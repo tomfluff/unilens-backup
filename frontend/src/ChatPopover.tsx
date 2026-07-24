@@ -270,7 +270,15 @@ export default function ChatPopover({
           {capture.meta.trace.length} trace pts
           {capture.meta.zoom !== 1 && <> · zoom {Math.round(capture.meta.zoom * 100)}%</>}
         </div>
-        <div style={{ fontSize: 11, color: '#7a9', margin: '0 0 12px' }}>{stored}</div>
+        <div style={{ fontSize: 11, color: '#7a9', margin: 0 }}>{stored}</div>
+        {capture.meta.element && (
+          <div style={{ fontSize: 11, color: '#a9c', margin: '2px 0 0' }}>
+            clicked: &lt;{capture.meta.element.tag}&gt;
+            {capture.meta.element.text && ` “${capture.meta.element.text.slice(0, 60)}${capture.meta.element.text.length > 60 ? '…' : ''}”`}
+            {capture.meta.element.nearestHeading && ` · under “${capture.meta.element.nearestHeading}”`}
+          </div>
+        )}
+        <div style={{ margin: '0 0 12px' }} />
         {messages.map((m, i) => (
           <div
             key={i}

@@ -17,6 +17,7 @@ export interface Settings {
   streamReplies: boolean
   quickActions: boolean
   dragPopover: boolean
+  elementContext: boolean
   /** capture render scale: 1 = screen resolution, 0.5 = reduced */
   captureRes: number
 }
@@ -32,6 +33,7 @@ const DEFAULTS: Settings = {
   streamReplies: true,
   quickActions: true,
   dragPopover: true,
+  elementContext: true,
   captureRes: 1,
 }
 
@@ -46,6 +48,7 @@ const TOGGLE_LABELS: Record<string, string> = {
   streamReplies: 'Streaming chat replies',
   quickActions: 'Quick-action chips',
   dragPopover: 'Movable popover (drag header)',
+  elementContext: 'Clicked-element context capture',
 }
 
 const STORAGE_KEY = 'unilens-settings'
@@ -101,6 +104,7 @@ function togglePanel() {
     | 'streamReplies'
     | 'quickActions'
     | 'dragPopover'
+    | 'elementContext'
   )[]) {
     const row = document.createElement('label')
     Object.assign(row.style, {

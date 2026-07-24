@@ -33,6 +33,57 @@ export interface CaptureMeta {
   zoomTrace: ZoomEvent[]
   /** content-space rect of the visible region (what viewportImage shows) */
   viewportRect: { x: number; y: number; w: number; h: number }
+  /** the DOM element under the alt+click, if enabled */
+  element?: ElementContext
+}
+
+export interface ElementContext {
+  tag: string
+  id?: string
+  classes?: string
+  role?: string
+  /** visible text of the element (capped) */
+  text?: string
+  /** alt text when the element is an image */
+  alt?: string
+  /** href when the element is inside a link */
+  href?: string
+  /** short ancestor path, e.g. "table > tbody > tr > td" */
+  path: string
+  /** text of the nearest heading before this element */
+  nearestHeading?: string
+}
+
+export function describeElement(el: Element): ElementContext {
+  const cap = (s: string | null | undefined, n = 200) => {
+    const t = s?.replace(/\s+/g, ' ').trim()
+    return t ? (t.length > n ? t.slice(0, n) + '…' : t) : undefined
+  }
+
+  const path = []
+  let node: Element | null = el
+  for (let i = 0; node && node !== document.body && i < 4; i++, node = node.parentElement) {
+    path.unshift(node.tagName.toLowerCase())
+  }
+
+  let heading: string | undefined
+  const headings = document.querySelectorAll('h1,h2,h3,h4,h5,h6')
+  for (const h of headings) {
+    if (h.compareDocumentPosition(el) & Node.DOCUMENT_POSITION_FOLLOWING) heading = cap(h.textContent, 120)
+    else break
+  }
+
+  return {
+    tag: el.tagName.toLowerCase(),
+    id: el.id || undefined,
+    classes: cap(el.getAttribute('class'), 80),
+    role: el.getAttribute('role') ?? undefined,
+    text: cap(el.textContent),
+    alt: el instanceof HTMLImageElement ? cap(el.alt, 120) : undefined,
+    href: (el.closest('a') as HTMLAnchorElement | null)?.href,
+    path: path.join(' > '),
+    nearestHeading: heading,
+  }
 }
 
 export interface CaptureResult {
@@ -163,7 +214,7 @@ async function preprocessImages(): Promise<() => void> {
 }
 
 // ── Core capture ───────────────────────────────────────────────────────────
-export async function capture(clickX: number, clickY: number): Promise<CaptureResult> {
+export async function capture(clickX: number, clickY: number, clickedEl?: Element): Promise<CaptureResult> {
   const captureTime = Date.now()
 
   const vvp = window.visualViewport
@@ -331,6 +382,7 @@ export async function capture(clickX: number, clickY: number): Promise<CaptureRe
       trace: recent,
       zoomTrace: getZoomTrace(captureTime),
       viewportRect: vRect,
+      element: settings.elementContext && clickedEl ? describeElement(clickedEl) : undefined,
     },
   }
 }

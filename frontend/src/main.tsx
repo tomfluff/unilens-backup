@@ -104,7 +104,7 @@ export function init(options: InitOptions = {}) {
     e.stopPropagation()
 
     const p = toContent(e.pageX, e.pageY)
-    const cap = await capture(Math.round(p.x), Math.round(p.y))
+    const cap = await capture(Math.round(p.x), Math.round(p.y), e.target instanceof Element ? e.target : undefined)
     let id = 'local'
     try {
       id = await uploadCapture(cap, backend)
