@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import type { CaptureResult } from './capture'
+import { settings } from './settings'
 
 interface Msg {
   role: 'user' | 'assistant'
@@ -57,6 +58,61 @@ export default function ChatPopover({ x, y, captureId, capture, backend, onClose
     return () => window.removeEventListener('keydown', onKey)
   }, [onClose])
 
+  const fmtInfo = (d: { provider: string; model: string; imagesSent: number; latencyMs: number }) =>
+    `${d.provider} · ${d.model} · ${d.imagesSent} image${d.imagesSent === 1 ? '' : 's'} · ${(d.latencyMs / 1000).toFixed(1)}s`
+
+  /** replace the text/info of the last (streaming) assistant message */
+  const patchLast = (patch: Partial<Msg>) =>
+    setMessages((m) => [...m.slice(0, -1), { ...m[m.length - 1], ...patch }])
+
+  async function sendStreaming(text: string) {
+    const res = await fetch(`${backend}/api/chat/stream`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ capture_id: captureId, message: text }),
+    })
+    if (!res.ok || !res.body) {
+      const data = await res.json().catch(() => ({}))
+      setMessages((m) => [...m, { role: 'assistant', text: data.error ?? `HTTP ${res.status}` }])
+      return
+    }
+    setMessages((m) => [...m, { role: 'assistant', text: '' }])
+    const reader = res.body.getReader()
+    const decoder = new TextDecoder()
+    let buffer = ''
+    let full = ''
+    for (;;) {
+      const { done, value } = await reader.read()
+      if (done) break
+      buffer += decoder.decode(value, { stream: true })
+      const events = buffer.split('\n\n')
+      buffer = events.pop() ?? '' // keep incomplete tail
+      for (const ev of events) {
+        if (!ev.startsWith('data: ')) continue
+        const data = JSON.parse(ev.slice(6))
+        if (data.delta) {
+          full += data.delta
+          patchLast({ text: full })
+        } else if (data.error) {
+          patchLast({ text: full + `\n[error: ${data.error}]` })
+        } else if (data.done) {
+          patchLast({ info: fmtInfo(data) })
+        }
+      }
+    }
+  }
+
+  async function sendPlain(text: string) {
+    const res = await fetch(`${backend}/api/chat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ capture_id: captureId, message: text }),
+    })
+    const data = await res.json()
+    const info = data.provider != null ? fmtInfo(data) : undefined
+    setMessages((m) => [...m, { role: 'assistant', text: data.reply ?? data.error ?? 'No reply.', info }])
+  }
+
   async function send() {
     const text = input.trim()
     if (!text || busy) return
@@ -64,17 +120,8 @@ export default function ChatPopover({ x, y, captureId, capture, backend, onClose
     setMessages((m) => [...m, { role: 'user', text }])
     setBusy(true)
     try {
-      const res = await fetch(`${backend}/api/chat`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ capture_id: captureId, message: text }),
-      })
-      const data = await res.json()
-      const info =
-        data.provider != null
-          ? `${data.provider} · ${data.model} · ${data.imagesSent} image${data.imagesSent === 1 ? '' : 's'} · ${(data.latencyMs / 1000).toFixed(1)}s`
-          : undefined
-      setMessages((m) => [...m, { role: 'assistant', text: data.reply ?? data.error ?? 'No reply.', info }])
+      if (settings.streamReplies) await sendStreaming(text)
+      else await sendPlain(text)
     } catch (err) {
       setMessages((m) => [...m, { role: 'assistant', text: `Backend error: ${err}` }])
     } finally {
