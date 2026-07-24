@@ -13,6 +13,7 @@ export interface Settings {
   viewportCrop: boolean
   zoomKeys: boolean
   smoothZoom: boolean
+  smartZoom: boolean
   /** capture render scale: 1 = screen resolution, 0.5 = reduced */
   captureRes: number
 }
@@ -24,6 +25,7 @@ const DEFAULTS: Settings = {
   viewportCrop: true,
   zoomKeys: true,
   smoothZoom: true,
+  smartZoom: true,
   captureRes: 1,
 }
 
@@ -34,6 +36,7 @@ const TOGGLE_LABELS: Record<string, string> = {
   viewportCrop: 'Send zoomed-view close-up',
   zoomKeys: 'Zoom shortcuts (ctrl +/− /0)',
   smoothZoom: 'Smooth zoom animation',
+  smartZoom: 'Double-click zoom to fit',
 }
 
 const STORAGE_KEY = 'unilens-settings'
@@ -85,6 +88,7 @@ function togglePanel() {
     | 'viewportCrop'
     | 'zoomKeys'
     | 'smoothZoom'
+    | 'smartZoom'
   )[]) {
     const row = document.createElement('label')
     Object.assign(row.style, {

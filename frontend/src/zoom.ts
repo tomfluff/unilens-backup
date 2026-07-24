@@ -126,17 +126,13 @@ function animate() {
   rafId = requestAnimationFrame(animate)
 }
 
-/** Zoom to `target`, keeping the content under (anchorX, anchorY) client coords fixed. Defaults to viewport center. */
-export function setZoom(target: number, anchorX?: number, anchorY?: number) {
+/** Zoom to `target`, pinning content point (cx, cy) to client point (ax, ay). */
+function setZoomPin(target: number, cx: number, cy: number, ax: number, ay: number) {
   if (layoutW === 0) measureLayout()
-  const ax = anchorX ?? window.innerWidth / 2
-  const ay = anchorY ?? window.innerHeight / 2
-
   const clamped = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, target))
   if (clamped === targetScale && clamped === scale) return
   targetScale = clamped
-  // pin the content point currently under the anchor (at the current scale)
-  anchor = { ax, ay, cx: (ax + window.scrollX) / scale, cy: (ay + window.scrollY) / scale }
+  anchor = { ax, ay, cx, cy }
 
   if (settings.zoomTrace) {
     zoomTrace.push({
@@ -155,6 +151,41 @@ export function setZoom(target: number, anchorX?: number, anchorY?: number) {
     return
   }
   if (!rafId) rafId = requestAnimationFrame(animate)
+}
+
+/** Zoom to `target`, keeping the content under (anchorX, anchorY) client coords fixed. Defaults to viewport center. */
+export function setZoom(target: number, anchorX?: number, anchorY?: number) {
+  const ax = anchorX ?? window.innerWidth / 2
+  const ay = anchorY ?? window.innerHeight / 2
+  // pin the content point currently under the anchor (at the current scale)
+  setZoomPin(target, (ax + window.scrollX) / scale, (ay + window.scrollY) / scale, ax, ay)
+}
+
+// ── Double-click smart zoom ────────────────────────────────────────────────
+function onDblClick(e: MouseEvent) {
+  if (!settings.smartZoom || !settings.zoom) return
+  if (!(e.target instanceof HTMLElement)) return
+  let el: HTMLElement | null = e.target
+  if (el.closest('#unilens-root')) return
+  // climb inline/tiny elements to a meaningful block
+  while (
+    el &&
+    el !== document.body &&
+    (getComputedStyle(el).display === 'inline' || el.getBoundingClientRect().width / scale < 80)
+  ) {
+    el = el.parentElement
+  }
+  if (!el || el === document.body) return
+
+  const rect = el.getBoundingClientRect() // zoomed client px
+  const contentW = rect.width / scale
+  const cx = (rect.left + rect.width / 2 + window.scrollX) / scale
+  const cy = (rect.top + rect.height / 2 + window.scrollY) / scale
+
+  let target = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, (window.innerWidth - 48) / contentW))
+  if (Math.abs(targetScale - target) < 0.05) target = 1 // second double-click: back out
+
+  setZoomPin(target, cx, cy, window.innerWidth / 2, window.innerHeight / 2)
 }
 
 function onWheel(e: WheelEvent) {
@@ -184,5 +215,6 @@ export function initZoom() {
   window.addEventListener('resize', measureLayout)
   document.addEventListener('wheel', onWheel, { passive: false })
   document.addEventListener('keydown', onKeyDown)
-  console.log('[UniLens] zoom enabled — ctrl+wheel, ctrl +/− /0')
+  document.addEventListener('dblclick', onDblClick)
+  console.log('[UniLens] zoom enabled — ctrl+wheel, ctrl +/− /0, double-click to fit')
 }
