@@ -26,6 +26,19 @@ export interface InitOptions {
 
 let root: Root | null = null
 let container: HTMLDivElement | null = null
+/** set when the user pins the popover — subsequent captures reopen here (survives reloads) */
+let pinnedPos: { left: number; top: number } | null = null
+try {
+  pinnedPos = JSON.parse(localStorage.getItem('unilens-pin') ?? 'null')
+} catch {
+  /* corrupted — stay unpinned */
+}
+
+function setPinnedPos(pos: { left: number; top: number } | null) {
+  pinnedPos = pos
+  if (pos) localStorage.setItem('unilens-pin', JSON.stringify(pos))
+  else localStorage.removeItem('unilens-pin')
+}
 
 function closePopover() {
   root?.unmount()
@@ -42,9 +55,27 @@ function openPopover(clientX: number, clientY: number, captureId: string, cap: C
   // break position:fixed and scale the popover. Also keeps it out of captures.
   document.documentElement.appendChild(container)
   root = createRoot(container)
-  root.render(
-    <ChatPopover x={clientX} y={clientY} captureId={captureId} capture={cap} backend={backend} onClose={closePopover} />,
-  )
+  const render = () =>
+    root!.render(
+      <ChatPopover
+        x={clientX}
+        y={clientY}
+        captureId={captureId}
+        capture={cap}
+        backend={backend}
+        onClose={closePopover}
+        initialPos={pinnedPos}
+        pinned={pinnedPos != null}
+        onTogglePin={(pos) => {
+          setPinnedPos(pos)
+          render() // re-render so the pin button reflects state
+        }}
+        onMove={(pos) => {
+          if (pinnedPos) setPinnedPos(pos)
+        }}
+      />,
+    )
+  render()
 }
 
 async function uploadCapture(cap: CaptureResult, backend: string): Promise<string> {

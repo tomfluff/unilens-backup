@@ -31,12 +31,28 @@ interface Props {
   capture: CaptureResult
   backend: string
   onClose: () => void
+  /** pinned position carried over from the previous popover, if the user pinned it */
+  initialPos?: { left: number; top: number } | null
+  pinned: boolean
+  onTogglePin: (pos: { left: number; top: number } | null) => void
+  onMove: (pos: { left: number; top: number }) => void
 }
 
 const PANEL_W = 340
 const PANEL_H = 420
 
-export default function ChatPopover({ x, y, captureId, capture, backend, onClose }: Props) {
+export default function ChatPopover({
+  x,
+  y,
+  captureId,
+  capture,
+  backend,
+  onClose,
+  initialPos,
+  pinned,
+  onTogglePin,
+  onMove,
+}: Props) {
   const [messages, setMessages] = useState<Msg[]>([])
   const [input, setInput] = useState('')
   const [busy, setBusy] = useState(false)
@@ -59,9 +75,29 @@ export default function ChatPopover({ x, y, captureId, capture, backend, onClose
       .catch(() => setStored('backend stored: (check failed)'))
   }, [backend, captureId])
 
-  // Clamp popover inside viewport, near the cursor
-  const left = Math.min(Math.max(x + 12, 8), window.innerWidth - PANEL_W - 8)
-  const top = Math.min(Math.max(y + 12, 8), window.innerHeight - PANEL_H - 8)
+  // Clamp popover inside viewport, near the cursor (or restore pinned position)
+  const clamp = (p: { left: number; top: number }) => ({
+    left: Math.min(Math.max(p.left, 8), window.innerWidth - PANEL_W - 8),
+    top: Math.min(Math.max(p.top, 8), window.innerHeight - PANEL_H - 8),
+  })
+  const [pos, setPos] = useState(() => clamp(initialPos ?? { left: x + 12, top: y + 12 }))
+  const dragRef = useRef<{ dx: number; dy: number } | null>(null)
+
+  function onHeaderPointerDown(e: React.PointerEvent) {
+    if (!settings.dragPopover) return
+    if ((e.target as HTMLElement).tagName === 'BUTTON') return
+    dragRef.current = { dx: e.clientX - pos.left, dy: e.clientY - pos.top }
+    ;(e.target as HTMLElement).setPointerCapture(e.pointerId)
+  }
+  function onHeaderPointerMove(e: React.PointerEvent) {
+    if (!dragRef.current) return
+    const p = clamp({ left: e.clientX - dragRef.current.dx, top: e.clientY - dragRef.current.dy })
+    setPos(p)
+    onMove(p)
+  }
+  function onHeaderPointerUp() {
+    dragRef.current = null
+  }
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight })
@@ -159,8 +195,8 @@ export default function ChatPopover({ x, y, captureId, capture, backend, onClose
     <div
       style={{
         position: 'fixed',
-        left,
-        top,
+        left: pos.left,
+        top: pos.top,
         width: PANEL_W,
         height: PANEL_H,
         display: 'flex',
@@ -176,21 +212,44 @@ export default function ChatPopover({ x, y, captureId, capture, backend, onClose
       }}
     >
       <div
+        onPointerDown={onHeaderPointerDown}
+        onPointerMove={onHeaderPointerMove}
+        onPointerUp={onHeaderPointerUp}
         style={{
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
           padding: '10px 14px',
           background: '#0f3460',
+          cursor: settings.dragPopover ? 'grab' : 'default',
+          touchAction: 'none',
         }}
       >
         <span style={{ fontWeight: 700, color: '#00c8ff' }}>UniLens</span>
-        <button
-          onClick={onClose}
-          style={{ background: 'none', border: 'none', color: '#aaa', cursor: 'pointer', fontSize: 16 }}
-        >
-          ✕
-        </button>
+        <span style={{ display: 'flex', gap: 4 }}>
+          <button
+            onClick={() => onTogglePin(pinned ? null : pos)}
+            title={pinned ? 'Pinned — click to unpin (reopen at cursor)' : 'Pin position for next captures'}
+            style={{
+              background: pinned ? '#00c8ff' : 'none',
+              border: 'none',
+              borderRadius: 6,
+              color: pinned ? '#08182e' : '#aaa',
+              cursor: 'pointer',
+              fontSize: 13,
+              padding: '2px 8px',
+              fontWeight: 700,
+            }}
+          >
+            📌{pinned ? ' pinned' : ''}
+          </button>
+          <button
+            onClick={onClose}
+            style={{ background: 'none', border: 'none', color: '#aaa', cursor: 'pointer', fontSize: 16 }}
+          >
+            ✕
+          </button>
+        </span>
       </div>
 
       <div ref={scrollRef} style={{ flex: 1, overflowY: 'auto', padding: 12 }}>

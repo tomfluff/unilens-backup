@@ -16,6 +16,7 @@ export interface Settings {
   smartZoom: boolean
   streamReplies: boolean
   quickActions: boolean
+  dragPopover: boolean
   /** capture render scale: 1 = screen resolution, 0.5 = reduced */
   captureRes: number
 }
@@ -30,6 +31,7 @@ const DEFAULTS: Settings = {
   smartZoom: true,
   streamReplies: true,
   quickActions: true,
+  dragPopover: true,
   captureRes: 1,
 }
 
@@ -43,6 +45,7 @@ const TOGGLE_LABELS: Record<string, string> = {
   smartZoom: 'Double-click zoom to fit',
   streamReplies: 'Streaming chat replies',
   quickActions: 'Quick-action chips',
+  dragPopover: 'Movable popover (drag header)',
 }
 
 const STORAGE_KEY = 'unilens-settings'
@@ -97,6 +100,7 @@ function togglePanel() {
     | 'smartZoom'
     | 'streamReplies'
     | 'quickActions'
+    | 'dragPopover'
   )[]) {
     const row = document.createElement('label')
     Object.assign(row.style, {
