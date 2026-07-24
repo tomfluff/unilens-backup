@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import type { CaptureResult } from './capture'
-import { settings } from './settings'
+import { settings, onSettingsChange } from './settings'
 
 interface Msg {
   role: 'user' | 'assistant'
@@ -58,6 +58,47 @@ export default function ChatPopover({
   const [busy, setBusy] = useState(false)
   const [stored, setStored] = useState('')
   const scrollRef = useRef<HTMLDivElement>(null)
+
+  // re-render when settings change so text size / contrast apply live
+  const [, bump] = useState(0)
+  useEffect(() => onSettingsChange(() => bump((n) => n + 1)), [])
+
+  const fs = settings.chatFontSize
+  const hc = settings.highContrast
+  // high contrast: pure black surfaces, white text, yellow accents (WCAG-friendly)
+  const C = hc
+    ? {
+        panelBg: '#000',
+        headerBg: '#000',
+        headerBorder: '2px solid #ffd700',
+        accent: '#ffd700',
+        text: '#fff',
+        dim: '#fff',
+        userBubble: '#1a1a1a',
+        aiBubble: '#1a1a1a',
+        bubbleBorder: '1px solid #ffd700',
+        inputBg: '#000',
+        inputBorder: '2px solid #ffd700',
+        chipBg: '#000',
+        chipBorder: '1px solid #ffd700',
+        chipText: '#ffd700',
+      }
+    : {
+        panelBg: '#1a1a2e',
+        headerBg: '#0f3460',
+        headerBorder: 'none',
+        accent: '#00c8ff',
+        text: '#eee',
+        dim: '#889',
+        userBubble: '#0f3460',
+        aiBubble: '#26263e',
+        bubbleBorder: 'none',
+        inputBg: '#26263e',
+        inputBorder: '1px solid #444',
+        chipBg: '#22224a',
+        chipBorder: '1px solid #345',
+        chipText: '#9cf',
+      }
 
   // Ask the backend what it actually received for this capture
   useEffect(() => {
@@ -201,13 +242,14 @@ export default function ChatPopover({
         height: PANEL_H,
         display: 'flex',
         flexDirection: 'column',
-        background: '#1a1a2e',
-        color: '#eee',
+        background: C.panelBg,
+        color: C.text,
         borderRadius: 12,
         boxShadow: '0 8px 32px rgba(0,0,0,0.45)',
+        border: hc ? '2px solid #ffd700' : 'none',
         zIndex: 2147483647,
         fontFamily: 'sans-serif',
-        fontSize: 14,
+        fontSize: fs,
         overflow: 'hidden',
       }}
     >
@@ -220,12 +262,13 @@ export default function ChatPopover({
           alignItems: 'center',
           justifyContent: 'space-between',
           padding: '10px 14px',
-          background: '#0f3460',
+          background: C.headerBg,
+          borderBottom: C.headerBorder,
           cursor: settings.dragPopover ? 'grab' : 'default',
           touchAction: 'none',
         }}
       >
-        <span style={{ fontWeight: 700, color: '#00c8ff' }}>UniLens</span>
+        <span style={{ fontWeight: 700, color: C.accent }}>UniLens</span>
         <span style={{ display: 'flex', gap: 4 }}>
           <button
             onClick={() => onTogglePin(pinned ? null : pos)}
@@ -265,7 +308,7 @@ export default function ChatPopover({
             style={{ maxWidth: '55%', borderRadius: 6, border: '1px solid #446', display: 'block', marginTop: 6 }}
           />
         )}
-        <div style={{ fontSize: 11, color: '#889', margin: '6px 0 2px' }}>
+        <div style={{ fontSize: Math.max(11, fs - 3), color: C.dim, margin: '6px 0 2px' }}>
           click ({capture.meta.clickX}, {capture.meta.clickY}) · scroll {capture.meta.scrollDepth}% ·{' '}
           {capture.meta.trace.length} trace pts
           {capture.meta.zoom !== 1 && <> · zoom {Math.round(capture.meta.zoom * 100)}%</>}
@@ -276,9 +319,9 @@ export default function ChatPopover({
             </>
           )}
         </div>
-        <div style={{ fontSize: 11, color: '#7a9', margin: 0 }}>{stored}</div>
+        <div style={{ fontSize: Math.max(11, fs - 3), color: hc ? '#fff' : '#7a9', margin: 0 }}>{stored}</div>
         {capture.meta.element && (
-          <div style={{ fontSize: 11, color: '#a9c', margin: '2px 0 0' }}>
+          <div style={{ fontSize: Math.max(11, fs - 3), color: hc ? '#fff' : '#a9c', margin: '2px 0 0' }}>
             clicked: &lt;{capture.meta.element.tag}&gt;
             {capture.meta.element.text && ` “${capture.meta.element.text.slice(0, 60)}${capture.meta.element.text.length > 60 ? '…' : ''}”`}
             {capture.meta.element.nearestHeading && ` · under “${capture.meta.element.nearestHeading}”`}
@@ -294,12 +337,15 @@ export default function ChatPopover({
               borderRadius: 10,
               maxWidth: '85%',
               whiteSpace: 'pre-wrap',
-              background: m.role === 'user' ? '#0f3460' : '#26263e',
+              background: m.role === 'user' ? C.userBubble : C.aiBubble,
+              border: C.bubbleBorder,
               marginLeft: m.role === 'user' ? 'auto' : 0,
             }}
           >
             {m.role === 'assistant' ? <span dangerouslySetInnerHTML={mdLite(m.text)} /> : m.text}
-            {m.info && <div style={{ fontSize: 10, color: '#88a', marginTop: 6 }}>{m.info}</div>}
+            {m.info && (
+              <div style={{ fontSize: Math.max(10, fs - 4), color: hc ? '#ffd700' : '#88a', marginTop: 6 }}>{m.info}</div>
+            )}
           </div>
         ))}
         {busy && <div style={{ color: '#889', padding: 8 }}>…</div>}
@@ -315,10 +361,10 @@ export default function ChatPopover({
               style={{
                 padding: '4px 10px',
                 borderRadius: 12,
-                border: '1px solid #345',
-                background: '#22224a',
-                color: '#9cf',
-                fontSize: 12,
+                border: C.chipBorder,
+                background: C.chipBg,
+                color: C.chipText,
+                fontSize: Math.max(12, fs - 2),
                 cursor: busy ? 'default' : 'pointer',
                 opacity: busy ? 0.5 : 1,
               }}
@@ -339,9 +385,10 @@ export default function ChatPopover({
             flex: 1,
             padding: '8px 12px',
             borderRadius: 8,
-            border: '1px solid #444',
-            background: '#26263e',
-            color: '#eee',
+            border: C.inputBorder,
+            background: C.inputBg,
+            color: C.text,
+            fontSize: fs,
             outline: 'none',
           }}
         />
@@ -352,8 +399,8 @@ export default function ChatPopover({
             padding: '8px 14px',
             borderRadius: 8,
             border: 'none',
-            background: '#00c8ff',
-            color: '#08182e',
+            background: C.accent,
+            color: hc ? '#000' : '#08182e',
             fontWeight: 700,
             cursor: 'pointer',
           }}

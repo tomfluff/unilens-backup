@@ -19,8 +19,11 @@ export interface Settings {
   dragPopover: boolean
   elementContext: boolean
   regionSelect: boolean
+  highContrast: boolean
   /** capture render scale: 1 = screen resolution, 0.5 = reduced */
   captureRes: number
+  /** chat bubble font size in px */
+  chatFontSize: number
 }
 
 const DEFAULTS: Settings = {
@@ -36,7 +39,9 @@ const DEFAULTS: Settings = {
   dragPopover: true,
   elementContext: true,
   regionSelect: true,
+  highContrast: false,
   captureRes: 1,
+  chatFontSize: 14,
 }
 
 const TOGGLE_LABELS: Record<string, string> = {
@@ -52,6 +57,7 @@ const TOGGLE_LABELS: Record<string, string> = {
   dragPopover: 'Movable popover (drag header)',
   elementContext: 'Clicked-element context capture',
   regionSelect: 'Alt+drag region select',
+  highContrast: 'High-contrast chat',
 }
 
 const STORAGE_KEY = 'unilens-settings'
@@ -63,8 +69,17 @@ try {
   /* corrupted storage — keep defaults */
 }
 
+const listeners: (() => void)[] = []
+
+/** subscribe to settings changes (returns unsubscribe) — lets open UI re-render live */
+export function onSettingsChange(cb: () => void): () => void {
+  listeners.push(cb)
+  return () => listeners.splice(listeners.indexOf(cb), 1)
+}
+
 function save() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(settings))
+  listeners.forEach((cb) => cb())
 }
 
 // ── UI ─────────────────────────────────────────────────────────────────────
@@ -109,6 +124,7 @@ function togglePanel() {
     | 'dragPopover'
     | 'elementContext'
     | 'regionSelect'
+    | 'highContrast'
   )[]) {
     const row = document.createElement('label')
     Object.assign(row.style, {
@@ -159,6 +175,30 @@ function togglePanel() {
   }
   resRow.appendChild(sel)
   panel.appendChild(resRow)
+
+  // Chat text size select
+  const fontRow = document.createElement('label')
+  Object.assign(fontRow.style, { display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 0' })
+  fontRow.appendChild(document.createTextNode('Chat text size'))
+  const fontSel = document.createElement('select')
+  fontSel.style.cssText = sel.style.cssText
+  for (const [value, label] of [
+    ['14', 'Normal'],
+    ['17', 'Large'],
+    ['20', 'X-Large'],
+  ]) {
+    const opt = document.createElement('option')
+    opt.value = value
+    opt.textContent = label
+    fontSel.appendChild(opt)
+  }
+  fontSel.value = String(settings.chatFontSize)
+  fontSel.onchange = () => {
+    settings.chatFontSize = parseInt(fontSel.value, 10)
+    save()
+  }
+  fontRow.appendChild(fontSel)
+  panel.appendChild(fontRow)
 
   panel.appendChild(buildZoomControls())
   document.documentElement.appendChild(panel)
