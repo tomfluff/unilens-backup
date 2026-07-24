@@ -34,7 +34,10 @@ With every conversation you receive:
 - A full-page screenshot annotated with: a cyan rectangle = the user's visible viewport,
   an orange fading line = the user's recent mouse movement (faint = older, bright = newer),
   and a red crosshair/circle = where the user alt+clicked to ask for help.
-- Page metadata (URL, scroll position, viewport size, click coordinates).
+- When available, a second clean close-up image of exactly the region the user currently
+  sees (zoom-aware). Prefer it for reading fine details and small text.
+- Page metadata (URL, scroll position, viewport size, click coordinates, zoom level,
+  recent zoom history showing where the user zoomed in).
 Focus your answers on the region around the click and what the user was likely looking at.
 Answer in short, plain sentences."""
 
@@ -47,25 +50,34 @@ def _provider():
     return "stub"
 
 
-def _call_openai(png_b64: str, meta: dict, history: list, message: str) -> str:
+def _call_openai(png_b64: str, viewport_b64: str | None, meta: dict, history: list, message: str) -> str:
     from openai import OpenAI
 
     client = OpenAI()
+    context_content = [
+        {"type": "input_text", "text": "## Annotated full-page screenshot"},
+        {
+            "type": "input_image",
+            "image_url": f"data:image/png;base64,{png_b64}",
+            "detail": "high",
+        },
+    ]
+    if viewport_b64:
+        context_content += [
+            {"type": "input_text", "text": "## Close-up of the user's current view"},
+            {
+                "type": "input_image",
+                "image_url": f"data:image/png;base64,{viewport_b64}",
+                "detail": "high",
+            },
+        ]
+    context_content.append(
+        {"type": "input_text", "text": "## Page metadata\n" + json.dumps(meta, indent=2)}
+    )
     input_messages = [
         {"role": "user", "content": [{"type": "input_text", "text": SYSTEM_PROMPT}]},
         {"role": "assistant", "content": "Understood. I will follow these instructions."},
-        {
-            "role": "user",
-            "content": [
-                {"type": "input_text", "text": "## Annotated page screenshot"},
-                {
-                    "type": "input_image",
-                    "image_url": f"data:image/png;base64,{png_b64}",
-                    "detail": "high",
-                },
-                {"type": "input_text", "text": "## Page metadata\n" + json.dumps(meta, indent=2)},
-            ],
-        },
+        {"role": "user", "content": context_content},
         {"role": "assistant", "content": "I can see the page. What would you like to know?"},
     ]
     for m in history:
@@ -76,20 +88,23 @@ def _call_openai(png_b64: str, meta: dict, history: list, message: str) -> str:
     return response.output_text
 
 
-def _call_gemini(png_b64: str, meta: dict, history: list, message: str) -> str:
+def _call_gemini(png_b64: str, viewport_b64: str | None, meta: dict, history: list, message: str) -> str:
     from google import genai
     from google.genai import types
 
     client = genai.Client()
+    context_parts = [
+        types.Part.from_text(text="## Annotated full-page screenshot"),
+        types.Part.from_bytes(data=base64.b64decode(png_b64), mime_type="image/png"),
+    ]
+    if viewport_b64:
+        context_parts += [
+            types.Part.from_text(text="## Close-up of the user's current view"),
+            types.Part.from_bytes(data=base64.b64decode(viewport_b64), mime_type="image/png"),
+        ]
+    context_parts.append(types.Part.from_text(text="## Page metadata\n" + json.dumps(meta, indent=2)))
     contents = [
-        types.Content(
-            role="user",
-            parts=[
-                types.Part.from_text(text="## Annotated page screenshot"),
-                types.Part.from_bytes(data=base64.b64decode(png_b64), mime_type="image/png"),
-                types.Part.from_text(text="## Page metadata\n" + json.dumps(meta, indent=2)),
-            ],
-        ),
+        types.Content(role="user", parts=context_parts),
         types.Content(role="model", parts=[types.Part.from_text(text="I can see the page. What would you like to know?")]),
     ]
     for m in history:
@@ -134,9 +149,20 @@ def create_app():
         cap_dir = CAPTURES_DIR / cap_id
         cap_dir.mkdir()
         (cap_dir / "capture.png").write_bytes(base64.b64decode(image.split(",", 1)[1]))
+        viewport = data.get("viewport") or ""
+        if viewport.startswith("data:image/png;base64,"):
+            (cap_dir / "viewport.png").write_bytes(base64.b64decode(viewport.split(",", 1)[1]))
         (cap_dir / "meta.json").write_text(json.dumps(meta, indent=2), encoding="utf-8")
         (cap_dir / "chat.json").write_text("[]", encoding="utf-8")
         return jsonify({"id": cap_id})
+
+    @app.get("/api/capture/<cap_id>")
+    def capture_info(cap_id):
+        cap_dir = CAPTURES_DIR / cap_id
+        if not cap_dir.is_dir():
+            return jsonify({"error": "unknown capture_id"}), 404
+        files = {p.name: p.stat().st_size for p in sorted(cap_dir.iterdir())}
+        return jsonify({"id": cap_id, "files": files})
 
     @app.post("/api/chat")
     def chat():
@@ -153,14 +179,17 @@ def create_app():
         meta = json.loads((cap_dir / "meta.json").read_text(encoding="utf-8"))
         history = json.loads((cap_dir / "chat.json").read_text(encoding="utf-8"))
         png_b64 = base64.b64encode((cap_dir / "capture.png").read_bytes()).decode()
+        viewport_b64 = None
+        if (cap_dir / "viewport.png").is_file():
+            viewport_b64 = base64.b64encode((cap_dir / "viewport.png").read_bytes()).decode()
 
         provider = _provider()
         t0 = time.perf_counter()
         try:
             if provider == "openai":
-                reply = _call_openai(png_b64, meta, history, message)
+                reply = _call_openai(png_b64, viewport_b64, meta, history, message)
             elif provider == "gemini":
-                reply = _call_gemini(png_b64, meta, history, message)
+                reply = _call_gemini(png_b64, viewport_b64, meta, history, message)
             else:
                 reply = _call_stub(meta, message)
         except Exception as e:  # surface provider errors to the popover
@@ -171,7 +200,15 @@ def create_app():
         (cap_dir / "chat.json").write_text(json.dumps(history, indent=2), encoding="utf-8")
 
         model = {"openai": OPENAI_MODEL, "gemini": GEMINI_MODEL, "stub": "none"}[provider]
-        return jsonify({"reply": reply, "provider": provider, "model": model, "latencyMs": latency_ms})
+        return jsonify(
+            {
+                "reply": reply,
+                "provider": provider,
+                "model": model,
+                "latencyMs": latency_ms,
+                "imagesSent": 0 if provider == "stub" else (2 if viewport_b64 else 1),
+            }
+        )
 
     return app
 

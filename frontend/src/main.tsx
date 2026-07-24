@@ -51,7 +51,7 @@ async function uploadCapture(cap: CaptureResult, backend: string): Promise<strin
   const res = await fetch(`${backend}/api/capture`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ image: cap.image, meta: cap.meta }),
+    body: JSON.stringify({ image: cap.image, viewport: cap.viewportImage, meta: cap.meta }),
   })
   if (!res.ok) throw new Error(`capture upload failed: HTTP ${res.status}`)
   const data = await res.json()

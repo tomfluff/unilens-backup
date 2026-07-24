@@ -10,18 +10,24 @@ export interface Settings {
   zoom: boolean
   mouseTrace: boolean
   zoomTrace: boolean
+  viewportCrop: boolean
+  /** capture render scale: 1 = screen resolution, 0.5 = reduced */
+  captureRes: number
 }
 
 const DEFAULTS: Settings = {
   zoom: true,
   mouseTrace: true,
   zoomTrace: true,
+  viewportCrop: true,
+  captureRes: 1,
 }
 
-const LABELS: Record<keyof Settings, string> = {
+const TOGGLE_LABELS: Record<string, string> = {
   zoom: 'Page zoom (ctrl+wheel)',
   mouseTrace: 'Mouse trail capture',
   zoomTrace: 'Zoom history capture',
+  viewportCrop: 'Send zoomed-view close-up',
 }
 
 const STORAGE_KEY = 'unilens-settings'
@@ -66,7 +72,7 @@ function togglePanel() {
   Object.assign(title.style, { fontWeight: '700', color: '#00c8ff', marginBottom: '8px' })
   panel.appendChild(title)
 
-  for (const key of Object.keys(LABELS) as (keyof Settings)[]) {
+  for (const key of Object.keys(TOGGLE_LABELS) as ('zoom' | 'mouseTrace' | 'zoomTrace' | 'viewportCrop')[]) {
     const row = document.createElement('label')
     Object.assign(row.style, {
       display: 'flex',
@@ -83,9 +89,40 @@ function togglePanel() {
       save()
     }
     row.appendChild(cb)
-    row.appendChild(document.createTextNode(LABELS[key]))
+    row.appendChild(document.createTextNode(TOGGLE_LABELS[key]))
     panel.appendChild(row)
   }
+
+  // Capture resolution select
+  const resRow = document.createElement('label')
+  Object.assign(resRow.style, { display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 0' })
+  resRow.appendChild(document.createTextNode('Capture resolution'))
+  const sel = document.createElement('select')
+  Object.assign(sel.style, {
+    marginLeft: 'auto',
+    background: '#26263e',
+    color: '#eee',
+    border: '1px solid rgba(255,255,255,0.25)',
+    borderRadius: '6px',
+    padding: '3px 6px',
+  })
+  for (const [value, label] of [
+    ['1', 'Screen (1x)'],
+    ['0.5', 'Reduced (0.5x)'],
+  ]) {
+    const opt = document.createElement('option')
+    opt.value = value
+    opt.textContent = label
+    sel.appendChild(opt)
+  }
+  sel.value = String(settings.captureRes)
+  sel.onchange = () => {
+    settings.captureRes = parseFloat(sel.value)
+    save()
+  }
+  resRow.appendChild(sel)
+  panel.appendChild(resRow)
+
   panel.appendChild(buildZoomControls())
   document.documentElement.appendChild(panel)
 }

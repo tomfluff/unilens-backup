@@ -31,11 +31,15 @@ export interface CaptureMeta {
   trace: TracePoint[]
   /** recent ctrl+wheel zoom events — where the user zoomed in/out lately */
   zoomTrace: ZoomEvent[]
+  /** content-space rect of the visible region (what viewportImage shows) */
+  viewportRect: { x: number; y: number; w: number; h: number }
 }
 
 export interface CaptureResult {
   /** annotated full-page screenshot as PNG data URL */
   image: string
+  /** clean full-resolution crop of what the user currently sees (zoom-aware), if enabled */
+  viewportImage?: string
   meta: CaptureMeta
 }
 
@@ -176,10 +180,34 @@ export async function capture(clickX: number, clickY: number): Promise<CaptureRe
   const pageW = zoom.layoutW // unzoomed layout size — the screenshot is rendered without the zoom transform
   const pageH = zoom.layoutH
 
+  const t0 = performance.now()
   const restore = await preprocessImages()
+  const tPre = performance.now()
 
-  const captureScale = Math.min(dpr, 2) * 0.5
+  // Visible region in content space (what the user actually sees, zoom-aware)
+  const vRect = {
+    x: Math.max(0, Math.round((scrollX + vvpOffsetX) / z)),
+    y: Math.max(0, Math.round((scrollY + vvpOffsetY) / z)),
+    w: Math.min(pageW, Math.round(vpW / z)),
+    h: Math.min(pageH, Math.round(vpH / z)),
+  }
+
+  const stripZoom = (doc: Document) => {
+    doc.body.style.transform = '' // render at zoom 1 — coords are content space
+  }
+
+  // Single render at the configured resolution (1 = screen res). Both outputs
+  // (annotated page + close-up crop) derive from this one canvas — html2canvas
+  // clone+parse dominates capture time, so we only pay it once.
+  // ponytail: 24MP canvas cap guards very long pages; tiled rendering if it ever bites
+  let captureScale = settings.captureRes
+  const MAX_PIXELS = 24_000_000
+  if (pageW * pageH * captureScale * captureScale > MAX_PIXELS) {
+    captureScale = Math.sqrt(MAX_PIXELS / (pageW * pageH))
+  }
+
   let pageCanvas: HTMLCanvasElement
+  let viewportImage: string | undefined
   try {
     pageCanvas = await html2canvas(document.body, {
       scrollX: 0,
@@ -191,12 +219,24 @@ export async function capture(clickX: number, clickY: number): Promise<CaptureRe
       useCORS: true,
       allowTaint: true,
       scale: captureScale,
-      onclone: (doc) => {
-        doc.body.style.transform = '' // render at zoom 1 — overlays are in content space
-      },
+      onclone: stripZoom,
     })
+    console.debug(`[UniLens] timings: preprocess ${(tPre - t0).toFixed(0)}ms, render ${(performance.now() - tPre).toFixed(0)}ms`)
   } finally {
     restore()
+  }
+
+  if (settings.viewportCrop) {
+    // Crop the visible region from the render BEFORE overlays are drawn —
+    // a clean close-up of exactly what the user is examining.
+    const s = pageCanvas.width / pageW
+    const crop = document.createElement('canvas')
+    crop.width = Math.max(1, Math.round(vRect.w * s))
+    crop.height = Math.max(1, Math.round(vRect.h * s))
+    crop
+      .getContext('2d')!
+      .drawImage(pageCanvas, vRect.x * s, vRect.y * s, vRect.w * s, vRect.h * s, 0, 0, crop.width, crop.height)
+    viewportImage = crop.toDataURL('image/png')
   }
 
   const scale = pageCanvas.width / pageW
@@ -266,8 +306,13 @@ export async function capture(clickX: number, clickY: number): Promise<CaptureRe
 
   const scrollDepth = Math.round((scrollY / Math.max(pageH * z - vpH, 1)) * 100)
 
+  const tEnc = performance.now()
+  const image = pageCanvas.toDataURL('image/png')
+  console.debug(`[UniLens] timings: overlays+encode ${(performance.now() - tEnc).toFixed(0)}ms, total ${(performance.now() - t0).toFixed(0)}ms`)
+
   return {
-    image: pageCanvas.toDataURL('image/png'),
+    image,
+    viewportImage,
     meta: {
       clickX,
       clickY,
@@ -285,6 +330,7 @@ export async function capture(clickX: number, clickY: number): Promise<CaptureRe
       timestamp: new Date().toISOString(),
       trace: recent,
       zoomTrace: getZoomTrace(captureTime),
+      viewportRect: vRect,
     },
   }
 }
