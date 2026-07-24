@@ -6,8 +6,28 @@
  * so annotations align with the unzoomed screenshot at any zoom level.
  */
 
+import { settings } from './settings'
+
 const MIN_ZOOM = 0.25
 const MAX_ZOOM = 5
+const ZOOM_TRACE_WINDOW_MS = 30_000
+const ZOOM_TRACE_MAX = 50
+
+export interface ZoomEvent {
+  t: number
+  /** zoom level after this event */
+  scale: number
+  /** content coords of the zoom anchor (cursor) */
+  x: number
+  y: number
+}
+
+let zoomTrace: ZoomEvent[] = []
+
+/** zoom events within the last 30s — the user's recent attention signal */
+export function getZoomTrace(atTime: number): ZoomEvent[] {
+  return zoomTrace.filter((e) => e.t >= atTime - ZOOM_TRACE_WINDOW_MS)
+}
 
 let scale = 1
 let layoutW = 0
@@ -68,25 +88,45 @@ function showBadge() {
   }, 1200)
 }
 
-function onWheel(e: WheelEvent) {
-  if (!e.ctrlKey) return
-  e.preventDefault() // stop browser-native zoom
+let changeListener: ((scale: number) => void) | null = null
 
+/** settings panel subscribes to keep its % label live */
+export function onZoomChange(cb: (scale: number) => void) {
+  changeListener = cb
+}
+
+/** Zoom to `target`, keeping the content under (anchorX, anchorY) client coords fixed. Defaults to viewport center. */
+export function setZoom(target: number, anchorX?: number, anchorY?: number) {
   if (layoutW === 0) measureLayout()
+  const ax = anchorX ?? window.innerWidth / 2
+  const ay = anchorY ?? window.innerHeight / 2
 
   const oldScale = scale
-  scale = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, scale * Math.exp(-e.deltaY * 0.002)))
+  scale = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, target))
   if (scale === oldScale) return
 
-  // content point under cursor stays under cursor: solve for new scroll
-  const cx = (e.clientX + window.scrollX) / oldScale
-  const cy = (e.clientY + window.scrollY) / oldScale
+  // content point under the anchor stays under the anchor: solve for new scroll
+  const cx = (ax + window.scrollX) / oldScale
+  const cy = (ay + window.scrollY) / oldScale
 
   document.body.style.transformOrigin = '0 0'
   document.body.style.transform = scale === 1 ? '' : `scale(${scale})`
-  window.scrollTo(cx * scale - e.clientX, cy * scale - e.clientY)
+  window.scrollTo(cx * scale - ax, cy * scale - ay)
+
+  if (settings.zoomTrace) {
+    zoomTrace.push({ t: Date.now(), scale: Math.round(scale * 100) / 100, x: Math.round(cx), y: Math.round(cy) })
+    if (zoomTrace.length > ZOOM_TRACE_MAX) zoomTrace.splice(0, zoomTrace.length - ZOOM_TRACE_MAX)
+  }
 
   showBadge()
+  changeListener?.(scale)
+}
+
+function onWheel(e: WheelEvent) {
+  if (!e.ctrlKey) return
+  if (!settings.zoom) return // toggled off: let the browser zoom natively
+  e.preventDefault() // stop browser-native zoom
+  setZoom(scale * Math.exp(-e.deltaY * 0.002), e.clientX, e.clientY)
 }
 
 export function initZoom() {

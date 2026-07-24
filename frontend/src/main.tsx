@@ -13,6 +13,7 @@
 import { createRoot, type Root } from 'react-dom/client'
 import { startTrace, capture, type CaptureResult } from './capture'
 import { initZoom, toContent } from './zoom'
+import { initSettings } from './settings'
 import ChatPopover from './ChatPopover'
 
 export interface InitOptions {
@@ -63,6 +64,7 @@ export function init(options: InitOptions = {}) {
 
   startTrace(options.mouseWindow ?? 2.5)
   if (options.zoom ?? true) initZoom()
+  initSettings()
 
   document.addEventListener('click', async (e) => {
     if (container?.contains(e.target as Node)) return // clicks inside the popover

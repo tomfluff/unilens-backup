@@ -4,7 +4,8 @@
  * overlays viewport rect + mouse trace + click crosshair, returns PNG + metadata.
  */
 import html2canvas from 'html2canvas'
-import { getZoom, toContent } from './zoom'
+import { getZoom, getZoomTrace, toContent, type ZoomEvent } from './zoom'
+import { settings } from './settings'
 
 export interface TracePoint {
   x: number
@@ -28,6 +29,8 @@ export interface CaptureMeta {
   url: string
   timestamp: string
   trace: TracePoint[]
+  /** recent ctrl+wheel zoom events — where the user zoomed in/out lately */
+  zoomTrace: ZoomEvent[]
 }
 
 export interface CaptureResult {
@@ -43,6 +46,7 @@ let traceWindowSec = 2.5
 let tracking = false
 
 function onMouseMove(e: MouseEvent) {
+  if (!settings.mouseTrace) return
   const p = toContent(e.pageX, e.pageY) // content space: aligns with unzoomed screenshot
   trace.push({ x: p.x, y: p.y, t: Date.now() })
   if (trace.length > traceBuffer) trace.splice(0, trace.length - traceBuffer)
@@ -280,6 +284,7 @@ export async function capture(clickX: number, clickY: number): Promise<CaptureRe
       url: location.href,
       timestamp: new Date().toISOString(),
       trace: recent,
+      zoomTrace: getZoomTrace(captureTime),
     },
   }
 }

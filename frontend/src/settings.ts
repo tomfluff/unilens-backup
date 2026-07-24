@@ -1,0 +1,176 @@
+/**
+ * UniLens settings — per-feature toggles, persisted in localStorage.
+ * Gear button (bottom-left) opens a small panel. Feature code reads
+ * settings.<flag> live, so toggles apply immediately without re-init.
+ * Also hosts zoom controls: [−] [100%] [+], % button resets to 100.
+ */
+import { getZoom, setZoom, onZoomChange } from './zoom'
+
+export interface Settings {
+  zoom: boolean
+  mouseTrace: boolean
+  zoomTrace: boolean
+}
+
+const DEFAULTS: Settings = {
+  zoom: true,
+  mouseTrace: true,
+  zoomTrace: true,
+}
+
+const LABELS: Record<keyof Settings, string> = {
+  zoom: 'Page zoom (ctrl+wheel)',
+  mouseTrace: 'Mouse trail capture',
+  zoomTrace: 'Zoom history capture',
+}
+
+const STORAGE_KEY = 'unilens-settings'
+
+export const settings: Settings = { ...DEFAULTS }
+try {
+  Object.assign(settings, JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '{}'))
+} catch {
+  /* corrupted storage — keep defaults */
+}
+
+function save() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(settings))
+}
+
+// ── UI ─────────────────────────────────────────────────────────────────────
+let panel: HTMLDivElement | null = null
+
+function togglePanel() {
+  if (panel) {
+    panel.remove()
+    panel = null
+    return
+  }
+  panel = document.createElement('div')
+  Object.assign(panel.style, {
+    position: 'fixed',
+    bottom: '52px',
+    left: '16px',
+    background: '#1a1a2e',
+    color: '#eee',
+    borderRadius: '10px',
+    padding: '12px 16px',
+    font: '13px sans-serif',
+    boxShadow: '0 6px 24px rgba(0,0,0,0.4)',
+    zIndex: '2147483647',
+    minWidth: '210px',
+  })
+
+  const title = document.createElement('div')
+  title.textContent = 'UniLens settings'
+  Object.assign(title.style, { fontWeight: '700', color: '#00c8ff', marginBottom: '8px' })
+  panel.appendChild(title)
+
+  for (const key of Object.keys(LABELS) as (keyof Settings)[]) {
+    const row = document.createElement('label')
+    Object.assign(row.style, {
+      display: 'flex',
+      alignItems: 'center',
+      gap: '8px',
+      padding: '4px 0',
+      cursor: 'pointer',
+    })
+    const cb = document.createElement('input')
+    cb.type = 'checkbox'
+    cb.checked = settings[key]
+    cb.onchange = () => {
+      settings[key] = cb.checked
+      save()
+    }
+    row.appendChild(cb)
+    row.appendChild(document.createTextNode(LABELS[key]))
+    panel.appendChild(row)
+  }
+  panel.appendChild(buildZoomControls())
+  document.documentElement.appendChild(panel)
+}
+
+function buildZoomControls(): HTMLDivElement {
+  const wrap = document.createElement('div')
+  Object.assign(wrap.style, {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '10px',
+    marginTop: '10px',
+    paddingTop: '10px',
+    borderTop: '1px solid rgba(255,255,255,0.15)',
+  })
+
+  const btn = (label: string, title: string) => {
+    const b = document.createElement('button')
+    b.textContent = label
+    b.title = title
+    Object.assign(b.style, {
+      width: '28px',
+      height: '28px',
+      borderRadius: '6px',
+      border: '1px solid rgba(255,255,255,0.25)',
+      background: 'transparent',
+      color: '#eee',
+      fontSize: '15px',
+      cursor: 'pointer',
+    })
+    return b
+  }
+
+  const minus = btn('−', 'Zoom out')
+  const plus = btn('+', 'Zoom in')
+  const level = document.createElement('button')
+  level.title = 'Reset zoom to 100%'
+  Object.assign(level.style, {
+    flex: '1',
+    height: '28px',
+    borderRadius: '6px',
+    border: 'none',
+    background: 'rgba(255,255,255,0.1)',
+    color: '#00c8ff',
+    fontWeight: '700',
+    cursor: 'pointer',
+  })
+
+  const render = (s: number) => {
+    level.textContent = `${Math.round(s * 100)}%`
+  }
+  render(getZoom().scale)
+  onZoomChange(render)
+
+  minus.onclick = () => setZoom(getZoom().scale / 1.25)
+  plus.onclick = () => setZoom(getZoom().scale * 1.25)
+  level.onclick = () => setZoom(1)
+
+  wrap.appendChild(minus)
+  wrap.appendChild(level)
+  wrap.appendChild(plus)
+  return wrap
+}
+
+export function initSettings() {
+  const gear = document.createElement('button')
+  gear.textContent = '⚙'
+  gear.title = 'UniLens settings'
+  Object.assign(gear.style, {
+    position: 'fixed',
+    bottom: '14px',
+    left: '14px',
+    width: '32px',
+    height: '32px',
+    borderRadius: '50%',
+    border: 'none',
+    background: 'rgba(0,0,0,0.55)',
+    color: '#fff',
+    fontSize: '16px',
+    cursor: 'pointer',
+    zIndex: '2147483647',
+    opacity: '0.6',
+  })
+  gear.onmouseenter = () => (gear.style.opacity = '1')
+  gear.onmouseleave = () => (gear.style.opacity = '0.6')
+  gear.onclick = togglePanel
+  // documentElement: outside the zoom-transformed body, excluded from captures
+  document.documentElement.appendChild(gear)
+}
