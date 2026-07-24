@@ -9,6 +9,21 @@ interface Msg {
   info?: string
 }
 
+/**
+ * Minimal markdown for a 340px chat bubble: bold, inline code, dash bullets,
+ * headings flattened to bold. HTML is escaped BEFORE any transform, so the
+ * only tags in the output are ones we emit ourselves.
+ */
+function mdLite(text: string): { __html: string } {
+  let h = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  h = h
+    .replace(/^#{1,4} (.+)$/gm, '<b>$1</b>')
+    .replace(/\*\*([^*\n]+)\*\*/g, '<b>$1</b>')
+    .replace(/`([^`\n]+)`/g, '<code style="background:rgba(255,255,255,0.12);border-radius:3px;padding:0 4px">$1</code>')
+    .replace(/^[-*] (.+)$/gm, '• $1')
+  return { __html: h }
+}
+
 interface Props {
   x: number // client coords of the triggering click
   y: number
@@ -210,7 +225,7 @@ export default function ChatPopover({ x, y, captureId, capture, backend, onClose
               marginLeft: m.role === 'user' ? 'auto' : 0,
             }}
           >
-            {m.text}
+            {m.role === 'assistant' ? <span dangerouslySetInnerHTML={mdLite(m.text)} /> : m.text}
             {m.info && <div style={{ fontSize: 10, color: '#88a', marginTop: 6 }}>{m.info}</div>}
           </div>
         ))}

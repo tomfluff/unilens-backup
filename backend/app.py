@@ -39,7 +39,8 @@ With every conversation you receive:
 - Page metadata (URL, scroll position, viewport size, click coordinates, zoom level,
   recent zoom history showing where the user zoomed in).
 Focus your answers on the region around the click and what the user was likely looking at.
-Answer in short, plain sentences."""
+Answer in short chat-style plain text suited to a small chat bubble. Avoid markdown
+headings and tables; minimal **bold** and simple dash lists are OK."""
 
 
 def _provider():
