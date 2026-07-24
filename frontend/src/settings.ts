@@ -4,7 +4,7 @@
  * settings.<flag> live, so toggles apply immediately without re-init.
  * Also hosts zoom controls: [−] [100%] [+], % button resets to 100.
  */
-import { getZoom, setZoom, onZoomChange } from './zoom'
+import { getZoom, getTargetZoom, setZoom, onZoomChange } from './zoom'
 
 export interface Settings {
   zoom: boolean
@@ -12,6 +12,7 @@ export interface Settings {
   zoomTrace: boolean
   viewportCrop: boolean
   zoomKeys: boolean
+  smoothZoom: boolean
   /** capture render scale: 1 = screen resolution, 0.5 = reduced */
   captureRes: number
 }
@@ -22,6 +23,7 @@ const DEFAULTS: Settings = {
   zoomTrace: true,
   viewportCrop: true,
   zoomKeys: true,
+  smoothZoom: true,
   captureRes: 1,
 }
 
@@ -31,6 +33,7 @@ const TOGGLE_LABELS: Record<string, string> = {
   zoomTrace: 'Zoom history capture',
   viewportCrop: 'Send zoomed-view close-up',
   zoomKeys: 'Zoom shortcuts (ctrl +/− /0)',
+  smoothZoom: 'Smooth zoom animation',
 }
 
 const STORAGE_KEY = 'unilens-settings'
@@ -75,7 +78,14 @@ function togglePanel() {
   Object.assign(title.style, { fontWeight: '700', color: '#00c8ff', marginBottom: '8px' })
   panel.appendChild(title)
 
-  for (const key of Object.keys(TOGGLE_LABELS) as ('zoom' | 'mouseTrace' | 'zoomTrace' | 'viewportCrop' | 'zoomKeys')[]) {
+  for (const key of Object.keys(TOGGLE_LABELS) as (
+    | 'zoom'
+    | 'mouseTrace'
+    | 'zoomTrace'
+    | 'viewportCrop'
+    | 'zoomKeys'
+    | 'smoothZoom'
+  )[]) {
     const row = document.createElement('label')
     Object.assign(row.style, {
       display: 'flex',
@@ -179,8 +189,8 @@ function buildZoomControls(): HTMLDivElement {
   render(getZoom().scale)
   onZoomChange(render)
 
-  minus.onclick = () => setZoom(getZoom().scale / 1.25)
-  plus.onclick = () => setZoom(getZoom().scale * 1.25)
+  minus.onclick = () => setZoom(getTargetZoom() / 1.25)
+  plus.onclick = () => setZoom(getTargetZoom() * 1.25)
   level.onclick = () => setZoom(1)
 
   wrap.appendChild(minus)

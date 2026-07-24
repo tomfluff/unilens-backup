@@ -47,6 +47,11 @@ export function getZoom(): ZoomState {
   return { scale, layoutW, layoutH }
 }
 
+/** where zoom is heading (equals current scale unless a smooth zoom is in flight) */
+export function getTargetZoom(): number {
+  return targetScale
+}
+
 /** page (scroll-space) coords -> content (layout-space) coords */
 export function toContent(pageX: number, pageY: number): { x: number; y: number } {
   return { x: pageX / scale, y: pageY / scale }
@@ -95,38 +100,68 @@ export function onZoomChange(cb: (scale: number) => void) {
   changeListener = cb
 }
 
+// ── Animated zoom state ────────────────────────────────────────────────────
+let targetScale = 1
+let anchor = { ax: 0, ay: 0, cx: 0, cy: 0 } // client point + pinned content point
+let rafId = 0
+
+function applyScale(s: number) {
+  scale = s
+  document.body.style.transformOrigin = '0 0'
+  document.body.style.transform = s === 1 ? '' : `scale(${s})`
+  // content point under the anchor stays under the anchor at every frame
+  window.scrollTo(anchor.cx * s - anchor.ax, anchor.cy * s - anchor.ay)
+  showBadge()
+  changeListener?.(s)
+}
+
+function animate() {
+  const diff = targetScale - scale
+  if (Math.abs(diff) < 0.001) {
+    applyScale(targetScale)
+    rafId = 0
+    return
+  }
+  applyScale(scale + diff * 0.25) // exponential ease-out
+  rafId = requestAnimationFrame(animate)
+}
+
 /** Zoom to `target`, keeping the content under (anchorX, anchorY) client coords fixed. Defaults to viewport center. */
 export function setZoom(target: number, anchorX?: number, anchorY?: number) {
   if (layoutW === 0) measureLayout()
   const ax = anchorX ?? window.innerWidth / 2
   const ay = anchorY ?? window.innerHeight / 2
 
-  const oldScale = scale
-  scale = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, target))
-  if (scale === oldScale) return
-
-  // content point under the anchor stays under the anchor: solve for new scroll
-  const cx = (ax + window.scrollX) / oldScale
-  const cy = (ay + window.scrollY) / oldScale
-
-  document.body.style.transformOrigin = '0 0'
-  document.body.style.transform = scale === 1 ? '' : `scale(${scale})`
-  window.scrollTo(cx * scale - ax, cy * scale - ay)
+  const clamped = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, target))
+  if (clamped === targetScale && clamped === scale) return
+  targetScale = clamped
+  // pin the content point currently under the anchor (at the current scale)
+  anchor = { ax, ay, cx: (ax + window.scrollX) / scale, cy: (ay + window.scrollY) / scale }
 
   if (settings.zoomTrace) {
-    zoomTrace.push({ t: Date.now(), scale: Math.round(scale * 100) / 100, x: Math.round(cx), y: Math.round(cy) })
+    zoomTrace.push({
+      t: Date.now(),
+      scale: Math.round(targetScale * 100) / 100,
+      x: Math.round(anchor.cx),
+      y: Math.round(anchor.cy),
+    })
     if (zoomTrace.length > ZOOM_TRACE_MAX) zoomTrace.splice(0, zoomTrace.length - ZOOM_TRACE_MAX)
   }
 
-  showBadge()
-  changeListener?.(scale)
+  if (!settings.smoothZoom) {
+    if (rafId) cancelAnimationFrame(rafId)
+    rafId = 0
+    applyScale(targetScale)
+    return
+  }
+  if (!rafId) rafId = requestAnimationFrame(animate)
 }
 
 function onWheel(e: WheelEvent) {
   if (!e.ctrlKey) return
   if (!settings.zoom) return // toggled off: let the browser zoom natively
   e.preventDefault() // stop browser-native zoom
-  setZoom(scale * Math.exp(-e.deltaY * 0.002), e.clientX, e.clientY)
+  setZoom(targetScale * Math.exp(-e.deltaY * 0.002), e.clientX, e.clientY)
 }
 
 function onKeyDown(e: KeyboardEvent) {
@@ -134,10 +169,10 @@ function onKeyDown(e: KeyboardEvent) {
   // '=' is unshifted '+' on most layouts; NumpadAdd/Subtract for numpad
   if (e.key === '+' || e.key === '=' || e.code === 'NumpadAdd') {
     e.preventDefault()
-    setZoom(scale * 1.25)
+    setZoom(targetScale * 1.25)
   } else if (e.key === '-' || e.code === 'NumpadSubtract') {
     e.preventDefault()
-    setZoom(scale / 1.25)
+    setZoom(targetScale / 1.25)
   } else if (e.key === '0' || e.code === 'Numpad0') {
     e.preventDefault()
     setZoom(1)
