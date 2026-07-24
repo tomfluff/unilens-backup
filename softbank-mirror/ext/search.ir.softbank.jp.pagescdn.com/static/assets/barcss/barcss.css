@@ -1,0 +1,25 @@
+/* .yxt-AutoComplete-results li:before {
+  content: '';
+  display: inline-block;
+  background-image: url(../../../../dynl.mktgcdn.com/p/ISHFIu6gPtyvBPSpLV0h2Kw88qHnNk6AlDk7l18ERhg/700x450.png);
+  background-size: contain;
+  width: 1.5rem;
+  height: 1.5rem;
+  margin-right: .8rem;
+  vertical-align: middle;
+  margin-top: .3rem;
+  margin-bottom: .3rem;
+} */
+
+@media screen and (max-width: 900px) {
+  input.yxt-SearchBar-input {
+    font-size: 14px;
+    padding-right: 0!important;
+  }
+  input.yxt-SearchBar-input::placeholder {
+    font-size: 11px;
+  }
+}
+.yxt-SearchBar-container {
+  border: 0.0625rem solid #D5D5D5;
+}

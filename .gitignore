@@ -1,0 +1,7 @@
+.gstack/
+node_modules/
+frontend/dist/
+backend/.venv/
+backend/captures/
+backend/.env
+*.log
