@@ -15,6 +15,7 @@ export interface Settings {
   smoothZoom: boolean
   smartZoom: boolean
   streamReplies: boolean
+  quickActions: boolean
   /** capture render scale: 1 = screen resolution, 0.5 = reduced */
   captureRes: number
 }
@@ -28,6 +29,7 @@ const DEFAULTS: Settings = {
   smoothZoom: true,
   smartZoom: true,
   streamReplies: true,
+  quickActions: true,
   captureRes: 1,
 }
 
@@ -40,6 +42,7 @@ const TOGGLE_LABELS: Record<string, string> = {
   smoothZoom: 'Smooth zoom animation',
   smartZoom: 'Double-click zoom to fit',
   streamReplies: 'Streaming chat replies',
+  quickActions: 'Quick-action chips',
 }
 
 const STORAGE_KEY = 'unilens-settings'
@@ -93,6 +96,7 @@ function togglePanel() {
     | 'smoothZoom'
     | 'smartZoom'
     | 'streamReplies'
+    | 'quickActions'
   )[]) {
     const row = document.createElement('label')
     Object.assign(row.style, {

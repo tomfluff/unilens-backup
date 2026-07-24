@@ -113,10 +113,8 @@ export default function ChatPopover({ x, y, captureId, capture, backend, onClose
     setMessages((m) => [...m, { role: 'assistant', text: data.reply ?? data.error ?? 'No reply.', info }])
   }
 
-  async function send() {
-    const text = input.trim()
+  async function sendText(text: string) {
     if (!text || busy) return
-    setInput('')
     setMessages((m) => [...m, { role: 'user', text }])
     setBusy(true)
     try {
@@ -128,6 +126,19 @@ export default function ChatPopover({ x, y, captureId, capture, backend, onClose
       setBusy(false)
     }
   }
+
+  function send() {
+    const text = input.trim()
+    if (!text) return
+    setInput('')
+    sendText(text)
+  }
+
+  const QUICK_ACTIONS: [string, string][] = [
+    ['Explain this', 'Explain what I am looking at, simply.'],
+    ['Summarize', 'Summarize this page briefly.'],
+    ['→ English', 'Translate the content I am looking at into English.'],
+  ]
 
   return (
     <div
@@ -206,6 +217,29 @@ export default function ChatPopover({ x, y, captureId, capture, backend, onClose
         {busy && <div style={{ color: '#889', padding: 8 }}>…</div>}
       </div>
 
+      {settings.quickActions && (
+        <div style={{ display: 'flex', gap: 6, padding: '8px 10px 0', flexWrap: 'wrap' }}>
+          {QUICK_ACTIONS.map(([label, prompt]) => (
+            <button
+              key={label}
+              onClick={() => sendText(prompt)}
+              disabled={busy}
+              style={{
+                padding: '4px 10px',
+                borderRadius: 12,
+                border: '1px solid #345',
+                background: '#22224a',
+                color: '#9cf',
+                fontSize: 12,
+                cursor: busy ? 'default' : 'pointer',
+                opacity: busy ? 0.5 : 1,
+              }}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      )}
       <div style={{ display: 'flex', gap: 8, padding: 10, borderTop: '1px solid #333' }}>
         <input
           autoFocus
