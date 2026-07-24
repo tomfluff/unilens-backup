@@ -13,7 +13,7 @@
 import { createRoot, type Root } from 'react-dom/client'
 import { startTrace, capture, type CaptureResult } from './capture'
 import { initZoom, toContent } from './zoom'
-import { initSettings } from './settings'
+import { initSettings, settings } from './settings'
 import ChatPopover from './ChatPopover'
 
 export interface InitOptions {
@@ -97,24 +97,105 @@ export function init(options: InitOptions = {}) {
   if (options.zoom ?? true) initZoom()
   initSettings()
 
-  document.addEventListener('click', async (e) => {
-    if (container?.contains(e.target as Node)) return // clicks inside the popover
-    if (!trigger(e)) return
-    e.preventDefault()
-    e.stopPropagation()
-
-    const p = toContent(e.pageX, e.pageY)
-    const cap = await capture(Math.round(p.x), Math.round(p.y), e.target instanceof Element ? e.target : undefined)
+  async function doCapture(
+    clientX: number,
+    clientY: number,
+    pageX: number,
+    pageY: number,
+    el?: Element,
+    region?: { x: number; y: number; w: number; h: number },
+  ) {
+    const p = toContent(pageX, pageY)
+    const cap = await capture(Math.round(p.x), Math.round(p.y), el, region)
     let id = 'local'
     try {
       id = await uploadCapture(cap, backend)
     } catch (err) {
       console.warn('[UniLens] backend unreachable, chat will fail:', err)
     }
-    openPopover(e.clientX, e.clientY, id, cap, backend)
+    openPopover(clientX, clientY, id, cap, backend)
+  }
+
+  // ── Alt+drag region select ───────────────────────────────────────────────
+  let dragStart: { clientX: number; clientY: number; pageX: number; pageY: number } | null = null
+  let dragBox: HTMLDivElement | null = null
+  let suppressClick = false
+
+  function removeDragBox() {
+    dragBox?.remove()
+    dragBox = null
+  }
+
+  document.addEventListener('mousedown', (e) => {
+    if (!settings.regionSelect || !trigger(e)) return
+    if (container?.contains(e.target as Node)) return
+    dragStart = { clientX: e.clientX, clientY: e.clientY, pageX: e.pageX, pageY: e.pageY }
+    e.preventDefault() // no text selection while dragging
   })
 
-  console.log('[UniLens] initialized — alt+click to capture')
+  document.addEventListener('mousemove', (e) => {
+    if (!dragStart) return
+    const w = Math.abs(e.clientX - dragStart.clientX)
+    const h = Math.abs(e.clientY - dragStart.clientY)
+    if (!dragBox && (w > 6 || h > 6)) {
+      dragBox = document.createElement('div')
+      Object.assign(dragBox.style, {
+        position: 'fixed',
+        border: '2px solid rgba(255,0,200,0.9)',
+        background: 'rgba(255,0,200,0.08)',
+        pointerEvents: 'none',
+        zIndex: '2147483646',
+      })
+      document.documentElement.appendChild(dragBox)
+    }
+    if (dragBox) {
+      Object.assign(dragBox.style, {
+        left: Math.min(e.clientX, dragStart.clientX) + 'px',
+        top: Math.min(e.clientY, dragStart.clientY) + 'px',
+        width: w + 'px',
+        height: h + 'px',
+      })
+    }
+  })
+
+  document.addEventListener('mouseup', (e) => {
+    if (!dragStart) return
+    const start = dragStart
+    dragStart = null
+    removeDragBox()
+    const dist = Math.max(Math.abs(e.clientX - start.clientX), Math.abs(e.clientY - start.clientY))
+    if (dist < 10) return // plain alt+click — let the click handler run
+
+    suppressClick = true // the click event that follows belongs to this drag
+    const a = toContent(start.pageX, start.pageY)
+    const b = toContent(e.pageX, e.pageY)
+    const region = {
+      x: Math.min(a.x, b.x),
+      y: Math.min(a.y, b.y),
+      w: Math.abs(b.x - a.x),
+      h: Math.abs(b.y - a.y),
+    }
+    const centerClientX = (start.clientX + e.clientX) / 2
+    const centerClientY = (start.clientY + e.clientY) / 2
+    const el = document.elementFromPoint(centerClientX, centerClientY) ?? undefined
+    doCapture(e.clientX, e.clientY, (start.pageX + e.pageX) / 2, (start.pageY + e.pageY) / 2, el, region)
+  })
+
+  document.addEventListener('click', async (e) => {
+    if (suppressClick) {
+      suppressClick = false
+      e.preventDefault()
+      e.stopPropagation()
+      return
+    }
+    if (container?.contains(e.target as Node)) return // clicks inside the popover
+    if (!trigger(e)) return
+    e.preventDefault()
+    e.stopPropagation()
+    doCapture(e.clientX, e.clientY, e.pageX, e.pageY, e.target instanceof Element ? e.target : undefined)
+  })
+
+  console.log('[UniLens] initialized — alt+click to capture, alt+drag to select a region')
 }
 
 // Expose for plain <script> embeds

@@ -35,6 +35,8 @@ export interface CaptureMeta {
   viewportRect: { x: number; y: number; w: number; h: number }
   /** the DOM element under the alt+click, if enabled */
   element?: ElementContext
+  /** content-space rect the user selected via alt+drag, if any */
+  region?: { x: number; y: number; w: number; h: number }
 }
 
 export interface ElementContext {
@@ -214,7 +216,12 @@ async function preprocessImages(): Promise<() => void> {
 }
 
 // ── Core capture ───────────────────────────────────────────────────────────
-export async function capture(clickX: number, clickY: number, clickedEl?: Element): Promise<CaptureResult> {
+export async function capture(
+  clickX: number,
+  clickY: number,
+  clickedEl?: Element,
+  region?: { x: number; y: number; w: number; h: number },
+): Promise<CaptureResult> {
   const captureTime = Date.now()
 
   const vvp = window.visualViewport
@@ -235,13 +242,21 @@ export async function capture(clickX: number, clickY: number, clickedEl?: Elemen
   const restore = await preprocessImages()
   const tPre = performance.now()
 
-  // Visible region in content space (what the user actually sees, zoom-aware)
-  const vRect = {
-    x: Math.max(0, Math.round((scrollX + vvpOffsetX) / z)),
-    y: Math.max(0, Math.round((scrollY + vvpOffsetY) / z)),
-    w: Math.min(pageW, Math.round(vpW / z)),
-    h: Math.min(pageH, Math.round(vpH / z)),
-  }
+  // Close-up source: the alt+drag selection if given, else the visible region
+  // in content space (what the user actually sees, zoom-aware)
+  const vRect = region
+    ? {
+        x: Math.max(0, Math.round(region.x)),
+        y: Math.max(0, Math.round(region.y)),
+        w: Math.max(1, Math.min(pageW, Math.round(region.w))),
+        h: Math.max(1, Math.min(pageH, Math.round(region.h))),
+      }
+    : {
+        x: Math.max(0, Math.round((scrollX + vvpOffsetX) / z)),
+        y: Math.max(0, Math.round((scrollY + vvpOffsetY) / z)),
+        w: Math.min(pageW, Math.round(vpW / z)),
+        h: Math.min(pageH, Math.round(vpH / z)),
+      }
 
   const stripZoom = (doc: Document) => {
     doc.body.style.transform = '' // render at zoom 1 — coords are content space
@@ -330,6 +345,15 @@ export async function capture(clickX: number, clickY: number, clickedEl?: Elemen
     }
   }
 
+  // Alt+drag selection rect (magenta, distinct from viewport cyan)
+  if (region) {
+    ctx.strokeStyle = 'rgba(255, 0, 200, 0.95)'
+    ctx.lineWidth = 3
+    ctx.strokeRect(vRect.x * scale, vRect.y * scale, vRect.w * scale, vRect.h * scale)
+    ctx.fillStyle = 'rgba(255, 0, 200, 0.08)'
+    ctx.fillRect(vRect.x * scale, vRect.y * scale, vRect.w * scale, vRect.h * scale)
+  }
+
   // Click crosshair
   const cx = clickX * scale
   const cy = clickY * scale
@@ -383,6 +407,7 @@ export async function capture(clickX: number, clickY: number, clickedEl?: Elemen
       zoomTrace: getZoomTrace(captureTime),
       viewportRect: vRect,
       element: settings.elementContext && clickedEl ? describeElement(clickedEl) : undefined,
+      region: region ? vRect : undefined,
     },
   }
 }

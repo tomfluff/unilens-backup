@@ -18,6 +18,7 @@ export interface Settings {
   quickActions: boolean
   dragPopover: boolean
   elementContext: boolean
+  regionSelect: boolean
   /** capture render scale: 1 = screen resolution, 0.5 = reduced */
   captureRes: number
 }
@@ -34,6 +35,7 @@ const DEFAULTS: Settings = {
   quickActions: true,
   dragPopover: true,
   elementContext: true,
+  regionSelect: true,
   captureRes: 1,
 }
 
@@ -49,6 +51,7 @@ const TOGGLE_LABELS: Record<string, string> = {
   quickActions: 'Quick-action chips',
   dragPopover: 'Movable popover (drag header)',
   elementContext: 'Clicked-element context capture',
+  regionSelect: 'Alt+drag region select',
 }
 
 const STORAGE_KEY = 'unilens-settings'
@@ -105,6 +108,7 @@ function togglePanel() {
     | 'quickActions'
     | 'dragPopover'
     | 'elementContext'
+    | 'regionSelect'
   )[]) {
     const row = document.createElement('label')
     Object.assign(row.style, {

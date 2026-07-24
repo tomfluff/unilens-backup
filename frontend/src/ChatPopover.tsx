@@ -269,6 +269,12 @@ export default function ChatPopover({
           click ({capture.meta.clickX}, {capture.meta.clickY}) · scroll {capture.meta.scrollDepth}% ·{' '}
           {capture.meta.trace.length} trace pts
           {capture.meta.zoom !== 1 && <> · zoom {Math.round(capture.meta.zoom * 100)}%</>}
+          {capture.meta.region && (
+            <>
+              {' '}
+              · region {capture.meta.region.w}×{capture.meta.region.h}
+            </>
+          )}
         </div>
         <div style={{ fontSize: 11, color: '#7a9', margin: 0 }}>{stored}</div>
         {capture.meta.element && (
