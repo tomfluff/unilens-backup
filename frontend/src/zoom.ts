@@ -129,9 +129,25 @@ function onWheel(e: WheelEvent) {
   setZoom(scale * Math.exp(-e.deltaY * 0.002), e.clientX, e.clientY)
 }
 
+function onKeyDown(e: KeyboardEvent) {
+  if (!e.ctrlKey || !settings.zoomKeys) return
+  // '=' is unshifted '+' on most layouts; NumpadAdd/Subtract for numpad
+  if (e.key === '+' || e.key === '=' || e.code === 'NumpadAdd') {
+    e.preventDefault()
+    setZoom(scale * 1.25)
+  } else if (e.key === '-' || e.code === 'NumpadSubtract') {
+    e.preventDefault()
+    setZoom(scale / 1.25)
+  } else if (e.key === '0' || e.code === 'Numpad0') {
+    e.preventDefault()
+    setZoom(1)
+  }
+}
+
 export function initZoom() {
   measureLayout()
   window.addEventListener('resize', measureLayout)
   document.addEventListener('wheel', onWheel, { passive: false })
-  console.log('[UniLens] zoom enabled — ctrl+wheel')
+  document.addEventListener('keydown', onKeyDown)
+  console.log('[UniLens] zoom enabled — ctrl+wheel, ctrl +/− /0')
 }

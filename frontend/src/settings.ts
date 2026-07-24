@@ -11,6 +11,7 @@ export interface Settings {
   mouseTrace: boolean
   zoomTrace: boolean
   viewportCrop: boolean
+  zoomKeys: boolean
   /** capture render scale: 1 = screen resolution, 0.5 = reduced */
   captureRes: number
 }
@@ -20,6 +21,7 @@ const DEFAULTS: Settings = {
   mouseTrace: true,
   zoomTrace: true,
   viewportCrop: true,
+  zoomKeys: true,
   captureRes: 1,
 }
 
@@ -28,6 +30,7 @@ const TOGGLE_LABELS: Record<string, string> = {
   mouseTrace: 'Mouse trail capture',
   zoomTrace: 'Zoom history capture',
   viewportCrop: 'Send zoomed-view close-up',
+  zoomKeys: 'Zoom shortcuts (ctrl +/− /0)',
 }
 
 const STORAGE_KEY = 'unilens-settings'
@@ -72,7 +75,7 @@ function togglePanel() {
   Object.assign(title.style, { fontWeight: '700', color: '#00c8ff', marginBottom: '8px' })
   panel.appendChild(title)
 
-  for (const key of Object.keys(TOGGLE_LABELS) as ('zoom' | 'mouseTrace' | 'zoomTrace' | 'viewportCrop')[]) {
+  for (const key of Object.keys(TOGGLE_LABELS) as ('zoom' | 'mouseTrace' | 'zoomTrace' | 'viewportCrop' | 'zoomKeys')[]) {
     const row = document.createElement('label')
     Object.assign(row.style, {
       display: 'flex',
