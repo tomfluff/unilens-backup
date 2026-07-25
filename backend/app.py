@@ -18,7 +18,7 @@ import uuid
 from pathlib import Path
 
 from dotenv import load_dotenv
-from flask import Flask, Response, jsonify, request, stream_with_context
+from flask import Flask, Response, jsonify, request, send_file, stream_with_context
 from flask_cors import CORS
 
 load_dotenv()
@@ -299,6 +299,91 @@ def create_app():
         _save_session(sid, session)
         _prune_storage()
         return jsonify({"id": cap_id, "session_id": sid})
+
+    @app.get("/history")
+    def history_page():
+        return send_file(Path(__file__).parent / "history.html")
+
+    @app.get("/api/captures")
+    def list_captures():
+        # capture id -> session id (a capture belongs to at most one session)
+        cap_session = {}
+        for s in SESSIONS_DIR.glob("*.json"):
+            data = json.loads(s.read_text(encoding="utf-8"))
+            for cid in data.get("captures", []):
+                cap_session[cid] = s.stem
+        items = []
+        for d in sorted(CAPTURES_DIR.iterdir(), key=lambda p: p.stat().st_mtime, reverse=True):
+            meta_path = d / "meta.json"
+            if not meta_path.is_file():
+                continue
+            m = json.loads(meta_path.read_text(encoding="utf-8"))
+            items.append(
+                {
+                    "id": d.name,
+                    "timestamp": m.get("timestamp"),
+                    "url": m.get("url"),
+                    "clickX": m.get("clickX"),
+                    "clickY": m.get("clickY"),
+                    "zoom": m.get("zoom"),
+                    "region": m.get("region"),
+                    "element": (m.get("element") or {}).get("tag"),
+                    "session": cap_session.get(d.name),
+                    "hasViewport": (d / "viewport.png").is_file(),
+                }
+            )
+        return jsonify({"captures": items})
+
+    @app.get("/api/capture/<cap_id>/image")
+    def capture_image(cap_id):
+        p = CAPTURES_DIR / cap_id / "capture.png"
+        if not p.is_file():
+            return jsonify({"error": "not found"}), 404
+        return send_file(p)
+
+    @app.get("/api/capture/<cap_id>/viewport")
+    def capture_viewport(cap_id):
+        p = CAPTURES_DIR / cap_id / "viewport.png"
+        if not p.is_file():
+            return jsonify({"error": "not found"}), 404
+        return send_file(p)
+
+    @app.get("/api/capture/<cap_id>/detail")
+    def capture_detail(cap_id):
+        cap_dir = CAPTURES_DIR / cap_id
+        if not cap_dir.is_dir():
+            return jsonify({"error": "unknown capture_id"}), 404
+        meta = json.loads((cap_dir / "meta.json").read_text(encoding="utf-8"))
+        history = []
+        session_id = None
+        for s in SESSIONS_DIR.glob("*.json"):
+            data = json.loads(s.read_text(encoding="utf-8"))
+            if cap_id in data.get("captures", []):
+                history = data.get("history", [])
+                session_id = s.stem
+                break
+        if not history and (cap_dir / "chat.json").is_file():
+            history = json.loads((cap_dir / "chat.json").read_text(encoding="utf-8"))
+        return jsonify({"id": cap_id, "meta": meta, "history": history, "session": session_id})
+
+    @app.delete("/api/capture/<cap_id>")
+    def delete_capture(cap_id):
+        cap_dir = CAPTURES_DIR / cap_id
+        if not cap_dir.is_dir():
+            return jsonify({"error": "unknown capture_id"}), 404
+        for f in cap_dir.iterdir():
+            f.unlink()
+        cap_dir.rmdir()
+        # drop from any session's capture list
+        for s in SESSIONS_DIR.glob("*.json"):
+            data = json.loads(s.read_text(encoding="utf-8"))
+            if cap_id in data.get("captures", []):
+                data["captures"].remove(cap_id)
+                if data["captures"]:
+                    _save_session(s.stem, data)
+                else:
+                    s.unlink()
+        return jsonify({"deleted": cap_id})
 
     @app.get("/api/capture/<cap_id>")
     def capture_info(cap_id):
