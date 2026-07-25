@@ -15,6 +15,7 @@ import { startTrace, capture, type CaptureResult } from './capture'
 import { initZoom, toContent } from './zoom'
 import { initSettings, settings } from './settings'
 import { setSpeechBackend } from './speech'
+import { initHint } from './hint'
 import ChatPopover from './ChatPopover'
 
 export interface InitOptions {
@@ -197,6 +198,12 @@ export function init(options: InitOptions = {}) {
     const centerClientY = (start.clientY + e.clientY) / 2
     const el = document.elementFromPoint(centerClientX, centerClientY) ?? undefined
     doCapture(e.clientX, e.clientY, (start.pageX + e.pageX) / 2, (start.pageY + e.pageY) / 2, el, region)
+  })
+
+  // Proactive dwell hint — clicking the chip is the zero-shortcut capture path
+  initHint((clientX, clientY) => {
+    const el = document.elementFromPoint(clientX, clientY) ?? undefined
+    doCapture(clientX, clientY, clientX + window.scrollX, clientY + window.scrollY, el)
   })
 
   document.addEventListener('click', async (e) => {

@@ -23,6 +23,7 @@ export interface Settings {
   continuity: boolean
   autoRead: boolean
   voiceInput: boolean
+  hints: boolean
   /** capture render scale: 1 = screen resolution, 0.5 = reduced */
   captureRes: number
   /** chat bubble font size in px */
@@ -46,6 +47,7 @@ const DEFAULTS: Settings = {
   continuity: true,
   autoRead: false,
   voiceInput: true,
+  hints: true,
   captureRes: 1,
   chatFontSize: 14,
 }
@@ -67,6 +69,7 @@ const TOGGLE_LABELS: Record<string, string> = {
   continuity: 'Conversation continuity',
   autoRead: 'Read replies aloud',
   voiceInput: 'Voice input (mic)',
+  hints: 'Proactive help hints',
 }
 
 const STORAGE_KEY = 'unilens-settings'
@@ -137,6 +140,7 @@ function togglePanel() {
     | 'continuity'
     | 'autoRead'
     | 'voiceInput'
+    | 'hints'
   )[]) {
     const row = document.createElement('label')
     Object.assign(row.style, {
