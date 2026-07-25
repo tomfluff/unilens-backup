@@ -30,6 +30,7 @@ interface Props {
   captureId: string
   capture: CaptureResult
   backend: string
+  sessionId: string | null
   onClose: () => void
   /** pinned position carried over from the previous popover, if the user pinned it */
   initialPos?: { left: number; top: number } | null
@@ -47,6 +48,7 @@ export default function ChatPopover({
   captureId,
   capture,
   backend,
+  sessionId,
   onClose,
   initialPos,
   pinned,
@@ -99,6 +101,20 @@ export default function ChatPopover({
         chipBorder: '1px solid #345',
         chipText: '#9cf',
       }
+
+  const [sessionCaptures, setSessionCaptures] = useState(1)
+
+  // Continuity: seed the running conversation from the session history
+  useEffect(() => {
+    if (!sessionId || captureId === 'local') return
+    fetch(`${backend}/api/session/${sessionId}`)
+      .then((r) => r.json())
+      .then((d) => {
+        if (Array.isArray(d.history)) setMessages(d.history.map((h: { role: string; text: string }) => ({ role: h.role as Msg['role'], text: h.text })))
+        if (d.captures) setSessionCaptures(d.captures)
+      })
+      .catch(() => {})
+  }, [backend, sessionId, captureId])
 
   // Ask the backend what it actually received for this capture
   useEffect(() => {
@@ -161,7 +177,7 @@ export default function ChatPopover({
     const res = await fetch(`${backend}/api/chat/stream`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ capture_id: captureId, message: text }),
+      body: JSON.stringify({ capture_id: captureId, message: text, session_id: sessionId }),
     })
     if (!res.ok || !res.body) {
       const data = await res.json().catch(() => ({}))
@@ -198,7 +214,7 @@ export default function ChatPopover({
     const res = await fetch(`${backend}/api/chat`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ capture_id: captureId, message: text }),
+      body: JSON.stringify({ capture_id: captureId, message: text, session_id: sessionId }),
     })
     const data = await res.json()
     const info = data.provider != null ? fmtInfo(data) : undefined
@@ -319,7 +335,10 @@ export default function ChatPopover({
             </>
           )}
         </div>
-        <div style={{ fontSize: Math.max(11, fs - 3), color: hc ? '#fff' : '#7a9', margin: 0 }}>{stored}</div>
+        <div style={{ fontSize: Math.max(11, fs - 3), color: hc ? '#fff' : '#7a9', margin: 0 }}>
+          {stored}
+          {sessionId && sessionCaptures > 1 && ` · session: ${sessionCaptures} captures`}
+        </div>
         {capture.meta.element && (
           <div style={{ fontSize: Math.max(11, fs - 3), color: hc ? '#fff' : '#a9c', margin: '2px 0 0' }}>
             clicked: &lt;{capture.meta.element.tag}&gt;

@@ -25,6 +25,47 @@ load_dotenv()
 
 CAPTURES_DIR = Path(__file__).parent / "captures"
 CAPTURES_DIR.mkdir(exist_ok=True)
+SESSIONS_DIR = Path(__file__).parent / "sessions"
+SESSIONS_DIR.mkdir(exist_ok=True)
+
+
+def _load_session(sid: str) -> dict | None:
+    p = SESSIONS_DIR / f"{sid}.json"
+    if not p.is_file():
+        return None
+    return json.loads(p.read_text(encoding="utf-8"))
+
+
+def _save_session(sid: str, data: dict) -> None:
+    (SESSIONS_DIR / f"{sid}.json").write_text(json.dumps(data, indent=2), encoding="utf-8")
+
+
+def _session_context_note(session: dict, current_cap_id: str) -> str | None:
+    """One text line per earlier capture so the model knows the session's path."""
+    lines = []
+    for i, cid in enumerate(session["captures"]):
+        if cid == current_cap_id:
+            continue
+        meta_path = CAPTURES_DIR / cid / "meta.json"
+        if not meta_path.is_file():
+            continue
+        m = json.loads(meta_path.read_text(encoding="utf-8"))
+        el = m.get("element") or {}
+        desc = f"capture #{i + 1}: click ({m.get('clickX')}, {m.get('clickY')})"
+        if el.get("tag"):
+            desc += f" on <{el['tag']}>"
+        if el.get("text"):
+            desc += f" \"{el['text'][:80]}\""
+        if m.get("region"):
+            r = m["region"]
+            desc += f", selected region {r['w']}x{r['h']}"
+        lines.append(desc)
+    if not lines:
+        return None
+    return (
+        "Earlier in this session the user also captured (images not re-sent; shown page is the latest capture):\n"
+        + "\n".join(lines)
+    )
 
 OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-5.4-mini")
 GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3-flash-preview")
@@ -204,7 +245,16 @@ def create_app():
             (cap_dir / "viewport.png").write_bytes(base64.b64decode(viewport.split(",", 1)[1]))
         (cap_dir / "meta.json").write_text(json.dumps(meta, indent=2), encoding="utf-8")
         (cap_dir / "chat.json").write_text("[]", encoding="utf-8")
-        return jsonify({"id": cap_id})
+
+        # Session continuity: join the given session or start a new one
+        sid = data.get("session_id") or ""
+        session = _load_session(sid) if sid else None
+        if session is None:
+            sid = uuid.uuid4().hex[:12]
+            session = {"captures": [], "history": []}
+        session["captures"].append(cap_id)
+        _save_session(sid, session)
+        return jsonify({"id": cap_id, "session_id": sid})
 
     @app.get("/api/capture/<cap_id>")
     def capture_info(cap_id):
@@ -213,6 +263,13 @@ def create_app():
             return jsonify({"error": "unknown capture_id"}), 404
         files = {p.name: p.stat().st_size for p in sorted(cap_dir.iterdir())}
         return jsonify({"id": cap_id, "files": files})
+
+    @app.get("/api/session/<sid>")
+    def session_info(sid):
+        session = _load_session(sid)
+        if session is None:
+            return jsonify({"error": "unknown session_id"}), 404
+        return jsonify({"id": sid, "captures": len(session["captures"]), "history": session["history"]})
 
     @app.post("/api/chat/stream")
     def chat_stream():
@@ -226,7 +283,17 @@ def create_app():
             return jsonify({"error": f"unknown capture_id: {cap_id}"}), 404
 
         meta = json.loads((cap_dir / "meta.json").read_text(encoding="utf-8"))
-        history = json.loads((cap_dir / "chat.json").read_text(encoding="utf-8"))
+        sid = data.get("session_id") or ""
+        session = _load_session(sid) if sid else None
+        if session is not None:
+            history = session["history"]
+            note = _session_context_note(session, cap_id)
+            provider_history = (
+                [{"role": "user", "text": note}, {"role": "assistant", "text": "Noted."}] + history if note else history
+            )
+        else:
+            history = json.loads((cap_dir / "chat.json").read_text(encoding="utf-8"))
+            provider_history = history
         png_b64 = base64.b64encode((cap_dir / "capture.png").read_bytes()).decode()
         viewport_b64 = None
         if (cap_dir / "viewport.png").is_file():
@@ -244,9 +311,9 @@ def create_app():
             parts = []
             try:
                 if provider == "openai":
-                    deltas = _stream_openai(png_b64, viewport_b64, meta, history, message)
+                    deltas = _stream_openai(png_b64, viewport_b64, meta, provider_history, message)
                 elif provider == "gemini":
-                    deltas = _stream_gemini(png_b64, viewport_b64, meta, history, message)
+                    deltas = _stream_gemini(png_b64, viewport_b64, meta, provider_history, message)
                 else:
                     deltas = _stream_stub(meta, message)
                 for delta in deltas:
@@ -257,7 +324,11 @@ def create_app():
                 return
             reply = "".join(parts)
             new_history = history + [{"role": "user", "text": message}, {"role": "assistant", "text": reply}]
-            (cap_dir / "chat.json").write_text(json.dumps(new_history, indent=2), encoding="utf-8")
+            if session is not None:
+                session["history"] = new_history
+                _save_session(sid, session)
+            else:
+                (cap_dir / "chat.json").write_text(json.dumps(new_history, indent=2), encoding="utf-8")
             yield sse(
                 {
                     "done": True,
@@ -283,7 +354,17 @@ def create_app():
             return jsonify({"error": f"unknown capture_id: {cap_id}"}), 404
 
         meta = json.loads((cap_dir / "meta.json").read_text(encoding="utf-8"))
-        history = json.loads((cap_dir / "chat.json").read_text(encoding="utf-8"))
+        sid = data.get("session_id") or ""
+        session = _load_session(sid) if sid else None
+        if session is not None:
+            history = session["history"]
+            note = _session_context_note(session, cap_id)
+            provider_history = (
+                [{"role": "user", "text": note}, {"role": "assistant", "text": "Noted."}] + history if note else history
+            )
+        else:
+            history = json.loads((cap_dir / "chat.json").read_text(encoding="utf-8"))
+            provider_history = history
         png_b64 = base64.b64encode((cap_dir / "capture.png").read_bytes()).decode()
         viewport_b64 = None
         if (cap_dir / "viewport.png").is_file():
@@ -293,9 +374,9 @@ def create_app():
         t0 = time.perf_counter()
         try:
             if provider == "openai":
-                reply = _call_openai(png_b64, viewport_b64, meta, history, message)
+                reply = _call_openai(png_b64, viewport_b64, meta, provider_history, message)
             elif provider == "gemini":
-                reply = _call_gemini(png_b64, viewport_b64, meta, history, message)
+                reply = _call_gemini(png_b64, viewport_b64, meta, provider_history, message)
             else:
                 reply = _call_stub(meta, message)
         except Exception as e:  # surface provider errors to the popover
@@ -303,7 +384,11 @@ def create_app():
         latency_ms = round((time.perf_counter() - t0) * 1000)
 
         history += [{"role": "user", "text": message}, {"role": "assistant", "text": reply}]
-        (cap_dir / "chat.json").write_text(json.dumps(history, indent=2), encoding="utf-8")
+        if session is not None:
+            session["history"] = history
+            _save_session(sid, session)
+        else:
+            (cap_dir / "chat.json").write_text(json.dumps(history, indent=2), encoding="utf-8")
 
         model = {"openai": OPENAI_MODEL, "gemini": GEMINI_MODEL, "stub": "none"}[provider]
         return jsonify(

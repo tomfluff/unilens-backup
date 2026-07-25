@@ -47,6 +47,12 @@ function closePopover() {
   container = null
 }
 
+/** ✕ pressed: dismissing the popover also ends the conversation session */
+function dismissPopover() {
+  sessionId = null
+  closePopover()
+}
+
 function openPopover(clientX: number, clientY: number, captureId: string, cap: CaptureResult, backend: string) {
   closePopover()
   container = document.createElement('div')
@@ -63,7 +69,8 @@ function openPopover(clientX: number, clientY: number, captureId: string, cap: C
         captureId={captureId}
         capture={cap}
         backend={backend}
-        onClose={closePopover}
+        sessionId={settings.continuity ? sessionId : null}
+        onClose={dismissPopover}
         initialPos={pinnedPos}
         pinned={pinnedPos != null}
         onTogglePin={(pos) => {
@@ -78,14 +85,23 @@ function openPopover(clientX: number, clientY: number, captureId: string, cap: C
   render()
 }
 
+/** current conversation session — new captures join it until the user closes the popover */
+let sessionId: string | null = null
+
 async function uploadCapture(cap: CaptureResult, backend: string): Promise<string> {
   const res = await fetch(`${backend}/api/capture`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ image: cap.image, viewport: cap.viewportImage, meta: cap.meta }),
+    body: JSON.stringify({
+      image: cap.image,
+      viewport: cap.viewportImage,
+      meta: cap.meta,
+      session_id: settings.continuity ? sessionId : null,
+    }),
   })
   if (!res.ok) throw new Error(`capture upload failed: HTTP ${res.status}`)
   const data = await res.json()
+  sessionId = settings.continuity ? (data.session_id ?? null) : null
   return data.id
 }
 

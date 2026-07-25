@@ -20,6 +20,7 @@ export interface Settings {
   elementContext: boolean
   regionSelect: boolean
   highContrast: boolean
+  continuity: boolean
   /** capture render scale: 1 = screen resolution, 0.5 = reduced */
   captureRes: number
   /** chat bubble font size in px */
@@ -40,6 +41,7 @@ const DEFAULTS: Settings = {
   elementContext: true,
   regionSelect: true,
   highContrast: false,
+  continuity: true,
   captureRes: 1,
   chatFontSize: 14,
 }
@@ -58,6 +60,7 @@ const TOGGLE_LABELS: Record<string, string> = {
   elementContext: 'Clicked-element context capture',
   regionSelect: 'Alt+drag region select',
   highContrast: 'High-contrast chat',
+  continuity: 'Conversation continuity',
 }
 
 const STORAGE_KEY = 'unilens-settings'
@@ -125,6 +128,7 @@ function togglePanel() {
     | 'elementContext'
     | 'regionSelect'
     | 'highContrast'
+    | 'continuity'
   )[]) {
     const row = document.createElement('label')
     Object.assign(row.style, {
