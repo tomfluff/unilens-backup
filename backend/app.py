@@ -70,6 +70,46 @@ def _session_context_note(session: dict, current_cap_id: str) -> str | None:
 OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-5.4-mini")
 GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3-flash-preview")
 
+# ── Pilot guardrails ───────────────────────────────────────────────────────
+# Off by default (open dev). Set GUARDRAILS=on for the pilot to enable
+# rate limits and storage pruning.
+GUARDRAILS = os.getenv("GUARDRAILS", "off").lower() == "on"
+MAX_CAPTURES = int(os.getenv("MAX_CAPTURES", "500"))
+RETENTION_DAYS = int(os.getenv("RETENTION_DAYS", "30"))
+RATE_LIMITS = {"capture": (10, 60), "chat": (20, 60)}  # (requests, per seconds)
+
+_rate: dict[tuple[str, str], list[float]] = {}
+
+
+def _rate_limited(bucket: str) -> bool:
+    if not GUARDRAILS:
+        return False
+    limit, window = RATE_LIMITS[bucket]
+    key = (bucket, request.remote_addr or "?")
+    now = time.time()
+    hits = [t for t in _rate.get(key, []) if t > now - window]
+    if len(hits) >= limit:
+        _rate[key] = hits
+        return True
+    hits.append(now)
+    _rate[key] = hits
+    return False
+
+
+def _prune_storage() -> None:
+    """Keep the newest MAX_CAPTURES capture dirs; drop sessions older than RETENTION_DAYS."""
+    if not GUARDRAILS:
+        return
+    dirs = sorted(CAPTURES_DIR.iterdir(), key=lambda p: p.stat().st_mtime, reverse=True)
+    for old in dirs[MAX_CAPTURES:]:
+        for f in old.iterdir():
+            f.unlink()
+        old.rmdir()
+    cutoff = time.time() - RETENTION_DAYS * 86400
+    for s in SESSIONS_DIR.glob("*.json"):
+        if s.stat().st_mtime < cutoff:
+            s.unlink()
+
 SYSTEM_PROMPT = """You are UniLens, an assistant that helps users understand web pages.
 With every conversation you receive:
 - A full-page screenshot annotated with: a cyan rectangle = the user's visible viewport,
@@ -222,6 +262,7 @@ def _call_stub(meta: dict, message: str) -> str:
 
 def create_app():
     app = Flask(__name__)
+    app.config["MAX_CONTENT_LENGTH"] = 25 * 1024 * 1024  # reject absurd payloads
     CORS(app)
 
     @app.get("/health")
@@ -230,6 +271,8 @@ def create_app():
 
     @app.post("/api/capture")
     def save_capture():
+        if _rate_limited("capture"):
+            return jsonify({"error": "rate limit: too many captures, wait a minute"}), 429
         data = request.get_json(force=True)
         image = data.get("image", "")
         meta = data.get("meta", {})
@@ -254,6 +297,7 @@ def create_app():
             session = {"captures": [], "history": []}
         session["captures"].append(cap_id)
         _save_session(sid, session)
+        _prune_storage()
         return jsonify({"id": cap_id, "session_id": sid})
 
     @app.get("/api/capture/<cap_id>")
@@ -273,6 +317,8 @@ def create_app():
 
     @app.post("/api/chat/stream")
     def chat_stream():
+        if _rate_limited("chat"):
+            return jsonify({"error": "rate limit: too many messages, wait a minute"}), 429
         data = request.get_json(force=True)
         cap_id = data.get("capture_id", "")
         message = (data.get("message") or "").strip()
@@ -343,6 +389,8 @@ def create_app():
 
     @app.post("/api/chat")
     def chat():
+        if _rate_limited("chat"):
+            return jsonify({"error": "rate limit: too many messages, wait a minute"}), 429
         data = request.get_json(force=True)
         cap_id = data.get("capture_id", "")
         message = (data.get("message") or "").strip()
