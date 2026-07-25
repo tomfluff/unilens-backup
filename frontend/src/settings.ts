@@ -21,6 +21,8 @@ export interface Settings {
   regionSelect: boolean
   highContrast: boolean
   continuity: boolean
+  autoRead: boolean
+  voiceInput: boolean
   /** capture render scale: 1 = screen resolution, 0.5 = reduced */
   captureRes: number
   /** chat bubble font size in px */
@@ -42,6 +44,8 @@ const DEFAULTS: Settings = {
   regionSelect: true,
   highContrast: false,
   continuity: true,
+  autoRead: false,
+  voiceInput: true,
   captureRes: 1,
   chatFontSize: 14,
 }
@@ -61,6 +65,8 @@ const TOGGLE_LABELS: Record<string, string> = {
   regionSelect: 'Alt+drag region select',
   highContrast: 'High-contrast chat',
   continuity: 'Conversation continuity',
+  autoRead: 'Read replies aloud',
+  voiceInput: 'Voice input (mic)',
 }
 
 const STORAGE_KEY = 'unilens-settings'
@@ -129,6 +135,8 @@ function togglePanel() {
     | 'regionSelect'
     | 'highContrast'
     | 'continuity'
+    | 'autoRead'
+    | 'voiceInput'
   )[]) {
     const row = document.createElement('label')
     Object.assign(row.style, {

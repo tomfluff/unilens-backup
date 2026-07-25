@@ -14,6 +14,7 @@ import { createRoot, type Root } from 'react-dom/client'
 import { startTrace, capture, type CaptureResult } from './capture'
 import { initZoom, toContent } from './zoom'
 import { initSettings, settings } from './settings'
+import { setSpeechBackend } from './speech'
 import ChatPopover from './ChatPopover'
 
 export interface InitOptions {
@@ -112,6 +113,7 @@ export function init(options: InitOptions = {}) {
   startTrace(options.mouseWindow ?? 2.5)
   if (options.zoom ?? true) initZoom()
   initSettings()
+  setSpeechBackend(backend)
 
   async function doCapture(
     clientX: number,

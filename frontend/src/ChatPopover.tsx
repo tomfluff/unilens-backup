@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import type { CaptureResult } from './capture'
 import { settings, onSettingsChange } from './settings'
+import { speak, stopSpeaking, listen, sttSupported, type SpeechState } from './speech'
 
 interface Msg {
   role: 'user' | 'assistant'
@@ -103,6 +104,42 @@ export default function ChatPopover({
       }
 
   const [sessionCaptures, setSessionCaptures] = useState(1)
+  const [listening, setListening] = useState(false)
+  const stopListenRef = useRef<(() => void) | null>(null)
+  /** which message is being spoken and its phase */
+  const [speaking, setSpeaking] = useState<{ idx: number; phase: SpeechState } | null>(null)
+
+  function speakMessage(idx: number, text: string) {
+    if (speaking?.idx === idx) {
+      stopSpeaking()
+      return
+    }
+    speak(text, (s) => setSpeaking(s === 'idle' ? null : { idx, phase: s }))
+  }
+
+  // stop any speech/mic when the popover unmounts
+  useEffect(
+    () => () => {
+      stopSpeaking()
+      stopListenRef.current?.()
+    },
+    [],
+  )
+
+  function toggleMic() {
+    if (listening) {
+      stopListenRef.current?.()
+      return
+    }
+    const stop = listen(
+      (transcript) => setInput(transcript),
+      () => setListening(false),
+    )
+    if (stop) {
+      stopListenRef.current = stop
+      setListening(true)
+    }
+  }
 
   // Continuity: seed the running conversation from the session history
   useEffect(() => {
@@ -205,6 +242,10 @@ export default function ChatPopover({
           patchLast({ text: full + `\n[error: ${data.error}]` })
         } else if (data.done) {
           patchLast({ info: fmtInfo(data) })
+          if (settings.autoRead && full) {
+            const idx = messages.length + 1 // the assistant bubble just added
+            speak(full, (s) => setSpeaking(s === 'idle' ? null : { idx, phase: s }))
+          }
         }
       }
     }
@@ -219,6 +260,7 @@ export default function ChatPopover({
     const data = await res.json()
     const info = data.provider != null ? fmtInfo(data) : undefined
     setMessages((m) => [...m, { role: 'assistant', text: data.reply ?? data.error ?? 'No reply.', info }])
+    if (settings.autoRead && data.reply) speak(data.reply)
   }
 
   async function sendText(text: string) {
@@ -362,6 +404,22 @@ export default function ChatPopover({
             }}
           >
             {m.role === 'assistant' ? <span dangerouslySetInnerHTML={mdLite(m.text)} /> : m.text}
+            {m.role === 'assistant' && m.text && (
+              <button
+                onClick={() => speakMessage(i, m.text)}
+                title={speaking?.idx === i ? (speaking.phase === 'loading' ? 'Preparing audio…' : 'Stop') : 'Read aloud'}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontSize: Math.max(12, fs - 2),
+                  marginLeft: 6,
+                  opacity: speaking?.idx === i ? 1 : 0.7,
+                }}
+              >
+                {speaking?.idx === i ? (speaking.phase === 'loading' ? '⏳' : '⏹') : '🔊'}
+              </button>
+            )}
             {m.info && (
               <div style={{ fontSize: Math.max(10, fs - 4), color: hc ? '#ffd700' : '#88a', marginTop: 6 }}>{m.info}</div>
             )}
@@ -394,6 +452,23 @@ export default function ChatPopover({
         </div>
       )}
       <div style={{ display: 'flex', gap: 8, padding: 10, borderTop: '1px solid #333' }}>
+        {settings.voiceInput && sttSupported && (
+          <button
+            onClick={toggleMic}
+            title={listening ? 'Stop listening' : 'Speak your question'}
+            style={{
+              padding: '8px 10px',
+              borderRadius: 8,
+              border: 'none',
+              background: listening ? '#e33' : C.inputBg,
+              color: C.text,
+              cursor: 'pointer',
+              fontSize: fs,
+            }}
+          >
+            🎤
+          </button>
+        )}
         <input
           autoFocus
           value={input}

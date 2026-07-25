@@ -385,6 +385,45 @@ def create_app():
                     s.unlink()
         return jsonify({"deleted": cap_id})
 
+    # Two-step streaming TTS: POST the text, GET the mp3 by id. The GET streams
+    # chunks straight from OpenAI so the <audio> element starts playing before
+    # synthesis finishes (an <audio> src can only GET, hence the id hop).
+    tts_texts: dict[str, str] = {}
+
+    @app.post("/api/tts")
+    def tts_prepare():
+        if not os.getenv("OPENAI_API_KEY"):
+            return jsonify({"error": "no OPENAI_API_KEY — TTS unavailable"}), 501
+        data = request.get_json(force=True)
+        text = (data.get("text") or "").strip()[:2000]
+        if not text:
+            return jsonify({"error": "empty text"}), 400
+        tid = uuid.uuid4().hex[:12]
+        tts_texts[tid] = text
+        if len(tts_texts) > 50:  # drop oldest one-shots that were never fetched
+            tts_texts.pop(next(iter(tts_texts)))
+        return jsonify({"id": tid})
+
+    @app.get("/api/tts/<tid>.mp3")
+    def tts_stream(tid):
+        text = tts_texts.pop(tid, None)
+        if text is None:
+            return jsonify({"error": "unknown or expired tts id"}), 404
+        from openai import OpenAI
+
+        client = OpenAI()
+
+        def generate():
+            with client.audio.speech.with_streaming_response.create(
+                model=os.getenv("TTS_MODEL", "gpt-4o-mini-tts"),
+                voice=os.getenv("TTS_VOICE", "alloy"),
+                input=text,
+                response_format="mp3",
+            ) as resp:
+                yield from resp.iter_bytes(4096)
+
+        return Response(stream_with_context(generate()), mimetype="audio/mpeg")
+
     @app.get("/api/capture/<cap_id>")
     def capture_info(cap_id):
         cap_dir = CAPTURES_DIR / cap_id
