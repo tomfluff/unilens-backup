@@ -109,6 +109,30 @@ function onMouseMove(e: MouseEvent) {
   if (trace.length > traceBuffer) trace.splice(0, trace.length - traceBuffer)
 }
 
+// ── Debug instrumentation ──────────────────────────────────────────────────
+export interface CaptureDebug {
+  id?: string
+  at: number
+  timings: { preprocess: number; render: number; encode: number; total: number }
+  pageW: number
+  pageH: number
+  images: number
+  sizes: { pageKB: number; closeupKB: number }
+}
+
+let lastCaptureDebug: CaptureDebug | null = null
+
+export const getCaptureDebug = () => lastCaptureDebug
+
+/** main.tsx tags the backend id once the upload completes */
+export function tagLastCapture(id: string) {
+  if (lastCaptureDebug) lastCaptureDebug.id = id
+}
+
+export function getTraceDebug() {
+  return { buffer: trace.length, window: recentTrace(Date.now()), windowSec: traceWindowSec }
+}
+
 export function startTrace(windowSec = 2.5, buffer = 5000) {
   traceWindowSec = windowSec
   traceBuffer = buffer
@@ -287,10 +311,11 @@ export async function capture(
       scale: captureScale,
       onclone: stripZoom,
     })
-    console.debug(`[UniLens] timings: preprocess ${(tPre - t0).toFixed(0)}ms, render ${(performance.now() - tPre).toFixed(0)}ms`)
   } finally {
     restore()
   }
+  const tRender = performance.now()
+  console.debug(`[UniLens] timings: preprocess ${(tPre - t0).toFixed(0)}ms, render ${(tRender - tPre).toFixed(0)}ms`)
 
   if (settings.viewportCrop) {
     // Crop the visible region from the render BEFORE overlays are drawn —
@@ -383,7 +408,25 @@ export async function capture(
 
   const tEnc = performance.now()
   const image = pageCanvas.toDataURL('image/png')
-  console.debug(`[UniLens] timings: overlays+encode ${(performance.now() - tEnc).toFixed(0)}ms, total ${(performance.now() - t0).toFixed(0)}ms`)
+  const tDone = performance.now()
+  console.debug(`[UniLens] timings: overlays+encode ${(tDone - tEnc).toFixed(0)}ms, total ${(tDone - t0).toFixed(0)}ms`)
+
+  lastCaptureDebug = {
+    at: Date.now(),
+    timings: {
+      preprocess: Math.round(tPre - t0),
+      render: Math.round(tRender - tPre),
+      encode: Math.round(tDone - tEnc),
+      total: Math.round(tDone - t0),
+    },
+    pageW,
+    pageH,
+    images: viewportImage ? 2 : 1,
+    sizes: {
+      pageKB: Math.round((image.length * 0.75) / 1024), // base64 → bytes
+      closeupKB: viewportImage ? Math.round((viewportImage.length * 0.75) / 1024) : 0,
+    },
+  }
 
   return {
     image,

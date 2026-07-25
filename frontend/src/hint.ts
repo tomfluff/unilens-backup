@@ -71,24 +71,74 @@ function showChip(x: number, y: number) {
   setTimeout(() => removeChip(), CHIP_LIFETIME_MS)
 }
 
-function check() {
-  if (!settings.hints || chip) return
-  if (document.getElementById('unilens-root')) return // popover open — stay quiet
-  const now = Date.now()
-  if (now - lastShown < COOLDOWN_MS) return
+export interface DwellDebug {
+  ptsInWindow: number
+  /** max distance from the dwell centroid, px */
+  spreadPx: number
+  windowMs: number
+  /** 0..1 toward triggering the chip */
+  progress: number
+  cooldownMs: number
+  chipVisible: boolean
+  zoomSignal: boolean
+  /** why the chip is not progressing right now ('' = progressing) */
+  blocked: string
+  centroid: { x: number; y: number } | null
+}
 
+let lastEval: DwellDebug = {
+  ptsInWindow: 0,
+  spreadPx: 0,
+  windowMs: DWELL_MS,
+  progress: 0,
+  cooldownMs: 0,
+  chipVisible: false,
+  zoomSignal: false,
+  blocked: 'no movement',
+  centroid: null,
+}
+
+export const getDwellDebug = () => lastEval
+
+function evaluate(): DwellDebug {
+  const now = Date.now()
   const zoomed = getZoom().scale >= ZOOM_SIGNAL
   const windowMs = zoomed ? DWELL_MS_ZOOMED : DWELL_MS
   const pts = recent.filter((p) => p.t > now - windowMs)
-  if (pts.length < 3) return // need micro-movement, not an abandoned mouse
-  if (now - pts[pts.length - 1].t > 2000) return // no recent movement — user likely gone
-  if (pts[0].t > now - windowMs + 1000) return // window not actually covered
+  const d: DwellDebug = {
+    ptsInWindow: pts.length,
+    spreadPx: 0,
+    windowMs,
+    progress: 0,
+    cooldownMs: Math.max(0, COOLDOWN_MS - (now - lastShown)),
+    chipVisible: chip != null,
+    zoomSignal: zoomed,
+    blocked: '',
+    centroid: null,
+  }
+  if (!settings.hints) return { ...d, blocked: 'hints disabled' }
+  if (document.getElementById('unilens-root')) return { ...d, blocked: 'popover open' }
+  if (chip) return { ...d, blocked: 'chip visible' }
+  if (d.cooldownMs > 0) return { ...d, blocked: 'cooldown' }
+  if (pts.length < 3) return { ...d, blocked: 'no movement' }
+  if (now - pts[pts.length - 1].t > 2000) return { ...d, blocked: 'pointer idle' }
 
   const cx = pts.reduce((s, p) => s + p.x, 0) / pts.length
   const cy = pts.reduce((s, p) => s + p.y, 0) / pts.length
-  if (pts.some((p) => Math.hypot(p.x - cx, p.y - cy) > DWELL_RADIUS)) return
+  d.centroid = { x: Math.round(cx), y: Math.round(cy) }
+  d.spreadPx = Math.round(Math.max(...pts.map((p) => Math.hypot(p.x - cx, p.y - cy))))
+  if (d.spreadPx > DWELL_RADIUS) return { ...d, blocked: 'moving around' }
 
-  const last = pts[pts.length - 1]
+  // trigger requires the window to be covered minus 1s of slack
+  d.progress = Math.min(1, (now - pts[0].t) / (windowMs - 1000))
+  return d
+}
+
+function check() {
+  const d = evaluate()
+  lastEval = d
+  if (d.blocked || d.progress < 1) return
+  const last = recent[recent.length - 1]
   showChip(last.x, last.y)
 }
 

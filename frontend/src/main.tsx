@@ -16,6 +16,8 @@ import { initZoom, toContent } from './zoom'
 import { initSettings, settings } from './settings'
 import { setSpeechBackend } from './speech'
 import { initHint } from './hint'
+import { initDebug } from './debug'
+import { tagLastCapture } from './capture'
 import ChatPopover from './ChatPopover'
 
 export interface InitOptions {
@@ -129,6 +131,7 @@ export function init(options: InitOptions = {}) {
     let id = 'local'
     try {
       id = await uploadCapture(cap, backend)
+      tagLastCapture(id)
     } catch (err) {
       console.warn('[UniLens] backend unreachable, chat will fail:', err)
     }
@@ -198,6 +201,12 @@ export function init(options: InitOptions = {}) {
     const centerClientY = (start.clientY + e.clientY) / 2
     const el = document.elementFromPoint(centerClientX, centerClientY) ?? undefined
     doCapture(e.clientX, e.clientY, (start.pageX + e.pageX) / 2, (start.pageY + e.pageY) / 2, el, region)
+  })
+
+  initDebug({
+    sessionId: () => sessionId,
+    popoverOpen: () => container != null,
+    backend: () => backend,
   })
 
   // Proactive dwell hint — clicking the chip is the zero-shortcut capture path

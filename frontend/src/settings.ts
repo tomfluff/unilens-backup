@@ -24,6 +24,7 @@ export interface Settings {
   autoRead: boolean
   voiceInput: boolean
   hints: boolean
+  debugView: boolean
   /** capture render scale: 1 = screen resolution, 0.5 = reduced */
   captureRes: number
   /** chat bubble font size in px */
@@ -48,6 +49,7 @@ const DEFAULTS: Settings = {
   autoRead: false,
   voiceInput: true,
   hints: true,
+  debugView: false,
   captureRes: 1,
   chatFontSize: 14,
 }
@@ -70,6 +72,7 @@ const TOGGLE_LABELS: Record<string, string> = {
   autoRead: 'Read replies aloud',
   voiceInput: 'Voice input (mic)',
   hints: 'Proactive help hints',
+  debugView: 'Debug view (ctrl+shift+D)',
 }
 
 const STORAGE_KEY = 'unilens-settings'
@@ -92,6 +95,12 @@ export function onSettingsChange(cb: () => void): () => void {
 function save() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(settings))
   listeners.forEach((cb) => cb())
+}
+
+/** programmatic settings change (e.g. keyboard shortcuts) — persists + notifies */
+export function updateSetting<K extends keyof Settings>(key: K, value: Settings[K]) {
+  settings[key] = value
+  save()
 }
 
 // ── UI ─────────────────────────────────────────────────────────────────────
@@ -141,6 +150,7 @@ function togglePanel() {
     | 'autoRead'
     | 'voiceInput'
     | 'hints'
+    | 'debugView'
   )[]) {
     const row = document.createElement('label')
     Object.assign(row.style, {
