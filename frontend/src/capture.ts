@@ -4,7 +4,7 @@
  * overlays viewport rect + mouse trace + click crosshair, returns PNG + metadata.
  */
 import html2canvas from 'html2canvas'
-import { getZoom, getZoomTrace, toContent, type ZoomEvent } from './zoom'
+import { clientToContent, getView, getZoom, getZoomTrace, stripFixedPins, type ZoomEvent } from './zoom'
 import { settings } from './settings'
 
 export interface TracePoint {
@@ -104,7 +104,8 @@ let tracking = false
 
 function onMouseMove(e: MouseEvent) {
   if (!settings.mouseTrace) return
-  const p = toContent(e.pageX, e.pageY) // content space: aligns with unzoomed screenshot
+  // content space: aligns with the unzoomed screenshot under either pan engine
+  const p = clientToContent(e.clientX, e.clientY)
   trace.push({ x: p.x, y: p.y, t: Date.now() })
   if (trace.length > traceBuffer) trace.splice(0, trace.length - traceBuffer)
 }
@@ -158,8 +159,14 @@ function parsePosition(val: string | undefined, elSize: number): number {
   return parseFloat(val) || elSize / 2
 }
 
-async function preprocessImages(): Promise<() => void> {
-  const swaps: { img: HTMLImageElement; canvas: HTMLCanvasElement }[] = []
+export interface ImageFix {
+  el: HTMLImageElement
+  /** the image pre-cropped to its element box, ready to drop into the clone */
+  dataUrl: string
+}
+
+async function preprocessImages(): Promise<ImageFix[]> {
+  const fixes: ImageFix[] = []
 
   await Promise.all(
     [...document.querySelectorAll('img')].map(
@@ -167,7 +174,9 @@ async function preprocessImages(): Promise<() => void> {
         new Promise<void>((resolve) => {
           const style = getComputedStyle(img)
           const objectFit = style.objectFit
-          if (!['cover', 'contain', 'fill', 'scale-down'].includes(objectFit)) return resolve()
+          // 'fill' stretches the image to its box, which is what html2canvas does
+          // natively — only the cropping fits need correcting
+          if (!['cover', 'contain', 'scale-down'].includes(objectFit)) return resolve()
           if (!img.src) return resolve()
 
           const rect = img.getBoundingClientRect()
@@ -193,13 +202,6 @@ async function preprocessImages(): Promise<() => void> {
             const c = document.createElement('canvas')
             c.width = elW
             c.height = elH
-            c.style.cssText = img.style.cssText
-            c.style.width = elW + 'px'
-            c.style.height = elH + 'px'
-            c.style.borderRadius = style.borderRadius
-            c.style.display = style.display
-            c.style.margin = style.margin
-            c.style.verticalAlign = style.verticalAlign
             const cx = c.getContext('2d')!
 
             if (objectFit === 'cover') {
@@ -220,9 +222,7 @@ async function preprocessImages(): Promise<() => void> {
               cx.drawImage(corsImg, 0, 0, elW, elH)
             }
 
-            swaps.push({ img, canvas: c })
-            img.parentNode!.insertBefore(c, img)
-            img.style.display = 'none'
+            fixes.push({ el: img, dataUrl: c.toDataURL() })
             resolve()
           }
 
@@ -232,11 +232,7 @@ async function preprocessImages(): Promise<() => void> {
     ),
   )
 
-  return () =>
-    swaps.forEach(({ img, canvas }) => {
-      img.style.display = ''
-      canvas.remove()
-    })
+  return fixes
 }
 
 // ── Core capture ───────────────────────────────────────────────────────────
@@ -255,15 +251,20 @@ export async function capture(
   const vvpOffsetX = vvp ? vvp.offsetLeft : 0
   const vvpOffsetY = vvp ? vvp.offsetTop : 0
   const pinchZoom = vvp ? Math.round((vvp.scale ?? 1) * 100) / 100 : 1
-  const scrollX = window.scrollX
-  const scrollY = window.scrollY
+  // the lens offset, which is document scroll or transform pan depending on the engine
+  const { x: scrollX, y: scrollY } = getView()
   const zoom = getZoom()
   const z = zoom.scale
   const pageW = zoom.layoutW // unzoomed layout size — the screenshot is rendered without the zoom transform
   const pageH = zoom.layoutH
 
   const t0 = performance.now()
-  const restore = await preprocessImages()
+  // Read-only: the correction is applied to the clone, never to the live page.
+  // Swapping elements here reflows the real layout mid-capture (measured at +8800px
+  // on a page with an open accordion), which jumps the user's view and leaves the
+  // click marker pointing at whatever moved into its place.
+  const imageFixes = await preprocessImages()
+  imageFixes.forEach((f, i) => (f.el.dataset.unilensImg = String(i)))
   const tPre = performance.now()
 
   // Close-up source: the alt+drag selection if given, else the visible region
@@ -284,6 +285,17 @@ export async function capture(
 
   const stripZoom = (doc: Document) => {
     doc.body.style.transform = '' // render at zoom 1 — coords are content space
+    doc.documentElement.style.height = ''
+    stripFixedPins(doc) // pins compensate for that transform; without it they'd offset the render
+    // swap in the pre-cropped bitmaps. The element stays put and keeps every CSS rule
+    // that matched it, so only its pixels change — no reflow, here or on the live page.
+    for (const el of doc.querySelectorAll<HTMLImageElement>('[data-unilens-img]')) {
+      const fix = imageFixes[Number(el.dataset.unilensImg)]
+      el.removeAttribute('data-unilens-img')
+      if (!fix) continue
+      el.src = fix.dataUrl
+      el.style.objectFit = 'fill' // already cropped to the box, so draw it 1:1
+    }
   }
 
   // Single render at the configured resolution (1 = screen res). Both outputs
@@ -312,7 +324,7 @@ export async function capture(
       onclone: stripZoom,
     })
   } finally {
-    restore()
+    for (const f of imageFixes) delete f.el.dataset.unilensImg
   }
   const tRender = performance.now()
   console.debug(`[UniLens] timings: preprocess ${(tPre - t0).toFixed(0)}ms, render ${(tRender - tPre).toFixed(0)}ms`)

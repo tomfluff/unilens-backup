@@ -11,7 +11,7 @@
 import { settings, updateSetting, onSettingsChange } from './settings'
 import { getTraceDebug, getCaptureDebug } from './capture'
 import { getDwellDebug } from './hint'
-import { getZoom, getTargetZoom, getZoomTrace } from './zoom'
+import { getZoom, getTargetZoom, getView, getZoomTrace } from './zoom'
 
 export interface DebugSources {
   sessionId: () => string | null
@@ -125,8 +125,9 @@ function drawTrace() {
   const { window: pts } = getTraceDebug()
   const z = getZoom()
   // content coords → viewport-proportional canvas coords
-  const sx = (x: number) => ((x * z.scale - window.scrollX) / window.innerWidth) * W
-  const sy = (y: number) => ((y * z.scale - window.scrollY) / window.innerHeight) * H
+  const v = getView()
+  const sx = (x: number) => ((x * z.scale - v.x) / window.innerWidth) * W
+  const sy = (y: number) => ((y * z.scale - v.y) / window.innerHeight) * H
 
   if (pts.length >= 2) {
     const oldest = pts[0].t

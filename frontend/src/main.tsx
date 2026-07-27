@@ -12,13 +12,17 @@
  */
 import { createRoot, type Root } from 'react-dom/client'
 import { startTrace, capture, type CaptureResult } from './capture'
-import { initZoom, toContent } from './zoom'
+import { clientToContent, initZoom } from './zoom'
+import { initMinimap } from './minimap'
 import { initSettings, settings } from './settings'
 import { setSpeechBackend } from './speech'
 import { initHint } from './hint'
 import { initDebug } from './debug'
 import { tagLastCapture } from './capture'
 import ChatPopover from './ChatPopover'
+
+/** build stamp injected by vite (see vite.config.ts define) */
+declare const __UNILENS_BUILD__: string
 
 export interface InitOptions {
   trigger?: (e: MouseEvent) => boolean
@@ -115,18 +119,21 @@ export function init(options: InitOptions = {}) {
 
   startTrace(options.mouseWindow ?? 2.5)
   if (options.zoom ?? true) initZoom()
+  initMinimap()
   initSettings()
   setSpeechBackend(backend)
 
   async function doCapture(
     clientX: number,
     clientY: number,
-    pageX: number,
-    pageY: number,
+    pointX: number,
+    pointY: number,
     el?: Element,
     region?: { x: number; y: number; w: number; h: number },
   ) {
-    const p = toContent(pageX, pageY)
+    // (pointX, pointY) is the client point being asked about — the click, or the centre
+    // of a drag. clientToContent handles both pan engines.
+    const p = clientToContent(pointX, pointY)
     const cap = await capture(Math.round(p.x), Math.round(p.y), el, region)
     let id = 'local'
     try {
@@ -139,7 +146,7 @@ export function init(options: InitOptions = {}) {
   }
 
   // ── Alt+drag region select ───────────────────────────────────────────────
-  let dragStart: { clientX: number; clientY: number; pageX: number; pageY: number } | null = null
+  let dragStart: { clientX: number; clientY: number } | null = null
   let dragBox: HTMLDivElement | null = null
   let suppressClick = false
 
@@ -151,7 +158,7 @@ export function init(options: InitOptions = {}) {
   document.addEventListener('mousedown', (e) => {
     if (!settings.regionSelect || !trigger(e)) return
     if (container?.contains(e.target as Node)) return
-    dragStart = { clientX: e.clientX, clientY: e.clientY, pageX: e.pageX, pageY: e.pageY }
+    dragStart = { clientX: e.clientX, clientY: e.clientY }
     e.preventDefault() // no text selection while dragging
   })
 
@@ -189,8 +196,8 @@ export function init(options: InitOptions = {}) {
     if (dist < 10) return // plain alt+click — let the click handler run
 
     suppressClick = true // the click event that follows belongs to this drag
-    const a = toContent(start.pageX, start.pageY)
-    const b = toContent(e.pageX, e.pageY)
+    const a = clientToContent(start.clientX, start.clientY)
+    const b = clientToContent(e.clientX, e.clientY)
     const region = {
       x: Math.min(a.x, b.x),
       y: Math.min(a.y, b.y),
@@ -200,7 +207,7 @@ export function init(options: InitOptions = {}) {
     const centerClientX = (start.clientX + e.clientX) / 2
     const centerClientY = (start.clientY + e.clientY) / 2
     const el = document.elementFromPoint(centerClientX, centerClientY) ?? undefined
-    doCapture(e.clientX, e.clientY, (start.pageX + e.pageX) / 2, (start.pageY + e.pageY) / 2, el, region)
+    doCapture(e.clientX, e.clientY, centerClientX, centerClientY, el, region)
   })
 
   initDebug({
@@ -212,7 +219,7 @@ export function init(options: InitOptions = {}) {
   // Proactive dwell hint — clicking the chip is the zero-shortcut capture path
   initHint((clientX, clientY) => {
     const el = document.elementFromPoint(clientX, clientY) ?? undefined
-    doCapture(clientX, clientY, clientX + window.scrollX, clientY + window.scrollY, el)
+    doCapture(clientX, clientY, clientX, clientY, el)
   })
 
   document.addEventListener('click', async (e) => {
@@ -226,10 +233,12 @@ export function init(options: InitOptions = {}) {
     if (!trigger(e)) return
     e.preventDefault()
     e.stopPropagation()
-    doCapture(e.clientX, e.clientY, e.pageX, e.pageY, e.target instanceof Element ? e.target : undefined)
+    doCapture(e.clientX, e.clientY, e.clientX, e.clientY, e.target instanceof Element ? e.target : undefined)
   })
 
-  console.log('[UniLens] initialized — alt+click to capture, alt+drag to select a region')
+  console.log(
+    `[UniLens] initialized (build ${typeof __UNILENS_BUILD__ === 'string' ? __UNILENS_BUILD__ : 'dev'}) — alt+click to capture, alt+drag to select a region`,
+  )
 }
 
 // Expose for plain <script> embeds

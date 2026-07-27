@@ -24,6 +24,9 @@ export interface Settings {
   autoRead: boolean
   voiceInput: boolean
   hints: boolean
+  minimap: boolean
+  /** freeze the page and pan by transform while zoomed, instead of scrolling it */
+  lensPan: boolean
   debugView: boolean
   /** capture render scale: 1 = screen resolution, 0.5 = reduced */
   captureRes: number
@@ -49,6 +52,8 @@ const DEFAULTS: Settings = {
   autoRead: false,
   voiceInput: true,
   hints: true,
+  minimap: true,
+  lensPan: false,
   debugView: false,
   captureRes: 1,
   chatFontSize: 14,
@@ -72,6 +77,8 @@ const TOGGLE_LABELS: Record<string, string> = {
   autoRead: 'Read replies aloud',
   voiceInput: 'Voice input (mic)',
   hints: 'Proactive help hints',
+  minimap: 'Minimap while zoomed',
+  lensPan: 'Lens panning (freeze page while zoomed)',
   debugView: 'Debug view (ctrl+shift+D)',
 }
 
@@ -150,6 +157,8 @@ function togglePanel() {
     | 'autoRead'
     | 'voiceInput'
     | 'hints'
+    | 'minimap'
+    | 'lensPan'
     | 'debugView'
   )[]) {
     const row = document.createElement('label')

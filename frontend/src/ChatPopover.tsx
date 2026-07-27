@@ -353,7 +353,10 @@ export default function ChatPopover({
         </span>
       </div>
 
-      <div ref={scrollRef} style={{ flex: 1, overflowY: 'auto', padding: 12 }}>
+      {/* contain: at the top or bottom of the messages, keep the wheel here instead of
+          handing it to the page behind — the list auto-scrolls to the end, so without
+          this every further scroll moves the page instead of the chat */}
+      <div ref={scrollRef} style={{ flex: 1, overflowY: 'auto', overscrollBehavior: 'contain', padding: 12 }}>
         <img
           src={capture.image}
           alt="page capture"
