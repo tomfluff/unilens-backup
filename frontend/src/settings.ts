@@ -139,6 +139,16 @@ function togglePanel() {
   Object.assign(title.style, { fontWeight: '700', color: '#00c8ff', marginBottom: '8px' })
   panel.appendChild(title)
 
+  // The feature list outgrew the window. It scrolls; the title and zoom controls
+  // stay put, so the controls are always reachable. Budget leaves room for the
+  // panel's offset from the bottom, its title and its zoom row.
+  const list = document.createElement('div')
+  Object.assign(list.style, {
+    overflowY: 'auto',
+    overscrollBehavior: 'contain',
+    maxHeight: `${Math.max(140, window.innerHeight - 190)}px`,
+  })
+
   for (const key of Object.keys(TOGGLE_LABELS) as (
     | 'zoom'
     | 'mouseTrace'
@@ -178,7 +188,7 @@ function togglePanel() {
     }
     row.appendChild(cb)
     row.appendChild(document.createTextNode(TOGGLE_LABELS[key]))
-    panel.appendChild(row)
+    list.appendChild(row)
   }
 
   // Capture resolution select
@@ -209,7 +219,7 @@ function togglePanel() {
     save()
   }
   resRow.appendChild(sel)
-  panel.appendChild(resRow)
+  list.appendChild(resRow)
 
   // Chat text size select
   const fontRow = document.createElement('label')
@@ -233,8 +243,9 @@ function togglePanel() {
     save()
   }
   fontRow.appendChild(fontSel)
-  panel.appendChild(fontRow)
+  list.appendChild(fontRow)
 
+  panel.appendChild(list)
   panel.appendChild(buildZoomControls())
   document.documentElement.appendChild(panel)
 }
