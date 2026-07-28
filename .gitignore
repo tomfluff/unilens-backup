@@ -6,3 +6,6 @@ backend/captures/
 backend/sessions/
 backend/.env
 *.log
+*.bkp
+.claude
+.cursor
