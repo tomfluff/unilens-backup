@@ -72,6 +72,22 @@ make serve-frontend softbank-mirror
 # Serves `softbank-mirror` to localhost:8000. Open and alt+click anywhere
 ```
 
+### Unilens Lib Only
+
+Build and watch unilens lib into a dist
+```
+make serve-unilens
+```
+
+### Run Multiple Frontends
+To run multiple frontends, just run `make serve-backend` separately and then run `make serve-frontend {target}` for each individual target. You can do this just by opening up three terminals. You can also do this via `npx concurrently`, which is included as part of the root `.` distribution:
+```
+npx concurrently "make serve-backend" "make serve-frontend dev-demo" "make serve-frontend softbank-mirror"
+# Serving frontend from 'dev-demo' to localhost:8000
+# http://0.0.0.0:8080 is already in use. Trying another port.
+# Serving "dev-demo" at http://127.0.0.1:53252
+```
+
 ## Embed in any HTML
 
 ```
