@@ -1,0 +1,14 @@
+{
+  "name": "unilens-serve",
+  "version": "1.0.0",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "chokidar-cli": "^3.0.0"
+  },
+  "devDependencies": {
+    "concurrently": "^10.0.4",
+    "live-server": "^1.2.2"
+  }
+}

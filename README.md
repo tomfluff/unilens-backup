@@ -1,6 +1,16 @@
 # UniLens Project
 Making web-browsing accessible with in-page AI-partners.
 
+## Structure
+
+There are three managed packages:
+
+* `backend` - Flask server managed by python `venv`. See `backend/Makefile` for details
+* `frontend` - Unilens library managed by `npm`. See `frontend/Makefile` for details
+* `.` - Root dir managed by `npm`. Very small package which is used to serve sample sites such as `softbank-mirror`. `./Makefile` manages all three packages
+
+Note that for `.`, the choice of `npm` vs `venv` is relatively arbitrary. We choose `npm` so that we can use `chokidar-cli` to stay consistent with the unilens watcher.
+
 ## Prototype
 
 Embeddable capture + chat overlay for any HTML page. Alt+click captures a full-page
@@ -13,29 +23,59 @@ backend/           Flask — stores captures, /api/chat with OpenAI / Gemini / s
 softbank-mirror/   Static copy of softbank.jp IR benefit page (test target)
 example-of-track-and-screenshot/   Original vanilla JS proof of concept
 ```
-
-## Run
-
-Backend (stub works without API keys; copy `.env.example` to `.env` for real LLM):
-
+## Setup and cleanup
+To set up backend, unilens lib, and build system:
 ```
-cd backend
-python -m venv .venv && .venv/Scripts/pip install -r requirements.txt
-.venv/Scripts/python app.py          # http://127.0.0.1:5000
+make run
 ```
 
-Frontend dev demo (proxies /api to Flask):
+To clean all packages and intermediates:
+```
+make clean
+```
+
+## Build, Run, and Serve
+
+Verbs:
+* `build` - Build a distribution (unilens lib only)
+* `run` - Run a server (without building)
+* `serve` - Build any distributions, run a server, watch for changes
+
+### General Usage
+
+To serve the backend, and serve a frontend from a given directory target `{target}`:
+```
+make serve softbank-mirror
+# Starts backend, and serves `softbank-mirror` to localhost:8000. Open and alt+click anywhere
+```
+
+This will watch for changes in any of the three directories and will automatically rebuild/serve:
+* `backend` - server code
+* `unilens-lib` - javascript library source code
+* `{target}` - base HTML and source of client (excluding unilens.js dist)
+
+### Backend Only
+
+Run backend and watch for changes (stub works without API keys; copy `.env.example` to `.env` for real LLM):
 
 ```
-cd frontend
-npm install
-npm run dev                          # open the shown URL, alt+click anywhere
+make serve-backend
+# Serves flask server to http://127.0.0.1:5000
+```
+
+### Frontend Only
+
+Run frontend dev demo to a given target dir and watch for changes (proxies /api to Flask):
+
+```
+make serve-frontend softbank-mirror
+# Serves `softbank-mirror` to localhost:8000. Open and alt+click anywhere
 ```
 
 ## Embed in any HTML
 
 ```
-cd frontend && npm run build         # -> dist/unilens.js
+cd frontend && make build         # -> dist/unilens.js
 ```
 
 ```html
