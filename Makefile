@@ -16,9 +16,7 @@ RM_RF=rm -rf
 
 # Set shared vars
 BACKEND_DIR=backend
-# NOTE: I am calling this "Unilens" because in principle the frontend should be hotswappable
-# as long as it includes the unilens library, so I feel the name 'frontend' is a bit misleading
-UNILENS_DIR=frontend
+UNILENS_DIR=unilens-lib
 UNILENS=unilens.js
 
 # Backend wrappers

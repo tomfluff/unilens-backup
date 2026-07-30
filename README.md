@@ -6,7 +6,7 @@ Making web-browsing accessible with in-page AI-partners.
 There are three managed packages:
 
 * `backend` - Flask server managed by python `venv`. See `backend/Makefile` for details
-* `frontend` - Unilens library managed by `npm`. See `frontend/Makefile` for details
+* `unilens-lib` - Unilens library managed by `npm`. See `unilens-lib/Makefile` for details
 * `.` - Root dir managed by `npm`. Very small package which is used to serve sample sites such as `softbank-mirror`. `./Makefile` manages all three packages
 
 Note that for `.`, the choice of `npm` vs `venv` is relatively arbitrary. We choose `npm` so that we can use `chokidar-cli` to stay consistent with the unilens watcher.
@@ -18,7 +18,7 @@ screenshot annotated with viewport, mouse trace, and click position, sends it to
 backend, and opens a chat popover at the cursor backed by an LLM/VLM.
 
 ```
-frontend/          Vite + React + TS — builds a single embeddable dist/unilens.js
+unilens-lib/          Vite + React + TS — builds a single embeddable dist/unilens.js
 backend/           Flask — stores captures, /api/chat with OpenAI / Gemini / stub
 softbank-mirror/   Static copy of softbank.jp IR benefit page (test target)
 example-of-track-and-screenshot/   Original vanilla JS proof of concept
@@ -75,7 +75,7 @@ make serve-frontend softbank-mirror
 ## Embed in any HTML
 
 ```
-cd frontend && make build         # -> dist/unilens.js
+cd unilens-lib && make build         # -> dist/unilens.js
 ```
 
 ```html
@@ -88,7 +88,7 @@ cd frontend && make build         # -> dist/unilens.js
 Options: `trigger` (MouseEvent predicate, default alt+click), `mouseWindow` (seconds
 of mouse trace), `backend` (Flask base URL).
 
-To test against the SoftBank mirror: copy `frontend/dist/unilens.js` into
+To test against the SoftBank mirror: copy `unilens-lib/dist/unilens.js` into
 `softbank-mirror/`, add the two script tags above to its `index.html`, and serve the
 folder (`python -m http.server`).
 
