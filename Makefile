@@ -82,7 +82,7 @@ build:
 run:
 	$(call require-dir,run)
 	echo "Running frontend from '$(WORD_2)'"
-	$(NPX) live-server $(WORD_2)
+	$(NPX) live-server --port=8000 $(WORD_2)
 
 # Builds and runs frontend from {target_dir}, watches for changes
 serve-frontend:

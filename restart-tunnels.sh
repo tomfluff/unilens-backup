@@ -2,7 +2,7 @@
 # Relaunch both cloudflared quick tunnels and point the mirror at the new
 # backend URL. Run from repo root in Git Bash after tunnels die (sleep etc.):
 #   ./restart-tunnels.sh
-# Assumes Flask on :5000 and the mirror served on :8902.
+# Assumes Flask on :5000 and the mirror served on :8000 (make serve <dir>).
 set -e
 CF="/c/Program Files (x86)/cloudflared/cloudflared"
 MIRROR_HTML="softbank-mirror/index.html"
@@ -11,7 +11,7 @@ taskkill //F //IM cloudflared.exe 2>/dev/null || true
 sleep 1
 
 "$CF" tunnel --url http://127.0.0.1:5000 > /tmp/cf-backend.log 2>&1 &
-"$CF" tunnel --url http://127.0.0.1:8902 > /tmp/cf-mirror.log 2>&1 &
+"$CF" tunnel --url http://127.0.0.1:8000 > /tmp/cf-mirror.log 2>&1 &
 
 echo "waiting for tunnels..."
 BACKEND_URL=""
