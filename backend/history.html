@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>UniLens — Capture History</title>
+<style>
+  * { box-sizing: border-box; margin: 0; }
+  body { font-family: sans-serif; background: #12121f; color: #eee; }
+  header { padding: 16px 24px; background: #0f3460; display: flex; align-items: baseline; gap: 14px; }
+  header h1 { font-size: 18px; color: #00c8ff; }
+  header span { color: #9ab; font-size: 13px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 14px; padding: 20px 24px; }
+  .card { background: #1a1a2e; border-radius: 10px; overflow: hidden; cursor: pointer; border: 1px solid #26263e; }
+  .card:hover { border-color: #00c8ff; }
+  .card img { width: 100%; height: 140px; object-fit: cover; object-position: top; display: block; background: #000; }
+  .card .info { padding: 8px 10px; font-size: 11px; color: #9ab; line-height: 1.5; }
+  .card .info b { color: #eee; font-size: 12px; }
+  .badge { display: inline-block; background: #0f3460; color: #7cf; border-radius: 8px; padding: 0 7px; font-size: 10px; margin-left: 4px; }
+  .badge.region { background: #52104a; color: #f8c; }
+
+  /* detail overlay */
+  #detail { position: fixed; inset: 0; background: rgba(0,0,0,0.75); display: none; }
+  #detail.open { display: flex; }
+  #panel { margin: auto; width: min(1100px, 94vw); height: 90vh; background: #1a1a2e; border-radius: 12px; display: flex; flex-direction: column; overflow: hidden; }
+  #panel header { justify-content: space-between; }
+  #panel header button { background: none; border: 1px solid #666; color: #ccc; border-radius: 6px; padding: 4px 12px; cursor: pointer; }
+  #panel header button.danger { border-color: #a33; color: #f88; }
+  #panel .body { flex: 1; display: grid; grid-template-columns: 1.2fr 1fr; gap: 0; overflow: hidden; }
+  #panel .imgs { overflow-y: auto; padding: 14px; border-right: 1px solid #26263e; }
+  #panel .imgs img { width: 100%; border-radius: 8px; margin-bottom: 12px; border: 1px solid #333; }
+  #panel .imgs .label { font-size: 11px; color: #9ab; margin: 2px 0 6px; }
+  #panel .side { overflow-y: auto; padding: 14px; }
+  #panel h3 { font-size: 13px; color: #00c8ff; margin: 12px 0 6px; }
+  #panel pre { background: #12121f; border-radius: 8px; padding: 10px; font-size: 11px; overflow-x: auto; color: #bcd; }
+  .msg { border-radius: 8px; padding: 8px 10px; margin: 6px 0; font-size: 13px; white-space: pre-wrap; }
+  .msg.user { background: #0f3460; }
+  .msg.assistant { background: #26263e; }
+  .empty { padding: 60px; text-align: center; color: #667; }
+</style>
+</head>
+<body>
+<header><h1>UniLens Capture History</h1><span id="count"></span></header>
+<div class="grid" id="grid"></div>
+<div class="empty" id="empty" style="display:none">No captures yet — alt+click on a UniLens-enabled page.</div>
+
+<div id="detail">
+  <div id="panel">
+    <header>
+      <h1 id="d-title"></h1>
+      <span>
+        <button class="danger" id="d-delete">Delete</button>
+        <button id="d-close">Close</button>
+      </span>
+    </header>
+    <div class="body">
+      <div class="imgs">
+        <div class="label">Annotated page</div>
+        <img id="d-image" alt="annotated capture" />
+        <div class="label" id="d-vp-label">Close-up sent to AI</div>
+        <img id="d-viewport" alt="close-up" />
+      </div>
+      <div class="side">
+        <h3>Conversation</h3>
+        <div id="d-chat"></div>
+        <h3>Metadata</h3>
+        <pre id="d-meta"></pre>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const grid = document.getElementById('grid')
+let current = null
+
+async function load() {
+  const res = await fetch('/api/captures')
+  const { captures } = await res.json()
+  document.getElementById('count').textContent = `${captures.length} captures`
+  document.getElementById('empty').style.display = captures.length ? 'none' : 'block'
+  grid.innerHTML = ''
+  for (const c of captures) {
+    const card = document.createElement('div')
+    card.className = 'card'
+    const when = c.timestamp ? new Date(c.timestamp).toLocaleString() : '?'
+    let page
+    try { page = new URL(c.url).pathname } catch { page = c.url ?? '?' }
+    card.innerHTML = `
+      <img loading="lazy" src="/api/capture/${c.id}/image" alt="" />
+      <div class="info">
+        <b>${when}</b>
+        ${c.session ? `<span class="badge">session ${c.session.slice(0, 4)}</span>` : ''}
+        ${c.region ? `<span class="badge region">region</span>` : ''}
+        <br />${page}<br />
+        click (${c.clickX}, ${c.clickY})${c.element ? ` on &lt;${c.element}&gt;` : ''}${c.zoom && c.zoom !== 1 ? ` · zoom ${Math.round(c.zoom * 100)}%` : ''}
+      </div>`
+    card.onclick = () => openDetail(c.id)
+    grid.appendChild(card)
+  }
+}
+
+async function openDetail(id) {
+  current = id
+  const res = await fetch(`/api/capture/${id}/detail`)
+  const d = await res.json()
+  document.getElementById('d-title').textContent = `${id}${d.session ? ` · session ${d.session}` : ''}`
+  document.getElementById('d-image').src = `/api/capture/${id}/image`
+  const hasVp = !!d.meta.viewportRect
+  document.getElementById('d-viewport').style.display = hasVp ? '' : 'none'
+  document.getElementById('d-vp-label').style.display = hasVp ? '' : 'none'
+  document.getElementById('d-viewport').src = `/api/capture/${id}/viewport`
+  document.getElementById('d-meta').textContent = JSON.stringify(d.meta, null, 2)
+  const chat = document.getElementById('d-chat')
+  chat.innerHTML = d.history.length ? '' : '<div class="msg">— no messages —</div>'
+  for (const m of d.history) {
+    const div = document.createElement('div')
+    div.className = `msg ${m.role}`
+    div.textContent = m.text
+    chat.appendChild(div)
+  }
+  document.getElementById('detail').classList.add('open')
+}
+
+document.getElementById('d-close').onclick = () => document.getElementById('detail').classList.remove('open')
+document.getElementById('detail').onclick = (e) => {
+  if (e.target.id === 'detail') document.getElementById('detail').classList.remove('open')
+}
+document.getElementById('d-delete').onclick = async () => {
+  if (!current || !confirm(`Delete capture ${current}?`)) return
+  await fetch(`/api/capture/${current}`, { method: 'DELETE' })
+  document.getElementById('detail').classList.remove('open')
+  load()
+}
+window.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') document.getElementById('detail').classList.remove('open')
+})
+
+load()
+</script>
+</body>
+</html>

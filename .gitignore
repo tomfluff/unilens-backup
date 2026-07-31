@@ -1,0 +1,11 @@
+.gstack/
+node_modules/
+frontend/dist/
+backend/.venv/
+backend/captures/
+backend/sessions/
+backend/.env
+*.log
+*.bkp
+.claude
+.cursor
