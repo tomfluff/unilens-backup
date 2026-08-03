@@ -1,6 +1,7 @@
 .gstack/
 node_modules/
-frontend/dist/
+frontend/**/accessibility.js
+frontend/**/unilens.js
 backend/.venv/
 backend/captures/
 backend/sessions/
@@ -9,3 +10,4 @@ backend/.env
 *.bkp
 .claude
 .cursor
+*.tsbuildinfo

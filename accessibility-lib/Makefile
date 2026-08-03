@@ -4,7 +4,7 @@
 
 .PHONY: init clean lint build serve
 
-ESBUILD=esbuild src/main.tsx --outfile=dist/$(target_dist_unilens-lib) --bundle  --minify --sourcemap
+ESBUILD=esbuild src/main.tsx --outfile=dist/$(target_dist_accessibility-lib) --bundle  --minify --sourcemap
 
 init:
 	echo "Setting up npm dependencies"

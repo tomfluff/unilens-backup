@@ -1,4 +1,5 @@
 # Wrapper for setup, teardown, build, and run
+-include ../make-include.mk
 
 .PHONY: init clean activate serve
 
@@ -27,5 +28,5 @@ activate:
 
 # Run the backend, and watch for changes
 serve:
-	. $(VENV_ACTIVATE) && flask --app app.py --debug run
+	. $(VENV_ACTIVATE) && flask --app app.py --debug run --port $(FLASK_PORT)
 	

@@ -22,7 +22,7 @@ import { tagLastCapture } from './capture'
 import ChatPopover from './ChatPopover'
 
 /** build stamp injected by vite (see vite.config.ts define) */
-declare const __UNILENS_BUILD__: string
+declare const __target_dist_unilens_BUILD__: string
 
 export interface InitOptions {
   trigger?: (e: MouseEvent) => boolean
@@ -237,7 +237,7 @@ export function init(options: InitOptions = {}) {
   })
 
   console.log(
-    `[UniLens] initialized (build ${typeof __UNILENS_BUILD__ === 'string' ? __UNILENS_BUILD__ : 'dev'}) — alt+click to capture, alt+drag to select a region`,
+    `[UniLens] initialized (build ${typeof __target_dist_unilens_BUILD__ === 'string' ? __target_dist_unilens_BUILD__ : 'dev'}) — alt+click to capture, alt+drag to select a region`,
   )
 }
 

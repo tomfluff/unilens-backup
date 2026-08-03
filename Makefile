@@ -1,23 +1,41 @@
 # Makefile to wrap the backend and frontend and run them together
+-include make-include.mk
+-include make-targets.mk
 
 # Load command line args
 WORD_2 ?= $(word 2, $(MAKECMDGOALS))
+WORD_3 ?= $(word 3, $(MAKECMDGOALS))
 
 # Signal to `make` that CLI args are not real targets
-.PHONY: $(WORD_2)
+.PHONY: $(WORD_2) $(WORD_3)
 $(WORD_2):
 	@:
+$(WORD_3):
+	@:
 
-# Set shared bins
-NPM=npm
-NPX=npx
-PYTHON=python3
-RM_RF=rm -rf
+define require-arg
+	@if [ -z "$(WORD_2)" ]; then \
+		echo "Error: No arg provided. Usage: make '$(1)' <arg>"; \
+		exit 1; \
+	fi
+endef
 
-# Set shared vars
-BACKEND_DIR=backend
-UNILENS_DIR=unilens-lib
-UNILENS=unilens.js
+define require-args-2
+	@if [ -z "$(WORD_2)" ] || [ -z "$(WORD_3)" ]; then \
+		echo "Error: No arg(s) provided. Usage: make $(1) <arg1> <arg2>"; \
+		exit 1; \
+	fi
+endef
+
+define check-dir
+	@if [ -d "$(1)" ]; then \
+		echo "Loading target '$(1)'"; \
+	else \
+		echo "'$(1)' not a directory"; \
+		exit 1; \
+	fi
+endef
+
 
 # Backend wrappers
 
@@ -32,74 +50,128 @@ clean-backend:
 serve-backend:
 	cd $(BACKEND_DIR) && $(MAKE) serve
 
-# Unilens wrappers
+# Target wrappers
+# These cd into the given subdir target and run the requested make command
+# Standard targets: unilens, accessibility
+# Usage:
+#   make init-target unilens
+#   make init-target accessibility
 
-.PHONY: init-unilens clean-unilens build-unilens serve-unilens
+.PHONY: init-target clean-target build-target serve-target
 
-init-unilens:
-	cd $(UNILENS_DIR) && $(MAKE) init
+define do-target
+	$(call require-arg,$(1)-target)
+    $(call check-dir,$(WORD_2))
+	cd $(WORD_2) && $(MAKE) $(1)
+endef
 
-clean-unilens:
-	cd $(UNILENS_DIR) && $(MAKE) clean
+init-target:
+	$(call do-target,init)
 
-build-unilens:
-	cd $(UNILENS_DIR) && $(MAKE) build
+clean-target:
+	$(call do-target,clean)
 
-serve-unilens:
-	cd $(UNILENS_DIR) && $(MAKE) serve
+build-target:
+	$(call do-target,build)
+
+serve-target:
+	$(call do-target,serve)
 
 # Init and clean backend, unilens lib, and self
 
 .PHONY: init clean
 
-init: init-backend init-unilens
+init-self:
 	$(NPM) install
 
-clean: clean-backend clean-unilens
+init: init-self init-backend
+	$(MAKE) init-target unilens
+	$(MAKE) init-target accessibility
+
+clean-self:
 	$(RM_RF) node_modules
+
+clean: clean-self clean-backend 
+	$(MAKE) clean-target unilens
+	$(MAKE) clean-target accessibility
 
 # build, run, and serve (build + run)
 # - All build/run/serve targets can take either a target dir, such as `softbank-mirror`
 
-.PHONY: build serve-frontend serve
+.PHONY: copy-built build-and-copy build-all copy copy-all
 
-define require-dir
-	@if [ -z "$(WORD_2)" ]; then \
-		echo "Error: No directory provided. Usage: make $(1) <directory>"; \
-		exit 1; \
-	fi
-endef
+# Copy from js target to frontend target
+copy-built:
+	$(call require-args-2,copy-built)
+	cp '$(WORD_2)/dist/$(call get_target_dist,$(WORD_2))' '$(FRONTEND_DIR)/$(WORD_3)/$(call get_target_dist,$(WORD_2))'
 
-# Builds unilens lib, then distributes it to {target_dir}/unilens.js
-UNILENS_DIST=$(UNILENS_DIR)/dist
-build:
-	$(call require-dir,build)
-	echo "Building target '$(WORD_2)'"
-	$(MAKE) build-unilens
-	cp '$(UNILENS_DIST)/$(UNILENS)' '$(WORD_2)/$(UNILENS)'
+# Takes two arguments as in `make <js-target> <frontend-target>`.
+# Builds `js-target` and copies `<js-target>/dist/{target}.js` into `<frontend-target>/{target.js}`
+# Example: `make build unilens-lib softbank-mirror
+build-and-copy:
+	$(call require-args-2,build-and-copy)
+	echo "Building javascript target '$(WORD_2)' to frontend target $(WORD_3)"
+	$(MAKE) build-target $(WORD_2)
+	$(MAKE) copy-built $(WORD_2) $(WORD_3)
 
-# Runs a server from {target_dir} (without building anything)
+# Build all js targets
+build-all:
+	echo "Targets: $(JS_TARGETS)"
+	@for item in $(JS_TARGETS); do \
+		$(MAKE) build-target $$item; \
+	done
+
+# Copy all js targets into a single frontend target
+copy:
+	$(call require-arg,copy)
+	echo "Targets: $(JS_TARGETS)"
+	@for item in $(JS_TARGETS); do \
+		$(MAKE) copy-built $$item $(WORD_2); \
+	done
+
+# Copy all js targets into all frontend targets
+copy-all:
+	echo "Targets: $(FRONTEND_TARGETS)"
+	@for item in $(FRONTEND_TARGETS); do \
+		$(MAKE) copy $$item; \
+	done
+
+.PHONY: build run serve-frontend serve
+
+# Builds all JS targets to all frontend targets
+build: build-all copy-all
+
+# Runs a server from frontend/{target_dir} (without building anything)
+# Passes in a port from `make-targets.mk` if it is defined
 run:
-	$(call require-dir,run)
+	$(call require-arg,run)
 	echo "Running frontend from '$(WORD_2)'"
-	$(NPX) live-server --port=8000 $(WORD_2)
+	$(NPX) live-server $(FRONTEND_DIR)/$(WORD_2) $(call get_frontend_port,$(WORD_2))
 
 # Builds and runs frontend from {target_dir}, watches for changes
 serve-frontend:
-	$(call require-dir,serve-frontend)
-	echo "Serving frontend from '$(WORD_2)' to localhost:8000"
+	$(call require-arg,serve-frontend)
+	echo "Serving frontend from '$(WORD_2)' to localhost:$(call get_frontend_port,$(WORD_2))"
 	$(NPX) concurrently \
 		"$(MAKE) run $(WORD_2)" \
 		"$(NPX) chokidar \
-			'$(UNILENS_DIR)/src/**' '$(WORD_2)/**' \
-			--ignore '$(WORD_2)/$(UNILENS)' \
+			'$(WORD_2)/**' $(foreach t,$(JS_TARGETS),'$(t)/src/**') \
+			$(foreach t,$(JS_TARGETS),--ignore '$(WORD_2)/$(call get_target_dist,$(t))') \
 			-c '$(MAKE) build $(WORD_2)'"
 
 # Runs backend, builds and runs frontend from {target_dir}, watches for changes in backend or frontend
 serve:
-	$(call require-dir,serve)
+	$(call require-arg,serve)
 	echo "Serving backend to 'localhost:5000"
-	echo "Serving frontend from '$(WORD_2)' to localhost:8000"
+	echo "Serving frontend from '$(WORD_2)' to localhost:$(call get_frontend_port,$(WORD_2))"
 	$(NPX) concurrently \
 		"$(MAKE) serve-backend" \
 		"$(MAKE) serve-frontend $(WORD_2)"
+
+# Runs `make serve` on all frontend targets
+serve-all:
+	@echo "Serving backend to 'localhost:$(FLASK_PORT)'"
+	@$(foreach t,$(FRONTEND_TARGETS),echo "  Serving frontend '$(t)' to localhost:$(frontend_port_$(t))";)
+	$(NPX) concurrently \
+		"$(MAKE) serve-backend" \
+		$(foreach t,$(FRONTEND_TARGETS),"$(MAKE) serve-frontend $(t)")

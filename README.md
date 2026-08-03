@@ -3,13 +3,14 @@ Making web-browsing accessible with in-page AI-partners.
 
 ## Structure
 
-There are three managed packages:
+There are four managed packages:
 
 * `backend` - Flask server managed by python `venv`. See `backend/Makefile` for details
 * `unilens-lib` - Unilens library managed by `npm`. See `unilens-lib/Makefile` for details
-* `.` - Root dir managed by `npm`. Very small package which is used to serve sample sites such as `softbank-mirror`. `./Makefile` manages all three packages
+* `accessibility-lib` - Unilens library managed by `npm`. See `unilens-lib/Makefile` for details
+* `.` - Root dir managed by `npm`. Very small package which is used to serve sample sites such as `softbank-mirror`. `./Makefile` manages all packages
 
-Note that for `.`, the choice of `npm` vs `venv` is relatively arbitrary. We choose `npm` so that we can use `chokidar-cli` to stay consistent with the unilens watcher.
+Note that for `.`, the choice of `npm` vs `venv` is relatively arbitrary. We choose `npm` to stay consistent with the client builds.
 
 ## Prototype
 
@@ -18,15 +19,15 @@ screenshot annotated with viewport, mouse trace, and click position, sends it to
 backend, and opens a chat popover at the cursor backed by an LLM/VLM.
 
 ```
-unilens-lib/          Vite + React + TS — builds a single embeddable dist/unilens.js
+unilens-lib/          React + TS — builds a single embeddable dist/unilens.js using esbuild
+accessibility-lib/    React + TS — builds a single embeddable dist/accessibility.js using esbuild
 backend/           Flask — stores captures, /api/chat with OpenAI / Gemini / stub
 softbank-mirror/   Static copy of softbank.jp IR benefit page (test target)
-example-of-track-and-screenshot/   Original vanilla JS proof of concept
 ```
 ## Setup and cleanup
 To set up backend, unilens lib, and build system:
 ```
-make run
+make init
 ```
 
 To clean all packages and intermediates:
@@ -43,7 +44,7 @@ Verbs:
 
 ### General Usage
 
-To serve the backend, and serve a frontend from a given directory target `{target}`:
+To serve the backend, and serve a frontend from a given frontend target `{target}`:
 ```
 make serve softbank-mirror
 # Starts backend, and serves `softbank-mirror` to localhost:8000. Open and alt+click anywhere
@@ -51,8 +52,9 @@ make serve softbank-mirror
 
 This will watch for changes in any of the three directories and will automatically rebuild/serve:
 * `backend` - server code
-* `unilens-lib` - javascript library source code
-* `{target}` - base HTML and source of client (excluding unilens.js dist)
+* `unilens-lib` - Unilens javascript library source code
+* `accessibility-lib` - Accessibility javascript library source code
+* `frontend/{target}` - base HTML and source of client (excluding unilens.js dist)
 
 ### Backend Only
 
@@ -72,15 +74,26 @@ make serve-frontend softbank-mirror
 # Serves `softbank-mirror` to localhost:8000. Open and alt+click anywhere
 ```
 
-### Unilens Lib Only
+### Javascript Libs Only
 
 Build and watch unilens lib into a dist
 ```
-make serve-unilens
+make serve-target unilens
+```
+
+Build and watch accessibility lib into a dist
+```
+make serve-target accessibility
 ```
 
 ### Run Multiple Frontends
-To run multiple frontends, just run `make serve-backend` separately and then run `make serve-frontend {target}` for each individual target. You can do this just by opening up three terminals. You can also do this via `npx concurrently`, which is included as part of the root `.` distribution:
+
+To build all JS targets into all frontend targets:
+```
+make serve-all
+```
+
+Alternatively, to run them individually, just run `make serve-backend` separately and then run `make serve-frontend {target}` for each individual target. You can do this just by opening up three terminals. You can also do this via `npx concurrently`, which is included as part of the root `.` distribution:
 ```
 npx concurrently "make serve-backend" "make serve-frontend dev-demo" "make serve-frontend softbank-mirror"
 # Serving frontend from 'dev-demo' to localhost:8000
@@ -107,6 +120,17 @@ of mouse trace), `backend` (Flask base URL).
 To test against the SoftBank mirror: copy `unilens-lib/dist/unilens.js` into
 `softbank-mirror/`, add the two script tags above to its `index.html`, and serve the
 folder (`python -m http.server`).
+
+## Switching Between Libraries
+If you are testing both `unilens-lib` and `accessibility-lib`, the easiest way to do so is simply include both in your frontend target HTML and comment out the one you are testing at a given time:
+```html
+<script src="accessibility.js"></script>
+<script src="unilens.js"></script>
+<script>
+  // Accessibility.init( ... );
+  UniLens.init({ backend: 'http://127.0.0.1:5000', mouseWindow: 5 })
+</script>
+```
 
 ## Data
 
