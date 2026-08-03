@@ -85,15 +85,17 @@ init-self:
 	$(NPM) install
 
 init: init-self init-backend
-	$(MAKE) init-target unilens
-	$(MAKE) init-target accessibility
+	@for item in $(JS_TARGETS); do \
+		$(MAKE) init-target $$item; \
+	done
 
 clean-self:
 	$(RM_RF) node_modules
 
 clean: clean-self clean-backend 
-	$(MAKE) clean-target unilens
-	$(MAKE) clean-target accessibility
+	@for item in $(JS_TARGETS); do \
+		$(MAKE) clean-target $$item; \
+	done
 
 # build, run, and serve (build + run)
 # - All build/run/serve targets can take either a target dir, such as `softbank-mirror`
