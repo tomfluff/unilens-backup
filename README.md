@@ -132,6 +132,25 @@ If you are testing both `unilens-lib` and `accessibility-lib`, the easiest way t
 </script>
 ```
 
+## Adding new targets
+To add new javascript targets or new frontend targets, update `make-targets.mk`:
+```Makefile
+# JS build targets
+
+# Define all targets here, this allows us to iterate through them
+JS_TARGETS:= unilens-lib accessibility-lib
+
+target_dist_unilens-lib=unilens.js
+target_dist_accessibility-lib=accessibility.js
+
+# Frontend build targets
+FRONTEND_TARGETS:= softbank-mirror dev-demo
+
+# To add a target, use the format `frontend_port_{subdir name}=<PORT>`
+frontend_port_softbank-mirror=8000
+frontend_port_dev-demo=8001
+```
+
 ## Data
 
 Each capture is stored under `backend/captures/<id>/`: `capture.png` (annotated
