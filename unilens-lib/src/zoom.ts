@@ -58,6 +58,9 @@ export function toContent(pageX: number, pageY: number): { x: number; y: number 
 }
 
 function measureLayout() {
+  // init() from <head> runs before <body> exists — leave layoutW at 0 so the
+  // next getZoom() call re-measures once the document has a body
+  if (!document.body) return
   // measure with transform off so scrollWidth/Height are true layout size
   const prev = document.body.style.transform
   const prevH = document.documentElement.style.height
@@ -608,6 +611,11 @@ function onKeyDown(e: KeyboardEvent) {
 
 export function initZoom() {
   measureLayout()
+  // init() from <head>: dimensions measured mid-parse (or not at all) are
+  // wrong — re-measure once the document is fully parsed
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => measureLayout(), { once: true })
+  }
   window.addEventListener('resize', () => {
     measureLayout()
     if (scale === 1) return
