@@ -478,7 +478,12 @@ export default function ChatPopover({
           autoFocus
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && send()}
+          // Enter that confirms an IME composition (Japanese, Chinese, Korean)
+          // must not submit the half-typed text. keyCode 229 covers browsers
+          // that report the confirming Enter with isComposing already false.
+          onKeyDown={(e) =>
+            e.key === 'Enter' && !e.nativeEvent.isComposing && e.nativeEvent.keyCode !== 229 && send()
+          }
           placeholder="Ask about this page…"
           style={{
             flex: 1,
