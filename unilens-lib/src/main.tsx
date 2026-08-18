@@ -14,10 +14,11 @@ import { createRoot, type Root } from 'react-dom/client'
 import { startTrace, capture, type CaptureResult } from './capture'
 import { clientToContent, initZoom } from './zoom'
 import { initMinimap } from './minimap'
-import { initSettings, settings } from './settings'
+import { settings } from './settings'
+import { initSettings } from './SettingsPanel'
 import { setSpeechBackend } from './speech'
 import { initHint } from './hint'
-import { initDebug } from './debug'
+import { initDebug } from './DebugPanel'
 import { tagLastCapture } from './capture'
 import ChatPopover from './ChatPopover'
 
@@ -44,8 +45,12 @@ try {
 
 function setPinnedPos(pos: { left: number; top: number } | null) {
   pinnedPos = pos
-  if (pos) localStorage.setItem('unilens-pin', JSON.stringify(pos))
-  else localStorage.removeItem('unilens-pin')
+  try {
+    if (pos) localStorage.setItem('unilens-pin', JSON.stringify(pos))
+    else localStorage.removeItem('unilens-pin')
+  } catch {
+    /* private browsing / blocked storage — pin still works for this page load */
+  }
 }
 
 function closePopover() {

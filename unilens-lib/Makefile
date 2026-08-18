@@ -20,8 +20,8 @@ lint:
 	echo "Running type checker..."
 	$(NPX) tsc -b
 
-# Build bundled js out to dist/
-build:
+# Build bundled js out to dist/ (typecheck first — esbuild strips types without checking them)
+build: lint
 	echo "Building dist..."
 	$(NPX) $(ESBUILD)
 

@@ -108,9 +108,13 @@ function showBadge() {
 
 const changeListeners: ((scale: number) => void)[] = []
 
-/** settings panel and minimap subscribe to follow the live zoom level */
-export function onZoomChange(cb: (scale: number) => void) {
+/** settings panel and minimap subscribe to follow the live zoom level (returns unsubscribe) */
+export function onZoomChange(cb: (scale: number) => void): () => void {
   changeListeners.push(cb)
+  return () => {
+    const i = changeListeners.indexOf(cb)
+    if (i >= 0) changeListeners.splice(i, 1)
+  }
 }
 
 // ── Fixed-element seating ──────────────────────────────────────────────────
