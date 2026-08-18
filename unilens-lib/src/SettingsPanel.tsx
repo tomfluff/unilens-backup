@@ -97,7 +97,11 @@ function Panel() {
         style={{
           overflowY: 'auto',
           overscrollBehavior: 'contain',
-          maxHeight: Math.max(140, window.innerHeight - 190),
+          // CSS max() instead of a JS-computed px value: tracks window resizes
+          // without a re-render, keeping the zoom controls below reachable.
+          // dvh (not vh): tracks mobile dynamic browser chrome like the old
+          // innerHeight read did.
+          maxHeight: 'max(140px, calc(100dvh - 190px))',
         }}
       >
         {(Object.keys(TOGGLE_LABELS) as BoolSettingKey[]).map((key) => (
