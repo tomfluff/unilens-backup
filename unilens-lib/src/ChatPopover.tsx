@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import type { CaptureResult } from './capture'
-import { useSettings } from './settings'
+import { getSettings, useSettings } from './settings'
 import { speak, stopSpeaking, listen, sttSupported, type SpeechState } from './speech'
 
 interface Msg {
@@ -242,7 +242,8 @@ export default function ChatPopover({
           patchLast({ text: full + `\n[error: ${data.error}]` })
         } else if (data.done) {
           patchLast({ info: fmtInfo(data) })
-          if (settings.autoRead && full) {
+          // live read: the user may toggle auto-read while the reply streams
+          if (getSettings().autoRead && full) {
             const idx = messages.length + 1 // the assistant bubble just added
             speak(full, (s) => setSpeaking(s === 'idle' ? null : { idx, phase: s }))
           }
@@ -260,7 +261,8 @@ export default function ChatPopover({
     const data = await res.json()
     const info = data.provider != null ? fmtInfo(data) : undefined
     setMessages((m) => [...m, { role: 'assistant', text: data.reply ?? data.error ?? 'No reply.', info }])
-    if (settings.autoRead && data.reply) speak(data.reply)
+    // live read: the user may toggle auto-read while the request is in flight
+    if (getSettings().autoRead && data.reply) speak(data.reply)
   }
 
   async function sendText(text: string) {
