@@ -160,15 +160,35 @@ export function init(options: InitOptions = {}) {
     dragBox = null
   }
 
+  function cancelDrag() {
+    dragStart = null
+    suppressClick = false
+    removeDragBox()
+  }
+
   document.addEventListener('mousedown', (e) => {
+    // stale state must never survive into a new interaction: if the click that
+    // was supposed to consume suppressClick never fired, or a drag never saw
+    // its mouseup (released over browser chrome), clear both here
+    cancelDrag()
     if (!getSettings().regionSelect || !trigger(e)) return
     if (container?.contains(e.target as Node)) return
     dragStart = { clientX: e.clientX, clientY: e.clientY }
     e.preventDefault() // no text selection while dragging
   })
 
+  // pointer released outside the window: no mouseup/click ever arrives, so
+  // abandon the drag instead of leaving the rubber band and flags stuck
+  window.addEventListener('blur', cancelDrag)
+
   document.addEventListener('mousemove', (e) => {
     if (!dragStart) return
+    // button already released but we never saw the mouseup (happened over
+    // browser chrome / outside the page): the drag is over, abandon it
+    if (e.buttons === 0) {
+      cancelDrag()
+      return
+    }
     const w = Math.abs(e.clientX - dragStart.clientX)
     const h = Math.abs(e.clientY - dragStart.clientY)
     if (!dragBox && (w > 6 || h > 6)) {
@@ -201,6 +221,12 @@ export function init(options: InitOptions = {}) {
     if (dist < 10) return // plain alt+click — let the click handler run
 
     suppressClick = true // the click event that follows belongs to this drag
+    // the browser dispatches that click immediately after mouseup; if it never
+    // comes (mixed targets, keyboard click next), expire the flag so it cannot
+    // swallow an unrelated click later
+    window.setTimeout(() => {
+      suppressClick = false
+    }, 150)
     const a = clientToContent(start.clientX, start.clientY)
     const b = clientToContent(e.clientX, e.clientY)
     const region = {
