@@ -97,10 +97,8 @@ function Panel() {
         style={{
           overflowY: 'auto',
           overscrollBehavior: 'contain',
-          // CSS max() instead of a JS-computed px value: tracks window resizes
-          // without a re-render, keeping the zoom controls below reachable.
-          // dvh (not vh): tracks mobile dynamic browser chrome like the old
-          // innerHeight read did.
+          // CSS (not a JS-computed px value) so it tracks resizes without a
+          // re-render; dvh follows mobile dynamic browser chrome.
           maxHeight: 'max(140px, calc(100dvh - 190px))',
         }}
       >

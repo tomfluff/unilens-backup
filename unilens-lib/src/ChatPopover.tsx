@@ -62,8 +62,7 @@ export default function ChatPopover({
   const [stored, setStored] = useState('')
   const scrollRef = useRef<HTMLDivElement>(null)
 
-  // re-render when settings change so text size / contrast apply live
-  // subscribes to the store — re-renders when settings change anywhere
+  // store subscription: re-renders when settings change, so text size / contrast apply live
   const settings = useSettings()
 
   const fs = settings.chatFontSize
