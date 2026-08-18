@@ -60,7 +60,7 @@ export async function speak(text: string, onState?: (s: SpeechState) => void) {
     })
     if (!res.ok) throw new Error(`tts ${res.status}`)
     const { id } = await res.json()
-    audioEl = new Audio(`${backendUrl}/api/tts/${id}.mp3`)
+    audioEl = new Audio(`${backendUrl}/api/tts/${encodeURIComponent(id)}.mp3`)
     audioEl.onplaying = () => setState('playing')
     audioEl.onended = () => {
       audioEl = null

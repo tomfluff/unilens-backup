@@ -144,7 +144,7 @@ export default function ChatPopover({
   // Continuity: seed the running conversation from the session history
   useEffect(() => {
     if (!sessionId || captureId === 'local') return
-    fetch(`${backend}/api/session/${sessionId}`)
+    fetch(`${backend}/api/session/${encodeURIComponent(sessionId)}`)
       .then((r) => r.json())
       .then((d) => {
         if (Array.isArray(d.history)) setMessages(d.history.map((h: { role: string; text: string }) => ({ role: h.role as Msg['role'], text: h.text })))
@@ -159,7 +159,7 @@ export default function ChatPopover({
       setStored('backend unreachable — nothing uploaded')
       return
     }
-    fetch(`${backend}/api/capture/${captureId}`)
+    fetch(`${backend}/api/capture/${encodeURIComponent(captureId)}`)
       .then((r) => r.json())
       .then((d) => {
         const f = d.files ?? {}
