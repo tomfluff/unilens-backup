@@ -4,7 +4,7 @@
  */
 import { useEffect, useState, type CSSProperties } from 'react'
 import { createRoot } from 'react-dom/client'
-import { onSettingsChange, settings, TOGGLE_LABELS, updateSetting, type BoolSettingKey } from './settings'
+import { TOGGLE_LABELS, updateSetting, useSettings, type BoolSettingKey } from './settings'
 import { getTargetZoom, getZoom, onZoomChange, setZoom } from './zoom'
 
 const selectStyle: CSSProperties = {
@@ -69,9 +69,8 @@ function ZoomControls() {
 }
 
 function Panel() {
-  // re-render when settings change elsewhere (keyboard shortcuts, debug close, …)
-  const [, bump] = useState(0)
-  useEffect(() => onSettingsChange(() => bump((n) => n + 1)), [])
+  // subscribes to the store — re-renders when settings change anywhere
+  const settings = useSettings()
 
   return (
     <div

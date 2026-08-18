@@ -10,7 +10,7 @@
  * out of captures — same as the rest of the UniLens chrome.
  */
 import { getView, getZoom, isOwnMutation, onViewChange, onZoomChange, refreshLayout, setView, toContent } from './zoom'
-import { settings } from './settings'
+import { getSettings } from './settings'
 
 const MAP_W = 140
 /** room left for the map after its inset, padding and border */
@@ -185,7 +185,7 @@ function hide() {
 
 export function initMinimap() {
   onZoomChange((scale) => {
-    if (scale > 1 && settings.minimap) {
+    if (scale > 1 && getSettings().minimap) {
       if (!box || box.style.display === 'none') show()
       else updateLens()
     } else hide()

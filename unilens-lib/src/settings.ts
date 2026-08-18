@@ -1,8 +1,10 @@
 /**
- * UniLens settings store — per-feature toggles, persisted in localStorage.
- * Feature code reads settings.<flag> live, so toggles apply immediately
- * without re-init. UI lives in SettingsPanel.tsx.
+ * UniLens settings store (zustand) — per-feature toggles, persisted in localStorage.
+ * React reads via the useSettings hook; imperative modules via getSettings().
+ * UI lives in SettingsPanel.tsx.
  */
+import { create } from 'zustand'
+import { persist } from 'zustand/middleware'
 
 export interface Settings {
   zoom: boolean
@@ -83,34 +85,26 @@ export const TOGGLE_LABELS: Record<BoolSettingKey, string> = {
   debugView: 'Debug view (ctrl+shift+D)',
 }
 
-const STORAGE_KEY = 'unilens-settings'
-
-export const settings: Settings = { ...DEFAULTS }
+// One-time lift of pre-zustand flat JSON into persist's { state, version } envelope,
+// so saved settings survive the store migration.
 try {
-  Object.assign(settings, JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '{}'))
+  const raw = localStorage.getItem('unilens-settings')
+  if (raw && JSON.parse(raw).state === undefined) {
+    localStorage.setItem('unilens-settings', JSON.stringify({ state: JSON.parse(raw), version: 0 }))
+  }
 } catch {
-  /* corrupted storage — keep defaults */
+  /* corrupted or blocked storage — defaults apply */
 }
 
-const listeners: (() => void)[] = []
+export const useSettings = create<Settings>()(persist(() => ({ ...DEFAULTS }), { name: 'unilens-settings' }))
+
+/** live snapshot for non-React modules (React components use the useSettings hook) */
+export const getSettings = () => useSettings.getState()
 
 /** subscribe to settings changes (returns unsubscribe) — lets open UI re-render live */
-export function onSettingsChange(cb: () => void): () => void {
-  listeners.push(cb)
-  return () => listeners.splice(listeners.indexOf(cb), 1)
-}
-
-function save() {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(settings))
-  } catch {
-    /* private browsing / blocked storage — settings still apply for this page load */
-  }
-  listeners.forEach((cb) => cb())
-}
+export const onSettingsChange = (cb: () => void) => useSettings.subscribe(cb)
 
 /** programmatic settings change (e.g. keyboard shortcuts) — persists + notifies */
 export function updateSetting<K extends keyof Settings>(key: K, value: Settings[K]) {
-  settings[key] = value
-  save()
+  useSettings.setState({ [key]: value })
 }

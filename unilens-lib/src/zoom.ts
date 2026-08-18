@@ -6,7 +6,7 @@
  * so annotations align with the unzoomed screenshot at any zoom level.
  */
 
-import { onSettingsChange, settings } from './settings'
+import { getSettings, onSettingsChange } from './settings'
 
 const MIN_ZOOM = 1 // 100% is the floor: zooming out returns to the page, never shrinks it
 const MAX_ZOOM = 5
@@ -347,7 +347,7 @@ let prevOverflow = ''
 const viewListeners: ((x: number, y: number) => void)[] = []
 
 function lensMode() {
-  return settings.lensPan
+  return getSettings().lensPan
 }
 
 /** window's offset over the magnified surface, in client px */
@@ -453,7 +453,7 @@ function setZoomPin(target: number, cx: number, cy: number, ax: number, ay: numb
     startWatching()
   }
 
-  if (settings.zoomTrace) {
+  if (getSettings().zoomTrace) {
     zoomTrace.push({
       t: Date.now(),
       scale: Math.round(targetScale * 100) / 100,
@@ -463,7 +463,7 @@ function setZoomPin(target: number, cx: number, cy: number, ax: number, ay: numb
     if (zoomTrace.length > ZOOM_TRACE_MAX) zoomTrace.splice(0, zoomTrace.length - ZOOM_TRACE_MAX)
   }
 
-  if (!settings.smoothZoom) {
+  if (!getSettings().smoothZoom) {
     if (rafId) cancelAnimationFrame(rafId)
     rafId = 0
     applyScale(targetScale)
@@ -483,7 +483,7 @@ export function setZoom(target: number, anchorX?: number, anchorY?: number) {
 
 // ── Double-click smart zoom ────────────────────────────────────────────────
 function onDblClick(e: MouseEvent) {
-  if (!settings.smartZoom || !settings.zoom) return
+  if (!getSettings().smartZoom || !getSettings().zoom) return
   if (!(e.target instanceof HTMLElement)) return
   let el: HTMLElement | null = e.target
   if (el.closest('#unilens-root')) return
@@ -532,7 +532,7 @@ function wheelHandledElsewhere(e: WheelEvent): boolean {
 
 function onWheel(e: WheelEvent) {
   if (e.ctrlKey) {
-    if (!settings.zoom) return // toggled off: let the browser zoom natively
+    if (!getSettings().zoom) return // toggled off: let the browser zoom natively
     e.preventDefault() // stop browser-native zoom
     setZoom(targetScale * Math.exp(-e.deltaY * 0.002), e.clientX, e.clientY)
     return
@@ -592,7 +592,7 @@ function onPanKey(e: KeyboardEvent) {
 }
 
 function onKeyDown(e: KeyboardEvent) {
-  if (!e.ctrlKey || !settings.zoomKeys) return
+  if (!e.ctrlKey || !getSettings().zoomKeys) return
   // '=' is unshifted '+' on most layouts; NumpadAdd/Subtract for numpad
   if (e.key === '+' || e.key === '=' || e.code === 'NumpadAdd') {
     e.preventDefault()

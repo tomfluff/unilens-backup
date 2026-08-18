@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import type { CaptureResult } from './capture'
-import { settings, onSettingsChange } from './settings'
+import { useSettings } from './settings'
 import { speak, stopSpeaking, listen, sttSupported, type SpeechState } from './speech'
 
 interface Msg {
@@ -63,8 +63,8 @@ export default function ChatPopover({
   const scrollRef = useRef<HTMLDivElement>(null)
 
   // re-render when settings change so text size / contrast apply live
-  const [, bump] = useState(0)
-  useEffect(() => onSettingsChange(() => bump((n) => n + 1)), [])
+  // subscribes to the store — re-renders when settings change anywhere
+  const settings = useSettings()
 
   const fs = settings.chatFontSize
   const hc = settings.highContrast

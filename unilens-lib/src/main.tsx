@@ -14,7 +14,7 @@ import { createRoot, type Root } from 'react-dom/client'
 import { startTrace, capture, type CaptureResult } from './capture'
 import { clientToContent, initZoom } from './zoom'
 import { initMinimap } from './minimap'
-import { settings } from './settings'
+import { getSettings } from './settings'
 import { initSettings } from './SettingsPanel'
 import { setSpeechBackend } from './speech'
 import { initHint } from './hint'
@@ -82,7 +82,7 @@ function openPopover(clientX: number, clientY: number, captureId: string, cap: C
         captureId={captureId}
         capture={cap}
         backend={backend}
-        sessionId={settings.continuity ? sessionId : null}
+        sessionId={getSettings().continuity ? sessionId : null}
         onClose={dismissPopover}
         initialPos={pinnedPos}
         pinned={pinnedPos != null}
@@ -109,12 +109,12 @@ async function uploadCapture(cap: CaptureResult, backend: string): Promise<strin
       image: cap.image,
       viewport: cap.viewportImage,
       meta: cap.meta,
-      session_id: settings.continuity ? sessionId : null,
+      session_id: getSettings().continuity ? sessionId : null,
     }),
   })
   if (!res.ok) throw new Error(`capture upload failed: HTTP ${res.status}`)
   const data = await res.json()
-  sessionId = settings.continuity ? (data.session_id ?? null) : null
+  sessionId = getSettings().continuity ? (data.session_id ?? null) : null
   return data.id
 }
 
@@ -161,7 +161,7 @@ export function init(options: InitOptions = {}) {
   }
 
   document.addEventListener('mousedown', (e) => {
-    if (!settings.regionSelect || !trigger(e)) return
+    if (!getSettings().regionSelect || !trigger(e)) return
     if (container?.contains(e.target as Node)) return
     dragStart = { clientX: e.clientX, clientY: e.clientY }
     e.preventDefault() // no text selection while dragging

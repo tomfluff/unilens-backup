@@ -13,7 +13,7 @@
  */
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react'
 import { createRoot } from 'react-dom/client'
-import { onSettingsChange, settings, updateSetting } from './settings'
+import { getSettings, updateSetting, useSettings } from './settings'
 import { getCaptureDebug, getTraceDebug } from './capture'
 import { getDwellDebug } from './hint'
 import { getTargetZoom, getView, getZoom, getZoomTrace } from './zoom'
@@ -239,16 +239,15 @@ function DebugPanel({ sources }: { sources: DebugSources }) {
 
 /** renders the panel only while settings.debugView is on */
 function DebugGate({ sources }: { sources: DebugSources }) {
-  const [, bump] = useState(0)
-  useEffect(() => onSettingsChange(() => bump((n) => n + 1)), [])
-  return settings.debugView ? <DebugPanel sources={sources} /> : null
+  const debugView = useSettings((s) => s.debugView)
+  return debugView ? <DebugPanel sources={sources} /> : null
 }
 
 export function initDebug(sources: DebugSources) {
   document.addEventListener('keydown', (e) => {
     if (e.ctrlKey && e.shiftKey && (e.key === 'D' || e.key === 'd')) {
       e.preventDefault()
-      updateSetting('debugView', !settings.debugView)
+      updateSetting('debugView', !getSettings().debugView)
     }
   })
 
