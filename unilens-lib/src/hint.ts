@@ -4,7 +4,7 @@
  * user is zoomed in and lingers, a small chip appears near the cursor.
  * Clicking it captures right there — the zero-shortcut entry path.
  */
-import { settings } from './settings'
+import { getSettings } from './settings'
 import { getZoom } from './zoom'
 
 const DWELL_RADIUS = 80 // px, client coords
@@ -116,7 +116,7 @@ function evaluate(): DwellDebug {
     blocked: '',
     centroid: null,
   }
-  if (!settings.hints) return { ...d, blocked: 'hints disabled' }
+  if (!getSettings().hints) return { ...d, blocked: 'hints disabled' }
   if (document.getElementById('unilens-root')) return { ...d, blocked: 'popover open' }
   if (chip) return { ...d, blocked: 'chip visible' }
   if (d.cooldownMs > 0) return { ...d, blocked: 'cooldown' }

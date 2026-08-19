@@ -1,11 +1,11 @@
 /**
- * UniLens capture core — ported from example-of-track-and-screenshot/unilens-capture.js.
+ * UniLens capture core.
  * Tracks mouse trace, captures a full-page screenshot with html2canvas,
  * overlays viewport rect + mouse trace + click crosshair, returns PNG + metadata.
  */
 import html2canvas from 'html2canvas'
 import { clientToContent, getView, getZoom, getZoomTrace, stripFixedPins, type ZoomEvent } from './zoom'
-import { settings } from './settings'
+import { getSettings } from './settings'
 
 export interface TracePoint {
   x: number
@@ -103,7 +103,7 @@ let traceWindowSec = 2.5
 let tracking = false
 
 function onMouseMove(e: MouseEvent) {
-  if (!settings.mouseTrace) return
+  if (!getSettings().mouseTrace) return
   // content space: aligns with the unzoomed screenshot under either pan engine
   const p = clientToContent(e.clientX, e.clientY)
   trace.push({ x: p.x, y: p.y, t: Date.now() })
@@ -301,8 +301,8 @@ export async function capture(
   // Single render at the configured resolution (1 = screen res). Both outputs
   // (annotated page + close-up crop) derive from this one canvas — html2canvas
   // clone+parse dominates capture time, so we only pay it once.
-  // ponytail: 24MP canvas cap guards very long pages; tiled rendering if it ever bites
-  let captureScale = settings.captureRes
+  // 24MP canvas cap guards very long pages; switch to tiled rendering if it ever bites
+  let captureScale = getSettings().captureRes
   const MAX_PIXELS = 24_000_000
   if (pageW * pageH * captureScale * captureScale > MAX_PIXELS) {
     captureScale = Math.sqrt(MAX_PIXELS / (pageW * pageH))
@@ -329,7 +329,7 @@ export async function capture(
   const tRender = performance.now()
   console.debug(`[UniLens] timings: preprocess ${(tPre - t0).toFixed(0)}ms, render ${(tRender - tPre).toFixed(0)}ms`)
 
-  if (settings.viewportCrop) {
+  if (getSettings().viewportCrop) {
     // Crop the visible region from the render BEFORE overlays are drawn —
     // a clean close-up of exactly what the user is examining.
     const s = pageCanvas.width / pageW
@@ -461,7 +461,7 @@ export async function capture(
       trace: recent,
       zoomTrace: getZoomTrace(captureTime),
       viewportRect: vRect,
-      element: settings.elementContext && clickedEl ? describeElement(clickedEl) : undefined,
+      element: getSettings().elementContext && clickedEl ? describeElement(clickedEl) : undefined,
       region: region ? vRect : undefined,
     },
   }

@@ -6,7 +6,7 @@
  * so annotations align with the unzoomed screenshot at any zoom level.
  */
 
-import { onSettingsChange, settings } from './settings'
+import { getSettings, onSettingsChange } from './settings'
 
 const MIN_ZOOM = 1 // 100% is the floor: zooming out returns to the page, never shrinks it
 const MAX_ZOOM = 5
@@ -58,6 +58,9 @@ export function toContent(pageX: number, pageY: number): { x: number; y: number 
 }
 
 function measureLayout() {
+  // init() from <head> runs before <body> exists — leave layoutW at 0 so the
+  // next getZoom() call re-measures once the document has a body
+  if (!document.body) return
   // measure with transform off so scrollWidth/Height are true layout size
   const prev = document.body.style.transform
   const prevH = document.documentElement.style.height
@@ -108,9 +111,13 @@ function showBadge() {
 
 const changeListeners: ((scale: number) => void)[] = []
 
-/** settings panel and minimap subscribe to follow the live zoom level */
-export function onZoomChange(cb: (scale: number) => void) {
+/** settings panel and minimap subscribe to follow the live zoom level (returns unsubscribe) */
+export function onZoomChange(cb: (scale: number) => void): () => void {
   changeListeners.push(cb)
+  return () => {
+    const i = changeListeners.indexOf(cb)
+    if (i >= 0) changeListeners.splice(i, 1)
+  }
 }
 
 // ── Fixed-element seating ──────────────────────────────────────────────────
@@ -201,7 +208,7 @@ function homeOnAxis(pos: number, size: number, layoutExtent: number, viewportExt
   return offDocumentEdge ? pos - layoutExtent + viewportExtent : pos
 }
 
-// ponytail: full-tree getComputedStyle sweep. Only runs while zoomed, debounced to the
+// Deliberately a full-tree getComputedStyle sweep: only runs while zoomed, debounced to the
 // end of a gesture, and additive. MutationObserver if it ever profiles hot.
 function scanFixed() {
   if (layoutW === 0) measureLayout()
@@ -343,7 +350,7 @@ let prevOverflow = ''
 const viewListeners: ((x: number, y: number) => void)[] = []
 
 function lensMode() {
-  return settings.lensPan
+  return getSettings().lensPan
 }
 
 /** window's offset over the magnified surface, in client px */
@@ -449,7 +456,7 @@ function setZoomPin(target: number, cx: number, cy: number, ax: number, ay: numb
     startWatching()
   }
 
-  if (settings.zoomTrace) {
+  if (getSettings().zoomTrace) {
     zoomTrace.push({
       t: Date.now(),
       scale: Math.round(targetScale * 100) / 100,
@@ -459,7 +466,7 @@ function setZoomPin(target: number, cx: number, cy: number, ax: number, ay: numb
     if (zoomTrace.length > ZOOM_TRACE_MAX) zoomTrace.splice(0, zoomTrace.length - ZOOM_TRACE_MAX)
   }
 
-  if (!settings.smoothZoom) {
+  if (!getSettings().smoothZoom) {
     if (rafId) cancelAnimationFrame(rafId)
     rafId = 0
     applyScale(targetScale)
@@ -479,7 +486,7 @@ export function setZoom(target: number, anchorX?: number, anchorY?: number) {
 
 // ── Double-click smart zoom ────────────────────────────────────────────────
 function onDblClick(e: MouseEvent) {
-  if (!settings.smartZoom || !settings.zoom) return
+  if (!getSettings().smartZoom || !getSettings().zoom) return
   if (!(e.target instanceof HTMLElement)) return
   let el: HTMLElement | null = e.target
   if (el.closest('#unilens-root')) return
@@ -528,7 +535,7 @@ function wheelHandledElsewhere(e: WheelEvent): boolean {
 
 function onWheel(e: WheelEvent) {
   if (e.ctrlKey) {
-    if (!settings.zoom) return // toggled off: let the browser zoom natively
+    if (!getSettings().zoom) return // toggled off: let the browser zoom natively
     e.preventDefault() // stop browser-native zoom
     setZoom(targetScale * Math.exp(-e.deltaY * 0.002), e.clientX, e.clientY)
     return
@@ -588,7 +595,7 @@ function onPanKey(e: KeyboardEvent) {
 }
 
 function onKeyDown(e: KeyboardEvent) {
-  if (!e.ctrlKey || !settings.zoomKeys) return
+  if (!e.ctrlKey || !getSettings().zoomKeys) return
   // '=' is unshifted '+' on most layouts; NumpadAdd/Subtract for numpad
   if (e.key === '+' || e.key === '=' || e.code === 'NumpadAdd') {
     e.preventDefault()
@@ -604,6 +611,11 @@ function onKeyDown(e: KeyboardEvent) {
 
 export function initZoom() {
   measureLayout()
+  // init() from <head>: dimensions measured mid-parse (or not at all) are
+  // wrong — re-measure once the document is fully parsed
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => measureLayout(), { once: true })
+  }
   window.addEventListener('resize', () => {
     measureLayout()
     if (scale === 1) return

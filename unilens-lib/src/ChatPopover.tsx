@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import type { CaptureResult } from './capture'
-import { settings, onSettingsChange } from './settings'
+import { getSettings, useSettings } from './settings'
 import { speak, stopSpeaking, listen, sttSupported, type SpeechState } from './speech'
 
 interface Msg {
@@ -62,9 +62,8 @@ export default function ChatPopover({
   const [stored, setStored] = useState('')
   const scrollRef = useRef<HTMLDivElement>(null)
 
-  // re-render when settings change so text size / contrast apply live
-  const [, bump] = useState(0)
-  useEffect(() => onSettingsChange(() => bump((n) => n + 1)), [])
+  // store subscription: re-renders when settings change, so text size / contrast apply live
+  const settings = useSettings()
 
   const fs = settings.chatFontSize
   const hc = settings.highContrast
@@ -144,7 +143,7 @@ export default function ChatPopover({
   // Continuity: seed the running conversation from the session history
   useEffect(() => {
     if (!sessionId || captureId === 'local') return
-    fetch(`${backend}/api/session/${sessionId}`)
+    fetch(`${backend}/api/session/${encodeURIComponent(sessionId)}`)
       .then((r) => r.json())
       .then((d) => {
         if (Array.isArray(d.history)) setMessages(d.history.map((h: { role: string; text: string }) => ({ role: h.role as Msg['role'], text: h.text })))
@@ -159,7 +158,7 @@ export default function ChatPopover({
       setStored('backend unreachable — nothing uploaded')
       return
     }
-    fetch(`${backend}/api/capture/${captureId}`)
+    fetch(`${backend}/api/capture/${encodeURIComponent(captureId)}`)
       .then((r) => r.json())
       .then((d) => {
         const f = d.files ?? {}
@@ -242,7 +241,8 @@ export default function ChatPopover({
           patchLast({ text: full + `\n[error: ${data.error}]` })
         } else if (data.done) {
           patchLast({ info: fmtInfo(data) })
-          if (settings.autoRead && full) {
+          // live read: the user may toggle auto-read while the reply streams
+          if (getSettings().autoRead && full) {
             const idx = messages.length + 1 // the assistant bubble just added
             speak(full, (s) => setSpeaking(s === 'idle' ? null : { idx, phase: s }))
           }
@@ -260,7 +260,8 @@ export default function ChatPopover({
     const data = await res.json()
     const info = data.provider != null ? fmtInfo(data) : undefined
     setMessages((m) => [...m, { role: 'assistant', text: data.reply ?? data.error ?? 'No reply.', info }])
-    if (settings.autoRead && data.reply) speak(data.reply)
+    // live read: the user may toggle auto-read while the request is in flight
+    if (getSettings().autoRead && data.reply) speak(data.reply)
   }
 
   async function sendText(text: string) {
@@ -476,7 +477,12 @@ export default function ChatPopover({
           autoFocus
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && send()}
+          // Enter that confirms an IME composition (Japanese, Chinese, Korean)
+          // must not submit the half-typed text. keyCode 229 covers browsers
+          // that report the confirming Enter with isComposing already false.
+          onKeyDown={(e) =>
+            e.key === 'Enter' && !e.nativeEvent.isComposing && e.nativeEvent.keyCode !== 229 && send()
+          }
           placeholder="Ask about this page…"
           style={{
             flex: 1,

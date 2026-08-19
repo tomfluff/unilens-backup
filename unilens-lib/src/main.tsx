@@ -8,20 +8,21 @@
  * Options:
  *   trigger      MouseEvent → bool. Default: alt+click.
  *   mouseWindow  Seconds of trace history. Default: 2.5.
- *   backend      Flask base URL. Default: '' (same origin / vite proxy).
+ *   backend      Flask base URL. Default: '' (same origin).
  */
 import { createRoot, type Root } from 'react-dom/client'
 import { startTrace, capture, type CaptureResult } from './capture'
 import { clientToContent, initZoom } from './zoom'
 import { initMinimap } from './minimap'
-import { initSettings, settings } from './settings'
+import { getSettings, updateSetting } from './settings'
+import { initSettings } from './SettingsPanel'
 import { setSpeechBackend } from './speech'
 import { initHint } from './hint'
-import { initDebug } from './debug'
+import { initDebug } from './DebugPanel'
 import { tagLastCapture } from './capture'
 import ChatPopover from './ChatPopover'
 
-/** build stamp injected by vite (see vite.config.ts define) */
+/** build stamp injected by esbuild --define (see the lib Makefile); absent in dev */
 declare const __target_dist_unilens_BUILD__: string
 
 export interface InitOptions {
@@ -34,18 +35,18 @@ export interface InitOptions {
 
 let root: Root | null = null
 let container: HTMLDivElement | null = null
-/** set when the user pins the popover — subsequent captures reopen here (survives reloads) */
-let pinnedPos: { left: number; top: number } | null = null
-try {
-  pinnedPos = JSON.parse(localStorage.getItem('unilens-pin') ?? 'null')
-} catch {
-  /* corrupted — stay unpinned */
+
+/**
+ * Popover pinned position, persisted in the settings store. Guarded on read:
+ * hydrated storage is not trusted to hold finite coordinates.
+ */
+function pinnedPos(): { left: number; top: number } | null {
+  const p = getSettings().pinnedPos
+  return p && Number.isFinite(p.left) && Number.isFinite(p.top) ? p : null
 }
 
 function setPinnedPos(pos: { left: number; top: number } | null) {
-  pinnedPos = pos
-  if (pos) localStorage.setItem('unilens-pin', JSON.stringify(pos))
-  else localStorage.removeItem('unilens-pin')
+  updateSetting('pinnedPos', pos)
 }
 
 function closePopover() {
@@ -77,16 +78,16 @@ function openPopover(clientX: number, clientY: number, captureId: string, cap: C
         captureId={captureId}
         capture={cap}
         backend={backend}
-        sessionId={settings.continuity ? sessionId : null}
+        sessionId={getSettings().continuity ? sessionId : null}
         onClose={dismissPopover}
-        initialPos={pinnedPos}
-        pinned={pinnedPos != null}
+        initialPos={pinnedPos()}
+        pinned={pinnedPos() != null}
         onTogglePin={(pos) => {
           setPinnedPos(pos)
           render() // re-render so the pin button reflects state
         }}
         onMove={(pos) => {
-          if (pinnedPos) setPinnedPos(pos)
+          if (pinnedPos()) setPinnedPos(pos)
         }}
       />,
     )
@@ -104,12 +105,12 @@ async function uploadCapture(cap: CaptureResult, backend: string): Promise<strin
       image: cap.image,
       viewport: cap.viewportImage,
       meta: cap.meta,
-      session_id: settings.continuity ? sessionId : null,
+      session_id: getSettings().continuity ? sessionId : null,
     }),
   })
   if (!res.ok) throw new Error(`capture upload failed: HTTP ${res.status}`)
   const data = await res.json()
-  sessionId = settings.continuity ? (data.session_id ?? null) : null
+  sessionId = getSettings().continuity ? (data.session_id ?? null) : null
   return data.id
 }
 
@@ -155,15 +156,35 @@ export function init(options: InitOptions = {}) {
     dragBox = null
   }
 
+  function cancelDrag() {
+    dragStart = null
+    suppressClick = false
+    removeDragBox()
+  }
+
   document.addEventListener('mousedown', (e) => {
-    if (!settings.regionSelect || !trigger(e)) return
+    // stale state must never survive into a new interaction: if the click that
+    // was supposed to consume suppressClick never fired, or a drag never saw
+    // its mouseup (released over browser chrome), clear both here
+    cancelDrag()
+    if (!getSettings().regionSelect || !trigger(e)) return
     if (container?.contains(e.target as Node)) return
     dragStart = { clientX: e.clientX, clientY: e.clientY }
     e.preventDefault() // no text selection while dragging
   })
 
+  // pointer released outside the window: no mouseup/click ever arrives, so
+  // abandon the drag instead of leaving the rubber band and flags stuck
+  window.addEventListener('blur', cancelDrag)
+
   document.addEventListener('mousemove', (e) => {
     if (!dragStart) return
+    // button already released but we never saw the mouseup (happened over
+    // browser chrome / outside the page): the drag is over, abandon it
+    if (e.buttons === 0) {
+      cancelDrag()
+      return
+    }
     const w = Math.abs(e.clientX - dragStart.clientX)
     const h = Math.abs(e.clientY - dragStart.clientY)
     if (!dragBox && (w > 6 || h > 6)) {
@@ -196,6 +217,12 @@ export function init(options: InitOptions = {}) {
     if (dist < 10) return // plain alt+click — let the click handler run
 
     suppressClick = true // the click event that follows belongs to this drag
+    // the browser dispatches that click immediately after mouseup; if it never
+    // comes (mixed targets, keyboard click next), expire the flag so it cannot
+    // swallow an unrelated click later
+    window.setTimeout(() => {
+      suppressClick = false
+    }, 150)
     const a = clientToContent(start.clientX, start.clientY)
     const b = clientToContent(e.clientX, e.clientY)
     const region = {
