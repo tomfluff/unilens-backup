@@ -85,27 +85,6 @@ export const TOGGLE_LABELS: Record<BoolSettingKey, string> = {
   debugView: 'Debug view (ctrl+shift+D)',
 }
 
-// One-time lift of pre-zustand flat JSON into persist's { state, version } envelope,
-// so saved settings survive the store migration. Only a plain object without a
-// `state` member is lifted — anything else (array, string, number, a colliding
-// writer's data) is left untouched and persist falls back to defaults.
-try {
-  const raw = localStorage.getItem('unilens-settings')
-  if (raw) {
-    const parsed: unknown = JSON.parse(raw)
-    if (
-      typeof parsed === 'object' &&
-      parsed !== null &&
-      !Array.isArray(parsed) &&
-      !('state' in parsed)
-    ) {
-      localStorage.setItem('unilens-settings', JSON.stringify({ state: parsed, version: 0 }))
-    }
-  }
-} catch {
-  /* corrupted or blocked storage — defaults apply */
-}
-
 export const useSettings = create<Settings>()(persist(() => ({ ...DEFAULTS }), { name: 'unilens-settings' }))
 
 /** live snapshot for non-React modules (React components use the useSettings hook) */
