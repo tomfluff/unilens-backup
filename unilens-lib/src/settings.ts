@@ -32,6 +32,8 @@ export interface Settings {
   captureRes: number
   /** chat bubble font size in px */
   chatFontSize: number
+  /** popover pinned position — null = follow the cursor (survives reloads) */
+  pinnedPos: { left: number; top: number } | null
 }
 
 const DEFAULTS: Settings = {
@@ -57,6 +59,7 @@ const DEFAULTS: Settings = {
   debugView: false,
   captureRes: 1,
   chatFontSize: 14,
+  pinnedPos: null,
 }
 
 /** keys of Settings whose value is a boolean — the on/off rows in the panel */

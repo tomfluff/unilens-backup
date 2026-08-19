@@ -14,7 +14,7 @@ import { createRoot, type Root } from 'react-dom/client'
 import { startTrace, capture, type CaptureResult } from './capture'
 import { clientToContent, initZoom } from './zoom'
 import { initMinimap } from './minimap'
-import { getSettings } from './settings'
+import { getSettings, updateSetting } from './settings'
 import { initSettings } from './SettingsPanel'
 import { setSpeechBackend } from './speech'
 import { initHint } from './hint'
@@ -35,22 +35,18 @@ export interface InitOptions {
 
 let root: Root | null = null
 let container: HTMLDivElement | null = null
-/** set when the user pins the popover — subsequent captures reopen here (survives reloads) */
-let pinnedPos: { left: number; top: number } | null = null
-try {
-  pinnedPos = JSON.parse(localStorage.getItem('unilens-pin') ?? 'null')
-} catch {
-  /* corrupted — stay unpinned */
+
+/**
+ * Popover pinned position, persisted in the settings store. Guarded on read:
+ * hydrated storage is not trusted to hold finite coordinates.
+ */
+function pinnedPos(): { left: number; top: number } | null {
+  const p = getSettings().pinnedPos
+  return p && Number.isFinite(p.left) && Number.isFinite(p.top) ? p : null
 }
 
 function setPinnedPos(pos: { left: number; top: number } | null) {
-  pinnedPos = pos
-  try {
-    if (pos) localStorage.setItem('unilens-pin', JSON.stringify(pos))
-    else localStorage.removeItem('unilens-pin')
-  } catch {
-    /* private browsing / blocked storage — pin still works for this page load */
-  }
+  updateSetting('pinnedPos', pos)
 }
 
 function closePopover() {
@@ -84,14 +80,14 @@ function openPopover(clientX: number, clientY: number, captureId: string, cap: C
         backend={backend}
         sessionId={getSettings().continuity ? sessionId : null}
         onClose={dismissPopover}
-        initialPos={pinnedPos}
-        pinned={pinnedPos != null}
+        initialPos={pinnedPos()}
+        pinned={pinnedPos() != null}
         onTogglePin={(pos) => {
           setPinnedPos(pos)
           render() // re-render so the pin button reflects state
         }}
         onMove={(pos) => {
-          if (pinnedPos) setPinnedPos(pos)
+          if (pinnedPos()) setPinnedPos(pos)
         }}
       />,
     )
