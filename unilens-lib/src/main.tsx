@@ -8,7 +8,7 @@
  * Options:
  *   trigger      MouseEvent → bool. Default: alt+click.
  *   mouseWindow  Seconds of trace history. Default: 2.5.
- *   backend      Flask base URL. Default: '' (same origin / vite proxy).
+ *   backend      Flask base URL. Default: '' (same origin).
  */
 import { createRoot, type Root } from 'react-dom/client'
 import { startTrace, capture, type CaptureResult } from './capture'
@@ -22,7 +22,7 @@ import { initDebug } from './DebugPanel'
 import { tagLastCapture } from './capture'
 import ChatPopover from './ChatPopover'
 
-/** build stamp injected by vite (see vite.config.ts define) */
+/** build stamp injected by esbuild --define (see the lib Makefile); absent in dev */
 declare const __target_dist_unilens_BUILD__: string
 
 export interface InitOptions {

@@ -97,6 +97,9 @@ Written in **English**.
 - Never restate obvious code (`// set flag` above `flag = true`).
 - One comment per concern; delete a comment when its code changes rather
   than letting it drift out of date.
+- A deliberate simplification with a known ceiling is marked with a
+  `ponytail:` comment naming the ceiling and the upgrade path, e.g.
+  `// ponytail: 24MP canvas cap guards very long pages; tiled rendering if it ever bites`.
 - Match the file's existing density — this codebase is comment-rich by
   choice, but every line must still pay rent.
 

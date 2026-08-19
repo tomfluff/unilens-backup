@@ -1,5 +1,5 @@
 /**
- * UniLens capture core — ported from example-of-track-and-screenshot/unilens-capture.js.
+ * UniLens capture core.
  * Tracks mouse trace, captures a full-page screenshot with html2canvas,
  * overlays viewport rect + mouse trace + click crosshair, returns PNG + metadata.
  */

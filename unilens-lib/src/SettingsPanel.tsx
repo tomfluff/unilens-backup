@@ -142,7 +142,8 @@ function Panel() {
         </label>
       </div>
 
-      <ZoomControls />
+      {/* manual zoom is part of the zoom feature — hide it when the toggle is off */}
+      {settings.zoom && <ZoomControls />}
     </div>
   )
 }
