@@ -301,7 +301,7 @@ export async function capture(
   // Single render at the configured resolution (1 = screen res). Both outputs
   // (annotated page + close-up crop) derive from this one canvas — html2canvas
   // clone+parse dominates capture time, so we only pay it once.
-  // ponytail: 24MP canvas cap guards very long pages; tiled rendering if it ever bites
+  // 24MP canvas cap guards very long pages; switch to tiled rendering if it ever bites
   let captureScale = getSettings().captureRes
   const MAX_PIXELS = 24_000_000
   if (pageW * pageH * captureScale * captureScale > MAX_PIXELS) {

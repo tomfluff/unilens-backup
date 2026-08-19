@@ -208,7 +208,7 @@ function homeOnAxis(pos: number, size: number, layoutExtent: number, viewportExt
   return offDocumentEdge ? pos - layoutExtent + viewportExtent : pos
 }
 
-// ponytail: full-tree getComputedStyle sweep. Only runs while zoomed, debounced to the
+// Deliberately a full-tree getComputedStyle sweep: only runs while zoomed, debounced to the
 // end of a gesture, and additive. MutationObserver if it ever profiles hot.
 function scanFixed() {
   if (layoutW === 0) measureLayout()

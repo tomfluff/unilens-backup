@@ -15,7 +15,7 @@ import { getSettings } from './settings'
 const MAP_W = 140
 /** room left for the map after its inset, padding and border */
 const heightBudget = () => window.innerHeight - 48
-// ponytail: skeleton rects, not a real thumbnail. html2canvas would look better but
+// Deliberately skeleton rects, not a real thumbnail. html2canvas would look better but
 // costs seconds per render; revisit if orientation turns out to need real content.
 const MIN_AREA = 200 // layout px² — below this a block is noise at minimap scale
 const MAX_RECTS = 1200
