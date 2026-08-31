@@ -25,4 +25,4 @@ To test and validate your changes, please make sure you run:
 - `make format` - Ensure all formatter checks pass
 
 If you are working within `unilens-lib` or `accessibility-lib`, please additionally run:
-- `make fix` - This is more aggressive than `make format` and will identify and attempt to fix syntactical errors, and will stop on errors that cannot be fixed. Your code should pass `make fix` before being finalized.
+- `make fix` - This is more aggressive than `make format` and will identify and attempt to fix syntactical errors, and will stop on errors that cannot be fixed. Your code should pass `make fix` with 0 warnings or errors before being finalized.
