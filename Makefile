@@ -85,15 +85,18 @@ format-target:
 
 # Init and clean backend, unilens lib, and self
 
-.PHONY: init-self init 
+.PHONY: init-self init-targets-all init 
 
 init-self:
 	$(NPM) install
 
-init: init-self init-backend
+init-all:
 	@for item in $(JS_TARGETS); do \
 		$(MAKE) init-target $$item; \
 	done
+
+init: init-self init-backend init-all
+	
 
 .PHONY: clean-self clean-all clean-frontend clean
 
