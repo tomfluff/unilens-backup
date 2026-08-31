@@ -18,3 +18,11 @@
 - `make serve <target>` (backend + one frontend)
 - `make serve-backend`
 - `make serve-frontend <target>`
+
+## Before Finishing Any Change
+To test and validate your changes, please make sure you run:
+- `make build` - Ensure all code can still be built
+- `make format` - Ensure all formatter checks pass
+
+If you are working within `unilens-lib` or `accessibility-lib`, please additionally run:
+- `make fix` - This is more aggressive than `make format` and will identify and attempt to fix syntactical errors, and will stop on errors that cannot be fixed. Your code should pass `make fix` before being finalized.
