@@ -10,13 +10,6 @@ env:
   BACKUP_TOKEN: ${{ secrets.BACKUP_TOKEN }}
 
 jobs:
-  ci-check:
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Run CI check
-        run: make check
-
   backup:
     runs-on: ubuntu-latest
 

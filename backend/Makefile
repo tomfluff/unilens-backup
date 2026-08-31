@@ -5,6 +5,7 @@
 
 PYTHON=python3
 PIP=pip
+PIPX=pipx
 VENV_DIR=.venv
 RM_RF=rm -rf
 
