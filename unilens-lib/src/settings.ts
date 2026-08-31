@@ -3,100 +3,107 @@
  * React reads via the useSettings hook; imperative modules via getSettings().
  * UI lives in SettingsPanel.tsx.
  */
-import { create } from 'zustand'
-import { persist } from 'zustand/middleware'
+import { create } from "zustand";
+import { persist } from "zustand/middleware";
 
 export interface Settings {
-  zoom: boolean
-  mouseTrace: boolean
-  zoomTrace: boolean
-  viewportCrop: boolean
-  zoomKeys: boolean
-  smoothZoom: boolean
-  smartZoom: boolean
-  streamReplies: boolean
-  quickActions: boolean
-  dragPopover: boolean
-  elementContext: boolean
-  regionSelect: boolean
-  highContrast: boolean
-  continuity: boolean
-  autoRead: boolean
-  voiceInput: boolean
-  hints: boolean
-  minimap: boolean
-  /** freeze the page and pan by transform while zoomed, instead of scrolling it */
-  lensPan: boolean
-  debugView: boolean
-  /** capture render scale: 1 = screen resolution, 0.5 = reduced */
-  captureRes: number
-  /** chat bubble font size in px */
-  chatFontSize: number
-  /** popover pinned position — null = follow the cursor (survives reloads) */
-  pinnedPos: { left: number; top: number } | null
+    zoom: boolean;
+    mouseTrace: boolean;
+    zoomTrace: boolean;
+    viewportCrop: boolean;
+    zoomKeys: boolean;
+    smoothZoom: boolean;
+    smartZoom: boolean;
+    streamReplies: boolean;
+    quickActions: boolean;
+    dragPopover: boolean;
+    elementContext: boolean;
+    regionSelect: boolean;
+    highContrast: boolean;
+    continuity: boolean;
+    autoRead: boolean;
+    voiceInput: boolean;
+    hints: boolean;
+    minimap: boolean;
+    /** freeze the page and pan by transform while zoomed, instead of scrolling it */
+    lensPan: boolean;
+    debugView: boolean;
+    /** capture render scale: 1 = screen resolution, 0.5 = reduced */
+    captureRes: number;
+    /** chat bubble font size in px */
+    chatFontSize: number;
+    /** popover pinned position — null = follow the cursor (survives reloads) */
+    pinnedPos: { left: number; top: number } | null;
 }
 
 const DEFAULTS: Settings = {
-  zoom: true,
-  mouseTrace: true,
-  zoomTrace: true,
-  viewportCrop: true,
-  zoomKeys: true,
-  smoothZoom: true,
-  smartZoom: true,
-  streamReplies: true,
-  quickActions: true,
-  dragPopover: true,
-  elementContext: true,
-  regionSelect: true,
-  highContrast: false,
-  continuity: true,
-  autoRead: false,
-  voiceInput: true,
-  hints: true,
-  minimap: true,
-  lensPan: false,
-  debugView: false,
-  captureRes: 1,
-  chatFontSize: 14,
-  pinnedPos: null,
-}
+    zoom: true,
+    mouseTrace: true,
+    zoomTrace: true,
+    viewportCrop: true,
+    zoomKeys: true,
+    smoothZoom: true,
+    smartZoom: true,
+    streamReplies: true,
+    quickActions: true,
+    dragPopover: true,
+    elementContext: true,
+    regionSelect: true,
+    highContrast: false,
+    continuity: true,
+    autoRead: false,
+    voiceInput: true,
+    hints: true,
+    minimap: true,
+    lensPan: false,
+    debugView: false,
+    captureRes: 1,
+    chatFontSize: 14,
+    pinnedPos: null,
+};
 
 /** keys of Settings whose value is a boolean — the on/off rows in the panel */
-export type BoolSettingKey = { [K in keyof Settings]: Settings[K] extends boolean ? K : never }[keyof Settings]
+export type BoolSettingKey = {
+    [K in keyof Settings]: Settings[K] extends boolean ? K : never;
+}[keyof Settings];
 
 export const TOGGLE_LABELS: Record<BoolSettingKey, string> = {
-  zoom: 'Page zoom (ctrl+wheel)',
-  mouseTrace: 'Mouse trail capture',
-  zoomTrace: 'Zoom history capture',
-  viewportCrop: 'Send zoomed-view close-up',
-  zoomKeys: 'Zoom shortcuts (ctrl +/− /0)',
-  smoothZoom: 'Smooth zoom animation',
-  smartZoom: 'Double-click zoom to fit',
-  streamReplies: 'Streaming chat replies',
-  quickActions: 'Quick-action chips',
-  dragPopover: 'Movable popover (drag header)',
-  elementContext: 'Clicked-element context capture',
-  regionSelect: 'Alt+drag region select',
-  highContrast: 'High-contrast chat',
-  continuity: 'Conversation continuity',
-  autoRead: 'Read replies aloud',
-  voiceInput: 'Voice input (mic)',
-  hints: 'Proactive help hints',
-  minimap: 'Minimap while zoomed',
-  lensPan: 'Lens panning (freeze page while zoomed)',
-  debugView: 'Debug view (ctrl+shift+D)',
-}
+    zoom: "Page zoom (ctrl+wheel)",
+    mouseTrace: "Mouse trail capture",
+    zoomTrace: "Zoom history capture",
+    viewportCrop: "Send zoomed-view close-up",
+    zoomKeys: "Zoom shortcuts (ctrl +/− /0)",
+    smoothZoom: "Smooth zoom animation",
+    smartZoom: "Double-click zoom to fit",
+    streamReplies: "Streaming chat replies",
+    quickActions: "Quick-action chips",
+    dragPopover: "Movable popover (drag header)",
+    elementContext: "Clicked-element context capture",
+    regionSelect: "Alt+drag region select",
+    highContrast: "High-contrast chat",
+    continuity: "Conversation continuity",
+    autoRead: "Read replies aloud",
+    voiceInput: "Voice input (mic)",
+    hints: "Proactive help hints",
+    minimap: "Minimap while zoomed",
+    lensPan: "Lens panning (freeze page while zoomed)",
+    debugView: "Debug view (ctrl+shift+D)",
+};
 
-export const useSettings = create<Settings>()(persist(() => ({ ...DEFAULTS }), { name: 'unilens-settings' }))
+export const useSettings = create<Settings>()(
+    persist(() => ({ ...DEFAULTS }), { name: "unilens-settings" }),
+);
 
 /** live snapshot for non-React modules (React components use the useSettings hook) */
-export const getSettings = () => useSettings.getState()
+export const getSettings = () => useSettings.getState();
 
 /** subscribe to settings changes (returns unsubscribe) — lets open UI re-render live */
-export const onSettingsChange = (cb: () => void) => useSettings.subscribe(cb)
+export const onSettingsChange = (cb: () => void) => useSettings.subscribe(cb);
 
 /** programmatic settings change (e.g. keyboard shortcuts) — persists + notifies */
-export function updateSetting<K extends keyof Settings>(key: K, value: Settings[K]) {
-  useSettings.setState({ [key]: value })
+export function updateSetting<K extends keyof Settings>(
+    key: K,
+    value: Settings[K],
+) {
+    useSettings.setState({ [key]: value });
 }

@@ -10,6 +10,7 @@ LLM/VLM provider picked by env: OPENAI_API_KEY -> OpenAI, else GOOGLE_API_KEY
 -> Gemini, else an offline echo stub (so the frontend works without keys).
 Patterns follow assets26-ai4vis-proj/prototype (base64 inline images).
 """
+
 import base64
 import json
 import os
@@ -37,7 +38,9 @@ def _load_session(sid: str) -> dict | None:
 
 
 def _save_session(sid: str, data: dict) -> None:
-    (SESSIONS_DIR / f"{sid}.json").write_text(json.dumps(data, indent=2), encoding="utf-8")
+    (SESSIONS_DIR / f"{sid}.json").write_text(
+        json.dumps(data, indent=2), encoding="utf-8"
+    )
 
 
 def _session_context_note(session: dict, current_cap_id: str) -> str | None:
@@ -66,6 +69,7 @@ def _session_context_note(session: dict, current_cap_id: str) -> str | None:
         "Earlier in this session the user also captured (images not re-sent; shown page is the latest capture):\n"
         + "\n".join(lines)
     )
+
 
 OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-5.4-mini")
 GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3-flash-preview")
@@ -110,6 +114,7 @@ def _prune_storage() -> None:
         if s.stat().st_mtime < cutoff:
             s.unlink()
 
+
 SYSTEM_PROMPT = """You are UniLens, an assistant that helps users understand web pages.
 With every conversation you receive:
 - A full-page screenshot annotated with: a cyan rectangle = the user's visible viewport,
@@ -136,7 +141,9 @@ def _provider():
     return "stub"
 
 
-def _openai_messages(png_b64: str, viewport_b64: str | None, meta: dict, history: list, message: str) -> list:
+def _openai_messages(
+    png_b64: str, viewport_b64: str | None, meta: dict, history: list, message: str
+) -> list:
     context_content = [
         {"type": "input_text", "text": "## Annotated full-page screenshot"},
         {
@@ -155,13 +162,22 @@ def _openai_messages(png_b64: str, viewport_b64: str | None, meta: dict, history
             },
         ]
     context_content.append(
-        {"type": "input_text", "text": "## Page metadata\n" + json.dumps(meta, indent=2)}
+        {
+            "type": "input_text",
+            "text": "## Page metadata\n" + json.dumps(meta, indent=2),
+        }
     )
     input_messages = [
         {"role": "user", "content": [{"type": "input_text", "text": SYSTEM_PROMPT}]},
-        {"role": "assistant", "content": "Understood. I will follow these instructions."},
+        {
+            "role": "assistant",
+            "content": "Understood. I will follow these instructions.",
+        },
         {"role": "user", "content": context_content},
-        {"role": "assistant", "content": "I can see the page. What would you like to know?"},
+        {
+            "role": "assistant",
+            "content": "I can see the page. What would you like to know?",
+        },
     ]
     for m in history:
         input_messages.append({"role": m["role"], "content": m["text"]})
@@ -169,17 +185,22 @@ def _openai_messages(png_b64: str, viewport_b64: str | None, meta: dict, history
     return input_messages
 
 
-def _call_openai(png_b64: str, viewport_b64: str | None, meta: dict, history: list, message: str) -> str:
+def _call_openai(
+    png_b64: str, viewport_b64: str | None, meta: dict, history: list, message: str
+) -> str:
     from openai import OpenAI
 
     client = OpenAI()
     response = client.responses.create(
-        model=OPENAI_MODEL, input=_openai_messages(png_b64, viewport_b64, meta, history, message)
+        model=OPENAI_MODEL,
+        input=_openai_messages(png_b64, viewport_b64, meta, history, message),
     )
     return response.output_text
 
 
-def _gemini_contents(png_b64: str, viewport_b64: str | None, meta: dict, history: list, message: str) -> list:
+def _gemini_contents(
+    png_b64: str, viewport_b64: str | None, meta: dict, history: list, message: str
+) -> list:
     from google.genai import types
 
     context_parts = [
@@ -189,21 +210,38 @@ def _gemini_contents(png_b64: str, viewport_b64: str | None, meta: dict, history
     if viewport_b64:
         context_parts += [
             types.Part.from_text(text="## Close-up of the user's current view"),
-            types.Part.from_bytes(data=base64.b64decode(viewport_b64), mime_type="image/png"),
+            types.Part.from_bytes(
+                data=base64.b64decode(viewport_b64), mime_type="image/png"
+            ),
         ]
-    context_parts.append(types.Part.from_text(text="## Page metadata\n" + json.dumps(meta, indent=2)))
+    context_parts.append(
+        types.Part.from_text(text="## Page metadata\n" + json.dumps(meta, indent=2))
+    )
     contents = [
         types.Content(role="user", parts=context_parts),
-        types.Content(role="model", parts=[types.Part.from_text(text="I can see the page. What would you like to know?")]),
+        types.Content(
+            role="model",
+            parts=[
+                types.Part.from_text(
+                    text="I can see the page. What would you like to know?"
+                )
+            ],
+        ),
     ]
     for m in history:
         role = "model" if m["role"] == "assistant" else "user"
-        contents.append(types.Content(role=role, parts=[types.Part.from_text(text=m["text"])]))
-    contents.append(types.Content(role="user", parts=[types.Part.from_text(text=message)]))
+        contents.append(
+            types.Content(role=role, parts=[types.Part.from_text(text=m["text"])])
+        )
+    contents.append(
+        types.Content(role="user", parts=[types.Part.from_text(text=message)])
+    )
     return contents
 
 
-def _call_gemini(png_b64: str, viewport_b64: str | None, meta: dict, history: list, message: str) -> str:
+def _call_gemini(
+    png_b64: str, viewport_b64: str | None, meta: dict, history: list, message: str
+) -> str:
     from google import genai
     from google.genai import types
 
@@ -222,7 +260,9 @@ def _stream_openai(png_b64, viewport_b64, meta, history, message):
 
     client = OpenAI()
     input_messages = _openai_messages(png_b64, viewport_b64, meta, history, message)
-    stream = client.responses.create(model=OPENAI_MODEL, input=input_messages, stream=True)
+    stream = client.responses.create(
+        model=OPENAI_MODEL, input=input_messages, stream=True
+    )
     for event in stream:
         if event.type == "response.output_text.delta":
             yield event.delta
@@ -272,7 +312,10 @@ def create_app():
     @app.post("/api/capture")
     def save_capture():
         if _rate_limited("capture"):
-            return jsonify({"error": "rate limit: too many captures, wait a minute"}), 429
+            return (
+                jsonify({"error": "rate limit: too many captures, wait a minute"}),
+                429,
+            )
         data = request.get_json(force=True)
         image = data.get("image", "")
         meta = data.get("meta", {})
@@ -285,7 +328,9 @@ def create_app():
         (cap_dir / "capture.png").write_bytes(base64.b64decode(image.split(",", 1)[1]))
         viewport = data.get("viewport") or ""
         if viewport.startswith("data:image/png;base64,"):
-            (cap_dir / "viewport.png").write_bytes(base64.b64decode(viewport.split(",", 1)[1]))
+            (cap_dir / "viewport.png").write_bytes(
+                base64.b64decode(viewport.split(",", 1)[1])
+            )
         (cap_dir / "meta.json").write_text(json.dumps(meta, indent=2), encoding="utf-8")
         (cap_dir / "chat.json").write_text("[]", encoding="utf-8")
 
@@ -313,7 +358,9 @@ def create_app():
             for cid in data.get("captures", []):
                 cap_session[cid] = s.stem
         items = []
-        for d in sorted(CAPTURES_DIR.iterdir(), key=lambda p: p.stat().st_mtime, reverse=True):
+        for d in sorted(
+            CAPTURES_DIR.iterdir(), key=lambda p: p.stat().st_mtime, reverse=True
+        ):
             meta_path = d / "meta.json"
             if not meta_path.is_file():
                 continue
@@ -364,7 +411,9 @@ def create_app():
                 break
         if not history and (cap_dir / "chat.json").is_file():
             history = json.loads((cap_dir / "chat.json").read_text(encoding="utf-8"))
-        return jsonify({"id": cap_id, "meta": meta, "history": history, "session": session_id})
+        return jsonify(
+            {"id": cap_id, "meta": meta, "history": history, "session": session_id}
+        )
 
     @app.delete("/api/capture/<cap_id>")
     def delete_capture(cap_id):
@@ -437,12 +486,21 @@ def create_app():
         session = _load_session(sid)
         if session is None:
             return jsonify({"error": "unknown session_id"}), 404
-        return jsonify({"id": sid, "captures": len(session["captures"]), "history": session["history"]})
+        return jsonify(
+            {
+                "id": sid,
+                "captures": len(session["captures"]),
+                "history": session["history"],
+            }
+        )
 
     @app.post("/api/chat/stream")
     def chat_stream():
         if _rate_limited("chat"):
-            return jsonify({"error": "rate limit: too many messages, wait a minute"}), 429
+            return (
+                jsonify({"error": "rate limit: too many messages, wait a minute"}),
+                429,
+            )
         data = request.get_json(force=True)
         cap_id = data.get("capture_id", "")
         message = (data.get("message") or "").strip()
@@ -459,7 +517,13 @@ def create_app():
             history = session["history"]
             note = _session_context_note(session, cap_id)
             provider_history = (
-                [{"role": "user", "text": note}, {"role": "assistant", "text": "Noted."}] + history if note else history
+                [
+                    {"role": "user", "text": note},
+                    {"role": "assistant", "text": "Noted."},
+                ]
+                + history
+                if note
+                else history
             )
         else:
             history = json.loads((cap_dir / "chat.json").read_text(encoding="utf-8"))
@@ -467,10 +531,14 @@ def create_app():
         png_b64 = base64.b64encode((cap_dir / "capture.png").read_bytes()).decode()
         viewport_b64 = None
         if (cap_dir / "viewport.png").is_file():
-            viewport_b64 = base64.b64encode((cap_dir / "viewport.png").read_bytes()).decode()
+            viewport_b64 = base64.b64encode(
+                (cap_dir / "viewport.png").read_bytes()
+            ).decode()
 
         provider = _provider()
-        model = {"openai": OPENAI_MODEL, "gemini": GEMINI_MODEL, "stub": "none"}[provider]
+        model = {"openai": OPENAI_MODEL, "gemini": GEMINI_MODEL, "stub": "none"}[
+            provider
+        ]
         images_sent = 0 if provider == "stub" else (2 if viewport_b64 else 1)
 
         def sse(obj):
@@ -481,9 +549,13 @@ def create_app():
             parts = []
             try:
                 if provider == "openai":
-                    deltas = _stream_openai(png_b64, viewport_b64, meta, provider_history, message)
+                    deltas = _stream_openai(
+                        png_b64, viewport_b64, meta, provider_history, message
+                    )
                 elif provider == "gemini":
-                    deltas = _stream_gemini(png_b64, viewport_b64, meta, provider_history, message)
+                    deltas = _stream_gemini(
+                        png_b64, viewport_b64, meta, provider_history, message
+                    )
                 else:
                     deltas = _stream_stub(meta, message)
                 for delta in deltas:
@@ -493,12 +565,17 @@ def create_app():
                 yield sse({"error": f"{type(e).__name__}: {e}"})
                 return
             reply = "".join(parts)
-            new_history = history + [{"role": "user", "text": message}, {"role": "assistant", "text": reply}]
+            new_history = history + [
+                {"role": "user", "text": message},
+                {"role": "assistant", "text": reply},
+            ]
             if session is not None:
                 session["history"] = new_history
                 _save_session(sid, session)
             else:
-                (cap_dir / "chat.json").write_text(json.dumps(new_history, indent=2), encoding="utf-8")
+                (cap_dir / "chat.json").write_text(
+                    json.dumps(new_history, indent=2), encoding="utf-8"
+                )
             yield sse(
                 {
                     "done": True,
@@ -514,7 +591,10 @@ def create_app():
     @app.post("/api/chat")
     def chat():
         if _rate_limited("chat"):
-            return jsonify({"error": "rate limit: too many messages, wait a minute"}), 429
+            return (
+                jsonify({"error": "rate limit: too many messages, wait a minute"}),
+                429,
+            )
         data = request.get_json(force=True)
         cap_id = data.get("capture_id", "")
         message = (data.get("message") or "").strip()
@@ -532,7 +612,13 @@ def create_app():
             history = session["history"]
             note = _session_context_note(session, cap_id)
             provider_history = (
-                [{"role": "user", "text": note}, {"role": "assistant", "text": "Noted."}] + history if note else history
+                [
+                    {"role": "user", "text": note},
+                    {"role": "assistant", "text": "Noted."},
+                ]
+                + history
+                if note
+                else history
             )
         else:
             history = json.loads((cap_dir / "chat.json").read_text(encoding="utf-8"))
@@ -540,29 +626,42 @@ def create_app():
         png_b64 = base64.b64encode((cap_dir / "capture.png").read_bytes()).decode()
         viewport_b64 = None
         if (cap_dir / "viewport.png").is_file():
-            viewport_b64 = base64.b64encode((cap_dir / "viewport.png").read_bytes()).decode()
+            viewport_b64 = base64.b64encode(
+                (cap_dir / "viewport.png").read_bytes()
+            ).decode()
 
         provider = _provider()
         t0 = time.perf_counter()
         try:
             if provider == "openai":
-                reply = _call_openai(png_b64, viewport_b64, meta, provider_history, message)
+                reply = _call_openai(
+                    png_b64, viewport_b64, meta, provider_history, message
+                )
             elif provider == "gemini":
-                reply = _call_gemini(png_b64, viewport_b64, meta, provider_history, message)
+                reply = _call_gemini(
+                    png_b64, viewport_b64, meta, provider_history, message
+                )
             else:
                 reply = _call_stub(meta, message)
         except Exception as e:  # surface provider errors to the popover
             return jsonify({"error": f"{type(e).__name__}: {e}"}), 502
         latency_ms = round((time.perf_counter() - t0) * 1000)
 
-        history += [{"role": "user", "text": message}, {"role": "assistant", "text": reply}]
+        history += [
+            {"role": "user", "text": message},
+            {"role": "assistant", "text": reply},
+        ]
         if session is not None:
             session["history"] = history
             _save_session(sid, session)
         else:
-            (cap_dir / "chat.json").write_text(json.dumps(history, indent=2), encoding="utf-8")
+            (cap_dir / "chat.json").write_text(
+                json.dumps(history, indent=2), encoding="utf-8"
+            )
 
-        model = {"openai": OPENAI_MODEL, "gemini": GEMINI_MODEL, "stub": "none"}[provider]
+        model = {"openai": OPENAI_MODEL, "gemini": GEMINI_MODEL, "stub": "none"}[
+            provider
+        ]
         return jsonify(
             {
                 "reply": reply,
@@ -579,4 +678,8 @@ def create_app():
 app = create_app()
 
 if __name__ == "__main__":
-    app.run(host="127.0.0.1", port=int(os.getenv("FLASK_PORT", "5000")), debug=os.getenv("FLASK_DEBUG") == "1")
+    app.run(
+        host="127.0.0.1",
+        port=int(os.getenv("FLASK_PORT", "5000")),
+        debug=os.getenv("FLASK_DEBUG") == "1",
+    )

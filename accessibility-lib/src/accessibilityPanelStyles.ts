@@ -5,51 +5,51 @@
  * TypeScript side. Everything is scoped under #unilens-a11y-root so
  * it never collides with the embedding site's CSS.
  */
-import { ROOT_ID } from './accessibilityPanelUI'
+import { ROOT_ID } from "./accessibilityPanelUI";
 
-type Tokens = Record<string, string>
+type Tokens = Record<string, string>;
 
 const LIGHT: Tokens = {
-  accent: '#1257a0',
-  'accent-dim': 'rgba(18, 87, 160, 0.1)',
-  'accent-ring': 'rgba(18, 87, 160, 0.35)',
-  'on-accent': '#ffffff',
-  bg: '#f4f6fa',
-  surface: '#ffffff',
-  'surface-2': '#eef1f7',
-  'surface-3': '#e2e7f0',
-  border: 'rgba(16, 24, 40, 0.14)',
-  'border-strong': 'rgba(16, 24, 40, 0.3)',
-  text: '#16203a',
-  muted: '#55607a',
-  faint: '#788398',
-  ok: '#0f6b3c',
-  'ok-bg': 'rgba(15, 107, 60, 0.1)',
-  danger: '#a92a2a',
-  'danger-bg': 'rgba(169, 42, 42, 0.08)',
-  'danger-border': 'rgba(169, 42, 42, 0.4)',
-  track: 'rgba(16, 24, 40, 0.22)',
-  knob: '#ffffff',
-  'knob-on': '#ffffff',
-  focus: '#0b57d0',
-  'toggle-bg': 'linear-gradient(135deg, #10456f 0%, #1a6aa8 100%)',
-  'toggle-border': 'rgba(10, 40, 70, 0.5)',
-  'toggle-text': '#ffffff',
-  'badge-bg': '#ffd23f',
-  'badge-text': '#3a2c00',
-  'shadow-panel': '0 18px 50px rgba(16, 24, 40, 0.18)',
-  'shadow-toggle': '0 6px 18px rgba(16, 24, 40, 0.2)',
-  'shadow-raise': '0 1px 3px rgba(16, 24, 40, 0.2)',
-}
+    accent: "#1257a0",
+    "accent-dim": "rgba(18, 87, 160, 0.1)",
+    "accent-ring": "rgba(18, 87, 160, 0.35)",
+    "on-accent": "#ffffff",
+    bg: "#f4f6fa",
+    surface: "#ffffff",
+    "surface-2": "#eef1f7",
+    "surface-3": "#e2e7f0",
+    border: "rgba(16, 24, 40, 0.14)",
+    "border-strong": "rgba(16, 24, 40, 0.3)",
+    text: "#16203a",
+    muted: "#55607a",
+    faint: "#788398",
+    ok: "#0f6b3c",
+    "ok-bg": "rgba(15, 107, 60, 0.1)",
+    danger: "#a92a2a",
+    "danger-bg": "rgba(169, 42, 42, 0.08)",
+    "danger-border": "rgba(169, 42, 42, 0.4)",
+    track: "rgba(16, 24, 40, 0.22)",
+    knob: "#ffffff",
+    "knob-on": "#ffffff",
+    focus: "#0b57d0",
+    "toggle-bg": "linear-gradient(135deg, #10456f 0%, #1a6aa8 100%)",
+    "toggle-border": "rgba(10, 40, 70, 0.5)",
+    "toggle-text": "#ffffff",
+    "badge-bg": "#ffd23f",
+    "badge-text": "#3a2c00",
+    "shadow-panel": "0 18px 50px rgba(16, 24, 40, 0.18)",
+    "shadow-toggle": "0 6px 18px rgba(16, 24, 40, 0.2)",
+    "shadow-raise": "0 1px 3px rgba(16, 24, 40, 0.2)",
+};
 
 function tokenBlock(selector: string, tokens: Tokens): string {
-  const body = Object.entries(tokens)
-    .map(([key, value]) => `  --unilens-a11y-panel-${key}: ${value};`)
-    .join('\n')
-  return `${selector} {\n${body}\n}`
+    const body = Object.entries(tokens)
+        .map(([key, value]) => `  --unilens-a11y-panel-${key}: ${value};`)
+        .join("\n");
+    return `${selector} {\n${body}\n}`;
 }
 
-const R = `#${ROOT_ID}`
+const R = `#${ROOT_ID}`;
 
 /**
  * Overlay uses a stable light theme. Page display filters never restyle the panel.
@@ -418,6 +418,6 @@ ${R}[data-unilens-a11y-reduce-motion="true"] *::before,
 ${R}[data-unilens-a11y-reduce-motion="true"] *::after {
   transition: none !important; animation: none !important;
 }
-`
+`;
 
-export const WIDGET_CSS = [tokenBlock(R, LIGHT), LAYOUT_CSS].join('\n')
+export const WIDGET_CSS = [tokenBlock(R, LIGHT), LAYOUT_CSS].join("\n");

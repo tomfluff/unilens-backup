@@ -15,45 +15,48 @@
  * - Importing this module must never throw even where the speech API is
  *   unavailable (the panel decides what to show based on support).
  */
-import { getA11yLang } from './accessibilityI18n'
-import { getActiveSelectionRange } from './selectionTextSize'
-import { settings } from './settings'
-import { isUniLensOverlayNode } from './domIds'
+import { getA11yLang } from "./accessibilityI18n";
+import { getActiveSelectionRange } from "./selectionTextSize";
+import { settings } from "./settings";
+import { isUniLensOverlayNode } from "./domIds";
 import {
-  guessWordLength,
-  normalizeSpeechRateLevel,
-  speechRateValue,
-  splitSpeechChunks,
-  type SpeechChunk,
-} from './speechLevels'
+    guessWordLength,
+    normalizeSpeechRateLevel,
+    speechRateValue,
+    splitSpeechChunks,
+    type SpeechChunk,
+} from "./speechLevels";
 
-export type SpeechState = 'idle' | 'speaking' | 'paused'
+export type SpeechState = "idle" | "speaking" | "paused";
 
 export interface SpeechTargetInfo {
-  /** Whether there's a range to read aloud (while speaking, the text being spoken counts as the target). */
-  hasTarget: boolean
-  /** Character count with whitespace collapsed. Used for the panel display. */
-  charCount: number
+    /** Whether there's a range to read aloud (while speaking, the text being spoken counts as the target). */
+    hasTarget: boolean;
+    /** Character count with whitespace collapsed. Used for the panel display. */
+    charCount: number;
 }
 
 export interface SpeakResult {
-  ok: boolean
-  charCount: number
+    ok: boolean;
+    charCount: number;
 }
 
 /** The whole range currently being read aloud (pale amber). */
-const RANGE_HIGHLIGHT_NAME = 'unilens-speech-range'
+const RANGE_HIGHLIGHT_NAME = "unilens-speech-range";
 /** The word currently being read (deep orange). Rendered above the range highlight. */
-const WORD_HIGHLIGHT_NAME = 'unilens-speech-word'
-const HIGHLIGHT_STYLE_ID = 'unilens-speech-highlight'
-const SPEAKING_ATTR = 'data-unilens-speaking'
+const WORD_HIGHLIGHT_NAME = "unilens-speech-word";
+const HIGHLIGHT_STYLE_ID = "unilens-speech-highlight";
+const SPEAKING_ATTR = "data-unilens-speaking";
 
 function isUniLensSelection(selection: Selection): boolean {
-  if (selection.rangeCount === 0) return false
-  const range = selection.getRangeAt(0)
-  const node = range.commonAncestorContainer
-  const element = node.nodeType === Node.TEXT_NODE ? node.parentElement : (node as Element)
-  return isUniLensOverlayNode(element)
+    if (selection.rangeCount === 0) return false;
+    const range = selection.getRangeAt(0);
+    const node = range.commonAncestorContainer;
+    const element =
+        node.nodeType === Node.TEXT_NODE
+            ? node.parentElement
+            : (node as Element);
+    return isUniLensOverlayNode(element);
 }
 
 /**
@@ -61,42 +64,47 @@ function isUniLensSelection(selection: Selection): boolean {
  * (Chrome-family browsers). For the first chunk only, wait this long and
  * retry if nothing has started.
  */
-const FIRST_CHUNK_RETRY_MS = 250
+const FIRST_CHUNK_RETRY_MS = 250;
 
 // ── Speech API entry point ────────────────────────────────────────────────
 
 function synth(): SpeechSynthesis | null {
-  if (typeof window === 'undefined') return null
-  return 'speechSynthesis' in window ? window.speechSynthesis : null
+    if (typeof window === "undefined") return null;
+    return "speechSynthesis" in window ? window.speechSynthesis : null;
 }
 
 export function isSpeechSupported(): boolean {
-  return synth() != null && typeof window.SpeechSynthesisUtterance === 'function'
+    return (
+        synth() != null && typeof window.SpeechSynthesisUtterance === "function"
+    );
 }
 
 // ── Read-position highlight (CSS Custom Highlight API) ────────────────────
 
 interface HighlightLike {
-  priority?: number
+    priority?: number;
 }
 
 interface HighlightRegistryLike {
-  set(name: string, highlight: HighlightLike): void
-  delete(name: string): void
+    set(name: string, highlight: HighlightLike): void;
+    delete(name: string): void;
 }
 
-type HighlightConstructor = new (...ranges: Range[]) => HighlightLike
+type HighlightConstructor = new (...ranges: Range[]) => HighlightLike;
 
 /** null on unsupported browsers — the caller just proceeds without the highlight. */
-function highlightApi(): { registry: HighlightRegistryLike; ctor: HighlightConstructor } | null {
-  if (typeof window === 'undefined') return null
-  const scope = window as unknown as {
-    CSS?: { highlights?: HighlightRegistryLike }
-    Highlight?: HighlightConstructor
-  }
-  const registry = scope.CSS?.highlights
-  const ctor = scope.Highlight
-  return registry && ctor ? { registry, ctor } : null
+function highlightApi(): {
+    registry: HighlightRegistryLike;
+    ctor: HighlightConstructor;
+} | null {
+    if (typeof window === "undefined") return null;
+    const scope = window as unknown as {
+        CSS?: { highlights?: HighlightRegistryLike };
+        Highlight?: HighlightConstructor;
+    };
+    const registry = scope.CSS?.highlights;
+    const ctor = scope.Highlight;
+    return registry && ctor ? { registry, ctor } : null;
 }
 
 /**
@@ -122,54 +130,54 @@ function highlightApi(): { registry: HighlightRegistryLike; ctor: HighlightConst
  * selection being read aloud is always the read target itself (i.e. both
  * highlight tones are light backgrounds), so a fixed dark text color is safe.
  */
-const HIGHLIGHT_TEXT_COLOR = '#1b1b1b'
+const HIGHLIGHT_TEXT_COLOR = "#1b1b1b";
 
 function ensureHighlightStyle() {
-  if (document.getElementById(HIGHLIGHT_STYLE_ID)) return
-  const style = document.createElement('style')
-  style.id = HIGHLIGHT_STYLE_ID
-  style.textContent = [
-    `::highlight(${RANGE_HIGHLIGHT_NAME}){background-color:#ffe9b0;color:${HIGHLIGHT_TEXT_COLOR};}`,
-    `::highlight(${WORD_HIGHLIGHT_NAME}){background-color:#ff9f1c;color:${HIGHLIGHT_TEXT_COLOR};}`,
-    `html[${SPEAKING_ATTR}] ::selection{` +
-      `background-color:transparent !important;color:${HIGHLIGHT_TEXT_COLOR} !important;}`,
-  ].join('')
-  document.head.appendChild(style)
+    if (document.getElementById(HIGHLIGHT_STYLE_ID)) return;
+    const style = document.createElement("style");
+    style.id = HIGHLIGHT_STYLE_ID;
+    style.textContent = [
+        `::highlight(${RANGE_HIGHLIGHT_NAME}){background-color:#ffe9b0;color:${HIGHLIGHT_TEXT_COLOR};}`,
+        `::highlight(${WORD_HIGHLIGHT_NAME}){background-color:#ff9f1c;color:${HIGHLIGHT_TEXT_COLOR};}`,
+        `html[${SPEAKING_ATTR}] ::selection{` +
+            `background-color:transparent !important;color:${HIGHLIGHT_TEXT_COLOR} !important;}`,
+    ].join("");
+    document.head.appendChild(style);
 }
 
 function highlightEnabled(): boolean {
-  return settings.speechHighlight && highlightApi() != null
+    return settings.speechHighlight && highlightApi() != null;
 }
 
 function setHighlightRange(name: string, range: Range, priority: number) {
-  const api = highlightApi()
-  if (!api) return
-  try {
-    const highlight = new api.ctor(range)
-    // Render the current word above the range highlight, without depending on registration order.
-    highlight.priority = priority
-    api.registry.set(name, highlight)
-  } catch {
-    api.registry.delete(name)
-  }
+    const api = highlightApi();
+    if (!api) return;
+    try {
+        const highlight = new api.ctor(range);
+        // Render the current word above the range highlight, without depending on registration order.
+        highlight.priority = priority;
+        api.registry.set(name, highlight);
+    } catch {
+        api.registry.delete(name);
+    }
 }
 
 /** Starts the highlight that shows speech is in progress. No-op when unsupported or turned off. */
 function startHighlighting() {
-  if (!highlightEnabled()) return
+    if (!highlightEnabled()) return;
 
-  ensureHighlightStyle()
-  document.documentElement.setAttribute(SPEAKING_ATTR, 'true')
+    ensureHighlightStyle();
+    document.documentElement.setAttribute(SPEAKING_ATTR, "true");
 
-  const range = buildRange(0, currentText.length)
-  if (range) setHighlightRange(RANGE_HIGHLIGHT_NAME, range, 0)
+    const range = buildRange(0, currentText.length);
+    if (range) setHighlightRange(RANGE_HIGHLIGHT_NAME, range, 0);
 }
 
 function stopHighlighting() {
-  document.documentElement.removeAttribute(SPEAKING_ATTR)
-  const registry = highlightApi()?.registry
-  registry?.delete(RANGE_HIGHLIGHT_NAME)
-  registry?.delete(WORD_HIGHLIGHT_NAME)
+    document.documentElement.removeAttribute(SPEAKING_ATTR);
+    const registry = highlightApi()?.registry;
+    registry?.delete(RANGE_HIGHLIGHT_NAME);
+    registry?.delete(WORD_HIGHLIGHT_NAME);
 }
 
 /**
@@ -178,20 +186,20 @@ function stopHighlighting() {
  * clears any highlight that was left showing.
  */
 export function syncSpeechHighlight() {
-  if (state !== 'idle' && highlightEnabled()) startHighlighting()
-  else stopHighlighting()
+    if (state !== "idle" && highlightEnabled()) startHighlighting();
+    else stopHighlighting();
 }
 
 // ── Extracting the selection ──────────────────────────────────────────────
 
 interface TextSegment {
-  node: Text
-  /** Start position within the spoken text. */
-  start: number
-  /** End position within the spoken text. */
-  end: number
-  /** Start position within node.data (starts mid-node at the range's edge). */
-  nodeOffset: number
+    node: Text;
+    /** Start position within the spoken text. */
+    start: number;
+    /** End position within the spoken text. */
+    end: number;
+    /** Start position within node.data (starts mid-node at the range's edge). */
+    nodeOffset: number;
 }
 
 /**
@@ -200,34 +208,48 @@ interface TextSegment {
  * Range.toString(), so a character position reported by a speech event can
  * be mapped straight back to its place in the original DOM.
  */
-function collectSegments(range: Range): { text: string; segments: TextSegment[] } {
-  const segments: TextSegment[] = []
-  let text = ''
+function collectSegments(range: Range): {
+    text: string;
+    segments: TextSegment[];
+} {
+    const segments: TextSegment[] = [];
+    let text = "";
 
-  const container = range.commonAncestorContainer
-  const root = container.nodeType === Node.TEXT_NODE ? container.parentNode : container
-  if (!root) return { text, segments }
+    const container = range.commonAncestorContainer;
+    const root =
+        container.nodeType === Node.TEXT_NODE
+            ? container.parentNode
+            : container;
+    if (!root) return { text, segments };
 
-  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT)
-  for (let node = walker.nextNode(); node; node = walker.nextNode()) {
-    const textNode = node as Text
-    if (!range.intersectsNode(textNode)) continue
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+    for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+        const textNode = node as Text;
+        if (!range.intersectsNode(textNode)) continue;
 
-    const from = textNode === range.startContainer ? range.startOffset : 0
-    const to = textNode === range.endContainer ? range.endOffset : textNode.data.length
-    const piece = textNode.data.slice(from, to)
-    // Skip nodes that only touch the range's edge — their piece ends up empty.
-    if (!piece) continue
+        const from = textNode === range.startContainer ? range.startOffset : 0;
+        const to =
+            textNode === range.endContainer
+                ? range.endOffset
+                : textNode.data.length;
+        const piece = textNode.data.slice(from, to);
+        // Skip nodes that only touch the range's edge — their piece ends up empty.
+        if (!piece) continue;
 
-    segments.push({ node: textNode, start: text.length, end: text.length + piece.length, nodeOffset: from })
-    text += piece
-  }
+        segments.push({
+            node: textNode,
+            start: text.length,
+            end: text.length + piece.length,
+            nodeOffset: from,
+        });
+        text += piece;
+    }
 
-  return { text, segments }
+    return { text, segments };
 }
 
 function normalizedLength(text: string): number {
-  return text.replace(/\s+/g, ' ').trim().length
+    return text.replace(/\s+/g, " ").trim().length;
 }
 
 /**
@@ -237,41 +259,44 @@ function normalizedLength(text: string): number {
  * always takes priority.
  */
 function detectSpeechLang(range: Range): string {
-  const node = range.commonAncestorContainer
-  const element = node.nodeType === Node.TEXT_NODE ? node.parentElement : (node as Element)
-  const tagged = element?.closest?.('[lang]')?.getAttribute('lang')?.trim()
-  if (tagged) return tagged
+    const node = range.commonAncestorContainer;
+    const element =
+        node.nodeType === Node.TEXT_NODE
+            ? node.parentElement
+            : (node as Element);
+    const tagged = element?.closest?.("[lang]")?.getAttribute("lang")?.trim();
+    if (tagged) return tagged;
 
-  const html = document.documentElement.lang.trim()
-  if (html) return html
+    const html = document.documentElement.lang.trim();
+    if (html) return html;
 
-  return getA11yLang() === 'ja' ? 'ja-JP' : 'en-US'
+    return getA11yLang() === "ja" ? "ja-JP" : "en-US";
 }
 
 function pickVoice(lang: string): SpeechSynthesisVoice | null {
-  const voices = synth()?.getVoices() ?? []
-  if (voices.length === 0) return null
+    const voices = synth()?.getVoices() ?? [];
+    if (voices.length === 0) return null;
 
-  // Depending on the environment this can show up as either "ja_JP" or "ja-JP", so normalize before comparing.
-  const normalize = (tag: string) => tag.toLowerCase().replace(/_/g, '-')
-  const wanted = normalize(lang)
-  const primary = wanted.split('-')[0]
+    // Depending on the environment this can show up as either "ja_JP" or "ja-JP", so normalize before comparing.
+    const normalize = (tag: string) => tag.toLowerCase().replace(/_/g, "-");
+    const wanted = normalize(lang);
+    const primary = wanted.split("-")[0];
 
-  return (
-    voices.find((v) => normalize(v.lang) === wanted) ??
-    voices.find((v) => normalize(v.lang).split('-')[0] === primary) ??
-    null
-  )
+    return (
+        voices.find((v) => normalize(v.lang) === wanted) ??
+        voices.find((v) => normalize(v.lang).split("-")[0] === primary) ??
+        null
+    );
 }
 
 // ── State ──────────────────────────────────────────────────────────────────
 
-let state: SpeechState = 'idle'
-let currentText = ''
-let currentLang = ''
-let segments: TextSegment[] = []
-let chunks: SpeechChunk[] = []
-let chunkIndex = 0
+let state: SpeechState = "idle";
+let currentText = "";
+let currentLang = "";
+let segments: TextSegment[] = [];
+let chunks: SpeechChunk[] = [];
+let chunkIndex = 0;
 
 /**
  * A sequence number for each speech session.
@@ -281,39 +306,39 @@ let chunkIndex = 0
  * "advance to the next chunk". Bumping this number ensures every stale
  * callback's number no longer matches, so they're reliably discarded.
  */
-let sessionId = 0
+let sessionId = 0;
 
-let speakActive = false
-let onVoicesChanged: (() => void) | null = null
-let onPageHide: (() => void) | null = null
-let onSelectionChange: (() => void) | null = null
+let speakActive = false;
+let onVoicesChanged: (() => void) | null = null;
+let onPageHide: (() => void) | null = null;
+let onSelectionChange: (() => void) | null = null;
 
-const listeners: (() => void)[] = []
+const listeners: (() => void)[] = [];
 
 /** Notifies only on play/pause/stop transitions (never called for per-character progress during speech). */
 export function onSpeechChange(cb: () => void): () => void {
-  listeners.push(cb)
-  return () => listeners.splice(listeners.indexOf(cb), 1)
+    listeners.push(cb);
+    return () => listeners.splice(listeners.indexOf(cb), 1);
 }
 
 function setState(next: SpeechState) {
-  if (state === next) return
-  state = next
-  listeners.forEach((cb) => cb())
+    if (state === next) return;
+    state = next;
+    listeners.forEach((cb) => cb());
 }
 
 export function getSpeechState(): SpeechState {
-  return state
+    return state;
 }
 
 export function getSpeechTarget(): SpeechTargetInfo {
-  if (state !== 'idle') {
-    return { hasTarget: true, charCount: normalizedLength(currentText) }
-  }
+    if (state !== "idle") {
+        return { hasTarget: true, charCount: normalizedLength(currentText) };
+    }
 
-  const range = getActiveSelectionRange()
-  const charCount = range ? normalizedLength(range.toString()) : 0
-  return { hasTarget: charCount > 0, charCount }
+    const range = getActiveSelectionRange();
+    const charCount = range ? normalizedLength(range.toString()) : 0;
+    return { hasTarget: charCount > 0, charCount };
 }
 
 // ── Speaking ───────────────────────────────────────────────────────────────
@@ -324,88 +349,106 @@ export function getSpeechTarget(): SpeechTargetInfo {
  * when the mapping no longer resolves.
  */
 function buildRange(start: number, end: number): Range | null {
-  const to = Math.min(end, currentText.length)
-  const startSegment = segments.find((s) => start >= s.start && start < s.end)
-  const endSegment = segments.find((s) => to > s.start && to <= s.end)
-  if (!startSegment || !endSegment) return null
-  if (!startSegment.node.isConnected || !endSegment.node.isConnected) return null
+    const to = Math.min(end, currentText.length);
+    const startSegment = segments.find(
+        (s) => start >= s.start && start < s.end,
+    );
+    const endSegment = segments.find((s) => to > s.start && to <= s.end);
+    if (!startSegment || !endSegment) return null;
+    if (!startSegment.node.isConnected || !endSegment.node.isConnected)
+        return null;
 
-  try {
-    const range = document.createRange()
-    range.setStart(startSegment.node, startSegment.nodeOffset + (start - startSegment.start))
-    range.setEnd(endSegment.node, endSegment.nodeOffset + (to - endSegment.start))
-    return range
-  } catch {
-    return null
-  }
+    try {
+        const range = document.createRange();
+        range.setStart(
+            startSegment.node,
+            startSegment.nodeOffset + (start - startSegment.start),
+        );
+        range.setEnd(
+            endSegment.node,
+            endSegment.nodeOffset + (to - endSegment.start),
+        );
+        return range;
+    } catch {
+        return null;
+    }
 }
 
 function highlightWord(start: number, length: number) {
-  const range = buildRange(start, start + length)
-  if (range) setHighlightRange(WORD_HIGHLIGHT_NAME, range, 1)
-  else highlightApi()?.registry.delete(WORD_HIGHLIGHT_NAME)
+    const range = buildRange(start, start + length);
+    if (range) setHighlightRange(WORD_HIGHLIGHT_NAME, range, 1);
+    else highlightApi()?.registry.delete(WORD_HIGHLIGHT_NAME);
 }
 
 function speakChunk(index: number, session: number) {
-  const engine = synth()
-  if (!engine) return
+    const engine = synth();
+    if (!engine) return;
 
-  if (index >= chunks.length) {
-    finishSpeech(session)
-    return
-  }
+    if (index >= chunks.length) {
+        finishSpeech(session);
+        return;
+    }
 
-  chunkIndex = index
-  const chunk = chunks[index]
-  const utterance = new SpeechSynthesisUtterance(chunk.text)
-  utterance.lang = currentLang
-  utterance.rate = speechRateValue(normalizeSpeechRateLevel(settings.speechRateLevel))
-  const voice = pickVoice(currentLang)
-  if (voice) utterance.voice = voice
+    chunkIndex = index;
+    const chunk = chunks[index];
+    const utterance = new SpeechSynthesisUtterance(chunk.text);
+    utterance.lang = currentLang;
+    utterance.rate = speechRateValue(
+        normalizeSpeechRateLevel(settings.speechRateLevel),
+    );
+    const voice = pickVoice(currentLang);
+    if (voice) utterance.voice = voice;
 
-  let started = false
-  utterance.onstart = () => {
-    started = true
-  }
+    let started = false;
+    utterance.onstart = () => {
+        started = true;
+    };
 
-  utterance.onboundary = (event) => {
-    if (session !== sessionId || !settings.speechHighlight) return
-    // Some implementations report finer-grained units than a word, but the highlight is always kept word-sized.
-    if (event.name && event.name !== 'word') return
+    utterance.onboundary = (event) => {
+        if (session !== sessionId || !settings.speechHighlight) return;
+        // Some implementations report finer-grained units than a word, but the highlight is always kept word-sized.
+        if (event.name && event.name !== "word") return;
 
-    const start = chunk.offset + event.charIndex
-    const reported = (event as SpeechSynthesisEvent & { charLength?: number }).charLength
-    highlightWord(start, reported && reported > 0 ? reported : guessWordLength(currentText, start))
-  }
+        const start = chunk.offset + event.charIndex;
+        const reported = (
+            event as SpeechSynthesisEvent & { charLength?: number }
+        ).charLength;
+        highlightWord(
+            start,
+            reported && reported > 0
+                ? reported
+                : guessWordLength(currentText, start),
+        );
+    };
 
-  utterance.onend = () => {
-    if (session !== sessionId) return
-    speakChunk(index + 1, session)
-  }
+    utterance.onend = () => {
+        if (session !== sessionId) return;
+        speakChunk(index + 1, session);
+    };
 
-  utterance.onerror = (event) => {
-    if (session !== sessionId) return
-    const code = event.error
-    if (code === 'interrupted' || code === 'canceled') return
-    stopSpeech()
-  }
+    utterance.onerror = (event) => {
+        if (session !== sessionId) return;
+        const code = event.error;
+        if (code === "interrupted" || code === "canceled") return;
+        stopSpeech();
+    };
 
-  engine.speak(utterance)
+    engine.speak(utterance);
 
-  if (index === 0) {
-    window.setTimeout(() => {
-      if (session !== sessionId || started) return
-      if (engine.speaking || engine.pending) return
-      engine.speak(utterance)
-    }, FIRST_CHUNK_RETRY_MS)
-  }
+    if (index === 0) {
+        window.setTimeout(() => {
+            if (session !== sessionId || started) return;
+            if (engine.speaking || engine.pending) return;
+            engine.speak(utterance);
+        }, FIRST_CHUNK_RETRY_MS);
+    }
 }
 
 function finishSpeech(session: number) {
-  if (session !== sessionId) return
-  sessionId += 1
-  stopHighlighting()
-  setState('idle')
+    if (session !== sessionId) return;
+    sessionId += 1;
+    stopHighlighting();
+    setState("idle");
 }
 
 /**
@@ -413,57 +456,57 @@ function finishSpeech(session: number) {
  * If speech is already in progress, cuts it off and starts reading the new range instead.
  */
 export function speakSelection(): SpeakResult {
-  const engine = synth()
-  if (!engine) return { ok: false, charCount: 0 }
+    const engine = synth();
+    if (!engine) return { ok: false, charCount: 0 };
 
-  stopSpeech()
+    stopSpeech();
 
-  const range = getActiveSelectionRange()
-  if (!range) return { ok: false, charCount: 0 }
+    const range = getActiveSelectionRange();
+    if (!range) return { ok: false, charCount: 0 };
 
-  const collected = collectSegments(range)
-  if (!collected.text.trim()) return { ok: false, charCount: 0 }
+    const collected = collectSegments(range);
+    if (!collected.text.trim()) return { ok: false, charCount: 0 };
 
-  const nextChunks = splitSpeechChunks(collected.text)
-  if (nextChunks.length === 0) return { ok: false, charCount: 0 }
+    const nextChunks = splitSpeechChunks(collected.text);
+    if (nextChunks.length === 0) return { ok: false, charCount: 0 };
 
-  currentText = collected.text
-  segments = collected.segments
-  chunks = nextChunks
-  currentLang = detectSpeechLang(range)
-  startHighlighting()
+    currentText = collected.text;
+    segments = collected.segments;
+    chunks = nextChunks;
+    currentLang = detectSpeechLang(range);
+    startHighlighting();
 
-  sessionId += 1
-  setState('speaking')
-  speakChunk(0, sessionId)
+    sessionId += 1;
+    setState("speaking");
+    speakChunk(0, sessionId);
 
-  return { ok: true, charCount: normalizedLength(currentText) }
+    return { ok: true, charCount: normalizedLength(currentText) };
 }
 
 export function pauseSpeech(): boolean {
-  const engine = synth()
-  if (!engine || state !== 'speaking') return false
-  engine.pause()
-  setState('paused')
-  return true
+    const engine = synth();
+    if (!engine || state !== "speaking") return false;
+    engine.pause();
+    setState("paused");
+    return true;
 }
 
 export function resumeSpeech(): boolean {
-  const engine = synth()
-  if (!engine || state !== 'paused') return false
-  engine.resume()
-  setState('speaking')
-  return true
+    const engine = synth();
+    if (!engine || state !== "paused") return false;
+    engine.resume();
+    setState("speaking");
+    return true;
 }
 
 /** Stops speech. Returns false if nothing was playing (safe to call regardless). */
 export function stopSpeech(): boolean {
-  const wasActive = state !== 'idle'
-  sessionId += 1
-  stopHighlighting()
-  if (wasActive) synth()?.cancel()
-  setState('idle')
-  return wasActive
+    const wasActive = state !== "idle";
+    sessionId += 1;
+    stopHighlighting();
+    if (wasActive) synth()?.cancel();
+    setState("idle");
+    return wasActive;
 }
 
 /**
@@ -479,59 +522,62 @@ export function stopSpeech(): boolean {
  * effect from the next chunk once playback is resumed.
  */
 export function restartSpeechWithCurrentRate(): boolean {
-  const engine = synth()
-  if (!engine || state !== 'speaking' || chunks.length === 0) return false
+    const engine = synth();
+    if (!engine || state !== "speaking" || chunks.length === 0) return false;
 
-  const from = chunkIndex
-  sessionId += 1
-  engine.cancel()
-  setState('speaking')
-  speakChunk(from, sessionId)
-  return true
+    const from = chunkIndex;
+    sessionId += 1;
+    engine.cancel();
+    setState("speaking");
+    speakChunk(from, sessionId);
+    return true;
 }
 
 export function initSpeakSelection() {
-  if (speakActive) return
-  speakActive = true
-  if (!isSpeechSupported()) return
+    if (speakActive) return;
+    speakActive = true;
+    if (!isSpeechSupported()) return;
 
-  const engine = synth()
-  if (engine) {
-    engine.getVoices()
-    onVoicesChanged = () => engine.getVoices()
-    engine.addEventListener('voiceschanged', onVoicesChanged)
-  }
+    const engine = synth();
+    if (engine) {
+        engine.getVoices();
+        onVoicesChanged = () => engine.getVoices();
+        engine.addEventListener("voiceschanged", onVoicesChanged);
+    }
 
-  onPageHide = () => stopSpeech()
-  window.addEventListener('pagehide', onPageHide)
+    onPageHide = () => stopSpeech();
+    window.addEventListener("pagehide", onPageHide);
 
-  onSelectionChange = () => {
-    if (state === 'idle') return
+    onSelectionChange = () => {
+        if (state === "idle") return;
 
-    const selection = window.getSelection()
-    // Don't stop just because a click cleared the selection — if speech cut
-    // out as collateral damage from operating the panel or clicking
-    // elsewhere on the page, the visitor would have to redo the selection
-    // just to hear it again.
-    if (!selection || selection.rangeCount === 0 || selection.isCollapsed) return
-    if (isUniLensSelection(selection)) return
-    if (selection.getRangeAt(0).toString() === currentText) return
+        const selection = window.getSelection();
+        // Don't stop just because a click cleared the selection — if speech cut
+        // out as collateral damage from operating the panel or clicking
+        // elsewhere on the page, the visitor would have to redo the selection
+        // just to hear it again.
+        if (!selection || selection.rangeCount === 0 || selection.isCollapsed)
+            return;
+        if (isUniLensSelection(selection)) return;
+        if (selection.getRangeAt(0).toString() === currentText) return;
 
-    stopSpeech()
-  }
-  document.addEventListener('selectionchange', onSelectionChange)
+        stopSpeech();
+    };
+    document.addEventListener("selectionchange", onSelectionChange);
 }
 
 export function destroySpeakSelection() {
-  if (!speakActive) return
-  speakActive = false
-  stopSpeech()
-  const engine = synth()
-  if (engine && onVoicesChanged) engine.removeEventListener('voiceschanged', onVoicesChanged)
-  if (onPageHide) window.removeEventListener('pagehide', onPageHide)
-  if (onSelectionChange) document.removeEventListener('selectionchange', onSelectionChange)
-  onVoicesChanged = null
-  onPageHide = null
-  onSelectionChange = null
-  document.getElementById(HIGHLIGHT_STYLE_ID)?.remove()
+    if (!speakActive) return;
+    speakActive = false;
+    stopSpeech();
+    const engine = synth();
+    if (engine && onVoicesChanged)
+        engine.removeEventListener("voiceschanged", onVoicesChanged);
+    if (onPageHide) window.removeEventListener("pagehide", onPageHide);
+    if (onSelectionChange)
+        document.removeEventListener("selectionchange", onSelectionChange);
+    onVoicesChanged = null;
+    onPageHide = null;
+    onSelectionChange = null;
+    document.getElementById(HIGHLIGHT_STYLE_ID)?.remove();
 }
