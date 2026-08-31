@@ -8,7 +8,7 @@
 BUILD_STAMP=$(shell git rev-parse --short HEAD 2>/dev/null || echo dev)
 
 SRC_DIR=src
-ESBUILD=esbuild $(SRC_DIR)/main.tsx --outfile=dist/$(target_dist_unilens-lib) --bundle  --minify --sourcemap \
+ESBUILD=esbuild $(SRC_DIR)/main.tsx --outfile=dist/$(target_dist_unilens-lib) --bundle  --minify --sourcemap --loader:.css=text --jsx=automatic \
 	--define:__target_dist_unilens_BUILD__='"$(BUILD_STAMP)"'
 BIOME=@biomejs/biome
 BIOMEFLAGS=--config-path ./biome.json --write

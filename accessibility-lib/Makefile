@@ -5,7 +5,7 @@
 .PHONY: init clean build serve test format fix
 
 SRC_DIR=src
-ESBUILD=esbuild src/main.tsx --outfile=dist/$(target_dist_accessibility-lib) --bundle --minify --sourcemap --loader:.css=text
+ESBUILD=esbuild src/main.tsx --outfile=dist/$(target_dist_accessibility-lib) --bundle --minify --sourcemap --loader:.css=text --jsx=automatic
 BIOME=@biomejs/biome
 BIOMEFLAGS=--config-path ./biome.json --write
 
