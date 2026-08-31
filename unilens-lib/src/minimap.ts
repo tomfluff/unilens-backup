@@ -106,7 +106,8 @@ function drawSkeleton() {
     canvas.width = Math.max(1, Math.round(layoutW * mapScale));
     canvas.height = Math.max(1, Math.round(layoutH * mapScale));
 
-    const g = canvas.getContext("2d")!;
+    const g = canvas.getContext("2d");
+    if (!g) return;
     g.fillStyle = "#fff";
     g.fillRect(0, 0, canvas.width, canvas.height);
 

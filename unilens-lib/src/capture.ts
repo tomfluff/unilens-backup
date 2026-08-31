@@ -229,7 +229,8 @@ async function preprocessImages(): Promise<ImageFix[]> {
                         const c = document.createElement("canvas");
                         c.width = elW;
                         c.height = elH;
-                        const cx = c.getContext("2d")!;
+                        const cx = c.getContext("2d");
+                        if (!cx) return resolve();
 
                         if (objectFit === "cover") {
                             const s = Math.max(scaleW, scaleH);
@@ -407,88 +408,90 @@ export async function capture(
     }
 
     const scale = pageCanvas.width / pageW;
-    const ctx = pageCanvas.getContext("2d")!;
-    ctx.setTransform(1, 0, 0, 1, 0, 0); // html2canvas leaves its render scale applied
+    const ctx = pageCanvas.getContext("2d");
+    if (ctx) {
+        ctx.setTransform(1, 0, 0, 1, 0, 0); // html2canvas leaves its render scale applied
 
-    // Viewport rect in content space: when zoomed in, the visible region of the
-    // unzoomed page is smaller by 1/z (accounts for pinch-zoom offset too)
-    const vpRect = {
-        x: ((scrollX + vvpOffsetX) / z) * scale,
-        y: ((scrollY + vvpOffsetY) / z) * scale,
-        w: (vpW / z) * scale,
-        h: (vpH / z) * scale,
-    };
-    ctx.strokeStyle = "rgba(0,200,255,0.9)";
-    ctx.lineWidth = 3;
-    ctx.strokeRect(vpRect.x, vpRect.y, vpRect.w, vpRect.h);
-    ctx.fillStyle = "rgba(0,200,255,0.08)";
-    ctx.fillRect(vpRect.x, vpRect.y, vpRect.w, vpRect.h);
-
-    // Mouse trace: fading line, oldest faint → newest bright
-    const recent = recentTrace(captureTime);
-    if (recent.length >= 2) {
-        const oldest = recent[0].t;
-        const newest = recent[recent.length - 1].t;
-        const span = Math.max(newest - oldest, 1);
-
-        for (let i = 1; i < recent.length; i++) {
-            const p0 = recent[i - 1];
-            const p1 = recent[i];
-            const age = (p1.t - oldest) / span;
-            ctx.beginPath();
-            ctx.moveTo(p0.x * scale, p0.y * scale);
-            ctx.lineTo(p1.x * scale, p1.y * scale);
-            ctx.strokeStyle = `rgba(255, 187, 0, ${(0.15 + age * 0.75).toFixed(2)})`;
-            ctx.lineWidth = (1 + age * 5) * scale;
-            ctx.lineCap = "round";
-            ctx.lineJoin = "round";
-            ctx.stroke();
-        }
-    }
-
-    // Alt+drag selection rect (magenta, distinct from viewport cyan)
-    if (region) {
-        ctx.strokeStyle = "rgba(255, 0, 200, 0.95)";
+        // Viewport rect in content space: when zoomed in, the visible region of the
+        // unzoomed page is smaller by 1/z (accounts for pinch-zoom offset too)
+        const vpRect = {
+            x: ((scrollX + vvpOffsetX) / z) * scale,
+            y: ((scrollY + vvpOffsetY) / z) * scale,
+            w: (vpW / z) * scale,
+            h: (vpH / z) * scale,
+        };
+        ctx.strokeStyle = "rgba(0,200,255,0.9)";
         ctx.lineWidth = 3;
-        ctx.strokeRect(
-            vRect.x * scale,
-            vRect.y * scale,
-            vRect.w * scale,
-            vRect.h * scale,
-        );
-        ctx.fillStyle = "rgba(255, 0, 200, 0.08)";
-        ctx.fillRect(
-            vRect.x * scale,
-            vRect.y * scale,
-            vRect.w * scale,
-            vRect.h * scale,
-        );
-    }
+        ctx.strokeRect(vpRect.x, vpRect.y, vpRect.w, vpRect.h);
+        ctx.fillStyle = "rgba(0,200,255,0.08)";
+        ctx.fillRect(vpRect.x, vpRect.y, vpRect.w, vpRect.h);
 
-    // Click crosshair
-    const cx = clickX * scale;
-    const cy = clickY * scale;
-    ctx.strokeStyle = "#ff4444";
-    ctx.lineWidth = 2.5;
-    ctx.setLineDash([4, 3]);
-    ctx.beginPath();
-    ctx.moveTo(0, cy);
-    ctx.lineTo(pageCanvas.width, cy);
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.moveTo(cx, 0);
-    ctx.lineTo(cx, pageCanvas.height);
-    ctx.stroke();
-    ctx.setLineDash([]);
-    ctx.beginPath();
-    ctx.arc(cx, cy, 18 * scale, 0, Math.PI * 2);
-    ctx.strokeStyle = "#ff4444";
-    ctx.lineWidth = 3;
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.arc(cx, cy, 4 * scale, 0, Math.PI * 2);
-    ctx.fillStyle = "#ff4444";
-    ctx.fill();
+        // Mouse trace: fading line, oldest faint → newest bright
+        const recent = recentTrace(captureTime);
+        if (recent.length >= 2) {
+            const oldest = recent[0].t;
+            const newest = recent[recent.length - 1].t;
+            const span = Math.max(newest - oldest, 1);
+
+            for (let i = 1; i < recent.length; i++) {
+                const p0 = recent[i - 1];
+                const p1 = recent[i];
+                const age = (p1.t - oldest) / span;
+                ctx.beginPath();
+                ctx.moveTo(p0.x * scale, p0.y * scale);
+                ctx.lineTo(p1.x * scale, p1.y * scale);
+                ctx.strokeStyle = `rgba(255, 187, 0, ${(0.15 + age * 0.75).toFixed(2)})`;
+                ctx.lineWidth = (1 + age * 5) * scale;
+                ctx.lineCap = "round";
+                ctx.lineJoin = "round";
+                ctx.stroke();
+            }
+        }
+
+        // Alt+drag selection rect (magenta, distinct from viewport cyan)
+        if (region) {
+            ctx.strokeStyle = "rgba(255, 0, 200, 0.95)";
+            ctx.lineWidth = 3;
+            ctx.strokeRect(
+                vRect.x * scale,
+                vRect.y * scale,
+                vRect.w * scale,
+                vRect.h * scale,
+            );
+            ctx.fillStyle = "rgba(255, 0, 200, 0.08)";
+            ctx.fillRect(
+                vRect.x * scale,
+                vRect.y * scale,
+                vRect.w * scale,
+                vRect.h * scale,
+            );
+        }
+
+        // Click crosshair
+        const cx = clickX * scale;
+        const cy = clickY * scale;
+        ctx.strokeStyle = "#ff4444";
+        ctx.lineWidth = 2.5;
+        ctx.setLineDash([4, 3]);
+        ctx.beginPath();
+        ctx.moveTo(0, cy);
+        ctx.lineTo(pageCanvas.width, cy);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(cx, 0);
+        ctx.lineTo(cx, pageCanvas.height);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.beginPath();
+        ctx.arc(cx, cy, 18 * scale, 0, Math.PI * 2);
+        ctx.strokeStyle = "#ff4444";
+        ctx.lineWidth = 3;
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(cx, cy, 4 * scale, 0, Math.PI * 2);
+        ctx.fillStyle = "#ff4444";
+        ctx.fill();
+    }
 
     const scrollDepth = Math.round(
         (scrollY / Math.max(pageH * z - vpH, 1)) * 100,
