@@ -11,3 +11,4 @@ backend/.env
 .claude
 .cursor
 *.tsbuildinfo
+*.js.map

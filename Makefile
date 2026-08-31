@@ -85,7 +85,7 @@ format-target:
 
 # Init and clean backend, unilens lib, and self
 
-.PHONY: init clean
+.PHONY: init-self init 
 
 init-self:
 	$(NPM) install
@@ -95,13 +95,26 @@ init: init-self init-backend
 		$(MAKE) init-target $$item; \
 	done
 
+.PHONY: clean-self clean-all clean-frontend clean
+
 clean-self:
 	$(RM_RF) node_modules
 
-clean: clean-self clean-backend 
+# Clean all js targets
+clean-all:
 	@for item in $(JS_TARGETS); do \
 		$(MAKE) clean-target $$item; \
 	done
+
+# Clean frontend targets
+clean-frontend:
+	@$(foreach fe,$(FRONTEND_TARGETS), \
+		$(foreach js,$(JS_TARGETS), \
+			$(RM_RF) $(FRONTEND_DIR)/$(fe)/$(call get_target_dist,$(js)) $(FRONTEND_DIR)/$(fe)/$(call get_target_dist,$(js)).map; \
+		) \
+	)
+
+clean: clean-self clean-backend clean-all clean-frontend
 
 # build, run, and serve (build + run)
 # - All build/run/serve targets can take either a target dir, such as `softbank-mirror`
@@ -112,6 +125,7 @@ clean: clean-self clean-backend
 copy-built:
 	$(call require-args-2,copy-built)
 	cp '$(WORD_2)/dist/$(call get_target_dist,$(WORD_2))' '$(FRONTEND_DIR)/$(WORD_3)/$(call get_target_dist,$(WORD_2))'
+	cp '$(WORD_2)/dist/$(call get_target_dist,$(WORD_2)).map' '$(FRONTEND_DIR)/$(WORD_3)/$(call get_target_dist,$(WORD_2)).map'
 
 # Takes two arguments as in `make <js-target> <frontend-target>`.
 # Builds `js-target` and copies `<js-target>/dist/{target}.js` into `<frontend-target>/{target.js}`
@@ -165,6 +179,7 @@ serve-frontend:
 		"$(NPX) chokidar \
 			'$(WORD_2)/**' $(foreach t,$(JS_TARGETS),'$(t)/src/**') \
 			$(foreach t,$(JS_TARGETS),--ignore '$(WORD_2)/$(call get_target_dist,$(t))') \
+			$(foreach t,$(JS_TARGETS),--ignore '$(WORD_2)/$(call get_target_dist,$(t))'.map) \
 			-c '$(MAKE) build $(WORD_2)'"
 
 # Runs backend, builds and runs frontend from {target_dir}, watches for changes in backend or frontend
@@ -178,6 +193,7 @@ serve:
 
 # Runs `make serve` on all frontend targets
 serve-all:
+	$(MAKE) build
 	@echo "Serving backend to 'localhost:$(FLASK_PORT)'"
 	@$(foreach t,$(FRONTEND_TARGETS),echo "  Serving frontend '$(t)' to localhost:$(frontend_port_$(t))";)
 	$(NPX) concurrently \
