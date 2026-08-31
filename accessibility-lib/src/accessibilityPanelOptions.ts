@@ -5,14 +5,14 @@
  * language-independent data; names that vary per language are exposed as
  * functions that pull from `t()`.
  */
-import type { TextAdjustLevel } from "./accessibilityStore";
-import type { DisplayTheme } from "./accessibilityStore";
-import { bodyTextExpandHint, smallTextBoostHint } from "./textAdjustLevels";
-import { speechRateHint, type SpeechRateLevel } from "./speechLevels";
-import type { AutoTextMode } from "./accessibilityStoreTypes";
-import type { FontScaleLevel } from "./fontScales";
+
 import { t } from "./accessibilityI18n";
 import type { IconName } from "./accessibilityPanelUI";
+import type { DisplayTheme, TextAdjustLevel } from "./accessibilityStore";
+import type { AutoTextMode } from "./accessibilityStoreTypes";
+import type { FontScaleLevel } from "./fontScales";
+import { type SpeechRateLevel, speechRateHint } from "./speechLevels";
+import { bodyTextExpandHint, smallTextBoostHint } from "./textAdjustLevels";
 
 export { fontScaleLabel } from "./accessibilityI18n";
 
@@ -25,8 +25,8 @@ export {
     STANDARD_FONT_STACK,
     UD_FONT_STACK,
 } from "./accessibilityStore";
-export { TEXT_ADJUST_LEVELS } from "./textAdjustLevels";
 export { SPEECH_RATE_LEVELS } from "./speechLevels";
+export { TEXT_ADJUST_LEVELS } from "./textAdjustLevels";
 
 export type PanelTab = "visual" | "text" | "tools";
 

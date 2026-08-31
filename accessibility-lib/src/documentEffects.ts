@@ -2,9 +2,19 @@
  * Applies accessibility display settings to the host document.
  * Reads live state via bindSettingsReader() to avoid circular imports with settings.ts.
  */
-import { a11yFontSizeToScale } from "./fontScales";
+
+import {
+    type A11ySettings,
+    CONTRAST_FILTER,
+    LETTER_SPACING_EM,
+    SATURATION_FILTER,
+    STANDARD_FONT_STACK,
+    UD_FONT_STACK,
+    WORD_SPACING_EM,
+} from "./accessibilityStoreTypes";
 import {
     A11Y_UD_FONT_LINK_ID,
+    BG_SAMPLE_ATTR,
     BODY_EXPAND_LEVEL_ATTR,
     HTML_ATTR_CONTRAST,
     HTML_ATTR_DISPLAY_ACTIVE,
@@ -14,13 +24,13 @@ import {
     HTML_ATTR_FONT_SIZE,
     HTML_ATTR_HTML_FILTER,
     HTML_ATTR_IMAGE_BORDER,
+    HTML_ATTR_IMAGE_FILTER,
     HTML_ATTR_LETTER_SPACING,
     HTML_ATTR_LINE_HEIGHT,
     HTML_ATTR_LINK_BACKGROUND,
     HTML_ATTR_LINK_BORDER,
     HTML_ATTR_LINK_UNDERLINE,
     HTML_ATTR_PAGE_FILTER,
-    HTML_ATTR_IMAGE_FILTER,
     HTML_ATTR_REDUCE_MOTION,
     HTML_ATTR_SATURATION,
     HTML_ATTR_THEME,
@@ -31,21 +41,12 @@ import {
     HTML_STYLE_LINE_HEIGHT,
     HTML_STYLE_SATURATE,
     HTML_STYLE_WORD_SPACING,
+    isUniLensOverlayNode,
     PAGE_CONTENT_ATTR,
     PAGE_CONTENT_ROOT_ID,
-    BG_SAMPLE_ATTR,
     POSITIONED_OVERLAY_ATTR,
-    isUniLensOverlayNode,
 } from "./domIds";
-import {
-    CONTRAST_FILTER,
-    LETTER_SPACING_EM,
-    SATURATION_FILTER,
-    STANDARD_FONT_STACK,
-    UD_FONT_STACK,
-    WORD_SPACING_EM,
-    type A11ySettings,
-} from "./accessibilityStoreTypes";
+import { a11yFontSizeToScale } from "./fontScales";
 import type { Settings } from "./settings";
 
 let readSettings: () => Settings = () => ({}) as Settings;
@@ -106,7 +107,9 @@ export function ensurePageContentRoot(): HTMLDivElement | null {
     root.setAttribute(PAGE_CONTENT_ATTR, "1");
 
     const nodes = Array.from(body.childNodes);
-    nodes.forEach((node) => root!.appendChild(node));
+    for (const node of nodes) {
+        root?.appendChild(node);
+    }
     body.appendChild(root);
     return root;
 }
@@ -128,7 +131,9 @@ export function restorePageContentRoot() {
     const body = document.body;
     if (!root || !body) return;
     const nodes = Array.from(root.childNodes);
-    nodes.forEach((node) => body.insertBefore(node, root));
+    for (const node of nodes) {
+        body.insertBefore(node, root);
+    }
     root.remove();
 }
 

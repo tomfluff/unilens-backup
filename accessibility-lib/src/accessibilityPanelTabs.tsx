@@ -6,18 +6,69 @@
  * latest language, as long as the component re-renders on a language change
  * (see the useExternalSignal(onA11yLangChange) call in each tab below).
  */
-import { useState, type CSSProperties } from "react";
+import { type CSSProperties, useState } from "react";
 import {
-    a11ySettings,
-    onA11yChange,
-    patchA11ySettings,
+    A11Y_LANG_NAMES,
+    A11Y_LANGS,
+    type A11yLang,
+    getA11yLang,
+    languageDescByLang,
+    onA11yLangChange,
+    setA11yLang,
+    t,
+} from "./accessibilityI18n";
+import {
+    AUTO_MIN_PX_OPTIONS,
+    AUTO_MODES,
+    bodyExpandLevelLabels,
+    CONTRAST_FILTER,
+    DISPLAY_THEMES,
+    fontScaleLabel,
+    PREVIEW_FONT_PX,
+    SATURATION_FILTER,
+    SELECTION_LEVELS,
+    // SPEECH_RATE_LEVELS,
+    STANDARD_FONT_STACK,
+    smallBoostLevelLabels,
+    TEXT_ADJUST_LEVELS,
+    THEME_SWATCH,
+    UD_FONT_STACK,
+} from "./accessibilityPanelOptions";
+import {
+    announce,
+    Button,
+    ButtonRow,
+    Card,
+    ChoiceGroup,
+    Icon,
+    LevelControl,
+    LinesPreview,
+    Metrics,
+    Note,
+    Stepper,
+    StripPreview,
+    SwatchPreview,
+    SwitchRow,
+    TextPreview,
+    useExternalSignal,
+} from "./accessibilityPanelUI";
+import {
+    A11Y_PRESET_IDS,
+    type A11yPresetId,
+    isPresetActive,
+    toggleA11yPreset,
+} from "./accessibilityPresets";
+import {
     type A11yFontFamily,
     type A11yFontSize,
     type A11yLetterSpacing,
     type A11yLineHeight,
+    a11ySettings,
     type DisplayContrast,
     type DisplaySaturation,
     type DisplayTheme,
+    onA11yChange,
+    patchA11ySettings,
     type TextAdjustLevel,
 } from "./accessibilityStore";
 import {
@@ -26,6 +77,7 @@ import {
     runAutoTextAction,
     type TextAnalysis,
 } from "./autoTextSize";
+import { getLastBodyTextScan, scanBodyText } from "./bodyTextExpand";
 import {
     applySelectionFontLevel,
     clearSelectionFontSize,
@@ -33,8 +85,6 @@ import {
     onSelectionChange,
     type SelectionFontLevel,
 } from "./selectionTextSize";
-import { getLastBodyTextScan, scanBodyText } from "./bodyTextExpand";
-import { getLastSmallTextScan, scanSmallText } from "./smallTextBoost";
 // Read-aloud disabled — see accessibility-umd.ts init().
 // import {
 //   getSpeechState,
@@ -50,64 +100,12 @@ import { getLastSmallTextScan, scanSmallText } from "./smallTextBoost";
 // } from './speakSelection'
 // import { normalizeSpeechRateLevel } from './speechLevels'
 import {
+    type AutoTextMode,
     onSettingsChange,
     saveSettings,
     settings,
-    type AutoTextMode,
 } from "./settings";
-import {
-    A11Y_LANGS,
-    A11Y_LANG_NAMES,
-    getA11yLang,
-    languageDescByLang,
-    onA11yLangChange,
-    setA11yLang,
-    t,
-    type A11yLang,
-} from "./accessibilityI18n";
-import {
-    A11Y_PRESET_IDS,
-    isPresetActive,
-    toggleA11yPreset,
-    type A11yPresetId,
-} from "./accessibilityPresets";
-import {
-    AUTO_MIN_PX_OPTIONS,
-    AUTO_MODES,
-    CONTRAST_FILTER,
-    PREVIEW_FONT_PX,
-    SATURATION_FILTER,
-    SELECTION_LEVELS,
-    // SPEECH_RATE_LEVELS,
-    STANDARD_FONT_STACK,
-    TEXT_ADJUST_LEVELS,
-    THEME_SWATCH,
-    DISPLAY_THEMES,
-    UD_FONT_STACK,
-    bodyExpandLevelLabels,
-    fontScaleLabel,
-    smallBoostLevelLabels,
-    // speechRateLabels,
-    type PanelTab,
-} from "./accessibilityPanelOptions";
-import {
-    Button,
-    ButtonRow,
-    Card,
-    ChoiceGroup,
-    Icon,
-    LevelControl,
-    LinesPreview,
-    Metrics,
-    Note,
-    Stepper,
-    StripPreview,
-    SwatchPreview,
-    SwitchRow,
-    TextPreview,
-    announce,
-    useExternalSignal,
-} from "./accessibilityPanelUI";
+import { getLastSmallTextScan, scanSmallText } from "./smallTextBoost";
 
 export type { PanelTab } from "./accessibilityPanelOptions";
 
@@ -145,15 +143,13 @@ function presetMeta(id: A11yPresetId): { label: string; hint: string } {
 function PresetsCard() {
     return (
         <Card title={t().presetsTitle} iconName="preset" desc={t().presetsDesc}>
-            <div className="unilens-a11y-group">
-                <span className="unilens-a11y-group-label">
+            <fieldset className="unilens-a11y-group">
+                <legend className="unilens-a11y-group-label">
                     {t().presetsGroup}
-                </span>
+                </legend>
                 <div
                     className="unilens-a11y-choices"
                     style={{ "--da-cols": 2 } as CSSProperties}
-                    role="group"
-                    aria-label={t().presetsGroup}
                 >
                     {A11Y_PRESET_IDS.map((id) => {
                         const { label, hint } = presetMeta(id);
@@ -196,7 +192,7 @@ function PresetsCard() {
                         );
                     })}
                 </div>
-            </div>
+            </fieldset>
         </Card>
     );
 }

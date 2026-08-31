@@ -1,13 +1,13 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import {
-    A11Y_LANGS,
     A11Y_LANG_NAMES,
+    A11Y_LANGS,
     A11Y_MESSAGES,
+    type A11yLang,
     fontScaleLabel,
     getA11yLang,
     setA11yLang,
     t,
-    type A11yLang,
 } from "./accessibilityI18n";
 import {
     bodyExpandLevelLabels,
@@ -56,9 +56,9 @@ describe("language dictionary coverage", () => {
                 if (typeof value === "string" && value.trim() === "")
                     empty.push(path);
                 else if (typeof value === "object" && value !== null) {
-                    Object.entries(value).forEach(([key, v]) =>
-                        walk(v, path ? `${path}.${key}` : key),
-                    );
+                    for (const [key, v] of Object.entries(value)) {
+                        walk(v, path ? `${path}.${key}` : key);
+                    }
                 }
             };
             walk(A11Y_MESSAGES[lang], "");

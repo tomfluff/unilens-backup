@@ -13,44 +13,78 @@
  * from `<html lang>`, then the browser languages; pass `init({ lang: 'en' })` to set
  * a different default. A choice made in the panel is stored and always wins.
  */
+
 import {
-    A11Y_DEFAULTS,
-    CONTRAST_FILTER,
-    SATURATION_FILTER,
-    a11ySettings,
-    applyA11yToDocument,
-    applySystemPreferences,
-    hasStoredA11ySettings,
-    onA11yChange,
-    patchA11ySettings,
-    resetA11ySettings,
-    resetDisplaySettings,
-    saveA11ySettings,
-    type A11yFontFamily,
-    type A11yFontSize,
-    type A11yLetterSpacing,
-    type A11yLineHeight,
-    type A11ySettings,
-    type DisplayContrast,
-    type DisplaySaturation,
-    type DisplayTheme,
-    type TextAdjustLevel,
-} from "./accessibilityStore";
+    A11Y_LANG_NAMES,
+    A11Y_LANGS,
+    type A11yLang,
+    type A11yMessages,
+    configureA11yLang,
+    fontScaleLabel,
+    getA11yLang,
+    onA11yLangChange,
+    setA11yLang,
+    t,
+} from "./accessibilityI18n";
+import { destroyAccessibilityRuntime } from "./accessibilityLifecycle";
 import {
     destroyAccessibilityPanel,
     initAccessibilityPanel,
 } from "./accessibilityPanel";
 import {
+    bodyExpandLevelLabels,
+    smallBoostLevelLabels,
+    speechRateLabels,
+} from "./accessibilityPanelOptions";
+import {
+    A11Y_PRESET_IDS,
+    A11Y_PRESETS,
+    type A11yPresetId,
+    applyA11yPreset,
+    clearA11yPreset,
+    isPresetActive,
+    toggleA11yPreset,
+} from "./accessibilityPresets";
+import {
+    A11Y_DEFAULTS,
+    type A11yFontFamily,
+    type A11yFontSize,
+    type A11yLetterSpacing,
+    type A11yLineHeight,
+    type A11ySettings,
+    type AutoTextMode,
+    a11ySettings,
+    applyA11yToDocument,
+    applySystemPreferences,
+    CONTRAST_FILTER,
+    type DisplayContrast,
+    type DisplaySaturation,
+    type DisplayTheme,
+    hasStoredA11ySettings,
+    onA11yChange,
+    onSettingsChange,
+    patchA11ySettings,
+    resetA11ySettings,
+    resetDisplaySettings,
+    SATURATION_FILTER,
+    type Settings,
+    saveA11ySettings,
+    saveSettings,
+    settings,
+    type TextAdjustLevel,
+} from "./accessibilityStore";
+import {
     analyzePageText,
+    destroyAutoTextSize,
     getAppliedTextScale,
     getEffectiveChatFontSize,
     initAutoTextSize,
-    destroyAutoTextSize,
     refreshAutoTextSize,
     runAutoTextAction,
     type TextAnalysis,
 } from "./autoTextSize";
 import {
+    type BodyTextScanResult,
     clearBodyTextExpand,
     computeExpandedFontPx,
     destroyBodyTextExpand,
@@ -58,42 +92,16 @@ import {
     initBodyTextExpand,
     LARGE_TEXT_PX,
     scanBodyText,
-    type BodyTextScanResult,
 } from "./bodyTextExpand";
 import {
     a11yFontSizeToScale,
     FONT_SCALE_LEVELS,
+    type FontScaleLevel,
     levelToScale,
     scaleToLevel,
-    type FontScaleLevel,
 } from "./fontScales";
 import {
-    A11Y_LANGS,
-    A11Y_LANG_NAMES,
-    configureA11yLang,
-    fontScaleLabel,
-    getA11yLang,
-    onA11yLangChange,
-    setA11yLang,
-    t,
-    type A11yLang,
-    type A11yMessages,
-} from "./accessibilityI18n";
-import {
-    bodyExpandLevelLabels,
-    smallBoostLevelLabels,
-    speechRateLabels,
-} from "./accessibilityPanelOptions";
-import {
-    A11Y_PRESETS,
-    A11Y_PRESET_IDS,
-    applyA11yPreset,
-    clearA11yPreset,
-    isPresetActive,
-    toggleA11yPreset,
-    type A11yPresetId,
-} from "./accessibilityPresets";
-import {
+    type ApplySelectionResult,
     applySelectionFontLevel,
     clearSelectionFontSize,
     destroySelectionTextSize,
@@ -103,67 +111,58 @@ import {
     levelToPx,
     onSelectionChange,
     pxToLevel,
-    type ApplySelectionResult,
     type SelectionFontLevel,
     type SelectionInfo,
 } from "./selectionTextSize";
-import {
-    getSpeechState,
-    getSpeechTarget,
-    destroySpeakSelection,
-    initSpeakSelection,
-    isSpeechSupported,
-    onSpeechChange,
-    pauseSpeech,
-    restartSpeechWithCurrentRate,
-    resumeSpeech,
-    speakSelection,
-    stopSpeech,
-    syncSpeechHighlight,
-    type SpeakResult,
-    type SpeechState,
-    type SpeechTargetInfo,
-} from "./speakSelection";
-import {
-    DEFAULT_SPEECH_RATE_LEVEL,
-    SPEECH_CHUNK_MAX,
-    SPEECH_RATE_LEVELS,
-    SPEECH_RATES,
-    normalizeSpeechRateLevel,
-    speechRateHint,
-    speechRateValue,
-    splitSpeechChunks,
-    type SpeechRateLevel,
-} from "./speechLevels";
 import {
     clearSmallTextBoost,
     computeTargetFontPx,
     destroySmallTextBoost,
     getLastSmallTextScan,
     initSmallTextBoost,
-    scanSmallText,
     type SmallTextScanResult,
+    scanSmallText,
 } from "./smallTextBoost";
 import {
-    onSettingsChange,
-    saveSettings,
-    settings,
-    type AutoTextMode,
-    type Settings,
-} from "./accessibilityStore";
-import { destroyAccessibilityRuntime } from "./accessibilityLifecycle";
+    destroySpeakSelection,
+    getSpeechState,
+    getSpeechTarget,
+    initSpeakSelection,
+    isSpeechSupported,
+    onSpeechChange,
+    pauseSpeech,
+    restartSpeechWithCurrentRate,
+    resumeSpeech,
+    type SpeakResult,
+    type SpeechState,
+    type SpeechTargetInfo,
+    speakSelection,
+    stopSpeech,
+    syncSpeechHighlight,
+} from "./speakSelection";
+import {
+    DEFAULT_SPEECH_RATE_LEVEL,
+    normalizeSpeechRateLevel,
+    SPEECH_CHUNK_MAX,
+    SPEECH_RATE_LEVELS,
+    SPEECH_RATES,
+    type SpeechRateLevel,
+    speechRateHint,
+    speechRateValue,
+    splitSpeechChunks,
+} from "./speechLevels";
 import {
     BODY_TEXT_EXPAND_CONFIG,
+    bodyTextExpandConfig,
+    bodyTextExpandHint,
     computeBodyTextTargetPx,
     computeSmallTextTargetPx,
     normalizeTextAdjustLevel,
     SMALL_TEXT_BOOST_CONFIG,
     SMALL_TEXT_THRESHOLD_PX,
-    TEXT_ADJUST_LEVELS,
-    bodyTextExpandConfig,
-    bodyTextExpandHint,
     smallTextBoostConfig,
     smallTextBoostHint,
+    TEXT_ADJUST_LEVELS,
 } from "./textAdjustLevels";
 
 interface UniLensA11yInitOptions {
@@ -418,7 +417,6 @@ const UniLensA11y = {
 };
 
 export default UniLensA11y;
-export { init, destroy, FEATURES, UniLensA11y };
 
 export type {
     A11yFontFamily,
@@ -448,6 +446,7 @@ export type {
     TextAnalysis,
     UniLensA11yInitOptions,
 };
+export { destroy, FEATURES, init, UniLensA11y };
 
 declare global {
     interface Window {

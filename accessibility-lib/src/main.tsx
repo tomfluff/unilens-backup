@@ -7,12 +7,13 @@
  *
  * UniLensA11y is also exposed for compatibility with the previous UMD build.
  */
+
+import type { UniLensA11yInitOptions } from "./accessibility-umd";
 import UniLensA11y, {
-    init as initA11y,
     destroy as destroyA11y,
     FEATURES,
+    init as initA11y,
 } from "./accessibility-umd";
-import type { UniLensA11yInitOptions } from "./accessibility-umd";
 
 export type InitOptions = UniLensA11yInitOptions;
 
@@ -26,7 +27,7 @@ export function destroy() {
 
 const Accessibility = Object.assign({}, UniLensA11y, { init, destroy });
 
-export { FEATURES, Accessibility, UniLensA11y };
+export { Accessibility, FEATURES, UniLensA11y };
 export default Accessibility;
 
 // Expose for plain <script> embeds

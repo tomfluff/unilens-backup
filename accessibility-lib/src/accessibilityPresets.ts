@@ -8,9 +8,9 @@
  */
 import {
     A11Y_DEFAULTS,
+    type A11ySettings,
     a11ySettings,
     patchA11ySettings,
-    type A11ySettings,
 } from "./accessibilityStore";
 import { runAutoTextAction } from "./autoTextSize";
 

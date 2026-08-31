@@ -2,15 +2,16 @@
  * Apply font-size scale ratios (100% / 150% / 200%) to the user's text selection.
  * Ratios match automatic / accessibility font-size settings.
  */
+
+import { fontScaleLabel, t } from "./accessibilityI18n";
+import { isUniLensOverlayNode } from "./domIds";
 import {
     FONT_SCALE_LEVELS,
+    type FontScaleLevel,
     levelToScale,
     scaleToLevel,
-    type FontScaleLevel,
 } from "./fontScales";
-import { fontScaleLabel, t } from "./accessibilityI18n";
 import { saveSettings, settings } from "./settings";
-import { isUniLensOverlayNode } from "./domIds";
 
 const WRAP_ATTR = "data-unilens-text-resize";
 
@@ -186,7 +187,7 @@ export function getSelectionInfo(): SelectionInfo {
                     const { basePx, scale, px } = readWrapperState(wrapper);
                     return {
                         hasSelection: true,
-                        text: text.length > 48 ? text.slice(0, 48) + "…" : text,
+                        text: text.length > 48 ? `${text.slice(0, 48)}…` : text,
                         charCount: text.length,
                         appliedLevel:
                             scale != null
@@ -201,7 +202,7 @@ export function getSelectionInfo(): SelectionInfo {
                 }
                 return {
                     hasSelection: true,
-                    text: text.length > 48 ? text.slice(0, 48) + "…" : text,
+                    text: text.length > 48 ? `${text.slice(0, 48)}…` : text,
                     charCount: text.length,
                     appliedLevel: null,
                     appliedPx: null,
@@ -218,7 +219,7 @@ export function getSelectionInfo(): SelectionInfo {
         const { scale, px } = readWrapperState(activeWrapper);
         return {
             hasSelection: text.length > 0,
-            text: text.length > 48 ? text.slice(0, 48) + "…" : text,
+            text: text.length > 48 ? `${text.slice(0, 48)}…` : text,
             charCount: text.length,
             appliedLevel: scale != null ? scaleToLevel(scale) : null,
             appliedPx: px,
@@ -233,7 +234,7 @@ export function getSelectionInfo(): SelectionInfo {
             if (text) {
                 return {
                     hasSelection: true,
-                    text: text.length > 48 ? text.slice(0, 48) + "…" : text,
+                    text: text.length > 48 ? `${text.slice(0, 48)}…` : text,
                     charCount: text.length,
                     appliedLevel: null,
                     appliedPx: null,

@@ -1,8 +1,9 @@
 /**
  * Teardown for embedders that remove accessibility at runtime.
  */
-import { clearAppliedA11yDocument } from "./accessibilityStore";
+
 import { destroyAccessibilityPanel } from "./accessibilityPanel";
+import { clearAppliedA11yDocument } from "./accessibilityStore";
 import { destroyAutoTextSize } from "./autoTextSize";
 import { destroyBodyTextExpand } from "./bodyTextExpand";
 import { destroySelectionTextSize } from "./selectionTextSize";

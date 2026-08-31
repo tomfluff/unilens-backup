@@ -4,23 +4,21 @@
  */
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { applyA11yToDocument } from "./documentEffects";
 import {
     A11Y_DEFAULTS,
     A11Y_SETTING_KEYS,
-    CONTRAST_FILTER,
-    SATURATION_FILTER,
     type A11ySettings,
     type AutoTextMode,
-    type DisplayContrast,
-    type DisplaySaturation,
+    CONTRAST_FILTER,
     type DisplayTheme,
+    SATURATION_FILTER,
 } from "./accessibilityStoreTypes";
-import { normalizeTextAdjustLevel } from "./textAdjustLevels";
+import { applyA11yToDocument } from "./documentEffects";
 import {
     DEFAULT_SPEECH_RATE_LEVEL,
     normalizeSpeechRateLevel,
 } from "./speechLevels";
+import { normalizeTextAdjustLevel } from "./textAdjustLevels";
 
 export type { AutoTextMode } from "./accessibilityStoreTypes";
 
@@ -229,4 +227,5 @@ export function applySystemPreferences(): Partial<A11ySettings> | null {
 
 // Wire document effects after both modules load (avoids circular imports).
 import { bindSettingsReader } from "./documentEffects";
+
 bindSettingsReader(getSettings);

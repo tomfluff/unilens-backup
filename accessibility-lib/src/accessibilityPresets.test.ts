@@ -1,12 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
-    HTML_ATTR_CONTRAST,
     HTML_ATTR_FOCUS_ENHANCE,
     HTML_ATTR_LINK_UNDERLINE,
     HTML_ATTR_REDUCE_MOTION,
     HTML_ATTR_SATURATION,
     HTML_ATTR_THEME,
-    HTML_STYLE_CONTRAST,
     HTML_STYLE_LETTER_SPACING,
     HTML_STYLE_SATURATE,
 } from "./domIds";
@@ -44,23 +42,21 @@ function installDomStub() {
 }
 
 import {
+    A11Y_PRESET_IDS,
+    applyA11yPreset,
+    isPresetActive,
+    toggleA11yPreset,
+} from "./accessibilityPresets";
+import {
     A11Y_DEFAULTS,
-    SATURATION_FILTER,
     a11ySettings,
     applyA11yToDocument,
     getA11ySettings,
     patchA11ySettings,
     resetA11ySettings,
+    SATURATION_FILTER,
 } from "./accessibilityStore";
-import {
-    A11Y_PRESET_IDS,
-    A11Y_PRESETS,
-    applyA11yPreset,
-    isPresetActive,
-    toggleA11yPreset,
-} from "./accessibilityPresets";
 import { runAutoTextAction } from "./autoTextSize";
-import { BODY_TEXT_EXPAND_CONFIG } from "./textAdjustLevels";
 
 describe("accessibility presets", () => {
     beforeEach(() => {

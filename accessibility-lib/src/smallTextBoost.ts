@@ -12,8 +12,8 @@ import {
     SMALL_BOOST_TARGET_VAR,
 } from "./domIds";
 import {
-    SMALL_TEXT_THRESHOLD_PX,
     computeSmallTextTargetPx,
+    SMALL_TEXT_THRESHOLD_PX,
     smallTextBoostConfig,
     type TextAdjustLevel,
 } from "./textAdjustLevels";

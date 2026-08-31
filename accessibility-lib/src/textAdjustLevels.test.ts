@@ -1,15 +1,15 @@
 import { describe, expect, it } from "vitest";
 import {
     BODY_TEXT_EXPAND_CONFIG,
-    SMALL_TEXT_BOOST_CONFIG,
-    TEXT_ADJUST_LEVELS,
     bodyTextExpandConfig,
     bodyTextExpandHint,
     computeBodyTextTargetPx,
     computeSmallTextTargetPx,
     normalizeTextAdjustLevel,
+    SMALL_TEXT_BOOST_CONFIG,
     smallTextBoostConfig,
     smallTextBoostHint,
+    TEXT_ADJUST_LEVELS,
     type TextAdjustLevel,
 } from "./textAdjustLevels";
 

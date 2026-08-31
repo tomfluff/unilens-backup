@@ -45,13 +45,13 @@ export {
     patchSettings,
     resetA11ySettings,
     resetDisplaySettings,
+    SETTINGS_DEFAULTS,
+    type Settings,
     saveA11ySettings,
     saveSettings,
     settings,
     updateSetting,
     useSettings,
-    SETTINGS_DEFAULTS,
-    type Settings,
 } from "./settings";
 
 /** Live read-only view of display settings for imperative code and tests. */

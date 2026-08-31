@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
     DEFAULT_SPEECH_RATE_LEVEL,
+    guessWordLength,
+    normalizeSpeechRateLevel,
     SPEECH_CHUNK_MAX,
     SPEECH_RATE_LEVELS,
     SPEECH_RATES,
-    guessWordLength,
-    normalizeSpeechRateLevel,
     speechRateHint,
     speechRateValue,
     splitSpeechChunks,
@@ -77,7 +77,7 @@ describe("splitSpeechChunks", () => {
     });
 
     it("joining the chunks loses no original characters", () => {
-        const text = "最初の文です。次の文はもう少し長くなります。" + long;
+        const text = `最初の文です。次の文はもう少し長くなります。${long}`;
         const chunks = splitSpeechChunks(text);
         const joined = chunks.map((c) => c.text).join("");
         expect(joined).toBe(text);

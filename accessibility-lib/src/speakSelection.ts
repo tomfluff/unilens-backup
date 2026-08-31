@@ -16,15 +16,15 @@
  *   unavailable (the panel decides what to show based on support).
  */
 import { getA11yLang } from "./accessibilityI18n";
+import { isUniLensOverlayNode } from "./domIds";
 import { getActiveSelectionRange } from "./selectionTextSize";
 import { settings } from "./settings";
-import { isUniLensOverlayNode } from "./domIds";
 import {
     guessWordLength,
     normalizeSpeechRateLevel,
+    type SpeechChunk,
     speechRateValue,
     splitSpeechChunks,
-    type SpeechChunk,
 } from "./speechLevels";
 
 export type SpeechState = "idle" | "speaking" | "paused";
@@ -324,7 +324,9 @@ export function onSpeechChange(cb: () => void): () => void {
 function setState(next: SpeechState) {
     if (state === next) return;
     state = next;
-    listeners.forEach((cb) => cb());
+    for (const cb of listeners) {
+        cb();
+    }
 }
 
 export function getSpeechState(): SpeechState {

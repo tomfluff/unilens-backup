@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
-    FONT_SCALE_LEVELS,
     a11yFontSizeToScale,
+    FONT_SCALE_LEVELS,
+    type FontScaleLevel,
     levelToScale,
     scaleToLevel,
-    type FontScaleLevel,
 } from "./fontScales";
 
 describe("levelToScale / scaleToLevel", () => {

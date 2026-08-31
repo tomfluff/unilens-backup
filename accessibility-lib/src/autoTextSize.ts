@@ -2,13 +2,9 @@
  * UniLens auto text size — adjusts host-page and chat text for readability.
  * Prototype: viewport / content / combined modes with a tab panel for testing.
  */
-import {
-    getSettings,
-    onSettingsChange,
-    saveSettings,
-    settings,
-} from "./settings";
-import { UI_ATTR, isUniLensOverlayNode } from "./domIds";
+
+import { isUniLensOverlayNode, UI_ATTR } from "./domIds";
+import { onSettingsChange, saveSettings, settings } from "./settings";
 
 export type { AutoTextMode } from "./accessibilityStoreTypes";
 

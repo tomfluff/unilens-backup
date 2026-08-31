@@ -708,7 +708,9 @@ let configuredLang: A11yLang | null = null;
 const ephemeralListeners: (() => void)[] = [];
 
 function notifyLangListeners() {
-    ephemeralListeners.forEach((cb) => cb());
+    for (const cb of ephemeralListeners) {
+        cb();
+    }
 }
 
 /**

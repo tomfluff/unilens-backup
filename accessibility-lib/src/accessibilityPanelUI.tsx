@@ -8,15 +8,16 @@
  * - Exclusive choices are operable as a radiogroup with arrow keys (roving tabindex).
  */
 import {
-    useEffect,
-    useRef,
-    useState,
     type CSSProperties,
     type KeyboardEvent,
     type ReactNode,
+    useEffect,
+    useRef,
+    useState,
 } from "react";
 
 import { A11Y_ROOT_ID, FOCUS_KEY_ATTR } from "./domIds";
+
 export { A11Y_ROOT_ID as ROOT_ID, FOCUS_KEY_ATTR };
 
 /**
@@ -115,6 +116,7 @@ export function Icon({ name, size = 18 }: { name: IconName; size?: number }) {
             strokeLinejoin="round"
             aria-hidden="true"
             focusable="false"
+            // biome-ignore lint/security/noDangerouslySetInnerHtml: Static SVG path definitions from ICON_PATHS
             dangerouslySetInnerHTML={{ __html: ICON_PATHS[name] }}
         />
     );
@@ -286,6 +288,7 @@ export function ChoiceGroup<T extends string>({
                 {options.map((opt, i) => {
                     const selected = opt.value === current;
                     return (
+                        // biome-ignore lint/a11y/useSemanticElements: ARIA radio button pattern with roving tabindex for custom segmented control
                         <button
                             key={opt.value}
                             ref={(node: HTMLButtonElement | null) => {
@@ -461,6 +464,7 @@ export function LevelControl({
                 {options.map((opt, i) => {
                     const selected = opt.value === current;
                     return (
+                        // biome-ignore lint/a11y/useSemanticElements: ARIA radio button pattern with roving tabindex for custom segmented control
                         <button
                             key={opt.value}
                             ref={(node: HTMLButtonElement | null) => {

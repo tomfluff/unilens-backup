@@ -1,10 +1,7 @@
 /**
  * Display adjustment types and filter constants.
  */
-import {
-    normalizeTextAdjustLevel,
-    type TextAdjustLevel,
-} from "./textAdjustLevels";
+import type { TextAdjustLevel } from "./textAdjustLevels";
 
 export type { TextAdjustLevel } from "./textAdjustLevels";
 

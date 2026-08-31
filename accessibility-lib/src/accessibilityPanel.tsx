@@ -17,13 +17,31 @@
  * mount point itself, not to anything this component renders as a child.
  */
 import {
+    type KeyboardEvent,
+    type MouseEvent,
     useEffect,
     useRef,
     useState,
-    type KeyboardEvent,
-    type MouseEvent,
 } from "react";
 import { createRoot } from "react-dom/client";
+import { getA11yLang, onA11yLangChange, t } from "./accessibilityI18n";
+import {
+    bodyExpandLevelLabels,
+    type PanelTab,
+    smallBoostLevelLabels,
+    TABS,
+    tabLabel,
+} from "./accessibilityPanelOptions";
+import { WIDGET_CSS } from "./accessibilityPanelStyles";
+import { TextTab, ToolsTab, VisualTab } from "./accessibilityPanelTabs";
+import {
+    announce,
+    Button,
+    Icon,
+    LiveRegion,
+    ROOT_ID,
+    useExternalSignal,
+} from "./accessibilityPanelUI";
 import {
     a11ySettings,
     applyA11yToDocument,
@@ -37,10 +55,6 @@ import {
     runAutoTextAction,
     type TextAnalysis,
 } from "./autoTextSize";
-import { clearSelectionFontSize } from "./selectionTextSize";
-// Read-aloud disabled — see accessibility-umd.ts init().
-// import { stopSpeech } from './speakSelection'
-import { onSettingsChange, settings, updateSetting } from "./settings";
 import {
     A11Y_OPEN_CLASS,
     A11Y_PAGE_STYLE_ID,
@@ -48,25 +62,11 @@ import {
     REDUCE_MOTION_ATTR,
     UI_ATTR,
 } from "./domIds";
-import { WIDGET_CSS } from "./accessibilityPanelStyles";
+import { clearSelectionFontSize } from "./selectionTextSize";
+// Read-aloud disabled — see accessibility-umd.ts init().
+// import { stopSpeech } from './speakSelection'
+import { onSettingsChange, settings, updateSetting } from "./settings";
 import PAGE_CSS from "./unilens-a11y/style.css";
-import { getA11yLang, onA11yLangChange, t } from "./accessibilityI18n";
-import {
-    TABS,
-    bodyExpandLevelLabels,
-    smallBoostLevelLabels,
-    tabLabel,
-    type PanelTab,
-} from "./accessibilityPanelOptions";
-import { ToolsTab, TextTab, VisualTab } from "./accessibilityPanelTabs";
-import {
-    Button,
-    Icon,
-    LiveRegion,
-    ROOT_ID,
-    announce,
-    useExternalSignal,
-} from "./accessibilityPanelUI";
 
 const RESET_CONFIRM_MS = 4000;
 
@@ -282,11 +282,7 @@ function TabBar({
     >;
 }) {
     return (
-        <ul
-            className="unilens-a11y-tabs"
-            role="tablist"
-            aria-label={t().tabsLabel}
-        >
+        <ul className="unilens-a11y-tabs" aria-label={t().tabsLabel}>
             {TABS.map((tab, index) => {
                 const selected = activeTab === tab.id;
                 const label = tabLabel(tab.id);
@@ -418,7 +414,7 @@ function AccessibilityPanelApp() {
         // Only the open transition should move focus — switching tabs while
         // already open is handled by the tab bar's own click/keydown handlers.
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [panelOpen]);
+    }, [panelOpen, activeTab]);
 
     // A destructive action was reset out from under the confirmation state
     // (e.g. everything got cleared some other way) — don't leave a stale
@@ -564,7 +560,6 @@ function AccessibilityPanelApp() {
                             }
                             role="tabpanel"
                             aria-labelledby={`da-tab-${id}`}
-                            tabIndex={0}
                             hidden={id !== activeTab}
                         >
                             {openedTabs.has(id) &&
