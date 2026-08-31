@@ -60,7 +60,7 @@ format-backend:
 #   make init-target unilens
 #   make init-target accessibility
 
-.PHONY: init-target clean-target build-target serve-target format-target check-target
+.PHONY: init-target clean-target build-target serve-target format-target fix-target
 
 define do-target
 	$(call require-arg,$(1)-target)
@@ -83,8 +83,8 @@ serve-target:
 format-target:
 	$(call do-target,format)
 
-check-target:
-	$(call do-target,check)
+fix-target:
+	$(call do-target,fix)
 
 # Init and clean backend, unilens lib, and self
 
@@ -208,8 +208,9 @@ serve-all:
 
 
 # Format and check rules
-.PHONY: format-all format check-all check
-# format all js targets
+.PHONY: format-all format fix-all fix check
+
+# Format all js targets
 format-all:
 	echo "Targets: $(JS_TARGETS)"
 	@for item in $(JS_TARGETS); do \
@@ -219,10 +220,15 @@ format-all:
 # Format js targets and backend targets
 format: format-backend format-all
 
-check-all:
+# Fix all JS targets
+fix-all:
 	echo "Targets: $(JS_TARGETS)"
 	@for item in $(JS_TARGETS); do \
-		$(MAKE) check-target $$item; \
-	done
+		$(MAKE) fix-target $$item; \
+	done 
 
-check: format-backend check-all
+# Fix everything. Only fixes JS for now. TODO: Update this with a backend linter.
+fix: fix-all
+
+# Unified CI check: build all bundles, format everything, check everything
+check: build format fix

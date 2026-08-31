@@ -2,7 +2,7 @@
 -include ../make-include.mk
 -include ../make-targets.mk
 
-.PHONY: init clean build serve format check
+.PHONY: init clean build serve format fix
 
 # Build stamp: git short hash, surfaced in the init console line
 BUILD_STAMP=$(shell git rev-parse --short HEAD 2>/dev/null || echo dev)
@@ -36,5 +36,5 @@ format:
 	$(NPX) $(BIOME) format $(SRC_DIR) $(BIOMEFLAGS)
 
 # Runs formatter with (potentially unsafe) fix
-check:
+fix:
 	$(NPX) $(BIOME) check --unsafe $(SRC_DIR) $(BIOMEFLAGS)
