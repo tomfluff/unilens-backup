@@ -2,7 +2,7 @@
 -include ../make-include.mk
 -include ../make-targets.mk
 
-.PHONY: init clean build serve test format fix
+.PHONY: init clean build serve test format check
 
 SRC_DIR=src
 ESBUILD=esbuild src/main.tsx --outfile=dist/$(target_dist_accessibility-lib) --bundle --minify --sourcemap --loader:.css=text --jsx=automatic
@@ -41,5 +41,5 @@ format:
 	$(NPX) $(BIOME) format $(SRC_DIR) $(BIOMEFLAGS)
 
 # Runs formatter with (potentially unsafe) fix
-fix:
+check:
 	$(NPX) $(BIOME) check --unsafe $(SRC_DIR) $(BIOMEFLAGS)

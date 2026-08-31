@@ -60,7 +60,7 @@ format-backend:
 #   make init-target unilens
 #   make init-target accessibility
 
-.PHONY: init-target clean-target build-target serve-target
+.PHONY: init-target clean-target build-target serve-target format-target check-target
 
 define do-target
 	$(call require-arg,$(1)-target)
@@ -82,6 +82,9 @@ serve-target:
 
 format-target:
 	$(call do-target,format)
+
+check-target:
+	$(call do-target,check)
 
 # Init and clean backend, unilens lib, and self
 
@@ -204,8 +207,8 @@ serve-all:
 		$(foreach t,$(FRONTEND_TARGETS),"$(MAKE) serve-frontend $(t)")
 
 
-# Format rules
-.PHONY: format-all format
+# Format and check rules
+.PHONY: format-all format check-all check
 # format all js targets
 format-all:
 	echo "Targets: $(JS_TARGETS)"
@@ -214,6 +217,12 @@ format-all:
 	done
 
 # Format js targets and backend targets
-format:
-	$(MAKE) format-backend
-	$(MAKE) format-all
+format: format-backend format-all
+
+check-all:
+	echo "Targets: $(JS_TARGETS)"
+	@for item in $(JS_TARGETS); do \
+		$(MAKE) check-target $$item; \
+	done
+
+check: format-backend check-all
