@@ -12,16 +12,16 @@
  * everything textual is derived state re-read on a 250ms tick.
  */
 import {
+    type CSSProperties,
+    type ReactNode,
     useEffect,
     useRef,
     useState,
-    type CSSProperties,
-    type ReactNode,
 } from "react";
 import { createRoot } from "react-dom/client";
-import { getSettings, updateSetting, useSettings } from "./settings";
 import { getCaptureDebug, getTraceDebug } from "./capture";
 import { getDwellDebug } from "./hint";
+import { getSettings, updateSetting, useSettings } from "./settings";
 import { getTargetZoom, getView, getZoom, getZoomTrace } from "./zoom";
 
 export interface DebugSources {
@@ -193,6 +193,7 @@ function DebugPanel({ sources }: { sources: DebugSources }) {
                     UniLens debug
                 </span>
                 <button
+                    type="button"
                     style={{
                         background: "none",
                         border: "none",

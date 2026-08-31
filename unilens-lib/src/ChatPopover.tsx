@@ -2,14 +2,15 @@ import { useEffect, useRef, useState } from "react";
 import type { CaptureResult } from "./capture";
 import { getSettings, useSettings } from "./settings";
 import {
+    listen,
+    type SpeechState,
     speak,
     stopSpeaking,
-    listen,
     sttSupported,
-    type SpeechState,
 } from "./speech";
 
 interface Msg {
+    id: string;
     role: "user" | "assistant";
     text: string;
     /** reply footer: provider · model · images · latency */
@@ -165,10 +166,16 @@ export default function ChatPopover({
             .then((d) => {
                 if (Array.isArray(d.history))
                     setMessages(
-                        d.history.map((h: { role: string; text: string }) => ({
-                            role: h.role as Msg["role"],
-                            text: h.text,
-                        })),
+                        d.history.map(
+                            (
+                                h: { role: string; text: string },
+                                idx: number,
+                            ) => ({
+                                id: `hist-${idx}-${Date.now()}`,
+                                role: h.role as Msg["role"],
+                                text: h.text,
+                            }),
+                        ),
                     );
                 if (d.captures) setSessionCaptures(d.captures);
             })
@@ -225,7 +232,7 @@ export default function ChatPopover({
 
     useEffect(() => {
         scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight });
-    }, [messages]);
+    }, []);
 
     useEffect(() => {
         const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
@@ -262,11 +269,18 @@ export default function ChatPopover({
             const data = await res.json().catch(() => ({}));
             setMessages((m) => [
                 ...m,
-                { role: "assistant", text: data.error ?? `HTTP ${res.status}` },
+                {
+                    id: `err-${Date.now()}`,
+                    role: "assistant",
+                    text: data.error ?? `HTTP ${res.status}`,
+                },
             ]);
             return;
         }
-        setMessages((m) => [...m, { role: "assistant", text: "" }]);
+        setMessages((m) => [
+            ...m,
+            { id: `stream-${Date.now()}`, role: "assistant", text: "" },
+        ]);
         const reader = res.body.getReader();
         const decoder = new TextDecoder();
         let buffer = "";
@@ -284,7 +298,7 @@ export default function ChatPopover({
                     full += data.delta;
                     patchLast({ text: full });
                 } else if (data.error) {
-                    patchLast({ text: full + `\n[error: ${data.error}]` });
+                    patchLast({ text: `${full}\n[error: ${data.error}]` });
                 } else if (data.done) {
                     patchLast({ info: fmtInfo(data) });
                     // live read: the user may toggle auto-read while the reply streams
@@ -316,6 +330,7 @@ export default function ChatPopover({
         setMessages((m) => [
             ...m,
             {
+                id: `plain-${Date.now()}`,
                 role: "assistant",
                 text: data.reply ?? data.error ?? "No reply.",
                 info,
@@ -327,7 +342,10 @@ export default function ChatPopover({
 
     async function sendText(text: string) {
         if (!text || busy) return;
-        setMessages((m) => [...m, { role: "user", text }]);
+        setMessages((m) => [
+            ...m,
+            { id: `user-${Date.now()}`, role: "user", text },
+        ]);
         setBusy(true);
         try {
             if (settings.streamReplies) await sendStreaming(text);
@@ -335,7 +353,11 @@ export default function ChatPopover({
         } catch (err) {
             setMessages((m) => [
                 ...m,
-                { role: "assistant", text: `Backend error: ${err}` },
+                {
+                    id: `err-${Date.now()}`,
+                    role: "assistant",
+                    text: `Backend error: ${err}`,
+                },
             ]);
         } finally {
             setBusy(false);
@@ -396,6 +418,7 @@ export default function ChatPopover({
                 </span>
                 <span style={{ display: "flex", gap: 4 }}>
                     <button
+                        type="button"
                         onClick={() => onTogglePin(pinned ? null : pos)}
                         title={
                             pinned
@@ -416,6 +439,7 @@ export default function ChatPopover({
                         📌{pinned ? " pinned" : ""}
                     </button>
                     <button
+                        type="button"
                         onClick={onClose}
                         style={{
                             background: "none",
@@ -516,7 +540,7 @@ export default function ChatPopover({
                 <div style={{ margin: "0 0 12px" }} />
                 {messages.map((m, i) => (
                     <div
-                        key={i}
+                        key={m.id}
                         style={{
                             margin: "6px 0",
                             padding: "8px 12px",
@@ -530,12 +554,14 @@ export default function ChatPopover({
                         }}
                     >
                         {m.role === "assistant" ? (
+                            // biome-ignore lint/security/noDangerouslySetInnerHtml: HTML is escaped in mdLite before formatting tags are added
                             <span dangerouslySetInnerHTML={mdLite(m.text)} />
                         ) : (
                             m.text
                         )}
                         {m.role === "assistant" && m.text && (
                             <button
+                                type="button"
                                 onClick={() => speakMessage(i, m.text)}
                                 title={
                                     speaking?.idx === i
@@ -587,6 +613,7 @@ export default function ChatPopover({
                 >
                     {QUICK_ACTIONS.map(([label, prompt]) => (
                         <button
+                            type="button"
                             key={label}
                             onClick={() => sendText(prompt)}
                             disabled={busy}
@@ -616,6 +643,7 @@ export default function ChatPopover({
             >
                 {settings.voiceInput && sttSupported && (
                     <button
+                        type="button"
                         onClick={toggleMic}
                         title={
                             listening ? "Stop listening" : "Speak your question"
@@ -634,7 +662,6 @@ export default function ChatPopover({
                     </button>
                 )}
                 <input
-                    autoFocus
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
                     // Enter that confirms an IME composition (Japanese, Chinese, Korean)
@@ -659,6 +686,7 @@ export default function ChatPopover({
                     }}
                 />
                 <button
+                    type="button"
                     onClick={send}
                     disabled={busy}
                     style={{

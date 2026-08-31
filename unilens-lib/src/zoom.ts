@@ -22,7 +22,7 @@ export interface ZoomEvent {
     y: number;
 }
 
-let zoomTrace: ZoomEvent[] = [];
+const zoomTrace: ZoomEvent[] = [];
 
 /** zoom events within the last 30s — the user's recent attention signal */
 export function getZoomTrace(atTime: number): ZoomEvent[] {

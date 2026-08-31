@@ -43,8 +43,8 @@ function showChip(x: number, y: number) {
     chip.textContent = "✨ Need help? Click here";
     Object.assign(chip.style, {
         position: "fixed",
-        left: Math.min(x + 16, window.innerWidth - 190) + "px",
-        top: Math.min(y + 16, window.innerHeight - 44) + "px",
+        left: `${Math.min(x + 16, window.innerWidth - 190)}px`,
+        top: `${Math.min(y + 16, window.innerHeight - 44)}px`,
         background: "#0f3460",
         color: "#9cf",
         border: "1px solid #00c8ff",
@@ -66,7 +66,11 @@ function showChip(x: number, y: number) {
     };
     // documentElement: outside the zoom-transformed body, excluded from captures
     document.documentElement.appendChild(chip);
-    requestAnimationFrame(() => chip && (chip.style.opacity = "1"));
+    requestAnimationFrame(() => {
+        if (chip) {
+            chip.style.opacity = "1";
+        }
+    });
     lastShown = Date.now();
     setTimeout(() => removeChip(), CHIP_LIFETIME_MS);
 }

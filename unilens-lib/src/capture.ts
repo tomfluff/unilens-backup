@@ -4,6 +4,7 @@
  * overlays viewport rect + mouse trace + click crosshair, returns PNG + metadata.
  */
 import html2canvas from "html2canvas";
+import { getSettings } from "./settings";
 import {
     clientToContent,
     getView,
@@ -12,7 +13,6 @@ import {
     stripFixedPins,
     type ZoomEvent,
 } from "./zoom";
-import { getSettings } from "./settings";
 
 export interface TracePoint {
     x: number;
@@ -66,7 +66,7 @@ export interface ElementContext {
 export function describeElement(el: Element): ElementContext {
     const cap = (s: string | null | undefined, n = 200) => {
         const t = s?.replace(/\s+/g, " ").trim();
-        return t ? (t.length > n ? t.slice(0, n) + "…" : t) : undefined;
+        return t ? (t.length > n ? `${t.slice(0, n)}…` : t) : undefined;
     };
 
     const path = [];
@@ -109,7 +109,7 @@ export interface CaptureResult {
 }
 
 // ── Mouse trace state ──────────────────────────────────────────────────────
-let trace: TracePoint[] = [];
+const trace: TracePoint[] = [];
 let traceBuffer = 5000;
 let traceWindowSec = 2.5;
 let tracking = false;
@@ -314,7 +314,9 @@ export async function capture(
     // on a page with an open accordion), which jumps the user's view and leaves the
     // click marker pointing at whatever moved into its place.
     const imageFixes = await preprocessImages();
-    imageFixes.forEach((f, i) => (f.el.dataset.unilensImg = String(i)));
+    imageFixes.forEach((f, i) => {
+        f.el.dataset.unilensImg = String(i);
+    });
     const tPre = performance.now();
 
     // Close-up source: the alt+drag selection if given, else the visible region
@@ -390,7 +392,7 @@ export async function capture(
         const crop = document.createElement("canvas");
         crop.width = Math.max(1, Math.round(vRect.w * s));
         crop.height = Math.max(1, Math.round(vRect.h * s));
-        crop.getContext("2d")!.drawImage(
+        crop.getContext("2d")?.drawImage(
             pageCanvas,
             vRect.x * s,
             vRect.y * s,

@@ -11,16 +11,20 @@
  *   backend      Flask base URL. Default: '' (same origin).
  */
 import { createRoot, type Root } from "react-dom/client";
-import { startTrace, capture, type CaptureResult } from "./capture";
-import { clientToContent, initZoom } from "./zoom";
-import { initMinimap } from "./minimap";
-import { getSettings, updateSetting } from "./settings";
-import { initSettings } from "./SettingsPanel";
-import { setSpeechBackend } from "./speech";
-import { initHint } from "./hint";
-import { initDebug } from "./DebugPanel";
-import { tagLastCapture } from "./capture";
 import ChatPopover from "./ChatPopover";
+import {
+    type CaptureResult,
+    capture,
+    startTrace,
+    tagLastCapture,
+} from "./capture";
+import { initDebug } from "./DebugPanel";
+import { initHint } from "./hint";
+import { initMinimap } from "./minimap";
+import { initSettings } from "./SettingsPanel";
+import { getSettings, updateSetting } from "./settings";
+import { setSpeechBackend } from "./speech";
+import { clientToContent, initZoom } from "./zoom";
 
 /** build stamp injected by esbuild --define (see the lib Makefile); absent in dev */
 declare const __target_dist_unilens_BUILD__: string;
@@ -77,7 +81,7 @@ function openPopover(
     document.documentElement.appendChild(container);
     root = createRoot(container);
     const render = () =>
-        root!.render(
+        root?.render(
             <ChatPopover
                 x={clientX}
                 y={clientY}
@@ -209,10 +213,10 @@ export function init(options: InitOptions = {}) {
         }
         if (dragBox) {
             Object.assign(dragBox.style, {
-                left: Math.min(e.clientX, dragStart.clientX) + "px",
-                top: Math.min(e.clientY, dragStart.clientY) + "px",
-                width: w + "px",
-                height: h + "px",
+                left: `${Math.min(e.clientX, dragStart.clientX)}px`,
+                top: `${Math.min(e.clientY, dragStart.clientY)}px`,
+                width: `${w}px`,
+                height: `${h}px`,
             });
         }
     });

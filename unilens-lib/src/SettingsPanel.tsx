@@ -2,13 +2,13 @@
  * UniLens settings panel — gear button (bottom-left) opening a small React panel.
  * Store lives in settings.ts; this file is UI only.
  */
-import { useEffect, useState, type CSSProperties } from "react";
+import { type CSSProperties, useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
 import {
+    type BoolSettingKey,
     TOGGLE_LABELS,
     updateSetting,
     useSettings,
-    type BoolSettingKey,
 } from "./settings";
 import { getTargetZoom, getZoom, onZoomChange, setZoom } from "./zoom";
 
@@ -48,6 +48,7 @@ function ZoomControls() {
             }}
         >
             <button
+                type="button"
                 style={zoomBtnStyle}
                 title="Zoom out"
                 onClick={() => setZoom(getTargetZoom() / 1.25)}
@@ -55,6 +56,7 @@ function ZoomControls() {
                 −
             </button>
             <button
+                type="button"
                 title="Reset zoom to 100%"
                 onClick={() => setZoom(1)}
                 style={{
@@ -71,6 +73,7 @@ function ZoomControls() {
                 {Math.round(scale * 100)}%
             </button>
             <button
+                type="button"
                 style={zoomBtnStyle}
                 title="Zoom in"
                 onClick={() => setZoom(getTargetZoom() * 1.25)}
@@ -202,6 +205,7 @@ function SettingsLauncher() {
     return (
         <>
             <button
+                type="button"
                 title="UniLens settings"
                 onClick={() => setOpen((o) => !o)}
                 onMouseEnter={() => setHover(true)}

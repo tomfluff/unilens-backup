@@ -9,6 +9,8 @@
  * Lives on documentElement, outside the body transform, so it stays at 1x and stays
  * out of captures — same as the rest of the UniLens chrome.
  */
+
+import { getSettings } from "./settings";
 import {
     getView,
     getZoom,
@@ -19,7 +21,6 @@ import {
     setView,
     toContent,
 } from "./zoom";
-import { getSettings } from "./settings";
 
 const MAP_W = 140;
 /** room left for the map after its inset, padding and border */
@@ -71,7 +72,7 @@ function build() {
 
     box.addEventListener("pointerdown", (e) => {
         try {
-            box!.setPointerCapture(e.pointerId); // keeps the drag alive past the map's edge
+            box?.setPointerCapture(e.pointerId); // keeps the drag alive past the map's edge
         } catch {
             /* no live pointer to capture — dragging still works, just not past the edge */
         }
@@ -188,7 +189,7 @@ function redraw() {
 
 function show() {
     if (!box) build();
-    box!.style.display = "";
+    if (box) box.style.display = "";
     redraw();
     startWatching();
 }
