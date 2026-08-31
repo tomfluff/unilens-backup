@@ -6,7 +6,12 @@
         "useIgnoreFile": true
     },
     "files": {
-        "includes": ["**", "!!**/dist"]
+        "includes": [
+            "src/**",
+            "!dist",
+            "!**/*.css",
+            "!**/*.html"
+        ]
     },
     "formatter": {
         "enabled": true,
