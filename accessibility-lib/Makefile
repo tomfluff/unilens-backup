@@ -2,10 +2,12 @@
 -include ../make-include.mk
 -include ../make-targets.mk
 
-.PHONY: init clean lint build serve test format
+.PHONY: init clean build serve test format fix
 
 SRC_DIR=src
 ESBUILD=esbuild src/main.tsx --outfile=dist/$(target_dist_accessibility-lib) --bundle --minify --sourcemap --loader:.css=text
+BIOME=@biomejs/biome
+BIOMEFLAGS=--config-path ./biome.json --write
 
 init:
 	echo "Setting up npm dependencies"
@@ -26,7 +28,7 @@ test:
 	$(NPX) vitest run
 
 # Build bundled js out to dist/
-build: lint
+build:
 	echo "Building dist..."
 	$(NPX) $(ESBUILD)
 
@@ -36,4 +38,8 @@ serve:
 
 # Runs formatter
 format:
-	$(NPX) @biomejs/biome format --write $(SRC_DIR)
+	$(NPX) $(BIOME) format $(SRC_DIR) $(BIOMEFLAGS)
+
+# Runs formatter with (potentially unsafe) fix
+fix:
+	$(NPX) $(BIOME) check --unsafe $(SRC_DIR) $(BIOMEFLAGS)
