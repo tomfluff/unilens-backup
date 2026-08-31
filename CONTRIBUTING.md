@@ -3,6 +3,19 @@
 Conventions for this repository. They exist so the codebase reads as one voice;
 match them rather than importing habits from other projects.
 
+## 0: Language
+The primary language of the project is English. For any documentation or comment contributions in Japanese, please abide by the following guideline:
+- Japanese translations of `.md` Markdown files in English may be suffixed by `.ja.md`, like so:
+```
+README.md
+README.ja.md     // Japanese translation
+```
+- Japanese translations of inline English comments may be prefixed by `ja:` like so:
+```
+// The architecture of this file is XYZ.
+// ja: このファイルのアーキテクチャはXYZです。
+```
+
 ## 1. Architecture: React vs imperative
 
 Both libraries are embeddable widgets built from two kinds of code, and the
