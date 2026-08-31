@@ -148,3 +148,7 @@ Climb this ladder and stop at the first rung that holds:
 
 Never a framework-sized addition for a single feature. Bundle size matters:
 these libraries are `<script>`-embedded into other people's pages.
+
+## 9. Submission Checks
+
+Please make sure `make check` passes with 0 errors or warnings before submitting any code.
