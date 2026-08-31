@@ -1,7 +1,5 @@
 # UniLens — parked work
 
-日本語版は [NEXT.ja.md](NEXT.ja.md) を参照してください。
-
 Picked-up-later queue, in intended order. Context: prototype branch `unilens-prototype`,
 all of the original 13-item improvement list plus guardrails/history/voice/hint shipped,
 and item 3 below largely done (magnifier zoom, minimap, two pan engines).

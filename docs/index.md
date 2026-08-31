@@ -2,4 +2,4 @@
 
 Structure of docs:
 
-- `adr` folder contains changes with reasoning
+- `changes` folder containing log of changes with reasoning
