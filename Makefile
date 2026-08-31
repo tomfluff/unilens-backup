@@ -50,6 +50,9 @@ clean-backend:
 serve-backend:
 	cd $(BACKEND_DIR) && $(MAKE) serve
 
+format-backend:
+	cd $(BACKEND_DIR) && $(MAKE) format
+
 # Target wrappers
 # These cd into the given subdir target and run the requested make command
 # Standard targets: unilens, accessibility
@@ -76,6 +79,9 @@ build-target:
 
 serve-target:
 	$(call do-target,serve)
+
+format-target:
+	$(call do-target,format)
 
 # Init and clean backend, unilens lib, and self
 
@@ -177,3 +183,18 @@ serve-all:
 	$(NPX) concurrently \
 		"$(MAKE) serve-backend" \
 		$(foreach t,$(FRONTEND_TARGETS),"$(MAKE) serve-frontend $(t)")
+
+
+# Format rules
+.PHONY: format-all format
+# format all js targets
+format-all:
+	echo "Targets: $(JS_TARGETS)"
+	@for item in $(JS_TARGETS); do \
+		$(MAKE) format-target $$item; \
+	done
+
+# Format js targets and backend targets
+format:
+	$(MAKE) format-backend
+	$(MAKE) format-all

@@ -1,0 +1,21 @@
+{
+	"folders": [
+		{
+			"path": "."
+		}
+	],
+	"extensions": {
+		"recommendations": [
+			"ms-python.black-formatter",
+			"biomejs.biome"
+		],
+		"unwantedRecommendations": []
+	},	
+	"settings": {
+		
+        "files.exclude": {
+            "**/node_modules": true,
+            "node_modules": true
+        }
+	},
+}

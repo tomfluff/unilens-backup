@@ -1,7 +1,7 @@
 # Wrapper for setup, teardown, build, and run
 -include ../make-include.mk
 
-.PHONY: init clean activate serve
+.PHONY: init clean activate serve format
 
 PYTHON=python3
 PIP=pip
@@ -29,4 +29,8 @@ activate:
 # Run the backend, and watch for changes
 serve:
 	. $(VENV_ACTIVATE) && flask --app app.py --debug run --port $(FLASK_PORT)
+
+# Runs the formatter
+format:
+	. $(VENV_ACTIVATE) && black app.py
 	

@@ -2,9 +2,10 @@
 -include ../make-include.mk
 -include ../make-targets.mk
 
-.PHONY: init clean lint build serve test
+.PHONY: init clean lint build serve test format
 
-ESBUILD=esbuild src/main.tsx --outfile=dist/$(target_dist_accessibility-lib) --bundle --minify --loader:.css=text
+SRC_DIR=src
+ESBUILD=esbuild src/main.tsx --outfile=dist/$(target_dist_accessibility-lib) --bundle --minify --sourcemap --loader:.css=text
 
 init:
 	echo "Setting up npm dependencies"
@@ -32,3 +33,7 @@ build: lint
 # Build bundled js, while watching for changes
 serve:
 	$(NPX) $(ESBUILD) --watch
+
+# Runs formatter
+format:
+	$(NPX) @biomejs/biome format --write $(SRC_DIR)

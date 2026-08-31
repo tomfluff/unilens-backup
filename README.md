@@ -110,6 +110,12 @@ npx concurrently "make serve-backend" "make serve-frontend dev-demo" "make serve
 # Serving "dev-demo" at http://127.0.0.1:53252
 ```
 
+## Format
+To format code using `black` for Python and `biome` for JS:
+```
+make format
+```
+
 ## Embed in any HTML
 
 ```
