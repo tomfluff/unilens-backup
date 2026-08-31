@@ -1,4 +1,7 @@
 # UniLens Project
+
+日本語版は [README.ja.md](README.ja.md) を参照してください。
+
 Making web-browsing accessible with in-page AI-partners.
 
 ## Structure
@@ -23,6 +26,7 @@ unilens-lib/          React + TS — builds a single embeddable dist/unilens.js 
 accessibility-lib/    React + TS — builds a single embeddable dist/accessibility.js using esbuild
 backend/           Flask — stores captures, /api/chat with OpenAI / Gemini / stub
 softbank-mirror/   Static copy of softbank.jp IR benefit page (test target)
+softbank-mirror-recruit/  Static copy of softbank.jp recruit/disability page (test target; docroot `site/`)
 ```
 ## Setup and cleanup
 To set up backend, unilens lib, and build system:
@@ -72,6 +76,11 @@ Run frontend dev demo to a given target dir and watch for changes (proxies /api 
 ```
 make serve-frontend softbank-mirror
 # Serves `softbank-mirror` to localhost:8000. Open and alt+click anywhere
+```
+
+```
+make serve-frontend softbank-mirror-recruit
+# Serves `frontend/softbank-mirror-recruit/site` to localhost:8002
 ```
 
 ### Javascript Libs Only

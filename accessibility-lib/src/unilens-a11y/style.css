@@ -1,0 +1,402 @@
+﻿/**
+ * Display adjustment — color mode, saturation, contrast
+ * Controlled via <html> data-unilens-a11y-theme, data-unilens-a11y-saturation, data-unilens-a11y-contrast
+ */
+
+:root {
+  --unilens-a11y-display-bg: #f5f5f5;
+  --unilens-a11y-display-text: #222222;
+  --unilens-a11y-display-surface: #ffffff;
+  --unilens-a11y-display-link: #0f3460;
+  --unilens-a11y-display-border: #cccccc;
+  --unilens-a11y-display-saturate: 1;
+  --unilens-a11y-display-contrast: 1;
+}
+
+/* ── Color modes (CSS variables) ─────────────────────────────────────────── */
+
+html[data-unilens-a11y-theme='light'] {
+  --unilens-a11y-display-bg: #f5f5f5;
+  --unilens-a11y-display-text: #222222;
+  --unilens-a11y-display-surface: #ffffff;
+  --unilens-a11y-display-link: #0f3460;
+  --unilens-a11y-display-border: #cccccc;
+}
+
+html[data-unilens-a11y-theme='dark'] {
+  --unilens-a11y-display-bg: #1a1a2e;
+  --unilens-a11y-display-text: #f0f0f0;
+  --unilens-a11y-display-surface: #26263e;
+  --unilens-a11y-display-link: #77ddff;
+  /* Keep borders readable against surface (#26263e); #444 was nearly invisible. */
+  --unilens-a11y-display-border: #9a9ab0;
+}
+
+/* Mild (low sensory stimulation): cream background × dark gray text */
+html[data-unilens-a11y-theme='soft'] {
+  --unilens-a11y-display-bg: #f5f2eb;
+  --unilens-a11y-display-text: #2b2b2b;
+  --unilens-a11y-display-surface: #faf8f3;
+  --unilens-a11y-display-link: #3d5a40;
+  --unilens-a11y-display-border: #c9c2b4;
+}
+
+html[data-unilens-a11y-theme='high-contrast'] {
+  --unilens-a11y-display-bg: #000000;
+  --unilens-a11y-display-text: #ffff00;
+  --unilens-a11y-display-surface: #000000;
+  --unilens-a11y-display-link: #ffff00;
+  --unilens-a11y-display-border: #ffff00;
+}
+
+html[data-unilens-a11y-theme='invert'] {
+  --unilens-a11y-display-bg: #f5f5f5;
+  --unilens-a11y-display-text: #222222;
+  --unilens-a11y-display-surface: #ffffff;
+  --unilens-a11y-display-link: #0f3460;
+  --unilens-a11y-display-border: #cccccc;
+}
+
+/* ── Saturation / contrast ───────────────────────────────────────────────────
+   accessibilityStore.ts's SATURATION_FILTER / CONTRAST_FILTER are the single
+   source of truth for these multipliers; applyA11yToDocument() writes
+   --unilens-a11y-display-saturate / --unilens-a11y-display-contrast directly onto <html>. Defining
+   them again here would let the panel preview and the actual rendering
+   drift apart, so no values are set here (the defaults live in :root).
+   The data-unilens-a11y-saturation / data-unilens-a11y-contrast attributes are still set, as a hook
+   for the embedding page to apply its own CSS. */
+
+/* ── Page application (page content root — overlay widget stays outside) ── */
+
+html[data-unilens-a11y-display-active] body {
+  background-color: var(--unilens-a11y-display-bg) !important;
+}
+
+html[data-unilens-a11y-display-active] #unilens-a11y-page-root {
+  background-color: var(--unilens-a11y-display-bg) !important;
+  color: var(--unilens-a11y-display-text) !important;
+  min-height: 100%;
+}
+
+html[data-unilens-a11y-theme='light'][data-unilens-a11y-display-active],
+html[data-unilens-a11y-theme='dark'][data-unilens-a11y-display-active],
+html[data-unilens-a11y-theme='soft'][data-unilens-a11y-display-active],
+html[data-unilens-a11y-theme='high-contrast'][data-unilens-a11y-display-active] {
+  color-scheme: light;
+}
+
+html[data-unilens-a11y-theme='dark'][data-unilens-a11y-display-active] {
+  color-scheme: dark;
+}
+
+html[data-unilens-a11y-theme='high-contrast'][data-unilens-a11y-display-active] {
+  color-scheme: dark;
+}
+
+/* Saturation / contrast filters apply to page content only (not the overlay). */
+html[data-unilens-a11y-display-active] #unilens-a11y-page-root[data-unilens-a11y-page-filter] {
+  filter: saturate(var(--unilens-a11y-display-saturate)) contrast(var(--unilens-a11y-display-contrast));
+}
+
+/* Theme = standard: leave host UI colors alone; tone filter hits media only.
+ * picture gets the filter once; nested img is excluded to avoid double-applying. */
+#unilens-a11y-page-root[data-unilens-a11y-image-filter] :is(img, video),
+#unilens-a11y-page-root[data-unilens-a11y-image-filter] picture {
+  filter: saturate(var(--unilens-a11y-display-saturate)) contrast(var(--unilens-a11y-display-contrast));
+}
+
+#unilens-a11y-page-root[data-unilens-a11y-image-filter] picture img {
+  filter: none;
+}
+
+/* Invert uses <html> filter so fixed headers stay viewport-anchored; overlay counter-inverts. */
+html[data-unilens-a11y-html-filter] {
+  filter: invert(1) hue-rotate(180deg) saturate(var(--unilens-a11y-display-saturate))
+    contrast(var(--unilens-a11y-display-contrast));
+}
+
+/* Counter-invert every UniLens overlay so invert on <html> never flips panel / minimap UI. */
+html[data-unilens-a11y-html-filter] :is(
+  #unilens-a11y-root,
+  #unilens-root,
+  #unilens-settings-root,
+  #unilens-debug-root,
+  [data-unilens-ui]
+) {
+  filter: invert(1) hue-rotate(180deg) saturate(var(--unilens-a11y-display-saturate))
+    contrast(var(--unilens-a11y-display-contrast));
+}
+
+/* Force color + background-color on every descendant, not just on the root.
+ * The host site's own CSS almost always sets `color` explicitly on individual
+ * elements (p, span, div, li, ...), which breaks CSS inheritance — so setting
+ * color/background only on #unilens-a11y-page-root left those elements with
+ * their *original* text color sitting on top of our *new* background, which
+ * is how a dark theme could end up rendering black text on a near-black
+ * background. Background resets to transparent so the (guaranteed readable)
+ * ancestor background always shows through unless a more specific "surface"
+ * rule below repaints it — background/color are always a matched pair from
+ * our own palette, never independently decided by the site's CSS.
+ *
+ * Host elements that originally had an opaque background-color are marked by
+ * documentEffects with [data-unilens-a11y-positioned-overlay] and get an
+ * explicit surface fill — including static/relative plates such as SoftBank
+ * `.megadropdown-view-inner`. Layers that were already transparent (decorative
+ * absolute text like `.p-homeMv__cursive`) stay transparent so host photos show
+ * through. `revert` does not reliably restore host author backgrounds under our
+ * !important reset; painting surface keeps menus opaque and theme-aligned.
+ * Only the marked node is painted — descendants stay transparent so they
+ * show this fill (and keep host background-image icons intact).
+ * [data-unilens-a11y-bg-sample] temporarily opts an element out of the
+ * transparent reset while markers sample the author background. */
+html[data-unilens-a11y-display-active] #unilens-a11y-page-root *:not([data-unilens-a11y-bg-sample]) {
+  background-color: transparent !important;
+}
+
+html[data-unilens-a11y-display-active] #unilens-a11y-page-root * {
+  color: var(--unilens-a11y-display-text) !important;
+  border-color: var(--unilens-a11y-display-border) !important;
+}
+
+html[data-unilens-a11y-display-active] #unilens-a11y-page-root [data-unilens-a11y-positioned-overlay] {
+  background-color: var(--unilens-a11y-display-surface) !important;
+}
+
+/*
+ * Interactive plates that lost brand-color boundaries (e.g. SoftBank
+ * `.c-btn.type1/type2` red/blue CTAs with border:0) get a 1px themed ring so
+ * adjacent same-surface controls stay separable. Limited to controls — not
+ * every opaque surface — to avoid framing decorative panels.
+ */
+html[data-unilens-a11y-display-active] #unilens-a11y-page-root [data-unilens-a11y-positioned-overlay]:is(
+  a,
+  button,
+  [role='button'],
+  input:not([type='hidden']),
+  select,
+  textarea,
+  summary
+) {
+  box-shadow: inset 0 0 0 1px var(--unilens-a11y-display-border) !important;
+}
+
+/*
+ * Host chrome often draws chevrons / plus icons / hairlines on ::before|::after
+ * with hardcoded border-color or background-color (e.g. SoftBank megadropdown
+ * `border-*: 2px solid #333` and `::after { height:1px; background:#6c6a6a }`).
+ * Those pseudos are outside the `*` rule above, so footer links that use
+ * currentColor look themed while overlay menus stay gray — extend the tokens
+ * onto pseudos. background-color is limited to likely hairline containers so
+ * large decorative ::before blocks (header bars, contact icons) are left alone.
+ */
+html[data-unilens-a11y-display-active] #unilens-a11y-page-root *::before,
+html[data-unilens-a11y-display-active] #unilens-a11y-page-root *::after {
+  border-color: var(--unilens-a11y-display-border) !important;
+  color: var(--unilens-a11y-display-text) !important;
+}
+
+html[data-unilens-a11y-display-active] #unilens-a11y-page-root [class*='link-container']::after,
+html[data-unilens-a11y-display-active] #unilens-a11y-page-root [class*='link-container']::before {
+  background-color: var(--unilens-a11y-display-border) !important;
+}
+
+/* SoftBank accordion open-state thickens the same ::after into a white spacer
+ * (parent gets `…-lv4--open`). Keep that fill on the surface token. */
+html[data-unilens-a11y-display-active] #unilens-a11y-page-root [class*='--open'] [class*='link-container']::after,
+html[data-unilens-a11y-display-active] #unilens-a11y-page-root [class*='link-container'][class*='--open']::after {
+  background-color: var(--unilens-a11y-display-surface) !important;
+}
+
+/* SoftBank world-menu trigger paints an open-state plate via ::before with
+ * hardcoded #ebebee — unreadable under dark/high-contrast text. Align with
+ * the themed surface used for the positioned overlay panel. */
+html[data-unilens-a11y-display-active] #unilens-a11y-page-root .sb-appshell-v1-header_world-menu-button::before {
+  background-color: var(--unilens-a11y-display-surface) !important;
+}
+
+/* Re-paint recognizable containers with the elevated "surface" tone for visual
+ * hierarchy, layered on top of the blanket reset above. Applies to every
+ * active theme (high-contrast's black-on-black is just as possible as dark's). */
+html[data-unilens-a11y-display-active] #unilens-a11y-page-root :where(
+  .hero,
+  .card,
+  .container,
+  .demo-section,
+  section,
+  article,
+  header,
+  footer,
+  nav,
+  main,
+  aside
+):not(#unilens-a11y-root):not(#unilens-root):not([data-unilens-ui]) {
+  background-color: var(--unilens-a11y-display-surface) !important;
+}
+
+html[data-unilens-a11y-display-active] #unilens-a11y-page-root a {
+  color: var(--unilens-a11y-display-link) !important;
+}
+
+html[data-unilens-a11y-theme='high-contrast'][data-unilens-a11y-display-active] #unilens-a11y-page-root .hero {
+  background-color: var(--unilens-a11y-display-bg) !important;
+}
+
+html[data-unilens-a11y-theme='high-contrast'][data-unilens-a11y-display-active] #unilens-a11y-page-root kbd {
+  background: #000 !important;
+  color: #ff0 !important;
+  border: 1px solid #ff0 !important;
+}
+
+/* ── Widget UI ────────────────────────────────────────────────────────────
+ * The panel's own appearance is injected as a <style> by accessibilityPanelStyles.ts.
+ * It's kept separate from the page's display adjustments and always rendered in a stable light theme.
+ * ------------------------------------------------------------------------ */
+
+/* Text size — body only (keeps the overlay widget scale stable). */
+html[data-unilens-a11y-font-size='large'] body,
+html[data-unilens-a11y-font-size='xlarge'] body {
+  font-size: calc(100% * var(--unilens-a11y-font-scale, 1));
+}
+
+/* Line spacing — only when the visitor chose “wide”. */
+html[data-unilens-a11y-line-height='wide'] body {
+  line-height: var(--unilens-a11y-line-height, 2) !important;
+}
+
+/* Force the chosen typeface only when the visitor actually picked one
+ * (UD / custom). Must not rewrite the host site's own font-family.
+ * Pseudo-elements are deliberately left out so icon fonts via ::before/::after
+ * keep rendering correctly. */
+html[data-unilens-a11y-font-family='ud'] #unilens-a11y-page-root,
+html[data-unilens-a11y-font-family='ud'] #unilens-a11y-page-root *,
+html[data-unilens-a11y-font-family='custom'] #unilens-a11y-page-root,
+html[data-unilens-a11y-font-family='custom'] #unilens-a11y-page-root * {
+  font-family: var(--unilens-a11y-font-family, system-ui, sans-serif) !important;
+}
+
+html[data-unilens-a11y-letter-spacing='wide'] body {
+  letter-spacing: var(--unilens-a11y-letter-spacing, 0.12em) !important;
+  word-spacing: var(--unilens-a11y-word-spacing, 0.16em) !important;
+}
+
+/* ── Link underline (color is not the only cue) ──────────────────────────── */
+
+html[data-unilens-a11y-link-underline='true'] #unilens-a11y-page-root a {
+  text-decoration: underline !important;
+  text-underline-offset: 0.2em;
+  text-decoration-thickness: 0.12em;
+}
+
+/* ── Link background (color is not the only cue) ───────────────────────────
+   --unilens-a11y-display-link is designed to read against OUR palette's own
+   background (--unilens-a11y-display-bg). When the color theme is left on
+   'standard' (site colors untouched) that variable stays the :root navy.
+   Mixing a DARK accent color with "transparent" over an already-dark host
+   page can never produce something visible no matter how high the opacity
+   goes — at the limit (100%) it converges on the accent color itself, and
+   pure navy against near-black is still under 1.5:1 contrast. So this
+   pre-lightens the accent color toward white first (giving a mid-tone slate
+   that's visible in its own right), THEN applies that at partial opacity —
+   the pre-lightening is what actually fixes the dark-host case; the outer
+   opacity just keeps it reading as a translucent tint rather than a solid
+   block on light hosts. */
+
+html[data-unilens-a11y-link-background='true'] #unilens-a11y-page-root a {
+  background-color: color-mix(
+    in srgb,
+    color-mix(in srgb, var(--unilens-a11y-display-link) 55%, white 45%) 68%,
+    transparent
+  ) !important;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.55);
+  border-radius: 2px;
+}
+
+/* ── Link border ──────────────────────────────────────────────────────────
+   An outline (not a real border) so it never nudges surrounding layout —
+   the host page's own box-sizing for these elements is unknown to us. The
+   white box-shadow ring sits right at the element's own edge (inside the
+   outline's offset gap) so it stays visible even when
+   --unilens-a11y-display-link itself is too dark to read against a dark
+   host background — see the link-background comment above for why. */
+
+html[data-unilens-a11y-link-border='true'] #unilens-a11y-page-root a {
+  outline: 2px solid var(--unilens-a11y-display-link) !important;
+  outline-offset: 1px;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.85);
+  border-radius: 2px;
+}
+
+/* ── Image border ─────────────────────────────────────────────────────────
+   Negative offset keeps the outline inside the image's own box, so it can't
+   overlap or shift neighboring inline content. */
+
+html[data-unilens-a11y-image-border='true'] #unilens-a11y-page-root img {
+  outline: 2px solid var(--unilens-a11y-display-border) !important;
+  outline-offset: -2px;
+}
+
+/* ── Element highlight (always on, not just while focused) ─────────────────
+   Same element list as the focus-enhance cursor, minus <label> (it isn't
+   itself an interactive control, so outlining it would just add noise).
+   Same white halo as link-border, for the same dark-host-page reason. */
+
+html[data-unilens-a11y-element-highlight='true'] #unilens-a11y-page-root :where(
+  a, button, [role='button'], input, select, textarea, summary
+) {
+  outline: 1.5px solid var(--unilens-a11y-display-link) !important;
+  outline-offset: 1px;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.85);
+  border-radius: 2px;
+}
+
+/* ── Reduce motion (mild / sensory) ──────────────────────────────────────── */
+
+html[data-unilens-a11y-reduce-motion='true'] #unilens-a11y-page-root *,
+html[data-unilens-a11y-reduce-motion='true'] #unilens-a11y-page-root *::before,
+html[data-unilens-a11y-reduce-motion='true'] #unilens-a11y-page-root *::after {
+  animation: none !important;
+  transition: none !important;
+  scroll-behavior: auto !important;
+}
+
+/* ── Focus / cursor enhance (low vision: where am I?) ──────────────────────
+   The widget itself is excluded here since it shows focus using the panel's
+   own tokens. The cursor uses an asset-free SVG data URI (black arrow + white outline). */
+
+html[data-unilens-a11y-focus-enhance='true'] #unilens-a11y-page-root {
+  --unilens-a11y-focus-ring: #ffcc00;
+  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 48 48'%3E%3Cpath d='M8 4v34l9.5-9.2 6.2 14.6 5.4-2.3-6.3-14.8L36 26.5Z' fill='%23000' stroke='%23fff' stroke-width='3' stroke-linejoin='round'/%3E%3C/svg%3E")
+      6 4,
+    auto;
+}
+
+html[data-unilens-a11y-focus-enhance='true'] #unilens-a11y-page-root :where(a, button, [role='button'], input, select, textarea, summary, label) {
+  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 48 48'%3E%3Cpath d='M8 4v34l9.5-9.2 6.2 14.6 5.4-2.3-6.3-14.8L36 26.5Z' fill='%23000' stroke='%23fff' stroke-width='3' stroke-linejoin='round'/%3E%3C/svg%3E")
+      6 4,
+    pointer;
+}
+
+html[data-unilens-a11y-focus-enhance='true'] #unilens-a11y-page-root :focus-visible {
+  outline: 4px solid var(--unilens-a11y-focus-ring, #ffcc00) !important;
+  outline-offset: 3px !important;
+  box-shadow: 0 0 0 2px #000 !important;
+}
+
+html[data-unilens-a11y-focus-enhance='true'] #unilens-a11y-root :focus-visible,
+html[data-unilens-a11y-focus-enhance='true'] #unilens-root :focus-visible {
+  outline: revert-layer;
+  outline-offset: revert-layer;
+  box-shadow: revert-layer;
+}
+
+/* ── Small text boost (16px floor) ───────────────────────────────────────── */
+
+[data-unilens-a11y-scaled="true"].unilens-a11y-small-text-boost {
+  font-size: var(--unilens-a11y-target-size, 16px) !important;
+}
+
+/* ── Body text expand (headings excluded, 1.25×, min 16px) ───────────────── */
+
+[data-unilens-a11y-body-expanded="true"].unilens-a11y-body-text-expand {
+  font-size: var(--unilens-a11y-body-target-size, 16px) !important;
+}

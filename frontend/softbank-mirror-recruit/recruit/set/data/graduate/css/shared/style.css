@@ -1,0 +1,93 @@
+@keyframes progressBar {
+  0%{width: 0;}
+  100%{width: 100%;}
+}
+.p-graduateCampaign{
+  background-color: #000;
+}
+@media (max-width: 800px){
+  .p-graduateCampaign{
+    display: none;
+  }
+}
+.p-graduateCampaign__inner{
+  max-width: 132rem;
+  padding: 0 6rem;
+  margin: 0 auto;
+}
+.p-graduateCampaign__title{
+  font-size: 4rem;
+  font-weight: 900;
+}
+.p-graduateCampaign__list{
+  margin-top: 2rem;
+}
+.p-graduateCampaign__list:not(:has(:nth-child(5))){
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  column-gap: 2rem;
+}
+.p-graduateCampaign__list:not(:has(:nth-child(5))) .p-graduateCampaign__item{
+  width: calc(33% - 2rem);
+}
+.p-graduateCampaign__list:has(:nth-child(5)) .p-graduateCampaign__item{
+  display: grid;
+  place-content: center;
+  height: auto;
+}
+.p-graduateCampaign__button:not(:has(.swiper-pagination-bullet)){
+  display: none;
+}
+.p-graduateCampaign__button{
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  column-gap: 2rem;
+  margin-top: 3rem;
+}
+.p-graduateCampaign__button > .p-graduateCampaign__pager.swiper-pagination-horizontal{
+  position: static;
+  display: flex;
+  justify-content: center;
+  width: auto;
+}
+.p-graduateCampaign__button .p-graduateCampaign__pager .swiper-pagination-bullet{
+  background-color: #ced3d8;
+  width: 20px;
+  border-radius: 0;
+  position: relative;
+  opacity: 1;
+}
+.p-graduateCampaign__button .p-graduateCampaign__pager .swiper-pagination-bullet::before{
+  content: '';
+  display: block;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 0;
+  height: 100%;
+  background-color: #757575;
+}
+.p-graduateCampaign__button .p-graduateCampaign__pager .swiper-pagination-bullet.swiper-pagination-bullet-active::before{
+  animation: progressBar var(--progressDuration) linear 0s forwards;
+}
+.p-graduateCampaign__button.is-stop .p-graduateCampaign__pager .swiper-pagination-bullet.swiper-pagination-bullet-active::before{
+  animation-play-state: paused;
+}
+.p-graduateCampaign__button .p-graduateCampaign__control{
+  width: 20px;
+  aspect-ratio: 1/1;
+  border-radius: 50%;
+  background-image: url('https://www.softbank.jp/site/set/common/shared/img/mainvisual/icon-pause.svg');
+  background-size: contain;
+  cursor: pointer;
+}
+.p-graduateCampaign__button.is-stop .p-graduateCampaign__control{
+  background-image: url('https://www.softbank.jp/site/set/common/shared/img/mainvisual/icon-play.svg');
+}
+@media only screen and (max-width: 800px) {
+	.bg-black {
+			background: #000;
+	}
+}

@@ -1,0 +1,321 @@
+/**
+ * Display adjustment — color mode, saturation, contrast
+ * Controlled via <html> data-theme, data-saturation, data-contrast
+ */
+
+:root {
+  --display-bg: #f5f5f5;
+  --display-text: #222222;
+  --display-surface: #ffffff;
+  --display-link: #0f3460;
+  --display-border: #cccccc;
+  --display-saturate: 1;
+  --display-contrast: 1;
+}
+
+/* ── Color modes (CSS variables) ─────────────────────────────────────────── */
+
+html[data-theme='light'] {
+  --display-bg: #f5f5f5;
+  --display-text: #222222;
+  --display-surface: #ffffff;
+  --display-link: #0f3460;
+  --display-border: #cccccc;
+}
+
+html[data-theme='dark'] {
+  --display-bg: #1a1a2e;
+  --display-text: #f0f0f0;
+  --display-surface: #26263e;
+  --display-link: #77ddff;
+  --display-border: #9a9ab0;
+}
+
+/* Mild (low sensory stimulation): cream background × dark gray text */
+html[data-theme='soft'] {
+  --display-bg: #f5f2eb;
+  --display-text: #2b2b2b;
+  --display-surface: #faf8f3;
+  --display-link: #3d5a40;
+  --display-border: #c9c2b4;
+}
+
+html[data-theme='high-contrast'] {
+  --display-bg: #000000;
+  --display-text: #ffff00;
+  --display-surface: #000000;
+  --display-link: #ffff00;
+  --display-border: #ffff00;
+}
+
+html[data-theme='invert'] {
+  --display-bg: #f5f5f5;
+  --display-text: #222222;
+  --display-surface: #ffffff;
+  --display-link: #0f3460;
+  --display-border: #cccccc;
+}
+
+/* ── Saturation / contrast ───────────────────────────────────────────────────
+   accessibilityStore.ts's SATURATION_FILTER / CONTRAST_FILTER are the single
+   source of truth for these multipliers; applyA11yToDocument() writes
+   --display-saturate / --display-contrast directly onto <html>. Defining
+   them again here would let the panel preview and the actual rendering
+   drift apart, so no values are set here (the defaults live in :root).
+   The data-saturation / data-contrast attributes are still set, as a hook
+   for the embedding page to apply its own CSS. */
+
+/* ── Page application (page content root — overlay widget stays outside) ── */
+
+html[data-display-active] body {
+  background-color: var(--display-bg) !important;
+}
+
+html[data-display-active] #unilens-a11y-page-root {
+  background-color: var(--display-bg) !important;
+  color: var(--display-text) !important;
+  min-height: 100%;
+}
+
+html[data-theme='dark'][data-display-active],
+html[data-theme='soft'][data-display-active],
+html[data-theme='high-contrast'][data-display-active] {
+  color-scheme: light;
+}
+
+html[data-theme='dark'][data-display-active] {
+  color-scheme: dark;
+}
+
+html[data-theme='high-contrast'][data-display-active] {
+  color-scheme: dark;
+}
+
+/* Saturation / contrast filters apply to page content only (not the overlay). */
+html[data-display-active] #unilens-a11y-page-root[data-a11y-page-filter] {
+  filter: saturate(var(--display-saturate)) contrast(var(--display-contrast));
+}
+
+/* Invert uses <html> filter so fixed headers stay viewport-anchored; overlay counter-inverts. */
+html[data-a11y-html-filter] {
+  filter: invert(1) hue-rotate(180deg) saturate(var(--display-saturate))
+    contrast(var(--display-contrast));
+}
+
+/* Counter-invert every UniLens overlay so invert on <html> never flips panel / minimap UI. */
+html[data-a11y-html-filter] :is(
+  #display-adjustment-widget,
+  #unilens-root,
+  #unilens-settings-root,
+  #unilens-debug-root,
+  [data-unilens-ui]
+) {
+  filter: invert(1) hue-rotate(180deg) saturate(var(--display-saturate))
+    contrast(var(--display-contrast));
+}
+
+/* Force color + background-color on every descendant, not just on the root.
+ * The host site's own CSS almost always sets `color` explicitly on individual
+ * elements (p, span, div, li, ...), which breaks CSS inheritance — so setting
+ * color/background only on #unilens-a11y-page-root left those elements with
+ * their *original* text color sitting on top of our *new* background, which
+ * is how a dark theme could end up rendering black text on a near-black
+ * background. Background resets to transparent so the (guaranteed readable)
+ * ancestor background always shows through unless a more specific "surface"
+ * rule below repaints it — background/color are always a matched pair from
+ * our own palette, never independently decided by the site's CSS.
+ *
+ * Positioned overlays with an originally opaque background get an explicit
+ * surface fill (`revert` is unreliable under the !important reset). */
+html[data-display-active] #unilens-a11y-page-root *:not([data-unilens-a11y-bg-sample]) {
+  background-color: transparent !important;
+}
+
+html[data-display-active] #unilens-a11y-page-root * {
+  color: var(--display-text) !important;
+  border-color: var(--display-border) !important;
+}
+
+html[data-display-active] #unilens-a11y-page-root [data-unilens-a11y-positioned-overlay] {
+  background-color: var(--display-surface) !important;
+}
+
+html[data-display-active] #unilens-a11y-page-root [data-unilens-a11y-positioned-overlay]:is(
+  a,
+  button,
+  [role='button'],
+  input:not([type='hidden']),
+  select,
+  textarea,
+  summary
+) {
+  box-shadow: inset 0 0 0 1px var(--display-border) !important;
+}
+
+html[data-display-active] #unilens-a11y-page-root .sb-appshell-v1-header_world-menu-button::before {
+  background-color: var(--display-surface) !important;
+}
+
+/* Re-paint recognizable containers with the elevated "surface" tone for visual
+ * hierarchy, layered on top of the blanket reset above. Applies to every
+ * active theme (high-contrast's black-on-black is just as possible as dark's). */
+html[data-display-active] #unilens-a11y-page-root :where(
+  .hero,
+  .card,
+  .container,
+  .demo-section,
+  section,
+  article,
+  header,
+  footer,
+  nav,
+  main,
+  aside
+):not(#display-adjustment-widget):not(#unilens-root):not([data-unilens-ui]) {
+  background-color: var(--display-surface) !important;
+}
+
+html[data-display-active] #unilens-a11y-page-root a {
+  color: var(--display-link) !important;
+}
+
+html[data-theme='high-contrast'][data-display-active] #unilens-a11y-page-root .hero {
+  background-color: var(--display-bg) !important;
+}
+
+html[data-theme='high-contrast'][data-display-active] #unilens-a11y-page-root kbd {
+  background: #000 !important;
+  color: #ff0 !important;
+  border: 1px solid #ff0 !important;
+}
+
+/* ── Widget UI ────────────────────────────────────────────────────────────
+ * The panel's own appearance is injected as a <style> by accessibilityPanelStyles.ts.
+ * It's kept separate from the page's display adjustments and always rendered in a stable light theme.
+ * ------------------------------------------------------------------------ */
+
+/* Text size — body only (keeps the overlay widget scale stable). */
+html[data-a11y-font-size='large'] body,
+html[data-a11y-font-size='xlarge'] body {
+  font-size: calc(100% * var(--a11y-font-scale, 1));
+}
+
+html[data-a11y-line-height='wide'] body {
+  line-height: var(--a11y-line-height, 2) !important;
+}
+
+/* Force the chosen typeface on every descendant too, not just body — the
+ * host site's own CSS very often sets an explicit font-family on individual
+ * elements (headings, buttons, nav items, ...), which breaks inheritance
+ * from body and left the typeface switch with no visible effect on most of
+ * the page's actual text (same class of bug as the color/background fix
+ * above). Pseudo-elements are deliberately left out of this selector so
+ * icon fonts implemented via ::before/::after glyphs — the common pattern —
+ * keep rendering correctly instead of falling back to missing-glyph boxes. */
+html[data-a11y-active] #unilens-a11y-page-root,
+html[data-a11y-active] #unilens-a11y-page-root * {
+  font-family: var(--a11y-font-family, system-ui, sans-serif) !important;
+}
+
+html[data-a11y-letter-spacing='wide'] body {
+  letter-spacing: var(--a11y-letter-spacing, 0.12em) !important;
+  word-spacing: var(--a11y-word-spacing, 0.16em) !important;
+}
+
+/* ── Link underline (color is not the only cue) ──────────────────────────── */
+
+html[data-a11y-link-underline='true'] #unilens-a11y-page-root a {
+  text-decoration: underline !important;
+  text-underline-offset: 0.2em;
+  text-decoration-thickness: 0.12em;
+}
+
+/* ── Link background (color is not the only cue) ─────────────────────────── */
+
+html[data-a11y-link-background='true'] #unilens-a11y-page-root a {
+  background-color: color-mix(in srgb, var(--display-link) 18%, transparent) !important;
+  border-radius: 2px;
+}
+
+/* ── Link border ──────────────────────────────────────────────────────────
+   An outline (not a real border) so it never nudges surrounding layout —
+   the host page's own box-sizing for these elements is unknown to us. */
+
+html[data-a11y-link-border='true'] #unilens-a11y-page-root a {
+  outline: 2px solid var(--display-link) !important;
+  outline-offset: 1px;
+  border-radius: 2px;
+}
+
+/* ── Image border ─────────────────────────────────────────────────────────
+   Negative offset keeps the outline inside the image's own box, so it can't
+   overlap or shift neighboring inline content. */
+
+html[data-a11y-image-border='true'] #unilens-a11y-page-root img {
+  outline: 2px solid var(--display-border) !important;
+  outline-offset: -2px;
+}
+
+/* ── Element highlight (always on, not just while focused) ─────────────────
+   Same element list as the focus-enhance cursor, minus <label> (it isn't
+   itself an interactive control, so outlining it would just add noise). */
+
+html[data-a11y-element-highlight='true'] #unilens-a11y-page-root :where(
+  a, button, [role='button'], input, select, textarea, summary
+) {
+  outline: 1.5px solid var(--display-link) !important;
+  outline-offset: 1px;
+  border-radius: 2px;
+}
+
+/* ── Reduce motion (mild / sensory) ──────────────────────────────────────── */
+
+html[data-a11y-reduce-motion='true'] #unilens-a11y-page-root *,
+html[data-a11y-reduce-motion='true'] #unilens-a11y-page-root *::before,
+html[data-a11y-reduce-motion='true'] #unilens-a11y-page-root *::after {
+  animation: none !important;
+  transition: none !important;
+  scroll-behavior: auto !important;
+}
+
+/* ── Focus / cursor enhance (low vision: where am I?) ──────────────────────
+   The widget itself is excluded here since it shows focus using the panel's
+   own tokens. The cursor uses an asset-free SVG data URI (black arrow + white outline). */
+
+html[data-a11y-focus-enhance='true'] #unilens-a11y-page-root {
+  --a11y-focus-ring: #ffcc00;
+  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 48 48'%3E%3Cpath d='M8 4v34l9.5-9.2 6.2 14.6 5.4-2.3-6.3-14.8L36 26.5Z' fill='%23000' stroke='%23fff' stroke-width='3' stroke-linejoin='round'/%3E%3C/svg%3E")
+      6 4,
+    auto;
+}
+
+html[data-a11y-focus-enhance='true'] #unilens-a11y-page-root :where(a, button, [role='button'], input, select, textarea, summary, label) {
+  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 48 48'%3E%3Cpath d='M8 4v34l9.5-9.2 6.2 14.6 5.4-2.3-6.3-14.8L36 26.5Z' fill='%23000' stroke='%23fff' stroke-width='3' stroke-linejoin='round'/%3E%3C/svg%3E")
+      6 4,
+    pointer;
+}
+
+html[data-a11y-focus-enhance='true'] #unilens-a11y-page-root :focus-visible {
+  outline: 4px solid var(--a11y-focus-ring, #ffcc00) !important;
+  outline-offset: 3px !important;
+  box-shadow: 0 0 0 2px #000 !important;
+}
+
+html[data-a11y-focus-enhance='true'] #display-adjustment-widget :focus-visible,
+html[data-a11y-focus-enhance='true'] #unilens-root :focus-visible {
+  outline: revert-layer;
+  outline-offset: revert-layer;
+  box-shadow: revert-layer;
+}
+
+/* ── Small text boost (16px floor) ───────────────────────────────────────── */
+
+[data-a11y-scaled="true"].a11y-small-text-boost {
+  font-size: var(--a11y-target-size, 16px) !important;
+}
+
+/* ── Body text expand (headings excluded, 1.25×, min 16px) ───────────────── */
+
+[data-a11y-body-expanded="true"].a11y-body-text-expand {
+  font-size: var(--a11y-body-target-size, 16px) !important;
+}

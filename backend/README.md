@@ -1,36 +1,38 @@
-# UniLens Backend 概要 (`backend/app.py`)
+# UniLens Backend Overview (`backend/app.py`)
 
-**役割**: Flaskの軽量プロトタイプAPI。フロントエンドがキャプチャした画像・メタデータを保存し、LLM/VLMに投げて質問応答を返す。
+日本語版は [README.ja.md](README.ja.md) を参照してください。
 
-## エンドポイント
+**Role**: A lightweight Flask prototype API. It stores images and metadata captured by the frontend, then forwards them to an LLM/VLM to answer questions.
 
-| エンドポイント | 内容 |
+## Endpoints
+
+| Endpoint | Description |
 |---|---|
-| `POST /api/capture` | フロントから送られたPNG(全体像+クローズアップ)とメタデータを`captures/<id>/`に保存。`session_id`があれば既存セッションに追加、なければ新規発行 |
-| `GET /api/capture/<id>` | 保存済みファイルのサイズ確認用(チャットUI上部の「backend stored: ...」表示に使用) |
-| `GET /api/session/<sid>` | セッションの履歴・キャプチャ数を返す(会話継続のシード用) |
-| `POST /api/chat` | 画像+メタデータ+履歴をLLMに渡し、返答を一括で返す |
-| `POST /api/chat/stream` | 同様だがSSE(`text/event-stream`)でトークンを逐次配信 |
-| `GET /health` | プロバイダ確認用ヘルスチェック |
+| `POST /api/capture` | Saves the PNG (full-page image + close-up) and metadata sent from the frontend into `captures/<id>/`. Appends to an existing session if `session_id` is given, otherwise issues a new one |
+| `GET /api/capture/<id>` | Reports the size of stored files (used by the "backend stored: ..." display at the top of the chat UI) |
+| `GET /api/session/<sid>` | Returns the session's history and capture count (used to seed conversation continuity) |
+| `POST /api/chat` | Passes the image, metadata, and history to the LLM, returning the reply all at once |
+| `POST /api/chat/stream` | Same as above, but streams tokens incrementally via SSE (`text/event-stream`) |
+| `GET /health` | Health check for confirming the active provider |
 
-## LLMプロバイダ選択
+## LLM provider selection
 
-環境変数で自動切り替え(`_provider()`):
-1. `OPENAI_API_KEY`があれば OpenAI(`gpt-5.4-mini`、Responses API)
-2. なければ`GOOGLE_API_KEY`でGemini(`gemini-3-flash-preview`)
-3. どちらもなければ**オフラインのスタブ**(キーなしでもフロントが動作確認できるよう、クリック位置などをエコーするだけの応答)
+Switched automatically via environment variables (`_provider()`):
+1. If `OPENAI_API_KEY` is set, use OpenAI (`gpt-5.4-mini`, Responses API)
+2. Otherwise, if `GOOGLE_API_KEY` is set, use Gemini (`gemini-3-flash-preview`)
+3. If neither is set, fall back to an **offline stub** (so the frontend can be verified without any keys; it just echoes things like the click position)
 
-## プロンプト設計
+## Prompt design
 
-`SYSTEM_PROMPT`で「注釈付きスクリーンショット(シアン=ビューポート、オレンジ=マウス軌跡、赤=クリック位置)+クローズアップ画像+ページメタデータ」の読み方をモデルに指示。クリックしたDOM要素情報やAlt+ドラッグの選択領域があれば、それを最優先の手がかりとして扱うよう指定。
+`SYSTEM_PROMPT` instructs the model on how to read "an annotated screenshot (cyan = viewport, orange = mouse trace, red = click position) + a close-up image + page metadata." If clicked-DOM-element info or an Alt+drag selection region is present, the prompt tells the model to treat it as the top-priority clue.
 
-## セッション継続性
+## Session continuity
 
-- `sessions/<sid>.json`に`captures`(キャプチャID一覧)と`history`(会話履歴)を保存。
-- 同一セッション内の複数キャプチャをまたぐ場合、`_session_context_note()`が「これまでのキャプチャでどこをクリックしたか」を一行要約としてLLMに渡す(画像自体は最新の1枚のみ再送し、トークン節約)。
+- `sessions/<sid>.json` stores `captures` (a list of capture IDs) and `history` (conversation history).
+- When multiple captures span the same session, `_session_context_note()` passes a one-line summary of "where past captures were clicked" to the LLM (only the most recent image is resent, to save tokens).
 
-## ストレージ
+## Storage
 
-- `captures/<id>/`: `capture.png`(全体注釈画像)、`viewport.png`(クローズアップ、任意)、`meta.json`、`chat.json`(セッション外の単発チャット履歴)
-- `sessions/<sid>.json`: セッション単位の履歴
+- `captures/<id>/`: `capture.png` (full annotated image), `viewport.png` (close-up, optional), `meta.json`, `chat.json` (one-off chat history outside of a session)
+- `sessions/<sid>.json`: per-session history
 

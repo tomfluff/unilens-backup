@@ -1,34 +1,12 @@
-# UniLens Frontend Summary / UniLens フロントエンド要約
+# UniLens Frontend Summary
 
-![概要図](../docs/architecture.drawio.png)
+日本語版は [README.ja.md](README.ja.md) を参照してください。
 
-## 日本語
-
-**概要**: どんなウェブページにも埋め込める、視覚的コンテキスト付きAIチャットのウィジェット。`<script>`タグ1本で`window.UniLens.init()`を呼ぶだけで動く埋め込み型ライブラリ(React + TypeScript + Vite、`frontend/src/main.tsx`)。
-
-### 主要モジュール
-
-- **`main.tsx`** — エントリポイント。Alt+クリック(またはAlt+ドラッグで範囲選択)をトリガーにキャプチャを実行し、バックエンドにアップロードしてチャットポップオーバーを開く。ポップオーバーはピン留め位置をlocalStorageに保存し、再読込後も同じ場所に復元。
-
-- **`capture.ts`** — キャプチャの中核。`html2canvas`でページ全体をスクリーンショット化し、以下を重ねて描画:
-  - クリック位置のクロスヘア
-  - 直近のマウス軌跡(フェードするトレイル)
-  - 現在のビューポート範囲(シアン枠)
-  - Alt+ドラッグで選択した範囲(マゼンタ枠)
-
-  加えて「今見えている部分」のクリーンな高解像度クローズアップも別途生成。`object-fit`画像はhtml2canvasの不具合を避けるため事前にcanvasへ焼き直す。クリックされたDOM要素の文脈(タグ、テキスト、role、直近の見出しなど)も収集。
-
-- **`zoom.ts`** — Ctrl+ホイール(トラックパッドのピンチも含む)によるページ全体のピンチズーム。`document.body`に`scale()`を適用し、カーソル位置を基準にスクロール補正。ダブルクリックで要素にスマートズームする機能も。座標は常にズーム非依存の「content space」で記録され、非ズーム状態のスクリーンショットと整合する。
-
-- **`ChatPopover.tsx`** — ドラッグ可能なチャットUI。キャプチャ画像を表示しつつ、バックエンド(`/api/chat`または`/api/chat/stream`)とやり取り。ストリーミング応答、会話の継続性(セッションID)、クイックアクション(「これを説明して」「要約して」「英訳して」)、ハイコントラストモードや文字サイズ調整など、アクセシビリティ寄りの設定に対応。
-
-- **`settings.ts`** — 左下の歯車アイコンから開く設定パネル。各機能のON/OFFやキャプチャ解像度、チャット文字サイズなどをlocalStorageに永続化し、即座に反映。
-
-## English
+![Overview diagram](../docs/architecture.drawio.png)
 
 **Overview**: An embeddable AI chat widget that adds visual context to any web page. It's a drop-in library — a single `<script>` tag plus `window.UniLens.init()` — built with React + TypeScript + Vite (`frontend/src/main.tsx`).
 
-### Key modules
+## Key modules
 
 - **`main.tsx`** — Entry point. Alt+click (or Alt+drag for a region selection) triggers a capture, uploads it to the backend, and opens the chat popover. The popover's pinned position is persisted to localStorage and restored across reloads.
 

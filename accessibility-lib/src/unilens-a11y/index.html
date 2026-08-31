@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="ja" data-theme="light" data-saturation="standard" data-contrast="standard">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>UniLens アクセシビリティ UMD デモ</title>
+    <style>
+      body {
+        font-family: system-ui, sans-serif;
+        margin: 0;
+        background: #f5f5f5;
+        color: #222;
+      }
+      .hero {
+        background: #16213e;
+        color: #fff;
+        padding: 48px 24px;
+        text-align: center;
+      }
+      .container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 32px 20px;
+      }
+      .demo-section {
+        background: #fff;
+        border-radius: 12px;
+        padding: 24px;
+        margin: 16px 0;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.07);
+      }
+      .swatch {
+        display: inline-block;
+        width: 48px;
+        height: 48px;
+        border-radius: 8px;
+        margin-right: 8px;
+        vertical-align: middle;
+      }
+      .swatch-red {
+        background: #e74c3c;
+      }
+      .swatch-green {
+        background: #2ecc71;
+      }
+      .swatch-blue {
+        background: #3498db;
+      }
+      img {
+        width: 100%;
+        max-height: 200px;
+        object-fit: cover;
+        border-radius: 8px;
+      }
+      .fine-print {
+        font-size: 11px;
+        color: #666;
+      }
+      code {
+        background: #eee;
+        padding: 2px 6px;
+        border-radius: 4px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="hero">
+      <h1>UniLens アクセシビリティ UMD デモ</h1>
+      <p>右上の <strong>表示調整</strong> ボタンから全機能を試せます。</p>
+    </div>
+
+    <div class="container">
+      <section class="demo-section">
+        <h2>埋め込み例</h2>
+        <pre><code>&lt;script src="accessibility.js"&gt;&lt;/script&gt;
+      &lt;script&gt;Accessibility.init()&lt;/script&gt;</code></pre>
+        <p class="fine-print">
+          パネルの言語は <code>&lt;html lang&gt;</code> とブラウザの設定から自動で決まります。
+          既定を明示したいときは <code>init({ lang: 'en' })</code> を渡してください。
+          利用者がパネル内で選んだ言語のほうが常に優先されます。
+        </p>
+      </section>
+
+      <section class="demo-section">
+        <h2>テキストサンプル</h2>
+        <p>
+          この段落は表示調整の効果を確認するためのサンプルです。文字サイズや色、コントラストの変化を観察してください。
+        </p>
+        <p class="fine-print">11px の注記テキスト — 小さな文字底上げ・本文拡大の対象になりやすいサンプルです。</p>
+        <p><a href="#">サンプルリンク</a> — リンク色もテーマに連動します。</p>
+      </section>
+
+      <section class="demo-section">
+        <h2>カラーパッチ</h2>
+        <p>
+          <span class="swatch swatch-red" aria-hidden="true"></span>赤
+          <span class="swatch swatch-green" aria-hidden="true"></span>緑
+          <span class="swatch swatch-blue" aria-hidden="true"></span>青 — 彩度調整の確認用
+        </p>
+        <img src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&q=80" alt="山の風景" />
+      </section>
+
+      <section class="demo-section">
+        <h2>含まれる機能</h2>
+        <ul>
+          <li>カラーモード / 彩度 / コントラスト</li>
+          <li>ページ全体の文字（サイズ・UDフォント・行間）</li>
+          <li>本文のみ拡大（見出し除外・3段階）</li>
+          <li>16px未満の小さな文字底上げ（3段階）</li>
+          <li>選択文字サイズ（100% / 150% / 200%）</li>
+          <li>自動文字サイズ（分析・適用）</li>
+        </ul>
+        <p>設定は <code>localStorage</code> に保存され、リロード後も復元されます。</p>
+      </section>
+    </div>
+
+    <!-- 開発: make build 後に dist から配信 -->
+    <script src="../accessibility.js"></script>
+    <script>
+      Accessibility.init()
+    </script>
+  </body>
+</html>

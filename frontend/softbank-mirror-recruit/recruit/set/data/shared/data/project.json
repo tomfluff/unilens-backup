@@ -1,0 +1,56 @@
+[
+  {
+    "name" : "thumb",
+    "imgdir" : "project/helpo/",
+    "img_toplayout_fill": false,
+    "url" : "/project/helpo/",
+    "category" : "graduate/career/disability",
+    "title" : "ヘルスケアアプリHELPO",
+    "subtitle" : "健康医療相談をチャット形式で24時間365日受付、<br>重症化を防ぎ、セルフケアをサポート"
+  },
+  {
+    "name" : "thumb",
+    "imgdir" : "project/merihariplan/",
+    "img_toplayout_fill": false,
+    "url" : "/project/merihariplan/",
+    "category" : "graduate/career/disability",
+    "title" : "大容量ニーズに応え、<br>小容量ニーズもカバーする",
+    "subtitle" : "「メリハリプラン」の誕生"
+  },
+  {
+    "name" : "thumb",
+    "imgdir" : "project/5g/",
+    "img_toplayout_fill": true,
+    "url" : "/project/5g/",
+    "category" : "graduate/career/disability",
+    "title" : "5Gネットワークの構築",
+    "subtitle" : "コアネットワーク、無線、デバイス 3つの技術領域<br>のエンジニアが連携して推進"
+  },
+  {
+    "name" : "thumb",
+    "imgdir" : "project/corp_business/",
+    "img_toplayout_fill": true,
+    "url" : "/project/corp_business/",
+    "category" : "graduate/career/disability",
+    "title" : "規格外の受注を、<br class=\"u-dsp-sp\">チームで乗り越えろ<br>大手製造小売業への<br class=\"u-dsp-sp\">「G Suite ™ 」導入",
+    "subtitle" : "法人事業プロジェクト"
+  },
+  {
+    "name" : "thumb",
+    "imgdir" : "project/monet/",
+    "img_toplayout_fill": false,
+    "url" : "/project/monet/",
+    "category" : "graduate/career/disability",
+    "title" : "MONET Technologies",
+    "subtitle" : "新しいモビリティサービスを通じて<br>人々の暮らしをもっと豊かに"
+  },
+  {
+    "name" : "thumb",
+    "imgdir" : "project/workstylereforms/",
+    "img_toplayout_fill": true,
+    "url" : "/project/workstylereforms/",
+    "category" : "graduate/career/disability",
+    "title" : "AI事業推進プロジェクト",
+    "subtitle" : "AIを制する者が世界を制する“AI群戦略”"
+  }
+]

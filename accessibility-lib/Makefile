@@ -2,9 +2,9 @@
 -include ../make-include.mk
 -include ../make-targets.mk
 
-.PHONY: init clean lint build serve
+.PHONY: init clean lint build serve test
 
-ESBUILD=esbuild src/main.tsx --outfile=dist/$(target_dist_accessibility-lib) --bundle  --minify --sourcemap
+ESBUILD=esbuild src/main.tsx --outfile=dist/$(target_dist_accessibility-lib) --bundle --minify --loader:.css=text
 
 init:
 	echo "Setting up npm dependencies"
@@ -20,8 +20,12 @@ lint:
 	echo "Running type checker..."
 	$(NPX) tsc -b
 
+test:
+	echo "Running unit tests..."
+	$(NPX) vitest run
+
 # Build bundled js out to dist/
-build:
+build: lint
 	echo "Building dist..."
 	$(NPX) $(ESBUILD)
 
