@@ -9,7 +9,7 @@
 import {
     A11Y_DEFAULTS,
     type A11ySettings,
-    a11ySettings,
+    getA11ySettings,
     patchA11ySettings,
 } from "./accessibilityStore";
 import { runAutoTextAction } from "./autoTextSize";
@@ -40,7 +40,7 @@ export const PRESET_KEYS: Record<
         "smallTextBoostLevel",
         "bodyTextExpandLevel",
         "linkUnderline",
-        "focusEnhance",
+        "focusEnhanceLevel",
     ],
     colorVision: ["saturation", "contrast", "linkUnderline", "theme"],
     mild: ["theme", "saturation", "reduceMotion"],
@@ -60,7 +60,7 @@ export const A11Y_PRESETS: Record<A11yPresetId, Partial<A11ySettings>> = {
         smallTextBoostLevel: 2,
         bodyTextExpandLevel: 0,
         linkUnderline: true,
-        focusEnhance: true,
+        focusEnhanceLevel: 2,
     },
     /** Color-vision support: lean on cues that don't depend on color. */
     colorVision: {
@@ -118,7 +118,9 @@ function allPresetKeys(): (keyof A11ySettings)[] {
 /** Whether every key a preset specifies matches the current settings. */
 export function isPresetActive(id: A11yPresetId): boolean {
     const preset = A11Y_PRESETS[id];
-    return PRESET_KEYS[id].every((key) => a11ySettings[key] === preset[key]);
+    return PRESET_KEYS[id].every(
+        (key) => getA11ySettings()[key] === preset[key],
+    );
 }
 
 /**
@@ -152,7 +154,7 @@ export function clearA11yPreset(id: A11yPresetId) {
                 (
                     PRESET_KEYS[other] as readonly (keyof A11ySettings)[]
                 ).includes(key) &&
-                A11Y_PRESETS[other][key] === a11ySettings[key],
+                A11Y_PRESETS[other][key] === getA11ySettings()[key],
         );
         if (!keptByOther) {
             (patch as Record<string, unknown>)[key] = A11Y_DEFAULTS[key];

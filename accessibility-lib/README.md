@@ -1,10 +1,10 @@
 # accessibility-lib
 
-An embeddable display-adjustment library. The build output is a single `dist/accessibility.js`, started with `window.Accessibility.init()` (`window.UniLensA11y` exposes the same API).
+The Japanese translation is [README.ja.md](README.ja.md). If the two disagree, this English file is canonical.
+
+An embeddable accessibility library for page display adjustments. The build output is a single `dist/accessibility.js`, started with `window.Accessibility.init()` (`window.UniLensA11y` exposes the same API).
 
 Unless noted otherwise, commands run from the **UniLens repository root** (the parent of this folder).
-
-日本語版は [README.ja.md](README.ja.md) を参照してください。
 
 ## Requirements
 
@@ -28,7 +28,7 @@ Demo (SoftBank mirror):
 make serve softbank-mirror
 ```
 
-Open http://localhost:8000/ . The **♿ display-adjustment** control at the top right is this library.
+Open http://localhost:8000/ . The top-right **♿ accessibility** panel is this library.
 
 To copy build outputs into the recruit mirror (`softbank-mirror-recruit`):
 
@@ -37,16 +37,16 @@ make build
 # or one target only: make copy softbank-mirror-recruit
 ```
 
-Artifacts land under `frontend/softbank-mirror-recruit/site/` (that folder is the docroot).  
-Frontend only: `make serve-frontend softbank-mirror-recruit` (port 8002). For API responses closer to production: `cd frontend/softbank-mirror-recruit && node server.mjs` (port 8787).
+Artifacts land in `frontend/softbank-mirror-recruit/` (that folder is the document root).
+Frontend only: `make serve-frontend softbank-mirror-recruit` (port 8002). Open http://localhost:8002/recruit/disability/ .
 
 | Command | What it does |
 |---|---|
 | `make serve-frontend softbank-mirror` | Frontend only (port 8000) |
-| `make serve-frontend softbank-mirror-recruit` | Recruit mirror (port 8002, serves `site/`) |
+| `make serve-frontend softbank-mirror-recruit` | Recruit mirror (port 8002) |
 | `make serve-frontend dev-demo` | Small demo (port 8001) |
 | `make serve-target accessibility-lib` | Watch-build this library only |
-| `cd accessibility-lib && make build` | Typecheck, then write the single `dist/accessibility.js` |
+| `cd accessibility-lib && make build` | Typecheck, then write a single `dist/accessibility.js` |
 | `cd accessibility-lib && make lint` | Typecheck |
 | `cd accessibility-lib && make test` | Unit tests |
 
@@ -73,7 +73,7 @@ npm install
 ```sh
 cd accessibility-lib
 npx tsc -b
-npx esbuild src/main.tsx --outfile=dist/accessibility.js --bundle --minify --loader:.css=text
+npx esbuild src/main.tsx --outfile=dist/accessibility.js --bundle --minify --sourcemap --loader:.css=text --jsx=automatic
 ```
 
 To build `unilens-lib` as well:
@@ -93,12 +93,12 @@ cp accessibility-lib/dist/accessibility.js frontend/softbank-mirror/accessibilit
 cp unilens-lib/dist/unilens.js frontend/softbank-mirror/unilens.js
 ```
 
-`softbank-mirror-recruit` (docroot is `site/`):
+`softbank-mirror-recruit` (this directory is the document root):
 
 ```sh
 cd ..
-cp accessibility-lib/dist/accessibility.js frontend/softbank-mirror-recruit/site/accessibility.js
-cp unilens-lib/dist/unilens.js frontend/softbank-mirror-recruit/site/unilens.js
+cp accessibility-lib/dist/accessibility.js frontend/softbank-mirror-recruit/accessibility.js
+cp unilens-lib/dist/unilens.js frontend/softbank-mirror-recruit/unilens.js
 ```
 
 Skip the `unilens.js` copy if you did not build it. The panel still runs with `Accessibility.init()` alone.
@@ -114,11 +114,11 @@ For the recruit mirror:
 
 ```sh
 cd frontend/softbank-mirror-recruit
-node server.mjs
-# → http://localhost:8787/recruit/disability/
+python3 -m http.server 8002
+# → http://localhost:8002/recruit/disability/
 ```
 
-If `python3` is missing (common on Windows), use `python -m http.server 8000`.
+If `python3` is missing (common on Windows), use `python -m http.server`.
 
 Open http://127.0.0.1:8000/ . After editing sources, repeat **steps 2–3** and reload the browser.
 
@@ -138,13 +138,13 @@ From the repository root:
 cd accessibility-lib
 npm install
 npx tsc -b
-npx esbuild src/main.tsx --outfile=dist/accessibility.js --bundle --minify --loader:.css=text
+npx esbuild src/main.tsx --outfile=dist/accessibility.js --bundle --minify --sourcemap --loader:.css=text --jsx=automatic
 
 cd ..
 Copy-Item accessibility-lib/dist/accessibility.js frontend/softbank-mirror/accessibility.js -Force
 
 # Also copy into the recruit mirror when needed:
-Copy-Item accessibility-lib/dist/accessibility.js frontend/softbank-mirror-recruit/site/accessibility.js -Force
+Copy-Item accessibility-lib/dist/accessibility.js frontend/softbank-mirror-recruit/accessibility.js -Force
 
 cd frontend/softbank-mirror
 python -m http.server 8000
@@ -159,7 +159,7 @@ python -m http.server 8000
 </script>
 ```
 
-The page display CSS is included in `accessibility.js` and injected automatically at initialization.
+Page display CSS is bundled into `accessibility.js` and injected on init.
 
 Together with `unilens-lib`:
 

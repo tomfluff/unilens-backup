@@ -7,7 +7,7 @@ flowchart TB
         direction TB
         Demo["dev-demo<br/>(Port 8001)"]
         SBMirror["softbank-mirror<br/>(Port 8000)"]
-        SBRecruit["softbank-mirror-recruit<br/>(Port 8002 / 8787)"]
+        SBRecruit["softbank-mirror-recruit<br/>(Port 8002)"]
         HostPage["Host Web Page (DOM)"]
     end
 

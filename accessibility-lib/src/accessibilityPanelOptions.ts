@@ -8,14 +8,18 @@
 
 import { t } from "./accessibilityI18n";
 import type { IconName } from "./accessibilityPanelUI";
-import type { DisplayTheme, TextAdjustLevel } from "./accessibilityStore";
+import type {
+    DisplayTheme,
+    PanelTab,
+    TextAdjustLevel,
+} from "./accessibilityStore";
 import type { AutoTextMode } from "./accessibilityStoreTypes";
+import { PANEL_TABS } from "./accessibilityStoreTypes";
 import type { FontScaleLevel } from "./fontScales";
 import { type SpeechRateLevel, speechRateHint } from "./speechLevels";
 import { bodyTextExpandHint, smallTextBoostHint } from "./textAdjustLevels";
 
 export { fontScaleLabel } from "./accessibilityI18n";
-
 // The saturation / contrast multipliers and the font stacks have a single
 // source of truth in the store. Re-export them here so the panel uses the
 // same values.
@@ -25,17 +29,24 @@ export {
     STANDARD_FONT_STACK,
     UD_FONT_STACK,
 } from "./accessibilityStore";
+export { PANEL_TABS, type PanelTab } from "./accessibilityStoreTypes";
+export { fontScalePercent, PREVIEW_FONT_PX } from "./fontScales";
 export { SPEECH_RATE_LEVELS } from "./speechLevels";
 export { TEXT_ADJUST_LEVELS } from "./textAdjustLevels";
 
-export type PanelTab = "visual" | "text" | "tools";
+const TAB_ICONS: Record<PanelTab, IconName> = {
+    visual: "contrast",
+    text: "textColor",
+    tools: "lab",
+};
 
 /** Tab order and icons. Display names vary per language, so they come from t(). */
-export const TABS: { id: PanelTab; iconName: IconName }[] = [
-    { id: "visual", iconName: "contrast" },
-    { id: "text", iconName: "textColor" },
-    { id: "tools", iconName: "lab" },
-];
+export const TABS: { id: PanelTab; iconName: IconName }[] = PANEL_TABS.map(
+    (id) => ({
+        id,
+        iconName: TAB_ICONS[id],
+    }),
+);
 
 export function tabLabel(id: PanelTab): string {
     return t().tabs[id];
@@ -119,6 +130,3 @@ export function speechRateLabels(): Record<SpeechRateLevel, [string, string]> {
         3: [names[3], speechRateHint(3)],
     };
 }
-
-/** Actual pixel sizes used for the font-size preview (standard / large / extra-large). */
-export const PREVIEW_FONT_PX = [13, 17, 21] as const;

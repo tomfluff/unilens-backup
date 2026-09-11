@@ -1,7 +1,7 @@
 /**
  * Expand body / annotation text only — headings and text ≥18px are excluded.
  */
-import { a11ySettings, onA11yChange } from "./accessibilityStore";
+import { getA11ySettings, onA11yChange } from "./accessibilityStore";
 import {
     BODY_EXPAND_ATTR,
     BODY_EXPAND_CLASS,
@@ -12,6 +12,7 @@ import {
     isUniLensOverlayNode,
     SMALL_BOOST_ORIGINAL_ATTR,
 } from "./domIds";
+import { restoreHostInlineStyle, setHostInlineStyle } from "./hostSurface";
 import {
     bodyTextExpandConfig,
     computeBodyTextTargetPx,
@@ -105,7 +106,7 @@ function shouldSkip(el: Element): boolean {
 
 export function computeExpandedFontPx(
     originalPx: number,
-    level: TextAdjustLevel = a11ySettings.bodyTextExpandLevel,
+    level: TextAdjustLevel = getA11ySettings().bodyTextExpandLevel,
 ): number {
     return computeBodyTextTargetPx(originalPx, level);
 }
@@ -136,21 +137,21 @@ function applyExpand(
         String(Math.round(originalPx * 100) / 100),
     );
     el.classList.add(BODY_EXPAND_CLASS);
-    el.style.setProperty(BODY_EXPAND_TARGET_VAR, `${targetPx}px`);
+    setHostInlineStyle(el, BODY_EXPAND_TARGET_VAR, `${targetPx}px`);
 }
 
 function restoreElement(el: HTMLElement) {
     el.removeAttribute(BODY_EXPAND_ATTR);
     el.removeAttribute(BODY_EXPAND_ORIGINAL_ATTR);
     el.classList.remove(BODY_EXPAND_CLASS);
-    el.style.removeProperty(BODY_EXPAND_TARGET_VAR);
+    restoreHostInlineStyle(el, BODY_EXPAND_TARGET_VAR);
 }
 
 export function scanBodyText(
     root: Element = document.body,
 ): BodyTextScanResult {
     const result: BodyTextScanResult = { scanned: 0, expanded: 0 };
-    const level = a11ySettings.bodyTextExpandLevel;
+    const level = getA11ySettings().bodyTextExpandLevel;
     if (level < 1 || !document.body) return result;
 
     const nodes: Element[] = [root, ...Array.from(root.querySelectorAll("*"))];
@@ -202,7 +203,7 @@ export function clearBodyTextExpand() {
 function applyEnabledState() {
     ensureStylesheet();
     clearBodyTextExpand();
-    const level = a11ySettings.bodyTextExpandLevel;
+    const level = getA11ySettings().bodyTextExpandLevel;
     if (level > 0 && bodyTextExpandConfig(level)) {
         document.documentElement.setAttribute(BODY_EXPAND_HTML_ATTR, "true");
         document.documentElement.setAttribute(
@@ -216,14 +217,14 @@ function applyEnabledState() {
 function scheduleRescan() {
     clearTimeout(rescanTimer);
     rescanTimer = window.setTimeout(() => {
-        if (a11ySettings.bodyTextExpandLevel > 0) scanBodyText();
+        if (getA11ySettings().bodyTextExpandLevel > 0) scanBodyText();
     }, 300);
 }
 
 function startObserver() {
     if (observer || !document.body) return;
     observer = new MutationObserver(() => {
-        if (a11ySettings.bodyTextExpandLevel > 0) scheduleRescan();
+        if (getA11ySettings().bodyTextExpandLevel > 0) scheduleRescan();
     });
     observer.observe(document.body, { childList: true, subtree: true });
 }

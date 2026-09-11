@@ -18,7 +18,7 @@
 import { getA11yLang } from "./accessibilityI18n";
 import { isUniLensOverlayNode } from "./domIds";
 import { getActiveSelectionRange } from "./selectionTextSize";
-import { settings } from "./settings";
+import { getSettings } from "./settings";
 import {
     guessWordLength,
     normalizeSpeechRateLevel,
@@ -146,7 +146,7 @@ function ensureHighlightStyle() {
 }
 
 function highlightEnabled(): boolean {
-    return settings.speechHighlight && highlightApi() != null;
+    return getSettings().speechHighlight && highlightApi() != null;
 }
 
 function setHighlightRange(name: string, range: Range, priority: number) {
@@ -324,9 +324,9 @@ export function onSpeechChange(cb: () => void): () => void {
 function setState(next: SpeechState) {
     if (state === next) return;
     state = next;
-    for (const cb of listeners) {
+    listeners.forEach((cb) => {
         cb();
-    }
+    });
 }
 
 export function getSpeechState(): SpeechState {
@@ -396,7 +396,7 @@ function speakChunk(index: number, session: number) {
     const utterance = new SpeechSynthesisUtterance(chunk.text);
     utterance.lang = currentLang;
     utterance.rate = speechRateValue(
-        normalizeSpeechRateLevel(settings.speechRateLevel),
+        normalizeSpeechRateLevel(getSettings().speechRateLevel),
     );
     const voice = pickVoice(currentLang);
     if (voice) utterance.voice = voice;
@@ -407,7 +407,7 @@ function speakChunk(index: number, session: number) {
     };
 
     utterance.onboundary = (event) => {
-        if (session !== sessionId || !settings.speechHighlight) return;
+        if (session !== sessionId || !getSettings().speechHighlight) return;
         // Some implementations report finer-grained units than a word, but the highlight is always kept word-sized.
         if (event.name && event.name !== "word") return;
 

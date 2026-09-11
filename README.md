@@ -26,7 +26,7 @@ unilens-lib/          React + TS — builds a single embeddable dist/unilens.js 
 accessibility-lib/    React + TS — builds a single embeddable dist/accessibility.js using esbuild
 backend/           Flask — stores captures, /api/chat with OpenAI / Gemini / stub
 softbank-mirror/   Static copy of softbank.jp IR benefit page (test target)
-softbank-mirror-recruit/  Static copy of softbank.jp recruit/disability page (test target; docroot `site/`)
+softbank-mirror-recruit/  Static copy of softbank.jp recruit/disability page (test target)
 ```
 ## Setup and cleanup
 To set up backend, unilens lib, and build system:
@@ -80,7 +80,8 @@ make serve-frontend softbank-mirror
 
 ```
 make serve-frontend softbank-mirror-recruit
-# Serves `frontend/softbank-mirror-recruit/site` to localhost:8002
+# Serves `frontend/softbank-mirror-recruit` to localhost:8002
+# Open http://localhost:8002/recruit/disability/ (root `/` redirects there)
 ```
 
 ### Javascript Libs Only
@@ -159,10 +160,11 @@ target_dist_unilens-lib=unilens.js
 target_dist_accessibility-lib=accessibility.js
 
 # Frontend build targets
-FRONTEND_TARGETS:= softbank-mirror dev-demo
+FRONTEND_TARGETS:= softbank-mirror softbank-mirror-recruit dev-demo
 
 # To add a target, use the format `frontend_port_{subdir name}=<PORT>`
 frontend_port_softbank-mirror=8000
+frontend_port_softbank-mirror-recruit=8002
 frontend_port_dev-demo=8001
 ```
 

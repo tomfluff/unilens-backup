@@ -45,4 +45,12 @@ describe("isOpaqueBackgroundColor", () => {
         expect(isOpaqueBackgroundColor("rgba(38, 38, 62, 0.95)")).toBe(true);
         expect(isOpaqueBackgroundColor("#333")).toBe(true);
     });
+
+    it("treats a tab still fading out as opaque — sampling must freeze transitions first", () => {
+        // SoftBank `.tab-button { transition: all .3s }` from #007ec4 → transparent.
+        // ~16ms into the fade is still > 0.9 alpha; a mid-transition sample would
+        // keep the previous tab marked and leave its themed ring behind.
+        expect(isOpaqueBackgroundColor("rgba(0, 126, 196, 0.95)")).toBe(true);
+        expect(isOpaqueBackgroundColor("rgba(0, 126, 196, 0)")).toBe(false);
+    });
 });

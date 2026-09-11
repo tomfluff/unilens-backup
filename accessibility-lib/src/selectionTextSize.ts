@@ -1,19 +1,32 @@
 /**
- * Apply font-size scale ratios (100% / 150% / 200%) to the user's text selection.
+ * Apply font-size scale ratios (100% / 195% / 260%) to the user's text selection.
  * Ratios match automatic / accessibility font-size settings.
+ *
+ * Host-page citizenship: we inject a prefixed <span> around the selection and
+ * unwrap it on clear/teardown — never reconstruct host markup, only remove our wrapper.
  */
 
 import { fontScaleLabel, t } from "./accessibilityI18n";
-import { isUniLensOverlayNode } from "./domIds";
+import {
+    isUniLensOverlayNode,
+    SELECTION_FONT_BASE_ATTR,
+    SELECTION_FONT_LEVEL_ATTR,
+    SELECTION_FONT_PX_ATTR,
+    SELECTION_FONT_SCALE_ATTR,
+    SELECTION_FONT_SIZE_VAR,
+    SELECTION_RESIZE_ATTR,
+    SELECTION_RESIZE_CLASS,
+    SELECTION_RESIZE_STYLE_ID,
+} from "./domIds";
 import {
     FONT_SCALE_LEVELS,
     type FontScaleLevel,
     levelToScale,
+    scaledFontPx,
     scaleToLevel,
 } from "./fontScales";
-import { saveSettings, settings } from "./settings";
-
-const WRAP_ATTR = "data-unilens-text-resize";
+import { readUnscaledFontSizePx } from "./pageFontScale";
+import { saveSettings, updateSetting } from "./settings";
 
 export { FONT_SCALE_LEVELS };
 export type SelectionFontLevel = FontScaleLevel;
@@ -35,6 +48,14 @@ export interface ApplySelectionResult {
     px?: number;
     scale?: number;
 }
+
+const RESIZE_CSS = `
+[${SELECTION_RESIZE_ATTR}].${SELECTION_RESIZE_CLASS} {
+  font-size: var(${SELECTION_FONT_SIZE_VAR}, inherit) !important;
+  line-height: 1.35;
+  display: inline;
+}
+`;
 
 let persistedRange: Range | null = null;
 let activeWrapper: HTMLElement | null = null;
@@ -60,7 +81,10 @@ function isUniLensRange(range: Range): boolean {
 function findResizeWrapper(node: Node | null): HTMLElement | null {
     let cur: Node | null = node;
     while (cur) {
-        if (cur instanceof HTMLElement && cur.hasAttribute(WRAP_ATTR))
+        if (
+            cur instanceof HTMLElement &&
+            cur.hasAttribute(SELECTION_RESIZE_ATTR)
+        )
             return cur;
         cur = cur.parentNode;
     }
@@ -71,6 +95,14 @@ function rangeText(range: Range): string {
     return range.toString().replace(/\s+/g, " ").trim();
 }
 
+function ensureResizeStylesheet() {
+    if (document.getElementById(SELECTION_RESIZE_STYLE_ID)) return;
+    const style = document.createElement("style");
+    style.id = SELECTION_RESIZE_STYLE_ID;
+    style.textContent = RESIZE_CSS;
+    document.head.appendChild(style);
+}
+
 /** Original computed font size before any selection resize wrapper. */
 function getBaseFontSizePx(range: Range): number {
     const wrapper =
@@ -78,20 +110,19 @@ function getBaseFontSizePx(range: Range): number {
         findResizeWrapper(range.endContainer);
     if (wrapper) {
         const stored = parseFloat(
-            wrapper.getAttribute("data-unilens-font-base") ?? "",
+            wrapper.getAttribute(SELECTION_FONT_BASE_ATTR) ?? "",
         );
         if (Number.isFinite(stored) && stored > 0) return stored;
     }
 
     const el = rangeRootElement(range);
-    if (!el) return 16;
-    const px = parseFloat(getComputedStyle(el).fontSize);
-    return Number.isFinite(px) && px > 0 ? px : 16;
+    if (!el || !(el instanceof HTMLElement)) return 16;
+    return readUnscaledFontSizePx(el);
 }
 
 export function levelToPx(level: SelectionFontLevel, basePx?: number): number {
     const base = basePx ?? 16;
-    return Math.max(1, Math.round(base * levelToScale(level)));
+    return Math.max(1, scaledFontPx(base, levelToScale(level)));
 }
 
 export function pxToLevel(
@@ -145,10 +176,6 @@ function getRangeForApply(): Range | null {
 /**
  * The "currently targeted range" for other features that operate on the
  * selection, such as read-aloud.
- *
- * Goes through the same resolution as resizing (raw selection → applied
- * wrapper → retained range), so the "resized range" and the "range read
- * aloud" never drift apart. Returns null if there is no target.
  */
 export function getActiveSelectionRange(): Range | null {
     return getRangeForApply();
@@ -156,19 +183,34 @@ export function getActiveSelectionRange(): Range | null {
 
 function readWrapperState(wrapper: HTMLElement) {
     const basePx = parseFloat(
-        wrapper.getAttribute("data-unilens-font-base") ?? "",
+        wrapper.getAttribute(SELECTION_FONT_BASE_ATTR) ?? "",
     );
     const scale = parseFloat(
-        wrapper.getAttribute("data-unilens-font-scale") ?? "",
+        wrapper.getAttribute(SELECTION_FONT_SCALE_ATTR) ?? "",
     );
     const px = parseFloat(
-        wrapper.getAttribute("data-unilens-font-px") ?? wrapper.style.fontSize,
+        wrapper.getAttribute(SELECTION_FONT_PX_ATTR) ??
+            wrapper.style.getPropertyValue(SELECTION_FONT_SIZE_VAR),
     );
     return {
         basePx: Number.isFinite(basePx) ? basePx : null,
         scale: Number.isFinite(scale) ? scale : null,
         px: Number.isFinite(px) ? px : null,
     };
+}
+
+function applyWrapperMetrics(
+    wrapper: HTMLElement,
+    basePx: number,
+    scale: number,
+    level: SelectionFontLevel,
+    px: number,
+) {
+    wrapper.setAttribute(SELECTION_FONT_BASE_ATTR, String(Math.round(basePx)));
+    wrapper.setAttribute(SELECTION_FONT_SCALE_ATTR, String(scale));
+    wrapper.setAttribute(SELECTION_FONT_PX_ATTR, String(px));
+    wrapper.setAttribute(SELECTION_FONT_LEVEL_ATTR, String(level));
+    wrapper.style.setProperty(SELECTION_FONT_SIZE_VAR, `${px}px`);
 }
 
 export function getSelectionInfo(): SelectionInfo {
@@ -264,6 +306,7 @@ function wrapRange(
     scale: number,
     level: SelectionFontLevel,
 ): HTMLElement {
+    ensureResizeStylesheet();
     const px = levelToPx(level, basePx);
     const existing =
         findResizeWrapper(range.startContainer) ??
@@ -271,27 +314,14 @@ function wrapRange(
         findResizeWrapper(range.commonAncestorContainer);
 
     if (existing && range.intersectsNode(existing)) {
-        existing.style.fontSize = `${px}px`;
-        existing.style.lineHeight = "1.35";
-        existing.setAttribute(
-            "data-unilens-font-base",
-            String(Math.round(basePx)),
-        );
-        existing.setAttribute("data-unilens-font-scale", String(scale));
-        existing.setAttribute("data-unilens-font-px", String(px));
-        existing.setAttribute("data-unilens-font-level", String(level));
+        applyWrapperMetrics(existing, basePx, scale, level, px);
         return existing;
     }
 
     const span = document.createElement("span");
-    span.setAttribute(WRAP_ATTR, "1");
-    span.setAttribute("data-unilens-font-base", String(Math.round(basePx)));
-    span.setAttribute("data-unilens-font-scale", String(scale));
-    span.setAttribute("data-unilens-font-px", String(px));
-    span.setAttribute("data-unilens-font-level", String(level));
-    span.style.fontSize = `${px}px`;
-    span.style.lineHeight = "1.35";
-    span.style.display = "inline";
+    span.setAttribute(SELECTION_RESIZE_ATTR, "1");
+    span.classList.add(SELECTION_RESIZE_CLASS);
+    applyWrapperMetrics(span, basePx, scale, level, px);
 
     try {
         range.surroundContents(span);
@@ -303,11 +333,43 @@ function wrapRange(
     return span;
 }
 
+/** Unwrap one injected resize span, restoring the host's original child nodes. */
+function unwrapResizeWrapper(wrapper: HTMLElement): boolean {
+    const parent = wrapper.parentNode;
+    if (!parent) return false;
+
+    const first = wrapper.firstChild;
+    const last = wrapper.lastChild;
+    while (wrapper.firstChild) parent.insertBefore(wrapper.firstChild, wrapper);
+    parent.removeChild(wrapper);
+
+    if (wrapper === activeWrapper) activeWrapper = null;
+
+    if (first && last) {
+        const range = document.createRange();
+        range.setStartBefore(first);
+        range.setEndAfter(last);
+        restoreSelectionOnRange(range);
+        persistedRange = range.cloneRange();
+    }
+
+    return true;
+}
+
+/** Remove every resize wrapper we injected under `root` (teardown / full reset). */
+export function unwrapAllSelectionWrappers(root: ParentNode = document.body) {
+    const wrappers = root.querySelectorAll(`[${SELECTION_RESIZE_ATTR}]`);
+    for (const node of wrappers) {
+        if (node instanceof HTMLElement) unwrapResizeWrapper(node);
+    }
+    activeWrapper = null;
+}
+
 export function applySelectionFontLevel(
     level: SelectionFontLevel,
 ): ApplySelectionResult {
     const scale = levelToScale(level);
-    settings.selectionFontLevel = level;
+    updateSetting("selectionFontLevel", level);
     saveSettings();
 
     const range = getRangeForApply();
@@ -358,22 +420,8 @@ export function clearSelectionFontSize(): ApplySelectionResult {
         return { ok: false, message: t().selNothingToClear };
     }
 
-    const parent = wrapper.parentNode;
-    if (!parent) return { ok: false, message: t().selClearFailed };
-
-    const first = wrapper.firstChild;
-    const last = wrapper.lastChild;
-    while (wrapper.firstChild) parent.insertBefore(wrapper.firstChild, wrapper);
-    parent.removeChild(wrapper);
-
-    activeWrapper = null;
-
-    if (first && last) {
-        const range = document.createRange();
-        range.setStartBefore(first);
-        range.setEndAfter(last);
-        restoreSelectionOnRange(range);
-        persistedRange = range.cloneRange();
+    if (!unwrapResizeWrapper(wrapper)) {
+        return { ok: false, message: t().selClearFailed };
     }
 
     return { ok: true, message: t().selCleared };
@@ -389,6 +437,7 @@ export function onSelectionChange(cb: () => void): () => void {
 export function initSelectionTextSize() {
     if (selectionActive) return;
     selectionActive = true;
+    ensureResizeStylesheet();
     onSelectionChangeHandler = () => {
         const sel = window.getSelection();
         if (!sel || sel.rangeCount === 0) return;
@@ -423,5 +472,6 @@ export function destroySelectionTextSize() {
             onSelectionChangeHandler,
         );
     onSelectionChangeHandler = null;
-    clearSelectionFontSize();
+    unwrapAllSelectionWrappers();
+    document.getElementById(SELECTION_RESIZE_STYLE_ID)?.remove();
 }

@@ -5,6 +5,12 @@ import type { TextAdjustLevel } from "./textAdjustLevels";
 
 export type { TextAdjustLevel } from "./textAdjustLevels";
 
+export const PANEL_TABS = ["visual", "text", "tools"] as const;
+export type PanelTab = (typeof PANEL_TABS)[number];
+
+export const A11Y_LANG_CODES = ["ja", "en"] as const;
+export type A11yLang = (typeof A11Y_LANG_CODES)[number];
+
 export type A11yFontSize = "standard" | "large" | "xlarge";
 export type A11yFontFamily = "standard" | "ud" | "custom";
 export type A11yLineHeight = "standard" | "wide";
@@ -18,6 +24,326 @@ export type DisplayTheme =
     | "invert";
 export type DisplaySaturation = "standard" | "soft" | "low" | "mono" | "high";
 export type DisplayContrast = "standard" | "strong" | "max";
+
+/** 0 = off. Diameter of the pointer halo; the OS cursor size is unchanged. */
+export const POINTER_HALO_FIXED_PX = [5, 20, 40] as const;
+/** Diameter as a percent of the shorter viewport side (CSS `vmin`). */
+export const POINTER_HALO_VIEWPORT_PCT = ["5%", "10%", "15%"] as const;
+export const POINTER_HALO_ON_PX = [
+    ...POINTER_HALO_FIXED_PX,
+    ...POINTER_HALO_VIEWPORT_PCT,
+] as const;
+export const POINTER_HALO_PX = [0, ...POINTER_HALO_ON_PX] as const;
+export type PointerHaloFixedPx = (typeof POINTER_HALO_FIXED_PX)[number];
+export type PointerHaloViewportPct = (typeof POINTER_HALO_VIEWPORT_PCT)[number];
+export type PointerHaloPx = (typeof POINTER_HALO_PX)[number];
+
+/** Size used when the visitor turns the halo on. */
+export const POINTER_HALO_DEFAULT_PX = 20 satisfies Exclude<PointerHaloPx, 0>;
+
+export function isPointerHaloViewportPct(
+    n: PointerHaloPx,
+): n is PointerHaloViewportPct {
+    return n === "5%" || n === "10%" || n === "15%";
+}
+
+export function pointerHaloOn(
+    n: PointerHaloPx,
+): n is Exclude<PointerHaloPx, 0> {
+    return n !== 0;
+}
+
+/** CSS width/height for the on-page halo. Viewport sizes use `vmin`. */
+export function pointerHaloCssDiameter(size: PointerHaloPx): string {
+    if (size === 0) return "0px";
+    if (isPointerHaloViewportPct(size)) return `${size.slice(0, -1)}vmin`;
+    return `${size}px`;
+}
+
+/** Choice-card preview diameter. Viewport sizes are scaled, not 1:1 px. */
+export function pointerHaloPreviewDiameter(size: PointerHaloPx): number {
+    if (size === "5%") return 22;
+    if (size === "10%") return 32;
+    if (size === "15%") return 42;
+    if (size === 5 || size === 20 || size === 40) return size;
+    return POINTER_HALO_DEFAULT_PX;
+}
+
+export function normalizePointerHaloPx(n: unknown): PointerHaloPx {
+    if (n === 0 || n === 5 || n === 20 || n === 40) return n;
+    if (n === "0" || n === "5" || n === "20" || n === "40") {
+        return Number(n) as PointerHaloPx;
+    }
+    if (n === "5%" || n === "10%" || n === "15%") return n;
+    return 0;
+}
+
+/** Fluorescent fills for the pointer halo. */
+export const POINTER_HALO_COLORS = [
+    "yellow",
+    "green",
+    "pink",
+    "orange",
+    "cyan",
+] as const;
+export type PointerHaloColor = (typeof POINTER_HALO_COLORS)[number];
+export const POINTER_HALO_DEFAULT_COLOR = "yellow" satisfies PointerHaloColor;
+
+/** RGB for each fluorescent color. One channel stays 0 so chroma stays high after blending. */
+export const POINTER_HALO_RGB = {
+    yellow: [255, 255, 0],
+    green: [0, 255, 40],
+    pink: [255, 0, 196],
+    orange: [255, 48, 0],
+    cyan: [0, 255, 255],
+} as const satisfies Record<
+    PointerHaloColor,
+    readonly [number, number, number]
+>;
+
+/**
+ * Halo fill strength. `thin` is most see-through; `strong` is the most opaque
+ * that still leaves the page in the majority of the pixel so text stays readable.
+ */
+export const POINTER_HALO_OPACITIES = ["thin", "medium", "strong"] as const;
+export type PointerHaloOpacity = (typeof POINTER_HALO_OPACITIES)[number];
+export const POINTER_HALO_DEFAULT_OPACITY =
+    "medium" satisfies PointerHaloOpacity;
+
+export const POINTER_HALO_ALPHA = {
+    thin: 0.2,
+    medium: 0.35,
+    strong: 0.48,
+} as const satisfies Record<PointerHaloOpacity, number>;
+
+export function normalizePointerHaloColor(n: unknown): PointerHaloColor {
+    if (
+        n === "yellow" ||
+        n === "green" ||
+        n === "pink" ||
+        n === "orange" ||
+        n === "cyan"
+    ) {
+        return n;
+    }
+    return POINTER_HALO_DEFAULT_COLOR;
+}
+
+export function normalizePointerHaloOpacity(n: unknown): PointerHaloOpacity {
+    if (n === "thin" || n === "medium" || n === "strong") return n;
+    return POINTER_HALO_DEFAULT_OPACITY;
+}
+
+export function pointerHaloFillCss(
+    color: PointerHaloColor,
+    opacity: PointerHaloOpacity,
+): string {
+    const [r, g, b] = POINTER_HALO_RGB[color];
+    return `rgba(${r}, ${g}, ${b}, ${POINTER_HALO_ALPHA[opacity]})`;
+}
+
+/**
+ * Reading-guide fill + outline. Five pairs so every candidate color is
+ * used at least once. Fill and outline always differ. The black-fill pair
+ * keeps a yellow outline; the other four keep a non-yellow outline so they
+ * still read against high-contrast yellow text.
+ */
+export const READING_GUIDE_STYLES = [
+    "whiteBlue",
+    "blackYellow",
+    "cyanGreen",
+    "magentaNavy",
+    "orangeWhite",
+] as const;
+export type ReadingGuideStyle = (typeof READING_GUIDE_STYLES)[number];
+export const READING_GUIDE_DEFAULT_STYLE =
+    "whiteBlue" satisfies ReadingGuideStyle;
+
+export const READING_GUIDE_PAIRS = {
+    whiteBlue: {
+        fill: "rgb(255, 255, 255)",
+        edge: "rgb(0, 85, 255)",
+    },
+    blackYellow: {
+        fill: "rgb(17, 17, 17)",
+        edge: "rgb(255, 255, 0)",
+    },
+    cyanGreen: {
+        fill: "rgb(0, 255, 255)",
+        edge: "rgb(0, 255, 40)",
+    },
+    magentaNavy: {
+        fill: "rgb(255, 0, 196)",
+        edge: "rgb(0, 32, 128)",
+    },
+    orangeWhite: {
+        fill: "rgb(255, 48, 0)",
+        edge: "rgb(255, 255, 255)",
+    },
+} as const satisfies Record<ReadingGuideStyle, { fill: string; edge: string }>;
+
+const READING_GUIDE_STYLE_ALIASES: Record<string, ReadingGuideStyle> = {
+    blackWhite: "blackYellow",
+    cyanNavy: "cyanGreen",
+    orangeBlue: "orangeWhite",
+};
+
+export function normalizeReadingGuideStyle(n: unknown): ReadingGuideStyle {
+    if (typeof n === "string" && n in READING_GUIDE_STYLE_ALIASES) {
+        return READING_GUIDE_STYLE_ALIASES[n];
+    }
+    for (const style of READING_GUIDE_STYLES) {
+        if (n === style) return style;
+    }
+    return READING_GUIDE_DEFAULT_STYLE;
+}
+
+export function readingGuidePairCss(style: ReadingGuideStyle): {
+    fill: string;
+    edge: string;
+} {
+    return READING_GUIDE_PAIRS[style];
+}
+
+/** Vertical placement of the reading-guide bar relative to the pointer. */
+export const READING_GUIDE_POSITIONS = ["above", "center", "below"] as const;
+export type ReadingGuidePosition = (typeof READING_GUIDE_POSITIONS)[number];
+export const READING_GUIDE_DEFAULT_POSITION =
+    "above" satisfies ReadingGuidePosition;
+
+export function normalizeReadingGuidePosition(
+    n: unknown,
+): ReadingGuidePosition {
+    if (n === "above" || n === "center" || n === "below") return n;
+    return READING_GUIDE_DEFAULT_POSITION;
+}
+
+/**
+ * Text outline (webkit-text-stroke). Five fill/stroke pairs.
+ *
+ * Fill and edge always differ in luminance, and the chromatic pairs also
+ * differ in hue, so the rim reads as its own color rather than a shadow:
+ *   - white/black and black/white: max luminance (still split after mono)
+ *   - yellow/blue and blue/yellow: opponent hues. Yellow+black becomes
+ *     yellow+white under invert(1) hue-rotate(180deg); blue does not.
+ *   - white/magenta: a third hue, off the yellow/blue axis
+ * Chromatic edges stay saturated (not black) so they do not vanish on
+ * dark / high-contrast backgrounds.
+ */
+export const TEXT_STROKE_STYLES = [
+    "whiteBlack",
+    "blackWhite",
+    "yellowBlue",
+    "blueYellow",
+    "whiteMagenta",
+] as const;
+export type TextStrokeStyle = (typeof TEXT_STROKE_STYLES)[number];
+export const TEXT_STROKE_DEFAULT_STYLE = "whiteBlack" satisfies TextStrokeStyle;
+
+/** Relative to the glyph's font-size so small and large type stay in proportion. */
+export const TEXT_STROKE_WIDTH = "0.1em";
+
+export const TEXT_STROKE_PAIRS = {
+    whiteBlack: {
+        fill: "rgb(255, 255, 255)",
+        edge: "rgb(0, 0, 0)",
+    },
+    blackWhite: {
+        fill: "rgb(0, 0, 0)",
+        edge: "rgb(255, 255, 255)",
+    },
+    yellowBlue: {
+        fill: "rgb(255, 255, 0)",
+        edge: "rgb(0, 80, 255)",
+    },
+    blueYellow: {
+        fill: "rgb(0, 80, 255)",
+        edge: "rgb(255, 255, 0)",
+    },
+    whiteMagenta: {
+        fill: "rgb(255, 255, 255)",
+        edge: "rgb(255, 0, 196)",
+    },
+} as const satisfies Record<TextStrokeStyle, { fill: string; edge: string }>;
+
+const TEXT_STROKE_STYLE_ALIASES: Record<string, TextStrokeStyle> = {
+    yellowBlack: "yellowBlue",
+    blackYellow: "blueYellow",
+    cyanNavy: "whiteMagenta",
+};
+
+export function normalizeTextStrokeStyle(n: unknown): TextStrokeStyle {
+    if (typeof n === "string" && n in TEXT_STROKE_STYLE_ALIASES) {
+        return TEXT_STROKE_STYLE_ALIASES[n];
+    }
+    for (const style of TEXT_STROKE_STYLES) {
+        if (n === style) return style;
+    }
+    return TEXT_STROKE_DEFAULT_STYLE;
+}
+
+export function textStrokePairCss(style: TextStrokeStyle): {
+    fill: string;
+    edge: string;
+} {
+    return TEXT_STROKE_PAIRS[style];
+}
+
+/**
+ * Solid plate behind glyphs so type never sits on leftover light pixels
+ * (white photos, unmarked plates) during high-contrast. Lab offers four
+ * more background/foreground pairs besides the classic black/yellow.
+ */
+export const TEXT_PLATE_STYLES = [
+    "blackYellow",
+    "blackWhite",
+    "navyYellow",
+    "blackCyan",
+    "greenWhite",
+] as const;
+export type TextPlateStyle = (typeof TEXT_PLATE_STYLES)[number];
+export const TEXT_PLATE_DEFAULT_STYLE = "blackYellow" satisfies TextPlateStyle;
+
+export const TEXT_PLATE_PAIRS = {
+    blackYellow: {
+        bg: "rgb(0, 0, 0)",
+        fg: "rgb(255, 255, 0)",
+    },
+    blackWhite: {
+        bg: "rgb(0, 0, 0)",
+        fg: "rgb(255, 255, 255)",
+    },
+    navyYellow: {
+        bg: "rgb(0, 26, 102)",
+        fg: "rgb(255, 255, 0)",
+    },
+    blackCyan: {
+        bg: "rgb(0, 0, 0)",
+        fg: "rgb(0, 255, 255)",
+    },
+    greenWhite: {
+        bg: "rgb(0, 61, 10)",
+        fg: "rgb(255, 255, 255)",
+    },
+} as const satisfies Record<TextPlateStyle, { bg: string; fg: string }>;
+
+export function normalizeTextPlateStyle(n: unknown): TextPlateStyle {
+    for (const style of TEXT_PLATE_STYLES) {
+        if (n === style) return style;
+    }
+    return TEXT_PLATE_DEFAULT_STYLE;
+}
+
+export function textPlatePairCss(style: TextPlateStyle): {
+    bg: string;
+    fg: string;
+} {
+    return TEXT_PLATE_PAIRS[style];
+}
+
+export function textPlateActive(theme: string): boolean {
+    return theme === "high-contrast";
+}
 
 export type AutoTextMode = "off" | "viewport" | "content" | "combined";
 
@@ -35,7 +361,28 @@ export interface A11ySettings {
     linkBorder: boolean;
     imageBorder: boolean;
     elementHighlight: boolean;
-    focusEnhance: boolean;
+    /** 0 = off. 1–3 enlarge the cursor and thicken the focus ring. */
+    focusEnhanceLevel: TextAdjustLevel;
+    /**
+     * 0 = off. Fixed CSS-pixel diameters, or a percent of the shorter
+     * viewport side (`5%` / `10%` / `15%` → CSS `vmin`).
+     */
+    pointerHaloPx: PointerHaloPx;
+    pointerHaloColor: PointerHaloColor;
+    pointerHaloOpacity: PointerHaloOpacity;
+    /**
+     * Dim the page except a full-width, 150px-tall band centered on the pointer.
+     */
+    focusCursor: boolean;
+    /** A 600×10px bar that follows the pointer as a reading ruler. */
+    readingGuide: boolean;
+    readingGuideStyle: ReadingGuideStyle;
+    readingGuidePosition: ReadingGuidePosition;
+    /** Outline host-page glyphs with -webkit-text-stroke. */
+    textStroke: boolean;
+    textStrokeStyle: TextStrokeStyle;
+    /** High-contrast plate background + type pair, chosen in Lab. */
+    textPlateStyle: TextPlateStyle;
     reduceMotion: boolean;
     smallTextBoostLevel: TextAdjustLevel;
     bodyTextExpandLevel: TextAdjustLevel;
@@ -55,7 +402,17 @@ export const A11Y_DEFAULTS: A11ySettings = {
     linkBorder: false,
     imageBorder: false,
     elementHighlight: false,
-    focusEnhance: false,
+    focusEnhanceLevel: 0,
+    pointerHaloPx: 0,
+    pointerHaloColor: POINTER_HALO_DEFAULT_COLOR,
+    pointerHaloOpacity: POINTER_HALO_DEFAULT_OPACITY,
+    focusCursor: false,
+    readingGuide: false,
+    readingGuideStyle: READING_GUIDE_DEFAULT_STYLE,
+    readingGuidePosition: READING_GUIDE_DEFAULT_POSITION,
+    textStroke: false,
+    textStrokeStyle: TEXT_STROKE_DEFAULT_STYLE,
+    textPlateStyle: TEXT_PLATE_DEFAULT_STYLE,
     reduceMotion: false,
     smallTextBoostLevel: 0,
     bodyTextExpandLevel: 0,
@@ -104,7 +461,17 @@ export const A11Y_SETTING_KEYS = [
     "linkBorder",
     "imageBorder",
     "elementHighlight",
-    "focusEnhance",
+    "focusEnhanceLevel",
+    "pointerHaloPx",
+    "pointerHaloColor",
+    "pointerHaloOpacity",
+    "focusCursor",
+    "readingGuide",
+    "readingGuideStyle",
+    "readingGuidePosition",
+    "textStroke",
+    "textStrokeStyle",
+    "textPlateStyle",
     "reduceMotion",
     "smallTextBoostLevel",
     "bodyTextExpandLevel",

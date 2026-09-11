@@ -3,15 +3,23 @@
  * Reads live state via bindSettingsReader() to avoid circular imports with settings.ts.
  */
 
+import type { A11yFontSize } from "./accessibilityStoreTypes";
 import {
     type A11ySettings,
     CONTRAST_FILTER,
     LETTER_SPACING_EM,
+    normalizeTextPlateStyle,
+    normalizeTextStrokeStyle,
     SATURATION_FILTER,
     STANDARD_FONT_STACK,
+    TEXT_STROKE_WIDTH,
+    textPlateActive,
+    textPlatePairCss,
+    textStrokePairCss,
     UD_FONT_STACK,
     WORD_SPACING_EM,
 } from "./accessibilityStoreTypes";
+import { clearBackgroundMediaMarkers } from "./backgroundMediaOverlay";
 import {
     A11Y_UD_FONT_LINK_ID,
     BG_SAMPLE_ATTR,
@@ -33,20 +41,44 @@ import {
     HTML_ATTR_PAGE_FILTER,
     HTML_ATTR_REDUCE_MOTION,
     HTML_ATTR_SATURATION,
+    HTML_ATTR_TEXT_PLATE,
+    HTML_ATTR_TEXT_STROKE,
     HTML_ATTR_THEME,
     HTML_STYLE_CONTRAST,
+    HTML_STYLE_DISPLAY_BG,
+    HTML_STYLE_DISPLAY_BORDER,
+    HTML_STYLE_DISPLAY_LINK,
+    HTML_STYLE_DISPLAY_SURFACE,
+    HTML_STYLE_DISPLAY_TEXT,
     HTML_STYLE_FONT_FAMILY,
     HTML_STYLE_FONT_SCALE,
     HTML_STYLE_LETTER_SPACING,
     HTML_STYLE_LINE_HEIGHT,
     HTML_STYLE_SATURATE,
+    HTML_STYLE_TEXT_PLATE_BG,
+    HTML_STYLE_TEXT_PLATE_FG,
+    HTML_STYLE_TEXT_STROKE_EDGE,
+    HTML_STYLE_TEXT_STROKE_FILL,
+    HTML_STYLE_TEXT_STROKE_WIDTH,
     HTML_STYLE_WORD_SPACING,
     isUniLensOverlayNode,
     PAGE_CONTENT_ATTR,
     PAGE_CONTENT_ROOT_ID,
     POSITIONED_OVERLAY_ATTR,
+    PSEUDO_OVERLAY_AFTER_ATTR,
+    PSEUDO_OVERLAY_BEFORE_ATTR,
 } from "./domIds";
 import { a11yFontSizeToScale } from "./fontScales";
+import {
+    clearHighContrastTextPlates,
+    syncHighContrastTextPlates,
+} from "./highContrastTextPlate";
+import {
+    restoreAllHostInlineStyles,
+    restoreHostInlineStyle,
+    setHostInlineStyle,
+} from "./hostSurface";
+import { destroyPageFontScale, setPageFontSizeScale } from "./pageFontScale";
 import type { Settings } from "./settings";
 
 let readSettings: () => Settings = () => ({}) as Settings;
@@ -70,7 +102,17 @@ function pickA11y(s: Settings): A11ySettings {
         linkBorder: s.linkBorder,
         imageBorder: s.imageBorder,
         elementHighlight: s.elementHighlight,
-        focusEnhance: s.focusEnhance,
+        focusEnhanceLevel: s.focusEnhanceLevel,
+        pointerHaloPx: s.pointerHaloPx,
+        pointerHaloColor: s.pointerHaloColor,
+        pointerHaloOpacity: s.pointerHaloOpacity,
+        focusCursor: s.focusCursor,
+        readingGuide: s.readingGuide,
+        readingGuideStyle: s.readingGuideStyle,
+        readingGuidePosition: s.readingGuidePosition,
+        textStroke: s.textStroke,
+        textStrokeStyle: s.textStrokeStyle,
+        textPlateStyle: s.textPlateStyle,
         reduceMotion: s.reduceMotion,
         smallTextBoostLevel: s.smallTextBoostLevel,
         bodyTextExpandLevel: s.bodyTextExpandLevel,
@@ -79,17 +121,38 @@ function pickA11y(s: Settings): A11ySettings {
 
 function isDisplayActive(s: A11ySettings): boolean {
     // Color remapping runs for every explicit palette, including light.
-    // `standard` leaves the host site's colors alone (tone filters may still
-    // hit images via HTML_ATTR_IMAGE_FILTER).
+    // `standard` leaves the host site's colors alone; saturate/contrast still
+    // paint the whole page via HTML_ATTR_PAGE_FILTER when those differ.
     return s.theme !== "standard";
 }
 
-function needsToneFilter(s: A11ySettings): boolean {
+function needsToneFilter(
+    s: Pick<A11ySettings, "saturation" | "contrast">,
+): boolean {
     return s.saturation !== "standard" || s.contrast !== "standard";
+}
+
+/** Where saturate/contrast is painted. Overlay UI stays outside the page root. */
+export type ToneFilterTarget = "none" | "page" | "html";
+
+export function toneFilterTarget(
+    s: Pick<A11ySettings, "theme" | "saturation" | "contrast">,
+): ToneFilterTarget {
+    // Invert uses <html> so position:fixed host chrome stays viewport-anchored.
+    // The invert stylesheet also consumes saturate/contrast, so this is "html"
+    // even when those two settings are still standard.
+    if (s.theme === "invert") return "html";
+    if (!needsToneFilter(s)) return "none";
+    return "page";
 }
 
 function setFlag(el: HTMLElement, name: string, on: boolean) {
     if (on) el.setAttribute(name, "true");
+    else el.removeAttribute(name);
+}
+
+function setLevel(el: HTMLElement, name: string, level: number) {
+    if (level > 0) el.setAttribute(name, String(level));
     else el.removeAttribute(name);
 }
 
@@ -107,15 +170,15 @@ export function ensurePageContentRoot(): HTMLDivElement | null {
     root.setAttribute(PAGE_CONTENT_ATTR, "1");
 
     const nodes = Array.from(body.childNodes);
-    for (const node of nodes) {
+    nodes.forEach((node) => {
         root?.appendChild(node);
-    }
+    });
     body.appendChild(root);
     return root;
 }
 
 export function syncWidgetDisplayIsolation() {
-    /* Counter-invert is handled by the bundled page CSS via html[data-unilens-a11y-html-filter]. */
+    /* Counter-invert is handled in the bundled page stylesheet via html[data-unilens-a11y-html-filter]. */
 }
 
 function notifyLayoutChange() {
@@ -131,9 +194,9 @@ export function restorePageContentRoot() {
     const body = document.body;
     if (!root || !body) return;
     const nodes = Array.from(root.childNodes);
-    for (const node of nodes) {
+    nodes.forEach((node) => {
         body.insertBefore(node, root);
-    }
+    });
     root.remove();
 }
 
@@ -151,19 +214,28 @@ function removeUdFontLink() {
     document.getElementById(A11Y_UD_FONT_LINK_ID)?.remove();
 }
 
+export function toneFilterCss(
+    s: Pick<A11ySettings, "saturation" | "contrast">,
+): string {
+    return `saturate(${SATURATION_FILTER[s.saturation]}) contrast(${CONTRAST_FILTER[s.contrast]})`;
+}
+
 function syncPageDisplayFilters(pageRoot: HTMLElement | null, s: A11ySettings) {
     const html = document.documentElement;
-    const invertOnHtml = s.theme === "invert" && isDisplayActive(s);
-    setFlag(html, HTML_ATTR_HTML_FILTER, invertOnHtml);
+    const target = toneFilterTarget(s);
+    setFlag(html, HTML_ATTR_HTML_FILTER, target === "html");
 
     if (pageRoot) {
-        const tone = needsToneFilter(s);
-        // Remapped themes: tone filter on the whole page root (invert uses <html>).
-        const pageFilter = !invertOnHtml && isDisplayActive(s) && tone;
-        // Site-default theme: leave UI colors alone; tone filter hits media only.
-        const imageFilter = s.theme === "standard" && tone;
-        setFlag(pageRoot, HTML_ATTR_PAGE_FILTER, pageFilter);
-        setFlag(pageRoot, HTML_ATTR_IMAGE_FILTER, imageFilter);
+        setFlag(pageRoot, HTML_ATTR_PAGE_FILTER, target === "page");
+        // Previous builds painted standard-theme tone on media only; always
+        // clear so a leftover marker cannot keep filtering just images.
+        setFlag(pageRoot, HTML_ATTR_IMAGE_FILTER, false);
+        // Inline filter so the whole page tints even if the stylesheet is stale.
+        if (target === "page") {
+            pageRoot.style.setProperty("filter", toneFilterCss(s));
+        } else {
+            pageRoot.style.removeProperty("filter");
+        }
     }
 }
 
@@ -225,6 +297,14 @@ function clearPositionedOverlayMarkers(root: ParentNode | null = document) {
     root.querySelectorAll(`[${BG_SAMPLE_ATTR}]`).forEach((el) => {
         el.removeAttribute(BG_SAMPLE_ATTR);
     });
+    root.querySelectorAll(`[${PSEUDO_OVERLAY_BEFORE_ATTR}]`).forEach((el) => {
+        el.removeAttribute(PSEUDO_OVERLAY_BEFORE_ATTR);
+    });
+    root.querySelectorAll(`[${PSEUDO_OVERLAY_AFTER_ATTR}]`).forEach((el) => {
+        el.removeAttribute(PSEUDO_OVERLAY_AFTER_ATTR);
+    });
+    clearBackgroundMediaMarkers(root);
+    clearHighContrastTextPlates(root);
 }
 
 /**
@@ -252,6 +332,8 @@ export function syncPositionedOverlayMarkers(pageRoot: HTMLElement | null) {
 
     // Opt candidates out of the transparent reset (one batch, one reflow) so we
     // can read the host author’s background-color rather than our own override.
+    // BG_SAMPLE_ATTR also disables transitions so we sample the settled author
+    // color, not a mid-fade value from `transition: all` (SoftBank tab buttons).
     for (const el of candidates) {
         el.removeAttribute(POSITIONED_OVERLAY_ATTR);
         el.setAttribute(BG_SAMPLE_ATTR, "true");
@@ -264,11 +346,40 @@ export function syncPositionedOverlayMarkers(pageRoot: HTMLElement | null) {
             keep.add(el);
         }
         el.removeAttribute(BG_SAMPLE_ATTR);
+
+        // Pseudo-elements are never touched by the transparent reset (`*`
+        // doesn't match `::before`/`::after`), so no opt-out dance is needed
+        // to read their real background — it's already the host author's
+        // own value. Host chrome frequently paints hairlines/arrows this way
+        // (SoftBank `.p-graduateArrow::after`, `.c-hdg::after`), which would
+        // otherwise keep a stray opaque background under the forced theme
+        // text color (e.g. yellow-on-white in high-contrast mode).
+        if (
+            isOpaqueBackgroundColor(
+                getComputedStyle(el, "::before").backgroundColor,
+            )
+        ) {
+            el.setAttribute(PSEUDO_OVERLAY_BEFORE_ATTR, "true");
+        } else {
+            el.removeAttribute(PSEUDO_OVERLAY_BEFORE_ATTR);
+        }
+        if (
+            isOpaqueBackgroundColor(
+                getComputedStyle(el, "::after").backgroundColor,
+            )
+        ) {
+            el.setAttribute(PSEUDO_OVERLAY_AFTER_ATTR, "true");
+        } else {
+            el.removeAttribute(PSEUDO_OVERLAY_AFTER_ATTR);
+        }
     }
 
     prev.forEach((el) => {
         if (!keep.has(el)) el.removeAttribute(POSITIONED_OVERLAY_ATTR);
     });
+
+    clearBackgroundMediaMarkers(pageRoot);
+    syncHighContrastTextPlates(pageRoot);
 }
 
 let overlayMarkerObserver: MutationObserver | null = null;
@@ -313,7 +424,7 @@ function ensurePositionedOverlayObserver(
         subtree: true,
         childList: true,
         attributes: true,
-        attributeFilter: ["class", "style", "hidden", "aria-hidden"],
+        attributeFilter: ["class", "style", "hidden", "aria-hidden", "src"],
     });
 }
 
@@ -333,18 +444,69 @@ const A11Y_HTML_ATTRS = [
     HTML_ATTR_ELEMENT_HIGHLIGHT,
     HTML_ATTR_FOCUS_ENHANCE,
     HTML_ATTR_REDUCE_MOTION,
+    HTML_ATTR_TEXT_STROKE,
+    HTML_ATTR_TEXT_PLATE,
     HTML_ATTR_HTML_FILTER,
 ];
 
-const A11Y_HTML_STYLE_PROPS = [
-    HTML_STYLE_FONT_SCALE,
-    HTML_STYLE_LINE_HEIGHT,
-    HTML_STYLE_FONT_FAMILY,
-    HTML_STYLE_LETTER_SPACING,
-    HTML_STYLE_WORD_SPACING,
-    HTML_STYLE_SATURATE,
-    HTML_STYLE_CONTRAST,
-];
+function syncPageFontScale(fontSize: A11yFontSize) {
+    const body = document.body;
+    if (body) restoreHostInlineStyle(body, "zoom");
+    setPageFontSizeScale(a11yFontSizeToScale(fontSize));
+}
+
+function syncTextStroke(
+    html: HTMLElement,
+    s: Pick<A11ySettings, "textStroke" | "textStrokeStyle">,
+) {
+    if (!s.textStroke) {
+        html.removeAttribute(HTML_ATTR_TEXT_STROKE);
+        restoreHostInlineStyle(html, HTML_STYLE_TEXT_STROKE_FILL);
+        restoreHostInlineStyle(html, HTML_STYLE_TEXT_STROKE_EDGE);
+        restoreHostInlineStyle(html, HTML_STYLE_TEXT_STROKE_WIDTH);
+        return;
+    }
+    const style = normalizeTextStrokeStyle(s.textStrokeStyle);
+    const pair = textStrokePairCss(style);
+    html.setAttribute(HTML_ATTR_TEXT_STROKE, style);
+    setHostInlineStyle(html, HTML_STYLE_TEXT_STROKE_FILL, pair.fill);
+    setHostInlineStyle(html, HTML_STYLE_TEXT_STROKE_EDGE, pair.edge);
+    setHostInlineStyle(html, HTML_STYLE_TEXT_STROKE_WIDTH, TEXT_STROKE_WIDTH);
+}
+
+function restoreDisplayPaletteVars(html: HTMLElement) {
+    restoreHostInlineStyle(html, HTML_STYLE_DISPLAY_BG);
+    restoreHostInlineStyle(html, HTML_STYLE_DISPLAY_TEXT);
+    restoreHostInlineStyle(html, HTML_STYLE_DISPLAY_SURFACE);
+    restoreHostInlineStyle(html, HTML_STYLE_DISPLAY_LINK);
+    restoreHostInlineStyle(html, HTML_STYLE_DISPLAY_BORDER);
+}
+
+function syncTextPlate(
+    html: HTMLElement,
+    pageRoot: HTMLElement | null,
+    s: Pick<A11ySettings, "theme" | "textPlateStyle">,
+) {
+    const style = normalizeTextPlateStyle(s.textPlateStyle);
+    const pair = textPlatePairCss(style);
+    if (!textPlateActive(s.theme)) {
+        html.removeAttribute(HTML_ATTR_TEXT_PLATE);
+        restoreHostInlineStyle(html, HTML_STYLE_TEXT_PLATE_BG);
+        restoreHostInlineStyle(html, HTML_STYLE_TEXT_PLATE_FG);
+        restoreDisplayPaletteVars(html);
+        clearHighContrastTextPlates(pageRoot);
+        return;
+    }
+    html.setAttribute(HTML_ATTR_TEXT_PLATE, style);
+    setHostInlineStyle(html, HTML_STYLE_TEXT_PLATE_BG, pair.bg);
+    setHostInlineStyle(html, HTML_STYLE_TEXT_PLATE_FG, pair.fg);
+    setHostInlineStyle(html, HTML_STYLE_DISPLAY_BG, pair.bg);
+    setHostInlineStyle(html, HTML_STYLE_DISPLAY_TEXT, pair.fg);
+    setHostInlineStyle(html, HTML_STYLE_DISPLAY_SURFACE, pair.bg);
+    setHostInlineStyle(html, HTML_STYLE_DISPLAY_LINK, pair.fg);
+    setHostInlineStyle(html, HTML_STYLE_DISPLAY_BORDER, pair.fg);
+    syncHighContrastTextPlates(pageRoot);
+}
 
 export function applyA11yToDocument() {
     const s = pickA11y(readSettings());
@@ -369,22 +531,26 @@ export function applyA11yToDocument() {
               ? UD_FONT_STACK
               : STANDARD_FONT_STACK;
 
-    html.style.setProperty(HTML_STYLE_FONT_SCALE, scale);
-    html.style.setProperty(HTML_STYLE_LINE_HEIGHT, lh);
-    html.style.setProperty(HTML_STYLE_FONT_FAMILY, fontStack);
-    html.style.setProperty(
+    setHostInlineStyle(html, HTML_STYLE_FONT_SCALE, scale);
+    setHostInlineStyle(html, HTML_STYLE_LINE_HEIGHT, lh);
+    setHostInlineStyle(html, HTML_STYLE_FONT_FAMILY, fontStack);
+    setHostInlineStyle(
+        html,
         HTML_STYLE_LETTER_SPACING,
         LETTER_SPACING_EM[s.letterSpacing],
     );
-    html.style.setProperty(
+    setHostInlineStyle(
+        html,
         HTML_STYLE_WORD_SPACING,
         WORD_SPACING_EM[s.letterSpacing],
     );
-    html.style.setProperty(
+    setHostInlineStyle(
+        html,
         HTML_STYLE_SATURATE,
         String(SATURATION_FILTER[s.saturation]),
     );
-    html.style.setProperty(
+    setHostInlineStyle(
+        html,
         HTML_STYLE_CONTRAST,
         String(CONTRAST_FILTER[s.contrast]),
     );
@@ -395,27 +561,33 @@ export function applyA11yToDocument() {
     setFlag(html, HTML_ATTR_LINK_BORDER, s.linkBorder);
     setFlag(html, HTML_ATTR_IMAGE_BORDER, s.imageBorder);
     setFlag(html, HTML_ATTR_ELEMENT_HIGHLIGHT, s.elementHighlight);
-    setFlag(html, HTML_ATTR_FOCUS_ENHANCE, s.focusEnhance);
+    setLevel(html, HTML_ATTR_FOCUS_ENHANCE, s.focusEnhanceLevel);
     setFlag(html, HTML_ATTR_REDUCE_MOTION, s.reduceMotion);
+    syncTextStroke(html, s);
+    syncTextPlate(html, pageRoot, s);
 
     if (s.fontFamily === "ud") ensureUdFontLink();
     else removeUdFontLink();
 
     syncPageDisplayFilters(pageRoot, s);
     ensurePositionedOverlayObserver(pageRoot, isDisplayActive(s));
+    syncPageFontScale(s.fontSize);
     syncWidgetDisplayIsolation();
     notifyLayoutChange();
 }
 
 export function clearAppliedA11yDocument() {
     const html = document.documentElement;
+    if (document.body) restoreHostInlineStyle(document.body, "zoom");
+    destroyPageFontScale();
     for (const attr of A11Y_HTML_ATTRS) html.removeAttribute(attr);
-    for (const prop of A11Y_HTML_STYLE_PROPS) html.style.removeProperty(prop);
+    restoreAllHostInlineStyles(html);
     const pageRoot = document.getElementById(PAGE_CONTENT_ROOT_ID);
     ensurePositionedOverlayObserver(pageRoot, false);
     if (pageRoot) {
         pageRoot.removeAttribute(HTML_ATTR_PAGE_FILTER);
         pageRoot.removeAttribute(HTML_ATTR_IMAGE_FILTER);
+        pageRoot.style.removeProperty("filter");
     }
     html.removeAttribute(BODY_EXPAND_LEVEL_ATTR);
     restorePageContentRoot();

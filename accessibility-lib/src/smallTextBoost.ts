@@ -1,7 +1,7 @@
 /**
  * Boost only text smaller than 16px — leaves headings and body text (≥16px) unchanged.
  */
-import { a11ySettings, onA11yChange } from "./accessibilityStore";
+import { getA11ySettings, onA11yChange } from "./accessibilityStore";
 import {
     isUniLensOverlayNode,
     SMALL_BOOST_ATTR,
@@ -11,6 +11,7 @@ import {
     SMALL_BOOST_ORIGINAL_ATTR,
     SMALL_BOOST_TARGET_VAR,
 } from "./domIds";
+import { restoreHostInlineStyle, setHostInlineStyle } from "./hostSurface";
 import {
     computeSmallTextTargetPx,
     SMALL_TEXT_THRESHOLD_PX,
@@ -65,7 +66,7 @@ function shouldSkip(el: Element): boolean {
 
 export function computeTargetFontPx(
     originalPx: number,
-    level: TextAdjustLevel = a11ySettings.smallTextBoostLevel,
+    level: TextAdjustLevel = getA11ySettings().smallTextBoostLevel,
 ): number {
     return computeSmallTextTargetPx(originalPx, level);
 }
@@ -91,21 +92,21 @@ function applyBoost(
         String(Math.round(originalPx * 100) / 100),
     );
     el.classList.add(SMALL_BOOST_CLASS);
-    el.style.setProperty(SMALL_BOOST_TARGET_VAR, `${targetPx}px`);
+    setHostInlineStyle(el, SMALL_BOOST_TARGET_VAR, `${targetPx}px`);
 }
 
 function restoreElement(el: HTMLElement) {
     el.removeAttribute(SMALL_BOOST_ATTR);
     el.removeAttribute(SMALL_BOOST_ORIGINAL_ATTR);
     el.classList.remove(SMALL_BOOST_CLASS);
-    el.style.removeProperty(SMALL_BOOST_TARGET_VAR);
+    restoreHostInlineStyle(el, SMALL_BOOST_TARGET_VAR);
 }
 
 export function scanSmallText(
     root: Element = document.body,
 ): SmallTextScanResult {
     const result: SmallTextScanResult = { scanned: 0, boosted: 0 };
-    const level = a11ySettings.smallTextBoostLevel;
+    const level = getA11ySettings().smallTextBoostLevel;
     if (level < 1 || !document.body) return result;
 
     const nodes: Element[] = [root, ...Array.from(root.querySelectorAll("*"))];
@@ -156,7 +157,7 @@ export function clearSmallTextBoost() {
 function applyEnabledState() {
     ensureStylesheet();
     clearSmallTextBoost();
-    const level = a11ySettings.smallTextBoostLevel;
+    const level = getA11ySettings().smallTextBoostLevel;
     if (level > 0 && smallTextBoostConfig(level)) {
         document.documentElement.setAttribute(SMALL_BOOST_HTML_ATTR, "true");
         document.documentElement.setAttribute(
@@ -172,14 +173,14 @@ function applyEnabledState() {
 function scheduleRescan() {
     clearTimeout(rescanTimer);
     rescanTimer = window.setTimeout(() => {
-        if (a11ySettings.smallTextBoostLevel > 0) scanSmallText();
+        if (getA11ySettings().smallTextBoostLevel > 0) scanSmallText();
     }, 300);
 }
 
 function startObserver() {
     if (observer || !document.body) return;
     observer = new MutationObserver(() => {
-        if (a11ySettings.smallTextBoostLevel > 0) scheduleRescan();
+        if (getA11ySettings().smallTextBoostLevel > 0) scheduleRescan();
     });
     observer.observe(document.body, { childList: true, subtree: true });
 }

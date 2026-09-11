@@ -4,9 +4,17 @@ import {
     HTML_ATTR_LINK_UNDERLINE,
     HTML_ATTR_REDUCE_MOTION,
     HTML_ATTR_SATURATION,
+    HTML_ATTR_TEXT_PLATE,
+    HTML_ATTR_TEXT_STROKE,
     HTML_ATTR_THEME,
+    HTML_STYLE_DISPLAY_BG,
+    HTML_STYLE_DISPLAY_TEXT,
     HTML_STYLE_LETTER_SPACING,
     HTML_STYLE_SATURATE,
+    HTML_STYLE_TEXT_PLATE_BG,
+    HTML_STYLE_TEXT_PLATE_FG,
+    HTML_STYLE_TEXT_STROKE_EDGE,
+    HTML_STYLE_TEXT_STROKE_FILL,
 } from "./domIds";
 
 vi.mock("./autoTextSize", () => ({
@@ -25,6 +33,8 @@ function installDomStub() {
             setProperty: (key: string, value: string) =>
                 styleProps.set(key, value),
             getPropertyValue: (key: string) => styleProps.get(key) ?? "",
+            getPropertyPriority: () => "",
+            removeProperty: (key: string) => styleProps.delete(key),
         },
     };
     const doc = {
@@ -49,7 +59,6 @@ import {
 } from "./accessibilityPresets";
 import {
     A11Y_DEFAULTS,
-    a11ySettings,
     applyA11yToDocument,
     getA11ySettings,
     patchA11ySettings,
@@ -78,52 +87,52 @@ describe("accessibility presets", () => {
 
     it("low-vision preset goes bigger, roomier, and crisper", () => {
         applyA11yPreset("lowVision");
-        expect(a11ySettings.fontSize).toBe("xlarge");
-        expect(a11ySettings.letterSpacing).toBe("wide");
-        expect(a11ySettings.focusEnhance).toBe(true);
+        expect(getA11ySettings().fontSize).toBe("xlarge");
+        expect(getA11ySettings().letterSpacing).toBe("wide");
+        expect(getA11ySettings().focusEnhanceLevel).toBe(2);
         expect(isPresetActive("lowVision")).toBe(true);
         expect(runAutoTextAction).toHaveBeenCalledWith("reset");
     });
 
     it("mild preset is cream theme, 50% saturation, animations stopped", () => {
         applyA11yPreset("mild");
-        expect(a11ySettings.theme).toBe("soft");
-        expect(a11ySettings.saturation).toBe("soft");
-        expect(a11ySettings.reduceMotion).toBe(true);
+        expect(getA11ySettings().theme).toBe("soft");
+        expect(getA11ySettings().saturation).toBe("soft");
+        expect(getA11ySettings().reduceMotion).toBe(true);
         expect(isPresetActive("mild")).toBe(true);
     });
 
     it("senior preset expands body text and boosts contrast", () => {
         applyA11yPreset("senior");
-        expect(a11ySettings.bodyTextExpandLevel).toBe(2);
-        expect(a11ySettings.contrast).toBe("strong");
-        expect(a11ySettings.linkUnderline).toBe(true);
+        expect(getA11ySettings().bodyTextExpandLevel).toBe(2);
+        expect(getA11ySettings().contrast).toBe("strong");
+        expect(getA11ySettings().linkUnderline).toBe(true);
     });
 
     it("high-contrast preset uses max contrast black/yellow theme", () => {
         applyA11yPreset("highContrast");
-        expect(a11ySettings.theme).toBe("high-contrast");
-        expect(a11ySettings.contrast).toBe("max");
+        expect(getA11ySettings().theme).toBe("high-contrast");
+        expect(getA11ySettings().contrast).toBe("max");
     });
 
     it("focus preset widens line height and desaturates", () => {
         applyA11yPreset("focus");
-        expect(a11ySettings.lineHeight).toBe("wide");
-        expect(a11ySettings.saturation).toBe("mono");
+        expect(getA11ySettings().lineHeight).toBe("wide");
+        expect(getA11ySettings().saturation).toBe("mono");
     });
 
     it("toggle turns a preset off and restores its fields", () => {
         applyA11yPreset("highContrast");
         toggleA11yPreset("highContrast");
-        expect(a11ySettings.theme).toBe("standard");
+        expect(getA11ySettings().theme).toBe("standard");
         expect(isPresetActive("highContrast")).toBe(false);
     });
 
     it("toggle clears body expand and link underline when turning senior off", () => {
         applyA11yPreset("senior");
         toggleA11yPreset("senior");
-        expect(a11ySettings.bodyTextExpandLevel).toBe(0);
-        expect(a11ySettings.linkUnderline).toBe(false);
+        expect(getA11ySettings().bodyTextExpandLevel).toBe(0);
+        expect(getA11ySettings().linkUnderline).toBe(false);
     });
 
     it("letter-spacing alone does not set legacy font-active flag", () => {
@@ -148,7 +157,7 @@ describe("accessibility presets", () => {
         const stub = installDomStub();
         patchA11ySettings({
             linkUnderline: true,
-            focusEnhance: true,
+            focusEnhanceLevel: 2,
             reduceMotion: true,
             letterSpacing: "wide",
             theme: "soft",
@@ -156,7 +165,7 @@ describe("accessibility presets", () => {
         });
         applyA11yToDocument();
         expect(stub.html.getAttribute(HTML_ATTR_LINK_UNDERLINE)).toBe("true");
-        expect(stub.html.getAttribute(HTML_ATTR_FOCUS_ENHANCE)).toBe("true");
+        expect(stub.html.getAttribute(HTML_ATTR_FOCUS_ENHANCE)).toBe("2");
         expect(stub.html.getAttribute(HTML_ATTR_REDUCE_MOTION)).toBe("true");
         expect(stub.html.getAttribute(HTML_ATTR_THEME)).toBe("soft");
         expect(stub.html.getAttribute(HTML_ATTR_SATURATION)).toBe("soft");
@@ -168,5 +177,49 @@ describe("accessibility presets", () => {
         ).toBe("0.12em");
         expect(getA11ySettings()).toMatchObject({ theme: "soft" });
         expect(A11Y_DEFAULTS.reduceMotion).toBe(false);
+    });
+
+    it("text stroke writes the pair onto html as an attribute and css vars", () => {
+        const stub = installDomStub();
+        patchA11ySettings({
+            textStroke: true,
+            textStrokeStyle: "yellowBlue",
+        });
+        applyA11yToDocument();
+        expect(stub.html.getAttribute(HTML_ATTR_TEXT_STROKE)).toBe(
+            "yellowBlue",
+        );
+        expect(
+            stub.html.style.getPropertyValue(HTML_STYLE_TEXT_STROKE_FILL),
+        ).toBe("rgb(255, 255, 0)");
+        expect(
+            stub.html.style.getPropertyValue(HTML_STYLE_TEXT_STROKE_EDGE),
+        ).toBe("rgb(0, 80, 255)");
+        patchA11ySettings({ textStroke: false });
+        expect(stub.html.getAttribute(HTML_ATTR_TEXT_STROKE)).toBeNull();
+    });
+
+    it("high-contrast writes the Lab text-plate pair onto html", () => {
+        const stub = installDomStub();
+        patchA11ySettings({
+            theme: "high-contrast",
+            textPlateStyle: "navyYellow",
+        });
+        applyA11yToDocument();
+        expect(stub.html.getAttribute(HTML_ATTR_TEXT_PLATE)).toBe("navyYellow");
+        expect(stub.html.style.getPropertyValue(HTML_STYLE_TEXT_PLATE_BG)).toBe(
+            "rgb(0, 26, 102)",
+        );
+        expect(stub.html.style.getPropertyValue(HTML_STYLE_TEXT_PLATE_FG)).toBe(
+            "rgb(255, 255, 0)",
+        );
+        expect(stub.html.style.getPropertyValue(HTML_STYLE_DISPLAY_BG)).toBe(
+            "rgb(0, 26, 102)",
+        );
+        expect(stub.html.style.getPropertyValue(HTML_STYLE_DISPLAY_TEXT)).toBe(
+            "rgb(255, 255, 0)",
+        );
+        patchA11ySettings({ theme: "standard" });
+        expect(stub.html.getAttribute(HTML_ATTR_TEXT_PLATE)).toBeNull();
     });
 });

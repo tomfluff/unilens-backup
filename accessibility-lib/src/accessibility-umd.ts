@@ -2,7 +2,7 @@
  * UniLens Accessibility — UMD entry point.
  *
  * Browser:
- *   <script src="unilens-a11y.js"></script>
+ *   <script src="accessibility.js"></script>
  *   <script>UniLensA11y.init()</script>
  *
  * Node / bundler (CommonJS):
@@ -28,7 +28,9 @@ import {
 } from "./accessibilityI18n";
 import { destroyAccessibilityRuntime } from "./accessibilityLifecycle";
 import {
+    configureAccessibilityCssUrl,
     destroyAccessibilityPanel,
+    ensureAccessibilityStyles,
     initAccessibilityPanel,
 } from "./accessibilityPanel";
 import {
@@ -93,6 +95,8 @@ import {
     LARGE_TEXT_PX,
     scanBodyText,
 } from "./bodyTextExpand";
+import { initCursorHalo } from "./cursorHalo";
+import { initFocusCursorMask } from "./focusCursorMask";
 import {
     a11yFontSizeToScale,
     FONT_SCALE_LEVELS,
@@ -100,6 +104,7 @@ import {
     levelToScale,
     scaleToLevel,
 } from "./fontScales";
+import { initReadingGuide } from "./readingGuide";
 import {
     type ApplySelectionResult,
     applySelectionFontLevel,
@@ -166,6 +171,12 @@ import {
 } from "./textAdjustLevels";
 
 interface UniLensA11yInitOptions {
+    /**
+     * Optional extra stylesheet. Page theme / text rules are already bundled
+     * into this script and injected on init; pass `cssUrl` only to overlay a
+     * host-provided sheet on top.
+     */
+    cssUrl?: string;
     /** Show top-right ♿ panel. Default: true */
     panel?: boolean;
     /** Selection text resize. Default: true */
@@ -202,12 +213,17 @@ function init(options: UniLensA11yInitOptions = {}) {
     if (initialized) return;
     initialized = true;
 
+    if (options.cssUrl) configureAccessibilityCssUrl(options.cssUrl);
+    ensureAccessibilityStyles();
     if (options.lang) configureA11yLang(options.lang);
     if (options.followSystemPreferences) applySystemPreferences();
     applyA11yToDocument();
 
     if (options.bodyTextExpand !== false) initBodyTextExpand();
     if (options.smallTextBoost !== false) initSmallTextBoost();
+    initCursorHalo();
+    initFocusCursorMask();
+    initReadingGuide();
     if (options.selection !== false) initSelectionTextSize();
     // Read-aloud disabled: speechSynthesis is shared with unilens-lib on the same page.
     // if (options.speech !== false) initSpeakSelection()
@@ -246,8 +262,18 @@ const FEATURES = {
     },
     cues: {
         id: "cues",
-        title: "Extra visual cues (link underlines, focus enhance)",
-        keys: ["linkUnderline", "focusEnhance"] as const,
+        title: "Extra visual cues (link underlines, focus enhance, pointer halo, focus cursor, reading guide)",
+        keys: [
+            "linkUnderline",
+            "focusEnhanceLevel",
+            "pointerHaloPx",
+            "pointerHaloColor",
+            "pointerHaloOpacity",
+            "focusCursor",
+            "readingGuide",
+            "readingGuideStyle",
+            "readingGuidePosition",
+        ] as const,
     },
     presets: {
         id: "presets",
@@ -270,7 +296,7 @@ const FEATURES = {
     },
     selectionText: {
         id: "selectionText",
-        title: "Selection text size (100% / 150% / 200%)",
+        title: "Selection text size (100% / 195% / 260%)",
         scales: FONT_SCALE_LEVELS,
     },
     // Read-aloud disabled — see init() above.
@@ -286,6 +312,16 @@ const FEATURES = {
         id: "autoTextSize",
         title: "Automatic text size (viewport / content / combined)",
         modes: ["off", "viewport", "content", "combined"] as const,
+    },
+    textStroke: {
+        id: "textStroke",
+        title: "Text outline (webkit-text-stroke, 5 fill/edge pairs)",
+        keys: ["textStroke", "textStrokeStyle"] as const,
+    },
+    textPlate: {
+        id: "textPlate",
+        title: "Text plate (solid background + type color, 5 pairs)",
+        keys: ["textPlateStyle"] as const,
     },
 } as const;
 
@@ -412,6 +448,7 @@ const UniLensA11y = {
     onSettingsChange,
 
     // Panel
+    configureAccessibilityCssUrl,
     initAccessibilityPanel,
     destroyAccessibilityPanel,
 };

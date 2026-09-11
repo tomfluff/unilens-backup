@@ -8,11 +8,19 @@
  * - Numbers and scales (1.25× / 16px+, etc.) are language-independent, so
  *   they don't live in this dictionary.
  */
+
+import {
+    A11Y_LANG_CODES,
+    type A11yLang,
+    type PanelTab,
+    type PointerHaloPx,
+} from "./accessibilityStoreTypes";
+import { fontScalePercent } from "./fontScales";
 import { getSettings, onSettingsChange, updateSetting } from "./settings";
 
-export type A11yLang = "ja" | "en";
+export type { A11yLang } from "./accessibilityStoreTypes";
 
-export const A11Y_LANGS: A11yLang[] = ["ja", "en"];
+export const A11Y_LANGS: A11yLang[] = [...A11Y_LANG_CODES];
 
 /**
  * Language names are always written in that language's own script.
@@ -54,7 +62,7 @@ const ja = {
         visual: "見やすさ",
         text: "文字・色",
         tools: "Lab",
-    },
+    } satisfies Record<PanelTab, string>,
 
     // "Currently applied" chip labels
     adjSaturation: (value: string) => `彩度 ${value}`,
@@ -72,7 +80,11 @@ const ja = {
     adjLinkBorder: "リンク枠線",
     adjImageBorder: "画像枠線",
     adjElementHighlight: "要素ハイライト",
-    adjFocusEnhance: "フォーカス強調",
+    adjFocusEnhance: (name: string) => `カーソル ${name}`,
+    adjPointerHalo: (size: string) => `ポインター ${size}`,
+    adjFocusCursor: "フォーカスカーソル",
+    adjReadingGuide: "リーディングガイド",
+    adjTextStroke: (name: string) => `縁取り ${name}`,
     adjReduceMotion: "アニメ停止",
 
     // Choice option names
@@ -114,8 +126,8 @@ const ja = {
     },
     fontScale: {
         1: { label: "標準", hint: "100%" },
-        2: { label: "大", hint: "150%" },
-        3: { label: "特大", hint: "200%" },
+        2: { label: "大", hint: "195%" },
+        3: { label: "特大", hint: "260%" },
     },
 
     /** Sample glyphs shown in the typeface/font-size preview. */
@@ -131,8 +143,6 @@ const ja = {
 
     // Frequently used settings (presets)
     presetsTitle: "よく使う設定",
-    presetsDesc:
-        "用途別の組み合わせをワンタップで適用します。もう一度押すとオフになります。",
     presetsGroup: "プリセット",
     presetLowVision: "弱視向け",
     presetLowVisionHint: "大きく・空けて・くっきり",
@@ -153,28 +163,33 @@ const ja = {
 
     // Visibility tab — cues (beyond color)
     cuesTitle: "見つけやすさの手がかり",
-    cuesDesc:
-        "色だけに頼らず、リンクや今の位置が分かるようにします。動きを止めることもできます。",
+    cuesEmphasisGroup: "表示の強調",
+    cuesVisibilityGroup: "視認性・動作",
+    linkUnderline: "リンク下線",
     linkUnderlineSwitch: "リンクに常に下線を付ける",
     linkUnderlineHintOn: "色が分かりにくくてもリンクだと見分けられます",
     linkUnderlineHintOff: "色覚サポートや弱視のときに特に役立ちます",
     linkUnderlineOn: "リンクの下線をオンにしました",
     linkUnderlineOff: "リンクの下線をオフにしました",
+    linkBackground: "リンク背景",
     linkBackgroundSwitch: "リンクに背景色を付ける",
     linkBackgroundHintOn: "下線や色以外に、面としても見分けられます",
     linkBackgroundHintOff: "下線が目立ちにくい背景のときに役立ちます",
     linkBackgroundOn: "リンクの背景色をオンにしました",
     linkBackgroundOff: "リンクの背景色をオフにしました",
+    linkBorder: "リンク枠線",
     linkBorderSwitch: "リンクに枠線を付ける",
     linkBorderHintOn: "リンクの範囲が輪郭でも分かるようになります",
     linkBorderHintOff: "背景色や下線と組み合わせても使えます",
     linkBorderOn: "リンクの枠線をオンにしました",
     linkBorderOff: "リンクの枠線をオフにしました",
+    imageBorder: "画像枠線",
     imageBorderSwitch: "画像に枠線を付ける",
     imageBorderHintOn: "画像の境界がはっきりします",
     imageBorderHintOff: "背景に溶け込みやすい画像があるときに役立ちます",
     imageBorderOn: "画像の枠線をオンにしました",
     imageBorderOff: "画像の枠線をオフにしました",
+    elementHighlight: "操作部の強調",
     elementHighlightSwitch: "リンク・ボタン・入力欄を常に目立たせる",
     elementHighlightHintOn:
         "フォーカスしていなくても操作できる場所が分かります",
@@ -182,11 +197,111 @@ const ja = {
         "注意がそれやすいときに、操作対象を見失いにくくします",
     elementHighlightOn: "要素のハイライトをオンにしました",
     elementHighlightOff: "要素のハイライトをオフにしました",
-    focusEnhanceSwitch: "大きなカーソルと太いフォーカス枠",
-    focusEnhanceHintOn: "マウス位置とキーボードの場所が見つけやすくなります",
-    focusEnhanceHintOff: "今どこを見ているかを見失いにくくします",
-    focusEnhanceOn: "フォーカス強調をオンにしました",
-    focusEnhanceOff: "フォーカス強調をオフにしました",
+    focusEnhance: "カーソル",
+    focusEnhanceSwitch:
+        "カーソルを大きくし、フォーカス枠を太くする（押すたびに小・中・大）",
+    focusEnhanceLevelName: {
+        1: "小",
+        2: "中",
+        3: "大",
+    },
+    focusEnhanceAria: (name: string) => `カーソル ${name}`,
+    focusEnhanceOn: (name: string) => `カーソルを${name}にしました`,
+    focusEnhanceOff: "カーソルをオフにしました",
+    pointerHalo: "ポインター",
+    pointerHaloSwitch: "マウス位置に半透明の円を表示する",
+    pointerHaloOn: "ポインターをオンにしました",
+    pointerHaloOff: "ポインターをオフにしました",
+    pointerHaloGroup: "円の大きさ",
+    pointerHaloSize: {
+        5: "小",
+        20: "中",
+        40: "大",
+        "5%": "5%",
+        "10%": "10%",
+        "15%": "15%",
+    },
+    pointerHaloSizeAria: (size: string) => `円の大きさ: ${size}`,
+    pointerHaloSizeAnnounce: (size: string) => `円の大きさを${size}にしました`,
+    pointerHaloViewportGroup: "画面比率",
+    pointerHaloViewportAria: (size: string) => `画面比率: ${size}`,
+    pointerHaloViewportAnnounce: (size: string) =>
+        `円の大きさを画面の${size}にしました`,
+    pointerHaloColorGroup: "円の色",
+    pointerHaloColor: {
+        yellow: "黄",
+        green: "緑",
+        pink: "ピンク",
+        orange: "オレンジ",
+        cyan: "シアン",
+    },
+    pointerHaloColorAria: (name: string) => `円の色: ${name}`,
+    pointerHaloColorAnnounce: (name: string) => `円の色を${name}にしました`,
+    pointerHaloOpacityGroup: "透明度",
+    pointerHaloOpacity: {
+        thin: "薄い",
+        medium: "標準",
+        strong: "濃い",
+    },
+    pointerHaloOpacityAria: (name: string) => `透明度: ${name}`,
+    pointerHaloOpacityAnnounce: (name: string) => `透明度を${name}にしました`,
+    focusCursor: "フォーカスカーソル",
+    focusCursorSwitch:
+        "マウス位置を中心に、横いっぱい・高さ150px以外を少し暗くする",
+    focusCursorOn: "フォーカスカーソルをオンにしました",
+    focusCursorOff: "フォーカスカーソルをオフにしました",
+    readingGuide: "リーディングガイド",
+    readingGuideSwitch: "マウス位置に横600px・高さ10pxの棒を表示する",
+    readingGuideOn: "リーディングガイドをオンにしました",
+    readingGuideOff: "リーディングガイドをオフにしました",
+    readingGuidePositionGroup: "棒の位置",
+    readingGuidePosition: {
+        above: "上",
+        center: "中央",
+        below: "下",
+    },
+    readingGuidePositionAria: (name: string) => `棒の位置: ${name}`,
+    readingGuidePositionAnnounce: (name: string) =>
+        `棒の位置を${name}にしました`,
+    readingGuideColorGroup: "棒の色",
+    readingGuideColor: {
+        whiteBlue: "白と青",
+        blackYellow: "黒と黄",
+        cyanGreen: "シアンと緑",
+        magentaNavy: "ピンクと紺",
+        orangeWhite: "オレンジと白",
+    },
+    readingGuideColorAria: (name: string) => `棒の色: ${name}`,
+    readingGuideColorAnnounce: (name: string) => `棒の色を${name}にしました`,
+    textStrokeTitle: "文字の縁取り",
+    textStrokeSwitch: "ページの文字に縁を付ける",
+    textStrokeHintOn: "写真や色の上でも、輪郭で文字が追えます",
+    textStrokeHintOff: "文字の色と縁の色を5通りから選べます",
+    textStrokeOn: "文字の縁取りをオンにしました",
+    textStrokeOff: "文字の縁取りをオフにしました",
+    textStrokeGroup: "文字色と縁の色",
+    textStrokeStyle: {
+        whiteBlack: "白と黒",
+        blackWhite: "黒と白",
+        yellowBlue: "黄と青",
+        blueYellow: "青と黄",
+        whiteMagenta: "白とマゼンタ",
+    },
+    textStrokeStyleAria: (name: string) => `縁取りの色: ${name}`,
+    textStrokeStyleAnnounce: (name: string) => `縁取りの色を${name}にしました`,
+    textPlateTitle: "高コントラスト時の文字背景と文字の色",
+    textPlateGroup: "下地と文字の色",
+    textPlateStyle: {
+        blackYellow: "黒と黄",
+        blackWhite: "黒と白",
+        navyYellow: "紺と黄",
+        blackCyan: "黒とシアン",
+        greenWhite: "緑と白",
+    },
+    textPlateStyleAria: (name: string) => `下地と文字の色: ${name}`,
+    textPlateStyleAnnounce: (name: string) =>
+        `下地と文字の色を${name}にしました`,
+    reduceMotion: "アニメ停止",
     reduceMotionSwitch: "アニメーションを止める",
     reduceMotionHintOn: "動きのある演出をすべて止めます",
     reduceMotionHintOff: "低刺激にしたいときに使います",
@@ -195,14 +310,10 @@ const ja = {
 
     // Visibility tab
     colorModeTitle: "カラーモード",
-    colorModeDesc:
-        "「標準」はサイト本来の色のままです。「ライト」以降はページ全体の配色を切り替えます。ボタンの色見本が、そのまま変更後の見え方です。",
     colorModeGroup: "配色",
     themeAria: (name: string) => `カラーモード: ${name}`,
     themeAnnounce: (name: string) => `カラーモードを${name}にしました`,
     toneTitle: "色みとメリハリ",
-    toneDesc:
-        "カラーモードが「標準」のときは画像（img / picture / video）だけに効きます。それ以外のモードではページ全体に効きます。",
     saturationGroup: "彩度",
     saturationAria: (name: string) => `彩度: ${name}`,
     saturationAnnounce: (name: string) => `彩度を${name}にしました`,
@@ -212,17 +323,14 @@ const ja = {
 
     // Text tab
     pageTextTitle: "ページ全体の文字",
-    pageTextDesc:
-        "サイト全体の文字サイズ・書体・行間・文字間隔をまとめて変更します。",
     fontSizeGroup: "文字サイズ",
     fontSizeAria: (name: string, hint: string) => `文字サイズ: ${name} ${hint}`,
     fontSizeAnnounce: (name: string) => `ページの文字サイズを${name}にしました`,
     typefaceGroup: "書体",
     typefaceStandard: "標準",
     typefaceUd: "UD フォント",
-    typefaceUdHint: "読み分けやすい",
     typefaceStandardAria: "書体: 標準",
-    typefaceUdAria: "書体: UD フォント（読み分けやすい書体）",
+    typefaceUdAria: "書体: UD フォント",
     typefaceAnnounce: (name: string) => `書体を${name}にしました`,
     lineHeightGroup: "行間",
     lineHeightStandard: "標準",
@@ -236,8 +344,6 @@ const ja = {
     letterSpacingAnnounce: (name: string) => `文字間隔を${name}にしました`,
 
     bodyExpandTitle: "本文だけ大きく",
-    bodyExpandDesc:
-        "見出しはそのままに、段落やリンクなど本文の文字だけを拡大します。レイアウトが崩れにくい方法です。",
     bodyExpandGroup: "拡大の強さ",
     bodyExpandAriaOff: "本文拡大: オフ",
     bodyExpandAria: (label: string) => `本文拡大: ${label}`,
@@ -252,8 +358,6 @@ const ja = {
         `${expanded} 箇所を拡大しました（${scanned} 箇所を確認）`,
 
     smallBoostTitle: "小さすぎる文字を底上げ",
-    smallBoostDesc:
-        "注釈やキャプションなど 16px 未満の文字だけを、読める大きさまで引き上げます。",
     smallBoostGroup: "底上げの強さ",
     smallBoostAriaOff: "小文字の底上げ: オフ",
     smallBoostAria: (label: string) => `小文字の底上げ: ${label}`,
@@ -268,8 +372,6 @@ const ja = {
 
     // Tools tab
     selectionTitle: "選んだ文字だけ拡大",
-    selectionDesc:
-        "ページ上でドラッグして選んだ範囲だけ、その場で大きくできます。",
     selectionQuoted: (text: string, charCount: number) =>
         `「${text}」${charCount} 文字`,
     selectionSticky: "保持中",
@@ -319,8 +421,6 @@ const ja = {
     speakHighlightOff: "読み上げ位置の強調をオフにしました",
 
     autoTitle: "自動で読みやすく",
-    autoDesc:
-        "ページの文字量と画面幅を調べ、ちょうどよい倍率を自動で当てはめます。",
     autoSwitch: "自動調整を使う",
     autoSwitchHintOn: "画面サイズが変わると自動で調整し直します",
     autoSwitchHintOff: "オンにすると調整のしかたを選べます",
@@ -395,7 +495,7 @@ const en: A11yMessages = {
         visual: "Visibility",
         text: "Text & Color",
         tools: "Lab",
-    },
+    } satisfies Record<PanelTab, string>,
 
     adjSaturation: (value) => `Saturation: ${value}`,
     adjContrast: (value) => `Contrast: ${value}`,
@@ -412,7 +512,11 @@ const en: A11yMessages = {
     adjLinkBorder: "Link border",
     adjImageBorder: "Image border",
     adjElementHighlight: "Element highlight",
-    adjFocusEnhance: "Focus enhance",
+    adjFocusEnhance: (name: string) => `Cursor ${name}`,
+    adjPointerHalo: (size) => `Pointer ${size}`,
+    adjFocusCursor: "Focus cursor",
+    adjReadingGuide: "Reading guide",
+    adjTextStroke: (name) => `Outline: ${name}`,
     adjReduceMotion: "Stop motion",
 
     theme: {
@@ -453,8 +557,8 @@ const en: A11yMessages = {
     },
     fontScale: {
         1: { label: "Normal", hint: "100%" },
-        2: { label: "Large", hint: "150%" },
-        3: { label: "X-large", hint: "200%" },
+        2: { label: "Large", hint: "195%" },
+        3: { label: "X-large", hint: "260%" },
     },
 
     previewSample: "Aa",
@@ -467,8 +571,6 @@ const en: A11yMessages = {
     languageAnnounce: (name) => `Panel language set to ${name}`,
 
     presetsTitle: "Quick presets",
-    presetsDesc:
-        "One-tap combinations for common needs. Press again to turn off.",
     presetsGroup: "Presets",
     presetLowVision: "Low vision",
     presetLowVisionHint: "Larger, roomier, clearer",
@@ -488,8 +590,9 @@ const en: A11yMessages = {
     presetActive: "Applied",
 
     cuesTitle: "Extra visual cues",
-    cuesDesc:
-        "Make links and your current position clearer without relying on color alone. You can also stop motion.",
+    cuesEmphasisGroup: "Display emphasis",
+    cuesVisibilityGroup: "Visibility and motion",
+    linkUnderline: "Link underline",
     linkUnderlineSwitch: "Always underline links",
     linkUnderlineHintOn:
         "Links stay recognizable even when colors are hard to tell apart",
@@ -497,6 +600,7 @@ const en: A11yMessages = {
         "Especially helpful for color vision support and low vision",
     linkUnderlineOn: "Link underlines turned on",
     linkUnderlineOff: "Link underlines turned off",
+    linkBackground: "Link background",
     linkBackgroundSwitch: "Give links a background color",
     linkBackgroundHintOn:
         "Recognizable as a shape, not just an underline or color",
@@ -504,16 +608,19 @@ const en: A11yMessages = {
         "Useful when underlines are hard to spot against the background",
     linkBackgroundOn: "Link background turned on",
     linkBackgroundOff: "Link background turned off",
+    linkBorder: "Link border",
     linkBorderSwitch: "Give links a border",
     linkBorderHintOn: "Makes a link's extent clear from its outline alone",
     linkBorderHintOff: "Can be combined with the background or underline",
     linkBorderOn: "Link border turned on",
     linkBorderOff: "Link border turned off",
+    imageBorder: "Image border",
     imageBorderSwitch: "Give images a border",
     imageBorderHintOn: "Makes an image’s edges unambiguous",
     imageBorderHintOff: "Useful for images that blend into the background",
     imageBorderOn: "Image border turned on",
     imageBorderOff: "Image border turned off",
+    elementHighlight: "Highlight controls",
     elementHighlightSwitch: "Always highlight links, buttons, and form fields",
     elementHighlightHintOn:
         "Shows what you can interact with, even without focusing it first",
@@ -521,11 +628,109 @@ const en: A11yMessages = {
         "Helps you keep track of interactive targets when attention drifts easily",
     elementHighlightOn: "Element highlight turned on",
     elementHighlightOff: "Element highlight turned off",
-    focusEnhanceSwitch: "Large cursor and thick focus ring",
-    focusEnhanceHintOn: "Makes the mouse and keyboard focus easier to find",
-    focusEnhanceHintOff: "Helps you keep track of where you are on the page",
-    focusEnhanceOn: "Focus enhance turned on",
-    focusEnhanceOff: "Focus enhance turned off",
+    focusEnhance: "Cursor",
+    focusEnhanceSwitch:
+        "Enlarge the cursor and thicken the focus ring (press to cycle small, medium, large)",
+    focusEnhanceLevelName: {
+        1: "Small",
+        2: "Medium",
+        3: "Large",
+    },
+    focusEnhanceAria: (name: string) => `Cursor ${name}`,
+    focusEnhanceOn: (name: string) => `Cursor set to ${name}`,
+    focusEnhanceOff: "Cursor turned off",
+    pointerHalo: "Pointer",
+    pointerHaloSwitch: "Show a translucent circle at the pointer",
+    pointerHaloOn: "Pointer turned on",
+    pointerHaloOff: "Pointer turned off",
+    pointerHaloGroup: "Circle size",
+    pointerHaloSize: {
+        5: "Small",
+        20: "Medium",
+        40: "Large",
+        "5%": "5%",
+        "10%": "10%",
+        "15%": "15%",
+    },
+    pointerHaloSizeAria: (size) => `Circle size: ${size}`,
+    pointerHaloSizeAnnounce: (size) => `Circle size set to ${size}`,
+    pointerHaloViewportGroup: "Percent of screen",
+    pointerHaloViewportAria: (size) => `Percent of screen: ${size}`,
+    pointerHaloViewportAnnounce: (size) =>
+        `Circle size set to ${size} of the screen`,
+    pointerHaloColorGroup: "Circle color",
+    pointerHaloColor: {
+        yellow: "Yellow",
+        green: "Green",
+        pink: "Pink",
+        orange: "Orange",
+        cyan: "Cyan",
+    },
+    pointerHaloColorAria: (name) => `Circle color: ${name}`,
+    pointerHaloColorAnnounce: (name) => `Circle color set to ${name}`,
+    pointerHaloOpacityGroup: "Transparency",
+    pointerHaloOpacity: {
+        thin: "Thin",
+        medium: "Medium",
+        strong: "Strong",
+    },
+    pointerHaloOpacityAria: (name) => `Transparency: ${name}`,
+    pointerHaloOpacityAnnounce: (name) => `Transparency set to ${name}`,
+    focusCursor: "Focus cursor",
+    focusCursorSwitch:
+        "Dim the page except a full-width 150px-tall band at the pointer",
+    focusCursorOn: "Focus cursor turned on",
+    focusCursorOff: "Focus cursor turned off",
+    readingGuide: "Reading guide",
+    readingGuideSwitch: "Show a 600×10px bar at the pointer",
+    readingGuideOn: "Reading guide turned on",
+    readingGuideOff: "Reading guide turned off",
+    readingGuidePositionGroup: "Bar position",
+    readingGuidePosition: {
+        above: "Above",
+        center: "Center",
+        below: "Below",
+    },
+    readingGuidePositionAria: (name) => `Bar position: ${name}`,
+    readingGuidePositionAnnounce: (name) => `Bar position set to ${name}`,
+    readingGuideColorGroup: "Bar color",
+    readingGuideColor: {
+        whiteBlue: "White and blue",
+        blackYellow: "Black and yellow",
+        cyanGreen: "Cyan and green",
+        magentaNavy: "Pink and navy",
+        orangeWhite: "Orange and white",
+    },
+    readingGuideColorAria: (name) => `Bar color: ${name}`,
+    readingGuideColorAnnounce: (name) => `Bar color set to ${name}`,
+    textStrokeTitle: "Text outline",
+    textStrokeSwitch: "Add an outline around page text",
+    textStrokeHintOn: "Glyphs stay readable on photos and mixed colors",
+    textStrokeHintOff: "Pick from five fill and outline color pairs",
+    textStrokeOn: "Text outline turned on",
+    textStrokeOff: "Text outline turned off",
+    textStrokeGroup: "Fill and outline",
+    textStrokeStyle: {
+        whiteBlack: "White and black",
+        blackWhite: "Black and white",
+        yellowBlue: "Yellow and blue",
+        blueYellow: "Blue and yellow",
+        whiteMagenta: "White and magenta",
+    },
+    textStrokeStyleAria: (name) => `Outline colors: ${name}`,
+    textStrokeStyleAnnounce: (name) => `Outline colors set to ${name}`,
+    textPlateTitle: "Text plate & text color",
+    textPlateGroup: "Plate and type",
+    textPlateStyle: {
+        blackYellow: "Black and yellow",
+        blackWhite: "Black and white",
+        navyYellow: "Navy and yellow",
+        blackCyan: "Black and cyan",
+        greenWhite: "Green and white",
+    },
+    textPlateStyleAria: (name) => `Plate and type: ${name}`,
+    textPlateStyleAnnounce: (name) => `Plate and type set to ${name}`,
+    reduceMotion: "Stop motion",
     reduceMotionSwitch: "Stop animations",
     reduceMotionHintOn: "Turns off animated effects on the page",
     reduceMotionHintOff: "Useful when you want a calmer, milder display",
@@ -533,14 +738,10 @@ const en: A11yMessages = {
     reduceMotionOff: "Motion stop turned off",
 
     colorModeTitle: "Color mode",
-    colorModeDesc:
-        "“Standard” keeps the site’s own colors. “Light” and the modes after it recolor the whole page. Each button shows the colors you will get.",
     colorModeGroup: "Color scheme",
     themeAria: (name) => `Color mode: ${name}`,
     themeAnnounce: (name) => `Color mode set to ${name}`,
     toneTitle: "Color and contrast",
-    toneDesc:
-        "With Color mode set to Standard, these apply only to images (img / picture / video). With any other mode, they apply to the whole page.",
     saturationGroup: "Saturation",
     saturationAria: (name) => `Saturation: ${name}`,
     saturationAnnounce: (name) => `Saturation set to ${name}`,
@@ -549,18 +750,14 @@ const en: A11yMessages = {
     contrastAnnounce: (name) => `Contrast set to ${name}`,
 
     pageTextTitle: "Page text",
-    pageTextDesc:
-        "Changes the text size, typeface, line spacing and letter spacing across the whole site.",
     fontSizeGroup: "Text size",
     fontSizeAria: (name, hint) => `Text size: ${name} ${hint}`,
     fontSizeAnnounce: (name) => `Page text size set to ${name}`,
     typefaceGroup: "Typeface",
     typefaceStandard: "Standard",
     typefaceUd: "UD font",
-    typefaceUdHint: "Easier to tell apart",
     typefaceStandardAria: "Typeface: standard",
-    typefaceUdAria:
-        "Typeface: UD font, with letters that are easier to tell apart",
+    typefaceUdAria: "Typeface: UD font",
     typefaceAnnounce: (name) => `Typeface set to ${name}`,
     lineHeightGroup: "Line spacing",
     lineHeightStandard: "Normal",
@@ -574,8 +771,6 @@ const en: A11yMessages = {
     letterSpacingAnnounce: (name) => `Letter spacing set to ${name}`,
 
     bodyExpandTitle: "Enlarge body text only",
-    bodyExpandDesc:
-        "Leaves headings untouched and enlarges only body text such as paragraphs and links. This is the least likely to break the layout.",
     bodyExpandGroup: "Strength",
     bodyExpandAriaOff: "Body text enlargement: off",
     bodyExpandAria: (label) => `Body text enlargement: ${label}`,
@@ -590,8 +785,6 @@ const en: A11yMessages = {
         `${expanded} places enlarged (${scanned} checked)`,
 
     smallBoostTitle: "Raise text that is too small",
-    smallBoostDesc:
-        "Raises only text below 16px, such as footnotes and captions, up to a readable size.",
     smallBoostGroup: "Strength",
     smallBoostAriaOff: "Small text boost: off",
     smallBoostAria: (label) => `Small text boost: ${label}`,
@@ -605,8 +798,6 @@ const en: A11yMessages = {
         `${boosted} places raised (${scanned} checked)`,
 
     selectionTitle: "Enlarge selected text",
-    selectionDesc:
-        "Drag to select text on the page, then enlarge just that part on the spot.",
     selectionQuoted: (text, charCount) => `“${text}” — ${charCount} characters`,
     selectionSticky: "kept",
     selectionEmpty: "First, drag to select some text on the page.",
@@ -655,8 +846,6 @@ const en: A11yMessages = {
     speakHighlightOff: "Reading highlight turned off",
 
     autoTitle: "Adjust automatically",
-    autoDesc:
-        "Measures the amount of text and the screen width, then applies a suitable scale automatically.",
     autoSwitch: "Use automatic adjustment",
     autoSwitchHintOn: "Re-adjusts whenever the screen size changes",
     autoSwitchHintOff: "Turn on to choose how it decides",
@@ -708,9 +897,9 @@ let configuredLang: A11yLang | null = null;
 const ephemeralListeners: (() => void)[] = [];
 
 function notifyLangListeners() {
-    for (const cb of ephemeralListeners) {
+    ephemeralListeners.forEach((cb) => {
         cb();
-    }
+    });
 }
 
 /**
@@ -805,8 +994,13 @@ export function languageDescByLang(): { lang: A11yLang; text: string }[] {
  * Assembled once here since both the panel and selectionTextSize use it.
  */
 export function fontScaleLabel(level: 1 | 2 | 3): string {
-    const { label, hint } = t().fontScale[level];
-    return `${label} ${hint}`;
+    return `${t().fontScale[level].label} ${fontScalePercent(level)}`;
+}
+
+/** Small / medium / large, or a viewport percent, for the pointer halo. */
+export function pointerHaloSizeName(px: PointerHaloPx): string {
+    if (px === 0) return "";
+    return t().pointerHaloSize[px];
 }
 
 /** For tests/verification. Exposes the Japanese dictionary as the reference for the type and for coverage checks. */

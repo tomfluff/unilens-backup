@@ -6,11 +6,22 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import {
     A11Y_DEFAULTS,
+    A11Y_LANG_CODES,
     A11Y_SETTING_KEYS,
+    type A11yLang,
     type A11ySettings,
     type AutoTextMode,
     CONTRAST_FILTER,
     type DisplayTheme,
+    normalizePointerHaloColor,
+    normalizePointerHaloOpacity,
+    normalizePointerHaloPx,
+    normalizeReadingGuidePosition,
+    normalizeReadingGuideStyle,
+    normalizeTextPlateStyle,
+    normalizeTextStrokeStyle,
+    PANEL_TABS,
+    type PanelTab,
     SATURATION_FILTER,
 } from "./accessibilityStoreTypes";
 import { applyA11yToDocument } from "./documentEffects";
@@ -32,8 +43,8 @@ export interface Settings extends A11ySettings {
     speechRateLevel: number;
     speechHighlight: boolean;
     /** Visitor-chosen panel language; null = auto-detect until they pick one. */
-    panelLang: "ja" | "en" | null;
-    panelTab: "visual" | "text" | "tools";
+    panelLang: A11yLang | null;
+    panelTab: PanelTab;
 }
 
 const AUX_DEFAULTS = {
@@ -45,14 +56,16 @@ const AUX_DEFAULTS = {
     selectionFontLevel: 2,
     speechRateLevel: DEFAULT_SPEECH_RATE_LEVEL,
     speechHighlight: true,
-    panelLang: null as "ja" | "en" | null,
-    panelTab: "visual" as "visual" | "text" | "tools",
+    panelLang: null as A11yLang | null,
+    panelTab: "visual" as PanelTab,
 };
 
 export const SETTINGS_DEFAULTS: Settings = {
     ...A11Y_DEFAULTS,
     ...AUX_DEFAULTS,
 };
+
+const SETTINGS_PERSIST_KEY = "unilens-a11y-settings";
 
 const THEMES: Record<DisplayTheme, 1> = {
     standard: 1,
@@ -62,9 +75,6 @@ const THEMES: Record<DisplayTheme, 1> = {
     "high-contrast": 1,
     invert: 1,
 };
-
-/** Persist schema: v2 introduces theme `standard` (site default). Old `light` meant off. */
-const SETTINGS_PERSIST_VERSION = 2;
 
 function normalizeA11yFields(s: A11ySettings): void {
     if (!(s.theme in THEMES)) s.theme = "standard";
@@ -85,7 +95,19 @@ function normalizeA11yFields(s: A11ySettings): void {
     s.linkBorder = s.linkBorder === true;
     s.imageBorder = s.imageBorder === true;
     s.elementHighlight = s.elementHighlight === true;
-    s.focusEnhance = s.focusEnhance === true;
+    s.focusEnhanceLevel = normalizeTextAdjustLevel(s.focusEnhanceLevel);
+    s.pointerHaloPx = normalizePointerHaloPx(s.pointerHaloPx);
+    s.pointerHaloColor = normalizePointerHaloColor(s.pointerHaloColor);
+    s.pointerHaloOpacity = normalizePointerHaloOpacity(s.pointerHaloOpacity);
+    s.focusCursor = s.focusCursor === true;
+    s.readingGuide = s.readingGuide === true;
+    s.readingGuideStyle = normalizeReadingGuideStyle(s.readingGuideStyle);
+    s.readingGuidePosition = normalizeReadingGuidePosition(
+        s.readingGuidePosition,
+    );
+    s.textStroke = s.textStroke === true;
+    s.textStrokeStyle = normalizeTextStrokeStyle(s.textStrokeStyle);
+    s.textPlateStyle = normalizeTextPlateStyle(s.textPlateStyle);
     s.reduceMotion = s.reduceMotion === true;
     s.smallTextBoostLevel = normalizeTextAdjustLevel(s.smallTextBoostLevel);
     s.bodyTextExpandLevel = normalizeTextAdjustLevel(s.bodyTextExpandLevel);
@@ -97,23 +119,18 @@ function normalizeSettings(s: Settings): void {
         s.selectionFontLevel = 2;
     s.speechRateLevel = normalizeSpeechRateLevel(s.speechRateLevel);
     s.speechHighlight = s.speechHighlight !== false;
-    if (!["visual", "text", "tools"].includes(s.panelTab))
+    if (!(PANEL_TABS as readonly string[]).includes(s.panelTab))
         s.panelTab = "visual";
-    if (s.panelLang != null && s.panelLang !== "ja" && s.panelLang !== "en")
+    if (
+        s.panelLang != null &&
+        !(A11Y_LANG_CODES as readonly string[]).includes(s.panelLang)
+    )
         s.panelLang = null;
 }
 
 export const useSettings = create<Settings>()(
     persist(() => ({ ...SETTINGS_DEFAULTS }), {
-        name: "unilens-a11y-settings",
-        version: SETTINGS_PERSIST_VERSION,
-        migrate: (persisted: unknown, version: number) => {
-            const state = (persisted ?? {}) as Partial<Settings>;
-            // v1 (and unversioned): theme `light` was the neutral/off state.
-            if (version < 2 && state.theme === "light")
-                state.theme = "standard";
-            return state as Settings;
-        },
+        name: SETTINGS_PERSIST_KEY,
         onRehydrateStorage: () => (state: Settings | undefined) => {
             if (state) normalizeSettings(state);
         },
@@ -188,13 +205,15 @@ export function saveA11ySettings() {
 
 export function hasStoredA11ySettings(): boolean {
     try {
-        return localStorage.getItem("unilens-a11y-settings") != null;
+        const storage = useSettings.persist.getOptions().storage;
+        if (!storage) return false;
+        return storage.getItem(SETTINGS_PERSIST_KEY) != null;
     } catch {
         return false;
     }
 }
 
-/** Live read/write view for imperative modules that still assign fields directly. */
+/** Live read/write view for embedders; imperative modules use getSettings() / updateSetting(). */
 export const settings: Settings = new Proxy({} as Settings, {
     get(_target, prop: string | symbol) {
         return getSettings()[prop as keyof Settings];

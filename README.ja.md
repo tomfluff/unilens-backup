@@ -26,7 +26,7 @@ unilens-lib/          React + TS — esbuild で単一の埋め込み用 dist/un
 accessibility-lib/    React + TS — esbuild で単一の埋め込み用 dist/accessibility.js をビルド
 backend/           Flask — キャプチャを保存し、OpenAI / Gemini / スタブで /api/chat を提供
 softbank-mirror/   softbank.jp の IR ベネフィットページの静的コピー（テスト対象）
-softbank-mirror-recruit/  softbank.jp の recruit/disability ページの静的コピー（テスト対象。配信ルートは `site/`）
+softbank-mirror-recruit/  softbank.jp の recruit/disability ページの静的コピー（テスト対象）
 ```
 ## セットアップとクリーンアップ
 バックエンド、unilens lib、ビルドシステムをセットアップする:
@@ -80,7 +80,8 @@ make serve-frontend softbank-mirror
 
 ```
 make serve-frontend softbank-mirror-recruit
-# `frontend/softbank-mirror-recruit/site` を localhost:8002 に配信
+# `frontend/softbank-mirror-recruit` を localhost:8002 に配信
+# http://localhost:8002/recruit/disability/ （ルート `/` からリダイレクト）
 ```
 
 ### JavaScript ライブラリのみ

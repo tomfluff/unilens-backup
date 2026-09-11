@@ -37,13 +37,13 @@ make build
 # または特定ターゲットのみ: make copy softbank-mirror-recruit
 ```
 
-成果物は `frontend/softbank-mirror-recruit/site/` にコピーされます（配信ルートが `site/` のため）。  
-フロントのみ起動する例: `make serve-frontend softbank-mirror-recruit`（ポート 8002）。API レスポンスまで本番に近づける場合は `cd frontend/softbank-mirror-recruit && node server.mjs`（ポート 8787）。
+成果物は `frontend/softbank-mirror-recruit/` にコピーされます（このディレクトリが配信ルートです）。  
+フロントのみ起動する例: `make serve-frontend softbank-mirror-recruit`（ポート 8002）。 http://localhost:8002/recruit/disability/ を開きます。
 
 | コマンド | 内容 |
 |---|---|
 | `make serve-frontend softbank-mirror` | フロントのみ（ポート 8000） |
-| `make serve-frontend softbank-mirror-recruit` | 採用ミラー（ポート 8002、`site/` を配信） |
+| `make serve-frontend softbank-mirror-recruit` | 採用ミラー（ポート 8002） |
 | `make serve-frontend dev-demo` | 簡易デモ（ポート 8001） |
 | `make serve-target accessibility-lib` | このライブラリだけ watch ビルド |
 | `cd accessibility-lib && make build` | 型チェック後に単一の `dist/accessibility.js` を出力 |
@@ -93,12 +93,12 @@ cp accessibility-lib/dist/accessibility.js frontend/softbank-mirror/accessibilit
 cp unilens-lib/dist/unilens.js frontend/softbank-mirror/unilens.js
 ```
 
-`softbank-mirror-recruit`（配信ルートは `site/`）:
+`softbank-mirror-recruit`（このディレクトリが配信ルート）:
 
 ```sh
 cd ..
-cp accessibility-lib/dist/accessibility.js frontend/softbank-mirror-recruit/site/accessibility.js
-cp unilens-lib/dist/unilens.js frontend/softbank-mirror-recruit/site/unilens.js
+cp accessibility-lib/dist/accessibility.js frontend/softbank-mirror-recruit/accessibility.js
+cp unilens-lib/dist/unilens.js frontend/softbank-mirror-recruit/unilens.js
 ```
 
 `unilens.js` が無い場合は、そのコピー行は省略してかまいません。`Accessibility.init()` だけでもパネルは動きます。
@@ -114,8 +114,8 @@ python3 -m http.server 8000
 
 ```sh
 cd frontend/softbank-mirror-recruit
-node server.mjs
-# → http://localhost:8787/recruit/disability/
+python3 -m http.server 8002
+# → http://localhost:8002/recruit/disability/
 ```
 
 Windows で `python3` が無いときは `python -m http.server 8000` を使います。
@@ -144,7 +144,7 @@ cd ..
 Copy-Item accessibility-lib/dist/accessibility.js frontend/softbank-mirror/accessibility.js -Force
 
 # 採用ミラーへも反映する場合:
-Copy-Item accessibility-lib/dist/accessibility.js frontend/softbank-mirror-recruit/site/accessibility.js -Force
+Copy-Item accessibility-lib/dist/accessibility.js frontend/softbank-mirror-recruit/accessibility.js -Force
 
 cd frontend/softbank-mirror
 python -m http.server 8000
