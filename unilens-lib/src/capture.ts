@@ -409,6 +409,10 @@ export async function capture(
 
     const scale = pageCanvas.width / pageW;
     const ctx = pageCanvas.getContext("2d");
+
+    // Mouse trace: fading line, oldest faint → newest bright
+    const recent = recentTrace(captureTime);
+
     if (ctx) {
         ctx.setTransform(1, 0, 0, 1, 0, 0); // html2canvas leaves its render scale applied
 
@@ -425,9 +429,6 @@ export async function capture(
         ctx.strokeRect(vpRect.x, vpRect.y, vpRect.w, vpRect.h);
         ctx.fillStyle = "rgba(0,200,255,0.08)";
         ctx.fillRect(vpRect.x, vpRect.y, vpRect.w, vpRect.h);
-
-        // Mouse trace: fading line, oldest faint → newest bright
-        const recent = recentTrace(captureTime);
         if (recent.length >= 2) {
             const oldest = recent[0].t;
             const newest = recent[recent.length - 1].t;
