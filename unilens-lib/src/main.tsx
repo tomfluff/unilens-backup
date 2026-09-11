@@ -160,6 +160,14 @@ export function init(options: InitOptions = {}) {
     }
 
     // ── Alt+drag region select ───────────────────────────────────────────────
+    const dragBoxBaseStyles = {
+        position: "fixed" as const,
+        border: "2px solid rgba(255,0,200,0.9)",
+        background: "rgba(255,0,200,0.08)",
+        pointerEvents: "none" as const,
+        zIndex: "2147483646",
+    };
+
     let dragStart: { clientX: number; clientY: number } | null = null;
     let dragBox: HTMLDivElement | null = null;
     let suppressClick = false;
@@ -202,13 +210,7 @@ export function init(options: InitOptions = {}) {
         const h = Math.abs(e.clientY - dragStart.clientY);
         if (!dragBox && (w > 6 || h > 6)) {
             dragBox = document.createElement("div");
-            Object.assign(dragBox.style, {
-                position: "fixed",
-                border: "2px solid rgba(255,0,200,0.9)",
-                background: "rgba(255,0,200,0.08)",
-                pointerEvents: "none",
-                zIndex: "2147483646",
-            });
+            Object.assign(dragBox.style, dragBoxBaseStyles);
             document.documentElement.appendChild(dragBox);
         }
         if (dragBox) {

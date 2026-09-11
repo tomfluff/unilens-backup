@@ -11,14 +11,9 @@
  * The trace canvas stays imperative (per-frame 2D drawing inside an effect);
  * everything textual is derived state re-read on a 250ms tick.
  */
-import {
-    type CSSProperties,
-    type ReactNode,
-    useEffect,
-    useRef,
-    useState,
-} from "react";
+import { type ReactNode, useEffect, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
+import styled from "styled-components";
 import { getCaptureDebug, getTraceDebug } from "./capture";
 import { getDwellDebug } from "./hint";
 import { getSettings, updateSetting, useSettings } from "./settings";
@@ -35,26 +30,78 @@ const CYAN = "#00c8ff";
 const GREEN = "#4cff91";
 const DIM = "#8899aa";
 
-const rowStyle: CSSProperties = {
-    font: "11px monospace",
-    color: "#cdE",
-    lineHeight: 1.6,
-    whiteSpace: "pre-wrap",
-};
+const PanelContainer = styled.div`
+    position: fixed;
+    top: 12px;
+    right: 12px;
+    width: 292px;
+    max-height: 94vh;
+    overflow-y: auto;
+    background: rgba(13, 13, 26, 0.96);
+    border: 1px solid #2a2a4a;
+    border-radius: 10px;
+    padding: 10px 14px 14px;
+    z-index: 2147483647;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+`;
+
+const HeaderRow = styled.div`
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+`;
+
+const HeaderTitle = styled.span`
+    color: ${CYAN};
+    font: 700 13px sans-serif;
+`;
+
+const CloseButton = styled.button`
+    background: none;
+    border: none;
+    color: #889;
+    cursor: pointer;
+    font-size: 14px;
+`;
+
+const SectionTitle = styled.div`
+    color: ${CYAN};
+    font: 700 11px sans-serif;
+    margin: 10px 0 4px;
+    letter-spacing: 0.5px;
+`;
+
+const RowText = styled.div`
+    font: 11px monospace;
+    color: #cde;
+    line-height: 1.6;
+    white-space: pre-wrap;
+`;
+
+const TraceCanvas = styled.canvas`
+    border-radius: 6px;
+    background: #101020;
+    display: block;
+`;
+
+const ProgressBar = styled.div`
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    height: 8px;
+    margin: 2px 0 4px;
+`;
+
+const ProgressFill = styled.div<{ progress: number; blocked: boolean }>`
+    background: ${(props) => (props.blocked ? DIM : GREEN)};
+    border-radius: 4px;
+    height: 8px;
+    width: ${(props) => Math.round(props.progress * 100)}%;
+`;
 
 function Section({ title, children }: { title: string; children?: ReactNode }) {
     return (
         <>
-            <div
-                style={{
-                    color: CYAN,
-                    font: "700 11px sans-serif",
-                    margin: "10px 0 4px",
-                    letterSpacing: 0.5,
-                }}
-            >
-                {title.toUpperCase()}
-            </div>
+            <SectionTitle>{title.toUpperCase()}</SectionTitle>
             {children}
         </>
     );
@@ -167,84 +214,31 @@ function DebugPanel({ sources }: { sources: DebugSources }) {
     const c = getCaptureDebug();
 
     return (
-        <div
-            style={{
-                position: "fixed",
-                top: 12,
-                right: 12,
-                width: 292,
-                maxHeight: "94vh",
-                overflowY: "auto",
-                background: "rgba(13, 13, 26, 0.96)",
-                border: "1px solid #2a2a4a",
-                borderRadius: 10,
-                padding: "10px 14px 14px",
-                zIndex: 2147483647,
-                boxShadow: "0 8px 32px rgba(0,0,0,0.5)",
-            }}
-        >
-            <div
-                style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                }}
-            >
-                <span style={{ color: CYAN, font: "700 13px sans-serif" }}>
-                    UniLens debug
-                </span>
-                <button
+        <PanelContainer>
+            <HeaderRow>
+                <HeaderTitle>UniLens debug</HeaderTitle>
+                <CloseButton
                     type="button"
-                    style={{
-                        background: "none",
-                        border: "none",
-                        color: "#889",
-                        cursor: "pointer",
-                        fontSize: 14,
-                    }}
                     onClick={() => updateSetting("debugView", false)}
                 >
                     ✕
-                </button>
-            </div>
+                </CloseButton>
+            </HeaderRow>
 
             <Section title="Pointer trace">
-                <canvas
-                    ref={canvasRef}
-                    width={264}
-                    height={66}
-                    style={{
-                        borderRadius: 6,
-                        background: "#101020",
-                        display: "block",
-                    }}
-                />
-                <div style={rowStyle}>
+                <TraceCanvas ref={canvasRef} width={264} height={66} />
+                <RowText>
                     {last
                         ? `content (${Math.round(last.x)}, ${Math.round(last.y)}) · ${t.window.length} pts in ${t.windowSec}s window · buffer ${t.buffer}`
                         : `no recent movement · buffer ${t.buffer}`}
-                </div>
+                </RowText>
             </Section>
 
             <Section title="Dwell detector">
-                <div
-                    style={{
-                        background: "rgba(255,255,255,0.1)",
-                        borderRadius: 4,
-                        height: 8,
-                        margin: "2px 0 4px",
-                    }}
-                >
-                    <div
-                        style={{
-                            background: d.blocked ? DIM : GREEN,
-                            borderRadius: 4,
-                            height: 8,
-                            width: `${Math.round(d.progress * 100)}%`,
-                        }}
-                    />
-                </div>
-                <div style={rowStyle}>
+                <ProgressBar>
+                    <ProgressFill progress={d.progress} blocked={d.blocked} />
+                </ProgressBar>
+                <RowText>
                     {(d.blocked
                         ? `blocked: ${d.blocked}`
                         : `progress ${Math.round(d.progress * 100)}%`) +
@@ -254,43 +248,43 @@ function DebugPanel({ sources }: { sources: DebugSources }) {
                             ? ` · cooldown ${fmtAge(d.cooldownMs)}`
                             : "") +
                         (d.chipVisible ? " · CHIP VISIBLE" : "")}
-                </div>
+                </RowText>
             </Section>
 
             <Section title="Zoom">
-                <div style={rowStyle}>
+                <RowText>
                     {`scale ${z.scale.toFixed(2)} → target ${getTargetZoom().toFixed(2)} · layout ${z.layoutW}×${z.layoutH}` +
                         `\nzoomTrace ${zt.length} events (30s)` +
                         (zt.length
                             ? ` · last ${zt[zt.length - 1].scale}x @ (${zt[zt.length - 1].x}, ${zt[zt.length - 1].y})`
                             : "")}
-                </div>
+                </RowText>
             </Section>
 
             <Section title="Last capture">
-                <div style={rowStyle}>
+                <RowText>
                     {c
                         ? `${c.id ?? "(not uploaded)"} · ${fmtAge(Date.now() - c.at)} ago` +
                           `\npre ${c.timings.preprocess} + render ${c.timings.render} + enc ${c.timings.encode} = ${c.timings.total}ms` +
                           `\n${c.pageW}×${c.pageH} · ${c.images} image${c.images === 1 ? "" : "s"} · ${c.sizes.pageKB}KB + ${c.sizes.closeupKB}KB`
                         : "none yet"}
-                </div>
+                </RowText>
             </Section>
 
             <Section title="Session">
-                <div style={rowStyle}>
+                <RowText>
                     {`${sources.sessionId() ?? "(none — next capture starts one)"} · popover ${
                         sources.popoverOpen() ? "open" : "closed"
                     }`}
-                </div>
+                </RowText>
             </Section>
 
             <Section title="Backend">
-                <div
-                    style={rowStyle}
-                >{`${sources.backend() || "(same origin)"}\n${health}`}</div>
+                <RowText>
+                    {`${sources.backend() || "(same origin)"}\n${health}`}
+                </RowText>
             </Section>
-        </div>
+        </PanelContainer>
     );
 }
 

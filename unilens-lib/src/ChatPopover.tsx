@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import styled from "styled-components";
 import type { CaptureResult } from "./capture";
 import { getSettings, useSettings } from "./settings";
 import {
@@ -55,6 +56,199 @@ interface Props {
 
 const PANEL_W = 340;
 const PANEL_H = 420;
+
+// Styled components
+const PopoverContainer = styled.div<{
+    panelBg: string;
+    text: string;
+    hc: boolean;
+}>`
+    position: fixed;
+    width: ${PANEL_W}px;
+    height: ${PANEL_H}px;
+    display: flex;
+    flex-direction: column;
+    background: ${(props) => props.panelBg};
+    color: ${(props) => props.text};
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
+    border: ${(props) => (props.hc ? "2px solid #ffd700" : "none")};
+    z-index: 2147483647;
+    font-family: sans-serif;
+    overflow: hidden;
+`;
+
+const HeaderContainer = styled.div<{ headerBg: string; headerBorder: string }>`
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    background: ${(props) => props.headerBg};
+    border-bottom: ${(props) => props.headerBorder};
+    cursor: grab;
+    touch-action: none;
+
+    &:active {
+        cursor: grabbing;
+    }
+`;
+
+const HeaderTitle = styled.span<{ accent: string }>`
+    font-weight: 700;
+    color: ${(props) => props.accent};
+`;
+
+const HeaderButtonsContainer = styled.span`
+    display: flex;
+    gap: 4px;
+`;
+
+const PinButton = styled.button<{ pinned: boolean; accent: string }>`
+    background: ${(props) => (props.pinned ? props.accent : "none")};
+    border: none;
+    border-radius: 6px;
+    color: ${(props) => (props.pinned ? "#08182e" : "#aaa")};
+    cursor: pointer;
+    font-size: 13px;
+    padding: 2px 8px;
+    font-weight: 700;
+`;
+
+const CloseButton = styled.button`
+    background: none;
+    border: none;
+    color: #aaa;
+    cursor: pointer;
+    font-size: 16px;
+`;
+
+const ScrollContainer = styled.div`
+    flex: 1;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 12px;
+`;
+
+const CaptureImage = styled.img`
+    max-width: 100%;
+    border-radius: 8px;
+    border: 1px solid #333;
+    display: block;
+`;
+
+const ViewportImage = styled.img`
+    max-width: 55%;
+    border-radius: 6px;
+    border: 1px solid #446;
+    display: block;
+    margin-top: 6px;
+`;
+
+const MessageBubble = styled.div<{
+    isUser: boolean;
+    userBg: string;
+    aiBg: string;
+    bubbleBorder: string;
+}>`
+    margin: 6px 0;
+    padding: 8px 12px;
+    border-radius: 10px;
+    max-width: 85%;
+    white-space: pre-wrap;
+    background: ${(props) => (props.isUser ? props.userBg : props.aiBg)};
+    border: ${(props) => props.bubbleBorder};
+    margin-left: ${(props) => (props.isUser ? "auto" : 0)};
+`;
+
+const SpeakButton = styled.button<{ speaking: boolean }>`
+    background: none;
+    border: none;
+    cursor: pointer;
+    margin-left: 6px;
+    opacity: ${(props) => (props.speaking ? 1 : 0.7)};
+`;
+
+const MessageInfo = styled.div<{ hc: boolean }>`
+    font-size: 10px;
+    color: ${(props) => (props.hc ? "#ffd700" : "#88a")};
+    margin-top: 6px;
+`;
+
+const QuickActionsContainer = styled.div`
+    display: flex;
+    gap: 6px;
+    padding: 8px 10px 0;
+    flex-wrap: wrap;
+`;
+
+const QuickActionButton = styled.button<{
+    chipBg: string;
+    chipBorder: string;
+    chipText: string;
+    busy: boolean;
+}>`
+    padding: 4px 10px;
+    border-radius: 12px;
+    border: ${(props) => props.chipBorder};
+    background: ${(props) => props.chipBg};
+    color: ${(props) => props.chipText};
+    cursor: ${(props) => (props.busy ? "default" : "pointer")};
+    opacity: ${(props) => (props.busy ? 0.5 : 1)};
+`;
+
+const InputContainer = styled.div`
+    display: flex;
+    gap: 8px;
+    padding: 10px;
+    border-top: 1px solid #333;
+`;
+
+const VoiceButton = styled.button<{
+    listening: boolean;
+    inputBg: string;
+    text: string;
+}>`
+    padding: 8px 10px;
+    border-radius: 8px;
+    border: none;
+    background: ${(props) => (props.listening ? "#e33" : props.inputBg)};
+    color: ${(props) => props.text};
+    cursor: pointer;
+`;
+
+const ChatInput = styled.input<{
+    inputBg: string;
+    inputBorder: string;
+    text: string;
+}>`
+    flex: 1;
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: ${(props) => props.inputBorder};
+    background: ${(props) => props.inputBg};
+    color: ${(props) => props.text};
+    font-size: inherit;
+    outline: none;
+`;
+
+const SendButton = styled.button<{ accent: string; hc: boolean }>`
+    padding: 8px 14px;
+    border-radius: 8px;
+    border: none;
+    background: ${(props) => props.accent};
+    color: ${(props) => (props.hc ? "#000" : "#08182e")};
+    font-weight: 700;
+    cursor: pointer;
+`;
+
+const LoadingText = styled.div`
+    color: #889;
+    padding: 8px;
+`;
+
+const CaptureMetaText = styled.div`
+    white-space: pre-wrap;
+`;
 
 export default function ChatPopover({
     x,
@@ -378,118 +572,57 @@ export default function ChatPopover({
     ];
 
     return (
-        <div
+        <PopoverContainer
+            panelBg={C.panelBg}
+            text={C.text}
+            hc={hc}
             style={{
-                position: "fixed",
                 left: pos.left,
                 top: pos.top,
-                width: PANEL_W,
-                height: PANEL_H,
-                display: "flex",
-                flexDirection: "column",
-                background: C.panelBg,
-                color: C.text,
-                borderRadius: 12,
-                boxShadow: "0 8px 32px rgba(0,0,0,0.45)",
-                border: hc ? "2px solid #ffd700" : "none",
-                zIndex: 2147483647,
-                fontFamily: "sans-serif",
                 fontSize: fs,
-                overflow: "hidden",
             }}
         >
-            <div
+            <HeaderContainer
+                headerBg={C.headerBg}
+                headerBorder={C.headerBorder}
                 onPointerDown={onHeaderPointerDown}
                 onPointerMove={onHeaderPointerMove}
                 onPointerUp={onHeaderPointerUp}
-                style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    padding: "10px 14px",
-                    background: C.headerBg,
-                    borderBottom: C.headerBorder,
-                    cursor: settings.dragPopover ? "grab" : "default",
-                    touchAction: "none",
-                }}
+                style={{ cursor: settings.dragPopover ? "grab" : "default" }}
             >
-                <span style={{ fontWeight: 700, color: C.accent }}>
-                    UniLens
-                </span>
-                <span style={{ display: "flex", gap: 4 }}>
-                    <button
+                <HeaderTitle accent={C.accent}>UniLens</HeaderTitle>
+                <HeaderButtonsContainer>
+                    <PinButton
                         type="button"
                         onClick={() => onTogglePin(pinned ? null : pos)}
+                        pinned={pinned}
+                        accent={C.accent}
                         title={
                             pinned
                                 ? "Pinned — click to unpin (reopen at cursor)"
                                 : "Pin position for next captures"
                         }
-                        style={{
-                            background: pinned ? "#00c8ff" : "none",
-                            border: "none",
-                            borderRadius: 6,
-                            color: pinned ? "#08182e" : "#aaa",
-                            cursor: "pointer",
-                            fontSize: 13,
-                            padding: "2px 8px",
-                            fontWeight: 700,
-                        }}
                     >
                         📌{pinned ? " pinned" : ""}
-                    </button>
-                    <button
-                        type="button"
-                        onClick={onClose}
-                        style={{
-                            background: "none",
-                            border: "none",
-                            color: "#aaa",
-                            cursor: "pointer",
-                            fontSize: 16,
-                        }}
-                    >
+                    </PinButton>
+                    <CloseButton type="button" onClick={onClose}>
                         ✕
-                    </button>
-                </span>
-            </div>
+                    </CloseButton>
+                </HeaderButtonsContainer>
+            </HeaderContainer>
 
             {/* contain: at the top or bottom of the messages, keep the wheel here instead of
           handing it to the page behind — the list auto-scrolls to the end, so without
           this every further scroll moves the page instead of the chat */}
-            <div
-                ref={scrollRef}
-                style={{
-                    flex: 1,
-                    overflowY: "auto",
-                    overscrollBehavior: "contain",
-                    padding: 12,
-                }}
-            >
-                <img
-                    src={capture.image}
-                    alt="page capture"
-                    style={{
-                        maxWidth: "100%",
-                        borderRadius: 8,
-                        border: "1px solid #333",
-                        display: "block",
-                    }}
-                />
+            <ScrollContainer ref={scrollRef}>
+                <CaptureImage src={capture.image} alt="page capture" />
                 {capture.viewportImage && (
-                    <img
+                    <ViewportImage
                         src={capture.viewportImage}
                         alt="close-up of current view"
-                        style={{
-                            maxWidth: "55%",
-                            borderRadius: 6,
-                            border: "1px solid #446",
-                            display: "block",
-                            marginTop: 6,
-                        }}
                     />
                 )}
-                <div
+                <CaptureMetaText
                     style={{
                         fontSize: Math.max(11, fs - 3),
                         color: C.dim,
@@ -509,8 +642,8 @@ export default function ChatPopover({
                             {capture.meta.region.h}
                         </>
                     )}
-                </div>
-                <div
+                </CaptureMetaText>
+                <CaptureMetaText
                     style={{
                         fontSize: Math.max(11, fs - 3),
                         color: hc ? "#fff" : "#7a9",
@@ -521,9 +654,9 @@ export default function ChatPopover({
                     {sessionId &&
                         sessionCaptures > 1 &&
                         ` · session: ${sessionCaptures} captures`}
-                </div>
+                </CaptureMetaText>
                 {capture.meta.element && (
-                    <div
+                    <CaptureMetaText
                         style={{
                             fontSize: Math.max(11, fs - 3),
                             color: hc ? "#fff" : "#a9c",
@@ -532,26 +665,19 @@ export default function ChatPopover({
                     >
                         clicked: &lt;{capture.meta.element.tag}&gt;
                         {capture.meta.element.text &&
-                            ` “${capture.meta.element.text.slice(0, 60)}${capture.meta.element.text.length > 60 ? "…" : ""}”`}
+                            ` "${capture.meta.element.text.slice(0, 60)}${capture.meta.element.text.length > 60 ? "…" : ""}"`}
                         {capture.meta.element.nearestHeading &&
-                            ` · under “${capture.meta.element.nearestHeading}”`}
-                    </div>
+                            ` · under "${capture.meta.element.nearestHeading}"`}
+                    </CaptureMetaText>
                 )}
                 <div style={{ margin: "0 0 12px" }} />
                 {messages.map((m, i) => (
-                    <div
+                    <MessageBubble
                         key={m.id}
-                        style={{
-                            margin: "6px 0",
-                            padding: "8px 12px",
-                            borderRadius: 10,
-                            maxWidth: "85%",
-                            whiteSpace: "pre-wrap",
-                            background:
-                                m.role === "user" ? C.userBubble : C.aiBubble,
-                            border: C.bubbleBorder,
-                            marginLeft: m.role === "user" ? "auto" : 0,
-                        }}
+                        isUser={m.role === "user"}
+                        userBg={C.userBubble}
+                        aiBg={C.aiBubble}
+                        bubbleBorder={C.bubbleBorder}
                     >
                         {m.role === "assistant" ? (
                             // biome-ignore lint/security/noDangerouslySetInnerHtml: HTML is escaped in mdLite before formatting tags are added
@@ -560,9 +686,11 @@ export default function ChatPopover({
                             m.text
                         )}
                         {m.role === "assistant" && m.text && (
-                            <button
+                            <SpeakButton
                                 type="button"
                                 onClick={() => speakMessage(i, m.text)}
+                                speaking={speaking?.idx === i}
+                                style={{ fontSize: Math.max(12, fs - 2) }}
                                 title={
                                     speaking?.idx === i
                                         ? speaking.phase === "loading"
@@ -570,98 +698,63 @@ export default function ChatPopover({
                                             : "Stop"
                                         : "Read aloud"
                                 }
-                                style={{
-                                    background: "none",
-                                    border: "none",
-                                    cursor: "pointer",
-                                    fontSize: Math.max(12, fs - 2),
-                                    marginLeft: 6,
-                                    opacity: speaking?.idx === i ? 1 : 0.7,
-                                }}
                             >
                                 {speaking?.idx === i
                                     ? speaking.phase === "loading"
                                         ? "⏳"
                                         : "⏹"
                                     : "🔊"}
-                            </button>
+                            </SpeakButton>
                         )}
                         {m.info && (
-                            <div
-                                style={{
-                                    fontSize: Math.max(10, fs - 4),
-                                    color: hc ? "#ffd700" : "#88a",
-                                    marginTop: 6,
-                                }}
+                            <MessageInfo
+                                hc={hc}
+                                style={{ fontSize: Math.max(10, fs - 4) }}
                             >
                                 {m.info}
-                            </div>
+                            </MessageInfo>
                         )}
-                    </div>
+                    </MessageBubble>
                 ))}
-                {busy && <div style={{ color: "#889", padding: 8 }}>…</div>}
-            </div>
+                {busy && <LoadingText>…</LoadingText>}
+            </ScrollContainer>
 
             {settings.quickActions && (
-                <div
-                    style={{
-                        display: "flex",
-                        gap: 6,
-                        padding: "8px 10px 0",
-                        flexWrap: "wrap",
-                    }}
-                >
+                <QuickActionsContainer>
                     {QUICK_ACTIONS.map(([label, prompt]) => (
-                        <button
+                        <QuickActionButton
                             type="button"
                             key={label}
                             onClick={() => sendText(prompt)}
                             disabled={busy}
-                            style={{
-                                padding: "4px 10px",
-                                borderRadius: 12,
-                                border: C.chipBorder,
-                                background: C.chipBg,
-                                color: C.chipText,
-                                fontSize: Math.max(12, fs - 2),
-                                cursor: busy ? "default" : "pointer",
-                                opacity: busy ? 0.5 : 1,
-                            }}
+                            chipBg={C.chipBg}
+                            chipBorder={C.chipBorder}
+                            chipText={C.chipText}
+                            busy={busy}
+                            style={{ fontSize: Math.max(12, fs - 2) }}
                         >
                             {label}
-                        </button>
+                        </QuickActionButton>
                     ))}
-                </div>
+                </QuickActionsContainer>
             )}
-            <div
-                style={{
-                    display: "flex",
-                    gap: 8,
-                    padding: 10,
-                    borderTop: "1px solid #333",
-                }}
-            >
+            <InputContainer>
                 {settings.voiceInput && sttSupported && (
-                    <button
+                    <VoiceButton
                         type="button"
                         onClick={toggleMic}
+                        listening={listening}
+                        inputBg={C.inputBg}
+                        text={C.text}
                         title={
                             listening ? "Stop listening" : "Speak your question"
                         }
-                        style={{
-                            padding: "8px 10px",
-                            borderRadius: 8,
-                            border: "none",
-                            background: listening ? "#e33" : C.inputBg,
-                            color: C.text,
-                            cursor: "pointer",
-                            fontSize: fs,
-                        }}
+                        style={{ fontSize: fs }}
                     >
                         🎤
-                    </button>
+                    </VoiceButton>
                 )}
-                <input
+                <ChatInput
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
                     // Enter that confirms an IME composition (Japanese, Chinese, Korean)
@@ -674,34 +767,21 @@ export default function ChatPopover({
                         send()
                     }
                     placeholder="Ask about this page…"
-                    style={{
-                        flex: 1,
-                        padding: "8px 12px",
-                        borderRadius: 8,
-                        border: C.inputBorder,
-                        background: C.inputBg,
-                        color: C.text,
-                        fontSize: fs,
-                        outline: "none",
-                    }}
+                    inputBg={C.inputBg}
+                    inputBorder={C.inputBorder}
+                    text={C.text}
+                    style={{ fontSize: fs }}
                 />
-                <button
+                <SendButton
                     type="button"
                     onClick={send}
                     disabled={busy}
-                    style={{
-                        padding: "8px 14px",
-                        borderRadius: 8,
-                        border: "none",
-                        background: C.accent,
-                        color: hc ? "#000" : "#08182e",
-                        fontWeight: 700,
-                        cursor: "pointer",
-                    }}
+                    accent={C.accent}
+                    hc={hc}
                 >
                     ➤
-                </button>
-            </div>
-        </div>
+                </SendButton>
+            </InputContainer>
+        </PopoverContainer>
     );
 }

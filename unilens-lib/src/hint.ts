@@ -21,6 +21,22 @@ interface Pt {
     t: number;
 }
 
+// Chip styles
+const chipStyles: Record<string, string> = {
+    position: "fixed",
+    background: "#0f3460",
+    color: "#9cf",
+    border: "1px solid #00c8ff",
+    borderRadius: "16px",
+    padding: "6px 14px",
+    font: "13px sans-serif",
+    cursor: "pointer",
+    zIndex: "2147483646",
+    boxShadow: "0 4px 16px rgba(0,0,0,0.35)",
+    opacity: "0",
+    transition: "opacity 0.25s",
+};
+
 let recent: Pt[] = [];
 let chip: HTMLDivElement | null = null;
 let lastShown = 0;
@@ -41,22 +57,15 @@ function showChip(x: number, y: number) {
     removeChip();
     chip = document.createElement("div");
     chip.textContent = "✨ Need help? Click here";
-    Object.assign(chip.style, {
-        position: "fixed",
-        left: `${Math.min(x + 16, window.innerWidth - 190)}px`,
-        top: `${Math.min(y + 16, window.innerHeight - 44)}px`,
-        background: "#0f3460",
-        color: "#9cf",
-        border: "1px solid #00c8ff",
-        borderRadius: "16px",
-        padding: "6px 14px",
-        font: "13px sans-serif",
-        cursor: "pointer",
-        zIndex: "2147483646",
-        boxShadow: "0 4px 16px rgba(0,0,0,0.35)",
-        opacity: "0",
-        transition: "opacity 0.25s",
+
+    // Apply styles
+    const left = Math.min(x + 16, window.innerWidth - 190);
+    const top = Math.min(y + 16, window.innerHeight - 44);
+    Object.assign(chip.style, chipStyles, {
+        left: `${left}px`,
+        top: `${top}px`,
     });
+
     chip.onclick = (e) => {
         e.stopPropagation();
         const cx = e.clientX;

@@ -32,6 +32,30 @@ const MAX_RECTS = 1200;
 const MEDIA = /^(IMG|VIDEO|CANVAS|SVG|PICTURE|IFRAME)$/;
 const REDRAW_DEBOUNCE_MS = 300;
 
+// Box (container) styles
+const boxStyles: Record<string, string> = {
+    position: "fixed",
+    top: "16px",
+    right: "16px",
+    background: "rgba(255,255,255,0.92)",
+    border: "1px solid rgba(0,0,0,0.25)",
+    borderRadius: "6px",
+    boxShadow: "0 4px 16px rgba(0,0,0,0.3)",
+    padding: "4px",
+    zIndex: "2147483646", // just under the popover/badge
+    cursor: "crosshair",
+    touchAction: "none",
+};
+
+// Lens styles
+const lensStyles: Record<string, string> = {
+    position: "absolute",
+    border: "2px solid #d23",
+    background: "rgba(221,51,51,0.12)",
+    pointerEvents: "none",
+    borderRadius: "2px",
+};
+
 let box: HTMLDivElement | null = null;
 let canvas: HTMLCanvasElement;
 let lens: HTMLDivElement;
@@ -42,32 +66,14 @@ let redrawTimer: number | undefined;
 
 function build() {
     box = document.createElement("div");
-    Object.assign(box.style, {
-        position: "fixed",
-        top: "16px",
-        right: "16px",
-        background: "rgba(255,255,255,0.92)",
-        border: "1px solid rgba(0,0,0,0.25)",
-        borderRadius: "6px",
-        boxShadow: "0 4px 16px rgba(0,0,0,0.3)",
-        padding: "4px",
-        zIndex: "2147483646", // just under the popover/badge
-        cursor: "crosshair",
-        touchAction: "none",
-    });
+    Object.assign(box.style, boxStyles);
 
     canvas = document.createElement("canvas");
     canvas.style.display = "block";
     box.appendChild(canvas);
 
     lens = document.createElement("div");
-    Object.assign(lens.style, {
-        position: "absolute",
-        border: "2px solid #d23",
-        background: "rgba(221,51,51,0.12)",
-        pointerEvents: "none",
-        borderRadius: "2px",
-    });
+    Object.assign(lens.style, lensStyles);
     box.appendChild(lens);
 
     box.addEventListener("pointerdown", (e) => {
@@ -142,12 +148,10 @@ function updateLens() {
     const v = getView();
     const x = v.x / scale;
     const y = v.y / scale;
-    Object.assign(lens.style, {
-        left: `${4 + x * mapScale}px`,
-        top: `${4 + y * mapScale}px`,
-        width: `${(window.innerWidth / scale) * mapScale}px`,
-        height: `${(window.innerHeight / scale) * mapScale}px`,
-    });
+    lens.style.left = `${4 + x * mapScale}px`;
+    lens.style.top = `${4 + y * mapScale}px`;
+    lens.style.width = `${(window.innerWidth / scale) * mapScale}px`;
+    lens.style.height = `${(window.innerHeight / scale) * mapScale}px`;
 }
 
 function scheduleLens() {
