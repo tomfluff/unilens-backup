@@ -22,6 +22,7 @@ import {
     AUTO_MIN_PX_OPTIONS,
     AUTO_MODES,
     bodyExpandLevelLabels,
+    focusEnhanceLevelLabels,
     CONTRAST_FILTER,
     DISPLAY_THEMES,
     fontScaleLabel,
@@ -138,7 +139,6 @@ import {
     useSettings,
 } from "./settings";
 import { getLastSmallTextScan, scanSmallText } from "./smallTextBoost";
-import { namedTextAdjustLevel, nextTextAdjustLevel } from "./textAdjustLevels";
 
 export type { PanelTab } from "./accessibilityPanelOptions";
 
@@ -295,7 +295,7 @@ interface CueItem {
     off: string;
 }
 
-/** Link underline, pointer halo, focus cursor, reading guide, and focus emphasis. Independent toggles — press again to turn off. */
+/** Link underline, pointer halo, focus cursor, and reading guide. Independent toggles — press again to turn off. */
 function CuesCard() {
     const s = useSettings();
     const toOptions = (cues: CueItem[]) =>
@@ -388,20 +388,6 @@ function CuesCard() {
             off: t().reduceMotionOff,
         },
     ];
-    const cursorLevel = s.focusEnhanceLevel;
-    const cursorName = namedTextAdjustLevel(
-        t().focusEnhanceLevelName,
-        cursorLevel,
-    );
-    const cycleCursor = () => {
-        const next = nextTextAdjustLevel(s.focusEnhanceLevel);
-        patchA11ySettings({ focusEnhanceLevel: next });
-        if (next === 0) announce(t().focusEnhanceOff);
-        else {
-            const name = namedTextAdjustLevel(t().focusEnhanceLevelName, next);
-            announce(t().focusEnhanceOn(name));
-        }
-    };
     const haloPx = s.pointerHaloPx;
     const haloOn = pointerHaloOn(haloPx);
     const haloSize = pointerHaloSizeName(haloPx);
@@ -432,18 +418,6 @@ function CuesCard() {
                 label={t().cuesVisibilityGroup}
                 columns={1}
                 options={[
-                    {
-                        value: "focusEnhanceLevel",
-                        label: t().focusEnhance,
-                        ariaLabel: cursorName
-                            ? t().focusEnhanceAria(cursorName)
-                            : t().focusEnhanceSwitch,
-                        iconName: "cursor",
-                        hint: cursorName || undefined,
-                        checked: cursorLevel > 0,
-                        focusKey: "focus-enhance",
-                        onActivate: cycleCursor,
-                    },
                     {
                         value: "pointerHaloPx",
                         label: t().pointerHalo,
@@ -1046,7 +1020,7 @@ function TextStrokeOptions({ strokeStyle }: { strokeStyle: TextStrokeStyle }) {
         <div className="unilens-a11y-text-stroke-opts">
             <ChoiceGroup<TextStrokeStyle>
                 label={t().textStrokeGroup}
-                columns={2}
+                columns={3}
                 focusPrefix="textStrokeStyle"
                 current={strokeStyle}
                 options={TEXT_STROKE_STYLES.map((value) => {
@@ -1081,11 +1055,7 @@ function TextStrokeCard() {
     const s = useSettings();
     const styleName = t().textStrokeStyle[s.textStrokeStyle];
     return (
-        <Card
-            title={t().textStrokeTitle}
-            iconName="textStroke"
-            badge={s.textStroke ? styleName : undefined}
-        >
+        <Card title={t().textStrokeTitle} iconName="textStroke">
             <ToggleGroup
                 label={t().textStrokeSwitch}
                 columns={1}
@@ -1110,6 +1080,47 @@ function TextStrokeCard() {
                 onToggle={(_value, next) => {
                     patchA11ySettings({ textStroke: next });
                     announce(next ? t().textStrokeOn : t().textStrokeOff);
+                }}
+            />
+        </Card>
+    );
+}
+
+function FocusEnhanceCard() {
+    const level = useSettings((s) => s.focusEnhanceLevel);
+    const labels = focusEnhanceLevelLabels();
+    const [name] = labels[level];
+
+    return (
+        <Card
+            title={t().focusEnhance}
+            iconName="cursor"
+            desc={t().focusEnhanceSwitch}
+            badge={level > 0 ? name : undefined}
+        >
+            <LevelControl
+                label={t().focusEnhanceGroup}
+                focusPrefix="focusEnhanceLevel"
+                current={level}
+                options={TEXT_ADJUST_LEVELS.map((value) => ({
+                    value,
+                    label: labels[value][0],
+                    ariaLabel:
+                        value === 0
+                            ? t().focusEnhanceAriaOff
+                            : t().focusEnhanceAria(labels[value][0]),
+                }))}
+                onSelect={(value) => {
+                    patchA11ySettings({
+                        focusEnhanceLevel: value as TextAdjustLevel,
+                    });
+                    if (value === 0) announce(t().focusEnhanceOff);
+                    else
+                        announce(
+                            t().focusEnhanceOn(
+                                labels[value as TextAdjustLevel][0],
+                            ),
+                        );
                 }}
             />
         </Card>
@@ -1576,6 +1587,7 @@ export function ToolsTab({
     useExternalSignal(onA11yLangChange);
     return (
         <>
+            <FocusEnhanceCard />
             <TextPlateCard />
             <TextStrokeCard />
             <BodyExpandCard />

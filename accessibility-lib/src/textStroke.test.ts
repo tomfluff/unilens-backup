@@ -67,13 +67,17 @@ function saturate0([r, g, b]: Rgb): Rgb {
 }
 
 describe("text stroke pairs", () => {
-    it("offers five fill/outline pairs with a white-on-black default", () => {
+    it("offers nine fill/outline pairs with a white-on-black default", () => {
         expect(TEXT_STROKE_STYLES).toEqual([
             "whiteBlack",
             "blackWhite",
             "yellowBlue",
             "blueYellow",
             "whiteMagenta",
+            "navyYellow",
+            "blackCyan",
+            "greenWhite",
+            "orangeWhite",
         ]);
         expect(TEXT_STROKE_DEFAULT_STYLE).toBe("whiteBlack");
         expect(TEXT_STROKE_WIDTH).toBe("0.1em");
@@ -136,7 +140,11 @@ describe("text stroke pairs", () => {
             const d = Math.abs(a - b);
             return Math.min(d, 360 - d);
         };
-        for (const style of ["yellowBlue", "blueYellow"] as const) {
+        for (const style of [
+            "yellowBlue",
+            "blueYellow",
+            "navyYellow",
+        ] as const) {
             const fillH = hue(rgb(TEXT_STROKE_PAIRS[style].fill));
             const edgeH = hue(rgb(TEXT_STROKE_PAIRS[style].edge));
             expect(fillH).not.toBeNull();

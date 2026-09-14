@@ -262,10 +262,9 @@ const FEATURES = {
     },
     cues: {
         id: "cues",
-        title: "Extra visual cues (link underlines, focus enhance, pointer halo, focus cursor, reading guide)",
+        title: "Extra visual cues (link underlines, cursor color, focus cursor, reading guide)",
         keys: [
             "linkUnderline",
-            "focusEnhanceLevel",
             "pointerHaloPx",
             "pointerHaloColor",
             "pointerHaloOpacity",
@@ -293,6 +292,12 @@ const FEATURES = {
         key: "smallTextBoostLevel" as const,
         levels: TEXT_ADJUST_LEVELS,
         hint: smallTextBoostHint,
+    },
+    focusEnhance: {
+        id: "focusEnhance",
+        title: "Cursor enlarge and focus-ring thicken (3 levels)",
+        key: "focusEnhanceLevel" as const,
+        levels: TEXT_ADJUST_LEVELS,
     },
     selectionText: {
         id: "selectionText",

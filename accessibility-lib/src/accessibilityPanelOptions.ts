@@ -116,6 +116,21 @@ export function smallBoostLevelLabels(): Record<
     return levelLabels(smallTextBoostHint);
 }
 
+/** Cursor enlarge / focus-ring levels (0 = off, 1–3 = small / medium / large). */
+export function focusEnhanceLevelLabels(): Record<
+    TextAdjustLevel,
+    [string, string]
+> {
+    const off = t().levelNames[0];
+    const names = t().focusEnhanceLevelName;
+    return {
+        0: [off, ""],
+        1: [names[1], ""],
+        2: [names[2], ""],
+        3: [names[3], ""],
+    };
+}
+
 /**
  * Speech-rate names and hints.
  * As with the level choices, only the name is language-dependent; the hint

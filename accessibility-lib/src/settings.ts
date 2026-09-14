@@ -29,6 +29,10 @@ import {
     DEFAULT_SPEECH_RATE_LEVEL,
     normalizeSpeechRateLevel,
 } from "./speechLevels";
+import {
+    applyPointerFollowerExclusion,
+    reconcilePointerFollowers,
+} from "./pointerFollowerExclusion";
 import { normalizeTextAdjustLevel } from "./textAdjustLevels";
 
 export type { AutoTextMode } from "./accessibilityStoreTypes";
@@ -111,6 +115,7 @@ function normalizeA11yFields(s: A11ySettings): void {
     s.reduceMotion = s.reduceMotion === true;
     s.smallTextBoostLevel = normalizeTextAdjustLevel(s.smallTextBoostLevel);
     s.bodyTextExpandLevel = normalizeTextAdjustLevel(s.bodyTextExpandLevel);
+    reconcilePointerFollowers(s);
 }
 
 function normalizeSettings(s: Settings): void {
@@ -173,9 +178,10 @@ export function patchSettings(patch: Partial<Settings>) {
 }
 
 export function patchA11ySettings(patch: Partial<A11ySettings>) {
-    const next: Partial<A11ySettings> = { ...patch };
+    let next: Partial<A11ySettings> = { ...patch };
     if (next.fontFamily !== undefined && next.fontFamily !== "custom")
         next.customFontFamily = null;
+    next = applyPointerFollowerExclusion(getSettings(), next);
     useSettings.setState(next);
     applyA11yToDocument();
 }

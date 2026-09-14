@@ -6,13 +6,17 @@ import { getA11ySettings, onA11yChange } from "./accessibilityStore";
 import {
     normalizePointerHaloColor,
     normalizePointerHaloOpacity,
-    POINTER_HALO_DEFAULT_PX,
     POINTER_HALO_RGB,
     type PointerHaloPx,
     pointerHaloCssDiameter,
     pointerHaloFillCss,
     pointerHaloOn,
 } from "./accessibilityStoreTypes";
+import {
+    lastOnPointerHaloPx,
+    rememberPointerHaloOnPx,
+    resetPointerHaloMemory,
+} from "./pointerHaloMemory";
 import {
     CURSOR_HALO_FILL_VAR,
     CURSOR_HALO_ID,
@@ -85,16 +89,7 @@ let tracking = false;
 let a11yUnsub: (() => void) | null = null;
 let lastX = Number.NaN;
 let lastY = Number.NaN;
-let rememberedOnPx: Exclude<PointerHaloPx, 0> = POINTER_HALO_DEFAULT_PX;
-
-/** Keep the last on-size so turning the toggle back on restores it. */
-export function rememberPointerHaloOnPx(px: PointerHaloPx): void {
-    if (pointerHaloOn(px)) rememberedOnPx = px;
-}
-
-export function lastOnPointerHaloPx(): Exclude<PointerHaloPx, 0> {
-    return rememberedOnPx;
-}
+export { lastOnPointerHaloPx, rememberPointerHaloOnPx } from "./pointerHaloMemory";
 
 function ensureStylesheet() {
     if (typeof document === "undefined") return;
@@ -203,5 +198,5 @@ export function destroyCursorHalo() {
     lastY = Number.NaN;
     document.getElementById(CURSOR_HALO_ID)?.remove();
     document.getElementById(STYLE_ID)?.remove();
-    rememberedOnPx = POINTER_HALO_DEFAULT_PX;
+    resetPointerHaloMemory();
 }

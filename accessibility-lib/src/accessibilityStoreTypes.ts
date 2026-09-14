@@ -157,7 +157,7 @@ export const READING_GUIDE_STYLES = [
 ] as const;
 export type ReadingGuideStyle = (typeof READING_GUIDE_STYLES)[number];
 export const READING_GUIDE_DEFAULT_STYLE =
-    "whiteBlue" satisfies ReadingGuideStyle;
+    "blackYellow" satisfies ReadingGuideStyle;
 
 export const READING_GUIDE_PAIRS = {
     whiteBlue: {
@@ -219,7 +219,7 @@ export function normalizeReadingGuidePosition(
 }
 
 /**
- * Text outline (webkit-text-stroke). Five fill/stroke pairs.
+ * Text outline (webkit-text-stroke). Nine fill/stroke pairs.
  *
  * Fill and edge always differ in luminance, and the chromatic pairs also
  * differ in hue, so the rim reads as its own color rather than a shadow:
@@ -227,6 +227,8 @@ export function normalizeReadingGuidePosition(
  *   - yellow/blue and blue/yellow: opponent hues. Yellow+black becomes
  *     yellow+white under invert(1) hue-rotate(180deg); blue does not.
  *   - white/magenta: a third hue, off the yellow/blue axis
+ *   - navy/yellow, black/cyan, green/white, orange/white: reuse text-plate
+ *     and reading-guide hues so cyan, green, orange, and navy axes are covered
  * Chromatic edges stay saturated (not black) so they do not vanish on
  * dark / high-contrast backgrounds.
  */
@@ -236,6 +238,10 @@ export const TEXT_STROKE_STYLES = [
     "yellowBlue",
     "blueYellow",
     "whiteMagenta",
+    "navyYellow",
+    "blackCyan",
+    "greenWhite",
+    "orangeWhite",
 ] as const;
 export type TextStrokeStyle = (typeof TEXT_STROKE_STYLES)[number];
 export const TEXT_STROKE_DEFAULT_STYLE = "whiteBlack" satisfies TextStrokeStyle;
@@ -263,6 +269,22 @@ export const TEXT_STROKE_PAIRS = {
     whiteMagenta: {
         fill: "rgb(255, 255, 255)",
         edge: "rgb(255, 0, 196)",
+    },
+    navyYellow: {
+        fill: "rgb(0, 26, 102)",
+        edge: "rgb(255, 255, 0)",
+    },
+    blackCyan: {
+        fill: "rgb(0, 0, 0)",
+        edge: "rgb(0, 255, 255)",
+    },
+    greenWhite: {
+        fill: "rgb(0, 61, 10)",
+        edge: "rgb(255, 255, 255)",
+    },
+    orangeWhite: {
+        fill: "rgb(255, 48, 0)",
+        edge: "rgb(255, 255, 255)",
     },
 } as const satisfies Record<TextStrokeStyle, { fill: string; edge: string }>;
 

@@ -141,8 +141,12 @@ describe("combining with language-independent values", () => {
         A11Y_LANGS.forEach((lang) => {
             setA11yLang(lang);
             expect(Object.keys(t().textStrokeStyle).sort()).toEqual([
+                "blackCyan",
                 "blackWhite",
                 "blueYellow",
+                "greenWhite",
+                "navyYellow",
+                "orangeWhite",
                 "whiteBlack",
                 "whiteMagenta",
                 "yellowBlue",

@@ -36,9 +36,8 @@ function TextPlatePreview({
 
 export function TextPlateCard() {
     const plateStyle = useSettings((s) => s.textPlateStyle);
-    const styleName = t().textPlateStyle[plateStyle];
     return (
-        <Card title={t().textPlateTitle} iconName="textPlate" badge={styleName}>
+        <Card title={t().textPlateTitle} iconName="textPlate">
             <ChoiceGroup<TextPlateStyle>
                 label={t().textPlateGroup}
                 columns={2}

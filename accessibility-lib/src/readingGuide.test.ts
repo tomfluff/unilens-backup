@@ -66,7 +66,7 @@ describe("reading guide", () => {
             "magentaNavy",
             "orangeWhite",
         ]);
-        expect(READING_GUIDE_DEFAULT_STYLE).toBe("whiteBlue");
+        expect(READING_GUIDE_DEFAULT_STYLE).toBe("blackYellow");
         expect(READING_GUIDE_EDGE_PX).toBe(2);
         expect(READING_GUIDE_POSITIONS).toEqual(["above", "center", "below"]);
         expect(READING_GUIDE_DEFAULT_POSITION).toBe("above");
@@ -119,13 +119,13 @@ describe("reading guide", () => {
         );
     });
 
-    it("falls back to white/blue on hydration garbage", () => {
+    it("falls back to the default style (black/yellow) on hydration garbage", () => {
         expect(normalizeReadingGuideStyle("cyanGreen")).toBe("cyanGreen");
         expect(normalizeReadingGuideStyle("cyanNavy")).toBe("cyanGreen");
         expect(normalizeReadingGuideStyle("orangeBlue")).toBe("orangeWhite");
         expect(normalizeReadingGuideStyle("blackWhite")).toBe("blackYellow");
-        expect(normalizeReadingGuideStyle("yellow")).toBe("whiteBlue");
-        expect(normalizeReadingGuideStyle(undefined)).toBe("whiteBlue");
+        expect(normalizeReadingGuideStyle("yellow")).toBe("blackYellow");
+        expect(normalizeReadingGuideStyle(undefined)).toBe("blackYellow");
     });
 
     it("always points the center tip up", () => {

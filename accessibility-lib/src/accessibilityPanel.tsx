@@ -254,7 +254,7 @@ function activeAdjustments(s: Settings): Adjustment[] {
             t().focusEnhanceLevelName,
             s.focusEnhanceLevel,
         );
-        add("visual", "focusEnhanceLevel", t().adjFocusEnhance(name), () =>
+        add("tools", "focusEnhanceLevel", t().adjFocusEnhance(name), () =>
             patchA11ySettings({ focusEnhanceLevel: 0 }),
         );
     }
