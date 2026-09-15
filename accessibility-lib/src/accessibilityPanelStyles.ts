@@ -58,15 +58,13 @@ const R = `#${ROOT_ID}`;
  */
 const LAYOUT_CSS = `
 ${R} {
-  /* +120px on the 380px panel (20px then 100px); tap targets and type follow. */
-  --unilens-a11y-panel-ui-scale: calc(500 / 380);
   --unilens-a11y-panel-base: 15px;
-  --unilens-a11y-panel-font-scale: var(--unilens-a11y-panel-ui-scale);
+  --unilens-a11y-panel-font-scale: 1;
   --unilens-a11y-panel-line-height: 1.5;
   --unilens-a11y-panel-font-family: "Segoe UI", system-ui, -apple-system, "Hiragino Sans", "Yu Gothic UI", sans-serif;
   --unilens-a11y-panel-saturate: 1;
   --unilens-a11y-panel-contrast: 1;
-  --unilens-a11y-panel-tap: calc(44px * var(--unilens-a11y-panel-ui-scale));
+  --unilens-a11y-panel-tap: 44px;
   position: fixed; bottom: 16px; right: 16px; top: auto; z-index: 2147483646;
   display: flex; flex-direction: column-reverse; align-items: flex-end;
   font-family: var(--unilens-a11y-panel-font-family);
@@ -136,7 +134,7 @@ ${R} .unilens-a11y-header {
 }
 ${R} .unilens-a11y-header-icon {
   display: flex; align-items: center; justify-content: center;
-  width: calc(36px * var(--unilens-a11y-panel-ui-scale)); height: calc(36px * var(--unilens-a11y-panel-ui-scale)); flex-shrink: 0; border-radius: 11px;
+  width: 36px; height: 36px; flex-shrink: 0; border-radius: 11px;
   background: var(--unilens-a11y-panel-accent); color: var(--unilens-a11y-panel-on-accent);
 }
 ${R} .unilens-a11y-header-text { flex: 1; min-width: 0; }
@@ -144,7 +142,7 @@ ${R} .unilens-a11y-title { margin: 0; font-size: 1.27em; font-weight: 800; lette
 ${R} .unilens-a11y-subtitle { margin: 1px 0 0; font-size: 0.94em; font-weight: 400; color: var(--unilens-a11y-panel-muted); }
 ${R} .unilens-a11y-close {
   display: flex; align-items: center; justify-content: center;
-  width: calc(38px * var(--unilens-a11y-panel-ui-scale)); height: calc(38px * var(--unilens-a11y-panel-ui-scale)); flex-shrink: 0;
+  width: 38px; height: 38px; flex-shrink: 0;
   border-radius: 11px; border: 2px solid var(--unilens-a11y-panel-border);
   background: var(--unilens-a11y-panel-surface); color: var(--unilens-a11y-panel-muted); cursor: pointer;
   transition: color 0.15s, border-color 0.15s, background 0.15s;
@@ -160,7 +158,7 @@ ${R} .unilens-a11y-tabs li { flex: 1; display: flex; }
 ${R} .unilens-a11y-tab {
   position: relative;
   flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
-  min-height: calc(54px * var(--unilens-a11y-panel-ui-scale)); padding: 7px 4px; border: none; border-bottom: 3px solid transparent;
+  min-height: 54px; padding: 7px 4px; border: none; border-bottom: 3px solid transparent;
   background: transparent; color: var(--unilens-a11y-panel-muted);
   font-size: 0.95em; font-weight: 700; cursor: pointer;
   border-radius: 10px 10px 0 0;
@@ -314,7 +312,7 @@ ${R} .unilens-a11y-choice[aria-pressed="true"]:hover:not(:disabled) {
 }
 ${R} .unilens-a11y-choice-check {
   position: absolute; top: -8px; right: -8px;
-  width: calc(20px * var(--unilens-a11y-panel-ui-scale)); height: calc(20px * var(--unilens-a11y-panel-ui-scale)); border-radius: 50%;
+  width: 20px; height: 20px; border-radius: 50%;
   background: var(--unilens-a11y-panel-selected); color: var(--unilens-a11y-panel-on-accent);
   border: 2px solid var(--unilens-a11y-panel-surface);
   display: none; align-items: center; justify-content: center;
@@ -329,7 +327,7 @@ ${R} .unilens-a11y-choice-copy {
 }
 ${R} .unilens-a11y-choices--stack .unilens-a11y-choice {
   flex-direction: row; align-items: center; gap: 12px;
-  min-height: calc(60px * var(--unilens-a11y-panel-ui-scale)); padding: 14px 18px;
+  min-height: 60px; padding: 14px 18px;
   font-size: 1.15em; text-align: left;
 }
 ${R} .unilens-a11y-choices--stack .unilens-a11y-choice-copy { align-items: flex-start; flex: 1; }
@@ -359,7 +357,7 @@ ${R} .unilens-a11y-level {
   background: var(--unilens-a11y-panel-surface-2); border: 1px solid var(--unilens-a11y-panel-border); border-radius: 13px;
 }
 ${R} .unilens-a11y-level-btn {
-  flex: 1; min-width: 0; min-height: calc(52px * var(--unilens-a11y-panel-ui-scale));
+  flex: 1; min-width: 0; min-height: 52px;
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
   border: none; border-radius: 10px; background: transparent; color: var(--unilens-a11y-panel-muted);
   font-size: 0.95em; font-weight: 700; cursor: pointer;
@@ -382,17 +380,17 @@ ${R} .unilens-a11y-switch-text { flex: 1; min-width: 0; }
 ${R} .unilens-a11y-switch-label { display: block; font-size: 1.08em; font-weight: 700; }
 ${R} .unilens-a11y-switch-hint { display: block; margin-top: 2px; font-size: 0.91em; color: var(--unilens-a11y-panel-muted); line-height: 1.45; }
 ${R} .unilens-a11y-switch {
-  position: relative; flex-shrink: 0; width: calc(48px * var(--unilens-a11y-panel-ui-scale)); height: calc(28px * var(--unilens-a11y-panel-ui-scale)); padding: 0;
+  position: relative; flex-shrink: 0; width: 48px; height: 28px; padding: 0;
   border: 2px solid var(--unilens-a11y-panel-border); border-radius: 999px;
   background: var(--unilens-a11y-panel-track); cursor: pointer; transition: background 0.18s;
 }
 ${R} .unilens-a11y-switch::after {
-  content: ''; position: absolute; top: 2px; left: 2px; width: calc(20px * var(--unilens-a11y-panel-ui-scale)); height: calc(20px * var(--unilens-a11y-panel-ui-scale));
+  content: ''; position: absolute; top: 2px; left: 2px; width: 20px; height: 20px;
   border-radius: 50%; background: var(--unilens-a11y-panel-knob); box-shadow: var(--unilens-a11y-panel-shadow-raise);
   transition: transform 0.18s ease, background 0.18s;
 }
 ${R} .unilens-a11y-switch[aria-checked="true"] { background: var(--unilens-a11y-panel-accent); border-color: var(--unilens-a11y-panel-accent); }
-${R} .unilens-a11y-switch[aria-checked="true"]::after { background: var(--unilens-a11y-panel-knob-on); transform: translateX(calc(20px * var(--unilens-a11y-panel-ui-scale))); }
+${R} .unilens-a11y-switch[aria-checked="true"]::after { background: var(--unilens-a11y-panel-knob-on); transform: translateX(20px); }
 
 /* ── Button ─────────────────────────────────────────────────────────────── */
 ${R} .unilens-a11y-btn {
