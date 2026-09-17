@@ -1,9 +1,14 @@
 /**
- * Reading-focus mask: a full-width, 150px-tall clear band centered on the
- * pointer. The rest of the viewport is slightly dimmed. The OS cursor is
- * unchanged. The top and bottom 10px of the clear band are solid blue.
+ * Reading-focus mask: a full-width clear band centered on the pointer.
+ * The rest of the viewport is slightly dimmed. The OS cursor is unchanged.
+ * The top and bottom of the clear band are solid blue.
  */
 import { getA11ySettings, onA11yChange } from "./accessibilityStore";
+import {
+    FOCUS_CURSOR_DEFAULT_BAND_PX,
+    focusCursorOn,
+    normalizeFocusCursorBandPx,
+} from "./accessibilityStoreTypes";
 import {
     FOCUS_CURSOR_BOTTOM_ID,
     FOCUS_CURSOR_EDGE_BOTTOM_ID,
@@ -12,9 +17,10 @@ import {
     FOCUS_CURSOR_TOP_ID,
     UI_ATTR,
 } from "./domIds";
+import { resetFocusCursorMemory } from "./focusCursorMemory";
 
-/** Clear band height in CSS pixels, vertically centered on the pointer. */
-export const FOCUS_CURSOR_BAND_PX = 150;
+/** Default clear band height (medium). */
+export const FOCUS_CURSOR_BAND_PX = FOCUS_CURSOR_DEFAULT_BAND_PX;
 
 /** Blue tint along the top and bottom of the clear band. */
 export const FOCUS_CURSOR_EDGE_PX = 10;
@@ -70,24 +76,36 @@ const MASK_CSS = `
 #${FOCUS_CURSOR_EDGE_BOTTOM_ID} { top: 0; }
 `;
 
-/** Top edge of the 150px clear band, in viewport Y. */
-export function focusCursorBandTop(clientY: number): number {
-    return clientY - FOCUS_CURSOR_BAND_PX / 2;
+/** Top edge of the clear band, in viewport Y. */
+export function focusCursorBandTop(
+    clientY: number,
+    bandPx: number = FOCUS_CURSOR_DEFAULT_BAND_PX,
+): number {
+    return clientY - bandPx / 2;
 }
 
-/** Bottom edge of the 150px clear band, in viewport Y. */
-export function focusCursorBandBottom(clientY: number): number {
-    return clientY + FOCUS_CURSOR_BAND_PX / 2;
+/** Bottom edge of the clear band, in viewport Y. */
+export function focusCursorBandBottom(
+    clientY: number,
+    bandPx: number = FOCUS_CURSOR_DEFAULT_BAND_PX,
+): number {
+    return clientY + bandPx / 2;
 }
 
 /** Top of the blue tint at the upper edge of the clear band. */
-export function focusCursorEdgeTop(clientY: number): number {
-    return focusCursorBandTop(clientY);
+export function focusCursorEdgeTop(
+    clientY: number,
+    bandPx: number = FOCUS_CURSOR_DEFAULT_BAND_PX,
+): number {
+    return focusCursorBandTop(clientY, bandPx);
 }
 
 /** Top of the blue tint at the lower edge of the clear band. */
-export function focusCursorEdgeBottom(clientY: number): number {
-    return focusCursorBandBottom(clientY) - FOCUS_CURSOR_EDGE_PX;
+export function focusCursorEdgeBottom(
+    clientY: number,
+    bandPx: number = FOCUS_CURSOR_DEFAULT_BAND_PX,
+): number {
+    return focusCursorBandBottom(clientY, bandPx) - FOCUS_CURSOR_EDGE_PX;
 }
 
 let active = false;
@@ -142,7 +160,10 @@ function hideMask() {
 }
 
 function paintMask() {
-    if (!getA11ySettings().focusCursor) {
+    const bandPx = normalizeFocusCursorBandPx(
+        getA11ySettings().focusCursorBandPx,
+    );
+    if (!focusCursorOn(bandPx)) {
         hideMask();
         return;
     }
@@ -164,12 +185,12 @@ function paintMask() {
     ) {
         return;
     }
-    const bandTop = focusCursorBandTop(lastY);
-    const bandBottom = focusCursorBandBottom(lastY);
+    const bandTop = focusCursorBandTop(lastY, bandPx);
+    const bandBottom = focusCursorBandBottom(lastY, bandPx);
     topEl.style.height = `${Math.max(0, bandTop)}px`;
     bottomEl.style.top = `${Math.max(0, bandBottom)}px`;
     edgeTopEl.style.top = `${bandTop}px`;
-    edgeBottomEl.style.top = `${focusCursorEdgeBottom(lastY)}px`;
+    edgeBottomEl.style.top = `${focusCursorEdgeBottom(lastY, bandPx)}px`;
     root.setAttribute("data-unilens-a11y-focus-cursor", "on");
 }
 
@@ -199,7 +220,7 @@ function detachTracking() {
 }
 
 function syncFromSettings() {
-    if (getA11ySettings().focusCursor) {
+    if (focusCursorOn(normalizeFocusCursorBandPx(getA11ySettings().focusCursorBandPx))) {
         ensureStylesheet();
         attachTracking();
         paintMask();
@@ -226,4 +247,5 @@ export function destroyFocusCursorMask() {
     lastY = Number.NaN;
     document.getElementById(FOCUS_CURSOR_ID)?.remove();
     document.getElementById(STYLE_ID)?.remove();
+    resetFocusCursorMemory();
 }

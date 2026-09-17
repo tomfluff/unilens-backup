@@ -27,14 +27,15 @@ test:
 	echo "Running unit tests..."
 	$(NPX) vitest run
 
-# Build bundled js out to dist/
+# Build bundled js out to dist/, then copy into frontend targets
 build:
 	echo "Building dist..."
 	$(NPX) $(ESBUILD)
+	$(NPX) node scripts/sync-dist.mjs
 
-# Build bundled js, while watching for changes
+# Watch src/, rebuild, and copy into frontend targets on every save
 serve:
-	$(NPX) $(ESBUILD) --watch
+	$(NPX) npm run dev
 
 # Runs formatter
 format:

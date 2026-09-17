@@ -27,6 +27,7 @@ import { createRoot } from "react-dom/client";
 import {
     getA11yLang,
     onA11yLangChange,
+    focusCursorBandName,
     pointerHaloSizeName,
     t,
 } from "./accessibilityI18n";
@@ -38,7 +39,7 @@ import {
     tabLabel,
 } from "./accessibilityPanelOptions";
 import { WIDGET_CSS } from "./accessibilityPanelStyles";
-import { TextTab, ToolsTab, VisualTab } from "./accessibilityPanelTabs";
+import { ToolsTab, VisualTab } from "./accessibilityPanelTabs";
 import {
     announce,
     Button,
@@ -58,6 +59,10 @@ import {
     runAutoTextAction,
     type TextAnalysis,
 } from "./autoTextSize";
+import {
+    focusCursorOn,
+    normalizeFocusCursorBandPx,
+} from "./accessibilityStoreTypes";
 import { pointerHaloOn, rememberPointerHaloOnPx } from "./cursorHalo";
 import {
     A11Y_CSS_LINK_ID,
@@ -179,35 +184,35 @@ function activeAdjustments(s: Settings): Adjustment[] {
     ) => list.push({ tab, key, label, clear });
 
     if (s.theme !== "standard") {
-        add("text", "theme", t().theme[s.theme], () =>
+        add("visual", "theme", t().theme[s.theme], () =>
             patchA11ySettings({ theme: "standard" }),
         );
     }
     if (s.saturation !== "standard") {
         add(
-            "text",
+            "visual",
             "saturation",
             t().adjSaturation(t().saturation[s.saturation]),
             () => patchA11ySettings({ saturation: "standard" }),
         );
     }
     if (s.contrast !== "standard") {
-        add("text", "contrast", t().adjContrast(t().contrast[s.contrast]), () =>
+        add("visual", "contrast", t().adjContrast(t().contrast[s.contrast]), () =>
             patchA11ySettings({ contrast: "standard" }),
         );
     }
     if (s.fontSize !== "standard") {
-        add("text", "fontSize", t().adjFontSize(t().fontSize[s.fontSize]), () =>
+        add("visual", "fontSize", t().adjFontSize(t().fontSize[s.fontSize]), () =>
             patchA11ySettings({ fontSize: "standard" }),
         );
     }
     if (s.fontFamily === "ud") {
-        add("text", "fontFamily", t().adjUdFont, () =>
+        add("visual", "fontFamily", t().adjUdFont, () =>
             patchA11ySettings({ fontFamily: "standard" }),
         );
     }
     if (s.fontFamily === "custom" && s.customFontFamily) {
-        add("text", "fontFamily", t().adjCustomFont(s.customFontFamily), () =>
+        add("visual", "fontFamily", t().adjCustomFont(s.customFontFamily), () =>
             patchA11ySettings({
                 fontFamily: "standard",
                 customFontFamily: null,
@@ -215,12 +220,12 @@ function activeAdjustments(s: Settings): Adjustment[] {
         );
     }
     if (s.lineHeight === "wide") {
-        add("text", "lineHeight", t().adjLineHeight, () =>
+        add("visual", "lineHeight", t().adjLineHeight, () =>
             patchA11ySettings({ lineHeight: "standard" }),
         );
     }
     if (s.letterSpacing === "wide") {
-        add("text", "letterSpacing", t().adjLetterSpacing, () =>
+        add("visual", "letterSpacing", t().adjLetterSpacing, () =>
             patchA11ySettings({ letterSpacing: "standard" }),
         );
     }
@@ -269,9 +274,13 @@ function activeAdjustments(s: Settings): Adjustment[] {
             },
         );
     }
-    if (s.focusCursor) {
-        add("visual", "focusCursor", t().adjFocusCursor, () =>
-            patchA11ySettings({ focusCursor: false }),
+    const focusBandPx = normalizeFocusCursorBandPx(s.focusCursorBandPx);
+    if (focusCursorOn(focusBandPx)) {
+        add(
+            "visual",
+            "focusCursorBandPx",
+            t().adjFocusCursor(focusCursorBandName(focusBandPx)),
+            () => patchA11ySettings({ focusCursorBandPx: 0 }),
         );
     }
     if (s.readingGuide) {
@@ -498,8 +507,8 @@ function AccessibilityPanelApp() {
         if (panelOpen) tabBtnRefs.current[activeTab]?.focus();
         // Only the open transition should move focus — switching tabs while
         // already open is handled by the tab bar's own click/keydown handlers.
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [panelOpen, activeTab]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps -- activeTab is read on open, not a trigger
+    }, [panelOpen]);
 
     // A destructive action was reset out from under the confirmation state
     // (e.g. everything got cleared some other way) — don't leave a stale
@@ -650,8 +659,6 @@ function AccessibilityPanelApp() {
                             {openedTabs.has(id) &&
                                 (id === "visual" ? (
                                     <VisualTab />
-                                ) : id === "text" ? (
-                                    <TextTab />
                                 ) : (
                                     <ToolsTab
                                         lastAnalysis={lastAnalysis}

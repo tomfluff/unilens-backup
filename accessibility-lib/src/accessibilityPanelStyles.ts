@@ -162,12 +162,27 @@ ${R} .unilens-a11y-tab {
   background: transparent; color: var(--unilens-a11y-panel-muted);
   font-size: 0.95em; font-weight: 700; cursor: pointer;
   border-radius: 10px 10px 0 0;
+  appearance: none;
+  text-decoration: none;
   transition: color 0.15s, background 0.15s, border-color 0.15s;
 }
 ${R} .unilens-a11y-tab:hover { color: var(--unilens-a11y-panel-text); background: var(--unilens-a11y-panel-surface-2); }
 ${R} .unilens-a11y-tab[aria-selected="true"] {
   color: var(--unilens-a11y-panel-accent); border-bottom-color: var(--unilens-a11y-panel-accent); background: var(--unilens-a11y-panel-accent-dim);
 }
+/* Host pages (SoftBank l3-common) use button:focus { outline: thin dotted }.
+   The accent underline already marks the selected tab, so suppress that ring —
+   including when focus-enhance's revert-layer would restore the UA outline. */
+${R} .unilens-a11y-tab:focus,
+${R} .unilens-a11y-tab:focus-visible,
+${R} .unilens-a11y-tab:hover,
+${R} .unilens-a11y-tab:active,
+html[data-unilens-a11y-focus-enhance] ${R} .unilens-a11y-tab:focus-visible {
+  outline: none;
+  box-shadow: none;
+  text-decoration: none;
+}
+${R} .unilens-a11y-tab::-moz-focus-inner { border: 0; padding: 0; }
 ${R} .unilens-a11y-tab-count {
   position: absolute; top: 6px; right: 8px;
   min-width: 17px; height: 17px; padding: 0 4px; border-radius: 999px;
@@ -265,7 +280,7 @@ ${R} .unilens-a11y-text-stroke-chip {
 ${R} .unilens-a11y-text-stroke-glyph { display: block; }
 ${R} .unilens-a11y-text-stroke-name {
   font-size: 0.76em; font-weight: 700; line-height: 1.25; text-align: center;
-  color: var(--unilens-a11y-panel-muted);
+  color: var(--unilens-a11y-panel-muted); white-space: nowrap;
 }
 ${R} .unilens-a11y-choice--swatch[aria-checked="true"] .unilens-a11y-text-stroke-name,
 ${R} .unilens-a11y-choice--swatch[aria-checked="true"] .unilens-a11y-text-plate-name {
@@ -287,7 +302,7 @@ ${R} .unilens-a11y-text-plate-preview {
 }
 ${R} .unilens-a11y-text-plate-name {
   font-size: 0.76em; font-weight: 700; line-height: 1.25; text-align: center;
-  color: var(--unilens-a11y-panel-muted);
+  color: var(--unilens-a11y-panel-muted); white-space: nowrap;
 }
 ${R} .unilens-a11y-choice {
   position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px;
@@ -295,6 +310,7 @@ ${R} .unilens-a11y-choice {
   border: 2px solid var(--unilens-a11y-panel-border); border-radius: 12px;
   background: var(--unilens-a11y-panel-surface-2); color: var(--unilens-a11y-panel-text);
   font-size: 1em; font-weight: 700; line-height: 1.3; text-align: center; cursor: pointer;
+  writing-mode: horizontal-tb; word-break: keep-all; overflow-wrap: normal; white-space: nowrap;
   transition: border-color 0.15s, background 0.15s, transform 0.1s;
 }
 ${R} .unilens-a11y-choice:hover:not(:disabled):not([aria-checked="true"]):not([aria-pressed="true"]) {
@@ -319,21 +335,24 @@ ${R} .unilens-a11y-choice-check {
 }
 ${R} .unilens-a11y-choice[aria-checked="true"] .unilens-a11y-choice-check,
 ${R} .unilens-a11y-choice[aria-pressed="true"] .unilens-a11y-choice-check { display: flex; }
-${R} .unilens-a11y-choice-label { display: block; font-size: 1.08em; font-weight: 700; }
+${R} .unilens-a11y-choice-label { display: block; font-size: 1.08em; font-weight: 700; white-space: nowrap; }
 ${R} .unilens-a11y-choice-icon { display: flex; flex-shrink: 0; overflow: visible; }
 ${R} .unilens-a11y-choice-icon svg { overflow: visible; }
 ${R} .unilens-a11y-choice-copy {
   display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 0;
 }
-${R} .unilens-a11y-choices--stack .unilens-a11y-choice {
+/* Direct children only: nested ChoiceGroups under a stacked toggle (cursor
+   color, reading guide, …) must keep the compact card layout, or labels
+   wrap one character per line inside the 3- and 5-column grids. */
+${R} .unilens-a11y-choices--stack > .unilens-a11y-choice {
   flex-direction: row; align-items: center; gap: 12px;
   min-height: 60px; padding: 14px 18px;
   font-size: 1.15em; text-align: left;
 }
-${R} .unilens-a11y-choices--stack .unilens-a11y-choice-copy { align-items: flex-start; flex: 1; }
-${R} .unilens-a11y-choices--stack .unilens-a11y-choice-label { font-size: 1.4em; }
-${R} .unilens-a11y-choices--stack .unilens-a11y-choice-hint { font-size: 1em; }
-${R} .unilens-a11y-choice-hint { display: block; font-size: 0.78em; font-weight: 600; opacity: 0.72; font-variant-numeric: tabular-nums; }
+${R} .unilens-a11y-choices--stack > .unilens-a11y-choice .unilens-a11y-choice-copy { align-items: flex-start; flex: 1; }
+${R} .unilens-a11y-choices--stack > .unilens-a11y-choice .unilens-a11y-choice-label { font-size: 1.4em; }
+${R} .unilens-a11y-choices--stack > .unilens-a11y-choice .unilens-a11y-choice-hint { font-size: 1em; }
+${R} .unilens-a11y-choice-hint { display: block; font-size: 0.78em; font-weight: 600; opacity: 0.72; font-variant-numeric: tabular-nums; white-space: nowrap; }
 
 /* ── Preview components ─────────────────────────────────────────────────── */
 ${R} .unilens-a11y-swatch {

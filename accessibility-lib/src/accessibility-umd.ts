@@ -268,7 +268,7 @@ const FEATURES = {
             "pointerHaloPx",
             "pointerHaloColor",
             "pointerHaloOpacity",
-            "focusCursor",
+            "focusCursorBandPx",
             "readingGuide",
             "readingGuideStyle",
             "readingGuidePosition",

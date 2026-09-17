@@ -4,6 +4,8 @@
  */
 import type { A11ySettings } from "./accessibilityStoreTypes";
 import {
+    focusCursorOn,
+    normalizeFocusCursorBandPx,
     normalizePointerHaloPx,
     pointerHaloOn,
 } from "./accessibilityStoreTypes";
@@ -11,7 +13,7 @@ import { rememberPointerHaloOnPx } from "./pointerHaloMemory";
 
 type PointerFollowerFields = Pick<
     A11ySettings,
-    "pointerHaloPx" | "focusCursor" | "readingGuide"
+    "pointerHaloPx" | "focusCursorBandPx" | "readingGuide"
 >;
 
 export function applyPointerFollowerExclusion(
@@ -27,17 +29,20 @@ export function applyPointerFollowerExclusion(
         patch.pointerHaloPx !== undefined &&
         pointerHaloOn(normalizePointerHaloPx(patch.pointerHaloPx))
     ) {
-        next.focusCursor = false;
+        next.focusCursorBandPx = 0;
         next.readingGuide = false;
     }
-    if (patch.focusCursor === true) {
+    if (
+        patch.focusCursorBandPx !== undefined &&
+        focusCursorOn(normalizeFocusCursorBandPx(patch.focusCursorBandPx))
+    ) {
         if (currentHaloOn) rememberPointerHaloOnPx(current.pointerHaloPx);
         next.pointerHaloPx = 0;
         next.readingGuide = false;
     }
     if (patch.readingGuide === true) {
         if (currentHaloOn) rememberPointerHaloOnPx(current.pointerHaloPx);
-        next.focusCursor = false;
+        next.focusCursorBandPx = 0;
         next.pointerHaloPx = 0;
     }
     return next;
@@ -47,17 +52,17 @@ export function applyPointerFollowerExclusion(
 export function reconcilePointerFollowers(s: PointerFollowerFields): void {
     const haloOn = pointerHaloOn(normalizePointerHaloPx(s.pointerHaloPx));
     if (haloOn) {
-        s.focusCursor = false;
+        s.focusCursorBandPx = 0;
         s.readingGuide = false;
         return;
     }
-    if (s.focusCursor) {
+    if (focusCursorOn(normalizeFocusCursorBandPx(s.focusCursorBandPx))) {
         s.pointerHaloPx = 0;
         s.readingGuide = false;
         return;
     }
     if (s.readingGuide) {
         s.pointerHaloPx = 0;
-        s.focusCursor = false;
+        s.focusCursorBandPx = 0;
     }
 }

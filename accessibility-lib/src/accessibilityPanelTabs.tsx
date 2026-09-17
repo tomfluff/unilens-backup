@@ -14,6 +14,7 @@ import {
     getA11yLang,
     languageDescByLang,
     onA11yLangChange,
+    focusCursorBandName,
     pointerHaloSizeName,
     setA11yLang,
     t,
@@ -70,7 +71,11 @@ import {
     type A11yLetterSpacing,
     type A11yLineHeight,
     type A11ySettings,
+    FOCUS_CURSOR_BAND_SIZES,
     type DisplayContrast,
+    type FocusCursorBandPx,
+    focusCursorOn,
+    normalizeFocusCursorBandPx,
     type DisplaySaturation,
     type DisplayTheme,
     patchA11ySettings,
@@ -86,6 +91,10 @@ import {
     type TextAnalysis,
 } from "./autoTextSize";
 import { getLastBodyTextScan, scanBodyText } from "./bodyTextExpand";
+import {
+    lastOnFocusCursorBandPx,
+    rememberFocusCursorBandPx,
+} from "./focusCursorMemory";
 import {
     isPointerHaloViewportPct,
     lastOnPointerHaloPx,
@@ -172,7 +181,7 @@ function presetMeta(id: A11yPresetId): { label: string; hint: string } {
 
 // ── Visual ─────────────────────────────────────────────────────────────────
 
-/** One-tap, per-use-case presets. Placed before the individual settings. 6 items, so 2 columns. */
+/** One-tap, per-use-case presets (Lab tab). 6 items, so 2 columns. */
 function PresetsCard() {
     return (
         <Card title={t().presetsTitle} iconName="preset">
@@ -233,16 +242,11 @@ function PresetsCard() {
 }
 
 /**
- * Panel-language switcher. Placed right after the presets.
+ * Panel-language switcher. Lives on the Lab tab with presets.
  *
- * For a visitor who can't read the panel's current language, being the
- * first thing they see matters far more than fitting neatly into a content
- * category — discoverability is prioritized over strict grouping. The
- * option labels are always written in their own language (日本語 / English)
- * so an unreadable label never leaves someone lost. For the same reason, the
- * description text always shows every supported language, not just the one
- * currently active (e.g. the English description is shown even while the
- * panel is in Japanese).
+ * Option labels are always written in their own language (日本語 / English)
+ * so an unreadable label never leaves someone lost. The description text
+ * always shows every supported language, not just the one currently active.
  */
 function LanguageCard() {
     const current = getA11yLang();
@@ -281,7 +285,6 @@ type CueKey = Extract<
     | "imageBorder"
     | "elementHighlight"
     | "reduceMotion"
-    | "focusCursor"
 >;
 
 interface CueItem {
@@ -368,16 +371,6 @@ function CuesCard() {
     ];
     const visibility: CueItem[] = [
         {
-            key: "focusCursor",
-            label: t().focusCursor,
-            ariaLabel: t().focusCursorSwitch,
-            iconName: "focusCursor",
-            checked: s.focusCursor,
-            focusKey: "focus-cursor",
-            on: t().focusCursorOn,
-            off: t().focusCursorOff,
-        },
-        {
             key: "reduceMotion",
             label: t().reduceMotion,
             ariaLabel: t().reduceMotionSwitch,
@@ -401,10 +394,21 @@ function CuesCard() {
         patchA11ySettings({ pointerHaloPx: lastOnPointerHaloPx() });
         announce(t().pointerHaloOn);
     };
-    const visibilityOpts = toOptions(visibility);
-    const focusCursorOpt = visibilityOpts[0];
-    const reduceMotionOpt = visibilityOpts[1];
-    if (!focusCursorOpt || !reduceMotionOpt) return null;
+    const focusBandPx = normalizeFocusCursorBandPx(s.focusCursorBandPx);
+    const focusOn = focusCursorOn(focusBandPx);
+    const focusBandName = focusOn ? focusCursorBandName(focusBandPx) : "";
+    const toggleFocusCursor = () => {
+        if (focusOn) {
+            rememberFocusCursorBandPx(focusBandPx);
+            patchA11ySettings({ focusCursorBandPx: 0 });
+            announce(t().focusCursorOff);
+            return;
+        }
+        patchA11ySettings({ focusCursorBandPx: lastOnFocusCursorBandPx() });
+        announce(t().focusCursorOn);
+    };
+    const reduceMotionOpt = toOptions(visibility)[0];
+    if (!reduceMotionOpt) return null;
 
     return (
         <Card title={t().cuesTitle} iconName="link">
@@ -437,7 +441,21 @@ function CuesCard() {
                             />
                         ) : undefined,
                     },
-                    focusCursorOpt,
+                    {
+                        value: "focusCursorBandPx",
+                        label: t().focusCursor,
+                        ariaLabel: focusOn
+                            ? t().adjFocusCursor(focusBandName)
+                            : t().focusCursorSwitch,
+                        iconName: "focusCursor",
+                        hint: focusOn ? focusBandName : undefined,
+                        checked: focusOn,
+                        focusKey: "focus-cursor",
+                        onActivate: toggleFocusCursor,
+                        after: focusOn ? (
+                            <FocusCursorOptions bandPx={focusBandPx} />
+                        ) : undefined,
+                    },
                     {
                         value: "readingGuide",
                         label: t().readingGuide,
@@ -473,6 +491,43 @@ function CuesCard() {
                 onToggle={toggle(visibility)}
             />
         </Card>
+    );
+}
+
+function FocusCursorOptions({
+    bandPx,
+}: {
+    bandPx: Exclude<FocusCursorBandPx, 0>;
+}) {
+    const applySize = (value: string) => {
+        const next = normalizeFocusCursorBandPx(Number(value));
+        if (!focusCursorOn(next)) return;
+        rememberFocusCursorBandPx(next);
+        patchA11ySettings({ focusCursorBandPx: next });
+        const label = focusCursorBandName(next);
+        const hint = `${next}px`;
+        announce(t().focusCursorSizeAnnounce(`${label} ${hint}`));
+    };
+    return (
+        <div className="unilens-a11y-focus-cursor-opts">
+            <ChoiceGroup<string>
+                label={t().focusCursorGroup}
+                columns={3}
+                focusPrefix="focusCursorBand"
+                current={String(bandPx)}
+                options={FOCUS_CURSOR_BAND_SIZES.map((value) => {
+                    const label = focusCursorBandName(value);
+                    const hint = `${value}px`;
+                    return {
+                        value: String(value),
+                        label,
+                        hint,
+                        ariaLabel: t().focusCursorSizeAria(`${label} ${hint}`),
+                    };
+                })}
+                onSelect={applySize}
+            />
+        </div>
     );
 }
 
@@ -535,10 +590,12 @@ function PointerHaloOptions({
                 current={typeof px === "number" ? String(px) : ""}
                 options={POINTER_HALO_FIXED_PX.map((value) => {
                     const label = pointerHaloSizeName(value);
+                    const hint = `${value}px`;
                     return {
                         value: String(value),
                         label,
-                        ariaLabel: t().pointerHaloSizeAria(label),
+                        hint,
+                        ariaLabel: t().pointerHaloSizeAria(`${label} ${hint}`),
                         preview: () => (
                             <HaloPreview
                                 diameter={pointerHaloPreviewDiameter(value)}
@@ -710,8 +767,9 @@ export function VisualTab() {
 
     return (
         <>
-            <PresetsCard />
-            <LanguageCard />
+            <PageTextCard />
+            <ColorModeCard />
+            <ToneCard />
             <CuesCard />
         </>
     );
@@ -755,7 +813,7 @@ function ToneCard() {
         <Card title={t().toneTitle} iconName="contrast">
             <ChoiceGroup<DisplaySaturation>
                 label={t().saturationGroup}
-                columns={5}
+                columns={3}
                 focusPrefix="saturation"
                 current={s.saturation}
                 options={(
@@ -1273,17 +1331,6 @@ function SmallBoostCard() {
     );
 }
 
-export function TextTab() {
-    useExternalSignal(onA11yLangChange);
-    return (
-        <>
-            <PageTextCard />
-            <ColorModeCard />
-            <ToneCard />
-        </>
-    );
-}
-
 // ── Tools ──────────────────────────────────────────────────────────────────
 
 function SelectionCard({
@@ -1587,6 +1634,8 @@ export function ToolsTab({
     useExternalSignal(onA11yLangChange);
     return (
         <>
+            <PresetsCard />
+            <LanguageCard />
             <FocusEnhanceCard />
             <TextPlateCard />
             <TextStrokeCard />

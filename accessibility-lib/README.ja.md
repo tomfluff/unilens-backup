@@ -45,7 +45,8 @@ make build
 | `make serve-frontend softbank-mirror` | フロントのみ（ポート 8000） |
 | `make serve-frontend softbank-mirror-recruit` | 採用ミラー（ポート 8002） |
 | `make serve-frontend dev-demo` | 簡易デモ（ポート 8001） |
-| `make serve-target accessibility-lib` | このライブラリだけ watch ビルド |
+| `make serve-target accessibility-lib` | このライブラリだけ watch ビルド（保存時に frontend へ自動コピー） |
+| `cd accessibility-lib && npm run dev` | 上と同じ（Make なし / Windows 向け） |
 | `cd accessibility-lib && make build` | 型チェック後に単一の `dist/accessibility.js` を出力 |
 | `cd accessibility-lib && make lint` | 型チェック |
 | `cd accessibility-lib && make test` | 単体テスト |
@@ -120,7 +121,11 @@ python3 -m http.server 8002
 
 Windows で `python3` が無いときは `python -m http.server 8000` を使います。
 
-ブラウザで http://127.0.0.1:8000/ を開きます。ソースを直したら **2 → 3 を再実行**し、ブラウザを再読み込みしてください。
+ブラウザで http://127.0.0.1:8000/ を開きます。
+
+**開発中は watch を使う（推奨）:** 別ターミナルで `cd accessibility-lib && npm run dev` を起動したままにすると、ソース保存のたびに `frontend/*/accessibility.js` へ自動コピーされます。`live-server` や `python -m http.server` と併用するとブラウザも自動更新されます。
+
+手動ビルドの場合は **2 → 3 を再実行**し、ブラウザを再読み込みしてください。
 
 型チェックとテスト:
 
@@ -135,19 +140,21 @@ npx vitest run
 リポジトリルートから:
 
 ```powershell
+# ターミナル 1: 保存時に自動ビルド＋フロントへコピー
 cd accessibility-lib
 npm install
-npx tsc -b
-npx esbuild src/main.tsx --outfile=dist/accessibility.js --bundle --minify --loader:.css=text
+npm run dev
 
-cd ..
-Copy-Item accessibility-lib/dist/accessibility.js frontend/softbank-mirror/accessibility.js -Force
-
-# 採用ミラーへも反映する場合:
-Copy-Item accessibility-lib/dist/accessibility.js frontend/softbank-mirror-recruit/accessibility.js -Force
-
+# ターミナル 2: ページ配信
 cd frontend/softbank-mirror
-python -m http.server 8000
+npx live-server --port=8000
+```
+
+一回だけビルドして反映する場合:
+
+```powershell
+cd accessibility-lib
+npm run build
 ```
 
 ## 任意の HTML への埋め込み

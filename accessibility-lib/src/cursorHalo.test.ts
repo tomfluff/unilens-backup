@@ -21,18 +21,20 @@ import {
 } from "./cursorHalo";
 
 describe("pointer halo sizes", () => {
-    it("offers off plus 5 / 20 / 40 px and 5% / 10% / 15% of the viewport", () => {
-        expect(POINTER_HALO_PX).toEqual([0, 5, 20, 40, "5%", "10%", "15%"]);
-        expect(POINTER_HALO_ON_PX).toEqual([5, 20, 40, "5%", "10%", "15%"]);
+    it("offers off plus 20 / 40 / 80 px and 5% / 10% / 15% of the viewport", () => {
+        expect(POINTER_HALO_PX).toEqual([0, 20, 40, 80, "5%", "10%", "15%"]);
+        expect(POINTER_HALO_ON_PX).toEqual([20, 40, 80, "5%", "10%", "15%"]);
         expect(POINTER_HALO_DEFAULT_PX).toBe(20);
     });
 
     it("keeps only those diameters after hydration garbage", () => {
         expect(normalizePointerHaloPx(20)).toBe(20);
         expect(normalizePointerHaloPx("40")).toBe(40);
+        expect(normalizePointerHaloPx(80)).toBe(80);
         expect(normalizePointerHaloPx("5%")).toBe("5%");
         expect(normalizePointerHaloPx("15%")).toBe("15%");
-        expect(normalizePointerHaloPx("5")).toBe(5);
+        expect(normalizePointerHaloPx(5)).toBe(20);
+        expect(normalizePointerHaloPx("5")).toBe(20);
         expect(normalizePointerHaloPx(12)).toBe(0);
         expect(normalizePointerHaloPx(undefined)).toBe(0);
         expect(normalizePointerHaloPx("8%")).toBe(0);
@@ -41,6 +43,7 @@ describe("pointer halo sizes", () => {
     it("maps viewport percents to vmin so the circle tracks the shorter screen side", () => {
         expect(pointerHaloCssDiameter(0)).toBe("0px");
         expect(pointerHaloCssDiameter(20)).toBe("20px");
+        expect(pointerHaloCssDiameter(80)).toBe("80px");
         expect(pointerHaloCssDiameter("5%")).toBe("5vmin");
         expect(pointerHaloCssDiameter("10%")).toBe("10vmin");
         expect(pointerHaloCssDiameter("15%")).toBe("15vmin");
@@ -48,7 +51,7 @@ describe("pointer halo sizes", () => {
 
     it("treats viewport percents as on", () => {
         expect(pointerHaloOn(0)).toBe(false);
-        expect(pointerHaloOn(5)).toBe(true);
+        expect(pointerHaloOn(20)).toBe(true);
         expect(pointerHaloOn("10%")).toBe(true);
     });
 
@@ -63,8 +66,8 @@ describe("pointer halo sizes", () => {
         expect(lastOnPointerHaloPx()).toBe(40);
         rememberPointerHaloOnPx(0);
         expect(lastOnPointerHaloPx()).toBe(40);
-        rememberPointerHaloOnPx(5);
-        expect(lastOnPointerHaloPx()).toBe(5);
+        rememberPointerHaloOnPx(80);
+        expect(lastOnPointerHaloPx()).toBe(80);
         rememberPointerHaloOnPx("15%");
         expect(lastOnPointerHaloPx()).toBe("15%");
         rememberPointerHaloOnPx(POINTER_HALO_DEFAULT_PX);

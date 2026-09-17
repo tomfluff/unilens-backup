@@ -36,7 +36,6 @@ export { TEXT_ADJUST_LEVELS } from "./textAdjustLevels";
 
 const TAB_ICONS: Record<PanelTab, IconName> = {
     visual: "contrast",
-    text: "textColor",
     tools: "lab",
 };
 

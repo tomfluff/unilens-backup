@@ -5,7 +5,7 @@ import type { TextAdjustLevel } from "./textAdjustLevels";
 
 export type { TextAdjustLevel } from "./textAdjustLevels";
 
-export const PANEL_TABS = ["visual", "text", "tools"] as const;
+export const PANEL_TABS = ["visual", "tools"] as const;
 export type PanelTab = (typeof PANEL_TABS)[number];
 
 export const A11Y_LANG_CODES = ["ja", "en"] as const;
@@ -26,7 +26,7 @@ export type DisplaySaturation = "standard" | "soft" | "low" | "mono" | "high";
 export type DisplayContrast = "standard" | "strong" | "max";
 
 /** 0 = off. Diameter of the pointer halo; the OS cursor size is unchanged. */
-export const POINTER_HALO_FIXED_PX = [5, 20, 40] as const;
+export const POINTER_HALO_FIXED_PX = [20, 40, 80] as const;
 /** Diameter as a percent of the shorter viewport side (CSS `vmin`). */
 export const POINTER_HALO_VIEWPORT_PCT = ["5%", "10%", "15%"] as const;
 export const POINTER_HALO_ON_PX = [
@@ -65,16 +65,40 @@ export function pointerHaloPreviewDiameter(size: PointerHaloPx): number {
     if (size === "5%") return 22;
     if (size === "10%") return 32;
     if (size === "15%") return 42;
-    if (size === 5 || size === 20 || size === 40) return size;
+    if (typeof size === "number") return size;
     return POINTER_HALO_DEFAULT_PX;
 }
 
 export function normalizePointerHaloPx(n: unknown): PointerHaloPx {
-    if (n === 0 || n === 5 || n === 20 || n === 40) return n;
-    if (n === "0" || n === "5" || n === "20" || n === "40") {
+    if (n === 5 || n === "5") return 20;
+    if (n === 0 || n === 20 || n === 40 || n === 80) return n;
+    if (n === "0" || n === "20" || n === "40" || n === "80") {
         return Number(n) as PointerHaloPx;
     }
     if (n === "5%" || n === "10%" || n === "15%") return n;
+    return 0;
+}
+
+/** 0 = off. Full-width clear band height in CSS pixels, centered on the pointer. */
+export const FOCUS_CURSOR_BAND_SIZES = [80, 150, 240] as const;
+export const FOCUS_CURSOR_BAND_PX = [0, ...FOCUS_CURSOR_BAND_SIZES] as const;
+export type FocusCursorBandPx = (typeof FOCUS_CURSOR_BAND_PX)[number];
+
+/** Band height used when the visitor turns the focus cursor on. */
+export const FOCUS_CURSOR_DEFAULT_BAND_PX =
+    150 satisfies Exclude<FocusCursorBandPx, 0>;
+
+export function focusCursorOn(
+    n: FocusCursorBandPx,
+): n is Exclude<FocusCursorBandPx, 0> {
+    return n !== 0;
+}
+
+export function normalizeFocusCursorBandPx(n: unknown): FocusCursorBandPx {
+    if (n === 0 || n === 80 || n === 150 || n === 240) return n;
+    if (n === "0" || n === "80" || n === "150" || n === "240") {
+        return Number(n) as FocusCursorBandPx;
+    }
     return 0;
 }
 
@@ -393,9 +417,10 @@ export interface A11ySettings {
     pointerHaloColor: PointerHaloColor;
     pointerHaloOpacity: PointerHaloOpacity;
     /**
-     * Dim the page except a full-width, 150px-tall band centered on the pointer.
+     * 0 = off. Full-width clear band height in CSS pixels, centered on the
+     * pointer; the rest of the viewport is dimmed.
      */
-    focusCursor: boolean;
+    focusCursorBandPx: FocusCursorBandPx;
     /** A 600×10px bar that follows the pointer as a reading ruler. */
     readingGuide: boolean;
     readingGuideStyle: ReadingGuideStyle;
@@ -428,7 +453,7 @@ export const A11Y_DEFAULTS: A11ySettings = {
     pointerHaloPx: 0,
     pointerHaloColor: POINTER_HALO_DEFAULT_COLOR,
     pointerHaloOpacity: POINTER_HALO_DEFAULT_OPACITY,
-    focusCursor: false,
+    focusCursorBandPx: 0,
     readingGuide: false,
     readingGuideStyle: READING_GUIDE_DEFAULT_STYLE,
     readingGuidePosition: READING_GUIDE_DEFAULT_POSITION,
@@ -487,7 +512,7 @@ export const A11Y_SETTING_KEYS = [
     "pointerHaloPx",
     "pointerHaloColor",
     "pointerHaloOpacity",
-    "focusCursor",
+    "focusCursorBandPx",
     "readingGuide",
     "readingGuideStyle",
     "readingGuidePosition",

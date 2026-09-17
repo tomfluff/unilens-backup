@@ -106,7 +106,7 @@ function pickA11y(s: Settings): A11ySettings {
         pointerHaloPx: s.pointerHaloPx,
         pointerHaloColor: s.pointerHaloColor,
         pointerHaloOpacity: s.pointerHaloOpacity,
-        focusCursor: s.focusCursor,
+        focusCursorBandPx: s.focusCursorBandPx,
         readingGuide: s.readingGuide,
         readingGuideStyle: s.readingGuideStyle,
         readingGuidePosition: s.readingGuidePosition,

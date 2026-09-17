@@ -12,6 +12,7 @@
 import {
     A11Y_LANG_CODES,
     type A11yLang,
+    type FocusCursorBandPx,
     type PanelTab,
     type PointerHaloPx,
 } from "./accessibilityStoreTypes";
@@ -59,8 +60,7 @@ const ja = {
     hintClose: "閉じる",
 
     tabs: {
-        visual: "見やすさ",
-        text: "文字・色",
+        visual: "アクセシビリティ",
         tools: "Lab",
     } satisfies Record<PanelTab, string>,
 
@@ -83,7 +83,7 @@ const ja = {
     adjFocusEnhance: (name: string) => `カーソル ${name}`,
     adjPointerHalo: (size: string) =>
         size ? `カーソルカラー ${size}` : "カーソルカラー",
-    adjFocusCursor: "フォーカスカーソル",
+    adjFocusCursor: (size: string) => `フォーカスカーソル ${size}`,
     adjReadingGuide: "リーディングガイド",
     adjTextStroke: (name: string) => `縁取り ${name}`,
     adjReduceMotion: "アニメ停止",
@@ -216,9 +216,9 @@ const ja = {
     pointerHaloOff: "カーソルカラーをオフにしました",
     pointerHaloGroup: "円の大きさ",
     pointerHaloSize: {
-        5: "小",
-        20: "中",
-        40: "大",
+        20: "小",
+        40: "中",
+        80: "大",
         "5%": "5%",
         "10%": "10%",
         "15%": "15%",
@@ -249,9 +249,17 @@ const ja = {
     pointerHaloOpacityAnnounce: (name: string) => `透明度を${name}にしました`,
     focusCursor: "フォーカスカーソル",
     focusCursorSwitch:
-        "マウス位置を中心に、横いっぱい・高さ150px以外を少し暗くする",
+        "マウス位置を中心に、横いっぱいの読み取り帯以外を少し暗くする",
     focusCursorOn: "フォーカスカーソルをオンにしました",
     focusCursorOff: "フォーカスカーソルをオフにしました",
+    focusCursorGroup: "帯の高さ",
+    focusCursorSize: {
+        80: "小",
+        150: "中",
+        240: "大",
+    },
+    focusCursorSizeAria: (size: string) => `帯の高さ: ${size}`,
+    focusCursorSizeAnnounce: (size: string) => `帯の高さを${size}にしました`,
     readingGuide: "リーディングガイド",
     readingGuideSwitch: "マウス位置に横600px・高さ10pxの棒を表示する",
     readingGuideOn: "リーディングガイドをオンにしました",
@@ -498,8 +506,7 @@ const en: A11yMessages = {
     hintClose: "close",
 
     tabs: {
-        visual: "Visibility",
-        text: "Text & Color",
+        visual: "Accessibility",
         tools: "Lab",
     } satisfies Record<PanelTab, string>,
 
@@ -521,7 +528,7 @@ const en: A11yMessages = {
     adjFocusEnhance: (name: string) => `Cursor ${name}`,
     adjPointerHalo: (size) =>
         size ? `Cursor color ${size}` : "Cursor color",
-    adjFocusCursor: "Focus cursor",
+    adjFocusCursor: (size) => `Focus cursor: ${size}`,
     adjReadingGuide: "Reading guide",
     adjTextStroke: (name) => `Outline: ${name}`,
     adjReduceMotion: "Stop motion",
@@ -653,9 +660,9 @@ const en: A11yMessages = {
     pointerHaloOff: "Cursor color turned off",
     pointerHaloGroup: "Circle size",
     pointerHaloSize: {
-        5: "Small",
-        20: "Medium",
-        40: "Large",
+        20: "Small",
+        40: "Medium",
+        80: "Large",
         "5%": "5%",
         "10%": "10%",
         "15%": "15%",
@@ -686,9 +693,17 @@ const en: A11yMessages = {
     pointerHaloOpacityAnnounce: (name) => `Transparency set to ${name}`,
     focusCursor: "Focus cursor",
     focusCursorSwitch:
-        "Dim the page except a full-width 150px-tall band at the pointer",
+        "Dim the page except a full-width reading band at the pointer",
     focusCursorOn: "Focus cursor turned on",
     focusCursorOff: "Focus cursor turned off",
+    focusCursorGroup: "Band height",
+    focusCursorSize: {
+        80: "Small",
+        150: "Medium",
+        240: "Large",
+    },
+    focusCursorSizeAria: (size) => `Band height: ${size}`,
+    focusCursorSizeAnnounce: (size) => `Band height set to ${size}`,
     readingGuide: "Reading guide",
     readingGuideSwitch: "Show a 600×10px bar at the pointer",
     readingGuideOn: "Reading guide turned on",
@@ -1013,6 +1028,11 @@ export function fontScaleLabel(level: 1 | 2 | 3): string {
 export function pointerHaloSizeName(px: PointerHaloPx): string {
     if (px === 0) return "";
     return t().pointerHaloSize[px];
+}
+
+/** Small / medium / large band height for the focus cursor. */
+export function focusCursorBandName(px: Exclude<FocusCursorBandPx, 0>): string {
+    return t().focusCursorSize[px];
 }
 
 /** For tests/verification. Exposes the Japanese dictionary as the reference for the type and for coverage checks. */

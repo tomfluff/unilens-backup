@@ -12,9 +12,11 @@ import {
     type A11ySettings,
     type AutoTextMode,
     CONTRAST_FILTER,
+    FOCUS_CURSOR_DEFAULT_BAND_PX,
     type DisplayTheme,
     normalizePointerHaloColor,
     normalizePointerHaloOpacity,
+    normalizeFocusCursorBandPx,
     normalizePointerHaloPx,
     normalizeReadingGuidePosition,
     normalizeReadingGuideStyle,
@@ -80,6 +82,13 @@ const THEMES: Record<DisplayTheme, 1> = {
     invert: 1,
 };
 
+function migrateLegacyFocusCursor(s: A11ySettings & { focusCursor?: unknown }) {
+    if (s.focusCursor === true) {
+        s.focusCursorBandPx = FOCUS_CURSOR_DEFAULT_BAND_PX;
+    }
+    delete s.focusCursor;
+}
+
 function normalizeA11yFields(s: A11ySettings): void {
     if (!(s.theme in THEMES)) s.theme = "standard";
     if (!(s.saturation in SATURATION_FILTER)) s.saturation = "standard";
@@ -103,7 +112,8 @@ function normalizeA11yFields(s: A11ySettings): void {
     s.pointerHaloPx = normalizePointerHaloPx(s.pointerHaloPx);
     s.pointerHaloColor = normalizePointerHaloColor(s.pointerHaloColor);
     s.pointerHaloOpacity = normalizePointerHaloOpacity(s.pointerHaloOpacity);
-    s.focusCursor = s.focusCursor === true;
+    migrateLegacyFocusCursor(s);
+    s.focusCursorBandPx = normalizeFocusCursorBandPx(s.focusCursorBandPx);
     s.readingGuide = s.readingGuide === true;
     s.readingGuideStyle = normalizeReadingGuideStyle(s.readingGuideStyle);
     s.readingGuidePosition = normalizeReadingGuidePosition(
@@ -124,7 +134,8 @@ function normalizeSettings(s: Settings): void {
         s.selectionFontLevel = 2;
     s.speechRateLevel = normalizeSpeechRateLevel(s.speechRateLevel);
     s.speechHighlight = s.speechHighlight !== false;
-    if (!(PANEL_TABS as readonly string[]).includes(s.panelTab))
+    const panelTab = s.panelTab as string;
+    if (panelTab === "text" || !(PANEL_TABS as readonly string[]).includes(panelTab))
         s.panelTab = "visual";
     if (
         s.panelLang != null &&

@@ -6,6 +6,7 @@ import {
     type A11yLang,
     fontScaleLabel,
     getA11yLang,
+    focusCursorBandName,
     pointerHaloSizeName,
     setA11yLang,
     t,
@@ -122,18 +123,29 @@ describe("combining with language-independent values", () => {
         expect(fontScaleLabel(2)).toBe("大 195%");
     });
 
+    it("focus cursor band sizes are small / medium / large", () => {
+        setA11yLang("ja");
+        expect(focusCursorBandName(80)).toBe("小");
+        expect(focusCursorBandName(150)).toBe("中");
+        expect(focusCursorBandName(240)).toBe("大");
+        setA11yLang("en");
+        expect(focusCursorBandName(80)).toBe("Small");
+        expect(focusCursorBandName(150)).toBe("Medium");
+        expect(focusCursorBandName(240)).toBe("Large");
+    });
+
     it("pointer halo sizes are small / medium / large, or a screen percent", () => {
         setA11yLang("ja");
-        expect(pointerHaloSizeName(5)).toBe("小");
-        expect(pointerHaloSizeName(20)).toBe("中");
-        expect(pointerHaloSizeName(40)).toBe("大");
+        expect(pointerHaloSizeName(20)).toBe("小");
+        expect(pointerHaloSizeName(40)).toBe("中");
+        expect(pointerHaloSizeName(80)).toBe("大");
         expect(pointerHaloSizeName("5%")).toBe("5%");
         expect(pointerHaloSizeName("15%")).toBe("15%");
         expect(pointerHaloSizeName(0)).toBe("");
         setA11yLang("en");
-        expect(pointerHaloSizeName(5)).toBe("Small");
-        expect(pointerHaloSizeName(20)).toBe("Medium");
-        expect(pointerHaloSizeName(40)).toBe("Large");
+        expect(pointerHaloSizeName(20)).toBe("Small");
+        expect(pointerHaloSizeName(40)).toBe("Medium");
+        expect(pointerHaloSizeName(80)).toBe("Large");
         expect(pointerHaloSizeName("10%")).toBe("10%");
     });
 
