@@ -300,6 +300,25 @@ def _call_stub(meta: dict, message: str) -> str:
     )
 
 
+# One dispatch table for every route that talks to a model. The stub takes only
+# (meta, message), so its entries adapt the shape here rather than widening the
+# stub's signature; `_run` is the single place an unknown provider can fail.
+PROVIDERS = {
+    "openai": {"call": _call_openai, "stream": _stream_openai},
+    "gemini": {"call": _call_gemini, "stream": _stream_gemini},
+    "stub": {
+        "call": lambda meta, message, **_: _call_stub(meta, message),
+        "stream": lambda meta, message, **_: _stream_stub(meta, message),
+    },
+}
+
+
+def _run(kind: str, provider: str, **kw):
+    if provider not in PROVIDERS:
+        raise ValueError(f"unknown provider: {provider}")
+    return PROVIDERS[provider][kind](**kw)
+
+
 def create_app():
     app = Flask(__name__)
     app.config["MAX_CONTENT_LENGTH"] = 25 * 1024 * 1024  # reject absurd payloads
@@ -548,16 +567,15 @@ def create_app():
             t0 = time.perf_counter()
             parts = []
             try:
-                if provider == "openai":
-                    deltas = _stream_openai(
-                        png_b64, viewport_b64, meta, provider_history, message
-                    )
-                elif provider == "gemini":
-                    deltas = _stream_gemini(
-                        png_b64, viewport_b64, meta, provider_history, message
-                    )
-                else:
-                    deltas = _stream_stub(meta, message)
+                deltas = _run(
+                    "stream",
+                    provider,
+                    png_b64=png_b64,
+                    viewport_b64=viewport_b64,
+                    meta=meta,
+                    history=provider_history,
+                    message=message,
+                )
                 for delta in deltas:
                     parts.append(delta)
                     yield sse({"delta": delta})
@@ -633,16 +651,15 @@ def create_app():
         provider = _provider()
         t0 = time.perf_counter()
         try:
-            if provider == "openai":
-                reply = _call_openai(
-                    png_b64, viewport_b64, meta, provider_history, message
-                )
-            elif provider == "gemini":
-                reply = _call_gemini(
-                    png_b64, viewport_b64, meta, provider_history, message
-                )
-            else:
-                reply = _call_stub(meta, message)
+            reply = _run(
+                "call",
+                provider,
+                png_b64=png_b64,
+                viewport_b64=viewport_b64,
+                meta=meta,
+                history=provider_history,
+                message=message,
+            )
         except Exception as e:  # surface provider errors to the popover
             return jsonify({"error": f"{type(e).__name__}: {e}"}), 502
         latency_ms = round((time.perf_counter() - t0) * 1000)

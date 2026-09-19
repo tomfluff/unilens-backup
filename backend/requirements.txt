@@ -4,3 +4,4 @@ python-dotenv>=1.2
 openai>=2.0
 google-genai>=1.60
 black==26.5.1
+pytest>=8.0
