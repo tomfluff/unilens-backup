@@ -34,6 +34,30 @@ export interface Settings {
     chatFontSize: number;
     /** popover pinned position — null = follow the cursor (survives reloads) */
     pinnedPos: { left: number; top: number } | null;
+    /** send the page inventory (interactables, headings, text) with every capture */
+    inventory: boolean;
+    /** stop descending past this depth (body = 0) when building the inventory */
+    inventoryMaxDepth: number;
+    /** nodes at or above this depth also carry a subtree text summary */
+    inventorySummaryDepth: number;
+    /** max chars of ownText / summary per inventory node */
+    inventorySummaryCap: number;
+    /** stop emitting inventory nodes once the serialized size reaches this */
+    inventoryMaxBytes: number;
+    /** stop emitting inventory nodes past this count (OpenAI strict-mode enum cap is 1000) */
+    inventoryMaxNodes: number;
+    /** highlight outline width, screen px per band */
+    ringWidth: number;
+    /** scale the outline with the zoom level instead of a fixed screen width */
+    ringScale: boolean;
+    /** pulse the outline briefly when a highlight appears */
+    pulse: boolean;
+    /** minimap target marker size in px */
+    minimapMarkerSize: number;
+    /** send the screenshots with a locate ("where is X?") request */
+    locateScreenshot: boolean;
+    /** what Escape dismisses first when a highlight and the popover are both up */
+    escapeOrder: "highlight" | "popover" | "both";
 }
 
 const DEFAULTS: Settings = {
@@ -60,6 +84,18 @@ const DEFAULTS: Settings = {
     captureRes: 1,
     chatFontSize: 14,
     pinnedPos: null,
+    inventory: true,
+    inventoryMaxDepth: 12,
+    inventorySummaryDepth: 2,
+    inventorySummaryCap: 160,
+    inventoryMaxBytes: 200000,
+    inventoryMaxNodes: 900,
+    ringWidth: 2,
+    ringScale: false,
+    pulse: false,
+    minimapMarkerSize: 16,
+    locateScreenshot: true,
+    escapeOrder: "highlight",
 };
 
 /** keys of Settings whose value is a boolean — the on/off rows in the panel */
@@ -88,6 +124,65 @@ export const TOGGLE_LABELS: Record<BoolSettingKey, string> = {
     minimap: "Minimap while zoomed",
     lensPan: "Lens panning (freeze page while zoomed)",
     debugView: "Debug view (ctrl+shift+D)",
+    inventory: "Send page inventory with captures",
+    ringScale: "Scale the outline with zoom",
+    pulse: "Pulse the outline briefly",
+    locateScreenshot: "Send screenshot with locate",
+};
+
+/** keys of Settings whose value is a number — the integer knob rows in the panel */
+export type NumSettingKey = {
+    [K in keyof Settings]: Settings[K] extends number ? K : never;
+}[keyof Settings];
+
+/**
+ * Bounds and label for every numeric knob, keyed like TOGGLE_LABELS so a numeric
+ * setting without a row here fails typecheck. captureRes and chatFontSize have
+ * hand-written <select>s in SettingsPanel; their rows describe the same choices.
+ */
+export const NUMBER_KNOBS: Record<
+    NumSettingKey,
+    { label: string; min: number; max: number; step: number }
+> = {
+    captureRes: { label: "Capture resolution", min: 0.5, max: 1, step: 0.5 },
+    chatFontSize: { label: "Chat text size", min: 14, max: 20, step: 3 },
+    inventoryMaxDepth: {
+        label: "Inventory max depth",
+        min: 1,
+        max: 40,
+        step: 1,
+    },
+    inventorySummaryDepth: {
+        label: "Inventory summary depth",
+        min: 0,
+        max: 10,
+        step: 1,
+    },
+    inventorySummaryCap: {
+        label: "Inventory text cap (chars)",
+        min: 20,
+        max: 1000,
+        step: 10,
+    },
+    inventoryMaxBytes: {
+        label: "Inventory byte cap",
+        min: 10000,
+        max: 2000000,
+        step: 10000,
+    },
+    inventoryMaxNodes: {
+        label: "Inventory node cap",
+        min: 50,
+        max: 1000,
+        step: 50,
+    },
+    ringWidth: { label: "Outline width (px)", min: 1, max: 6, step: 1 },
+    minimapMarkerSize: {
+        label: "Minimap marker size (px)",
+        min: 8,
+        max: 32,
+        step: 2,
+    },
 };
 
 export const useSettings = create<Settings>()(
