@@ -41,10 +41,17 @@ SESSIONS_DIR.mkdir(exist_ok=True)
 CAPTURE_ID_RE = re.compile(r"^[0-9a-f]{12}$")
 
 
+def _text_field(data: dict, key: str) -> str:
+    """A request's text field as a stripped string; any non-string JSON value counts
+    as empty, so it fails the route's own empty check instead of raising."""
+    v = data.get(key)
+    return v.strip() if isinstance(v, str) else ""
+
+
 def _capture_dir(cap_id) -> Path | None:
     """The capture's directory, or None unless the id has the minted syntax,
     resolves inside CAPTURES_DIR and exists."""
-    if not isinstance(cap_id, str) or not CAPTURE_ID_RE.match(cap_id):
+    if not isinstance(cap_id, str) or not CAPTURE_ID_RE.fullmatch(cap_id):
         return None
     p = CAPTURES_DIR / cap_id
     if not p.resolve().is_relative_to(CAPTURES_DIR.resolve()) or not p.is_dir():
@@ -59,7 +66,7 @@ SESSION_ID_RE = CAPTURE_ID_RE
 def _session_path(sid) -> Path | None:
     """The session's file, or None unless the id has the minted syntax and
     resolves inside SESSIONS_DIR. A malformed id is simply "no session"."""
-    if not isinstance(sid, str) or not SESSION_ID_RE.match(sid):
+    if not isinstance(sid, str) or not SESSION_ID_RE.fullmatch(sid):
         return None
     p = SESSIONS_DIR / f"{sid}.json"
     if not p.resolve().is_relative_to(SESSIONS_DIR.resolve()):
@@ -414,11 +421,11 @@ def _inventory_error(inventory: list) -> str | None:
         if not NODE_KEYS <= set(node) <= NODE_KEYS | NODE_OPTIONAL_KEYS:
             return f"{where}: keys must be i, r, n, b, v and optionally t, s, p"
         i = node["i"]
-        if not isinstance(i, str) or not NODE_ID_RE.match(i):
+        if not isinstance(i, str) or not NODE_ID_RE.fullmatch(i):
             return f"{where}: bad id"
         if i in seen:
             return f"{where}: duplicate id {i}"
-        if node["r"] not in NODE_ROLES:
+        if not isinstance(node["r"], str) or node["r"] not in NODE_ROLES:
             return f"{where}: bad role"
         for key in ("n", "t"):
             if key in node and not (
@@ -859,7 +866,7 @@ def create_app():
         if not os.getenv("OPENAI_API_KEY"):
             return jsonify({"error": "no OPENAI_API_KEY — TTS unavailable"}), 501
         data = request.get_json(force=True)
-        text = (data.get("text") or "").strip()[:2000]
+        text = _text_field(data, "text")[:2000]
         if not text:
             return jsonify({"error": "empty text"}), 400
         tid = uuid.uuid4().hex[:12]
@@ -918,7 +925,7 @@ def create_app():
             )
         data = request.get_json(force=True)
         cap_id = data.get("capture_id", "")
-        message = (data.get("message") or "").strip()
+        message = _text_field(data, "message")
         if not message:
             return jsonify({"error": "empty message"}), 400
         sid = data.get("session_id") or ""
@@ -980,7 +987,7 @@ def create_app():
             )
         data = request.get_json(force=True)
         cap_id = data.get("capture_id", "")
-        message = (data.get("message") or "").strip()
+        message = _text_field(data, "message")
         if not message:
             return jsonify({"error": "empty message"}), 400
         sid = data.get("session_id") or ""
@@ -1032,7 +1039,7 @@ def create_app():
             )
         data = request.get_json(force=True)
         cap_id = data.get("capture_id", "")
-        question = (data.get("question") or "").strip()
+        question = _text_field(data, "question")
         if not question:
             return jsonify({"error": "empty question"}), 400
         if len(question) > MAX_QUESTION_CHARS:

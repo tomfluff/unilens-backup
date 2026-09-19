@@ -345,3 +345,16 @@ def test_adversarial_text_neither_steers_the_stub_nor_reaches_the_model_verbatim
         marked = json.dumps(marker.join(s.split()), ensure_ascii=False)[1:-1]
         assert verbatim not in body
         assert marked in body
+
+
+def test_non_string_text_fields_are_400_not_500(client, capture):
+    cap = capture()
+    for q in ([1, 2], {"a": 1}, 7, True):
+        assert _locate(client, cap, question=q).status_code == 400, q
+    r = client.post("/api/chat", json={"capture_id": cap, "message": ["x"]})
+    assert r.status_code == 400
+
+
+def test_ids_with_a_trailing_newline_are_rejected(client, capture):
+    """`$` under re.match accepts "abc\\n"; the gates use fullmatch."""
+    assert _locate(client, capture() + "\n").status_code == 404

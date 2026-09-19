@@ -126,3 +126,19 @@ def test_capture_rejects_an_oversized_inventory(client):
     res = _post_bad(client, nodes)
     assert res.status_code == 413
     assert res.get_json() == {"error": "inventory too large"}
+
+
+def test_capture_rejects_a_non_string_role_and_a_newline_id(client):
+    from tests.conftest import PNG_B64
+
+    base = {"i": "n0", "r": "container", "n": "", "b": [0, 0, 1, 1], "v": 1}
+    for bad in (
+        {**base, "r": ["button"]},
+        {**base, "r": {"x": 1}},
+        {**base, "i": "n0\n"},
+    ):
+        r = client.post(
+            "/api/capture",
+            json={"image": PNG_B64, "meta": {}, "inventory": [bad]},
+        )
+        assert r.status_code == 400, bad
