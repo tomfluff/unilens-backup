@@ -11,7 +11,8 @@ import {
     setCurrentCapture,
     showHighlights,
 } from "./highlight";
-import { updateSetting } from "./settings";
+import type { HighlightPreset } from "./highlightStyles";
+import { updateSetting, useSettings } from "./settings";
 
 const rect = (left: number, top: number, width: number, height: number) => ({
     left,
@@ -55,6 +56,16 @@ beforeEach(() => {
 });
 
 describe("showHighlights", () => {
+    it("draws with the default preset when the store holds an unknown style", () => {
+        const { registry } = mount();
+        // bypasses clampSetting on purpose: the fallback is for a hot store edit
+        useSettings.setState({ highlightStyle: "nope" as HighlightPreset });
+        expect(show(registry, ["n1"], "Choose Pro")).toBe(true);
+        expect((layerBoxes()[0] as HTMLElement).style.border).toContain(
+            "2px solid",
+        );
+    });
+
     it("draws one box per target with the preset's geometry", () => {
         const { registry } = mount();
         expect(show(registry, ["n1"], "Choose Pro")).toBe(true);

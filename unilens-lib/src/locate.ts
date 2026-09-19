@@ -80,6 +80,19 @@ export interface LocateRequest {
     screenshot: boolean;
 }
 
+/** the last locate, for the debug panel; null until one completes */
+export interface LocateDebug {
+    code: LocateCode;
+    bubble: string;
+    highlights: (Highlight & { label: string })[];
+    token: number;
+    at: number;
+}
+
+let lastLocateDebug: LocateDebug | null = null;
+
+export const getLastLocateDebug = () => lastLocateDebug;
+
 /** POST /api/locate. The token is minted before the request so a later question supersedes it. */
 export async function postLocate(
     backend: string,
@@ -87,6 +100,8 @@ export async function postLocate(
     labelFor: (id: string) => string,
 ): Promise<{ outcome: LocateOutcome; token: number; captureId: string }> {
     const token = nextToken();
+    let outcome: LocateOutcome;
+    let captureId = req.captureId;
     try {
         const res = await fetch(`${backend}/api/locate`, {
             method: "POST",
@@ -99,16 +114,20 @@ export async function postLocate(
             }),
         });
         const body = await res.json().catch(() => ({}));
-        return {
-            outcome: locateOutcome(res.status, body, labelFor),
-            token,
-            captureId: (body as LocateBody).capture_id ?? req.captureId,
-        };
+        outcome = locateOutcome(res.status, body, labelFor);
+        captureId = (body as LocateBody).capture_id ?? req.captureId;
     } catch (err) {
-        return {
-            outcome: locateOutcome(0, err, labelFor),
-            token,
-            captureId: req.captureId,
-        };
+        outcome = locateOutcome(0, err, labelFor);
     }
+    lastLocateDebug = {
+        code: outcome.code,
+        bubble: outcome.bubble,
+        highlights: outcome.highlights.map((h) => ({
+            ...h,
+            label: labelFor(h.id),
+        })),
+        token,
+        at: Date.now(),
+    };
+    return { outcome, token, captureId };
 }

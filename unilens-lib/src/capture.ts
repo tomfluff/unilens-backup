@@ -6,6 +6,7 @@
 import html2canvas from "html2canvas";
 import {
     buildInventory,
+    type Inventory,
     inventoryOptionsFrom,
     type WireNode,
 } from "./inventory";
@@ -153,6 +154,33 @@ export interface CaptureDebug {
 let lastCaptureDebug: CaptureDebug | null = null;
 
 export const getCaptureDebug = () => lastCaptureDebug;
+
+/** what the last capture's inventory cost; null until a capture builds one */
+export interface InventoryDebug {
+    nodes: number;
+    bytes: number;
+    /** nodes dropped by the budget guard */
+    truncated: number;
+    at: number;
+}
+
+let lastInventoryDebug: InventoryDebug | null = null;
+
+export const getLastInventoryDebug = () => lastInventoryDebug;
+
+/** capture() records here; exported so the shape is testable without html2canvas */
+export function recordInventoryDebug(
+    inv: Pick<Inventory, "wire" | "bytes" | "truncated"> | undefined,
+) {
+    lastInventoryDebug = inv
+        ? {
+              nodes: inv.wire.length,
+              bytes: inv.bytes,
+              truncated: inv.truncated,
+              at: Date.now(),
+          }
+        : null;
+}
 
 /** main.tsx tags the backend id once the upload completes */
 export function tagLastCapture(id: string) {
@@ -320,6 +348,7 @@ export async function capture(
               clientToContent,
           )
         : undefined;
+    recordInventoryDebug(inv);
 
     const vvp = window.visualViewport;
     const dpr = window.devicePixelRatio || 1;

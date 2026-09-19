@@ -14,8 +14,13 @@
 import { type ReactNode, useEffect, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import styled from "styled-components";
-import { getCaptureDebug, getTraceDebug } from "./capture";
+import {
+    getCaptureDebug,
+    getLastInventoryDebug,
+    getTraceDebug,
+} from "./capture";
 import { getDwellDebug } from "./hint";
+import { getLastLocateDebug } from "./locate";
 import { getSettings, updateSetting, useSettings } from "./settings";
 import { getTargetZoom, getView, getZoom, getZoomTrace } from "./zoom";
 
@@ -212,6 +217,8 @@ function DebugPanel({ sources }: { sources: DebugSources }) {
     const z = getZoom();
     const zt = getZoomTrace(Date.now());
     const c = getCaptureDebug();
+    const inv = getLastInventoryDebug();
+    const loc = getLastLocateDebug();
 
     return (
         <PanelContainer>
@@ -267,6 +274,28 @@ function DebugPanel({ sources }: { sources: DebugSources }) {
                         ? `${c.id ?? "(not uploaded)"} · ${fmtAge(Date.now() - c.at)} ago` +
                           `\npre ${c.timings.preprocess} + render ${c.timings.render} + enc ${c.timings.encode} = ${c.timings.total}ms` +
                           `\n${c.pageW}×${c.pageH} · ${c.images} image${c.images === 1 ? "" : "s"} · ${c.sizes.pageKB}KB + ${c.sizes.closeupKB}KB`
+                        : "none yet"}
+                </RowText>
+            </Section>
+
+            {/* ~4 bytes per token is the usual English/JSON rule of thumb; a readout, not a budget */}
+            <Section title="Inventory">
+                <RowText>
+                    {(inv
+                        ? `${inv.nodes} nodes · ${Math.round(inv.bytes / 1024)}KB · ~${Math.round(inv.bytes / 4)} tokens · ${inv.truncated} dropped`
+                        : "none yet") +
+                        `\nstyle ${getSettings().highlightStyle}`}
+                </RowText>
+            </Section>
+
+            <Section title="Last locate">
+                <RowText>
+                    {loc
+                        ? `${loc.code} · token ${loc.token} · ${fmtAge(Date.now() - loc.at)} ago` +
+                          `\n${loc.bubble || "(no answer)"}` +
+                          loc.highlights
+                              .map((h) => `\n${h.id} ${h.role}: ${h.label}`)
+                              .join("")
                         : "none yet"}
                 </RowText>
             </Section>

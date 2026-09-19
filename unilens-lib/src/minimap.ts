@@ -79,7 +79,10 @@ export function setTargets(els: Element[]) {
 
 function drawTargets(g: CanvasRenderingContext2D, scale: number) {
     const size = getSettings().minimapMarkerSize;
-    const ring = HIGHLIGHT_PRESETS[getSettings().highlightStyle].ring;
+    const ring = (
+        HIGHLIGHT_PRESETS[getSettings().highlightStyle] ??
+        HIGHLIGHT_PRESETS["wcag-ring"]
+    ).ring;
     const v = getView();
     for (const el of targets) {
         if (!el.isConnected) continue;
