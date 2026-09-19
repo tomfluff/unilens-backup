@@ -41,6 +41,14 @@ only.
   node if it is a landmark, heading, or labelled, or has ≥2 child branches each
   holding a visible descendant. Collapse unlabelled single-child chains.
 
+**Said plainly:** UniLens's region summaries are the cheap client-side version
+(region role, heading text, the names of emitted children), not Region4Web's
+fine-tuned 0.6B summariser, and there is no on-page LLM. The evidence supports
+the shape; the quality of *our* summaries is something the runner measures.
+What nobody in this literature measures is whether a *human* found the element
+the model named; that measurement, with low-vision magnifier users, is the
+paper.
+
 **Novel, if we do it:** a locate-specific, budgeted representation combining
 persistent ids, full-page rendered text leaves, visibility geometry, additive
 region summaries, evaluated with low-vision users. **Not novel:** AX role/name
@@ -144,12 +152,14 @@ invalid ids and benign utility.
 - Zhou et al. WebArena. arXiv 2307.13854 ✅ https://arxiv.org/abs/2307.13854
 - Drouin et al. BrowserGym. arXiv 2412.05467 ✅ https://arxiv.org/abs/2412.05467
 - Zheng et al. SeeAct. arXiv 2401.01614 ✅ https://arxiv.org/abs/2401.01614
-- Koh et al. VisualWebArena. arXiv 2401.13649 🔍 https://arxiv.org/abs/2401.13649
-- Gou et al. UGround / SeeAct-V. arXiv 2410.05243 🔍 https://arxiv.org/abs/2410.05243
-- AgentOccam. arXiv 2410.13825 🔍 https://arxiv.org/abs/2410.13825
-- LineRetriever. arXiv 2507.00210 🔍 https://arxiv.org/abs/2507.00210
-- A11y-Compressor. arXiv 2605.00551 🔍 https://arxiv.org/abs/2605.00551
+- Koh et al. VisualWebArena. arXiv 2401.13649 ✅ https://arxiv.org/abs/2401.13649
+- Gou et al. UGround / SeeAct-V. arXiv 2410.05243 ✅ https://arxiv.org/abs/2410.05243
+- AgentOccam. arXiv 2410.13825 ✅ https://arxiv.org/abs/2410.13825
+- LineRetriever. arXiv 2507.00210 ✅ https://arxiv.org/abs/2507.00210
+- A11y-Compressor. arXiv 2605.00551 ✅ https://arxiv.org/abs/2605.00551
 - Nguyen et al. PageGuide. arXiv 2604.23772 ✅ https://arxiv.org/abs/2604.23772
+- Playwright aria snapshots ✅ https://playwright.dev/docs/aria-snapshots
+- browser-use interactive-element detection ✅ https://deepwiki.com/browser-use/browser-use/5.3-interactive-element-detection
 - W3C. WCAG 2.2 Understanding 2.4.11, 2.4.13, 1.4.11, 2.2.2, 2.3.3, 2.5.5 ✅ https://www.w3.org/WAI/WCAG22/Understanding/
 - W3C. Technique C40, two-colour focus indicator ✅ https://www.w3.org/WAI/WCAG22/Techniques/css/C40
 - W3C. Technique C39 ✅ https://www.w3.org/WAI/WCAG22/Techniques/css/C39.html
