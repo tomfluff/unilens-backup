@@ -5,6 +5,7 @@
  */
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import type { HighlightPreset } from "./highlightStyles";
 
 export interface Settings {
     zoom: boolean;
@@ -58,6 +59,8 @@ export interface Settings {
     locateScreenshot: boolean;
     /** what Escape dismisses first when a highlight and the popover are both up */
     escapeOrder: "highlight" | "popover" | "both";
+    /** which HIGHLIGHT_PRESETS entry the located-element outline is drawn with */
+    highlightStyle: HighlightPreset;
 }
 
 const DEFAULTS: Settings = {
@@ -96,6 +99,7 @@ const DEFAULTS: Settings = {
     minimapMarkerSize: 16,
     locateScreenshot: true,
     escapeOrder: "highlight",
+    highlightStyle: "wcag-ring",
 };
 
 /** keys of Settings whose value is a boolean — the on/off rows in the panel */
