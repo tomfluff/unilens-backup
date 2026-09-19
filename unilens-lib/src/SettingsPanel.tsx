@@ -5,8 +5,14 @@
 import { useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
 import styled from "styled-components";
+import { HIGHLIGHT_PRESETS, type HighlightPreset } from "./highlightStyles";
 import {
     type BoolSettingKey,
+    clampSetting,
+    ESCAPE_ORDERS,
+    NUMBER_KNOBS,
+    type NumSettingKey,
+    type Settings,
     TOGGLE_LABELS,
     updateSetting,
     useSettings,
@@ -21,6 +27,64 @@ const SettingsSelect = styled.select`
     border-radius: 6px;
     padding: 3px 6px;
 `;
+
+const SettingsNumber = styled.input`
+    margin-left: auto;
+    width: 7em;
+    background: #26263e;
+    color: #eee;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    border-radius: 6px;
+    padding: 3px 6px;
+`;
+
+// captureRes and chatFontSize keep their hand-written selects below: their choices
+// have names (Screen/Reduced, Normal/Large), not a free number.
+const SELECT_KNOBS: NumSettingKey[] = ["captureRes", "chatFontSize"];
+const NUMBER_ROWS = (Object.keys(NUMBER_KNOBS) as NumSettingKey[]).filter(
+    (key) => !SELECT_KNOBS.includes(key),
+);
+const PRESETS = Object.keys(HIGHLIGHT_PRESETS) as HighlightPreset[];
+const ESCAPE_KEYS = Object.keys(ESCAPE_ORDERS) as Settings["escapeOrder"][];
+
+/**
+ * Free-number row. Uncontrolled and committed on blur/Enter so typing "160" into a
+ * field whose min is 20 is not clamped to "20" mid-keystroke; the key remounts it
+ * when the store changes elsewhere, so it never shows a stale value.
+ */
+function NumberRow({
+    setting,
+    value,
+}: {
+    setting: NumSettingKey;
+    value: number;
+}) {
+    const knob = NUMBER_KNOBS[setting];
+    const shown = clampSetting(setting, value);
+    const commit = (el: HTMLInputElement) => {
+        const v = el.valueAsNumber;
+        if (Number.isFinite(v))
+            updateSetting(setting, clampSetting(setting, v));
+        else el.value = String(shown);
+    };
+    return (
+        <SettingLabel>
+            {knob.label}
+            <SettingsNumber
+                key={shown}
+                type="number"
+                min={knob.min}
+                max={knob.max}
+                step={knob.step}
+                defaultValue={shown}
+                onBlur={(e) => commit(e.currentTarget)}
+                onKeyDown={(e) => {
+                    if (e.key === "Enter") e.currentTarget.blur();
+                }}
+            />
+        </SettingLabel>
+    );
+}
 
 const ZoomButton = styled.button`
     width: 28px;
@@ -150,7 +214,7 @@ function Panel() {
     const settings = useSettings();
 
     return (
-        <PanelContainer>
+        <PanelContainer id="unilens-settings-panel">
             <PanelTitle>UniLens settings</PanelTitle>
 
             {/* The feature list outgrew the window. It scrolls; the title and zoom controls
@@ -202,6 +266,55 @@ function Panel() {
                         <option value="20">X-Large</option>
                     </SettingsSelect>
                 </SettingLabel>
+
+                <SettingLabel>
+                    Highlight style
+                    <SettingsSelect
+                        value={clampSetting(
+                            "highlightStyle",
+                            settings.highlightStyle,
+                        )}
+                        onChange={(e) =>
+                            updateSetting(
+                                "highlightStyle",
+                                e.currentTarget.value as HighlightPreset,
+                            )
+                        }
+                    >
+                        {PRESETS.map((preset) => (
+                            <option key={preset} value={preset}>
+                                {preset}
+                            </option>
+                        ))}
+                    </SettingsSelect>
+                </SettingLabel>
+
+                <SettingLabel>
+                    Escape order
+                    <SettingsSelect
+                        value={clampSetting(
+                            "escapeOrder",
+                            settings.escapeOrder,
+                        )}
+                        onChange={(e) =>
+                            updateSetting(
+                                "escapeOrder",
+                                e.currentTarget
+                                    .value as Settings["escapeOrder"],
+                            )
+                        }
+                    >
+                        {ESCAPE_KEYS.map((order) => (
+                            <option key={order} value={order}>
+                                {ESCAPE_ORDERS[order]}
+                            </option>
+                        ))}
+                    </SettingsSelect>
+                </SettingLabel>
+
+                {NUMBER_ROWS.map((key) => (
+                    <NumberRow key={key} setting={key} value={settings[key]} />
+                ))}
             </SettingsList>
 
             {/* manual zoom is part of the zoom feature — hide it when the toggle is off */}
@@ -218,6 +331,8 @@ function SettingsLauncher() {
             <GearButton
                 type="button"
                 title="UniLens settings"
+                aria-expanded={open}
+                aria-controls="unilens-settings-panel"
                 onClick={() => setOpen((o) => !o)}
             >
                 ⚙

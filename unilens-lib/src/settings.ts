@@ -5,7 +5,7 @@
  */
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import type { HighlightPreset } from "./highlightStyles";
+import { HIGHLIGHT_PRESETS, type HighlightPreset } from "./highlightStyles";
 
 export interface Settings {
     zoom: boolean;
@@ -188,6 +188,36 @@ export const NUMBER_KNOBS: Record<
         step: 2,
     },
 };
+
+/** the escapeOrder choices with their panel labels; the keys are the valid stored values */
+export const ESCAPE_ORDERS: Record<Settings["escapeOrder"], string> = {
+    highlight: "Escape clears the outline first",
+    popover: "Escape closes the popover first",
+    both: "Escape clears the outline and closes the popover",
+};
+
+/**
+ * Persisted values can be stale or out of range (an old build, a hand-edited
+ * localStorage). Numbers are clamped into their NUMBER_KNOBS bounds; an unknown
+ * enum value falls back to its default; everything else passes through.
+ */
+export function clampSetting<K extends keyof Settings>(
+    key: K,
+    value: Settings[K],
+): Settings[K] {
+    if (typeof value === "number") {
+        if (!Number.isFinite(value)) return DEFAULTS[key];
+        const { min, max } = NUMBER_KNOBS[key as NumSettingKey];
+        return Math.min(max, Math.max(min, value)) as Settings[K];
+    }
+    if (key === "escapeOrder" && !(String(value) in ESCAPE_ORDERS)) {
+        return DEFAULTS[key];
+    }
+    if (key === "highlightStyle" && !(String(value) in HIGHLIGHT_PRESETS)) {
+        return DEFAULTS[key];
+    }
+    return value;
+}
 
 export const useSettings = create<Settings>()(
     persist(() => ({ ...DEFAULTS }), { name: "unilens-settings" }),

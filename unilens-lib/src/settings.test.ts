@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
     type BoolSettingKey,
+    clampSetting,
     getSettings,
     NUMBER_KNOBS,
     type NumSettingKey,
@@ -38,5 +39,36 @@ describe("settings tables", () => {
         for (const key of boolKeys) {
             expect(TOGGLE_LABELS[key], key).toBeTruthy();
         }
+    });
+});
+
+describe("clampSetting", () => {
+    it("clamps numbers into their NUMBER_KNOBS bounds", () => {
+        const { min, max } = NUMBER_KNOBS.ringWidth;
+        expect(clampSetting("ringWidth", min - 5)).toBe(min);
+        expect(clampSetting("ringWidth", max + 5)).toBe(max);
+        expect(clampSetting("ringWidth", min)).toBe(min);
+    });
+
+    it("falls back to the default for a non-finite number", () => {
+        expect(clampSetting("inventoryMaxNodes", Number.NaN)).toBe(
+            defaults.inventoryMaxNodes,
+        );
+    });
+
+    it("falls back to the default for an unknown enum value", () => {
+        const stale = "gone" as Settings["escapeOrder"];
+        expect(clampSetting("escapeOrder", stale)).toBe(defaults.escapeOrder);
+        expect(clampSetting("escapeOrder", "both")).toBe("both");
+        const gone = "neon" as Settings["highlightStyle"];
+        expect(clampSetting("highlightStyle", gone)).toBe(
+            defaults.highlightStyle,
+        );
+        expect(clampSetting("highlightStyle", "glow")).toBe("glow");
+    });
+
+    it("passes everything else through", () => {
+        expect(clampSetting("zoom", false)).toBe(false);
+        expect(clampSetting("pinnedPos", null)).toBeNull();
     });
 });
