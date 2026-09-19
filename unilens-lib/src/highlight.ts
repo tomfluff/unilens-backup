@@ -10,6 +10,7 @@
  */
 
 import { HIGHLIGHT_PRESETS, type HighlightStyle } from "./highlightStyles";
+import { setTargets } from "./minimap";
 import { getSettings } from "./settings";
 import { getZoom, isOwnMutation, onViewChange, onZoomChange } from "./zoom";
 
@@ -331,6 +332,7 @@ export function showHighlights(
     }
     render();
     setupSubscriptions();
+    setTargets(boxes.map((b) => b.el));
     if (opts.label) announce(`Found: ${opts.label}`);
     return true;
 }
@@ -341,6 +343,7 @@ export function clearHighlights() {
     dimBox?.remove();
     dimBox = null;
     teardownSubscriptions();
+    setTargets([]);
 }
 
 /** synchronous re-lay, for tests and for callers that just moved the view themselves */
