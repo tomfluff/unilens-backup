@@ -155,8 +155,10 @@ function bandWidth(): number {
     return Math.min(8, Math.max(3, s.ringWidth * getZoom().scale));
 }
 
+// hydration sanitises highlightStyle; the fallback is defence in depth against a hot store edit
 const currentPreset = (): HighlightStyle =>
-    HIGHLIGHT_PRESETS[getSettings().highlightStyle];
+    HIGHLIGHT_PRESETS[getSettings().highlightStyle] ??
+    HIGHLIGHT_PRESETS["wcag-ring"];
 
 function render() {
     const preset = currentPreset();

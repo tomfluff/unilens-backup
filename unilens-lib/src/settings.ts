@@ -197,30 +197,79 @@ export const ESCAPE_ORDERS: Record<Settings["escapeOrder"], string> = {
 };
 
 /**
- * Persisted values can be stale or out of range (an old build, a hand-edited
- * localStorage). Numbers are clamped into their NUMBER_KNOBS bounds; an unknown
- * enum value falls back to its default; everything else passes through.
+ * Numeric settings offered as a named-choice <select> rather than a free number.
+ * The panel renders these; hydration rejects a stored value that is not one of them.
+ */
+export const SELECT_CHOICES = {
+    captureRes: [
+        { value: 1, label: "Screen (1x)" },
+        { value: 0.5, label: "Reduced (0.5x)" },
+    ],
+    chatFontSize: [
+        { value: 14, label: "Normal" },
+        { value: 17, label: "Large" },
+        { value: 20, label: "X-Large" },
+    ],
+} satisfies Partial<Record<NumSettingKey, { value: number; label: string }[]>>;
+export type SelectKnobKey = keyof typeof SELECT_CHOICES;
+
+/**
+ * Persisted values can be stale, out of range or the wrong type (an old build, a
+ * hand-edited localStorage). Dispatch is by key: numeric knobs coerce with Number()
+ * and clamp into their NUMBER_KNOBS bounds (or must be one of their SELECT_CHOICES),
+ * enums must be a table key, booleans must be booleans; anything else falls back to
+ * the default. pinnedPos passes through: its consumer validates the coordinates.
  */
 export function clampSetting<K extends keyof Settings>(
     key: K,
-    value: Settings[K],
+    value: unknown,
 ): Settings[K] {
-    if (typeof value === "number") {
-        if (!Number.isFinite(value)) return DEFAULTS[key];
+    const fallback = DEFAULTS[key];
+    if (Object.hasOwn(NUMBER_KNOBS, key)) {
+        const n = Number(value);
+        if (!Number.isFinite(n)) return fallback;
+        if (Object.hasOwn(SELECT_CHOICES, key)) {
+            const choices = SELECT_CHOICES[key as SelectKnobKey];
+            return choices.some((c) => c.value === n)
+                ? (n as Settings[K])
+                : fallback;
+        }
         const { min, max } = NUMBER_KNOBS[key as NumSettingKey];
-        return Math.min(max, Math.max(min, value)) as Settings[K];
+        return Math.min(max, Math.max(min, n)) as Settings[K];
     }
-    if (key === "escapeOrder" && !(String(value) in ESCAPE_ORDERS)) {
-        return DEFAULTS[key];
+    if (key === "escapeOrder") {
+        return Object.hasOwn(ESCAPE_ORDERS, String(value))
+            ? (value as Settings[K])
+            : fallback;
     }
-    if (key === "highlightStyle" && !(String(value) in HIGHLIGHT_PRESETS)) {
-        return DEFAULTS[key];
+    if (key === "highlightStyle") {
+        return Object.hasOwn(HIGHLIGHT_PRESETS, String(value))
+            ? (value as Settings[K])
+            : fallback;
     }
-    return value;
+    if (typeof fallback === "boolean") {
+        return typeof value === "boolean" ? (value as Settings[K]) : fallback;
+    }
+    return value as Settings[K];
+}
+
+/** hydration: every stored key is sanitised before it becomes state; unknown keys are dropped */
+function mergePersisted(persisted: unknown, current: Settings): Settings {
+    const stored = (persisted ?? {}) as Record<string, unknown>;
+    const next = { ...current };
+    for (const key of Object.keys(DEFAULTS) as (keyof Settings)[]) {
+        if (Object.hasOwn(stored, key)) {
+            next[key] = clampSetting(key, stored[key]) as never;
+        }
+    }
+    return next;
 }
 
 export const useSettings = create<Settings>()(
-    persist(() => ({ ...DEFAULTS }), { name: "unilens-settings" }),
+    persist(() => ({ ...DEFAULTS }), {
+        name: "unilens-settings",
+        merge: mergePersisted,
+    }),
 );
 
 /** live snapshot for non-React modules (React components use the useSettings hook) */

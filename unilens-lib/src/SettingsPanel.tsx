@@ -12,6 +12,8 @@ import {
     ESCAPE_ORDERS,
     NUMBER_KNOBS,
     type NumSettingKey,
+    SELECT_CHOICES,
+    type SelectKnobKey,
     type Settings,
     TOGGLE_LABELS,
     updateSetting,
@@ -38,11 +40,11 @@ const SettingsNumber = styled.input`
     padding: 3px 6px;
 `;
 
-// captureRes and chatFontSize keep their hand-written selects below: their choices
-// have names (Screen/Reduced, Normal/Large), not a free number.
-const SELECT_KNOBS: NumSettingKey[] = ["captureRes", "chatFontSize"];
+// captureRes and chatFontSize render as named-choice selects (Screen/Reduced,
+// Normal/Large), not free-number rows.
+const SELECT_KNOBS = Object.keys(SELECT_CHOICES) as SelectKnobKey[];
 const NUMBER_ROWS = (Object.keys(NUMBER_KNOBS) as NumSettingKey[]).filter(
-    (key) => !SELECT_KNOBS.includes(key),
+    (key) => !Object.hasOwn(SELECT_CHOICES, key),
 );
 const PRESETS = Object.keys(HIGHLIGHT_PRESETS) as HighlightPreset[];
 const ESCAPE_KEYS = Object.keys(ESCAPE_ORDERS) as Settings["escapeOrder"][];
@@ -61,11 +63,12 @@ function NumberRow({
 }) {
     const knob = NUMBER_KNOBS[setting];
     const shown = clampSetting(setting, value);
+    // Write the clamped value back: when it equals the stored one the key does not
+    // change, so nothing else would replace the out-of-range text in the field.
     const commit = (el: HTMLInputElement) => {
-        const v = el.valueAsNumber;
-        if (Number.isFinite(v))
-            updateSetting(setting, clampSetting(setting, v));
-        else el.value = String(shown);
+        const v = clampSetting(setting, el.valueAsNumber);
+        el.value = String(v);
+        updateSetting(setting, v);
     };
     return (
         <SettingLabel>
@@ -234,38 +237,26 @@ function Panel() {
                     </SettingLabel>
                 ))}
 
-                <SettingLabel>
-                    Capture resolution
-                    <SettingsSelect
-                        value={String(settings.captureRes)}
-                        onChange={(e) =>
-                            updateSetting(
-                                "captureRes",
-                                parseFloat(e.currentTarget.value),
-                            )
-                        }
-                    >
-                        <option value="1">Screen (1x)</option>
-                        <option value="0.5">Reduced (0.5x)</option>
-                    </SettingsSelect>
-                </SettingLabel>
-
-                <SettingLabel>
-                    Chat text size
-                    <SettingsSelect
-                        value={String(settings.chatFontSize)}
-                        onChange={(e) =>
-                            updateSetting(
-                                "chatFontSize",
-                                parseInt(e.currentTarget.value, 10),
-                            )
-                        }
-                    >
-                        <option value="14">Normal</option>
-                        <option value="17">Large</option>
-                        <option value="20">X-Large</option>
-                    </SettingsSelect>
-                </SettingLabel>
+                {SELECT_KNOBS.map((key) => (
+                    <SettingLabel key={key}>
+                        {NUMBER_KNOBS[key].label}
+                        <SettingsSelect
+                            value={String(clampSetting(key, settings[key]))}
+                            onChange={(e) =>
+                                updateSetting(
+                                    key,
+                                    clampSetting(key, e.currentTarget.value),
+                                )
+                            }
+                        >
+                            {SELECT_CHOICES[key].map((c) => (
+                                <option key={c.value} value={c.value}>
+                                    {c.label}
+                                </option>
+                            ))}
+                        </SettingsSelect>
+                    </SettingLabel>
+                ))}
 
                 <SettingLabel>
                     Highlight style
