@@ -10,7 +10,7 @@ import pytest
 
 import app as app_module
 from app import LOCATE_RULES
-from conftest import PNG_B64
+from conftest import CAP_ID, PNG_B64
 
 PNG = base64.b64decode(PNG_B64)
 META = {"url": "https://example.test/", "clickX": 10, "clickY": 20}
@@ -67,7 +67,7 @@ ADVERSARIAL_NODES = [
 
 @pytest.fixture
 def capture(client):
-    def make(inventory=INVENTORY, cap_id="cap1"):
+    def make(inventory=INVENTORY, cap_id=CAP_ID):
         cap_dir = app_module.CAPTURES_DIR / cap_id
         cap_dir.mkdir()
         (cap_dir / "capture.png").write_bytes(PNG)
@@ -98,6 +98,17 @@ def test_404_unknown_capture(client):
     assert _locate(client, "nope").status_code == 404
 
 
+def test_400_on_bad_input(client, capture):
+    cap = capture()
+    res = _locate(client, cap, question="x" * 501)
+    assert res.status_code == 400
+    assert res.get_json() == {"error": "question too long"}
+    assert _locate(client, cap, question="x" * 500).status_code == 200
+    res = _locate(client, cap, screenshot="no")
+    assert res.status_code == 400
+    assert res.get_json() == {"error": "screenshot must be a boolean"}
+
+
 def test_429_once_the_locate_bucket_fills(client, capture, monkeypatch):
     monkeypatch.setattr(app_module, "GUARDRAILS", True)
     monkeypatch.setitem(app_module.RATE_LIMITS, "locate", (2, 60))
@@ -124,7 +135,7 @@ def test_stub_picks_the_deepest_match(client, capture):
     res = _locate(client, capture())
     assert res.status_code == 200
     body = res.get_json()
-    assert body["capture_id"] == "cap1"
+    assert body["capture_id"] == CAP_ID
     assert body["answer"] == Q
     assert body["highlights"] == TARGET  # n2's `t` matches too, but shallower
 

@@ -7,7 +7,7 @@ import json
 import pytest
 
 import app as app_module
-from conftest import PNG_B64
+from conftest import CAP_ID, PNG_B64
 
 PNG = base64.b64decode(PNG_B64)
 META = {"url": "https://example.test/", "clickX": 10, "clickY": 20, "scrollDepth": 5}
@@ -15,12 +15,12 @@ META = {"url": "https://example.test/", "clickX": 10, "clickY": 20, "scrollDepth
 
 @pytest.fixture
 def capture(client):
-    cap_dir = app_module.CAPTURES_DIR / "cap1"
+    cap_dir = app_module.CAPTURES_DIR / CAP_ID
     cap_dir.mkdir()
     (cap_dir / "capture.png").write_bytes(PNG)
     (cap_dir / "meta.json").write_text(json.dumps(META), encoding="utf-8")
     (cap_dir / "chat.json").write_text("[]", encoding="utf-8")
-    return "cap1"
+    return CAP_ID
 
 
 def _stream_text(res) -> str:

@@ -36,6 +36,22 @@ SESSIONS_DIR = Path(__file__).parent / "sessions"
 SESSIONS_DIR.mkdir(exist_ok=True)
 
 
+# Capture ids are minted as uuid4().hex[:12] in save_capture; anything else in a
+# request is not an id. The resolve check is belt and braces against traversal.
+CAPTURE_ID_RE = re.compile(r"^[0-9a-f]{12}$")
+
+
+def _capture_dir(cap_id) -> Path | None:
+    """The capture's directory, or None unless the id has the minted syntax,
+    resolves inside CAPTURES_DIR and exists."""
+    if not isinstance(cap_id, str) or not CAPTURE_ID_RE.match(cap_id):
+        return None
+    p = CAPTURES_DIR / cap_id
+    if not p.resolve().is_relative_to(CAPTURES_DIR.resolve()) or not p.is_dir():
+        return None
+    return p
+
+
 def _load_session(sid: str) -> dict | None:
     p = SESSIONS_DIR / f"{sid}.json"
     if not p.is_file():
@@ -352,8 +368,64 @@ def _call_stub(meta: dict, message: str) -> str:
 
 # ── Locate: schema, prompt data, providers ─────────────────────────────────
 
-OPENAI_ENUM_CAP = 1000  # OpenAI strict mode rejects enums above this
+# OpenAI strict mode rejects enums above 1,000 values; ids are at most 6 chars
+# (NODE_ID_RE), so 1,000 of them are ~7 KB, under its 15,000-char total enum
+# and 120,000-char schema limits.
+OPENAI_ENUM_CAP = 1000
 ROLE = Literal["target", "anchor", "source"]
+
+# ── Inventory upload schema ────────────────────────────────────────────────
+# Allowlisted so that `n` and `t` are the only free text the model ever sees
+# from a page (both are datamarked); everything else is an enum or a number.
+NODE_ID_RE = re.compile(r"^n\d{1,5}$")
+NODE_KEYS = {"i", "r", "n", "b", "v"}
+NODE_OPTIONAL_KEYS = {"t", "s", "p"}
+NODE_ROLES = {"button", "link", "input", "heading", "landmark", "text", "container"}
+NODE_STATES = {"checked", "expanded", "disabled", "selected"}
+MAX_NODE_TEXT = 1000
+MAX_INVENTORY_BYTES = 1_000_000
+MAX_INVENTORY_NODES = 5000
+MAX_QUESTION_CHARS = 500
+
+
+def _inventory_error(inventory: list) -> str | None:
+    """Why an uploaded inventory is rejected, or None if every node conforms."""
+    seen: set[str] = set()
+    for k, node in enumerate(inventory):
+        where = f"inventory node {k}"
+        if not isinstance(node, dict):
+            return f"{where}: not an object"
+        if not NODE_KEYS <= set(node) <= NODE_KEYS | NODE_OPTIONAL_KEYS:
+            return f"{where}: keys must be i, r, n, b, v and optionally t, s, p"
+        i = node["i"]
+        if not isinstance(i, str) or not NODE_ID_RE.match(i):
+            return f"{where}: bad id"
+        if i in seen:
+            return f"{where}: duplicate id {i}"
+        if node["r"] not in NODE_ROLES:
+            return f"{where}: bad role"
+        for key in ("n", "t"):
+            if key in node and not (
+                isinstance(node[key], str) and len(node[key]) <= MAX_NODE_TEXT
+            ):
+                return (
+                    f"{where}: {key} must be a string of at most {MAX_NODE_TEXT} chars"
+                )
+        b = node["b"]
+        if not (isinstance(b, list) and len(b) == 4 and all(type(x) is int for x in b)):
+            return f"{where}: b must be four integers"
+        if type(node["v"]) is not int or node["v"] not in (0, 1):
+            return f"{where}: v must be 0 or 1"
+        s = node.get("s")
+        if s is not None and not (
+            isinstance(s, str) and all(tok in NODE_STATES for tok in s.split())
+        ):
+            return f"{where}: bad state"
+        p = node.get("p")
+        if p is not None and not (isinstance(p, str) and p in seen):
+            return f"{where}: p must be the id of an earlier node"
+        seen.add(i)
+    return None
 
 
 def _answer_model(ids: list[str]) -> type[BaseModel]:
@@ -571,8 +643,8 @@ def _load_capture_context(cap_id: str, sid: str):
     model sees: the same list, prefixed with the session context note when
     the session has earlier captures.
     """
-    cap_dir = CAPTURES_DIR / cap_id
-    if not cap_dir.is_dir():
+    cap_dir = _capture_dir(cap_id)
+    if cap_dir is None:
         return None
     meta = json.loads((cap_dir / "meta.json").read_text(encoding="utf-8"))
     session = _load_session(sid) if sid else None
@@ -633,8 +705,17 @@ def create_app():
         inventory = data.get("inventory")
         if not image.startswith("data:image/png;base64,"):
             return jsonify({"error": "image must be a PNG data URL"}), 400
-        if inventory is not None and not isinstance(inventory, list):
-            return jsonify({"error": "inventory must be a list of nodes"}), 400
+        if inventory is not None:
+            if not isinstance(inventory, list):
+                return jsonify({"error": "inventory must be a list of nodes"}), 400
+            inventory_text = json.dumps(inventory)
+            if len(inventory_text.encode("utf-8")) > MAX_INVENTORY_BYTES:
+                return jsonify({"error": "inventory too large"}), 413
+            if len(inventory) > MAX_INVENTORY_NODES:
+                return jsonify({"error": "too many inventory nodes"}), 413
+            problem = _inventory_error(inventory)
+            if problem:
+                return jsonify({"error": problem}), 400
 
         cap_id = uuid.uuid4().hex[:12]
         cap_dir = CAPTURES_DIR / cap_id
@@ -650,9 +731,7 @@ def create_app():
         # The page inventory is kept beside meta, never inside it: only
         # /api/locate reads it, so nothing else has to strip it out.
         if inventory is not None:
-            (cap_dir / "inventory.json").write_text(
-                json.dumps(inventory), encoding="utf-8"
-            )
+            (cap_dir / "inventory.json").write_text(inventory_text, encoding="utf-8")
 
         # Session continuity: join the given session or start a new one
         sid = data.get("session_id") or ""
@@ -703,22 +782,22 @@ def create_app():
 
     @app.get("/api/capture/<cap_id>/image")
     def capture_image(cap_id):
-        p = CAPTURES_DIR / cap_id / "capture.png"
-        if not p.is_file():
+        cap_dir = _capture_dir(cap_id)
+        if cap_dir is None or not (cap_dir / "capture.png").is_file():
             return jsonify({"error": "not found"}), 404
-        return send_file(p)
+        return send_file(cap_dir / "capture.png")
 
     @app.get("/api/capture/<cap_id>/viewport")
     def capture_viewport(cap_id):
-        p = CAPTURES_DIR / cap_id / "viewport.png"
-        if not p.is_file():
+        cap_dir = _capture_dir(cap_id)
+        if cap_dir is None or not (cap_dir / "viewport.png").is_file():
             return jsonify({"error": "not found"}), 404
-        return send_file(p)
+        return send_file(cap_dir / "viewport.png")
 
     @app.get("/api/capture/<cap_id>/detail")
     def capture_detail(cap_id):
-        cap_dir = CAPTURES_DIR / cap_id
-        if not cap_dir.is_dir():
+        cap_dir = _capture_dir(cap_id)
+        if cap_dir is None:
             return jsonify({"error": "unknown capture_id"}), 404
         meta = json.loads((cap_dir / "meta.json").read_text(encoding="utf-8"))
         history = []
@@ -737,8 +816,8 @@ def create_app():
 
     @app.delete("/api/capture/<cap_id>")
     def delete_capture(cap_id):
-        cap_dir = CAPTURES_DIR / cap_id
-        if not cap_dir.is_dir():
+        cap_dir = _capture_dir(cap_id)
+        if cap_dir is None:
             return jsonify({"error": "unknown capture_id"}), 404
         for f in cap_dir.iterdir():
             f.unlink()
@@ -795,8 +874,8 @@ def create_app():
 
     @app.get("/api/capture/<cap_id>")
     def capture_info(cap_id):
-        cap_dir = CAPTURES_DIR / cap_id
-        if not cap_dir.is_dir():
+        cap_dir = _capture_dir(cap_id)
+        if cap_dir is None:
             return jsonify({"error": "unknown capture_id"}), 404
         files = {p.name: p.stat().st_size for p in sorted(cap_dir.iterdir())}
         return jsonify({"id": cap_id, "files": files})
@@ -940,6 +1019,11 @@ def create_app():
         question = (data.get("question") or "").strip()
         if not question:
             return jsonify({"error": "empty question"}), 400
+        if len(question) > MAX_QUESTION_CHARS:
+            return jsonify({"error": "question too long"}), 400
+        screenshot = data.get("screenshot", True)
+        if not isinstance(screenshot, bool):
+            return jsonify({"error": "screenshot must be a boolean"}), 400
         sid = data.get("session_id") or ""
         ctx = _load_capture_context(cap_id, sid)
         if ctx is None:
@@ -966,7 +1050,7 @@ def create_app():
                 history=provider_history,
                 question=question,
                 inventory=inventory,
-                screenshot=bool(data.get("screenshot", True)),
+                screenshot=screenshot,
             )
             result = ANY_ID_ANSWER.model_validate(raw)
         except Exception as e:  # surface provider errors to the popover
