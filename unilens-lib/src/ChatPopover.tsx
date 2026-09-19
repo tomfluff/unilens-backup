@@ -1,6 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import styled from "styled-components";
 import type { CaptureResult } from "./capture";
+import { announce, registerPopoverClose, showHighlights } from "./highlight";
+import { labelOfWire } from "./inventory";
+import { postLocate } from "./locate";
 import { getSettings, useSettings } from "./settings";
 import {
     listen,
@@ -16,6 +19,9 @@ interface Msg {
     text: string;
     /** reply footer: provider · model · images · latency */
     info?: string;
+    /** a system failure (rate limit, backend, network), not an answer: styled apart so a
+     *  participant can tell "the model didn't find it" from "something broke" */
+    error?: boolean;
 }
 
 /**
@@ -149,6 +155,7 @@ const MessageBubble = styled.div<{
     userBg: string;
     aiBg: string;
     bubbleBorder: string;
+    isError?: boolean;
 }>`
     margin: 6px 0;
     padding: 8px 12px;
@@ -157,6 +164,7 @@ const MessageBubble = styled.div<{
     white-space: pre-wrap;
     background: ${(props) => (props.isUser ? props.userBg : props.aiBg)};
     border: ${(props) => props.bubbleBorder};
+    border-left: ${(props) => (props.isError ? "4px solid #b42318" : undefined)};
     margin-left: ${(props) => (props.isUser ? "auto" : 0)};
 `;
 
@@ -428,11 +436,74 @@ export default function ChatPopover({
         scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight });
     }, []);
 
-    useEffect(() => {
-        const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
-        window.addEventListener("keydown", onKey);
-        return () => window.removeEventListener("keydown", onKey);
-    }, [onClose]);
+    // Escape is owned by highlight.ts (one listener decides per keypress, honouring the
+    // escapeOrder setting); the popover only lends it a close callback
+    useEffect(() => registerPopoverClose(onClose), [onClose]);
+
+    // "Where is…" mode: the reply is a location and the element gets outlined.
+    // Only offered when a locate can work: the capture reached the backend and carried
+    // an inventory (design doc: affordance gating).
+    const [locateMode, setLocateMode] = useState(false);
+    const canLocate =
+        captureId !== "local" && (capture.inventory?.length ?? 0) > 0;
+    const labelFor = (id: string) => labelOfWire(id, capture.inventory ?? []);
+
+    async function sendLocate(question: string) {
+        if (!question || busy) return;
+        setMessages((m) => [
+            ...m,
+            { id: `user-${Date.now()}`, role: "user", text: question },
+        ]);
+        setBusy(true);
+        try {
+            const {
+                outcome,
+                token,
+                captureId: cid,
+            } = await postLocate(
+                backend,
+                {
+                    captureId,
+                    sessionId,
+                    question,
+                    screenshot: getSettings().locateScreenshot,
+                },
+                labelFor,
+            );
+            const failed =
+                outcome.code === "rate_limited" || outcome.code === "error";
+            setMessages((m) => [
+                ...m,
+                {
+                    id: `locate-${Date.now()}`,
+                    role: "assistant",
+                    text: outcome.bubble,
+                    error: failed,
+                },
+            ]);
+            // Every outcome goes through the guarded show: a found answer draws, any
+            // other outcome clears the previous outline (the outline always belongs to
+            // the latest question), and a stale answer for an older question or capture
+            // is dropped either way. One audio channel: announce is a no-op under
+            // autoRead, and showHighlights announces "Found" itself.
+            const shown = showHighlights(
+                outcome.code === "found" ? outcome.highlights : [],
+                capture.registry ?? new Map(),
+                cid,
+                token,
+                {
+                    label:
+                        outcome.code === "found"
+                            ? labelFor(outcome.highlights[0].id)
+                            : undefined,
+                },
+            );
+            if (shown && outcome.code !== "found") announce(outcome.live);
+            if (getSettings().autoRead) speak(outcome.bubble);
+        } finally {
+            setBusy(false);
+        }
+    }
 
     const fmtInfo = (d: {
         provider: string;
@@ -562,7 +633,8 @@ export default function ChatPopover({
         const text = input.trim();
         if (!text) return;
         setInput("");
-        sendText(text);
+        if (locateMode && canLocate) sendLocate(text);
+        else sendText(text);
     }
 
     const QUICK_ACTIONS: [string, string][] = [
@@ -678,6 +750,7 @@ export default function ChatPopover({
                         userBg={C.userBubble}
                         aiBg={C.aiBubble}
                         bubbleBorder={C.bubbleBorder}
+                        isError={m.error}
                     >
                         {m.role === "assistant" ? (
                             // biome-ignore lint/security/noDangerouslySetInnerHtml: HTML is escaped in mdLite before formatting tags are added
@@ -739,6 +812,25 @@ export default function ChatPopover({
                 </QuickActionsContainer>
             )}
             <InputContainer>
+                {canLocate && (
+                    <QuickActionButton
+                        type="button"
+                        onClick={() => setLocateMode((v) => !v)}
+                        aria-pressed={locateMode}
+                        disabled={busy}
+                        chipBg={C.chipBg}
+                        chipBorder={C.chipBorder}
+                        chipText={C.chipText}
+                        busy={busy}
+                        title="Ask where something is on this page; the answer is outlined"
+                        style={{
+                            fontSize: Math.max(12, fs - 2),
+                            fontWeight: locateMode ? 700 : undefined,
+                        }}
+                    >
+                        Where is…
+                    </QuickActionButton>
+                )}
                 {settings.voiceInput && sttSupported && (
                     <VoiceButton
                         type="button"
@@ -766,7 +858,11 @@ export default function ChatPopover({
                         e.nativeEvent.keyCode !== 229 &&
                         send()
                     }
-                    placeholder="Ask about this page…"
+                    placeholder={
+                        locateMode && canLocate
+                            ? "Where is… (the answer is outlined on the page)"
+                            : "Ask about this page…"
+                    }
                     inputBg={C.inputBg}
                     inputBorder={C.inputBorder}
                     text={C.text}

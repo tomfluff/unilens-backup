@@ -458,6 +458,16 @@ function byteLength(s: string): number {
         : new TextEncoder().encode(s).length;
 }
 
+/** same fallback chain over the wire form, which is all the popover holds after upload */
+export function labelOfWire(id: string, wire: WireNode[]): string {
+    const node = wire.find((n) => n.i === id);
+    if (!node) return id;
+    if (node.n) return node.n;
+    if (node.t) return node.t;
+    const child = wire.find((n) => n.p === id && n.n);
+    return child ? child.n : node.r;
+}
+
 /** what the popover announces: name, else region text, else the first named child, else tag */
 export function labelOf(id: string, inv: Pick<Inventory, "nodes">): string {
     const node = inv.nodes.find((n) => n.id === id);

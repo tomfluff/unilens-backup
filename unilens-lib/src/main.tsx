@@ -19,6 +19,11 @@ import {
     tagLastCapture,
 } from "./capture";
 import { initDebug } from "./DebugPanel";
+import {
+    clearHighlights,
+    init as initHighlight,
+    setCurrentCapture,
+} from "./highlight";
 import { initHint } from "./hint";
 import { initMinimap } from "./minimap";
 import { initSettings } from "./SettingsPanel";
@@ -136,6 +141,7 @@ export function init(options: InitOptions = {}) {
     startTrace(options.mouseWindow ?? 2.5);
     if (options.zoom ?? true) initZoom();
     initMinimap();
+    initHighlight();
     initSettings();
     setSpeechBackend(backend);
 
@@ -150,6 +156,11 @@ export function init(options: InitOptions = {}) {
         // (pointX, pointY) is the client point being asked about — the click, or the centre
         // of a drag. clientToContent handles both pan engines.
         const p = clientToContent(pointX, pointY);
+        // a new capture retires the previous outline and its ids. Retire the id first:
+        // while this capture renders and uploads, a late answer for the old one must
+        // already be stale, or it could redraw after the clear (Codex review, P1)
+        setCurrentCapture(null);
+        clearHighlights();
         const cap = await capture(Math.round(p.x), Math.round(p.y), el, region);
         let id = "local";
         try {
@@ -158,6 +169,8 @@ export function init(options: InitOptions = {}) {
         } catch (err) {
             console.warn("[UniLens] backend unreachable, chat will fail:", err);
         }
+        // the id exists only now, after upload: this is where the guard learns it
+        setCurrentCapture(id);
         openPopover(clientX, clientY, id, cap, backend);
     }
 

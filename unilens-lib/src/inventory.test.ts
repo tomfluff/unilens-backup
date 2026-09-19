@@ -4,6 +4,7 @@ import {
     type InventoryOptions,
     inventoryOptionsFrom,
     labelOf,
+    labelOfWire,
     type Measure,
     roleOf,
 } from "./inventory";
@@ -315,5 +316,9 @@ describe("labelOf", () => {
         expect(inv.nodes.find((n) => n.id === forkId)?.role).toBe("container");
         expect(labelOf(forkId, inv)).toBe("a");
         expect(labelOf("nope", inv)).toBe("nope");
+        // the wire form gives the same answers
+        expect(labelOfWire(byName(inv, "Sec")?.id ?? "", inv.wire)).toBe("Sec");
+        expect(labelOfWire(forkId, inv.wire)).toBe("a");
+        expect(labelOfWire("nope", inv.wire)).toBe("nope");
     });
 });
