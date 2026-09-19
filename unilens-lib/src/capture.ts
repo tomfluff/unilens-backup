@@ -4,6 +4,11 @@
  * overlays viewport rect + mouse trace + click crosshair, returns PNG + metadata.
  */
 import html2canvas from "html2canvas";
+import {
+    buildInventory,
+    inventoryOptionsFrom,
+    type WireNode,
+} from "./inventory";
 import { getSettings } from "./settings";
 import {
     clientToContent,
@@ -42,6 +47,9 @@ export interface CaptureMeta {
     viewportRect: { x: number; y: number; w: number; h: number };
     /** the DOM element under the alt+click, if enabled */
     element?: ElementContext;
+    /** inventory nodes dropped by the budget guard (the inventory itself travels beside meta) */
+    inventoryTruncated?: number;
+    inventoryBytes?: number;
     /** content-space rect the user selected via alt+drag, if any */
     region?: { x: number; y: number; w: number; h: number };
 }
@@ -106,6 +114,10 @@ export interface CaptureResult {
     /** clean full-resolution crop of what the user currently sees (zoom-aware), if enabled */
     viewportImage?: string;
     meta: CaptureMeta;
+    /** page inventory (wire form) when settings.inventory is on; uploaded beside meta */
+    inventory?: WireNode[];
+    /** inventory id → live element; never serialized */
+    registry?: Map<string, Element>;
 }
 
 // ── Mouse trace state ──────────────────────────────────────────────────────
@@ -294,6 +306,20 @@ export async function capture(
     region?: { x: number; y: number; w: number; h: number },
 ): Promise<CaptureResult> {
     const captureTime = Date.now();
+
+    // Inventory first: it reads the live layout before anything else touches the page.
+    // `visible` is judged against the real viewport, never the alt+drag region.
+    const inv = getSettings().inventory
+        ? buildInventory(
+              document.body,
+              inventoryOptionsFrom(getSettings(), {
+                  w: window.visualViewport?.width ?? window.innerWidth,
+                  h: window.visualViewport?.height ?? window.innerHeight,
+              }),
+              undefined,
+              clientToContent,
+          )
+        : undefined;
 
     const vvp = window.visualViewport;
     const dpr = window.devicePixelRatio || 1;
@@ -550,6 +576,10 @@ export async function capture(
                     ? describeElement(clickedEl)
                     : undefined,
             region: region ? vRect : undefined,
+            inventoryTruncated: inv?.truncated,
+            inventoryBytes: inv?.bytes,
         },
+        inventory: inv?.wire,
+        registry: inv?.registry,
     };
 }

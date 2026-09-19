@@ -118,6 +118,8 @@ async function uploadCapture(
             image: cap.image,
             viewport: cap.viewportImage,
             meta: cap.meta,
+            // beside meta, never inside it: only /api/locate reads it
+            inventory: cap.inventory,
             session_id: getSettings().continuity ? sessionId : null,
         }),
     });

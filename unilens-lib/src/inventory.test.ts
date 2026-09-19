@@ -2,10 +2,12 @@ import { beforeEach, describe, expect, it } from "vitest";
 import {
     buildInventory,
     type InventoryOptions,
+    inventoryOptionsFrom,
     labelOf,
     type Measure,
     roleOf,
 } from "./inventory";
+import { getSettings } from "./settings";
 
 // jsdom has no layout: every element's box comes from a stub keyed by data-box="x,y,w,h"
 // (client px); elements without one are given a small box below the last one so the
@@ -284,6 +286,21 @@ describe("buildInventory: budget guard", () => {
             "r",
             "v",
         ]);
+    });
+});
+
+describe("inventoryOptionsFrom", () => {
+    it("maps every knob and the viewport; the store's defaults are valid options", () => {
+        const opts = inventoryOptionsFrom(getSettings(), { w: 1024, h: 768 });
+        expect(opts).toEqual({
+            maxDepth: getSettings().inventoryMaxDepth,
+            summaryDepth: getSettings().inventorySummaryDepth,
+            summaryCap: getSettings().inventorySummaryCap,
+            maxBytes: getSettings().inventoryMaxBytes,
+            maxNodes: getSettings().inventoryMaxNodes,
+            viewport: { w: 1024, h: 768 },
+        });
+        expect(opts.maxNodes).toBeLessThanOrEqual(1000); // OpenAI strict-mode enum cap
     });
 });
 

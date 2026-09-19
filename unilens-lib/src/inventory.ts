@@ -69,6 +69,27 @@ export interface InventoryOptions {
     viewport: { w: number; h: number };
 }
 
+/** the knobs, as capture.ts reads them; a pure mapping so the wiring is testable */
+export function inventoryOptionsFrom(
+    s: {
+        inventoryMaxDepth: number;
+        inventorySummaryDepth: number;
+        inventorySummaryCap: number;
+        inventoryMaxBytes: number;
+        inventoryMaxNodes: number;
+    },
+    viewport: { w: number; h: number },
+): InventoryOptions {
+    return {
+        maxDepth: s.inventoryMaxDepth,
+        summaryDepth: s.inventorySummaryDepth,
+        summaryCap: s.inventorySummaryCap,
+        maxBytes: s.inventoryMaxBytes,
+        maxNodes: s.inventoryMaxNodes,
+        viewport,
+    };
+}
+
 export interface Inventory {
     nodes: InventoryNode[];
     wire: WireNode[];
