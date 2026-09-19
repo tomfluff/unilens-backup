@@ -75,6 +75,14 @@ per-depth rollup. Privacy rule (no field values or contents) unchanged.
   zoom-scaling.** Measure target-acquisition time (highlight onset → pointer
   on the element) at 1× and 4×.
 
+**Builder decision (2026-09-19): the highlight's visual design is part of the
+research.** The findings above set the default preset and the floor; they do
+not fix the design. `highlight.ts` renders from a parameter object with named
+presets (ring, fill, glow, dim-others, pulse are composable), so yellow
+fills, glows and dimming can be tried against the WCAG ring on the real
+mirrors. Dimming and pulsing are off in the default preset for the reasons
+cited here, and available as presets for exactly that comparison.
+
 **Knobs (evidence silent).**
 - `ringWidth`: default 2 px per band (4 total), constant in screen px
   (Codex); alternative `clamp(3px, 2px × zoom, 8px)` per band (Claude) via
