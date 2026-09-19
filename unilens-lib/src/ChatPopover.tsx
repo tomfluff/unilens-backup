@@ -135,15 +135,24 @@ const ScrollContainer = styled.div`
     padding: 12px;
 `;
 
+// width/height/object-fit are set explicitly: the popover sits in the host
+// page's light DOM, so a host rule such as `img { height: 260px; object-fit:
+// cover }` would otherwise size these (dev-demo has exactly that rule)
 const CaptureImage = styled.img`
+    width: auto;
+    height: auto;
     max-width: 100%;
+    object-fit: contain;
     border-radius: 8px;
     border: 1px solid #333;
     display: block;
 `;
 
 const ViewportImage = styled.img`
+    width: auto;
+    height: auto;
     max-width: 55%;
+    object-fit: contain;
     border-radius: 6px;
     border: 1px solid #446;
     display: block;

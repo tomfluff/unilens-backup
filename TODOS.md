@@ -38,6 +38,18 @@
 **Priority:** P3
 **Depends on:** Step-two trial runner
 
+### Isolate UniLens UI from host page CSS
+
+**What:** Render the popover, settings panel, debug panel, hint chip, minimap, and zoom badge inside a shadow root (styled-components via `StyleSheetManager target={shadowRoot}`), or at minimum give every UniLens root `all: initial` plus explicit values for the properties host type selectors commonly set.
+
+**Why:** All UniLens UI is appended to `documentElement` in the light DOM, so any host type selector applies to it. On 2026-09-19 dev-demo's `img { width:100%; height:260px; object-fit:cover }` turned the popover's close-up into a 176×262 vertical strip; fixed by setting width/height/object-fit explicitly on the two images (`ChatPopover.tsx`). The same leak waits for `button`, `input`, `div`, `span`, `p` rules on the SoftBank mirrors and on any real host, and the fix-per-property approach does not scale.
+
+**Context:** Shadow DOM is the real fix but touches event plumbing: `container.contains(e.target)` checks in `main.tsx` need `e.composedPath()`, the Escape single-owner in `highlight.ts` and `registerPopoverClose` must still see keydown from inside the shadow, `document.activeElement` becomes the host, and the live region for `announce` should stay in the light DOM so screen readers read it. Do it as its own lane with a Codex review; verify on both mirrors at 100/200/400% zoom. Cheaper interim: `all: initial; font: ...` on `PopoverContainer` and the two panels' roots.
+
+**Effort:** M
+**Priority:** P2
+**Depends on:** None; land before the feel-check on the mirrors if their CSS leaks visibly
+
 ### Trial html2canvas-pro as the capture renderer and decide
 
 **What:** Swap `html2canvas` (1.4.1, last release 2022, unmaintained) for `html2canvas-pro` (free, MIT, same API) on a branch, capture `dev-demo` and both SoftBank mirrors at 100/200/400% zoom, diff the PNGs against the current renderer, and decide whether to keep it.
