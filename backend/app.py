@@ -304,11 +304,23 @@ def _call_stub(meta: dict, message: str) -> str:
 # (meta, message), so its entries adapt the shape here rather than widening the
 # stub's signature; `_run` is the single place an unknown provider can fail.
 PROVIDERS = {
-    "openai": {"call": _call_openai, "stream": _stream_openai},
-    "gemini": {"call": _call_gemini, "stream": _stream_gemini},
+    "openai": {
+        "call": _call_openai,
+        "stream": _stream_openai,
+        "model": OPENAI_MODEL,
+        "images": True,
+    },
+    "gemini": {
+        "call": _call_gemini,
+        "stream": _stream_gemini,
+        "model": GEMINI_MODEL,
+        "images": True,
+    },
     "stub": {
         "call": lambda meta, message, **_: _call_stub(meta, message),
         "stream": lambda meta, message, **_: _stream_stub(meta, message),
+        "model": "none",
+        "images": False,
     },
 }
 
@@ -317,6 +329,61 @@ def _run(kind: str, provider: str, **kw):
     if provider not in PROVIDERS:
         raise ValueError(f"unknown provider: {provider}")
     return PROVIDERS[provider][kind](**kw)
+
+
+def _images_sent(provider: str, viewport_b64: str | None) -> int:
+    if not PROVIDERS[provider]["images"]:
+        return 0
+    return 2 if viewport_b64 else 1
+
+
+def _load_capture_context(cap_id: str, sid: str):
+    """Everything a model call needs about a capture, or None if it is unknown.
+
+    Returns (cap_dir, meta, history, provider_history, png_b64, viewport_b64,
+    session). `history` is the list the new exchange is appended to (the
+    session's, or the capture's chat.json); `provider_history` is what the
+    model sees: the same list, prefixed with the session context note when
+    the session has earlier captures.
+    """
+    cap_dir = CAPTURES_DIR / cap_id
+    if not cap_dir.is_dir():
+        return None
+    meta = json.loads((cap_dir / "meta.json").read_text(encoding="utf-8"))
+    session = _load_session(sid) if sid else None
+    if session is not None:
+        history = session["history"]
+        note = _session_context_note(session, cap_id)
+        provider_history = (
+            [
+                {"role": "user", "text": note},
+                {"role": "assistant", "text": "Noted."},
+            ]
+            + history
+            if note
+            else history
+        )
+    else:
+        history = json.loads((cap_dir / "chat.json").read_text(encoding="utf-8"))
+        provider_history = history
+    png_b64 = base64.b64encode((cap_dir / "capture.png").read_bytes()).decode()
+    viewport_b64 = None
+    if (cap_dir / "viewport.png").is_file():
+        viewport_b64 = base64.b64encode(
+            (cap_dir / "viewport.png").read_bytes()
+        ).decode()
+    return cap_dir, meta, history, provider_history, png_b64, viewport_b64, session
+
+
+def _save_history(cap_dir: Path, sid: str, session: dict | None, history: list):
+    """Persist an exchange where it came from: the session, else chat.json."""
+    if session is not None:
+        session["history"] = history
+        _save_session(sid, session)
+    else:
+        (cap_dir / "chat.json").write_text(
+            json.dumps(history, indent=2), encoding="utf-8"
+        )
 
 
 def create_app():
@@ -525,40 +592,15 @@ def create_app():
         message = (data.get("message") or "").strip()
         if not message:
             return jsonify({"error": "empty message"}), 400
-        cap_dir = CAPTURES_DIR / cap_id
-        if not cap_dir.is_dir():
-            return jsonify({"error": f"unknown capture_id: {cap_id}"}), 404
-
-        meta = json.loads((cap_dir / "meta.json").read_text(encoding="utf-8"))
         sid = data.get("session_id") or ""
-        session = _load_session(sid) if sid else None
-        if session is not None:
-            history = session["history"]
-            note = _session_context_note(session, cap_id)
-            provider_history = (
-                [
-                    {"role": "user", "text": note},
-                    {"role": "assistant", "text": "Noted."},
-                ]
-                + history
-                if note
-                else history
-            )
-        else:
-            history = json.loads((cap_dir / "chat.json").read_text(encoding="utf-8"))
-            provider_history = history
-        png_b64 = base64.b64encode((cap_dir / "capture.png").read_bytes()).decode()
-        viewport_b64 = None
-        if (cap_dir / "viewport.png").is_file():
-            viewport_b64 = base64.b64encode(
-                (cap_dir / "viewport.png").read_bytes()
-            ).decode()
+        ctx = _load_capture_context(cap_id, sid)
+        if ctx is None:
+            return jsonify({"error": f"unknown capture_id: {cap_id}"}), 404
+        cap_dir, meta, history, provider_history, png_b64, viewport_b64, session = ctx
 
         provider = _provider()
-        model = {"openai": OPENAI_MODEL, "gemini": GEMINI_MODEL, "stub": "none"}[
-            provider
-        ]
-        images_sent = 0 if provider == "stub" else (2 if viewport_b64 else 1)
+        model = PROVIDERS[provider]["model"]
+        images_sent = _images_sent(provider, viewport_b64)
 
         def sse(obj):
             return f"data: {json.dumps(obj)}\n\n"
@@ -587,13 +629,7 @@ def create_app():
                 {"role": "user", "text": message},
                 {"role": "assistant", "text": reply},
             ]
-            if session is not None:
-                session["history"] = new_history
-                _save_session(sid, session)
-            else:
-                (cap_dir / "chat.json").write_text(
-                    json.dumps(new_history, indent=2), encoding="utf-8"
-                )
+            _save_history(cap_dir, sid, session, new_history)
             yield sse(
                 {
                     "done": True,
@@ -618,35 +654,11 @@ def create_app():
         message = (data.get("message") or "").strip()
         if not message:
             return jsonify({"error": "empty message"}), 400
-
-        cap_dir = CAPTURES_DIR / cap_id
-        if not cap_dir.is_dir():
-            return jsonify({"error": f"unknown capture_id: {cap_id}"}), 404
-
-        meta = json.loads((cap_dir / "meta.json").read_text(encoding="utf-8"))
         sid = data.get("session_id") or ""
-        session = _load_session(sid) if sid else None
-        if session is not None:
-            history = session["history"]
-            note = _session_context_note(session, cap_id)
-            provider_history = (
-                [
-                    {"role": "user", "text": note},
-                    {"role": "assistant", "text": "Noted."},
-                ]
-                + history
-                if note
-                else history
-            )
-        else:
-            history = json.loads((cap_dir / "chat.json").read_text(encoding="utf-8"))
-            provider_history = history
-        png_b64 = base64.b64encode((cap_dir / "capture.png").read_bytes()).decode()
-        viewport_b64 = None
-        if (cap_dir / "viewport.png").is_file():
-            viewport_b64 = base64.b64encode(
-                (cap_dir / "viewport.png").read_bytes()
-            ).decode()
+        ctx = _load_capture_context(cap_id, sid)
+        if ctx is None:
+            return jsonify({"error": f"unknown capture_id: {cap_id}"}), 404
+        cap_dir, meta, history, provider_history, png_b64, viewport_b64, session = ctx
 
         provider = _provider()
         t0 = time.perf_counter()
@@ -668,24 +680,15 @@ def create_app():
             {"role": "user", "text": message},
             {"role": "assistant", "text": reply},
         ]
-        if session is not None:
-            session["history"] = history
-            _save_session(sid, session)
-        else:
-            (cap_dir / "chat.json").write_text(
-                json.dumps(history, indent=2), encoding="utf-8"
-            )
+        _save_history(cap_dir, sid, session, history)
 
-        model = {"openai": OPENAI_MODEL, "gemini": GEMINI_MODEL, "stub": "none"}[
-            provider
-        ]
         return jsonify(
             {
                 "reply": reply,
                 "provider": provider,
-                "model": model,
+                "model": PROVIDERS[provider]["model"],
                 "latencyMs": latency_ms,
-                "imagesSent": 0 if provider == "stub" else (2 if viewport_b64 else 1),
+                "imagesSent": _images_sent(provider, viewport_b64),
             }
         )
 
