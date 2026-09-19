@@ -44,6 +44,16 @@ export interface Settings {
     inventorySummaryCap: number;
     /** stop emitting inventory nodes once the serialized size reaches this */
     inventoryMaxBytes: number;
+    /** stop emitting inventory nodes past this count (OpenAI strict-mode enum cap is 1000) */
+    inventoryMaxNodes: number;
+    /** highlight outline width, screen px per band */
+    ringWidth: number;
+    /** scale the outline with the zoom level instead of a fixed screen width */
+    ringScale: boolean;
+    /** pulse the outline briefly when a highlight appears */
+    pulse: boolean;
+    /** minimap target marker size in px */
+    minimapMarkerSize: number;
     /** send the screenshots with a locate ("where is X?") request */
     locateScreenshot: boolean;
     /** what Escape dismisses first when a highlight and the popover are both up */
@@ -79,6 +89,11 @@ const DEFAULTS: Settings = {
     inventorySummaryDepth: 2,
     inventorySummaryCap: 160,
     inventoryMaxBytes: 200000,
+    inventoryMaxNodes: 900,
+    ringWidth: 2,
+    ringScale: false,
+    pulse: false,
+    minimapMarkerSize: 16,
     locateScreenshot: true,
     escapeOrder: "highlight",
 };
@@ -110,6 +125,8 @@ export const TOGGLE_LABELS: Record<BoolSettingKey, string> = {
     lensPan: "Lens panning (freeze page while zoomed)",
     debugView: "Debug view (ctrl+shift+D)",
     inventory: "Send page inventory with captures",
+    ringScale: "Scale the outline with zoom",
+    pulse: "Pulse the outline briefly",
     locateScreenshot: "Send screenshot with locate",
 };
 
@@ -152,6 +169,19 @@ export const NUMBER_KNOBS: Record<
         min: 10000,
         max: 2000000,
         step: 10000,
+    },
+    inventoryMaxNodes: {
+        label: "Inventory node cap",
+        min: 50,
+        max: 1000,
+        step: 50,
+    },
+    ringWidth: { label: "Outline width (px)", min: 1, max: 6, step: 1 },
+    minimapMarkerSize: {
+        label: "Minimap marker size (px)",
+        min: 8,
+        max: 32,
+        step: 2,
     },
 };
 
