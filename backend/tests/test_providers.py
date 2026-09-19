@@ -7,11 +7,9 @@ import json
 import pytest
 
 import app as app_module
+from conftest import PNG_B64
 
-# 1x1 transparent PNG; the stub never decodes it but the route reads the file.
-PNG = base64.b64decode(
-    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="
-)
+PNG = base64.b64decode(PNG_B64)
 META = {"url": "https://example.test/", "clickX": 10, "clickY": 20, "scrollDepth": 5}
 
 

@@ -16,6 +16,9 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 import app as app_module  # noqa: E402
 
+# 1x1 transparent PNG; the stub never decodes it but the routes read the file.
+PNG_B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="
+
 
 @pytest.fixture
 def client(tmp_path, monkeypatch):

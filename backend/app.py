@@ -1,11 +1,12 @@
 """
 UniLens backend — minimal Flask prototype.
 
-POST /api/capture  {image: dataURL, meta: {...}}      -> {id}
+POST /api/capture  {image: dataURL, meta: {...}, inventory?: [...]} -> {id}
 POST /api/chat     {capture_id, message}              -> {reply, provider, model}
 GET  /health
 
-Captures stored under captures/<id>/ (capture.png + meta.json + chat.json).
+Captures stored under captures/<id>/ (capture.png + meta.json + chat.json,
+plus inventory.json when the client sent a page inventory).
 LLM/VLM provider picked by env: OPENAI_API_KEY -> OpenAI, else GOOGLE_API_KEY
 -> Gemini, else an offline echo stub (so the frontend works without keys).
 Patterns follow assets26-ai4vis-proj/prototype (base64 inline images).
@@ -405,8 +406,11 @@ def create_app():
         data = request.get_json(force=True)
         image = data.get("image", "")
         meta = data.get("meta", {})
+        inventory = data.get("inventory")
         if not image.startswith("data:image/png;base64,"):
             return jsonify({"error": "image must be a PNG data URL"}), 400
+        if inventory is not None and not isinstance(inventory, list):
+            return jsonify({"error": "inventory must be a list of nodes"}), 400
 
         cap_id = uuid.uuid4().hex[:12]
         cap_dir = CAPTURES_DIR / cap_id
@@ -419,6 +423,12 @@ def create_app():
             )
         (cap_dir / "meta.json").write_text(json.dumps(meta, indent=2), encoding="utf-8")
         (cap_dir / "chat.json").write_text("[]", encoding="utf-8")
+        # The page inventory is kept beside meta, never inside it: only
+        # /api/locate reads it, so nothing else has to strip it out.
+        if inventory is not None:
+            (cap_dir / "inventory.json").write_text(
+                json.dumps(inventory), encoding="utf-8"
+            )
 
         # Session continuity: join the given session or start a new one
         sid = data.get("session_id") or ""
