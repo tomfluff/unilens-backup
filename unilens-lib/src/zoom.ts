@@ -385,9 +385,13 @@ export function clientToContent(
     return { x: (clientX + v.x) / scale, y: (clientY + v.y) / scale };
 }
 
-/** minimap follows the lens; there are no scroll events to listen to when frozen */
-export function onViewChange(cb: (x: number, y: number) => void) {
+/** minimap and highlight follow the lens; there are no scroll events to listen to when frozen (returns unsubscribe) */
+export function onViewChange(cb: (x: number, y: number) => void): () => void {
     viewListeners.push(cb);
+    return () => {
+        const i = viewListeners.indexOf(cb);
+        if (i >= 0) viewListeners.splice(i, 1);
+    };
 }
 
 export function setView(x: number, y: number) {

@@ -10,6 +10,7 @@
  * out of captures — same as the rest of the UniLens chrome.
  */
 
+import { HIGHLIGHT_PRESETS } from "./highlightStyles";
 import { getSettings } from "./settings";
 import {
     getView,
@@ -63,6 +64,36 @@ let mapScale = 0;
 let raf = 0;
 let watcher: MutationObserver | null = null;
 let redrawTimer: number | undefined;
+/** located elements to mark on the map; rects are read live at draw time */
+let targets: Element[] = [];
+
+/**
+ * Mark the elements the model pointed at, so an outline that lies outside the
+ * magnified viewport is still discoverable (design decision D11). Elements, not
+ * rects: a stored rect goes stale on the next layout shift.
+ */
+export function setTargets(els: Element[]) {
+    targets = els;
+    if (box && box.style.display !== "none") redraw();
+}
+
+function drawTargets(g: CanvasRenderingContext2D, scale: number) {
+    const size = getSettings().minimapMarkerSize;
+    const ring = HIGHLIGHT_PRESETS[getSettings().highlightStyle].ring;
+    const v = getView();
+    for (const el of targets) {
+        if (!el.isConnected) continue;
+        const r = el.getBoundingClientRect();
+        const p = toContent(r.left + v.x, r.top + v.y);
+        const cx = (p.x + r.width / scale / 2) * mapScale;
+        const cy = (p.y + r.height / scale / 2) * mapScale;
+        // same two-band construction as the outline, shrunk: border then fill
+        g.fillStyle = ring.outer;
+        g.fillRect(cx - size / 2, cy - size / 2, size, size);
+        g.fillStyle = ring.inner;
+        g.fillRect(cx - size / 2 + 2, cy - size / 2 + 2, size - 4, size - 4);
+    }
+}
 
 function build() {
     box = document.createElement("div");
@@ -141,6 +172,7 @@ function drawSkeleton() {
         );
         drawn++;
     }
+    drawTargets(g, scale);
 }
 
 function updateLens() {
