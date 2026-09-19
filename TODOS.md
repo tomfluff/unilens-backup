@@ -38,6 +38,18 @@
 **Priority:** P3
 **Depends on:** Step-two trial runner
 
+### Trial html2canvas-pro as the capture renderer and decide
+
+**What:** Swap `html2canvas` (1.4.1, last release 2022, unmaintained) for `html2canvas-pro` (free, MIT, same API) on a branch, capture `dev-demo` and both SoftBank mirrors at 100/200/400% zoom, diff the PNGs against the current renderer, and decide whether to keep it.
+
+**Why:** On 2026-09-19 a host rule `img { height: 260px }` in dev-demo broke html2canvas's font-metrics probe and shifted every glyph ~245px; fixed by pinning the probe in `capture.ts` (`guardFontProbe`). That is one known fault in a library that will not get patches; the fork carries fixes for modern CSS colours (oklch, color-mix), some layout regressions, and newer Chrome. If the mirrors hit another html2canvas fault, the swap is the remedy to try first.
+
+**Context:** Drop-in: change the import in `unilens-lib/src/capture.ts` and the dependency in `unilens-lib/package.json`; keep the probe guard and the object-fit image preprocessing (check whether the fork makes either redundant). Verify with the headless capture script pattern used for the 2026-09-19 bisect (Playwright, alt+click, read `backend/captures/<id>/capture.png`). No cost involved.
+
+**Effort:** S
+**Priority:** P3
+**Depends on:** None; do it when a second html2canvas fault appears, or before the step-two runner if capture time matters
+
 ## unilens-lib (inventory)
 
 ### Inventory completeness beyond phase 1
