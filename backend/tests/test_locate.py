@@ -180,9 +180,10 @@ def test_history_appended_to_chat_json(client, capture):
 
 def test_history_appended_to_the_session(client, capture):
     cap = capture()
-    app_module._save_session("s1", {"captures": [cap], "history": []})
-    _locate(client, cap, session_id="s1")
-    assert app_module._load_session("s1")["history"] == EXCHANGE
+    sid = "abcdefabcdef"  # minted syntax; anything else is "no session"
+    app_module._save_session(sid, {"captures": [cap], "history": []})
+    _locate(client, cap, session_id=sid)
+    assert app_module._load_session(sid)["history"] == EXCHANGE
     assert (app_module.CAPTURES_DIR / cap / "chat.json").read_text() == "[]"
 
 

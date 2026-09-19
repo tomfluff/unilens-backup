@@ -52,17 +52,33 @@ def _capture_dir(cap_id) -> Path | None:
     return p
 
 
-def _load_session(sid: str) -> dict | None:
+# Session ids are minted the same way (uuid4().hex[:12] in save_capture).
+SESSION_ID_RE = CAPTURE_ID_RE
+
+
+def _session_path(sid) -> Path | None:
+    """The session's file, or None unless the id has the minted syntax and
+    resolves inside SESSIONS_DIR. A malformed id is simply "no session"."""
+    if not isinstance(sid, str) or not SESSION_ID_RE.match(sid):
+        return None
     p = SESSIONS_DIR / f"{sid}.json"
-    if not p.is_file():
+    if not p.resolve().is_relative_to(SESSIONS_DIR.resolve()):
+        return None
+    return p
+
+
+def _load_session(sid: str) -> dict | None:
+    p = _session_path(sid)
+    if p is None or not p.is_file():
         return None
     return json.loads(p.read_text(encoding="utf-8"))
 
 
 def _save_session(sid: str, data: dict) -> None:
-    (SESSIONS_DIR / f"{sid}.json").write_text(
-        json.dumps(data, indent=2), encoding="utf-8"
-    )
+    p = _session_path(sid)
+    if p is None:  # only minted or already-loaded ids reach here
+        raise ValueError(f"bad session id: {sid!r}")
+    p.write_text(json.dumps(data, indent=2), encoding="utf-8")
 
 
 def _session_context_note(session: dict, current_cap_id: str) -> str | None:
