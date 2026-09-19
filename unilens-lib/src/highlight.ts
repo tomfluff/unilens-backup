@@ -131,16 +131,17 @@ function ensureLayer() {
         pointerEvents: "none",
         zIndex: LAYER_Z,
     });
+    layer.setAttribute("data-unilens-layer", "");
     document.documentElement.appendChild(layer);
     if (!styleEl) {
         styleEl = document.createElement("style");
         styleEl.textContent = `
 @keyframes ${CLASS}-pulse { 0%,100% { opacity: 1 } 50% { opacity: var(--${CLASS}-min, .35) } }
-.${CLASS}[data-pulse] { animation: ${CLASS}-pulse var(--${CLASS}-ms, 600ms) ease-in-out var(--${CLASS}-cycles, 2); }
-@media (prefers-reduced-motion: reduce) { .${CLASS} { animation: none !important } }
+[data-unilens-layer] .${CLASS}[data-pulse] { animation: ${CLASS}-pulse var(--${CLASS}-ms, 600ms) ease-in-out var(--${CLASS}-cycles, 2); }
+@media (prefers-reduced-motion: reduce) { [data-unilens-layer] .${CLASS} { animation: none !important } }
 @media (forced-colors: active) {
-  .${CLASS} { forced-color-adjust: none; border-color: Canvas !important; outline-color: CanvasText !important; background: transparent !important; box-shadow: none !important }
-  .${CLASS}-dim { display: none !important }
+  [data-unilens-layer] .${CLASS} { forced-color-adjust: none; border-color: Canvas !important; outline-color: CanvasText !important; background: transparent !important; box-shadow: none !important }
+  [data-unilens-layer] .${CLASS}-dim { display: none !important }
 }`;
         document.head.appendChild(styleEl);
     }
@@ -191,10 +192,14 @@ function render() {
         g.box.remove();
         boxes.splice(boxes.indexOf(g), 1);
     }
-    if (gone.length) announce("That element is no longer on the page.");
+    if (gone.length) {
+        announce("That element is no longer on the page.");
+        setTargets(boxes.map((b) => b.el)); // the minimap must not keep a detached target
+    }
     if (dimBox) {
-        // ponytail: dims around the first target only; phase 1 sends one highlight
-        const first = boxes[0];
+        // ponytail: dims around one element only; phase 1 sends one highlight. It must
+        // be the target, not whichever entry came first, once anchors/sources arrive
+        const first = boxes.find((b) => b.role === "target") ?? boxes[0];
         if (!first) {
             dimBox.remove();
             dimBox = null;
@@ -234,10 +239,17 @@ function scheduleRelay() {
 
 function setupSubscriptions() {
     if (unsubs.length) return;
-    window.addEventListener("scroll", scheduleRelay, { passive: true });
+    // capture phase: scroll events from overflow containers do not bubble to window
+    window.addEventListener("scroll", scheduleRelay, {
+        passive: true,
+        capture: true,
+    });
     window.addEventListener("resize", scheduleRelay);
     unsubs = [
-        () => window.removeEventListener("scroll", scheduleRelay),
+        () =>
+            window.removeEventListener("scroll", scheduleRelay, {
+                capture: true,
+            }),
         () => window.removeEventListener("resize", scheduleRelay),
         onViewChange(scheduleRelay),
         onZoomChange(scheduleRelay),
