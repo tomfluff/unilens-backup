@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { getLastInventoryDebug, recordInventoryDebug } from "./capture";
+import {
+    FONT_PROBE_GUARD_CSS,
+    getLastInventoryDebug,
+    guardFontProbe,
+    recordInventoryDebug,
+} from "./capture";
 import type { WireNode } from "./inventory";
 
 const wire: WireNode[] = [
@@ -25,5 +30,28 @@ describe("getLastInventoryDebug", () => {
     it("clears when a capture runs with the inventory off", () => {
         recordInventoryDebug(undefined);
         expect(getLastInventoryDebug()).toBeNull();
+    });
+});
+
+describe("guardFontProbe", () => {
+    it("pins html2canvas's 1x1 baseline probe against host img rules, then removes itself", () => {
+        const host = document.createElement("style");
+        host.textContent = "img { height: 260px }";
+        document.head.appendChild(host);
+        const probe = document.createElement("img");
+        probe.src =
+            "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
+        document.body.appendChild(probe);
+
+        const unguard = guardFontProbe();
+        expect(getComputedStyle(probe).height).toBe("1px");
+        expect(document.head.lastElementChild?.textContent).toBe(
+            FONT_PROBE_GUARD_CSS,
+        );
+
+        unguard();
+        expect(getComputedStyle(probe).height).toBe("260px");
+        host.remove();
+        probe.remove();
     });
 });

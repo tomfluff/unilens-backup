@@ -182,6 +182,23 @@ export function recordInventoryDebug(
         : null;
 }
 
+/**
+ * html2canvas measures font baselines by appending a hidden 1x1 probe <img> to the
+ * live body. A host rule such as `img { height: 260px }` inflates the probe and
+ * every glyph then draws hundreds of px off. Pin the probe for the render window.
+ */
+const H2C_PROBE_SRC =
+    "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
+export const FONT_PROBE_GUARD_CSS = `img[src="${H2C_PROBE_SRC}"]{width:1px!important;height:1px!important;display:inline!important;border:0!important;transform:none!important}`;
+
+/** installs the probe guard; returns the remover */
+export function guardFontProbe(doc: Document = document): () => void {
+    const style = doc.createElement("style");
+    style.textContent = FONT_PROBE_GUARD_CSS;
+    doc.head.appendChild(style);
+    return () => style.remove();
+}
+
 /** main.tsx tags the backend id once the upload completes */
 export function tagLastCapture(id: string) {
     if (lastCaptureDebug) lastCaptureDebug.id = id;
@@ -420,6 +437,7 @@ export async function capture(
 
     let pageCanvas: HTMLCanvasElement;
     let viewportImage: string | undefined;
+    const unguard = guardFontProbe();
     try {
         pageCanvas = await html2canvas(document.body, {
             scrollX: 0,
@@ -434,6 +452,7 @@ export async function capture(
             onclone: stripZoom,
         });
     } finally {
+        unguard();
         for (const f of imageFixes) delete f.el.dataset.unilensImg;
     }
     const tRender = performance.now();
