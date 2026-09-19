@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { locateOutcome, postLocate } from "./locate";
+import { getLastLocateDebug, locateOutcome, postLocate } from "./locate";
 
 const label = (id: string) => (id === "n7" ? "Choose Pro" : id);
 
@@ -117,5 +117,27 @@ describe("postLocate", () => {
         );
         expect(r.outcome.code).toBe("error");
         expect(r.captureId).toBe("c1");
+    });
+
+    it("records the last outcome, labelled ids and token for the debug panel", async () => {
+        vi.stubGlobal("fetch", async () => ({
+            status: 200,
+            json: async () => ({
+                answer: "Top right.",
+                highlights: [{ id: "n7", role: "target" }],
+            }),
+        }));
+        const r = await postLocate(
+            "http://b",
+            { captureId: "c1", question: "where is pro?", screenshot: true },
+            label,
+        );
+        expect(getLastLocateDebug()).toMatchObject({
+            code: "found",
+            bubble: "Top right.",
+            highlights: [{ id: "n7", role: "target", label: "Choose Pro" }],
+            token: r.token,
+        });
+        expect(getLastLocateDebug()?.at).toBeTypeOf("number");
     });
 });
