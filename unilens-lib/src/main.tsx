@@ -30,7 +30,7 @@ import { initMinimap } from "./minimap";
 import { initSettings } from "./SettingsPanel";
 import { getSettings, updateSetting } from "./settings";
 import { setSpeechBackend } from "./speech";
-import { clientToContent, initZoom } from "./zoom";
+import { clientToContent, initZoom, isOwnUI } from "./zoom";
 
 /** build stamp injected by esbuild --define (see the lib Makefile); absent in dev */
 declare const __target_dist_unilens_BUILD__: string;
@@ -254,7 +254,7 @@ export function init(options: InitOptions = {}) {
         // its mouseup (released over browser chrome), clear both here
         cancelDrag();
         if (!getSettings().regionSelect || !trigger(e)) return;
-        if (container?.contains(e.target as Node)) return;
+        if (isOwnUI(e.target)) return;
         dragStart = { clientX: e.clientX, clientY: e.clientY };
         e.preventDefault(); // no text selection while dragging
     });
@@ -348,7 +348,7 @@ export function init(options: InitOptions = {}) {
             e.stopPropagation();
             return;
         }
-        if (container?.contains(e.target as Node)) return; // clicks inside the popover
+        if (isOwnUI(e.target)) return; // clicks on our own chrome, never a capture
         if (!trigger(e)) return;
         e.preventDefault();
         e.stopPropagation();

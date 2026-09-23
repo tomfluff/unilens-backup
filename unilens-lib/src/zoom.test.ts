@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { onViewChange, revealElement, setView } from "./zoom";
+import { isOwnUI, onViewChange, revealElement, setView } from "./zoom";
 
 describe("onViewChange", () => {
     it("returns an unsubscribe that stops later notifications", () => {
@@ -54,5 +54,24 @@ describe("revealElement", () => {
     it("refuses an element with no box", () => {
         const el = document.createElement("div");
         expect(revealElement(el, () => box(0, 0, 0, 0))).toBe(false);
+    });
+});
+
+describe("isOwnUI", () => {
+    it("is true for UniLens chrome outside <body>, false for the page", () => {
+        const panel = document.createElement("div");
+        const spinner = document.createElement("input");
+        panel.appendChild(spinner);
+        document.documentElement.appendChild(panel);
+        const pageEl = document.createElement("p");
+        document.body.appendChild(pageEl);
+        expect(isOwnUI(spinner)).toBe(true);
+        expect(isOwnUI(panel)).toBe(true);
+        expect(isOwnUI(pageEl)).toBe(false);
+        expect(isOwnUI(document.body)).toBe(false);
+        expect(isOwnUI(document.documentElement)).toBe(false);
+        expect(isOwnUI(null)).toBe(false);
+        panel.remove();
+        pageEl.remove();
     });
 });

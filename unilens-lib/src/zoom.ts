@@ -408,6 +408,21 @@ export function boxOf(
 export const isEmptyBox = (b: ClientRect) => !b.width && !b.height;
 
 /**
+ * An event from UniLens' own chrome (popover, settings, debug panel, minimap, badge,
+ * hint chip): all of it lives on documentElement outside <body>, so the zoom transform
+ * leaves it at 1x. Page gestures (double-click fit, alt+click capture, lens keys) must
+ * ignore it: fast clicks on a settings spinner are a double-click too.
+ */
+export function isOwnUI(target: EventTarget | null): boolean {
+    return (
+        target instanceof Node &&
+        target !== document.documentElement &&
+        document.documentElement.contains(target) &&
+        !document.body.contains(target)
+    );
+}
+
+/**
  * "Scroll to": bring an element to the middle of the screen under either pan
  * engine. Leaves the view alone when the element is already fully on screen, so
  * the page never moves without need. False when the element has no box.
@@ -591,8 +606,8 @@ export function setZoom(target: number, anchorX?: number, anchorY?: number) {
 function onDblClick(e: MouseEvent) {
     if (!getSettings().smartZoom || !getSettings().zoom) return;
     if (!(e.target instanceof HTMLElement)) return;
+    if (isOwnUI(e.target)) return;
     let el: HTMLElement | null = e.target;
-    if (el.closest("#unilens-root")) return;
     // climb inline/tiny elements to a meaningful block
     while (
         el &&
@@ -693,7 +708,7 @@ function onPanKey(e: KeyboardEvent) {
         t &&
         (t.isContentEditable ||
             /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName) ||
-            t.closest?.("#unilens-root"))
+            isOwnUI(t))
     )
         return;
     const v = getView();
