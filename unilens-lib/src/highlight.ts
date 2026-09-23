@@ -23,7 +23,7 @@ import {
     SPOTLIGHT_FEATHER,
 } from "./highlightStyles";
 import { setTargets } from "./minimap";
-import { getSettings } from "./settings";
+import { getSettings, onSettingsChange } from "./settings";
 import {
     boxOf,
     type ClientRect,
@@ -63,6 +63,11 @@ interface Drawn {
 }
 let boxes: Drawn[] = [];
 let cueHost: HTMLDivElement | null = null;
+/** one cue element per outlined element, kept across frames so a focused edge
+ *  button keeps focus while the page scrolls */
+const cueEls = new Map<Drawn, { el: HTMLElement; sig: string }>();
+/** each outlined element's box as of the last full render; pointer moves reuse it */
+let lastRects = new Map<Drawn, ClientRect>();
 /** last pointer position, for the pointer cue; null until the mouse moves */
 let pointer: { x: number; y: number } | null = null;
 let dimBox: HTMLDivElement | null = null;
@@ -190,6 +195,7 @@ function ensureLayer() {
   [data-unilens-layer] .${CLASS}-deco { forced-color-adjust: none; background: CanvasText !important; stroke: CanvasText !important }
   [data-unilens-layer] .${CLASS}-deco path { stroke: CanvasText !important }
   [data-unilens-layer] .${CLASS}-cue { forced-color-adjust: none }
+  [data-unilens-layer] .${CLASS}[data-outline="none"] { outline: 3px solid CanvasText !important }
   [data-unilens-layer] .${CLASS} { forced-color-adjust: none; border-color: Canvas !important; outline-color: CanvasText !important; background: transparent !important; box-shadow: none !important }
   [data-unilens-layer] .${CLASS}-dim { display: none !important }
   [data-unilens-layer] .${CLASS}-badge { forced-color-adjust: none; background: CanvasText !important; color: Canvas !important; border-color: Canvas !important }
@@ -319,8 +325,11 @@ function render() {
             continue;
         }
         const r = boxOf(el, measure);
+        lastRects.set(entry, r);
         // collapsed since it was drawn (an accordion closed): hide, never park at (0, 0)
         box.style.display = isEmptyBox(r) ? "none" : "";
+        // forced colours drop fill, glow and backdrop: an outline-less look needs a ring there
+        box.dataset.outline = outline;
         decorate(entry, look, outline, w);
         const band = outline === "band" ? 3 * w : outline === "ring" ? w : 0;
         const shadows = [
@@ -359,6 +368,7 @@ function render() {
     for (const g of gone) {
         g.box.remove();
         boxes.splice(boxes.indexOf(g), 1);
+        lastRects.delete(g);
     }
     if (gone.length) {
         announce("That element is no longer on the page.");
@@ -378,7 +388,7 @@ function render() {
  */
 function renderBackdrop(look: HighlightLook) {
     const rects = boxes
-        .map((b) => boxOf(b.el, measure))
+        .map((b) => lastRects.get(b) ?? boxOf(b.el, measure))
         .filter((r) => !isEmptyBox(r));
     if (look.backdrop === "none" || !rects.length) {
         dimBox?.remove();
@@ -472,15 +482,54 @@ export function settleCues(
     const gap = CUE + 4;
     if (mode === "pointer" && from) {
         const step = gap / radius;
+        const TAU = 2 * Math.PI;
         const sorted = [...cues].sort((a, b) => a.angle - b.angle);
-        for (let i = 1; i < sorted.length; i++)
-            if (sorted[i].angle - sorted[i - 1].angle < step)
-                sorted[i] = { ...sorted[i], angle: sorted[i - 1].angle + step };
-        return sorted.map((c) => ({
-            ...c,
-            x: from.x + Math.cos(c.angle) * radius,
-            y: from.y + Math.sin(c.angle) * radius,
-        }));
+        // start after the widest gap, so the pair that wraps round past ±π is spaced too
+        let start = 0;
+        let widest = -1;
+        sorted.forEach((c, i) => {
+            const next = sorted[(i + 1) % sorted.length];
+            const g =
+                (next.angle - c.angle + TAU) % TAU ||
+                (sorted.length > 1 ? 0 : TAU);
+            if (g > widest) {
+                widest = g;
+                start = (i + 1) % sorted.length;
+            }
+        });
+        const seq = sorted.map((_, k) => {
+            const c = sorted[(start + k) % sorted.length];
+            return {
+                ...c,
+                angle:
+                    c.angle +
+                    (k > 0 && (start + k) % sorted.length < start ? TAU : 0),
+            };
+        });
+        for (let i = 1; i < seq.length; i++)
+            if (seq[i].angle - seq[i - 1].angle < step)
+                seq[i] = { ...seq[i], angle: seq[i - 1].angle + step };
+        const at = (angle: number) => ({
+            x: from.x + Math.cos(angle) * radius,
+            y: from.y + Math.sin(angle) * radius,
+        });
+        const blocked = (q: { x: number; y: number }) =>
+            !!avoid &&
+            q.x + CUE / 2 > avoid.left &&
+            q.x - CUE / 2 < avoid.right &&
+            q.y + CUE / 2 > avoid.top &&
+            q.y - CUE / 2 < avoid.bottom;
+        return seq.map((c) => {
+            let angle = c.angle;
+            // rotate a cue the chat popover would cover round the circle until it is clear
+            for (
+                let k = 0;
+                k < Math.ceil(TAU / step) && blocked(at(angle));
+                k++
+            )
+                angle += step;
+            return { ...c, angle, ...at(angle) };
+        });
     }
     const m = 32;
     // which edge a cue sits on decides the axis it may slide along
@@ -536,28 +585,47 @@ export function settleCues(
     return out;
 }
 
+/** the part of the page the user actually sees: the visual viewport under pinch zoom */
+function visibleBounds() {
+    const vv = window.visualViewport;
+    return {
+        x: vv?.offsetLeft ?? 0,
+        y: vv?.offsetTop ?? 0,
+        w: vv?.width ?? window.innerWidth,
+        h: vv?.height ?? window.innerHeight,
+    };
+}
+
 /**
  * Off-screen cues: an arrow per outlined element that is entirely outside the
- * screen, at the screen edge (a button that brings it into view) or on a circle
+ * visible area, at its edge (a button that brings the element in) or on a circle
  * round the pointer (points only, never catches clicks). Numbered like the chips.
+ * Elements are kept per target and only repositioned, so focus survives scrolling.
  */
 function renderCues(look: HighlightLook) {
     const mode = getSettings().offscreenCue;
-    const W = window.innerWidth;
-    const H = window.innerHeight;
+    const V = visibleBounds();
     const off =
         mode === "none"
             ? []
             : boxes
-                  .map((b) => ({ b, r: boxOf(b.el, measure) }))
+                  .map((b) => ({
+                      b,
+                      r: lastRects.get(b) ?? boxOf(b.el, measure),
+                  }))
                   .filter(
                       ({ r }) =>
                           !isEmptyBox(r) &&
-                          (r.left + r.width < 0 ||
-                              r.top + r.height < 0 ||
-                              r.left > W ||
-                              r.top > H),
+                          (r.left + r.width < V.x ||
+                              r.top + r.height < V.y ||
+                              r.left > V.x + V.w ||
+                              r.top > V.y + V.h),
                   );
+    for (const [b, c] of cueEls)
+        if (!off.some((o) => o.b === b)) {
+            c.el.remove();
+            cueEls.delete(b);
+        }
     if (!off.length) {
         cueHost?.remove();
         cueHost = null;
@@ -568,27 +636,79 @@ function renderCues(look: HighlightLook) {
         cueHost.className = `${CLASS}-cues`;
         ensureLayer().appendChild(cueHost);
     }
-    cueHost.replaceChildren();
     const cueMode = mode as "edge" | "pointer";
     const radius = getSettings().cueRadius;
-    const pop = document
+    // work in visual-viewport coordinates, place in layout (fixed) coordinates
+    // explicit fields: a DOMRect keeps them as prototype getters, so spreading one copies nothing
+    const local = (r: ClientRect): ClientRect => ({
+        left: r.left - V.x,
+        top: r.top - V.y,
+        width: r.width,
+        height: r.height,
+    });
+    const from = pointer ? { x: pointer.x - V.x, y: pointer.y - V.y } : null;
+    const popRect = document
         .getElementById("unilens-root")
         ?.firstElementChild?.getBoundingClientRect();
-    const raw = off.map(({ r }) =>
-        cuePosition(cueMode, r, { w: W, h: H }, pointer, radius),
-    );
+    const pop = popRect?.width
+        ? {
+              left: popRect.left - V.x,
+              top: popRect.top - V.y,
+              right: popRect.right - V.x,
+              bottom: popRect.bottom - V.y,
+          }
+        : null;
     const settled = settleCues(
-        raw.map((p, i) => ({ ...p, i })),
+        off.map(({ r }, i) => ({
+            ...cuePosition(cueMode, local(r), { w: V.w, h: V.h }, from, radius),
+            i,
+        })),
         cueMode,
-        { w: W, h: H },
-        pop && pop.width ? pop : null,
-        pointer,
+        { w: V.w, h: V.h },
+        pop,
+        from,
         radius,
     ) as { x: number; y: number; angle: number; i: number }[];
     for (const p of settled) {
         const { b } = off[p.i];
-        const cue = document.createElement(mode === "edge" ? "button" : "div");
-        cue.className = `${CLASS}-cue`;
+        // digits only: the number is written into SVG markup
+        const num =
+            look.badges && /^\d{1,3}$/.test(b.badge ?? "")
+                ? (b.badge ?? "")
+                : "";
+        const sig = `${cueMode}|${look.color}|${num}`;
+        let entry = cueEls.get(b);
+        if (!entry || entry.sig !== sig) {
+            entry?.el.remove();
+            const el = document.createElement(
+                cueMode === "edge" ? "button" : "div",
+            );
+            el.className = `${CLASS}-cue`;
+            Object.assign(el.style, {
+                position: "fixed",
+                width: "48px",
+                height: "48px",
+                padding: "0",
+                margin: "0",
+                border: "0",
+                background: "none",
+                cursor: cueMode === "edge" ? "pointer" : "default",
+                pointerEvents: cueMode === "edge" ? "auto" : "none",
+            });
+            el.innerHTML = `<svg width="48" height="48" viewBox="0 0 48 48" aria-hidden="true"><g><path d="M36 14 L47 24 L36 34 Z" fill="${look.color}" stroke="${EDGE}" stroke-width="2"/></g><circle cx="24" cy="24" r="15" fill="${EDGE}" stroke="${look.color}" stroke-width="3"/><text x="24" y="29" text-anchor="middle" font-family="system-ui, sans-serif" font-weight="700" font-size="15" fill="#fff">${num}</text></svg>`;
+            if (cueMode === "edge") {
+                el.setAttribute("type", "button");
+                el.addEventListener("click", () => {
+                    revealElement(b.el, measure);
+                    announce(
+                        `${b.badge ? `Item ${b.badge}` : "Highlighted item"} brought into view.`,
+                    );
+                });
+            } else el.setAttribute("aria-hidden", "true");
+            cueHost.appendChild(el);
+            entry = { el, sig };
+            cueEls.set(b, entry);
+        }
         const where =
             Math.abs(Math.cos(p.angle)) > Math.abs(Math.sin(p.angle))
                 ? p.angle > -Math.PI / 2 && p.angle < Math.PI / 2
@@ -597,38 +717,30 @@ function renderCues(look: HighlightLook) {
                 : p.angle > 0
                   ? "below"
                   : "above";
-        const label = `${b.badge ? `Item ${b.badge}` : "The highlighted item"} is ${where}`;
-        Object.assign(cue.style, {
-            position: "fixed",
-            left: `${p.x - 24}px`,
-            top: `${p.y - 24}px`,
-            width: "48px",
-            height: "48px",
-            padding: "0",
-            margin: "0",
-            border: "0",
-            background: "none",
-            cursor: mode === "edge" ? "pointer" : "default",
-            pointerEvents: mode === "edge" ? "auto" : "none",
-        });
-        const deg = (p.angle * 180) / Math.PI;
-        // digits only: the number is written into SVG markup
-        const num =
-            look.badges && /^\d{1,3}$/.test(b.badge ?? "") ? b.badge : "";
-        cue.innerHTML = `<svg width="48" height="48" viewBox="0 0 48 48" aria-hidden="true"><g transform="rotate(${deg} 24 24)"><path d="M36 14 L47 24 L36 34 Z" fill="${look.color}" stroke="${EDGE}" stroke-width="2"/></g><circle cx="24" cy="24" r="15" fill="${EDGE}" stroke="${look.color}" stroke-width="3"/><text x="24" y="29" text-anchor="middle" font-family="system-ui, sans-serif" font-weight="700" font-size="15" fill="#fff">${num}</text></svg>`;
-        if (mode === "edge") {
-            cue.setAttribute("type", "button");
-            cue.setAttribute("aria-label", `${label}. Go there.`);
-            cue.title = `${label}. Go there.`;
-            cue.addEventListener("click", () => {
-                revealElement(b.el, measure);
-                announce(
-                    `${b.badge ? `Item ${b.badge}` : "Highlighted item"} brought into view.`,
-                );
-            });
-        } else cue.setAttribute("aria-hidden", "true");
-        cueHost.appendChild(cue);
+        if (cueMode === "edge") {
+            const label = `${b.badge ? `Item ${b.badge}` : "The highlighted item"} is ${where}. Go there.`;
+            entry.el.setAttribute("aria-label", label);
+            entry.el.title = label;
+        }
+        entry.el.style.left = `${p.x + V.x - 24}px`;
+        entry.el.style.top = `${p.y + V.y - 24}px`;
+        entry.el
+            .querySelector("g")
+            ?.setAttribute(
+                "transform",
+                `rotate(${(p.angle * 180) / Math.PI} 24 24)`,
+            );
     }
+}
+
+/** a pointer move only moves the pointer cues: nothing else on the layer changed */
+let cueRaf = 0;
+function scheduleCueRelay() {
+    if (cueRaf || !boxes.length) return;
+    cueRaf = requestAnimationFrame(() => {
+        cueRaf = 0;
+        renderCues(currentLook());
+    });
 }
 
 function syncMinimap() {
@@ -660,11 +772,18 @@ function setupSubscriptions() {
     });
     window.addEventListener("resize", scheduleRelay);
     const onPointer = () => {
-        if (getSettings().offscreenCue === "pointer") scheduleRelay();
+        if (getSettings().offscreenCue === "pointer") scheduleCueRelay();
     };
+    const vv = window.visualViewport;
+    vv?.addEventListener("resize", scheduleRelay);
+    vv?.addEventListener("scroll", scheduleRelay);
     window.addEventListener("mousemove", onPointer, { passive: true });
     unsubs = [
         () => window.removeEventListener("mousemove", onPointer),
+        () => vv?.removeEventListener("resize", scheduleRelay),
+        () => vv?.removeEventListener("scroll", scheduleRelay),
+        // a colour, layer or cue change applies to the outline already on screen
+        onSettingsChange(scheduleRelay),
         () =>
             window.removeEventListener("scroll", scheduleRelay, {
                 capture: true,
@@ -692,6 +811,8 @@ function teardownSubscriptions() {
     watcher = null;
     if (raf) cancelAnimationFrame(raf);
     raf = 0;
+    if (cueRaf) cancelAnimationFrame(cueRaf);
+    cueRaf = 0;
 }
 
 // ── public lifecycle ─────────────────────────────────────────────────────────
@@ -770,6 +891,8 @@ export function clearHighlights() {
     dimBox = null;
     cueHost?.remove();
     cueHost = null;
+    cueEls.clear();
+    lastRects = new Map();
     teardownSubscriptions();
     setTargets([]);
     if (had) for (const cb of clearedListeners) cb();

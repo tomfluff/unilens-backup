@@ -511,6 +511,101 @@ describe("off-screen cues", () => {
         expect(Math.hypot(a.x - from.x, a.y - from.y)).toBeCloseTo(90);
     });
 
+    it("spaces the pointer cues that wrap round past ±π", () => {
+        const from = { x: 300, y: 300 };
+        const cues = [Math.PI - 0.02, -Math.PI + 0.02].map((angle) => ({
+            x: 0,
+            y: 0,
+            angle,
+        }));
+        const [a, b] = settleCues(
+            cues,
+            "pointer",
+            { w: 1000, h: 800 },
+            null,
+            from,
+            90,
+        );
+        expect(Math.hypot(b.x - a.x, b.y - a.y)).toBeGreaterThan(48);
+    });
+
+    it("rotates a pointer cue out from under the popover", () => {
+        const from = { x: 300, y: 300 };
+        const popover = { left: 360, top: 250, right: 700, bottom: 700 };
+        const [c] = settleCues(
+            [{ x: 0, y: 0, angle: 0 }],
+            "pointer",
+            { w: 1000, h: 800 },
+            popover,
+            from,
+            90,
+        );
+        const inside =
+            c.x + 24 > popover.left &&
+            c.x - 24 < popover.right &&
+            c.y + 24 > popover.top &&
+            c.y - 24 < popover.bottom;
+        expect(inside).toBe(false);
+    });
+
+    it("places cues from real DOMRects, whose fields are prototype getters", () => {
+        class Rect {
+            constructor(
+                private l: number,
+                private t: number,
+            ) {}
+            get left() {
+                return this.l;
+            }
+            get top() {
+                return this.t;
+            }
+            get width() {
+                return 50;
+            }
+            get height() {
+                return 20;
+            }
+        }
+        updateSetting("offscreenCue", "edge");
+        const { registry } = mount();
+        setCurrentCapture("c1");
+        showHighlights(
+            [{ id: "n1", role: "target", badge: "1" }],
+            registry,
+            "c1",
+            nextToken(),
+            { measure: () => new Rect(100, 5000) },
+        );
+        const cue = document.querySelector(".unilens-hl-cue") as HTMLElement;
+        expect(cue.style.top).toMatch(/^\d+(\.\d+)?px$/);
+        expect(cue.getAttribute("aria-label")).toContain("below");
+    });
+
+    it("keeps the same edge cue element across relays, so focus survives", () => {
+        updateSetting("offscreenCue", "edge");
+        const { registry } = mount();
+        setCurrentCapture("c1");
+        showHighlights(
+            [{ id: "n1", role: "target", badge: "1" }],
+            registry,
+            "c1",
+            nextToken(),
+            { measure: () => rect(100, 5000, 50, 20) },
+        );
+        const before = document.querySelector(".unilens-hl-cue");
+        relayNow();
+        expect(document.querySelector(".unilens-hl-cue")).toBe(before);
+    });
+
+    it("marks an outline-less box, so forced colours can give it a ring", () => {
+        updateSetting("hlOutline", "none");
+        updateSetting("hlFill", true);
+        const { registry } = mount();
+        show(registry);
+        expect((layerBoxes()[0] as HTMLElement).dataset.outline).toBe("none");
+    });
+
     it("draws an edge cue only for a target off screen, and it brings the target in", () => {
         updateSetting("offscreenCue", "edge");
         const scroll = vi.fn();

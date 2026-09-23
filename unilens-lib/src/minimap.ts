@@ -11,7 +11,7 @@
  */
 
 import { colorWithAlpha, EDGE, lookFrom } from "./highlightStyles";
-import { getSettings } from "./settings";
+import { getSettings, onSettingsChange } from "./settings";
 import {
     boxOf,
     getView,
@@ -311,4 +311,11 @@ export function initMinimap() {
     window.addEventListener("scroll", scheduleLens, { passive: true });
     onViewChange(scheduleLens); // lens-pan engine: the document never scrolls
     window.addEventListener("resize", redraw);
+    // marker shape, dim, glow, numbers and the highlight colour apply to an open map
+    // at once; debounced, since a redraw repaints the whole page skeleton
+    onSettingsChange(() => {
+        if (!box || box.style.display === "none" || !targets.length) return;
+        clearTimeout(redrawTimer);
+        redrawTimer = window.setTimeout(redraw, 60);
+    });
 }
