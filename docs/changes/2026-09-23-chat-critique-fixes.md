@@ -41,6 +41,7 @@ It added one blocking issue: at 300% browser zoom the chat shrank to a 150px she
   - An arrow is pushed outward along its own line when the chat is in the way, and falls back to the screen edge otherwise.
   - New `cueSize` setting (default 72, was a fixed 48), with the arrowhead as the main shape.
 - **Short screens.** The layout accounts for height as well as width. The chat never shrinks below its header, three lines and the input. Quick actions hide once a conversation starts, and the status keeps to one line. A header button folds the chat to its header and status. On a short screen, the chat folds itself when it still covers a source it moved to.
+- **The page's floating controls stay usable.** When the chat is placed (on open, on a new click, on resize, but not while it is dragged), it moves the least distance that clears the page's fixed controls. That includes the UniLens display-adjust widget, which, like the chat, lives outside `<body>` and is never part of the page UniLens reads or highlights.
 - **Smaller fixes:**
   - "Explain".
   - 3件中 2件目.
@@ -57,5 +58,5 @@ It added one blocking issue: at 300% browser zoom the chat shrank to a 150px she
 - Known limits, kept as they are:
   - When three or more arrows crowd one spot, their numbers can swap order along the edge.
   - Near the screen edge, a pointer arrow can sit under the cursor.
-  - The chat can land on a host page's own floating controls.
+  - A floating control smaller than 22px can slip between the grid points the chat checks, so the chat may still cover it.
 - Tests: `places.test.ts`, `zoom.test.ts` (glide, cancel, bookmark) and `highlight.test.ts` (true bearing, inset, chat avoidance, spacing, over 400 random layouts).
