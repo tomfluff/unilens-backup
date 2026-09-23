@@ -101,6 +101,8 @@ def _session_context_note(session: dict, current_cap_id: str) -> str | None:
         m = json.loads(meta_path.read_text(encoding="utf-8"))
         el = m.get("element") or {}
         desc = f"capture #{i + 1}: click ({m.get('clickX')}, {m.get('clickY')})"
+        if m.get("viewRefresh"):
+            desc += " (same question, the user's view moved)"
         if el.get("tag"):
             desc += f" on <{el['tag']}>"
         if el.get("text"):
@@ -177,7 +179,9 @@ With every conversation you receive:
   describes the exact DOM element the user clicked (tag, text, nearest heading) — treat
   it as the most precise signal of what they are asking about. When metadata.region is
   present, the user explicitly selected that rectangle (drawn magenta on the full page;
-  the close-up image shows exactly it) — answer about that region.
+  the close-up image shows exactly it) — answer about that region. When
+  metadata.viewRefresh is true, the user scrolled, panned or zoomed since asking: the
+  images show their current view, and the crosshair is still where they first asked.
 Focus your answers on the region around the click and what the user was likely looking at.
 Answer in short chat-style plain text suited to a small chat bubble. Avoid markdown
 headings and tables; minimal **bold** and simple dash lists are OK."""

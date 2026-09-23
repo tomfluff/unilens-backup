@@ -53,6 +53,9 @@ export interface CaptureMeta {
     inventoryBytes?: number;
     /** content-space rect the user selected via alt+drag, if any */
     region?: { x: number; y: number; w: number; h: number };
+    /** a re-capture because the user moved the view mid-conversation: same question
+     *  point (clickX/Y, element), new view */
+    viewRefresh?: boolean;
 }
 
 export interface ElementContext {
@@ -197,6 +200,25 @@ export function guardFontProbe(doc: Document = document): () => void {
     style.textContent = FONT_PROBE_GUARD_CSS;
     doc.head.appendChild(style);
     return () => style.remove();
+}
+
+/**
+ * Has the user moved the view since this capture enough that the model should see it
+ * again: scrolled or panned by more than VIEW_MOVE of the viewport, or zoomed.
+ * ponytail: fixed 25% threshold; make it a knob if sessions show refreshes too eager or late.
+ */
+const VIEW_MOVE = 0.25;
+export function viewMovedSince(meta: CaptureMeta): boolean {
+    const vvp = window.visualViewport;
+    const { x, y } = getView();
+    const z = getZoom().scale;
+    const pinch = vvp ? Math.round((vvp.scale ?? 1) * 100) / 100 : 1;
+    return (
+        Math.abs(z - meta.zoom) > 0.05 ||
+        Math.abs(pinch - meta.pinchZoom) > 0.05 ||
+        Math.abs(x - meta.scrollX) > meta.viewportW * VIEW_MOVE ||
+        Math.abs(y - meta.scrollY) > meta.viewportH * VIEW_MOVE
+    );
 }
 
 /** main.tsx tags the backend id once the upload completes */
@@ -349,6 +371,7 @@ export async function capture(
     clickY: number,
     clickedEl?: Element,
     region?: { x: number; y: number; w: number; h: number },
+    opts: { viewRefresh?: boolean } = {},
 ): Promise<CaptureResult> {
     const captureTime = Date.now();
 
@@ -626,6 +649,7 @@ export async function capture(
             region: region ? vRect : undefined,
             inventoryTruncated: inv?.truncated,
             inventoryBytes: inv?.bytes,
+            viewRefresh: opts.viewRefresh || undefined,
         },
         inventory: inv?.wire,
         registry: inv?.registry,

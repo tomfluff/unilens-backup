@@ -1,9 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
+    type CaptureMeta,
     FONT_PROBE_GUARD_CSS,
     getLastInventoryDebug,
     guardFontProbe,
     recordInventoryDebug,
+    viewMovedSince,
 } from "./capture";
 import type { WireNode } from "./inventory";
 
@@ -53,5 +55,27 @@ describe("guardFontProbe", () => {
         expect(getComputedStyle(probe).height).toBe("260px");
         host.remove();
         probe.remove();
+    });
+});
+
+describe("viewMovedSince", () => {
+    // jsdom: view at (0, 0), zoom 1, no pinch
+    const meta = (over: Partial<CaptureMeta>) =>
+        ({
+            scrollX: 0,
+            scrollY: 0,
+            viewportW: 1000,
+            viewportH: 800,
+            zoom: 1,
+            pinchZoom: 1,
+            ...over,
+        }) as CaptureMeta;
+
+    it("ignores small scrolls and flags a real move or a zoom change", () => {
+        expect(viewMovedSince(meta({}))).toBe(false);
+        expect(viewMovedSince(meta({ scrollY: 150 }))).toBe(false);
+        expect(viewMovedSince(meta({ scrollY: 400 }))).toBe(true);
+        expect(viewMovedSince(meta({ scrollX: 300 }))).toBe(true);
+        expect(viewMovedSince(meta({ zoom: 2 }))).toBe(true);
     });
 });

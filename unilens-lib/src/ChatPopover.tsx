@@ -43,6 +43,8 @@ interface Msg {
     cite?: CiteSource;
     /** still streaming: an unfinished marker at the end stays hidden */
     streaming?: boolean;
+    /** a question sent with a fresh view: its close-up, shown small under the question */
+    view?: string;
 }
 
 /** a capture's inventory (for labels) and its id → live element registry */
@@ -79,6 +81,10 @@ interface Props {
     pinned: boolean;
     onTogglePin: (pos: { left: number; top: number } | null) => void;
     onMove: (pos: { left: number; top: number }) => void;
+    /** re-capture if the view moved since `prev`; null when it did not */
+    refreshCapture?: (
+        prev: CaptureResult,
+    ) => Promise<{ id: string; cap: CaptureResult } | null>;
 }
 
 const PANEL_W = 340;
@@ -220,6 +226,17 @@ const MessageBubble = styled.div<{
     }
 `;
 
+const SentView = styled.img`
+    display: block;
+    width: 120px;
+    height: auto;
+    max-width: 100%;
+    object-fit: contain;
+    margin-top: 6px;
+    border-radius: 4px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+`;
+
 /** the navigator wraps as one unit, never "‹ 1 of 3" on one line and "›" on the next */
 const NavGroup = styled.span`
     display: inline-flex;
@@ -343,6 +360,7 @@ export default function ChatPopover({
     pinned,
     onTogglePin,
     onMove,
+    refreshCapture,
 }: Props) {
     const [messages, setMessages] = useState<Msg[]>([]);
     const [input, setInput] = useState("");
@@ -516,15 +534,17 @@ export default function ChatPopover({
     // escapeOrder setting); the popover only lends it a close callback
     useEffect(() => registerPopoverClose(onClose), [onClose]);
 
+    // The capture the next message goes against: the one this popover opened on, until
+    // a follow-up after a scroll/pan/zoom re-captures the new view into the session
+    const cur = useRef({ id: captureId, cap: capture });
+
     // ── evidence: [[id]] citations in replies become chips and an action row ────
-    const citeSource = (): CiteSource | undefined =>
-        captureId !== "local" && capture.inventory?.length && capture.registry
-            ? {
-                  id: captureId,
-                  inventory: capture.inventory,
-                  registry: capture.registry,
-              }
+    const citeSource = (): CiteSource | undefined => {
+        const { id, cap } = cur.current;
+        return id !== "local" && cap.inventory?.length && cap.registry
+            ? { id, inventory: cap.inventory, registry: cap.registry }
             : undefined;
+    };
 
     const [active, setActive] = useState<Active>(null);
     // Escape (or a new capture) clears the outline: the pressed buttons must follow
@@ -655,7 +675,7 @@ export default function ChatPopover({
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-                capture_id: captureId,
+                capture_id: cur.current.id,
                 message: text,
                 session_id: sessionId,
                 cite: getSettings().citeEvidence,
@@ -723,7 +743,7 @@ export default function ChatPopover({
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-                capture_id: captureId,
+                capture_id: cur.current.id,
                 message: text,
                 session_id: sessionId,
                 cite: getSettings().citeEvidence,
@@ -747,14 +767,26 @@ export default function ChatPopover({
 
     async function sendText(text: string) {
         if (!text || busy) return;
-        setMessages((m) => [
-            ...m,
-            { id: `user-${Date.now()}`, role: "user", text },
-        ]);
+        const userId = `user-${Date.now()}`;
+        setMessages((m) => [...m, { id: userId, role: "user", text }]);
         setBusy(true);
         // minted at ask time: an auto-highlight for this reply loses to anything newer
         const token = nextToken();
         try {
+            // the user moved since the last capture: send what they see now
+            if (refreshCapture && cur.current.id !== "local") {
+                const fresh = await refreshCapture(cur.current.cap);
+                if (fresh) {
+                    cur.current = fresh;
+                    const view = fresh.cap.viewportImage;
+                    if (view)
+                        setMessages((m) =>
+                            m.map((x) =>
+                                x.id === userId ? { ...x, view } : x,
+                            ),
+                        );
+                }
+            }
             if (settings.streamReplies) await sendStreaming(text, token);
             else await sendPlain(text, token);
         } catch (err) {
@@ -922,7 +954,16 @@ export default function ChatPopover({
                                     }}
                                 />
                             ) : (
-                                m.text
+                                <>
+                                    {m.text}
+                                    {m.view && (
+                                        <SentView
+                                            src={m.view}
+                                            alt="the view sent with this question"
+                                            title="Sent with your current view"
+                                        />
+                                    )}
+                                </>
                             )}
                             {m.role === "assistant" && m.text && (
                                 <SpeakButton

@@ -17,6 +17,7 @@ import {
     capture,
     startTrace,
     tagLastCapture,
+    viewMovedSince,
 } from "./capture";
 import { initDebug } from "./DebugPanel";
 import {
@@ -71,6 +72,44 @@ function dismissPopover() {
     closePopover();
 }
 
+/** the element the open popover's question was asked about, for view refreshes */
+let askedAbout: Element | undefined;
+
+/**
+ * Before a follow-up: if the user scrolled, panned or zoomed since `prev`, capture the
+ * new view (same question point) into the session so the model sees what they see now.
+ * Null when the view has not moved, the knob is off, or the upload fails (the chat
+ * then carries on with the capture it has).
+ */
+async function refreshCapture(
+    prev: CaptureResult,
+    backend: string,
+): Promise<{ id: string; cap: CaptureResult } | null> {
+    // the conversation lives in the session; without one (continuity off) a new capture
+    // would start with an empty history, so the chat stays on the capture it has
+    if (!sessionId || !getSettings().refreshView || !viewMovedSince(prev.meta))
+        return null;
+    try {
+        const cap = await capture(
+            prev.meta.clickX,
+            prev.meta.clickY,
+            askedAbout?.isConnected ? askedAbout : undefined,
+            undefined,
+            { viewRefresh: true },
+        );
+        const id = await uploadCapture(cap, backend);
+        tagLastCapture(id);
+        setCurrentCapture(id);
+        return { id, cap };
+    } catch (err) {
+        console.warn(
+            "[UniLens] view refresh failed, using the last capture:",
+            err,
+        );
+        return null;
+    }
+}
+
 function openPopover(
     clientX: number,
     clientY: number,
@@ -95,6 +134,7 @@ function openPopover(
                 backend={backend}
                 sessionId={getSettings().continuity ? sessionId : null}
                 onClose={dismissPopover}
+                refreshCapture={(prev) => refreshCapture(prev, backend)}
                 initialPos={pinnedPos()}
                 pinned={pinnedPos() != null}
                 onTogglePin={(pos) => {
@@ -161,6 +201,7 @@ export function init(options: InitOptions = {}) {
         // already be stale, or it could redraw after the clear (Codex review, P1)
         setCurrentCapture(null);
         clearHighlights();
+        askedAbout = el;
         const cap = await capture(Math.round(p.x), Math.round(p.y), el, region);
         let id = "local";
         try {

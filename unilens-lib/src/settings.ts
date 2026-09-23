@@ -57,6 +57,8 @@ export interface Settings {
     minimapMarkerSize: number;
     /** answers cite the page elements they used, as numbered chips that highlight */
     citeEvidence: boolean;
+    /** re-capture before a message when the user scrolled, panned or zoomed since the last one */
+    refreshView: boolean;
     /** when an answer's evidence is outlined without a click */
     autoHighlight: "where" | "always" | "never";
     /** what Escape dismisses first when a highlight and the popover are both up */
@@ -100,6 +102,7 @@ const DEFAULTS: Settings = {
     pulse: false,
     minimapMarkerSize: 8,
     citeEvidence: true,
+    refreshView: true,
     autoHighlight: "where",
     escapeOrder: "highlight",
     highlightStyle: "wcag-ring",
@@ -135,6 +138,7 @@ export const TOGGLE_LABELS: Record<BoolSettingKey, string> = {
     ringScale: "Scale the outline with zoom",
     pulse: "Pulse the outline briefly",
     citeEvidence: "Answers cite page elements",
+    refreshView: "Send my new view with follow-ups",
 };
 
 /** keys of Settings whose value is a number — the integer knob rows in the panel */
