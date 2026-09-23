@@ -345,6 +345,8 @@ function DebugPanel({ sources }: { sources: DebugSources }) {
     const collapsed = stored?.collapsed === true;
     const [pos, setPos] = useState<Pos | null>(() => validPos(stored?.pos));
     const drag = useRef<{ dx: number; dy: number } | null>(null);
+    // the latest dragged position: a fast release can arrive before React commits it
+    const lastPos = useRef<Pos | null>(pos);
     const saveLayout = (next: { pos?: Pos | null; collapsed?: boolean }) =>
         updateSetting("debugPanel", {
             pos: next.pos !== undefined ? next.pos : pos,
@@ -360,17 +362,16 @@ function DebugPanel({ sources }: { sources: DebugSources }) {
     }
     function onHeaderMove(e: React.PointerEvent<HTMLDivElement>) {
         if (!drag.current) return;
-        setPos(
-            clampPos({
-                left: e.clientX - drag.current.dx,
-                top: e.clientY - drag.current.dy,
-            }),
-        );
+        lastPos.current = clampPos({
+            left: e.clientX - drag.current.dx,
+            top: e.clientY - drag.current.dy,
+        });
+        setPos(lastPos.current);
     }
     function onHeaderUp() {
         if (!drag.current) return;
         drag.current = null;
-        saveLayout({ pos }); // persisted once per drag, not on every move
+        saveLayout({ pos: lastPos.current }); // persisted once per drag, not per move
     }
 
     useEffect(() => {
@@ -454,7 +455,7 @@ function DebugPanel({ sources }: { sources: DebugSources }) {
                         {sent.length ? (
                             sent.map((c, i) => (
                                 <SentEntry
-                                    key={c.id}
+                                    key={`${c.id}-${c.at}`}
                                     c={c}
                                     backend={backend}
                                     newest={i === 0}

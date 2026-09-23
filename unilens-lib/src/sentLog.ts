@@ -37,6 +37,8 @@ export interface SentCapture {
 }
 
 const MAX_CAPTURES = 20;
+/** one capture can take many follow-ups; the oldest go first */
+const MAX_ASKS = 50;
 let log: SentCapture[] = [];
 
 export const getSentLog = (): readonly SentCapture[] => log;
@@ -47,9 +49,10 @@ export function recordCapture(
     cap: CaptureResult,
     viewRefresh = false,
 ) {
+    // failed uploads all share the id "local": each is its own record
     log = [
         { id, at: Date.now(), cap, viewRefresh, asks: [] },
-        ...log.filter((c) => c.id !== id),
+        ...log.filter((c) => c.id !== id || id === "local"),
     ].slice(0, MAX_CAPTURES);
 }
 
@@ -59,7 +62,12 @@ export function recordAsk(
     ask: Omit<SentAsk, "at">,
 ): SentAsk {
     const entry: SentAsk = { at: Date.now(), ...ask };
-    log.find((c) => c.id === captureId)?.asks.push(entry);
+    // newest first, so a "local" id finds the capture the popover is on
+    const asks = log.find((c) => c.id === captureId)?.asks;
+    if (asks) {
+        asks.push(entry);
+        if (asks.length > MAX_ASKS) asks.splice(0, asks.length - MAX_ASKS);
+    }
     return entry;
 }
 

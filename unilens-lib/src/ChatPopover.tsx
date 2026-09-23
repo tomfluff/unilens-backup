@@ -714,6 +714,7 @@ export default function ChatPopover({
         });
         if (!res.ok || !res.body) {
             const data = await res.json().catch(() => ({}));
+            ask.error = data.error ?? `HTTP ${res.status}`;
             setMessages((m) => [
                 ...m,
                 {
@@ -778,7 +779,10 @@ export default function ChatPopover({
             }
         }
         // connection dropped with neither "done" nor "error": stop hiding the tail
-        if (!ended) patchLast({ streaming: false });
+        if (!ended) {
+            ask.error = "stream ended without a reply";
+            patchLast({ streaming: false });
+        }
     }
 
     async function sendPlain(text: string, token: number, ask: SentAsk) {
@@ -823,6 +827,7 @@ export default function ChatPopover({
         setBusy(true);
         // minted at ask time: an auto-highlight for this reply loses to anything newer
         const token = nextToken();
+        let ask: SentAsk | undefined;
         try {
             // the user moved since the last capture: send what they see now
             if (refreshCapture && cur.current.id !== "local") {
@@ -830,13 +835,14 @@ export default function ChatPopover({
                 if (fresh) cur.current = fresh;
             }
             // developer-facing record of what went out; the debug panel shows it
-            const ask = recordAsk(cur.current.id, {
+            ask = recordAsk(cur.current.id, {
                 question: text,
                 cite: getSettings().citeEvidence,
             });
             if (settings.streamReplies) await sendStreaming(text, token, ask);
             else await sendPlain(text, token, ask);
         } catch (err) {
+            if (ask) ask.error = String(err);
             setMessages((m) => [
                 ...m,
                 {

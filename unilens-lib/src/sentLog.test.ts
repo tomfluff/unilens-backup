@@ -33,6 +33,18 @@ describe("sent log", () => {
         expect(getSentLog()[0].id).toBe("c29");
     });
 
+    it("keeps every failed upload and bounds the asks per capture", () => {
+        recordCapture("local", cap);
+        recordCapture("local", cap);
+        expect(getSentLog()).toHaveLength(2);
+        for (let i = 0; i < 60; i++)
+            recordAsk("local", { question: `q${i}`, cite: false });
+        const asks = getSentLog()[0].asks;
+        expect(asks).toHaveLength(50);
+        expect(asks[0].question).toBe("q10");
+        expect(getSentLog()[1].asks).toHaveLength(0);
+    });
+
     it("ignores an ask for a capture it does not hold", () => {
         expect(() =>
             recordAsk("gone", { question: "x", cite: false }),
