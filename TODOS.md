@@ -62,6 +62,18 @@
 **Priority:** P3
 **Depends on:** None; do it when a second html2canvas fault appears, or before the step-two runner if capture time matters
 
+### Decide the highlight and evidence visuals from the options page
+
+**What:** Pick highlight style (S), entrance (E), off-screen cue (X), minimap marker (M), chat evidence layout (C) and the meaning of "Guide to" (G) on https://claude.ai/artifact/TmaPQ7ZRpSZ9pEmhn2CnB5, then build the picks as presets/knobs and "Guide to" as the third action.
+
+**Why:** Phase-1 notes (2026-09-23): the WCAG ring is hard to recognise for low vision; the user wants a chosen colour and style, an entrance animation that makes the target findable, and several outlines at once. Citations, chips, the action row and numbered outlines shipped with placeholder visuals.
+
+**Context:** `highlightStyles.ts` holds presets as parameter rows; `highlight.ts` draws badges and multi-hole dim; `minimap.ts` draws targets as rects in the preset's colours. The edge arrow (X2) and entrance animations need new preset fields. Guide-to options: G1 camera move, G2 trail from the pointer, G3 step list.
+
+**Effort:** M
+**Priority:** P1
+**Depends on:** The builder's picks
+
 ## unilens-lib (inventory)
 
 ### Inventory completeness beyond phase 1
