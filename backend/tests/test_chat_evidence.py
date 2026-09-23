@@ -144,6 +144,20 @@ def test_stream_sends_deltas_as_written_but_saves_only_known_ids(
     assert _saved(cap)[-1]["text"] == "Price $9, button [[n2]]."
 
 
+@pytest.mark.parametrize(
+    "text, expected",
+    [
+        ("See [[n99]]details", "See details"),  # keeps a separator between words
+        ("$9 [[n99]].", "$9."),
+        ("Over-long [[n123456]] id", "Over-long id"),
+        ("Adjacent [[n2]][[n99]][[n1]].", "Adjacent [[n2]][[n1]]."),
+        ("Not a marker [[x1]] or [n2].", "Not a marker [[x1]] or [n2]."),
+    ],
+)
+def test_strip_unknown_cites(text, expected):
+    assert app_module._strip_unknown_cites(text, {"n1", "n2"}) == expected
+
+
 def test_cite_false_strips_every_marker(client, capture, monkeypatch):
     monkeypatch.setitem(app_module.PROVIDERS["stub"], "call", lambda **_: "See [[n2]].")
     assert _reply(client, "/api/chat", capture(), cite=False) == "See."

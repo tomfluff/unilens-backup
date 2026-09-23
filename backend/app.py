@@ -215,13 +215,22 @@ EVIDENCE_RULES = (
     "the page, which are no longer valid. Never explain the markers or mention "
     "ids otherwise. An answer that uses no page content needs no citation."
 )
-# the optional leading space goes with an invalid marker: "$9 [[n99]]." -> "$9."
-CITE_RE = re.compile(r" ?\[\[(n\d{1,5})\]\]")
+# any n-digits id, so an over-long one is stripped rather than let through
+CITE_RE = re.compile(r"( ?)\[\[(n\d+)\]\]")
 
 
 def _strip_unknown_cites(text: str, ids: set[str]) -> str:
-    """Drop [[id]] markers that name no element of the inventory in use."""
-    return CITE_RE.sub(lambda m: m.group(0) if m.group(1) in ids else "", text)
+    """Drop [[id]] markers that name no element of the inventory in use. The
+    space before one goes with it only when punctuation or the end follows:
+    "$9 [[n99]]." -> "$9." but "See [[n99]]details" -> "See details"."""
+
+    def drop(m):
+        if m.group(2) in ids:
+            return m.group(0)
+        after = text[m.end() : m.end() + 1]
+        return m.group(1) if after and (after.isalnum() or after == "_") else ""
+
+    return CITE_RE.sub(drop, text)
 
 
 def _provider():
