@@ -13,6 +13,7 @@ import {
 } from "./evidence";
 import {
     clearHighlights,
+    hasHighlight,
     nextToken,
     onHighlightsCleared,
     registerPopoverClose,
@@ -582,7 +583,9 @@ export default function ChatPopover({
             const el = src.registry.get(picks[0].id);
             if (el) revealElement(el);
         }
-        setActive({ msgId: m.id, index });
+        // nothing placeable (collapsed, box-less): showHighlights announced it; no button
+        // may look pressed over an empty page
+        setActive(hasHighlight() ? { msgId: m.id, index } : null);
     }
 
     /** a finished reply: debug readout, then outline it if the auto-highlight knob says so */
@@ -611,7 +614,7 @@ export default function ChatPopover({
                     .join(", "),
             },
         );
-        if (drawn) setActive({ msgId: m.id, index: "all" });
+        if (drawn && hasHighlight()) setActive({ msgId: m.id, index: "all" });
     }
 
     /** "next", "show all", "the second one": steer the last cited reply without a model call */
@@ -702,6 +705,7 @@ export default function ChatPopover({
         const decoder = new TextDecoder();
         let buffer = "";
         let full = "";
+        let ended = false;
         for (;;) {
             const { done, value } = await reader.read();
             if (done) break;
@@ -715,8 +719,15 @@ export default function ChatPopover({
                     full += data.delta;
                     patchLast({ text: full });
                 } else if (data.error) {
-                    patchLast({ text: `${full}\n[error: ${data.error}]` });
+                    // the backend ends the stream after an error, with no "done"
+                    ended = true;
+                    patchLast({
+                        text: `${full}\n[error: ${data.error}]`,
+                        streaming: false,
+                        error: true,
+                    });
                 } else if (data.done) {
+                    ended = true;
                     patchLast({ info: fmtInfo(data), streaming: false });
                     onReplyDone(
                         { id: msgId, role: "assistant", text: full, cite },
@@ -735,6 +746,8 @@ export default function ChatPopover({
                 }
             }
         }
+        // connection dropped with neither "done" nor "error": stop hiding the tail
+        if (!ended) patchLast({ streaming: false });
     }
 
     async function sendPlain(text: string, token: number) {

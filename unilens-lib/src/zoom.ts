@@ -418,19 +418,24 @@ export function revealElement(
 ): boolean {
     const r = boxOf(el, measure);
     if (isEmptyBox(r)) return false;
-    const W = window.innerWidth;
-    const H = window.innerHeight;
+    // under browser pinch zoom the user sees the visual viewport, a window inside the
+    // layout viewport that client rects are measured in
+    const vv = window.visualViewport;
+    const L = vv?.offsetLeft ?? 0;
+    const T = vv?.offsetTop ?? 0;
+    const W = vv?.width ?? window.innerWidth;
+    const H = vv?.height ?? window.innerHeight;
     if (
-        r.left >= 0 &&
-        r.top >= 0 &&
-        r.left + r.width <= W &&
-        r.top + r.height <= H
+        r.left >= L &&
+        r.top >= T &&
+        r.left + r.width <= L + W &&
+        r.top + r.height <= T + H
     )
         return true;
     const v = getView();
     setView(
-        v.x + r.left + r.width / 2 - W / 2,
-        v.y + r.top + r.height / 2 - H / 2,
+        v.x + r.left + r.width / 2 - (L + W / 2),
+        v.y + r.top + r.height / 2 - (T + H / 2),
     );
     return true;
 }

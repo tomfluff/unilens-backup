@@ -34,6 +34,23 @@ describe("revealElement", () => {
         expect(scroll).not.toHaveBeenCalled();
     });
 
+    it("uses the visual viewport under browser pinch zoom", () => {
+        const scroll = vi.fn();
+        window.scrollTo = scroll as unknown as typeof window.scrollTo;
+        Object.defineProperty(window, "visualViewport", {
+            configurable: true,
+            value: { offsetLeft: 300, offsetTop: 200, width: 400, height: 300 },
+        });
+        const el = document.createElement("div");
+        // inside the layout viewport but left of the pinched visual viewport
+        expect(revealElement(el, () => box(100, 250))).toBe(true);
+        expect(scroll).toHaveBeenLastCalledWith(150 - 500, 270 - 350);
+        Object.defineProperty(window, "visualViewport", {
+            configurable: true,
+            value: undefined,
+        });
+    });
+
     it("refuses an element with no box", () => {
         const el = document.createElement("div");
         expect(revealElement(el, () => box(0, 0, 0, 0))).toBe(false);

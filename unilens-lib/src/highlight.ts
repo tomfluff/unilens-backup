@@ -43,6 +43,14 @@ let boxes: { el: Element; box: HTMLDivElement; role: HighlightRole }[] = [];
 let dimBox: HTMLDivElement | null = null;
 let measure: Measure = defaultMeasure;
 
+const clearedListeners = new Set<() => void>();
+/** the popover's pressed buttons follow the outline: Escape, a new capture, or the
+ *  last outlined element leaving the page clears it */
+export function onHighlightsCleared(cb: () => void): () => void {
+    clearedListeners.add(cb);
+    return () => clearedListeners.delete(cb);
+}
+
 // ── current-capture guard ────────────────────────────────────────────────────
 // The outline always belongs to the latest question on the current capture: a
 // locate answer that lands after a newer capture, or after a newer question, is
@@ -209,6 +217,7 @@ function render() {
     if (gone.length) {
         announce("That element is no longer on the page.");
         setTargets(boxes.map((b) => b.el)); // the minimap must not keep a detached target
+        if (!boxes.length) for (const cb of clearedListeners) cb();
     }
     if (dimBox) {
         // one darkened layer over the viewport with a hole per outlined element: an
@@ -405,13 +414,6 @@ export function showHighlights(
     setTargets(boxes.map((b) => b.el));
     if (opts.label) announce(`Found: ${opts.label}`);
     return true;
-}
-
-const clearedListeners = new Set<() => void>();
-/** the popover's pressed buttons follow the outline: Escape or a new capture clears it */
-export function onHighlightsCleared(cb: () => void): () => void {
-    clearedListeners.add(cb);
-    return () => clearedListeners.delete(cb);
 }
 
 export function clearHighlights() {

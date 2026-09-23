@@ -6,6 +6,7 @@ import {
     hasHighlight,
     init,
     nextToken,
+    onHighlightsCleared,
     registerPopoverClose,
     relayNow,
     setCurrentCapture,
@@ -153,6 +154,18 @@ describe("showHighlights", () => {
         expect(box.style.left).toBe("45px");
         expect(box.style.top).toBe("395px");
         expect(box.style.width).toBe("540px");
+    });
+
+    it("tells listeners when the last outlined element leaves the page", () => {
+        const { el, registry } = mount();
+        const cleared = vi.fn();
+        const off = onHighlightsCleared(cleared);
+        show(registry);
+        el.remove();
+        relayNow();
+        expect(hasHighlight()).toBe(false);
+        expect(cleared).toHaveBeenCalledTimes(1);
+        off();
     });
 
     it("removes and announces an element that left the page", () => {

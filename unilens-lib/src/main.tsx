@@ -60,6 +60,7 @@ function setPinnedPos(pos: { left: number; top: number } | null) {
 }
 
 function closePopover() {
+    generation++;
     root?.unmount();
     root = null;
     container?.remove();
@@ -74,6 +75,9 @@ function dismissPopover() {
 
 /** the element the open popover's question was asked about, for view refreshes */
 let askedAbout: Element | undefined;
+/** bumped whenever the popover's capture is retired (new capture, close): a refresh
+ *  that finishes after that belongs to a conversation that is gone */
+let generation = 0;
 
 /**
  * Before a follow-up: if the user scrolled, panned or zoomed since `prev`, capture the
@@ -89,6 +93,7 @@ async function refreshCapture(
     // would start with an empty history, so the chat stays on the capture it has
     if (!sessionId || !getSettings().refreshView || !viewMovedSince(prev.meta))
         return null;
+    const gen = generation;
     try {
         const cap = await capture(
             prev.meta.clickX,
@@ -97,7 +102,10 @@ async function refreshCapture(
             undefined,
             { viewRefresh: true },
         );
+        if (gen !== generation) return null;
         const id = await uploadCapture(cap, backend);
+        // never let a slow refresh take the guard from a capture opened since
+        if (gen !== generation) return null;
         tagLastCapture(id);
         setCurrentCapture(id);
         return { id, cap };
@@ -199,6 +207,7 @@ export function init(options: InitOptions = {}) {
         // a new capture retires the previous outline and its ids. Retire the id first:
         // while this capture renders and uploads, a late answer for the old one must
         // already be stale, or it could redraw after the clear (Codex review, P1)
+        generation++;
         setCurrentCapture(null);
         clearHighlights();
         askedAbout = el;
