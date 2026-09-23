@@ -10,11 +10,13 @@
  * out of captures — same as the rest of the UniLens chrome.
  */
 
-import { HIGHLIGHT_PRESETS } from "./highlightStyles";
+import { HIGHLIGHT_PRESETS, type HighlightStyle } from "./highlightStyles";
 import { getSettings } from "./settings";
 import {
+    boxOf,
     getView,
     getZoom,
+    isEmptyBox,
     isOwnMutation,
     onViewChange,
     onZoomChange,
@@ -77,24 +79,59 @@ export function setTargets(els: Element[]) {
     if (box && box.style.display !== "none") redraw();
 }
 
+/**
+ * Targets drawn as their real rects on the map, in the selected highlight style:
+ * fill, glow and the two-band ring as on the page, and a dim-others style dims the
+ * whole map except the targets. Tiny targets grow to the marker minimum, centred.
+ */
 function drawTargets(g: CanvasRenderingContext2D, scale: number) {
-    const size = getSettings().minimapMarkerSize;
-    const ring = (
+    const min = getSettings().minimapMarkerSize;
+    const preset =
         HIGHLIGHT_PRESETS[getSettings().highlightStyle] ??
-        HIGHLIGHT_PRESETS["wcag-ring"]
-    ).ring;
+        HIGHLIGHT_PRESETS["wcag-ring"];
     const v = getView();
+    const rects: [number, number, number, number][] = [];
     for (const el of targets) {
         if (!el.isConnected) continue;
-        const r = el.getBoundingClientRect();
+        const r = boxOf(el);
+        if (isEmptyBox(r)) continue;
         const p = toContent(r.left + v.x, r.top + v.y);
-        const cx = (p.x + r.width / scale / 2) * mapScale;
-        const cy = (p.y + r.height / scale / 2) * mapScale;
-        // same two-band construction as the outline, shrunk: border then fill
-        g.fillStyle = ring.outer;
-        g.fillRect(cx - size / 2, cy - size / 2, size, size);
-        g.fillStyle = ring.inner;
-        g.fillRect(cx - size / 2 + 2, cy - size / 2 + 2, size - 4, size - 4);
+        const w = (r.width / scale) * mapScale;
+        const h = (r.height / scale) * mapScale;
+        const cx = p.x * mapScale + w / 2;
+        const cy = p.y * mapScale + h / 2;
+        const mw = Math.max(w, min);
+        const mh = Math.max(h, min);
+        rects.push([cx - mw / 2, cy - mh / 2, mw, mh]);
+    }
+    if (!rects.length) return;
+    const style: HighlightStyle = preset;
+    if (style.dimOthers) {
+        g.beginPath();
+        g.rect(0, 0, g.canvas.width, g.canvas.height);
+        for (const [x, y, w, h] of rects) g.rect(x, y, w, h);
+        g.fillStyle = `rgba(0,0,0,${style.dimOthers.alpha})`;
+        g.fill("evenodd");
+    }
+    for (const [x, y, w, h] of rects) {
+        g.save();
+        if (style.glow) {
+            g.shadowColor = style.glow.color;
+            g.shadowBlur = 10;
+        }
+        // an outline-only style still needs area at map scale: fill with its outer band
+        g.fillStyle = style.fill
+            ? style.fill.color
+            : (style.ring?.outer ?? "#ffe600");
+        g.fillRect(x, y, w, h);
+        g.restore();
+        const ring = style.ring ?? { inner: "#000", outer: "#fff" };
+        g.lineWidth = 3;
+        g.strokeStyle = ring.outer;
+        g.strokeRect(x - 1.5, y - 1.5, w + 3, h + 3);
+        g.lineWidth = 1.5;
+        g.strokeStyle = ring.inner;
+        g.strokeRect(x, y, w, h);
     }
 }
 

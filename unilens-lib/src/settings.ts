@@ -96,7 +96,7 @@ const DEFAULTS: Settings = {
     ringWidth: 2,
     ringScale: false,
     pulse: false,
-    minimapMarkerSize: 16,
+    minimapMarkerSize: 8,
     locateScreenshot: true,
     escapeOrder: "highlight",
     highlightStyle: "wcag-ring",
@@ -182,7 +182,7 @@ export const NUMBER_KNOBS: Record<
     },
     ringWidth: { label: "Outline width (px)", min: 1, max: 6, step: 1 },
     minimapMarkerSize: {
-        label: "Minimap marker size (px)",
+        label: "Minimap marker min size (px)",
         min: 8,
         max: 32,
         step: 2,
