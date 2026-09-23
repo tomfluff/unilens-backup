@@ -435,7 +435,11 @@ const HISTORY_CAP = 20;
 export function revealElement(
     el: Element,
     measure?: (el: Element) => ClientRect,
-    opts: { always?: boolean } = {},
+    opts: {
+        always?: boolean;
+        /** client rect to keep the element out from under (the chat popover) */
+        avoid?: { left: number; top: number; right: number; bottom: number };
+    } = {},
 ): "moved" | "in-view" | "none" {
     const r = boxOf(el, measure);
     if (isEmptyBox(r)) return "none";
@@ -446,20 +450,45 @@ export function revealElement(
     const T = vv?.offsetTop ?? 0;
     const W = vv?.width ?? window.innerWidth;
     const H = vv?.height ?? window.innerHeight;
+    const a = opts.avoid;
+    const covered =
+        !!a &&
+        r.left < a.right &&
+        r.left + r.width > a.left &&
+        r.top < a.bottom &&
+        r.top + r.height > a.top;
     if (
         !opts.always &&
+        !covered &&
         r.left >= L &&
         r.top >= T &&
         r.left + r.width <= L + W &&
         r.top + r.height <= T + H
     )
         return "in-view";
+    // aim for the middle of the screen, or with a popover in the way, the middle of
+    // the largest free band beside it (one the element fits in, when there is one)
+    let cx = L + W / 2;
+    let cy = T + H / 2;
+    if (a) {
+        const bands = [
+            { x: L, y: T, w: a.left - L, h: H },
+            { x: a.right, y: T, w: L + W - a.right, h: H },
+            { x: L, y: T, w: W, h: a.top - T },
+            { x: L, y: a.bottom, w: W, h: T + H - a.bottom },
+        ].filter((b) => b.w > 0 && b.h > 0);
+        const fits = bands.filter((b) => b.w >= r.width && b.h >= r.height);
+        const pick = (fits.length ? fits : bands).sort(
+            (p, q) => q.w * q.h - p.w * p.h,
+        )[0];
+        if (pick) {
+            cx = pick.x + pick.w / 2;
+            cy = pick.y + pick.h / 2;
+        }
+    }
     const v = getView();
     rememberView(W, H);
-    setView(
-        v.x + r.left + r.width / 2 - (L + W / 2),
-        v.y + r.top + r.height / 2 - (T + H / 2),
-    );
+    setView(v.x + r.left + r.width / 2 - cx, v.y + r.top + r.height / 2 - cy);
     return "moved";
 }
 

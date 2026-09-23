@@ -90,6 +90,19 @@ describe("revealElement", () => {
         expect(directionOf(el, () => box(100, 200))).toBe("on screen");
     });
 
+    it("moves an element the popover covers into the free band beside it", () => {
+        const scroll = vi.fn();
+        window.scrollTo = scroll as unknown as typeof window.scrollTo;
+        const el = document.createElement("div");
+        // jsdom viewport 1024x768; popover on the right half; element under it
+        const popover = { left: 600, top: 0, right: 1024, bottom: 768 };
+        expect(revealElement(el, () => box(700, 300), { avoid: popover })).toBe(
+            "moved",
+        );
+        // centred in the free left band (0..600 wide): x 750 -> 300, y stays centred
+        expect(scroll).toHaveBeenLastCalledWith(750 - 300, 320 - 384);
+    });
+
     it("refuses an element with no box", () => {
         const el = document.createElement("div");
         expect(revealElement(el, () => box(0, 0, 0, 0))).toBe("none");

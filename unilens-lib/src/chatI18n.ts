@@ -88,6 +88,10 @@ const EN = {
     sAllNote: (n: number) => (n > 1 ? `Showing all ${n}.` : "Showing it."),
     sItemNote: (i: number, n: number) => `Showing ${i} of ${n}.`,
     otherName: "ユニレンズ",
+    placeRegion: "the area you selected",
+    placeClick: "where you clicked",
+    placeNear: (h: string) => `near "${h}"`,
+    placeTag: (tag: string) => `the ${tag}`,
     sBackendError: (e: string) => `Could not reach UniLens: ${e}`,
     // directions from zoom.directionOf
     dir: {
@@ -163,6 +167,10 @@ const JA: Strings = {
         n > 1 ? `${n}か所すべて表示しています。` : "表示しています。",
     sItemNote: (i: number, n: number) => `${n}件中 ${i}件目を表示しています。`,
     otherName: "UniLens",
+    placeRegion: "選択した範囲",
+    placeClick: "クリックした場所",
+    placeNear: (h: string) => `「${h}」の近く`,
+    placeTag: (tag: string) => `${tag} 要素`,
     sBackendError: (e: string) => `UniLens に接続できません: ${e}`,
     dir: {
         "on screen": "画面内",

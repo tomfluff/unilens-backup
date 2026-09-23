@@ -19,6 +19,7 @@ import {
     tagLastCapture,
     viewMovedSince,
 } from "./capture";
+import { chatText } from "./chatI18n";
 import { initDebug } from "./DebugPanel";
 import {
     clearHighlights,
@@ -77,15 +78,16 @@ function dismissPopover() {
 
 /** a short name for where the user clicked, for "where I clicked" buttons and speech */
 function placeLabel(cap: CaptureResult): string {
+    const T = chatText();
     const e = cap.meta.element;
-    if (cap.meta.region) return "the area you selected";
-    if (!e) return "where you clicked";
+    if (cap.meta.region) return T.placeRegion;
+    if (!e) return T.placeClick;
     const text = (e.text ?? e.alt ?? "").trim();
     // a short text names the thing itself; a long one is a whole section, whose
     // heading names it better
     if (text && text.length <= 40) return text;
-    if (e.nearestHeading) return `near "${e.nearestHeading}"`;
-    return text ? `${text.slice(0, 40)}…` : `the ${e.tag}`;
+    if (e.nearestHeading) return T.placeNear(e.nearestHeading);
+    return text ? `${text.slice(0, 40)}…` : T.placeTag(e.tag);
 }
 
 /** the element the open popover's question was asked about, for view refreshes */

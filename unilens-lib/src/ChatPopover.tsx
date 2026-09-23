@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import type { CaptureResult } from "./capture";
 import { chatLang, chatText } from "./chatI18n";
 import { ensureChatStyles } from "./chatStyles";
-import { type Earcon, earcon } from "./earcons";
+import { type Earcon, earcon, releaseAudio } from "./earcons";
 import {
     asksToLocate,
     type Cited,
@@ -91,8 +91,14 @@ function cited(m: Msg): Cited | null {
         (id) => src.registry.has(id),
         (id) => labelOfWire(id, src.inventory),
         m.streaming,
+        chatText().evidenceLabel,
+        chipText,
     );
 }
+
+/** station signs number their sources like station codes */
+const chipText = (n: number) =>
+    getSettings().chatStyle === "station" ? `U${n}` : String(n);
 
 interface Props {
     x: number; // client coords of the triggering click
@@ -144,9 +150,13 @@ export default function ChatPopover({
     const [messages, setMessages] = useState<Msg[]>([]);
     /** the last action, shown on the status line: every action is seen as well as heard */
     const [status, setStatus] = useState("");
+    /** every action: its sound, the visible status line, and the one live region */
     const act = (kind: Earcon, text?: string) => {
         earcon(kind);
-        if (text !== undefined) setStatus(text);
+        if (text !== undefined) {
+            setStatus(text);
+            announce(text);
+        }
     };
     const [input, setInput] = useState("");
     const [busy, setBusy] = useState(false);
@@ -159,8 +169,15 @@ export default function ChatPopover({
     const hc = settings.highContrast;
     const style = settings.chatStyle;
     const T = chatText();
-    const panelW = PANEL_W_EM * fs;
-    const panelH = Math.min(PANEL_H_EM * fs, window.innerHeight - 16);
+    // on a phone-width screen the chat docks as a bottom sheet over half the height,
+    // so what it points at above stays visible
+    const narrow = window.innerWidth <= 480;
+    const panelW = narrow
+        ? window.innerWidth - 16
+        : Math.min(PANEL_W_EM * fs, window.innerWidth - 16);
+    const panelH = narrow
+        ? Math.min(PANEL_H_EM * fs, window.innerHeight * 0.5)
+        : Math.min(PANEL_H_EM * fs, window.innerHeight - 16);
 
     const [listening, setListening] = useState(false);
     const stopListenRef = useRef<(() => void) | null>(null);
@@ -182,14 +199,21 @@ export default function ChatPopover({
         );
     }
 
-    // stop any speech/mic when the popover unmounts
-    useEffect(
-        () => () => {
+    // Focus moves into the chat when it opens and back to where it was when it
+    // closes, so keyboard and screen-reader users are never left on the page behind.
+    // Speech, the mic and the audio context stop with it.
+    const inputRef = useRef<HTMLInputElement>(null);
+    const rootRef = useRef<HTMLDivElement>(null);
+    useEffect(() => {
+        const before = document.activeElement as HTMLElement | null;
+        inputRef.current?.focus({ preventScroll: true });
+        return () => {
             stopSpeaking();
             stopListenRef.current?.();
-        },
-        [],
-    );
+            releaseAudio();
+            if (before?.isConnected) before.focus({ preventScroll: true });
+        };
+    }, []);
 
     function toggleMic() {
         if (listening) {
@@ -242,9 +266,21 @@ export default function ChatPopover({
         top: Math.min(Math.max(p.top, 8), window.innerHeight - panelH - 8),
     });
     const [pos, setPos] = useState(() =>
-        clamp(initialPos ?? { left: x + 12, top: y + 12 }),
+        clamp(
+            narrow
+                ? { left: 8, top: window.innerHeight }
+                : (initialPos ?? { left: x + 12, top: y + 12 }),
+        ),
     );
     const dragRef = useRef<{ dx: number; dy: number } | null>(null);
+    // a bigger text size or a narrower window must not push the chat off screen
+    // biome-ignore lint/correctness/useExhaustiveDependencies: re-clamp on size changes only
+    useEffect(() => {
+        const refit = () => setPos((p) => clamp(p));
+        refit();
+        window.addEventListener("resize", refit);
+        return () => window.removeEventListener("resize", refit);
+    }, [fs, style]);
 
     function onHeaderPointerDown(e: React.PointerEvent) {
         if (!settings.dragPopover) return;
@@ -265,12 +301,30 @@ export default function ChatPopover({
         dragRef.current = null;
     }
 
-    // a new bubble (question, reply, error) scrolls into view; streaming deltas do not
-    // move the list, so a user reading back up is not yanked down
-    // biome-ignore lint/correctness/useExhaustiveDependencies: keyed on the count on purpose
+    // The log follows the conversation (new bubbles, streaming text, the evidence
+    // controls that appear when an answer ends) while the user is at the bottom; once
+    // they scroll up to read, it stays put until they send again.
+    const stick = useRef(true);
+    /** keep a reply's controls in view inside the log, scrolling only the log (never
+     *  the host page, which scrollIntoView would also move) */
+    const revealTurn = (id: string) =>
+        requestAnimationFrame(() => {
+            const log = scrollRef.current;
+            const turn = log?.querySelector(`[data-turn="${CSS.escape(id)}"]`);
+            if (!log || !turn) return;
+            const lr = log.getBoundingClientRect();
+            const tr = turn.getBoundingClientRect();
+            if (tr.bottom > lr.bottom)
+                log.scrollTop += tr.bottom - lr.bottom + 8;
+            else if (tr.top < lr.top) log.scrollTop -= lr.top - tr.top + 8;
+        });
+    // biome-ignore lint/correctness/useExhaustiveDependencies: follows every message change
     useEffect(() => {
-        scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight });
-    }, [messages.length]);
+        if (stick.current)
+            scrollRef.current?.scrollTo({
+                top: scrollRef.current.scrollHeight,
+            });
+    }, [messages]);
 
     // Escape is owned by highlight.ts (one listener decides per keypress, honouring the
     // escapeOrder setting); the popover only lends it a close callback
@@ -326,6 +380,7 @@ export default function ChatPopover({
             reveal && move !== "never" && el
                 ? revealElement(el, undefined, {
                       always: move === "always",
+                      avoid: rootRef.current?.getBoundingClientRect(),
                   }) === "moved"
                 : false;
         setReturnable(canReturn());
@@ -339,12 +394,12 @@ export default function ChatPopover({
                           : where && where !== "on screen"
                             ? T.sWhere(T.dir[where] ?? where)
                             : T.sEnd);
-            announce(said);
             act(index === "all" ? "all" : moved ? "move" : "chip", said);
         }
         // nothing placeable (collapsed, box-less): showHighlights announced it; no button
         // may look pressed over an empty page
         setActive(hasHighlight() ? { msgId: m.id, index } : null);
+        revealTurn(m.id);
     }
 
     /** a finished reply: debug readout, then outline it if the auto-highlight knob says so */
@@ -409,7 +464,6 @@ export default function ChatPopover({
             );
         setReturnable(canReturn());
         const note = T.sPlace(p.label, r === "moved");
-        announce(note);
         act(r === "moved" ? "move" : "chip", note);
         return note;
     }
@@ -421,7 +475,6 @@ export default function ChatPopover({
                 const ok = returnToPreviousView();
                 note = ok ? T.sBack : T.sNoBack;
                 setReturnable(canReturn());
-                announce(note);
                 act(ok ? "back" : "error", note);
             } else {
                 const p = latestPlace();
@@ -611,6 +664,7 @@ export default function ChatPopover({
             },
         ]);
         setBusy(true);
+        stick.current = true;
         act("send", T.sAsking);
         // minted at ask time: an auto-highlight for this reply loses to anything newer
         const token = nextToken();
@@ -692,12 +746,12 @@ export default function ChatPopover({
         const ok = returnToPreviousView();
         setReturnable(canReturn());
         const said = ok ? T.sBack : T.sNoBack;
-        announce(said);
         act(ok ? "back" : "error", said);
     };
 
     return (
         <div
+            ref={rootRef}
             className="ul-chat"
             data-style={style}
             data-hc={hc ? "true" : "false"}
@@ -708,6 +762,8 @@ export default function ChatPopover({
                 {
                     left: pos.left,
                     top: pos.top,
+                    width: panelW,
+                    height: panelH,
                     "--ul-fs": `${fs}px`,
                 } as React.CSSProperties
             }
@@ -724,9 +780,6 @@ export default function ChatPopover({
                     <span className="ulc-roundel" aria-hidden="true">
                         U
                     </span>
-                )}
-                {style === "assistant" && (
-                    <span className="ulc-dot" aria-hidden="true" />
                 )}
                 <div className="ulc-title">
                     <b>{T.title}</b>
@@ -780,7 +833,15 @@ export default function ChatPopover({
                 </div>
             )}
 
-            <div className="ulc-log" ref={scrollRef}>
+            <div
+                className="ulc-log"
+                ref={scrollRef}
+                onScroll={(e) => {
+                    const el = e.currentTarget;
+                    stick.current =
+                        el.scrollHeight - el.scrollTop - el.clientHeight < 48;
+                }}
+            >
                 {messages.length === 0 && (
                     <p className="ulc-empty">{T.emptyHint}</p>
                 )}
@@ -949,7 +1010,7 @@ export default function ChatPopover({
                                                         point(m, k, true)
                                                     }
                                                 >
-                                                    {k + 1}
+                                                    {chipText(k + 1)}
                                                 </button>
                                             ))}
                                             <button
@@ -960,11 +1021,6 @@ export default function ChatPopover({
                                             >
                                                 <NextIcon />
                                             </button>
-                                            {at >= 0 && (
-                                                <span className="ulc-of">
-                                                    {T.ofN(at + 1, n)}
-                                                </span>
-                                            )}
                                         </div>
                                     )}
                                 </div>
@@ -972,7 +1028,7 @@ export default function ChatPopover({
                                 <div className="ulc-ev">
                                     <button
                                         type="button"
-                                        className="ulc-pill"
+                                        className="ulc-pill ulc-primary"
                                         aria-pressed={allOn}
                                         onClick={() => toggleAll(m, allOn)}
                                     >
@@ -1022,7 +1078,7 @@ export default function ChatPopover({
                             )
                         ) : null;
                     return (
-                        <div key={m.id} className="ulc-turn">
+                        <div key={m.id} className="ulc-turn" data-turn={m.id}>
                             <div
                                 className={`ulc-msg ulc-bot${m.error ? " is-err" : ""}${m.quiet ? " is-quiet" : ""}`}
                             >
@@ -1057,6 +1113,7 @@ export default function ChatPopover({
                                         aria-hidden="true"
                                     />
                                 )}
+                                {style === "assistant" && controls}
                                 {m.text && !m.streaming && (
                                     <div className="ulc-tools">
                                         <button
@@ -1098,7 +1155,7 @@ export default function ChatPopover({
                                     </div>
                                 )}
                             </div>
-                            {controls}
+                            {style !== "assistant" && controls}
                         </div>
                     );
                 })}
@@ -1132,6 +1189,7 @@ export default function ChatPopover({
                     </button>
                 )}
                 <input
+                    ref={inputRef}
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
                     // Enter that confirms an IME composition (Japanese, Chinese, Korean)
@@ -1152,7 +1210,7 @@ export default function ChatPopover({
                     aria-label={T.send}
                     title={T.send}
                     onClick={send}
-                    disabled={busy}
+                    disabled={busy || !input.trim()}
                 >
                     {busy ? <WaitIcon /> : <SendIcon />}
                 </button>

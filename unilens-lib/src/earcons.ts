@@ -121,6 +121,11 @@ export const PALETTES: Record<Settings["chatStyle"], Record<Earcon, Tone[]>> = {
 const GAIN = 0.05;
 let ctx: AudioContext | null = null;
 
+/** the chat closed: stop holding the audio device (the next sound resumes it) */
+export function releaseAudio() {
+    if (ctx && ctx.state === "running") void ctx.suspend().catch(() => {});
+}
+
 /** play an action's sound in the current style; silent when sounds are off or unavailable */
 export function earcon(kind: Earcon) {
     const s = getSettings();
@@ -134,6 +139,7 @@ export function earcon(kind: Earcon) {
                 .webkitAudioContext;
         if (!AC) return;
         ctx ??= new AC();
+        if (ctx.state === "suspended") void ctx.resume();
         const t0 = ctx.currentTime + 0.01;
         for (const tone of tones) {
             const osc = ctx.createOscillator();
