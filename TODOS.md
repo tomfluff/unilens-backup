@@ -62,19 +62,17 @@
 **Priority:** P3
 **Depends on:** None; do it when a second html2canvas fault appears, or before the step-two runner if capture time matters
 
-### Decide the highlight and evidence visuals from the options page
+### Think through "Guide to" in its own session
 
-**What:** Pick highlight style (S), entrance (E), off-screen cue (X), minimap marker (M), chat evidence layout (C) and the meaning of "Guide to" (G) on https://claude.ai/artifact/TmaPQ7ZRpSZ9pEmhn2CnB5, then build the picks as presets/knobs and "Guide to" as the third action.
+**What:** Decide what "Guide to" means for magnifier users, then build it as the third evidence action: a camera move, a drawn trail from the pointer, a step list, or something else.
 
-**Why:** Phase-1 notes (2026-09-23): the WCAG ring is hard to recognise for low vision; the user wants a chosen colour and style, an entrance animation that makes the target findable, and several outlines at once. Citations, chips, the action row and numbered outlines shipped with placeholder visuals.
+**Why:** Builder's call (2026-09-23): clicking a chip or the navigator already moves to an item, so a plain "Scroll to" was removed; "Guide to" must earn its place as deliberate guidance, and needs its own thought session outside phase 1.
 
-**Context:** `highlightStyles.ts` holds presets as parameter rows; `highlight.ts` draws badges and multi-hole dim; `minimap.ts` draws targets as rects in the preset's colours. The edge arrow (X2) and entrance animations need new preset fields. Guide-to options: G1 camera move, G2 trail from the pointer, G3 step list.
+**Context:** Options page https://claude.ai/artifact/TmaPQ7ZRpSZ9pEmhn2CnB5 (G1 camera move, G2 trail, G3 step list). Role-play synthesis on movement: `docs/research/2026-09-23-evidence-movement-roleplay.md`. The Back stack in `zoom.ts` (revealElement, returnToPreviousView) is the return path any guide should use.
 
 **Effort:** M
-**Priority:** P1
-**Depends on:** The builder's picks
-
-## unilens-lib (inventory)
+**Priority:** P2
+**Depends on:** Its own design session
 
 ### Inventory completeness beyond phase 1
 
