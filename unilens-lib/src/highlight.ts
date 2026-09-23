@@ -236,25 +236,49 @@ function bracketPath(W: number, H: number, t: number): string {
     );
 }
 
+/** page badges wear the chat style, so the number on the page matches its chip */
+const BADGE_LOOK: Record<string, Partial<CSSStyleDeclaration>> = {
+    assistant: {
+        background: "#2563eb",
+        color: "#fff",
+        border: "2px solid #fff",
+        borderRadius: "12px",
+    },
+    audioGuide: {
+        background: "#111",
+        color: "#fff",
+        border: "2px solid #fff",
+        borderRadius: "12px",
+    },
+    station: {
+        background: "#fff",
+        color: "#111",
+        border: "3px solid #0079c2",
+        borderRadius: "4px",
+    },
+};
+
 function makeBadge(text: string): HTMLDivElement {
+    const style = getSettings().chatStyle;
     const badge = document.createElement("div");
     badge.className = `${CLASS}-badge`;
-    badge.textContent = text;
-    Object.assign(badge.style, {
-        position: "absolute",
-        left: "-14px",
-        top: "-14px",
-        minWidth: "24px",
-        height: "24px",
-        padding: "0 5px",
-        boxSizing: "border-box",
-        borderRadius: "12px",
-        border: "2px solid #fff",
-        background: "#000",
-        color: "#fff",
-        font: "700 14px/20px system-ui, sans-serif",
-        textAlign: "center",
-    });
+    // station codes read "U1", like the chips
+    badge.textContent = style === "station" ? `U${text}` : text;
+    Object.assign(
+        badge.style,
+        {
+            position: "absolute",
+            left: "-14px",
+            top: "-14px",
+            minWidth: "24px",
+            height: "24px",
+            padding: "0 5px",
+            boxSizing: "border-box",
+            font: "700 14px/20px system-ui, sans-serif",
+            textAlign: "center",
+        },
+        BADGE_LOOK[style] ?? BADGE_LOOK.assistant,
+    );
     return badge;
 }
 
@@ -265,7 +289,7 @@ function decorate(
     outline: string,
     w: number,
 ) {
-    const key = `${outline}|${look.badges}|${look.color}|${w}`;
+    const key = `${outline}|${look.badges}|${look.color}|${w}|${getSettings().chatStyle}`;
     if (entry.decoKey === key) return;
     entry.decoKey = key;
     entry.box.replaceChildren();

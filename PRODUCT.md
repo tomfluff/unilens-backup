@@ -71,6 +71,9 @@ ladder is the contribution.
 - Interface language follows the browser or page language: Japanese and English
   (the Display panel, 表示調整, already does this).
 - No emoji as interface icons.
+- The chat follows the familiar assistant-widget convention by default (chosen over bespoke
+  worlds on 2026-09-23); its craft bar is ChatGPT and Claude apps, and LINE. Two alternates stay
+  selectable for the study: an audio-guide style and a station-signage style.
 
 ## Evidence on Hand
 

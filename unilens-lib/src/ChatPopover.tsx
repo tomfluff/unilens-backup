@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from "react";
-import styled from "styled-components";
 import type { CaptureResult } from "./capture";
+import { chatLang, chatText } from "./chatI18n";
+import { ensureChatStyles } from "./chatStyles";
+import { type Earcon, earcon } from "./earcons";
 import {
     asksToLocate,
     type Cited,
@@ -20,6 +22,20 @@ import {
     registerPopoverClose,
     showHighlights,
 } from "./highlight";
+import {
+    BackIcon,
+    CloseIcon,
+    HighlightIcon,
+    MicIcon,
+    NextIcon,
+    PinIcon,
+    PlaceIcon,
+    PrevIcon,
+    SendIcon,
+    SpeakerIcon,
+    StopIcon,
+    WaitIcon,
+} from "./icons";
 import { labelOfWire, type WireNode } from "./inventory";
 import { goToPlace, latestPlace, type Place, placeOf } from "./places";
 import { recordAsk, type SentAsk } from "./sentLog";
@@ -52,6 +68,9 @@ interface Msg {
     streaming?: boolean;
     /** a question's capture, so its bubble can offer "where I clicked" */
     captureId?: string;
+    /** a reply to a where/show question that cited nothing: styled as "nothing found",
+     *  apart from an answer and from an error */
+    quiet?: boolean;
 }
 
 /** a capture's inventory (for labels) and its id → live element registry */
@@ -94,249 +113,18 @@ interface Props {
     ) => Promise<{ id: string; cap: CaptureResult } | null>;
 }
 
-const PANEL_W = 340;
-const PANEL_H = 420;
+/** width and height in em of the chat's font size (chatStyles.ts sizes the panel in em) */
+const PANEL_W_EM = 24.3;
+const PANEL_H_EM = 30;
 
-// Styled components
-const PopoverContainer = styled.div<{
-    panelBg: string;
-    text: string;
-    hc: boolean;
-}>`
-    position: fixed;
-    width: ${PANEL_W}px;
-    height: ${PANEL_H}px;
-    display: flex;
-    flex-direction: column;
-    background: ${(props) => props.panelBg};
-    color: ${(props) => props.text};
-    border-radius: 12px;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
-    border: ${(props) => (props.hc ? "2px solid #ffd700" : "none")};
-    z-index: 2147483647;
-    font-family: sans-serif;
-    overflow: hidden;
-`;
-
-const HeaderContainer = styled.div<{ headerBg: string; headerBorder: string }>`
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 10px 14px;
-    background: ${(props) => props.headerBg};
-    border-bottom: ${(props) => props.headerBorder};
-    cursor: grab;
-    touch-action: none;
-
-    &:active {
-        cursor: grabbing;
-    }
-`;
-
-const HeaderTitle = styled.span<{ accent: string }>`
-    font-weight: 700;
-    color: ${(props) => props.accent};
-`;
-
-const HeaderButtonsContainer = styled.span`
-    display: flex;
-    gap: 4px;
-`;
-
-const PinButton = styled.button<{ pinned: boolean; accent: string }>`
-    background: ${(props) => (props.pinned ? props.accent : "none")};
-    border: none;
-    border-radius: 6px;
-    color: ${(props) => (props.pinned ? "#08182e" : "#aaa")};
-    cursor: pointer;
-    font-size: 13px;
-    padding: 2px 8px;
-    font-weight: 700;
-`;
-
-const CloseButton = styled.button`
-    background: none;
-    border: none;
-    color: #aaa;
-    cursor: pointer;
-    font-size: 16px;
-`;
-
-const ScrollContainer = styled.div`
-    flex: 1;
-    overflow-y: auto;
-    overscroll-behavior: contain;
-    padding: 12px;
-`;
-
-const MessageBubble = styled.div<{
-    isUser: boolean;
-    userBg: string;
-    aiBg: string;
-    bubbleBorder: string;
-    isError?: boolean;
-}>`
-    margin: 6px 0;
-    padding: 8px 12px;
-    border-radius: 10px;
-    max-width: 85%;
-    white-space: pre-wrap;
-    background: ${(props) => (props.isUser ? props.userBg : props.aiBg)};
-    border: ${(props) => props.bubbleBorder};
-    border-left: ${(props) => (props.isError ? "4px solid #b42318" : undefined)};
-    margin-left: ${(props) => (props.isUser ? "auto" : 0)};
-
-    /* citation chips arrive as HTML, so they are styled here; every property is set
-       because host-page button rules reach into the popover */
-    & .unilens-cite {
-        display: inline-block;
-        min-width: 1.6em;
-        height: auto;
-        margin: 0 0.1em;
-        padding: 0 0.35em;
-        border: 2px solid #000;
-        border-radius: 0.8em;
-        background: #ffe600;
-        color: #000;
-        font: 700 0.85em/1.35 system-ui, sans-serif;
-        text-align: center;
-        vertical-align: baseline;
-        cursor: pointer;
-    }
-    & .unilens-cite:focus-visible {
-        outline: 3px solid #00c8ff;
-        outline-offset: 1px;
-    }
-`;
-
-/** the navigator wraps as one unit, never "‹ 1 of 3" on one line and "›" on the next */
-/** under a question: back to the place it was asked about (explicit sizes: host CSS leaks) */
-const PlaceButton = styled.button`
-    display: block;
-    margin: 6px 0 0;
-    padding: 2px 8px;
-    min-height: 24px;
-    max-width: 100%;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    border: 1px solid rgba(255, 255, 255, 0.45);
-    border-radius: 10px;
-    background: transparent;
-    color: inherit;
-    font: inherit;
-    cursor: pointer;
-    text-align: left;
-    &:focus-visible {
-        outline: 3px solid #00c8ff;
-        outline-offset: 1px;
-    }
-`;
-
-const NavGroup = styled.span`
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    white-space: nowrap;
-`;
-
-const EvidenceRow = styled.div`
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 6px;
-    margin-top: 8px;
-`;
-
-const SpeakButton = styled.button<{ speaking: boolean }>`
-    background: none;
-    border: none;
-    cursor: pointer;
-    margin-left: 6px;
-    opacity: ${(props) => (props.speaking ? 1 : 0.7)};
-`;
-
-const QuickActionsContainer = styled.div`
-    display: flex;
-    gap: 6px;
-    padding: 8px 10px 0;
-    flex-wrap: wrap;
-`;
-
-const QuickActionButton = styled.button<{
-    chipBg: string;
-    chipBorder: string;
-    chipText: string;
-    busy: boolean;
-}>`
-    padding: 4px 10px;
-    border-radius: 12px;
-    border: ${(props) => props.chipBorder};
-    background: ${(props) => props.chipBg};
-    color: ${(props) => props.chipText};
-    cursor: ${(props) => (props.busy ? "default" : "pointer")};
-    opacity: ${(props) => (props.busy ? 0.5 : 1)};
-    &[aria-pressed="true"] {
-        font-weight: 700;
-        outline: 2px solid currentColor;
-        outline-offset: 1px;
-    }
-`;
-
-const InputContainer = styled.div`
-    display: flex;
-    gap: 8px;
-    padding: 10px;
-    border-top: 1px solid #333;
-`;
-
-const VoiceButton = styled.button<{
-    listening: boolean;
-    inputBg: string;
-    text: string;
-}>`
-    padding: 8px 10px;
-    border-radius: 8px;
-    border: none;
-    background: ${(props) => (props.listening ? "#e33" : props.inputBg)};
-    color: ${(props) => props.text};
-    cursor: pointer;
-`;
-
-const ChatInput = styled.input<{
-    inputBg: string;
-    inputBorder: string;
-    text: string;
-}>`
-    flex: 1;
-    padding: 8px 12px;
-    border-radius: 8px;
-    border: ${(props) => props.inputBorder};
-    background: ${(props) => props.inputBg};
-    color: ${(props) => props.text};
-    font-size: inherit;
-    outline: none;
-`;
-
-const SendButton = styled.button<{ accent: string; hc: boolean }>`
-    padding: 8px 14px;
-    border-radius: 8px;
-    border: none;
-    background: ${(props) => props.accent};
-    color: ${(props) => (props.hc ? "#000" : "#08182e")};
-    font-weight: 700;
-    cursor: pointer;
-`;
-
-const EmptyHint = styled.p`
-    margin: 8px 2px;
-    line-height: 1.5;
-`;
-
-const LoadingText = styled.div`
-    color: #889;
-    padding: 8px;
-`;
+/** a chip's HTML with the active one marked, so each style can show which is current */
+const markActive = (html: string, id: string | undefined) =>
+    id
+        ? html.replace(
+              `data-cite="${id}"`,
+              `data-cite="${id}" aria-current="true"`,
+          )
+        : html;
 
 export default function ChatPopover({
     x,
@@ -352,7 +140,14 @@ export default function ChatPopover({
     onMove,
     refreshCapture,
 }: Props) {
+    ensureChatStyles();
     const [messages, setMessages] = useState<Msg[]>([]);
+    /** the last action, shown on the status line: every action is seen as well as heard */
+    const [status, setStatus] = useState("");
+    const act = (kind: Earcon, text?: string) => {
+        earcon(kind);
+        if (text !== undefined) setStatus(text);
+    };
     const [input, setInput] = useState("");
     const [busy, setBusy] = useState(false);
     const scrollRef = useRef<HTMLDivElement>(null);
@@ -362,40 +157,10 @@ export default function ChatPopover({
 
     const fs = settings.chatFontSize;
     const hc = settings.highContrast;
-    // high contrast: pure black surfaces, white text, yellow accents (WCAG-friendly)
-    const C = hc
-        ? {
-              panelBg: "#000",
-              headerBg: "#000",
-              headerBorder: "2px solid #ffd700",
-              accent: "#ffd700",
-              text: "#fff",
-              dim: "#fff",
-              userBubble: "#1a1a1a",
-              aiBubble: "#1a1a1a",
-              bubbleBorder: "1px solid #ffd700",
-              inputBg: "#000",
-              inputBorder: "2px solid #ffd700",
-              chipBg: "#000",
-              chipBorder: "1px solid #ffd700",
-              chipText: "#ffd700",
-          }
-        : {
-              panelBg: "#1a1a2e",
-              headerBg: "#0f3460",
-              headerBorder: "none",
-              accent: "#00c8ff",
-              text: "#eee",
-              dim: "#889",
-              userBubble: "#0f3460",
-              aiBubble: "#26263e",
-              bubbleBorder: "none",
-              inputBg: "#26263e",
-              inputBorder: "1px solid #444",
-              chipBg: "#22224a",
-              chipBorder: "1px solid #345",
-              chipText: "#9cf",
-          };
+    const style = settings.chatStyle;
+    const T = chatText();
+    const panelW = PANEL_W_EM * fs;
+    const panelH = Math.min(PANEL_H_EM * fs, window.innerHeight - 16);
 
     const [listening, setListening] = useState(false);
     const stopListenRef = useRef<(() => void) | null>(null);
@@ -408,8 +173,10 @@ export default function ChatPopover({
     function speakMessage(idx: number, text: string) {
         if (speaking?.idx === idx) {
             stopSpeaking();
+            act("press", T.sStoppedReading);
             return;
         }
+        act("press", T.sReading);
         speak(text, (s) =>
             setSpeaking(s === "idle" ? null : { idx, phase: s }),
         );
@@ -427,6 +194,7 @@ export default function ChatPopover({
     function toggleMic() {
         if (listening) {
             stopListenRef.current?.();
+            act("micOff", T.sStoppedListening);
             return;
         }
         const stop = listen(
@@ -436,6 +204,7 @@ export default function ChatPopover({
         if (stop) {
             stopListenRef.current = stop;
             setListening(true);
+            act("micOn", T.sListening);
         }
     }
 
@@ -469,8 +238,8 @@ export default function ChatPopover({
 
     // Clamp popover inside viewport, near the cursor (or restore pinned position)
     const clamp = (p: { left: number; top: number }) => ({
-        left: Math.min(Math.max(p.left, 8), window.innerWidth - PANEL_W - 8),
-        top: Math.min(Math.max(p.top, 8), window.innerHeight - PANEL_H - 8),
+        left: Math.min(Math.max(p.left, 8), window.innerWidth - panelW - 8),
+        top: Math.min(Math.max(p.top, 8), window.innerHeight - panelH - 8),
     });
     const [pos, setPos] = useState(() =>
         clamp(initialPos ?? { left: x + 12, top: y + 12 }),
@@ -479,7 +248,7 @@ export default function ChatPopover({
 
     function onHeaderPointerDown(e: React.PointerEvent) {
         if (!settings.dragPopover) return;
-        if ((e.target as HTMLElement).tagName === "BUTTON") return;
+        if ((e.target as HTMLElement).closest("button")) return;
         dragRef.current = { dx: e.clientX - pos.left, dy: e.clientY - pos.top };
         (e.target as HTMLElement).setPointerCapture(e.pointerId);
     }
@@ -560,17 +329,19 @@ export default function ChatPopover({
                   }) === "moved"
                 : false;
         setReturnable(canReturn());
-        if (hasHighlight())
-            announce(
-                index === "all" && n > 1
-                    ? `${n} sources: ${c.ids.map(label).join(", ")}.`
-                    : `Source ${n > 1 ? `${picks[0].i + 1} of ${n}` : ""}, ${label(picks[0].id)}` +
-                          (moved
-                              ? ". Brought into view; say back to return."
-                              : where && where !== "on screen"
-                                ? `, ${where}.`
-                                : "."),
-            );
+        if (hasHighlight()) {
+            const said =
+                index === "all"
+                    ? T.sAll(n, c.ids.map(label).join(", "))
+                    : T.sItem(picks[0].i + 1, n, label(picks[0].id)) +
+                      (moved
+                          ? T.sMoved
+                          : where && where !== "on screen"
+                            ? T.sWhere(T.dir[where] ?? where)
+                            : T.sEnd);
+            announce(said);
+            act(index === "all" ? "all" : moved ? "move" : "chip", said);
+        }
         // nothing placeable (collapsed, box-less): showHighlights announced it; no button
         // may look pressed over an empty page
         setActive(hasHighlight() ? { msgId: m.id, index } : null);
@@ -585,6 +356,12 @@ export default function ChatPopover({
     ) {
         const c = cited(m);
         const src = m.cite;
+        act("done", chatText().sAnswer(c?.ids.length ?? 0));
+        // asked where, pointed nowhere: "nothing found", styled apart from an answer
+        if (c && !c.ids.length && asksToLocate(question))
+            setMessages((ms) =>
+                ms.map((x) => (x.id === m.id ? { ...x, quiet: true } : x)),
+            );
         if (!c || !src) return;
         ask.cited = c.ids;
         recordEvidence(m.text, c.ids, (id) => labelOfWire(id, src.inventory));
@@ -613,6 +390,7 @@ export default function ChatPopover({
     /** "next", "show all", "the second one": steer the last cited reply without a model call */
     /** take the user back to where they clicked, and outline what they clicked on */
     function goPlace(p: Place): string {
+        const T = chatText();
         const r = goToPlace(p);
         // outline what was clicked only when it is a thing, not a whole section
         const box = p.el?.isConnected ? p.el.getBoundingClientRect() : null;
@@ -630,8 +408,9 @@ export default function ChatPopover({
                 { userInitiated: true },
             );
         setReturnable(canReturn());
-        const note = `Where you clicked: ${p.label}.${r === "moved" ? " Say back to return." : ""}`;
+        const note = T.sPlace(p.label, r === "moved");
         announce(note);
+        act(r === "moved" ? "move" : "chip", note);
         return note;
     }
 
@@ -639,14 +418,14 @@ export default function ChatPopover({
         if (cmd.kind === "return" || cmd.kind === "place") {
             let note: string;
             if (cmd.kind === "return") {
-                note = returnToPreviousView()
-                    ? "Back to where you were."
-                    : "Nothing to go back to.";
+                const ok = returnToPreviousView();
+                note = ok ? T.sBack : T.sNoBack;
                 setReturnable(canReturn());
                 announce(note);
+                act(ok ? "back" : "error", note);
             } else {
                 const p = latestPlace();
-                note = p ? goPlace(p) : "No click recorded yet.";
+                note = p ? goPlace(p) : T.sNoPlace;
             }
             setMessages((m) => [
                 ...m,
@@ -667,10 +446,11 @@ export default function ChatPopover({
         let note: string;
         if (cmd.kind === "clear") {
             clearHighlights();
-            note = "Cleared.";
+            note = T.sCleared;
+            act("clear", note);
         } else if (cmd.kind === "all") {
             point(last, "all", false);
-            note = n > 1 ? `Showing all ${n}.` : "Showing it.";
+            note = T.sAllNote(n);
         } else {
             const i =
                 cmd.kind === "next"
@@ -679,10 +459,11 @@ export default function ChatPopover({
                       ? (cur - 1 + n) % n
                       : cmd.n - 1;
             if (i < 0 || i >= n) {
-                note = `There ${n === 1 ? "is only 1" : `are only ${n}`}.`;
+                note = T.sOnly(n);
+                act("error", note);
             } else {
                 point(last, i, true);
-                note = `Showing ${i + 1} of ${n}.`;
+                note = T.sItemNote(i + 1, n);
             }
         }
         setMessages((m) => [
@@ -715,6 +496,7 @@ export default function ChatPopover({
         if (!res.ok || !res.body) {
             const data = await res.json().catch(() => ({}));
             ask.error = data.error ?? `HTTP ${res.status}`;
+            act("error", chatText().sError);
             setMessages((m) => [
                 ...m,
                 {
@@ -751,6 +533,7 @@ export default function ChatPopover({
                     // the backend ends the stream after an error, with no "done"
                     ended = true;
                     ask.error = data.error;
+                    act("error", chatText().sError);
                     patchLast({
                         text: `${full}\n[error: ${data.error}]`,
                         streaming: false,
@@ -799,11 +582,14 @@ export default function ChatPopover({
         });
         const data = await res.json();
         if (data.provider != null) ask.reply = data;
-        if (data.reply == null) ask.error = data.error ?? `HTTP ${res.status}`;
+        if (data.reply == null) {
+            ask.error = data.error ?? `HTTP ${res.status}`;
+            act("error", chatText().sError);
+        }
         const reply: Msg = {
             id: `plain-${Date.now()}`,
             role: "assistant",
-            text: data.reply ?? data.error ?? "No reply.",
+            text: data.reply ?? data.error ?? chatText().sError,
             error: data.reply == null,
             cite: data.reply == null ? undefined : cite,
         };
@@ -825,6 +611,7 @@ export default function ChatPopover({
             },
         ]);
         setBusy(true);
+        act("send", T.sAsking);
         // minted at ask time: an auto-highlight for this reply loses to anything newer
         const token = nextToken();
         let ask: SentAsk | undefined;
@@ -843,12 +630,14 @@ export default function ChatPopover({
             else await sendPlain(text, token, ask);
         } catch (err) {
             if (ask) ask.error = String(err);
+            act("error", T.sError);
             setMessages((m) => [
                 ...m,
                 {
                     id: `err-${Date.now()}`,
                     role: "assistant",
-                    text: `Backend error: ${err}`,
+                    text: T.sBackendError(String(err)),
+                    error: true,
                 },
             ]);
         } finally {
@@ -865,80 +654,381 @@ export default function ChatPopover({
         sendText(text);
     }
 
-    const QUICK_ACTIONS: [string, string][] = [
-        ["Explain this", "Explain what I am looking at, simply."],
-        ["Summarize", "Summarize this page briefly."],
-        ["→ English", "Translate the content I am looking at into English."],
+    const QUICK: [string, string][] = [
+        [T.quickExplain, T.promptExplain],
+        [T.quickSummary, T.promptSummary],
+        [T.quickTranslate, T.promptTranslate],
     ];
 
+    // what the audio-guide display and the station strip show: the selected source,
+    // else how many the latest cited answer found, else what the chat is doing
+    const activeMsg = active
+        ? messages.find((m) => m.id === active.msgId)
+        : undefined;
+    const activeN = activeMsg ? (cited(activeMsg)?.ids.length ?? 0) : 0;
+    const lastCited = [...messages]
+        .reverse()
+        .find((m) => (cited(m)?.ids.length ?? 0) > 0);
+    const foundN =
+        activeN || (lastCited ? (cited(lastCited)?.ids.length ?? 0) : 0);
+    const selected =
+        active && typeof active.index === "number" ? active.index + 1 : 0;
+    const doing = busy
+        ? T.sAsking
+        : listening
+          ? T.sListening
+          : speaking
+            ? T.sReading
+            : "";
+    const shortTitle = doing || (foundN ? T.found(foundN) : T.subtitle);
+
+    const toggleAll = (m: Msg, pressed: boolean) => {
+        if (pressed) {
+            clearHighlights();
+            act("clear", T.sCleared);
+        } else point(m, "all", false);
+    };
+    const goBack = () => {
+        const ok = returnToPreviousView();
+        setReturnable(canReturn());
+        const said = ok ? T.sBack : T.sNoBack;
+        announce(said);
+        act(ok ? "back" : "error", said);
+    };
+
     return (
-        <PopoverContainer
-            panelBg={C.panelBg}
-            text={C.text}
-            hc={hc}
-            style={{
-                left: pos.left,
-                top: pos.top,
-                fontSize: fs,
-            }}
+        <div
+            className="ul-chat"
+            data-style={style}
+            data-hc={hc ? "true" : "false"}
+            role="dialog"
+            aria-label={T.title}
+            lang={chatLang()}
+            style={
+                {
+                    left: pos.left,
+                    top: pos.top,
+                    "--ul-fs": `${fs}px`,
+                } as React.CSSProperties
+            }
         >
-            <HeaderContainer
-                headerBg={C.headerBg}
-                headerBorder={C.headerBorder}
+            {/* the header is the drag handle; its buttons are excluded from the drag */}
+            <div
+                className="ulc-hd"
                 onPointerDown={onHeaderPointerDown}
                 onPointerMove={onHeaderPointerMove}
                 onPointerUp={onHeaderPointerUp}
-                style={{ cursor: settings.dragPopover ? "grab" : "default" }}
+                style={settings.dragPopover ? undefined : { cursor: "default" }}
             >
-                <HeaderTitle accent={C.accent}>UniLens</HeaderTitle>
-                <HeaderButtonsContainer>
-                    <PinButton
-                        type="button"
-                        onClick={() => onTogglePin(pinned ? null : pos)}
-                        pinned={pinned}
-                        accent={C.accent}
-                        title={
-                            pinned
-                                ? "Pinned — click to unpin (reopen at cursor)"
-                                : "Pin position for next captures"
-                        }
-                    >
-                        📌{pinned ? " pinned" : ""}
-                    </PinButton>
-                    <CloseButton type="button" onClick={onClose}>
-                        ✕
-                    </CloseButton>
-                </HeaderButtonsContainer>
-            </HeaderContainer>
+                {style === "station" && (
+                    <span className="ulc-roundel" aria-hidden="true">
+                        U
+                    </span>
+                )}
+                {style === "assistant" && (
+                    <span className="ulc-dot" aria-hidden="true" />
+                )}
+                <div className="ulc-title">
+                    <b>{T.title}</b>
+                    {style === "station" && <small>{T.otherName}</small>}
+                    {style === "assistant" && <small>{T.subtitle}</small>}
+                </div>
+                <button
+                    type="button"
+                    className="ulc-ib"
+                    aria-pressed={pinned}
+                    aria-label={pinned ? T.unpin : T.pin}
+                    title={pinned ? T.unpin : T.pin}
+                    onClick={() => {
+                        onTogglePin(pinned ? null : pos);
+                        act("press", pinned ? T.unpin : T.pin);
+                    }}
+                >
+                    <PinIcon />
+                </button>
+                <button
+                    type="button"
+                    className="ulc-ib"
+                    aria-label={T.close}
+                    title={T.close}
+                    onClick={onClose}
+                >
+                    <CloseIcon />
+                </button>
+            </div>
 
-            {/* contain: at the top or bottom of the messages, keep the wheel here instead of
-          handing it to the page behind — the list auto-scrolls to the end, so without
-          this every further scroll moves the page instead of the chat */}
-            <ScrollContainer ref={scrollRef}>
+            {style === "audioGuide" && (
+                <div className="ulc-lcd" aria-hidden="true">
+                    <span className="ulc-big">{selected || foundN || "–"}</span>
+                    <span className="ulc-txt">
+                        {selected && activeN > 1
+                            ? T.ofTotal(activeN)
+                            : shortTitle}
+                        {selected > 0 && (
+                            <small>{doing || T.found(activeN)}</small>
+                        )}
+                    </span>
+                </div>
+            )}
+            {style === "station" && (
+                <div className="ulc-strip" aria-hidden="true">
+                    <span>
+                        {selected && activeN > 1
+                            ? T.ofN(selected, activeN)
+                            : shortTitle}
+                    </span>
+                </div>
+            )}
+
+            <div className="ulc-log" ref={scrollRef}>
                 {messages.length === 0 && (
-                    <EmptyHint style={{ color: C.dim, fontSize: fs }}>
-                        Ask about what you clicked, or pick a quick action
-                        below.
-                    </EmptyHint>
+                    <p className="ulc-empty">{T.emptyHint}</p>
                 )}
                 {messages.map((m, i) => {
+                    if (m.role === "user") {
+                        // once per place: the first question asked there
+                        const place = placeOf(m.captureId);
+                        const first =
+                            place &&
+                            messages.findIndex(
+                                (x) =>
+                                    x.role === "user" &&
+                                    placeOf(x.captureId) === place,
+                            ) === i;
+                        return (
+                            <div key={m.id} className="ulc-msg ulc-me">
+                                {m.text}
+                                {place && first && (
+                                    <button
+                                        type="button"
+                                        className="ulc-place"
+                                        onClick={() => goPlace(place)}
+                                        title={T.whereClickedTitle}
+                                    >
+                                        <PlaceIcon />
+                                        <span>
+                                            {T.whereClicked}: {place.label}
+                                        </span>
+                                    </button>
+                                )}
+                            </div>
+                        );
+                    }
                     const c = cited(m);
                     const n = c?.ids.length ?? 0;
                     const mine = active?.msgId === m.id ? active : null;
-                    const at = typeof mine?.index === "number" ? mine.index : 0;
+                    const at =
+                        typeof mine?.index === "number" ? mine.index : -1;
+                    const allOn = mine?.index === "all";
+                    const src = m.cite;
+                    const label = (id: string) =>
+                        src ? labelOfWire(id, src.inventory) : id;
+                    const prev = () =>
+                        point(m, at < 0 ? n - 1 : (at - 1 + n) % n, true);
+                    const next = () =>
+                        point(m, at < 0 ? 0 : (at + 1) % n, true);
+                    const showBack = returnable && mine;
+                    const controls =
+                        c && n > 0 && !m.streaming ? (
+                            style === "audioGuide" ? (
+                                <div className="ulc-keys">
+                                    {n > 1 && (
+                                        <button
+                                            type="button"
+                                            className="ulc-key"
+                                            aria-label={T.prevEvidence}
+                                            onClick={prev}
+                                        >
+                                            <PrevIcon />
+                                        </button>
+                                    )}
+                                    {c.ids
+                                        .map((id, k) => ({ id, k }))
+                                        // three number keys: a window round the current one
+                                        .slice(
+                                            Math.max(
+                                                0,
+                                                Math.min(at - 1, n - 3),
+                                            ),
+                                            Math.max(
+                                                0,
+                                                Math.min(at - 1, n - 3),
+                                            ) + 3,
+                                        )
+                                        .map(({ id, k }) => (
+                                            <button
+                                                key={id}
+                                                type="button"
+                                                className="ulc-key"
+                                                aria-current={at === k}
+                                                aria-label={T.evidenceLabel(
+                                                    k + 1,
+                                                    label(id),
+                                                )}
+                                                onClick={() =>
+                                                    point(m, k, true)
+                                                }
+                                            >
+                                                {k + 1}
+                                            </button>
+                                        ))}
+                                    {n > 1 && (
+                                        <button
+                                            type="button"
+                                            className="ulc-key"
+                                            aria-label={T.nextEvidence}
+                                            onClick={next}
+                                        >
+                                            <NextIcon />
+                                        </button>
+                                    )}
+                                    <button
+                                        type="button"
+                                        className={`ulc-key ${showBack ? "ulc-wide" : "ulc-full"}`}
+                                        aria-pressed={allOn}
+                                        onClick={() => toggleAll(m, allOn)}
+                                    >
+                                        <HighlightIcon />
+                                        {T.highlightAll(n)}
+                                    </button>
+                                    {showBack && (
+                                        <button
+                                            type="button"
+                                            className="ulc-key ulc-wide2"
+                                            title={T.backTitle}
+                                            onClick={goBack}
+                                        >
+                                            <BackIcon />
+                                            {T.back}
+                                        </button>
+                                    )}
+                                </div>
+                            ) : style === "station" ? (
+                                <div className="ulc-signs">
+                                    <button
+                                        type="button"
+                                        className={`ulc-sign ${showBack ? "" : "ulc-span"}`}
+                                        aria-pressed={allOn}
+                                        onClick={() => toggleAll(m, allOn)}
+                                    >
+                                        <HighlightIcon />
+                                        {T.highlightAll(n)}
+                                    </button>
+                                    {showBack && (
+                                        <button
+                                            type="button"
+                                            className="ulc-sign"
+                                            title={T.backTitle}
+                                            onClick={goBack}
+                                        >
+                                            <BackIcon />
+                                            {T.back}
+                                        </button>
+                                    )}
+                                    {n > 1 && (
+                                        <div className="ulc-codes">
+                                            <button
+                                                type="button"
+                                                className="ulc-nb"
+                                                aria-label={T.prevEvidence}
+                                                onClick={prev}
+                                            >
+                                                <PrevIcon />
+                                            </button>
+                                            {c.ids.map((id, k) => (
+                                                <button
+                                                    key={id}
+                                                    type="button"
+                                                    className="unilens-cite"
+                                                    aria-current={at === k}
+                                                    aria-label={T.evidenceLabel(
+                                                        k + 1,
+                                                        label(id),
+                                                    )}
+                                                    onClick={() =>
+                                                        point(m, k, true)
+                                                    }
+                                                >
+                                                    {k + 1}
+                                                </button>
+                                            ))}
+                                            <button
+                                                type="button"
+                                                className="ulc-nb"
+                                                aria-label={T.nextEvidence}
+                                                onClick={next}
+                                            >
+                                                <NextIcon />
+                                            </button>
+                                            {at >= 0 && (
+                                                <span className="ulc-of">
+                                                    {T.ofN(at + 1, n)}
+                                                </span>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+                            ) : (
+                                <div className="ulc-ev">
+                                    <button
+                                        type="button"
+                                        className="ulc-pill"
+                                        aria-pressed={allOn}
+                                        onClick={() => toggleAll(m, allOn)}
+                                    >
+                                        <HighlightIcon />
+                                        {T.highlightAll(n)}
+                                    </button>
+                                    {n > 1 && (
+                                        <span className="ulc-nav">
+                                            <button
+                                                type="button"
+                                                className="ulc-pill"
+                                                aria-label={T.prevEvidence}
+                                                onClick={prev}
+                                            >
+                                                <PrevIcon />
+                                            </button>
+                                            <span
+                                                className="ulc-of"
+                                                aria-live="polite"
+                                            >
+                                                {at >= 0
+                                                    ? T.ofN(at + 1, n)
+                                                    : ""}
+                                            </span>
+                                            <button
+                                                type="button"
+                                                className="ulc-pill"
+                                                aria-label={T.nextEvidence}
+                                                onClick={next}
+                                            >
+                                                <NextIcon />
+                                            </button>
+                                        </span>
+                                    )}
+                                    {showBack && (
+                                        <button
+                                            type="button"
+                                            className="ulc-pill"
+                                            title={T.backTitle}
+                                            onClick={goBack}
+                                        >
+                                            <BackIcon />
+                                            {T.back}
+                                        </button>
+                                    )}
+                                </div>
+                            )
+                        ) : null;
                     return (
-                        <MessageBubble
-                            key={m.id}
-                            isUser={m.role === "user"}
-                            userBg={C.userBubble}
-                            aiBg={C.aiBubble}
-                            bubbleBorder={C.bubbleBorder}
-                            isError={m.error}
-                        >
-                            {m.role === "assistant" ? (
-                                // Chips are <button data-cite> inside escaped HTML; one delegated
-                                // click handler serves them (keyboard Enter/Space clicks too)
-                                // biome-ignore lint/a11y/noStaticElementInteractions lint/a11y/useKeyWithClickEvents: delegation only; the targets are real <button> chips, which click on Enter and Space
+                        <div key={m.id} className="ulc-turn">
+                            <div
+                                className={`ulc-msg ulc-bot${m.error ? " is-err" : ""}${m.quiet ? " is-quiet" : ""}`}
+                            >
+                                {/* Chips are <button data-cite> inside escaped HTML; one delegated
+                                    click handler serves them (keyboard Enter/Space clicks too) */}
+                                {/* biome-ignore lint/a11y/noStaticElementInteractions lint/a11y/useKeyWithClickEvents: delegation only; the targets are real <button> chips, which click on Enter and Space */}
                                 <span
                                     onClick={(e) => {
                                         const id = (e.target as HTMLElement)
@@ -952,219 +1042,96 @@ export default function ChatPopover({
                                     // biome-ignore lint/security/noDangerouslySetInnerHtml: HTML is escaped in mdLite before formatting tags and chips are added
                                     dangerouslySetInnerHTML={{
                                         __html: c
-                                            ? c.html
+                                            ? markActive(
+                                                  c.html,
+                                                  at >= 0
+                                                      ? c.ids[at]
+                                                      : undefined,
+                                              )
                                             : mdLite(speakable(m.text)),
                                     }}
                                 />
-                            ) : (
-                                <>
-                                    {m.text}
-                                    {(() => {
-                                        // once per place: the first question asked there
-                                        const place = placeOf(m.captureId);
-                                        const first =
-                                            place &&
-                                            messages.findIndex(
-                                                (x) =>
-                                                    x.role === "user" &&
-                                                    placeOf(x.captureId) ===
-                                                        place,
-                                            ) === i;
-                                        return place && first ? (
-                                            <PlaceButton
-                                                type="button"
-                                                onClick={() => goPlace(place)}
-                                                title="Go back to where you clicked to ask this"
-                                                style={{
-                                                    fontSize: Math.max(
-                                                        12,
-                                                        fs - 3,
-                                                    ),
-                                                }}
-                                            >
-                                                Where I clicked: {place.label}
-                                            </PlaceButton>
-                                        ) : null;
-                                    })()}
-                                </>
-                            )}
-                            {m.role === "assistant" && m.text && (
-                                <SpeakButton
-                                    type="button"
-                                    onClick={() =>
-                                        speakMessage(i, speakable(m.text))
-                                    }
-                                    speaking={speaking?.idx === i}
-                                    style={{ fontSize: Math.max(12, fs - 2) }}
-                                    title={
-                                        speaking?.idx === i
-                                            ? speaking.phase === "loading"
-                                                ? "Preparing audio…"
-                                                : "Stop"
-                                            : "Read aloud"
-                                    }
-                                >
-                                    {speaking?.idx === i
-                                        ? speaking.phase === "loading"
-                                            ? "⏳"
-                                            : "⏹"
-                                        : "🔊"}
-                                </SpeakButton>
-                            )}
-                            {n > 0 && !m.streaming && (
-                                <EvidenceRow>
-                                    <QuickActionButton
-                                        type="button"
-                                        aria-pressed={mine?.index === "all"}
-                                        onClick={() =>
-                                            mine?.index === "all"
-                                                ? clearHighlights()
-                                                : point(m, "all", false)
-                                        }
-                                        chipBg={C.chipBg}
-                                        chipBorder={C.chipBorder}
-                                        chipText={C.chipText}
-                                        busy={false}
-                                        style={{
-                                            fontSize: Math.max(12, fs - 2),
-                                        }}
-                                    >
-                                        {n > 1
-                                            ? `Highlight all ${n}`
-                                            : "Highlight"}
-                                    </QuickActionButton>
-                                    {n > 1 && (
-                                        <NavGroup>
-                                            <QuickActionButton
-                                                type="button"
-                                                aria-label="Previous evidence"
-                                                onClick={() =>
-                                                    point(
-                                                        m,
-                                                        mine &&
-                                                            typeof mine.index ===
-                                                                "number"
-                                                            ? (at - 1 + n) % n
-                                                            : n - 1,
-                                                        true,
-                                                    )
-                                                }
-                                                chipBg={C.chipBg}
-                                                chipBorder={C.chipBorder}
-                                                chipText={C.chipText}
-                                                busy={false}
-                                                style={{
-                                                    fontSize: Math.max(
-                                                        12,
-                                                        fs - 2,
-                                                    ),
-                                                }}
-                                            >
-                                                ‹
-                                            </QuickActionButton>
-                                            <span aria-live="polite">
-                                                {typeof mine?.index === "number"
-                                                    ? `${mine.index + 1} of ${n}`
-                                                    : `${n} found`}
-                                            </span>
-                                            <QuickActionButton
-                                                type="button"
-                                                aria-label="Next evidence"
-                                                onClick={() =>
-                                                    point(
-                                                        m,
-                                                        mine &&
-                                                            typeof mine.index ===
-                                                                "number"
-                                                            ? (at + 1) % n
-                                                            : 0,
-                                                        true,
-                                                    )
-                                                }
-                                                chipBg={C.chipBg}
-                                                chipBorder={C.chipBorder}
-                                                chipText={C.chipText}
-                                                busy={false}
-                                                style={{
-                                                    fontSize: Math.max(
-                                                        12,
-                                                        fs - 2,
-                                                    ),
-                                                }}
-                                            >
-                                                ›
-                                            </QuickActionButton>
-                                        </NavGroup>
-                                    )}
-                                    {returnable && mine && (
-                                        <QuickActionButton
+                                {m.streaming && (
+                                    <span
+                                        className="ulc-caret"
+                                        aria-hidden="true"
+                                    />
+                                )}
+                                {m.text && !m.streaming && (
+                                    <div className="ulc-tools">
+                                        <button
                                             type="button"
-                                            onClick={() => {
-                                                const ok =
-                                                    returnToPreviousView();
-                                                setReturnable(canReturn());
-                                                announce(
-                                                    ok
-                                                        ? "Back to where you were."
-                                                        : "Nothing to go back to.",
-                                                );
-                                            }}
-                                            chipBg={C.chipBg}
-                                            chipBorder={C.chipBorder}
-                                            chipText={C.chipText}
-                                            busy={false}
-                                            title="Return to where you were reading"
-                                            style={{
-                                                fontSize: Math.max(12, fs - 2),
-                                            }}
+                                            className="ulc-speak"
+                                            onClick={() =>
+                                                speakMessage(
+                                                    i,
+                                                    speakable(m.text),
+                                                )
+                                            }
+                                            aria-label={
+                                                speaking?.idx === i
+                                                    ? speaking.phase ===
+                                                      "loading"
+                                                        ? T.preparingAudio
+                                                        : T.stopReading
+                                                    : T.readAloud
+                                            }
+                                            title={
+                                                speaking?.idx === i
+                                                    ? speaking.phase ===
+                                                      "loading"
+                                                        ? T.preparingAudio
+                                                        : T.stopReading
+                                                    : T.readAloud
+                                            }
                                         >
-                                            Back
-                                        </QuickActionButton>
-                                    )}
-                                </EvidenceRow>
-                            )}
-                        </MessageBubble>
+                                            {speaking?.idx === i ? (
+                                                speaking.phase === "loading" ? (
+                                                    <WaitIcon />
+                                                ) : (
+                                                    <StopIcon />
+                                                )
+                                            ) : (
+                                                <SpeakerIcon />
+                                            )}
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+                            {controls}
+                        </div>
                     );
                 })}
-                {busy && <LoadingText>…</LoadingText>}
-            </ScrollContainer>
+            </div>
 
             {settings.quickActions && (
-                <QuickActionsContainer>
-                    {QUICK_ACTIONS.map(([label, prompt]) => (
-                        <QuickActionButton
+                <div className="ulc-quick">
+                    {QUICK.map(([label, prompt]) => (
+                        <button
                             type="button"
                             key={label}
                             onClick={() => sendText(prompt)}
                             disabled={busy}
-                            chipBg={C.chipBg}
-                            chipBorder={C.chipBorder}
-                            chipText={C.chipText}
-                            busy={busy}
-                            style={{ fontSize: Math.max(12, fs - 2) }}
                         >
                             {label}
-                        </QuickActionButton>
+                        </button>
                     ))}
-                </QuickActionsContainer>
+                </div>
             )}
-            <InputContainer>
+            <div className="ulc-in">
                 {settings.voiceInput && sttSupported && (
-                    <VoiceButton
+                    <button
                         type="button"
+                        className="ulc-ib"
+                        aria-pressed={listening}
+                        aria-label={listening ? T.micStop : T.micStart}
+                        title={listening ? T.micStop : T.micStart}
                         onClick={toggleMic}
-                        listening={listening}
-                        inputBg={C.inputBg}
-                        text={C.text}
-                        title={
-                            listening ? "Stop listening" : "Speak your question"
-                        }
-                        style={{ fontSize: fs }}
                     >
-                        🎤
-                    </VoiceButton>
+                        <MicIcon />
+                    </button>
                 )}
-                <ChatInput
+                <input
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
                     // Enter that confirms an IME composition (Japanese, Chinese, Korean)
@@ -1176,22 +1143,30 @@ export default function ChatPopover({
                         e.nativeEvent.keyCode !== 229 &&
                         send()
                     }
-                    placeholder="Ask about this page…"
-                    inputBg={C.inputBg}
-                    inputBorder={C.inputBorder}
-                    text={C.text}
-                    style={{ fontSize: fs }}
+                    placeholder={T.placeholder}
+                    aria-label={T.placeholder}
                 />
-                <SendButton
+                <button
                     type="button"
+                    className="ulc-ib ulc-go"
+                    aria-label={T.send}
+                    title={T.send}
                     onClick={send}
                     disabled={busy}
-                    accent={C.accent}
-                    hc={hc}
                 >
-                    ➤
-                </SendButton>
-            </InputContainer>
-        </PopoverContainer>
+                    {busy ? <WaitIcon /> : <SendIcon />}
+                </button>
+            </div>
+            <div className="ulc-status">
+                {(speaking || listening) && (
+                    <span className="ulc-lvl" aria-hidden="true">
+                        <i />
+                        <i />
+                        <i />
+                    </span>
+                )}
+                <span>{status}</span>
+            </div>
+        </div>
     );
 }

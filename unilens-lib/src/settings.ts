@@ -84,6 +84,12 @@ export interface Settings {
     mmNumbers: boolean;
     /** whether choosing a piece of evidence moves the page to it */
     moveToEvidence: "offscreen" | "always" | "never";
+    /** the chat's look: the assistant standard, or the audio-guide or station-sign alternates */
+    chatStyle: "assistant" | "audioGuide" | "station";
+    /** interface language of the chat; auto follows the page, then the browser */
+    chatLanguage: "auto" | "en" | "ja";
+    /** a short sound for every chat action, alongside what is shown */
+    sounds: boolean;
     /** answers cite the page elements they used, as numbered chips that highlight */
     citeEvidence: boolean;
     /** re-capture before a message when the user scrolled, panned or zoomed since the last one */
@@ -141,6 +147,9 @@ const DEFAULTS: Settings = {
     mmGlow: false,
     mmNumbers: true,
     moveToEvidence: "offscreen",
+    chatStyle: "assistant",
+    chatLanguage: "auto",
+    sounds: true,
     citeEvidence: true,
     refreshView: true,
     autoHighlight: "where",
@@ -182,6 +191,7 @@ export const TOGGLE_LABELS: Record<BoolSettingKey, string> = {
     mmGlow: "Minimap: glow around targets",
     mmNumbers: "Minimap: numbers on targets",
     citeEvidence: "Answers cite page elements",
+    sounds: "Chat sounds for every action",
     refreshView: "Send my new view with follow-ups",
 };
 
@@ -267,6 +277,18 @@ export const AUTO_HIGHLIGHTS: Record<Settings["autoHighlight"], string> = {
  * <select> per row, in this order, and hydration rejects anything not listed.
  */
 export const ENUM_CHOICES = {
+    chatStyle: {
+        label: "Chat style",
+        choices: {
+            assistant: "Assistant",
+            audioGuide: "Audio guide",
+            station: "Station signs",
+        },
+    },
+    chatLanguage: {
+        label: "Chat language",
+        choices: { auto: "Follow the page", en: "English", ja: "日本語" },
+    },
     hlOutline: { label: "Highlight outline", choices: OUTLINES },
     hlBackdrop: { label: "Highlight backdrop", choices: BACKDROPS },
     offscreenCue: {
