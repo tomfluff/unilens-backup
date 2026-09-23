@@ -457,155 +457,230 @@ function renderBackdrop(look: HighlightLook) {
     shade.style.clipPath = `path(evenodd, "M0 0H${W + 2 * o}V${H + 2 * o}H0Z${holes}")`;
 }
 
-/** where a cue sits: on the inset screen edge toward the target, or on a circle round the pointer */
-export function cuePosition(
-    mode: "edge" | "pointer",
-    target: ClientRect,
-    view: { w: number; h: number },
-    from: { x: number; y: number } | null,
-    radius: number,
-): { x: number; y: number; angle: number } {
-    const tx = target.left + target.width / 2;
-    const ty = target.top + target.height / 2;
-    const c =
-        mode === "pointer" && from ? from : { x: view.w / 2, y: view.h / 2 };
+type Pt = { x: number; y: number };
+type View = { w: number; h: number };
+type Avoid = { left: number; top: number; right: number; bottom: number };
+/** a cue: its centre, the bearing it points along (radians, true from the centre to
+ *  the target), and the target's centre, so it can be re-aimed wherever it moves */
+export type Cue = {
+    x: number;
+    y: number;
+    angle: number;
+    tx: number;
+    ty: number;
+};
+
+/** px a cue keeps clear of the viewport edge and of the chat popover */
+const CUE_MARGIN = 8;
+/** where a cue centre may sit: half a cue plus the margin in from each edge */
+const cueInset = (size: number) => size / 2 + CUE_MARGIN;
+/** least centre-to-centre distance between two cues */
+const cueGap = (size: number) => (size * 13) / 12;
+
+const bearing = (p: Pt, tx: number, ty: number) =>
+    Math.atan2(ty - p.y, tx - p.x);
+
+/** the rectangle a cue centre may occupy (a point when the view is smaller than a cue) */
+function insetBox(view: View, m: number) {
+    return {
+        x0: Math.min(m, view.w / 2),
+        x1: Math.max(view.w - m, view.w / 2),
+        y0: Math.min(m, view.h / 2),
+        y1: Math.max(view.h - m, view.h / 2),
+    };
+}
+
+function clampTo(view: View, m: number, p: Pt): Pt {
+    const b = insetBox(view, m);
+    return {
+        x: Math.min(b.x1, Math.max(b.x0, p.x)),
+        y: Math.min(b.y1, Math.max(b.y0, p.y)),
+    };
+}
+
+/** where the ray from the view's centre toward (tx, ty) meets the inset edge */
+function edgePoint(view: View, m: number, tx: number, ty: number): Pt {
+    const c = { x: view.w / 2, y: view.h / 2 };
     const dx = tx - c.x;
     const dy = ty - c.y;
-    const angle = Math.atan2(dy, dx);
-    if (mode === "pointer" && from) {
-        const len = Math.hypot(dx, dy) || 1;
-        return {
-            x: c.x + (dx / len) * radius,
-            y: c.y + (dy / len) * radius,
-            angle,
-        };
-    }
-    const m = 32; // inset: the whole cue stays on screen
     const sx =
         dx > 0 ? (view.w - m - c.x) / dx : dx < 0 ? (m - c.x) / dx : Infinity;
     const sy =
         dy > 0 ? (view.h - m - c.y) / dy : dy < 0 ? (m - c.y) / dy : Infinity;
-    const k = Math.min(sx, sy);
-    return { x: c.x + dx * k, y: c.y + dy * k, angle };
+    const k = Math.max(0, Math.min(sx, sy));
+    if (!Number.isFinite(k)) return c; // the target sits at the centre
+    return clampTo(view, m, { x: c.x + dx * k, y: c.y + dy * k });
 }
 
-const CUE = 48;
+/** the inset edge as a loop, clockwise from the top-left corner: s → point, point → s */
+function edgeLoop(view: View, m: number) {
+    const { x0, x1, y0, y1 } = insetBox(view, m);
+    const W = x1 - x0;
+    const H = y1 - y0;
+    const P = 2 * (W + H);
+    const at = (s: number): Pt => {
+        let t = P ? ((s % P) + P) % P : 0;
+        if (t < W) return { x: x0 + t, y: y0 };
+        t -= W;
+        if (t < H) return { x: x1, y: y0 + t };
+        t -= H;
+        if (t < W) return { x: x1 - t, y: y1 };
+        t -= W;
+        return { x: x0, y: y1 - t };
+    };
+    const of = (p: Pt): number => {
+        const x = Math.min(x1, Math.max(x0, p.x));
+        const y = Math.min(y1, Math.max(y0, p.y));
+        const d = [y - y0, x1 - x, y1 - y, x - x0]; // to the top, right, bottom, left edge
+        const e = d.indexOf(Math.min(...d));
+        if (e === 0) return x - x0;
+        if (e === 1) return W + (y - y0);
+        if (e === 2) return W + H + (x1 - x);
+        return 2 * W + H + (y1 - y);
+    };
+    return { at, of, P };
+}
 
 /**
- * Keep cues apart and out from under the chat popover. Edge cues slide along
- * their edge; pointer cues slide round their circle. Positions are cue centres.
+ * Where a cue sits: on the inset screen edge toward the target, or on a circle
+ * round the pointer (kept inside the view). `angle` is the true bearing from
+ * there to the target's centre.
  */
-export function settleCues(
-    cues: { x: number; y: number; angle: number }[],
+export function cuePosition(
     mode: "edge" | "pointer",
-    view: { w: number; h: number },
-    avoid: { left: number; top: number; right: number; bottom: number } | null,
-    from: { x: number; y: number } | null,
+    target: ClientRect,
+    view: View,
+    from: Pt | null,
     radius: number,
-): { x: number; y: number; angle: number }[] {
-    const gap = CUE + 4;
+    size: number,
+): Cue {
+    const tx = target.left + target.width / 2;
+    const ty = target.top + target.height / 2;
+    const m = cueInset(size);
+    let p: Pt;
     if (mode === "pointer" && from) {
-        const step = gap / radius;
+        const dx = tx - from.x;
+        const dy = ty - from.y;
+        const len = Math.hypot(dx, dy) || 1;
+        p = clampTo(view, m, {
+            x: from.x + (dx / len) * radius,
+            y: from.y + (dy / len) * radius,
+        });
+    } else p = edgePoint(view, m, tx, ty);
+    return { x: p.x, y: p.y, angle: bearing(p, tx, ty), tx, ty };
+}
+
+/**
+ * Keep cues apart, inside the view and out from under the chat popover, then aim
+ * each one at its target from wherever it ended up: a move never skews an arrow.
+ * Pointer cues spread round their circle; one the popover covers moves outward
+ * along its own ray from the pointer, and failing that to its edge spot. Edge cues
+ * slide along the inset edge to the nearest free place. Positions are cue centres;
+ * the result is in the input's order.
+ */
+export function settleCues<C extends Cue>(
+    cues: C[],
+    mode: "edge" | "pointer",
+    view: View,
+    avoid: Avoid | null,
+    from: Pt | null,
+    radius: number,
+    size: number,
+): C[] {
+    const m = cueInset(size);
+    const gap = cueGap(size);
+    const half = size / 2 + CUE_MARGIN;
+    const blocked = (p: Pt) =>
+        !!avoid &&
+        p.x + half > avoid.left &&
+        p.x - half < avoid.right &&
+        p.y + half > avoid.top &&
+        p.y - half < avoid.bottom;
+    const placed: Pt[] = [];
+    const free = (p: Pt) =>
+        !blocked(p) &&
+        placed.every((q) => Math.hypot(p.x - q.x, p.y - q.y) >= gap - 1e-6);
+    const loop = edgeLoop(view, m);
+    /** the nearest place along the inset edge from `start` that passes `ok` */
+    const slide = (start: Pt, ok: (p: Pt) => boolean): Pt | null => {
+        const s0 = loop.of(start);
+        const step = Math.max(2, size / 16);
+        for (let d = 0; d <= loop.P / 2; d += step)
+            for (const s of d ? [s0 + d, s0 - d] : [s0]) {
+                const p = loop.at(s);
+                if (ok(p)) return p;
+            }
+        return null;
+    };
+    // somewhere free on the edge; else clear of the chat at least; else where it was
+    const onEdge = (start: Pt) =>
+        slide(start, free) ?? slide(start, (p) => !blocked(p)) ?? start;
+    const out: C[] = [...cues];
+    const place = (i: number, p: Pt) => {
+        placed.push(p);
+        const c = cues[i];
+        out[i] = { ...c, x: p.x, y: p.y, angle: bearing(p, c.tx, c.ty) };
+    };
+
+    if (mode === "pointer" && from) {
         const TAU = 2 * Math.PI;
-        const sorted = [...cues].sort((a, b) => a.angle - b.angle);
+        // least angle between neighbours on the circle so their centres are a gap apart
+        const step = 2 * Math.asin(Math.min(1, gap / (2 * radius)));
+        const sorted = cues
+            .map((c, i) => ({ i, a: Math.atan2(c.ty - from.y, c.tx - from.x) }))
+            .sort((p, q) => p.a - q.a);
         // start after the widest gap, so the pair that wraps round past ±π is spaced too
         let start = 0;
         let widest = -1;
-        sorted.forEach((c, i) => {
-            const next = sorted[(i + 1) % sorted.length];
+        sorted.forEach((c, k) => {
+            const next = sorted[(k + 1) % sorted.length];
             const g =
-                (next.angle - c.angle + TAU) % TAU ||
-                (sorted.length > 1 ? 0 : TAU);
+                (next.a - c.a + TAU) % TAU || (sorted.length > 1 ? 0 : TAU);
             if (g > widest) {
                 widest = g;
-                start = (i + 1) % sorted.length;
+                start = (k + 1) % sorted.length;
             }
         });
         const seq = sorted.map((_, k) => {
-            const c = sorted[(start + k) % sorted.length];
+            const j = (start + k) % sorted.length;
             return {
-                ...c,
-                angle:
-                    c.angle +
-                    (k > 0 && (start + k) % sorted.length < start ? TAU : 0),
+                i: sorted[j].i,
+                a: sorted[j].a + (k > 0 && j < start ? TAU : 0),
             };
         });
-        for (let i = 1; i < seq.length; i++)
-            if (seq[i].angle - seq[i - 1].angle < step)
-                seq[i] = { ...seq[i], angle: seq[i - 1].angle + step };
-        const at = (angle: number) => ({
-            x: from.x + Math.cos(angle) * radius,
-            y: from.y + Math.sin(angle) * radius,
-        });
-        const blocked = (q: { x: number; y: number }) =>
-            !!avoid &&
-            q.x + CUE / 2 > avoid.left &&
-            q.x - CUE / 2 < avoid.right &&
-            q.y + CUE / 2 > avoid.top &&
-            q.y - CUE / 2 < avoid.bottom;
-        return seq.map((c) => {
-            let angle = c.angle;
-            // rotate a cue the chat popover would cover round the circle until it is clear
-            for (
-                let k = 0;
-                k < Math.ceil(TAU / step) && blocked(at(angle));
-                k++
-            )
-                angle += step;
-            return { ...c, angle, ...at(angle) };
-        });
-    }
-    const m = 32;
-    // which edge a cue sits on decides the axis it may slide along
-    const horizontal = (c: { y: number }) =>
-        Math.abs(c.y - m) < 1 || Math.abs(c.y - (view.h - m)) < 1;
-    const out: { x: number; y: number; angle: number }[] = [];
-    for (const edgeIsH of [true, false]) {
-        const group = cues
-            .filter((c) => horizontal(c) === edgeIsH)
-            .map((c) => ({ ...c }));
-        const along = (c: { x: number; y: number }) => (edgeIsH ? c.x : c.y);
-        const set = (c: { x: number; y: number }, v: number) => {
-            if (edgeIsH) c.x = v;
-            else c.y = v;
-        };
-        const len = edgeIsH ? view.w : view.h;
-        const lo = avoid
-            ? (edgeIsH ? avoid.left : avoid.top) - CUE / 2 - 8
-            : Number.NEGATIVE_INFINITY;
-        const hi = avoid
-            ? (edgeIsH ? avoid.right : avoid.bottom) + CUE / 2 + 8
-            : Number.NEGATIVE_INFINITY;
-        const blocked = (c: { x: number; y: number }) =>
-            !!avoid &&
-            c.x + CUE / 2 > avoid.left &&
-            c.x - CUE / 2 < avoid.right &&
-            c.y + CUE / 2 > avoid.top &&
-            c.y - CUE / 2 < avoid.bottom;
-        // cues the popover would cover move to its nearer side (or the side with room)
-        for (const c of group) {
-            if (!blocked(c)) continue;
-            const v = along(c);
-            set(c, (v - lo < hi - v && lo >= m) || hi > len - m ? lo : hi);
+        for (let k = 1; k < seq.length; k++)
+            if (seq[k].a - seq[k - 1].a < step) seq[k].a = seq[k - 1].a + step;
+        const { x0, x1, y0, y1 } = insetBox(view, m);
+        const inView = (p: Pt) =>
+            p.x >= x0 && p.x <= x1 && p.y >= y0 && p.y <= y1;
+        for (const { i, a } of seq) {
+            const ray = (r: number) => ({
+                x: from.x + Math.cos(a) * r,
+                y: from.y + Math.sin(a) * r,
+            });
+            let p: Pt | null = clampTo(view, m, ray(radius));
+            if (!free(p)) {
+                // covered or crowded: step outward along the ray while it stays in view
+                p = null;
+                for (let r = radius + size / 2; ; r += size / 2) {
+                    const q = ray(r);
+                    if (!inView(q)) break;
+                    if (free(q)) {
+                        p = q;
+                        break;
+                    }
+                }
+            }
+            const c = cues[i];
+            place(i, p ?? onEdge(edgePoint(view, m, c.tx, c.ty)));
         }
-        // then space them out away from the popover: cues before it stack backward,
-        // cues after it forward, so spacing never pushes one back under it
-        const mid = avoid ? (lo + hi) / 2 : Number.NEGATIVE_INFINITY;
-        const before = group
-            .filter((c) => along(c) < mid)
-            .sort((a, b) => along(b) - along(a));
-        const after = group
-            .filter((c) => along(c) >= mid)
-            .sort((a, b) => along(a) - along(b));
-        for (let i = 1; i < before.length; i++)
-            if (along(before[i - 1]) - along(before[i]) < gap)
-                set(before[i], along(before[i - 1]) - gap);
-        for (let i = 1; i < after.length; i++)
-            if (along(after[i]) - along(after[i - 1]) < gap)
-                set(after[i], along(after[i - 1]) + gap);
-        for (const c of group) set(c, Math.min(len - m, Math.max(m, along(c))));
-        out.push(...group);
+        return out;
     }
+    // edge: settle in order along the loop, so neighbours keep their order where they can
+    const order = cues
+        .map((c, i) => ({ i, s: loop.of(c) }))
+        .sort((p, q) => p.s - q.s);
+    for (const { i } of order) place(i, onEdge(cues[i]));
     return out;
 }
 
@@ -618,6 +693,36 @@ function visibleBounds() {
         w: vv?.width ?? window.innerWidth,
         h: vv?.height ?? window.innerHeight,
     };
+}
+
+/**
+ * A cue drawn in a 48-unit box scaled to the cue size, pointing right before it is
+ * aimed: a bold arrowhead that fills most of the box, with the number disc at its
+ * tail. The group turns round the box centre; the number is placed apart so it
+ * stays upright. Every shape stays within 24 units of the centre at any turn.
+ */
+const CUE_BOX = 48;
+const CUE_TAIL = 11; // the number disc's centre, units behind the box centre
+function cueSvg(color: string, num: string): string {
+    const c = CUE_BOX / 2;
+    return (
+        `<svg width="100%" height="100%" viewBox="0 0 ${CUE_BOX} ${CUE_BOX}" aria-hidden="true" style="display:block">` +
+        `<g><path d="M46 24 L18 7 L18 41 Z" fill="${color}" stroke="${EDGE}" stroke-width="2.5" stroke-linejoin="round"/>` +
+        `<circle cx="${c - CUE_TAIL}" cy="${c}" r="10" fill="${EDGE}" stroke="${color}" stroke-width="2.5"/></g>` +
+        `<text text-anchor="middle" dominant-baseline="central" font-family="system-ui, sans-serif" font-weight="700" font-size="13" fill="#fff">${num}</text></svg>`
+    );
+}
+
+/** turn a cue's arrow to `angle` (radians) and keep its number upright on the tail disc */
+function aimCue(el: HTMLElement, angle: number) {
+    const c = CUE_BOX / 2;
+    el.querySelector("g")?.setAttribute(
+        "transform",
+        `rotate(${(angle * 180) / Math.PI} ${c} ${c})`,
+    );
+    const text = el.querySelector("text");
+    text?.setAttribute("x", `${c - CUE_TAIL * Math.cos(angle)}`);
+    text?.setAttribute("y", `${c - CUE_TAIL * Math.sin(angle)}`);
 }
 
 /**
@@ -661,7 +766,7 @@ function renderCues(look: HighlightLook) {
         ensureLayer().appendChild(cueHost);
     }
     const cueMode = mode as "edge" | "pointer";
-    const radius = getSettings().cueRadius;
+    const { cueRadius: radius, cueSize: size } = getSettings();
     // work in visual-viewport coordinates, place in layout (fixed) coordinates
     // explicit fields: a DOMRect keeps them as prototype getters, so spreading one copies nothing
     const local = (r: ClientRect): ClientRect => ({
@@ -682,17 +787,19 @@ function renderCues(look: HighlightLook) {
               bottom: popRect.bottom - V.y,
           }
         : null;
+    const view = { w: V.w, h: V.h };
     const settled = settleCues(
         off.map(({ r }, i) => ({
-            ...cuePosition(cueMode, local(r), { w: V.w, h: V.h }, from, radius),
+            ...cuePosition(cueMode, local(r), view, from, radius, size),
             i,
         })),
         cueMode,
-        { w: V.w, h: V.h },
+        view,
         pop,
         from,
         radius,
-    ) as { x: number; y: number; angle: number; i: number }[];
+        size,
+    );
     for (const p of settled) {
         const { b } = off[p.i];
         // digits only: the number is written into SVG markup
@@ -710,8 +817,6 @@ function renderCues(look: HighlightLook) {
             el.className = `${CLASS}-cue`;
             Object.assign(el.style, {
                 position: "fixed",
-                width: "48px",
-                height: "48px",
                 padding: "0",
                 margin: "0",
                 border: "0",
@@ -719,7 +824,7 @@ function renderCues(look: HighlightLook) {
                 cursor: cueMode === "edge" ? "pointer" : "default",
                 pointerEvents: cueMode === "edge" ? "auto" : "none",
             });
-            el.innerHTML = `<svg width="48" height="48" viewBox="0 0 48 48" aria-hidden="true"><g><path d="M36 14 L47 24 L36 34 Z" fill="${look.color}" stroke="${EDGE}" stroke-width="2"/></g><circle cx="24" cy="24" r="15" fill="${EDGE}" stroke="${look.color}" stroke-width="3"/><text x="24" y="29" text-anchor="middle" font-family="system-ui, sans-serif" font-weight="700" font-size="15" fill="#fff">${num}</text></svg>`;
+            el.innerHTML = cueSvg(look.color, num);
             if (cueMode === "edge") {
                 el.setAttribute("type", "button");
                 el.addEventListener("click", () => {
@@ -746,14 +851,14 @@ function renderCues(look: HighlightLook) {
             entry.el.setAttribute("aria-label", label);
             entry.el.title = label;
         }
-        entry.el.style.left = `${p.x + V.x - 24}px`;
-        entry.el.style.top = `${p.y + V.y - 24}px`;
-        entry.el
-            .querySelector("g")
-            ?.setAttribute(
-                "transform",
-                `rotate(${(p.angle * 180) / Math.PI} 24 24)`,
-            );
+        // sized every frame, not rebuilt: a size change keeps a focused edge button
+        Object.assign(entry.el.style, {
+            width: `${size}px`,
+            height: `${size}px`,
+            left: `${p.x + V.x - size / 2}px`,
+            top: `${p.y + V.y - size / 2}px`,
+        });
+        aimCue(entry.el, p.angle);
     }
 }
 

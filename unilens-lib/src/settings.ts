@@ -77,6 +77,13 @@ export interface Settings {
     offscreenCue: "none" | "edge" | "pointer";
     /** radius of the pointer cue circle, px */
     cueRadius: number;
+    /** size of an off-screen cue arrow, px */
+    cueSize: number;
+    /** page moves, chat scrolling and the chat's move to a new click: eased or instant.
+     *  Always instant when the system asks for reduced motion */
+    motion: "smooth" | "instant";
+    /** how long an eased move takes, ms */
+    motionMs: number;
     /** minimap target marker: see-through fill or outline; dim, glow and numbers stack */
     mmShape: "filled" | "outlined";
     mmDim: boolean;
@@ -142,6 +149,9 @@ const DEFAULTS: Settings = {
     hlColor: "#ffd400",
     offscreenCue: "none",
     cueRadius: 90,
+    cueSize: 72,
+    motion: "smooth",
+    motionMs: 350,
     mmShape: "filled",
     mmDim: false,
     mmGlow: false,
@@ -256,6 +266,18 @@ export const NUMBER_KNOBS: Record<
         max: 240,
         step: 10,
     },
+    cueSize: {
+        label: "Off-screen cue size (px)",
+        min: 48,
+        max: 128,
+        step: 8,
+    },
+    motionMs: {
+        label: "Movement duration (ms)",
+        min: 100,
+        max: 1000,
+        step: 50,
+    },
 };
 
 /** the escapeOrder choices with their panel labels; the keys are the valid stored values */
@@ -297,6 +319,13 @@ export const ENUM_CHOICES = {
             none: "None",
             edge: "Arrows at the screen edge",
             pointer: "Arrows around the pointer",
+        },
+    },
+    motion: {
+        label: "Page and chat movement",
+        choices: {
+            smooth: "Smooth (instant under reduced motion)",
+            instant: "Instant",
         },
     },
     mmShape: {
@@ -405,4 +434,14 @@ export function updateSetting<K extends keyof Settings>(
     value: Settings[K],
 ) {
     useSettings.setState({ [key]: value });
+}
+
+/** ms an eased move should take now: 0 when the motion setting is instant or the
+ *  system asks for reduced motion */
+export function motionMs(): number {
+    const s = getSettings();
+    const reduced =
+        typeof matchMedia === "function" &&
+        matchMedia("(prefers-reduced-motion: reduce)").matches;
+    return s.motion === "instant" || reduced ? 0 : s.motionMs;
 }

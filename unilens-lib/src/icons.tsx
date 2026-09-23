@@ -93,3 +93,13 @@ export const PlaceIcon = () => (
         <circle cx="12" cy="9.5" r="2.5" />
     </Icon>
 );
+export const MinimizeIcon = () => (
+    <Icon>
+        <path d="M6 12h12" />
+    </Icon>
+);
+export const ExpandIcon = () => (
+    <Icon>
+        <path d="M6 15l6-6 6 6" />
+    </Icon>
+);

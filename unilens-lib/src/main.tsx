@@ -21,14 +21,16 @@ import {
 } from "./capture";
 import { chatText } from "./chatI18n";
 import { initDebug } from "./DebugPanel";
+import { earcon } from "./earcons";
 import {
+    announce,
     clearHighlights,
     init as initHighlight,
     setCurrentCapture,
 } from "./highlight";
 import { initHint } from "./hint";
 import { initMinimap } from "./minimap";
-import { recordPlace } from "./places";
+import { aliasPlace, recordPlace } from "./places";
 import { initSettings } from "./SettingsPanel";
 import { recordCapture } from "./sentLog";
 import { getSettings, updateSetting } from "./settings";
@@ -48,6 +50,10 @@ export interface InitOptions {
 
 let root: Root | null = null;
 let container: HTMLDivElement | null = null;
+/** what the open chat was last rendered with, so a new click can update it in place */
+let popProps: Parameters<typeof ChatPopover>[0] | null = null;
+const paintPopover = () =>
+    popProps && root?.render(<ChatPopover {...popProps} />);
 
 /**
  * Popover pinned position, persisted in the settings store. Guarded on read:
@@ -66,6 +72,7 @@ function closePopover() {
     generation++;
     root?.unmount();
     root = null;
+    popProps = null;
     container?.remove();
     container = null;
 }
@@ -104,12 +111,15 @@ let generation = 0;
  */
 async function refreshCapture(
     prev: CaptureResult,
+    prevId: string,
     backend: string,
+    onStart?: () => void,
 ): Promise<{ id: string; cap: CaptureResult } | null> {
     // the conversation lives in the session; without one (continuity off) a new capture
     // would start with an empty history, so the chat stays on the capture it has
     if (!sessionId || !getSettings().refreshView || !viewMovedSince(prev.meta))
         return null;
+    onStart?.();
     const gen = generation;
     try {
         const cap = await capture(
@@ -126,15 +136,8 @@ async function refreshCapture(
         tagLastCapture(id);
         recordCapture(id, cap, true);
         setCurrentCapture(id);
-        // same question point as the capture it refreshes
-        recordPlace({
-            captureId: id,
-            at: Date.now(),
-            x: cap.meta.clickX,
-            y: cap.meta.clickY,
-            el: askedAbout?.isConnected ? askedAbout : undefined,
-            label: placeLabel(cap),
-        });
+        // same question point as the capture it refreshes: the same place, not a new one
+        aliasPlace(id, prevId);
         return { id, cap };
     } catch (err) {
         console.warn(
@@ -152,36 +155,45 @@ function openPopover(
     cap: CaptureResult,
     backend: string,
 ) {
-    closePopover();
-    container = document.createElement("div");
-    container.id = "unilens-root";
-    // documentElement, not body: body carries the zoom transform, which would
-    // break position:fixed and scale the popover. Also keeps it out of captures.
-    document.documentElement.appendChild(container);
-    root = createRoot(container);
-    const render = () =>
-        root?.render(
-            <ChatPopover
-                x={clientX}
-                y={clientY}
-                captureId={captureId}
-                capture={cap}
-                backend={backend}
-                sessionId={getSettings().continuity ? sessionId : null}
-                onClose={dismissPopover}
-                refreshCapture={(prev) => refreshCapture(prev, backend)}
-                initialPos={pinnedPos()}
-                pinned={pinnedPos() != null}
-                onTogglePin={(pos) => {
-                    setPinnedPos(pos);
-                    render(); // re-render so the pin button reflects state
-                }}
-                onMove={(pos) => {
-                    if (pinnedPos()) setPinnedPos(pos);
-                }}
-            />,
-        );
-    render();
+    // one conversation, one chat: with continuity on, a new click updates the open chat
+    // (it glides to the click and keeps its history and chips) instead of replacing it
+    const keep = root != null && getSettings().continuity;
+    if (!keep) {
+        closePopover();
+        container = document.createElement("div");
+        container.id = "unilens-root";
+        // documentElement, not body: body carries the zoom transform, which would
+        // break position:fixed and scale the popover. Also keeps it out of captures.
+        document.documentElement.appendChild(container);
+        root = createRoot(container);
+    }
+    popProps = {
+        x: clientX,
+        y: clientY,
+        captureId,
+        capture: cap,
+        backend,
+        sessionId: getSettings().continuity ? sessionId : null,
+        onClose: dismissPopover,
+        refreshCapture: (prev, prevId, onStart) =>
+            refreshCapture(prev, prevId, backend, onStart),
+        initialPos: pinnedPos(),
+        pinned: pinnedPos() != null,
+        onTogglePin: (pos) => {
+            setPinnedPos(pos);
+            if (popProps)
+                popProps = {
+                    ...popProps,
+                    pinned: pos != null,
+                    initialPos: pos,
+                };
+            paintPopover(); // re-render so the pin button reflects state
+        },
+        onMove: (pos) => {
+            if (pinnedPos()) setPinnedPos(pos);
+        },
+    };
+    paintPopover();
 }
 
 /** current conversation session — new captures join it until the user closes the popover */
@@ -238,6 +250,14 @@ export function init(options: InitOptions = {}) {
         setCurrentCapture(null);
         clearHighlights();
         askedAbout = el;
+        // the capture takes a moment: say so now, in the open chat or out loud
+        if (popProps && getSettings().continuity) {
+            popProps = { ...popProps, capturing: true };
+            paintPopover();
+        } else {
+            earcon("send");
+            announce(chatText().sCapturing);
+        }
         const cap = await capture(Math.round(p.x), Math.round(p.y), el, region);
         let id = "local";
         try {

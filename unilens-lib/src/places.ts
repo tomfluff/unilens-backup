@@ -3,7 +3,7 @@
  * so the conversation can take them back there ("where I clicked"). Kept for this
  * page load; the element reference goes stale on reload, the content point does not.
  */
-import { getView, getZoom, revealPoint } from "./zoom";
+import { getTargetView, getZoom, revealPoint } from "./zoom";
 
 export interface Place {
     captureId: string;
@@ -18,12 +18,24 @@ export interface Place {
 }
 
 const places = new Map<string, Place>();
+/** places in the order they were made: P1, P2, … in the chat */
+const order: Place[] = [];
 let latest: Place | null = null;
 
 export function recordPlace(p: Place) {
     places.set(p.captureId, p);
+    order.push(p);
     latest = p;
 }
+
+/** a re-capture of the same view (a follow-up after the user moved) is the same place */
+export function aliasPlace(captureId: string, of: string) {
+    const p = places.get(of);
+    if (p) places.set(captureId, p);
+}
+
+/** the place's number in this page load, from 1 */
+export const placeNumber = (p: Place) => order.indexOf(p) + 1;
 
 export const placeOf = (captureId: string | undefined) =>
     captureId ? places.get(captureId) : undefined;
@@ -36,7 +48,8 @@ export const latestPlace = () => latest;
  */
 export function goToPlace(p: Place): "moved" | "in-view" {
     const { scale } = getZoom();
-    const v = getView();
+    // mid-glide, judge from where the page is going, not where it is
+    const v = getTargetView();
     const W = window.visualViewport?.width ?? window.innerWidth;
     const H = window.visualViewport?.height ?? window.innerHeight;
     const cx = p.x * scale - v.x;
@@ -48,5 +61,6 @@ export function goToPlace(p: Place): "moved" | "in-view" {
 
 export function clearPlaces() {
     places.clear();
+    order.length = 0;
     latest = null;
 }

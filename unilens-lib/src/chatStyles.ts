@@ -35,28 +35,31 @@ ${B} button:disabled { cursor: default; opacity: .55; }
 ${B} input { font: inherit; margin: 0; min-width: 0; flex: 1; }
 ${B} p { margin: 0; }
 ${B} svg { display: block; flex: none; width: 1.25em; height: 1.25em; }
-${R} .ulc-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 ${R} .ulc-hd { display: flex; align-items: center; gap: .55em; flex: none; user-select: none; touch-action: none; }
 ${R} .ulc-title { flex: 1; min-width: 0; line-height: 1.2; }
 ${R} .ulc-title b { display: block; font-weight: 700; }
 ${R} .ulc-title small { display: block; font-size: 1em; }
 ${R} .ulc-ib { display: grid; place-items: center; flex: none; padding: 0; }
 ${R} .ulc-log { flex: 1; overflow-y: auto; overscroll-behavior: contain; display: flex; flex-direction: column; gap: .7em; scrollbar-width: thin; }
-${R} .ulc-row { display: flex; flex-wrap: wrap; align-items: center; gap: .45em; }
 ${R} .ulc-turn { display: flex; flex-direction: column; align-items: flex-start; gap: .1em; }
 ${R} .ulc-msg { max-width: 92%; white-space: pre-wrap; overflow-wrap: anywhere; }
 ${R} .ulc-me { align-self: flex-end; max-width: 85%; }
 ${R} .ulc-bot { align-self: flex-start; }
-${R} .ulc-tools { display: flex; align-items: center; gap: .35em; margin-top: .5em; }
-${R} .ulc-speak { display: inline-grid; place-items: center; width: 2.2em; height: 2.2em; padding: 0; border-radius: 999px; background: transparent; border: 1px solid currentColor; }
-${R} .ulc-place { display: inline-flex; align-items: center; gap: .35em; max-width: 100%; margin-top: .45em; padding: .2em .6em; min-height: 2em; border-radius: 999px; background: transparent; border: 1px solid currentColor; font-size: 1em; }
-${R} .ulc-place span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+${R} .ulc-speak { display: inline-grid; place-items: center; width: 2em; height: 2em; margin-left: .35em; padding: 0; vertical-align: middle; border-radius: 999px; background: transparent; border: 1px solid currentColor; }
+${R} .ulc-speak svg { width: 1.1em; height: 1.1em; }
+${R} .ulc-where { display: inline-flex; align-items: center; gap: .4em; flex: none; max-width: 100%; min-height: 2.3em; padding: .15em .75em .15em .5em; font-size: .95em; line-height: 1.3; }
+${R} .ulc-where b { flex: none; font-variant-numeric: tabular-nums; }
+${R} .ulc-where span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+${R} .ulc-ctl { display: flex; align-items: center; gap: .35em; min-width: 0; }
+${R} .ulc-c { display: inline-flex; align-items: center; justify-content: center; gap: .35em; flex: none; padding: 0; font-size: 1em; white-space: nowrap; }
+${R} .ulc-c span { overflow: hidden; text-overflow: ellipsis; }
 ${R} .ulc-quick { display: grid; grid-template-columns: repeat(3, 1fr); gap: .35em; flex: none; }
 ${R} .ulc-quick button { min-width: 0; line-height: 1.2; padding-left: .3em; padding-right: .3em; }
 ${R} .ulc-in { display: flex; gap: .45em; flex: none; align-items: center; }
 ${R} .ulc-in input::placeholder { opacity: 1; }
 ${R} .ulc-status { flex: none; min-height: 1.6em; font-size: 1em; display: flex; align-items: center; gap: .45em; overflow: hidden; line-height: 1.35; }
 ${R} .ulc-status span { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
+${R}[data-short="true"] .ulc-status span { -webkit-line-clamp: 1; }
 ${R} .ulc-empty { opacity: .9; }
 ${R} .ulc-caret { display: inline-block; width: .5em; height: 1.05em; vertical-align: -.15em; margin-left: .1em; background: currentColor; animation: ulc-blink 1s steps(2) infinite; }
 ${R} .ulc-lvl { display: inline-flex; gap: 3px; align-items: center; height: 1.2em; }
@@ -64,10 +67,9 @@ ${R} .ulc-lvl i { display: block; width: 4px; height: 40%; border-radius: 2px; b
 ${R} .ulc-lvl i:nth-child(2) { animation-delay: .15s } ${R} .ulc-lvl i:nth-child(3) { animation-delay: .3s }
 @keyframes ulc-blink { 50% { opacity: 0 } }
 @keyframes ulc-lvl { 0%, 100% { height: 30% } 50% { height: 100% } }
-${R} .ulc-flash { animation: ulc-flash .35s cubic-bezier(.16, 1, .3, 1); }
-@keyframes ulc-flash { from { transform: scale(.94); filter: brightness(1.3) } to { transform: none; filter: none } }
 @media (prefers-reduced-motion: reduce) {
-  ${R} .ulc-caret, ${R} .ulc-lvl i, ${R} .ulc-flash { animation: none !important; }
+  ${R} { transition: none !important; }
+  ${R} .ulc-caret, ${R} .ulc-lvl i { animation: none !important; }
 }
 ${R} .unilens-cite { display: inline-grid; place-items: center; min-width: 1.75em; height: 1.75em; padding: 0 .3em; margin: 0 .12em; border: 0; border-radius: 999px; font-weight: 700; font-size: 1em; line-height: 1; vertical-align: .08em; font-variant-numeric: tabular-nums; cursor: pointer; }
 ${B} code { font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace; font-size: .92em; }
@@ -97,17 +99,18 @@ ${A}${HC} .ulc-bot.is-err { border-width: 3px; }
 ${A} .ulc-bot.is-quiet { background: transparent; border: 1.5px dashed #6b7280; }
 ${A} .unilens-cite { background: var(--acc); color: var(--acc-fg); margin: 0 .25em; }
 ${A} .unilens-cite[aria-current="true"] { box-shadow: 0 0 0 2px var(--soft), 0 0 0 4px var(--acc); }
-${A} .ulc-ev { display: flex; flex-wrap: wrap; align-items: center; gap: .4em; margin-top: .65em; }
-${A} .ulc-pill { display: inline-flex; align-items: center; gap: .35em; min-height: 2.3em; padding: 0 .85em; border: 1px solid #6b7280; border-radius: 999px; background: var(--bg); color: var(--fg); font-size: 1em; }
-${A} .ulc-pill.ulc-primary { color: var(--acc); border: 1.5px solid var(--acc); font-weight: 600; }
-${A}${HC} .ulc-pill { border: 2px solid #fff; }
-${A} .ulc-pill[aria-pressed="true"] { background: var(--acc); color: var(--acc-fg); border-color: var(--acc); font-weight: 700; }
-${A} .ulc-nav { display: inline-flex; align-items: center; gap: .3em; white-space: nowrap; }
-${A} .ulc-nav .ulc-pill { width: 2.3em; padding: 0; justify-content: center; }
-${A} .ulc-of { font-size: 1em; font-variant-numeric: tabular-nums; min-width: 3.4em; text-align: center; }
-${A} .ulc-speak, ${A} .ulc-place { color: var(--muted); border-color: #9ca3af; }
-${A}${HC} .ulc-speak, ${A}${HC} .ulc-place { color: #fff; border-color: #fff; }
-${A} .ulc-me .ulc-place { color: var(--acc-fg); border-color: currentColor; }
+${A} .ulc-where { align-self: flex-end; border: 1.5px solid var(--acc); border-radius: 999px; background: var(--bg); color: var(--acc); font-weight: 600; }
+${A} .ulc-where b { padding: 0 .45em; border-radius: 999px; background: var(--acc); color: var(--acc-fg); }
+${A}${HC} .ulc-where { border-width: 2px; }
+${A} .ulc-ctl { margin-top: .6em; }
+${A} .ulc-c { height: 2.3em; min-width: 2.3em; border: 1px solid #6b7280; border-radius: 999px; background: var(--bg); color: var(--fg); }
+${A}${HC} .ulc-c { border: 2px solid #fff; }
+${A} .ulc-all.has-label { padding: 0 .8em; color: var(--acc); border: 1.5px solid var(--acc); font-weight: 600; }
+${A} .ulc-all[aria-pressed="true"] { background: var(--acc); color: var(--acc-fg); border-color: var(--acc); font-weight: 700; }
+${A} .ulc-of { min-width: 2.6em; text-align: center; font-weight: 600; font-variant-numeric: tabular-nums; }
+${A} .ulc-back { margin-left: auto; }
+${A} .ulc-speak { color: var(--muted); border-color: #9ca3af; }
+${A}${HC} .ulc-speak { color: #fff; border-color: #fff; }
 ${A} .ulc-quick { padding: .55em 1em 0; border-top: 1px solid var(--line); }
 ${A} .ulc-quick button { min-height: 2.3em; border: 1px solid #6b7280; border-radius: 999px; background: var(--soft); color: var(--fg); font-size: 1em; }
 ${A}${HC} .ulc-quick button { border: 2px solid #fff; }
@@ -135,10 +138,6 @@ ${G} .ulc-title small { color: var(--muted); }
 ${G} .ulc-ib { width: 2.6em; height: 2.6em; border: 0; border-radius: 12px; background: var(--key); color: var(--key-fg); }
 ${G}${HC} .ulc-ib { border: 2px solid #ffd400; }
 ${G} .ulc-ib[aria-pressed="true"] { background: var(--lcd); color: var(--lcd-fg); }
-${G} .ulc-lcd { flex: none; display: flex; align-items: center; gap: .8em; min-height: 3.6em; padding: .5em .8em; border-radius: 12px; background: var(--lcd); color: var(--lcd-fg); }
-${G} .ulc-lcd .ulc-big { font: 700 2.2em/1 "BIZ UDGothic", ui-monospace, monospace; font-variant-numeric: tabular-nums; min-width: 1.2em; text-align: center; }
-${G} .ulc-lcd .ulc-txt { font-weight: 700; line-height: 1.3; min-width: 0; }
-${G} .ulc-lcd .ulc-txt small { display: block; font-weight: 400; font-size: .86em; }
 ${G} .ulc-log { padding: 12px 2px 4px; }
 ${G} .ulc-me { align-self: stretch; max-width: none; color: var(--muted); }
 ${G} .ulc-bot { align-self: stretch; max-width: none; background: var(--label); color: var(--label-fg); border-radius: 6px; padding: 1em 1.05em; line-height: 1.75; font-size: 1.05em; }
@@ -147,15 +146,15 @@ ${G} .ulc-bot.is-err { background: var(--body2); color: #fff; border: 3px solid 
 ${G} .ulc-bot.is-quiet { background: var(--body2); color: #fff; border: 2px dashed var(--muted); }
 ${G} .unilens-cite { background: var(--disc); color: var(--disc-fg); }
 ${G} .unilens-cite[aria-current="true"] { background: var(--lcd); color: var(--lcd-fg); box-shadow: 0 0 0 3px var(--label-fg); }
-${G} .ulc-keys { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin-top: 10px; }
-${G} .ulc-key { display: grid; place-items: center; height: 3em; padding: 0; border: 0; border-radius: 10px; background: var(--key); color: var(--key-fg); font-weight: 700; font-size: 1.1em; font-variant-numeric: tabular-nums; }
-${G}${HC} .ulc-key { border: 2px solid #ffd400; }
-${G} .ulc-key[aria-current="true"], ${G} .ulc-key[aria-pressed="true"] { background: var(--lcd); color: var(--lcd-fg); }
-${G} .ulc-key.ulc-wide { grid-column: span 3; display: flex; justify-content: center; align-items: center; gap: .4em; font-size: 1em; }
-${G} .ulc-key.ulc-wide2 { grid-column: span 2; display: flex; justify-content: center; align-items: center; gap: .4em; font-size: 1em; }
-${G} .ulc-key.ulc-full { grid-column: 1 / -1; display: flex; justify-content: center; align-items: center; gap: .4em; font-size: 1em; }
-${G} .ulc-speak, ${G} .ulc-place { color: var(--muted); border-color: #8a929e; }
-${G} .ulc-bot .ulc-speak { color: var(--label-fg); border-color: currentColor; }
+${G} .ulc-where { align-self: flex-start; border: 1.5px solid #8a929e; border-radius: 10px; background: transparent; color: var(--muted); }
+${G} .ulc-where b { padding: 0 .4em; border-radius: 6px; background: var(--lcd); color: var(--lcd-fg); }
+${G}${HC} .ulc-where { border: 2px solid #ffd400; color: #fff; }
+${G} .ulc-ctl { align-self: stretch; margin-top: 8px; gap: 6px; }
+${G} .ulc-c { flex: 1 1 0; min-width: 0; height: 2.8em; border: 0; border-radius: 10px; background: var(--key); color: var(--key-fg); font-weight: 700; font-size: 1.05em; font-variant-numeric: tabular-nums; }
+${G}${HC} .ulc-c { border: 2px solid #ffd400; }
+${G} .ulc-c[aria-current="true"], ${G} .ulc-c[aria-pressed="true"] { background: var(--lcd); color: var(--lcd-fg); }
+${G} .ulc-all.has-label { flex: 3 1 0; padding: 0 .6em; font-size: 1em; }
+${G} .ulc-speak { color: var(--label-fg); border-color: currentColor; }
 ${G} .ulc-quick { margin-top: 10px; }
 ${G} .ulc-quick button { min-height: 2.6em; border: 1.5px solid #8a929e; border-radius: 10px; background: transparent; color: #fff; font-size: 1em; }
 ${G} .ulc-log { scrollbar-color: #6b7280 transparent; }
@@ -167,7 +166,7 @@ ${G} .ulc-in input::placeholder { color: #aeb5bf; }
 ${G} .ulc-in .ulc-ib { width: 3em; height: 3em; }
 ${G} .ulc-in .ulc-go { background: var(--lcd); color: var(--lcd-fg); }
 ${G} .ulc-in .ulc-ib[aria-pressed="true"] { background: var(--err); color: #111; }
-${G} .ulc-status { margin-top: 8px; color: var(--muted); }
+${G} .ulc-status { margin-top: 8px; min-height: 2.6em; padding: .45em .8em; border-radius: 10px; background: var(--lcd); color: var(--lcd-fg); font-weight: 700; }
 ${G} :focus-visible { outline: 3px solid #fff; outline-offset: 2px; box-shadow: 0 0 0 6px var(--lcd); }
 
 /* ── Station signs: sign band, blue status strip, station codes, exit-yellow signs ── */
@@ -182,31 +181,31 @@ ${S} .ulc-title small { opacity: .9; }
 ${S} .ulc-ib { width: 2.5em; height: 2.5em; border: 2px solid #8a8f95; border-radius: 4px; background: transparent; color: var(--band-fg); }
 ${S}${HC} .ulc-ib { border-color: #fff; }
 ${S} .ulc-ib[aria-pressed="true"] { background: var(--exit); color: var(--exit-fg); border-color: var(--exit); }
-${S} .ulc-strip { flex: none; display: flex; align-items: center; gap: .6em; min-height: 2.5em; padding: .45em .8em; background: var(--strip); color: var(--strip-fg); font-weight: 700; }
-${S}${HC} .ulc-strip { border-bottom: 2px solid #fff; }
-${S} .ulc-strip small { font-weight: 400; color: var(--muted); }
 ${S} .ulc-log { padding: .8em .8em .3em; }
-${S} .ulc-me { align-self: stretch; max-width: none; display: flex; gap: .5em; align-items: baseline; color: var(--muted); }
-${S} .ulc-me::before { content: ""; width: .5em; height: .5em; flex: none; background: var(--fg); transform: translateY(-.1em); }
+${S} .ulc-me { position: relative; align-self: stretch; max-width: none; padding-left: 1em; color: var(--muted); }
+${S} .ulc-me::before { content: ""; position: absolute; left: 0; top: .55em; width: .5em; height: .5em; background: var(--fg); }
 ${S} .ulc-bot { align-self: stretch; max-width: none; font-size: 1.05em; line-height: 1.75; }
 ${S} .ulc-bot.is-err { border: 3px solid var(--err); padding: .8em; border-radius: 4px; }
 ${S} .ulc-bot.is-quiet { border: 2px dashed #8a8f95; padding: .8em; border-radius: 4px; }
 ${S} .unilens-cite { display: inline-flex; align-items: center; justify-content: center; min-width: 2.5em; height: 1.75em; padding: 0 .35em; border: .22em solid var(--line); border-radius: .35em; background: #fff; color: #111; font-size: 1em; white-space: nowrap; }
 ${S} .unilens-cite[aria-current="true"] { background: var(--line); color: #fff; }
 ${S}${HC} .unilens-cite[aria-current="true"] { color: #000; }
-${S} .ulc-signs { display: grid; grid-template-columns: 1fr 1fr; gap: .45em; margin-top: .85em; }
-${S} .ulc-sign { display: flex; align-items: center; gap: .35em; min-height: 2.9em; padding: 0 .5em; line-height: 1.2; border: 0; border-radius: 4px; background: var(--exit); color: var(--exit-fg); font-weight: 700; text-align: left; }
-${S} .ulc-sign.ulc-span { grid-column: 1 / -1; }
-${S} .ulc-sign[aria-pressed="true"] { box-shadow: inset 0 0 0 3px #111; }
-${S} .ulc-codes { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; gap: .4em; padding: .35em; border-radius: 4px; background: #f1f2f3; }
-${S}${HC} .ulc-codes { background: #000; border: 2px solid #fff; }
-${S} .ulc-nb { display: grid; place-items: center; width: 2.6em; height: 2.6em; padding: 0; border: 2px solid #6d7278; border-radius: 4px; background: #fff; color: #111; }
-${S} .ulc-codes .unilens-cite { height: 2.3em; min-width: 3em; font-size: 1em; }
-${S} .ulc-of { margin-left: auto; padding-right: .3em; font-weight: 700; font-variant-numeric: tabular-nums; }
-${S} .ulc-speak, ${S} .ulc-place { color: var(--muted); border-color: #8a8f95; }
-${S}${HC} .ulc-speak, ${S}${HC} .ulc-place { color: #fff; border-color: #fff; }
+${S} .ulc-where { align-self: flex-start; border: 2px solid var(--fg); border-radius: 4px; background: var(--panel); color: var(--fg); font-weight: 600; }
+${S} .ulc-where b { padding: 0 .3em; border: .18em solid var(--line); border-radius: .3em; background: #fff; color: #111; }
+${S} .ulc-ctl { align-self: stretch; margin-top: .7em; }
+${S} .ulc-c { flex: 1 1 0; min-width: 0; height: 2.6em; border-radius: 4px; font-weight: 700; }
+${S} .ulc-arrow { border: 2px solid #6d7278; background: #fff; color: #111; }
+${S}${HC} .ulc-arrow { border-color: #fff; background: #000; color: #fff; }
+${S} .ulc-num { border: .22em solid var(--line); background: #fff; color: #111; }
+${S} .ulc-num[aria-current="true"] { background: var(--line); color: #fff; }
+${S}${HC} .ulc-num[aria-current="true"] { color: #000; }
+${S} .ulc-all, ${S} .ulc-back { border: 0; background: var(--exit); color: var(--exit-fg); }
+${S} .ulc-all.has-label { flex: 3 1 0; padding: 0 .5em; }
+${S} .ulc-all[aria-pressed="true"] { background: var(--band); color: var(--exit); box-shadow: inset 0 0 0 3px var(--exit); }
+${S} .ulc-speak { color: var(--muted); border-color: #8a8f95; }
+${S}${HC} .ulc-speak { color: #fff; border-color: #fff; }
 ${S} .ulc-quick { padding: .6em .8em 0; }
-${S} .ulc-quick button { min-height: 2.5em; border: 2px solid var(--fg); border-radius: 4px; background: transparent; color: var(--fg); font-weight: 600; font-size: 1em; }
+${S} .ulc-quick button { min-height: 2.5em; border: 2px solid var(--fg); border-radius: 4px; background: transparent; color: var(--fg); font-weight: 600; font-size: .94em; }
 ${S} .ulc-log { scrollbar-color: #8a8f95 transparent; }
 ${S} .ulc-in { padding: .6em .8em .35em; }
 ${S} .ulc-in input { height: 2.9em; padding: 0 .7em; border: 2px solid var(--fg); border-radius: 4px; background: var(--panel); color: var(--fg); caret-color: var(--line); }
@@ -215,9 +214,23 @@ ${S} .ulc-in .ulc-ib { width: 2.9em; height: 2.9em; color: var(--fg); border-col
 ${S} .ulc-in .ulc-go { background: var(--line); border-color: var(--line); color: #fff; }
 ${S}${HC} .ulc-in .ulc-go { color: #000; }
 ${S} .ulc-in .ulc-ib[aria-pressed="true"] { background: var(--err); border-color: var(--err); color: #fff; }
-${S} .ulc-status { padding: 0 .8em .65em; color: var(--muted); }
+${S} .ulc-status { min-height: 2.5em; padding: .45em .8em; border-top: .25em solid var(--line); background: var(--strip); color: var(--strip-fg); font-weight: 700; }
 ${S} :focus-visible { outline: 3px solid #111; outline-offset: 2px; box-shadow: 0 0 0 6px var(--exit); }
 ${S}${HC} :focus-visible { outline-color: #fff; }
+/* short screens (a laptop at 200-300% browser zoom): the chrome gives its height to
+   the log, so an answer's lines still show; last, so it outranks each style's sizes */
+${R}[data-short="true"] .ulc-hd { padding-top: .3em; padding-bottom: .3em; }
+${R}[data-short="true"] .ulc-title small { display: none; }
+${R}[data-short="true"] .ulc-roundel { width: 1.8em; height: 1.8em; border-width: .22em; }
+${R}[data-short="true"] .ulc-ib { width: 2.1em; height: 2.1em; }
+${R}[data-short="true"] .ulc-log { padding-top: .4em; padding-bottom: .2em; }
+${R}[data-short="true"] .ulc-in { margin-top: 0; padding-top: .3em; padding-bottom: .2em; }
+${R}[data-short="true"] .ulc-in input { height: 2.3em; }
+${R}[data-short="true"] .ulc-in .ulc-ib { width: 2.3em; height: 2.3em; }
+${R}[data-short="true"] .ulc-c { height: 2.2em; }
+${R}[data-short="true"] .ulc-status { min-height: 0; margin-top: 4px; padding-top: .15em; padding-bottom: .25em; }
+${R}[data-short="true"][data-style="audioGuide"] { padding: 6px 8px; }
+${R}[data-short="true"][data-style="audioGuide"] .ulc-hd { padding: 0 2px 4px; }
 /* send stays quiet until there is text; last, so no style or contrast rule overrides it,
    and the arrow keeps at least 3:1 against its own ground in every mode */
 ${A} .ulc-in .ulc-go:disabled { background: var(--soft); color: var(--muted); opacity: 1; }

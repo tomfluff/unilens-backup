@@ -25,8 +25,10 @@ import {
 import {
     BackIcon,
     CloseIcon,
+    ExpandIcon,
     HighlightIcon,
     MicIcon,
+    MinimizeIcon,
     NextIcon,
     PinIcon,
     PlaceIcon,
@@ -37,9 +39,15 @@ import {
     WaitIcon,
 } from "./icons";
 import { labelOfWire, type WireNode } from "./inventory";
-import { goToPlace, latestPlace, type Place, placeOf } from "./places";
+import {
+    goToPlace,
+    latestPlace,
+    type Place,
+    placeNumber,
+    placeOf,
+} from "./places";
 import { recordAsk, type SentAsk } from "./sentLog";
-import { getSettings, useSettings } from "./settings";
+import { getSettings, motionMs, useSettings } from "./settings";
 import {
     listen,
     type SpeechState,
@@ -113,15 +121,103 @@ interface Props {
     pinned: boolean;
     onTogglePin: (pos: { left: number; top: number } | null) => void;
     onMove: (pos: { left: number; top: number }) => void;
-    /** re-capture if the view moved since `prev`; null when it did not */
+    /** re-capture if the view moved since `prev`; null when it did not. `onStart`
+     *  runs when it does re-capture, so the chat can say so */
     refreshCapture?: (
         prev: CaptureResult,
+        prevId: string,
+        onStart?: () => void,
     ) => Promise<{ id: string; cap: CaptureResult } | null>;
+    /** a new click is being captured; the chat moves there when it arrives */
+    capturing?: boolean;
 }
 
 /** width and height in em of the chat's font size (chatStyles.ts sizes the panel in em) */
 const PANEL_W_EM = 24.3;
 const PANEL_H_EM = 30;
+/** the least a chat can be and still work: header, three lines of log, input, status */
+const MIN_H_EM = 16;
+
+/** the fixed or sticky ancestor that pins a host element to the screen, if any */
+function fixedRoot(el: Element): Element | null {
+    for (
+        let e: Element | null = el, i = 0;
+        e && i < 8;
+        e = e.parentElement, i++
+    ) {
+        const p = getComputedStyle(e).position;
+        if (p === "fixed" || p === "sticky") return e;
+    }
+    return null;
+}
+
+/**
+ * The page's own floating controls (a help or accessibility button pinned to a
+ * corner) must stay usable: a chat placed over one moves the least distance that
+ * clears it. Full-width bars are not controls and are left alone.
+ * ponytail: hit-tests a 22px grid (~300 points, only when the chat is placed); a control under 22px can slip between them
+ */
+function clearOfHostControls(
+    p: { left: number; top: number },
+    w: number,
+    h: number,
+) {
+    const W = window.innerWidth;
+    const H = window.innerHeight;
+    const r = {
+        left: p.left,
+        top: p.top,
+        right: p.left + w,
+        bottom: p.top + h,
+    };
+    const seen = new Set<Element>();
+    let worst: DOMRect | null = null;
+    let worstArea = 0;
+    // a 22px grid over where the chat will be: fine enough for a 24px control
+    const grid = (a: number, b: number) => {
+        const out: number[] = [];
+        for (let v = a + 2; v < b - 2; v += 22) out.push(v);
+        return [...out, b - 2];
+    };
+    for (const py of grid(r.top, r.bottom))
+        for (const px of grid(r.left, r.right))
+            for (const el of document.elementsFromPoint(px, py)) {
+                // the chat itself and the outlines/cues it draws; the display-adjust
+                // widget, the settings gear and the minimap are dodged like host controls
+                if (el.closest("#unilens-root, #unilens-highlight-layer"))
+                    continue;
+                const f = fixedRoot(el);
+                if (!f || seen.has(f)) continue;
+                seen.add(f);
+                const b = f.getBoundingClientRect();
+                if (b.width * b.height > W * H * 0.1) continue;
+                const ow =
+                    Math.min(r.right, b.right) - Math.max(r.left, b.left);
+                const oh =
+                    Math.min(r.bottom, b.bottom) - Math.max(r.top, b.top);
+                if (ow > 0 && oh > 0 && ow * oh > worstArea) {
+                    worst = b;
+                    worstArea = ow * oh;
+                }
+            }
+    if (!worst) return p;
+    const b = worst;
+    const moves = [
+        { left: b.left - 8 - w, top: p.top },
+        { left: b.right + 8, top: p.top },
+        { left: p.left, top: b.top - 8 - h },
+        { left: p.left, top: b.bottom + 8 },
+    ].filter(
+        (m) =>
+            m.left >= 8 &&
+            m.top >= 8 &&
+            m.left + w <= W - 8 &&
+            m.top + h <= H - 8,
+    );
+    const d = (m: { left: number; top: number }) =>
+        Math.hypot(m.left - p.left, m.top - p.top);
+    return moves.sort((a, c) => d(a) - d(c))[0] ?? p;
+}
 
 /** a chip's HTML with the active one marked, so each style can show which is current */
 const markActive = (html: string, id: string | undefined) =>
@@ -145,6 +241,7 @@ export default function ChatPopover({
     onTogglePin,
     onMove,
     refreshCapture,
+    capturing,
 }: Props) {
     ensureChatStyles();
     const [messages, setMessages] = useState<Msg[]>([]);
@@ -170,14 +267,23 @@ export default function ChatPopover({
     const style = settings.chatStyle;
     const T = chatText();
     // on a phone-width screen the chat docks as a bottom sheet over half the height,
-    // so what it points at above stays visible
+    // so what it points at above stays visible. A short screen (a laptop at 200-300%
+    // browser zoom) gets a smaller chat, but never so small that the input is lost
     const narrow = window.innerWidth <= 480;
+    const short = window.innerHeight <= 560;
     const panelW = narrow
         ? window.innerWidth - 16
         : Math.min(PANEL_W_EM * fs, window.innerWidth - 16);
-    const panelH = narrow
-        ? Math.min(PANEL_H_EM * fs, window.innerHeight * 0.5)
-        : Math.min(PANEL_H_EM * fs, window.innerHeight - 16);
+    const room =
+        narrow || short
+            ? Math.max(
+                  MIN_H_EM * fs,
+                  window.innerHeight * (narrow ? 0.5 : 0.66),
+              )
+            : Number.POSITIVE_INFINITY;
+    const panelH = Math.min(PANEL_H_EM * fs, room, window.innerHeight - 16);
+    /** folded to its header and status line, out of the page's way */
+    const [mini, setMini] = useState(false);
 
     const [listening, setListening] = useState(false);
     const stopListenRef = useRef<(() => void) | null>(null);
@@ -232,7 +338,9 @@ export default function ChatPopover({
         }
     }
 
-    // Continuity: seed the running conversation from the session history
+    // Continuity: seed the running conversation from the session history, once: later
+    // captures join the chat that is already open
+    // biome-ignore lint/correctness/useExhaustiveDependencies: seeds once, on mount
     useEffect(() => {
         if (!sessionId || captureId === "local") return;
         fetch(`${backend}/api/session/${encodeURIComponent(sessionId)}`)
@@ -258,25 +366,62 @@ export default function ChatPopover({
                     );
             })
             .catch(() => {});
-    }, [backend, sessionId, captureId]);
+    }, []);
 
     // Clamp popover inside viewport, near the cursor (or restore pinned position)
     const clamp = (p: { left: number; top: number }) => ({
         left: Math.min(Math.max(p.left, 8), window.innerWidth - panelW - 8),
         top: Math.min(Math.max(p.top, 8), window.innerHeight - panelH - 8),
     });
+    /** where the chat sits when placed for the user (not dragged): on screen, and
+     *  off the page's own floating controls */
+    const settle = (p: { left: number; top: number }) =>
+        clearOfHostControls(clamp(p), panelW, panelH);
     const [pos, setPos] = useState(() =>
-        clamp(
+        settle(
             narrow
                 ? { left: 8, top: window.innerHeight }
                 : (initialPos ?? { left: x + 12, top: y + 12 }),
         ),
     );
     const dragRef = useRef<{ dx: number; dy: number } | null>(null);
+    // a new click while the chat is open: it glides there (setting "motion") and the
+    // log gains the new place; the capture it answers against becomes the new one
+    const firstCapture = useRef(true);
+    // biome-ignore lint/correctness/useExhaustiveDependencies: runs per new capture only
+    useEffect(() => {
+        if (firstCapture.current) {
+            firstCapture.current = false;
+            return;
+        }
+        cur.current = { id: captureId, cap: capture };
+        setActive(null);
+        setReturnable(canReturn());
+        setMini(false);
+        if (!pinned)
+            setPos(
+                settle(
+                    narrow
+                        ? { left: 8, top: window.innerHeight }
+                        : { left: x + 12, top: y + 12 },
+                ),
+            );
+        const p = placeOf(captureId);
+        act("chip", p ? T.sNewPlace(placeNumber(p), p.label) : "");
+        // the new place is the latest entry: follow it
+        stick.current = true;
+        requestAnimationFrame(() =>
+            logScroll({ top: scrollRef.current?.scrollHeight ?? 0 }),
+        );
+    }, [captureId]);
+    // biome-ignore lint/correctness/useExhaustiveDependencies: on the capturing edge only
+    useEffect(() => {
+        if (capturing) act("send", T.sCapturing);
+    }, [capturing]);
     // a bigger text size or a narrower window must not push the chat off screen
     // biome-ignore lint/correctness/useExhaustiveDependencies: re-clamp on size changes only
     useEffect(() => {
-        const refit = () => setPos((p) => clamp(p));
+        const refit = () => setPos((p) => settle(p));
         refit();
         window.addEventListener("resize", refit);
         return () => window.removeEventListener("resize", refit);
@@ -305,6 +450,17 @@ export default function ChatPopover({
     // controls that appear when an answer ends) while the user is at the bottom; once
     // they scroll up to read, it stays put until they send again.
     const stick = useRef(true);
+    /** until when the log's scroll events are our own eased scroll, not the user's */
+    const ownScroll = useRef(0);
+    const logScroll = (opts: ScrollToOptions, by = false) => {
+        const log = scrollRef.current;
+        if (!log) return;
+        const ms = motionMs();
+        ownScroll.current = performance.now() + ms + 120;
+        const o = { ...opts, behavior: ms ? "smooth" : "auto" } as const;
+        if (by) log.scrollBy(o);
+        else log.scrollTo(o);
+    };
     /** keep a reply's controls in view inside the log, scrolling only the log (never
      *  the host page, which scrollIntoView would also move) */
     const revealTurn = (id: string) =>
@@ -314,16 +470,56 @@ export default function ChatPopover({
             if (!log || !turn) return;
             const lr = log.getBoundingClientRect();
             const tr = turn.getBoundingClientRect();
-            if (tr.bottom > lr.bottom)
-                log.scrollTop += tr.bottom - lr.bottom + 8;
-            else if (tr.top < lr.top) log.scrollTop -= lr.top - tr.top + 8;
+            // keep from the turn's top when it fits, else from the answer's last two
+            // lines: controls with no answer above them read as an empty reply
+            const text = turn.querySelector(".ulc-bot > span");
+            const line =
+                Number.parseFloat(getComputedStyle(turn).lineHeight) || 24;
+            const top =
+                tr.height + 16 <= lr.height || !text
+                    ? tr.top
+                    : Math.max(
+                          tr.top,
+                          text.getBoundingClientRect().bottom - 2 * line,
+                      );
+            let d = Math.max(0, tr.bottom - lr.bottom + 8);
+            // the kept top wins when both ends cannot show
+            if (top - d < lr.top + 8) d = top - lr.top - 8;
+            if (d) logScroll({ top: d }, true);
         });
+    // while following, the log stays at its end when it changes size (the status line
+    // growing a line, the quick actions hiding), not only when a message changes
+    useEffect(() => {
+        const log = scrollRef.current;
+        if (!log || typeof ResizeObserver === "undefined") return;
+        const ro = new ResizeObserver(() => {
+            if (stick.current) log.scrollTop = log.scrollHeight;
+        });
+        ro.observe(log);
+        return () => ro.disconnect();
+    }, []);
+    /** a finished answer taller than the log opens at its first line, not its last:
+     *  the log followed the stream down, but reading starts at the top */
+    const showAnswerStart = (id: string) =>
+        // two frames: after the render that ends the stream and its follow-the-bottom scroll
+        requestAnimationFrame(() =>
+            requestAnimationFrame(() => {
+                const log = scrollRef.current;
+                const turn = log?.querySelector(
+                    `[data-turn="${CSS.escape(id)}"]`,
+                );
+                if (!log || !turn) return;
+                const lr = log.getBoundingClientRect();
+                const tr = turn.getBoundingClientRect();
+                if (tr.height <= lr.height - 16) return;
+                stick.current = false;
+                logScroll({ top: log.scrollTop + tr.top - lr.top - 8 });
+            }),
+        );
     // biome-ignore lint/correctness/useExhaustiveDependencies: follows every message change
     useEffect(() => {
         if (stick.current)
-            scrollRef.current?.scrollTo({
-                top: scrollRef.current.scrollHeight,
-            });
+            logScroll({ top: scrollRef.current?.scrollHeight ?? 0 });
     }, [messages]);
 
     // Escape is owned by highlight.ts (one listener decides per keypress, honouring the
@@ -384,6 +580,21 @@ export default function ChatPopover({
                   }) === "moved"
                 : false;
         setReturnable(canReturn());
+        // at high zoom there may be no room beside the chat: once the move settles, a
+        // chat still covering the source folds to its header
+        if (short && el && !mini)
+            setTimeout(() => {
+                const a = el.getBoundingClientRect();
+                const b = rootRef.current?.getBoundingClientRect();
+                if (!b) return;
+                const w = Math.min(a.right, b.right) - Math.max(a.left, b.left);
+                const h = Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top);
+                const area = Math.max(1, a.width * a.height);
+                if (w > 0 && h > 0 && (w * h) / area > 0.2) {
+                    setMini(true);
+                    act("press", T.sCovered);
+                }
+            }, motionMs() + 80);
         if (hasHighlight()) {
             const said =
                 index === "all"
@@ -412,6 +623,7 @@ export default function ChatPopover({
         const c = cited(m);
         const src = m.cite;
         act("done", chatText().sAnswer(c?.ids.length ?? 0));
+        showAnswerStart(m.id);
         // asked where, pointed nowhere: "nothing found", styled apart from an answer
         if (c && !c.ids.length && asksToLocate(question))
             setMessages((ms) =>
@@ -672,7 +884,11 @@ export default function ChatPopover({
         try {
             // the user moved since the last capture: send what they see now
             if (refreshCapture && cur.current.id !== "local") {
-                const fresh = await refreshCapture(cur.current.cap);
+                const fresh = await refreshCapture(
+                    cur.current.cap,
+                    cur.current.id,
+                    () => setStatus(T.sUpdatingView),
+                );
                 if (fresh) cur.current = fresh;
             }
             // developer-facing record of what went out; the debug panel shows it
@@ -690,7 +906,7 @@ export default function ChatPopover({
                 {
                     id: `err-${Date.now()}`,
                     role: "assistant",
-                    text: T.sBackendError(String(err)),
+                    text: T.sBackendError,
                     error: true,
                 },
             ]);
@@ -714,28 +930,6 @@ export default function ChatPopover({
         [T.quickTranslate, T.promptTranslate],
     ];
 
-    // what the audio-guide display and the station strip show: the selected source,
-    // else how many the latest cited answer found, else what the chat is doing
-    const activeMsg = active
-        ? messages.find((m) => m.id === active.msgId)
-        : undefined;
-    const activeN = activeMsg ? (cited(activeMsg)?.ids.length ?? 0) : 0;
-    const lastCited = [...messages]
-        .reverse()
-        .find((m) => (cited(m)?.ids.length ?? 0) > 0);
-    const foundN =
-        activeN || (lastCited ? (cited(lastCited)?.ids.length ?? 0) : 0);
-    const selected =
-        active && typeof active.index === "number" ? active.index + 1 : 0;
-    const doing = busy
-        ? T.sAsking
-        : listening
-          ? T.sListening
-          : speaking
-            ? T.sReading
-            : "";
-    const shortTitle = doing || (foundN ? T.found(foundN) : T.subtitle);
-
     const toggleAll = (m: Msg, pressed: boolean) => {
         if (pressed) {
             clearHighlights();
@@ -749,12 +943,211 @@ export default function ChatPopover({
         act(ok ? "back" : "error", said);
     };
 
+    /** a click, as its own entry in the log: a pin with its number, which goes there */
+    const placeRow = (p: Place, key: string) => (
+        <button
+            key={key}
+            type="button"
+            className="ulc-where"
+            onClick={() => goPlace(p)}
+            aria-label={T.placeEntry(placeNumber(p), p.label)}
+            title={T.placeEntry(placeNumber(p), p.label)}
+        >
+            <PlaceIcon />
+            <b>P{placeNumber(p)}</b>
+            <span>{p.label}</span>
+        </button>
+    );
+
+    /** a reply's source controls, one row: ‹ position › · highlight all · back */
+    function controlsFor(m: Msg, c: Cited, at: number, allOn: boolean) {
+        const n = c.ids.length;
+        const src = m.cite;
+        const label = (id: string) =>
+            src ? labelOfWire(id, src.inventory) : id;
+        const nav = n > 1;
+        // three number keys at most: a window round the current one
+        const from = Math.max(0, Math.min(at - 1, n - 3));
+        const keys = c.ids.map((id, k) => ({ id, k })).slice(from, from + 3);
+        const showLabel = style === "assistant" || !nav;
+        return (
+            <div className="ulc-ctl">
+                {nav && (
+                    <button
+                        type="button"
+                        className="ulc-c ulc-arrow"
+                        aria-label={T.prevEvidence}
+                        title={T.prevEvidence}
+                        onClick={() =>
+                            point(m, at < 0 ? n - 1 : (at - 1 + n) % n, true)
+                        }
+                    >
+                        <PrevIcon />
+                    </button>
+                )}
+                {nav &&
+                    (style === "assistant" ? (
+                        // the status line announces the position; this is its visible copy
+                        <span className="ulc-of" aria-hidden="true">
+                            {at >= 0 ? at + 1 : "–"}/{n}
+                        </span>
+                    ) : (
+                        keys.map(({ id, k }) => (
+                            <button
+                                key={id}
+                                type="button"
+                                className="ulc-c ulc-num"
+                                aria-current={at === k}
+                                aria-label={`${chipText(k + 1)}, ${T.evidenceLabel(k + 1, label(id))}`}
+                                onClick={() => point(m, k, true)}
+                            >
+                                {chipText(k + 1)}
+                            </button>
+                        ))
+                    ))}
+                {nav && (
+                    <button
+                        type="button"
+                        className="ulc-c ulc-arrow"
+                        aria-label={T.nextEvidence}
+                        title={T.nextEvidence}
+                        onClick={() =>
+                            point(m, at < 0 ? 0 : (at + 1) % n, true)
+                        }
+                    >
+                        <NextIcon />
+                    </button>
+                )}
+                <button
+                    type="button"
+                    className={`ulc-c ulc-all${showLabel ? " has-label" : ""}`}
+                    aria-pressed={allOn}
+                    aria-label={T.highlightAll(n)}
+                    title={T.highlightAll(n)}
+                    onClick={() => toggleAll(m, allOn)}
+                >
+                    <HighlightIcon />
+                    {showLabel && (
+                        <span>{nav ? T.allShort : T.highlightAll(n)}</span>
+                    )}
+                </button>
+                {returnable && (
+                    <button
+                        type="button"
+                        className="ulc-c ulc-back"
+                        aria-label={T.back}
+                        title={T.backTitle}
+                        onClick={goBack}
+                    >
+                        <BackIcon />
+                    </button>
+                )}
+            </div>
+        );
+    }
+
+    // the log, with each click as its own entry before what was asked there
+    const rows: React.ReactNode[] = [];
+    let lastPlace: Place | undefined;
+    messages.forEach((m, i) => {
+        if (m.role === "user") {
+            const p = placeOf(m.captureId);
+            if (p && p !== lastPlace) {
+                rows.push(placeRow(p, `where-${m.id}`));
+                lastPlace = p;
+            }
+            rows.push(
+                <div key={m.id} className="ulc-msg ulc-me">
+                    {m.text}
+                </div>,
+            );
+            return;
+        }
+        const c = cited(m);
+        const mine = active?.msgId === m.id ? active : null;
+        const at = typeof mine?.index === "number" ? mine.index : -1;
+        const allOn = mine?.index === "all";
+        const controls =
+            c && c.ids.length > 0 && !m.streaming
+                ? controlsFor(m, c, at, allOn)
+                : null;
+        const speakLabel =
+            speaking?.idx === i
+                ? speaking.phase === "loading"
+                    ? T.preparingAudio
+                    : T.stopReading
+                : T.readAloud;
+        rows.push(
+            <div key={m.id} className="ulc-turn" data-turn={m.id}>
+                <div
+                    className={`ulc-msg ulc-bot${m.error ? " is-err" : ""}${m.quiet ? " is-quiet" : ""}`}
+                >
+                    {/* Chips are <button data-cite> inside escaped HTML; one delegated
+                        click handler serves them (keyboard Enter/Space clicks too) */}
+                    {/* biome-ignore lint/a11y/noStaticElementInteractions lint/a11y/useKeyWithClickEvents: delegation only; the targets are real <button> chips, which click on Enter and Space */}
+                    <span
+                        onClick={(e) => {
+                            const id = (e.target as HTMLElement)
+                                .closest("[data-cite]")
+                                ?.getAttribute("data-cite");
+                            const k = id ? (c?.ids.indexOf(id) ?? -1) : -1;
+                            if (k >= 0) point(m, k, true);
+                        }}
+                        // biome-ignore lint/security/noDangerouslySetInnerHtml: HTML is escaped in mdLite before formatting tags and chips are added
+                        dangerouslySetInnerHTML={{
+                            __html: c
+                                ? markActive(
+                                      c.html,
+                                      at >= 0 ? c.ids[at] : undefined,
+                                  )
+                                : mdLite(speakable(m.text)),
+                        }}
+                    />
+                    {m.streaming && (
+                        <span className="ulc-caret" aria-hidden="true" />
+                    )}
+                    {/* read aloud sits at the end of the answer, not on a row of its own */}
+                    {m.text && !m.streaming && (
+                        <button
+                            type="button"
+                            className="ulc-speak"
+                            onClick={() => speakMessage(i, speakable(m.text))}
+                            aria-label={speakLabel}
+                            title={speakLabel}
+                        >
+                            {speaking?.idx === i ? (
+                                speaking.phase === "loading" ? (
+                                    <WaitIcon />
+                                ) : (
+                                    <StopIcon />
+                                )
+                            ) : (
+                                <SpeakerIcon />
+                            )}
+                        </button>
+                    )}
+                    {style === "assistant" && controls}
+                </div>
+                {style !== "assistant" && controls}
+            </div>,
+        );
+    });
+    // the click that opened (or moved) the chat, before anything is asked there
+    const here = placeOf(captureId);
+    if (here && here !== lastPlace) rows.push(placeRow(here, "where-now"));
+
+    const ms = motionMs();
+    const statusShown =
+        style === "assistant" || Boolean(status) || speaking || listening;
+
     return (
         <div
             ref={rootRef}
             className="ul-chat"
             data-style={style}
             data-hc={hc ? "true" : "false"}
+            data-mini={mini ? "true" : "false"}
+            data-short={short ? "true" : "false"}
             role="dialog"
             aria-label={T.title}
             lang={chatLang()}
@@ -763,7 +1156,12 @@ export default function ChatPopover({
                     left: pos.left,
                     top: pos.top,
                     width: panelW,
-                    height: panelH,
+                    height: mini ? "auto" : panelH,
+                    // glides to a new click; never while dragged
+                    transition:
+                        ms && !dragRef.current
+                            ? `left ${ms}ms cubic-bezier(.22,1,.36,1), top ${ms}ms cubic-bezier(.22,1,.36,1)`
+                            : "none",
                     "--ul-fs": `${fs}px`,
                 } as React.CSSProperties
             }
@@ -782,10 +1180,22 @@ export default function ChatPopover({
                     </span>
                 )}
                 <div className="ulc-title">
-                    <b>{T.title}</b>
+                    <b>{style === "station" ? T.stationName : T.title}</b>
                     {style === "station" && <small>{T.otherName}</small>}
-                    {style === "assistant" && <small>{T.subtitle}</small>}
                 </div>
+                <button
+                    type="button"
+                    className="ulc-ib"
+                    aria-expanded={!mini}
+                    aria-label={mini ? T.expand : T.minimize}
+                    title={mini ? T.expand : T.minimize}
+                    onClick={() => {
+                        setMini(!mini);
+                        act("press", mini ? T.sExpanded : T.sMinimized);
+                    }}
+                >
+                    {mini ? <ExpandIcon /> : <MinimizeIcon />}
+                </button>
                 <button
                     type="button"
                     className="ulc-ib"
@@ -810,421 +1220,98 @@ export default function ChatPopover({
                 </button>
             </div>
 
-            {style === "audioGuide" && (
-                <div className="ulc-lcd" aria-hidden="true">
-                    <span className="ulc-big">{selected || foundN || "–"}</span>
-                    <span className="ulc-txt">
-                        {selected && activeN > 1
-                            ? T.ofTotal(activeN)
-                            : shortTitle}
-                        {selected > 0 && (
-                            <small>{doing || T.found(activeN)}</small>
-                        )}
-                    </span>
-                </div>
-            )}
-            {style === "station" && (
-                <div className="ulc-strip" aria-hidden="true">
-                    <span>
-                        {selected && activeN > 1
-                            ? T.ofN(selected, activeN)
-                            : shortTitle}
-                    </span>
+            {!mini && (
+                <div
+                    className="ulc-log"
+                    ref={scrollRef}
+                    onScroll={(e) => {
+                        // our own eased scroll passes through positions the user never chose
+                        if (performance.now() < ownScroll.current) return;
+                        const el = e.currentTarget;
+                        stick.current =
+                            el.scrollHeight - el.scrollTop - el.clientHeight <
+                            48;
+                    }}
+                >
+                    {rows}
+                    {messages.length === 0 && (
+                        <p className="ulc-empty">{T.emptyHint}</p>
+                    )}
                 </div>
             )}
 
-            <div
-                className="ulc-log"
-                ref={scrollRef}
-                onScroll={(e) => {
-                    const el = e.currentTarget;
-                    stick.current =
-                        el.scrollHeight - el.scrollTop - el.clientHeight < 48;
-                }}
-            >
-                {messages.length === 0 && (
-                    <p className="ulc-empty">{T.emptyHint}</p>
-                )}
-                {messages.map((m, i) => {
-                    if (m.role === "user") {
-                        // once per place: the first question asked there
-                        const place = placeOf(m.captureId);
-                        const first =
-                            place &&
-                            messages.findIndex(
-                                (x) =>
-                                    x.role === "user" &&
-                                    placeOf(x.captureId) === place,
-                            ) === i;
-                        return (
-                            <div key={m.id} className="ulc-msg ulc-me">
-                                {m.text}
-                                {place && first && (
-                                    <button
-                                        type="button"
-                                        className="ulc-place"
-                                        onClick={() => goPlace(place)}
-                                        title={T.whereClickedTitle}
-                                    >
-                                        <PlaceIcon />
-                                        <span>
-                                            {T.whereClicked}: {place.label}
-                                        </span>
-                                    </button>
-                                )}
-                            </div>
-                        );
-                    }
-                    const c = cited(m);
-                    const n = c?.ids.length ?? 0;
-                    const mine = active?.msgId === m.id ? active : null;
-                    const at =
-                        typeof mine?.index === "number" ? mine.index : -1;
-                    const allOn = mine?.index === "all";
-                    const src = m.cite;
-                    const label = (id: string) =>
-                        src ? labelOfWire(id, src.inventory) : id;
-                    const prev = () =>
-                        point(m, at < 0 ? n - 1 : (at - 1 + n) % n, true);
-                    const next = () =>
-                        point(m, at < 0 ? 0 : (at + 1) % n, true);
-                    const showBack = returnable && mine;
-                    const controls =
-                        c && n > 0 && !m.streaming ? (
-                            style === "audioGuide" ? (
-                                <div className="ulc-keys">
-                                    {n > 1 && (
-                                        <button
-                                            type="button"
-                                            className="ulc-key"
-                                            aria-label={T.prevEvidence}
-                                            onClick={prev}
-                                        >
-                                            <PrevIcon />
-                                        </button>
-                                    )}
-                                    {c.ids
-                                        .map((id, k) => ({ id, k }))
-                                        // three number keys: a window round the current one
-                                        .slice(
-                                            Math.max(
-                                                0,
-                                                Math.min(at - 1, n - 3),
-                                            ),
-                                            Math.max(
-                                                0,
-                                                Math.min(at - 1, n - 3),
-                                            ) + 3,
-                                        )
-                                        .map(({ id, k }) => (
-                                            <button
-                                                key={id}
-                                                type="button"
-                                                className="ulc-key"
-                                                aria-current={at === k}
-                                                aria-label={T.evidenceLabel(
-                                                    k + 1,
-                                                    label(id),
-                                                )}
-                                                onClick={() =>
-                                                    point(m, k, true)
-                                                }
-                                            >
-                                                {k + 1}
-                                            </button>
-                                        ))}
-                                    {n > 1 && (
-                                        <button
-                                            type="button"
-                                            className="ulc-key"
-                                            aria-label={T.nextEvidence}
-                                            onClick={next}
-                                        >
-                                            <NextIcon />
-                                        </button>
-                                    )}
-                                    <button
-                                        type="button"
-                                        className={`ulc-key ${showBack ? "ulc-wide" : "ulc-full"}`}
-                                        aria-pressed={allOn}
-                                        onClick={() => toggleAll(m, allOn)}
-                                    >
-                                        <HighlightIcon />
-                                        {T.highlightAll(n)}
-                                    </button>
-                                    {showBack && (
-                                        <button
-                                            type="button"
-                                            className="ulc-key ulc-wide2"
-                                            title={T.backTitle}
-                                            onClick={goBack}
-                                        >
-                                            <BackIcon />
-                                            {T.back}
-                                        </button>
-                                    )}
-                                </div>
-                            ) : style === "station" ? (
-                                <div className="ulc-signs">
-                                    <button
-                                        type="button"
-                                        className={`ulc-sign ${showBack ? "" : "ulc-span"}`}
-                                        aria-pressed={allOn}
-                                        onClick={() => toggleAll(m, allOn)}
-                                    >
-                                        <HighlightIcon />
-                                        {T.highlightAll(n)}
-                                    </button>
-                                    {showBack && (
-                                        <button
-                                            type="button"
-                                            className="ulc-sign"
-                                            title={T.backTitle}
-                                            onClick={goBack}
-                                        >
-                                            <BackIcon />
-                                            {T.back}
-                                        </button>
-                                    )}
-                                    {n > 1 && (
-                                        <div className="ulc-codes">
-                                            <button
-                                                type="button"
-                                                className="ulc-nb"
-                                                aria-label={T.prevEvidence}
-                                                onClick={prev}
-                                            >
-                                                <PrevIcon />
-                                            </button>
-                                            {c.ids.map((id, k) => (
-                                                <button
-                                                    key={id}
-                                                    type="button"
-                                                    className="unilens-cite"
-                                                    aria-current={at === k}
-                                                    aria-label={T.evidenceLabel(
-                                                        k + 1,
-                                                        label(id),
-                                                    )}
-                                                    onClick={() =>
-                                                        point(m, k, true)
-                                                    }
-                                                >
-                                                    {chipText(k + 1)}
-                                                </button>
-                                            ))}
-                                            <button
-                                                type="button"
-                                                className="ulc-nb"
-                                                aria-label={T.nextEvidence}
-                                                onClick={next}
-                                            >
-                                                <NextIcon />
-                                            </button>
-                                        </div>
-                                    )}
-                                </div>
-                            ) : (
-                                <div className="ulc-ev">
-                                    <button
-                                        type="button"
-                                        className="ulc-pill ulc-primary"
-                                        aria-pressed={allOn}
-                                        onClick={() => toggleAll(m, allOn)}
-                                    >
-                                        <HighlightIcon />
-                                        {T.highlightAll(n)}
-                                    </button>
-                                    {n > 1 && (
-                                        <span className="ulc-nav">
-                                            <button
-                                                type="button"
-                                                className="ulc-pill"
-                                                aria-label={T.prevEvidence}
-                                                onClick={prev}
-                                            >
-                                                <PrevIcon />
-                                            </button>
-                                            <span
-                                                className="ulc-of"
-                                                aria-live="polite"
-                                            >
-                                                {at >= 0
-                                                    ? T.ofN(at + 1, n)
-                                                    : ""}
-                                            </span>
-                                            <button
-                                                type="button"
-                                                className="ulc-pill"
-                                                aria-label={T.nextEvidence}
-                                                onClick={next}
-                                            >
-                                                <NextIcon />
-                                            </button>
-                                        </span>
-                                    )}
-                                    {showBack && (
-                                        <button
-                                            type="button"
-                                            className="ulc-pill"
-                                            title={T.backTitle}
-                                            onClick={goBack}
-                                        >
-                                            <BackIcon />
-                                            {T.back}
-                                        </button>
-                                    )}
-                                </div>
-                            )
-                        ) : null;
-                    return (
-                        <div key={m.id} className="ulc-turn" data-turn={m.id}>
-                            <div
-                                className={`ulc-msg ulc-bot${m.error ? " is-err" : ""}${m.quiet ? " is-quiet" : ""}`}
+            {!mini &&
+                settings.quickActions &&
+                !(short && messages.length > 0) && (
+                    <div className="ulc-quick">
+                        {QUICK.map(([label, prompt]) => (
+                            <button
+                                type="button"
+                                key={label}
+                                onClick={() => sendText(prompt)}
+                                disabled={busy}
                             >
-                                {/* Chips are <button data-cite> inside escaped HTML; one delegated
-                                    click handler serves them (keyboard Enter/Space clicks too) */}
-                                {/* biome-ignore lint/a11y/noStaticElementInteractions lint/a11y/useKeyWithClickEvents: delegation only; the targets are real <button> chips, which click on Enter and Space */}
-                                <span
-                                    onClick={(e) => {
-                                        const id = (e.target as HTMLElement)
-                                            .closest("[data-cite]")
-                                            ?.getAttribute("data-cite");
-                                        const k = id
-                                            ? (c?.ids.indexOf(id) ?? -1)
-                                            : -1;
-                                        if (k >= 0) point(m, k, true);
-                                    }}
-                                    // biome-ignore lint/security/noDangerouslySetInnerHtml: HTML is escaped in mdLite before formatting tags and chips are added
-                                    dangerouslySetInnerHTML={{
-                                        __html: c
-                                            ? markActive(
-                                                  c.html,
-                                                  at >= 0
-                                                      ? c.ids[at]
-                                                      : undefined,
-                                              )
-                                            : mdLite(speakable(m.text)),
-                                    }}
-                                />
-                                {m.streaming && (
-                                    <span
-                                        className="ulc-caret"
-                                        aria-hidden="true"
-                                    />
-                                )}
-                                {style === "assistant" && controls}
-                                {m.text && !m.streaming && (
-                                    <div className="ulc-tools">
-                                        <button
-                                            type="button"
-                                            className="ulc-speak"
-                                            onClick={() =>
-                                                speakMessage(
-                                                    i,
-                                                    speakable(m.text),
-                                                )
-                                            }
-                                            aria-label={
-                                                speaking?.idx === i
-                                                    ? speaking.phase ===
-                                                      "loading"
-                                                        ? T.preparingAudio
-                                                        : T.stopReading
-                                                    : T.readAloud
-                                            }
-                                            title={
-                                                speaking?.idx === i
-                                                    ? speaking.phase ===
-                                                      "loading"
-                                                        ? T.preparingAudio
-                                                        : T.stopReading
-                                                    : T.readAloud
-                                            }
-                                        >
-                                            {speaking?.idx === i ? (
-                                                speaking.phase === "loading" ? (
-                                                    <WaitIcon />
-                                                ) : (
-                                                    <StopIcon />
-                                                )
-                                            ) : (
-                                                <SpeakerIcon />
-                                            )}
-                                        </button>
-                                    </div>
-                                )}
-                            </div>
-                            {style !== "assistant" && controls}
-                        </div>
-                    );
-                })}
-            </div>
-
-            {settings.quickActions && (
-                <div className="ulc-quick">
-                    {QUICK.map(([label, prompt]) => (
+                                {label}
+                            </button>
+                        ))}
+                    </div>
+                )}
+            {!mini && (
+                <div className="ulc-in">
+                    {settings.voiceInput && sttSupported && (
                         <button
                             type="button"
-                            key={label}
-                            onClick={() => sendText(prompt)}
-                            disabled={busy}
+                            className="ulc-ib"
+                            aria-pressed={listening}
+                            aria-label={listening ? T.micStop : T.micStart}
+                            title={listening ? T.micStop : T.micStart}
+                            onClick={toggleMic}
                         >
-                            {label}
+                            <MicIcon />
                         </button>
-                    ))}
-                </div>
-            )}
-            <div className="ulc-in">
-                {settings.voiceInput && sttSupported && (
+                    )}
+                    <input
+                        ref={inputRef}
+                        value={input}
+                        onChange={(e) => setInput(e.target.value)}
+                        // Enter that confirms an IME composition (Japanese, Chinese, Korean)
+                        // must not submit the half-typed text. keyCode 229 covers browsers
+                        // that report the confirming Enter with isComposing already false.
+                        onKeyDown={(e) =>
+                            e.key === "Enter" &&
+                            !e.nativeEvent.isComposing &&
+                            e.nativeEvent.keyCode !== 229 &&
+                            send()
+                        }
+                        placeholder={T.placeholder}
+                        aria-label={T.placeholder}
+                    />
                     <button
                         type="button"
-                        className="ulc-ib"
-                        aria-pressed={listening}
-                        aria-label={listening ? T.micStop : T.micStart}
-                        title={listening ? T.micStop : T.micStart}
-                        onClick={toggleMic}
+                        className="ulc-ib ulc-go"
+                        aria-label={T.send}
+                        title={T.send}
+                        onClick={send}
+                        disabled={busy || !input.trim()}
                     >
-                        <MicIcon />
+                        {busy ? <WaitIcon /> : <SendIcon />}
                     </button>
-                )}
-                <input
-                    ref={inputRef}
-                    value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                    // Enter that confirms an IME composition (Japanese, Chinese, Korean)
-                    // must not submit the half-typed text. keyCode 229 covers browsers
-                    // that report the confirming Enter with isComposing already false.
-                    onKeyDown={(e) =>
-                        e.key === "Enter" &&
-                        !e.nativeEvent.isComposing &&
-                        e.nativeEvent.keyCode !== 229 &&
-                        send()
-                    }
-                    placeholder={T.placeholder}
-                    aria-label={T.placeholder}
-                />
-                <button
-                    type="button"
-                    className="ulc-ib ulc-go"
-                    aria-label={T.send}
-                    title={T.send}
-                    onClick={send}
-                    disabled={busy || !input.trim()}
-                >
-                    {busy ? <WaitIcon /> : <SendIcon />}
-                </button>
-            </div>
-            <div className="ulc-status">
-                {(speaking || listening) && (
-                    <span className="ulc-lvl" aria-hidden="true">
-                        <i />
-                        <i />
-                        <i />
-                    </span>
-                )}
-                <span>{status}</span>
-            </div>
+                </div>
+            )}
+            {/* one home for what just happened: the audio guide shows it on its amber
+                display, the station on its information strip */}
+            {statusShown && (
+                <div className="ulc-status" title={status}>
+                    {(speaking || listening) && (
+                        <span className="ulc-lvl" aria-hidden="true">
+                            <i />
+                            <i />
+                            <i />
+                        </span>
+                    )}
+                    <span>{status}</span>
+                </div>
+            )}
         </div>
     );
 }

@@ -29,10 +29,15 @@ export function chatLang(): ChatLang {
 
 const EN = {
     title: "UniLens",
-    subtitle: "Ask about this page",
+    /** the station sign's main name; otherName is the other language below it */
+    stationName: "UniLens",
     pin: "Keep the chat here for the next question",
     unpin: "Stop keeping the chat here",
     close: "Close the chat",
+    minimize: "Minimize the chat",
+    expand: "Show the whole chat",
+    sMinimized: "Chat minimized to its header.",
+    sExpanded: "Chat shown in full.",
     emptyHint: "Ask about what you clicked, or pick a quick action below.",
     placeholder: "Ask about this page…",
     send: "Send",
@@ -41,25 +46,27 @@ const EN = {
     readAloud: "Read aloud",
     stopReading: "Stop reading",
     preparingAudio: "Preparing audio…",
-    quickExplain: "Explain this",
+    quickExplain: "Explain",
     quickSummary: "Summarize",
     quickTranslate: "Translate",
     promptExplain: "Explain what I am looking at, simply.",
     promptSummary: "Summarize this page briefly.",
     promptTranslate: "Translate the content I am looking at into English.",
     highlightAll: (n: number) => (n > 1 ? `Highlight all ${n}` : "Highlight"),
+    allShort: "All",
     prevEvidence: "Previous source",
     nextEvidence: "Next source",
     back: "Back",
     backTitle: "Return to where you were reading",
-    whereClicked: "Where I clicked",
-    whereClickedTitle: "Go back to where you clicked to ask this",
-    ofN: (i: number, n: number) => `${i} of ${n}`,
-    ofTotal: (n: number) => `of ${n}`,
-    found: (n: number) => (n === 1 ? "1 place found" : `${n} places found`),
+    placeEntry: (n: number, label: string) =>
+        `Where you clicked, P${n}: ${label}. Go there`,
     evidenceLabel: (n: number, label: string) => `Source ${n}: ${label}`,
     // status line and live region
     sAsking: "Sent. Waiting for the answer…",
+    sCapturing: "Capturing what you clicked…",
+    sNewPlace: (n: number, label: string) =>
+        `New place, P${n}: ${label}. Ask about it.`,
+    sCovered: " The chat is minimized so it does not cover the source.",
     sUpdatingView: "Sending your current view…",
     sAnswer: (n: number) =>
         n
@@ -75,12 +82,12 @@ const EN = {
         n > 1 ? `Showing all ${n}: ${labels}.` : `Showing it: ${labels}.`,
     sItem: (i: number, n: number, label: string) =>
         n > 1 ? `Source ${i} of ${n}, ${label}` : `Source, ${label}`,
-    sMoved: ". Brought into view; say back to return.",
+    sMoved: ". Moved there; Back returns you.",
     sWhere: (where: string) => `, ${where}.`,
     sBack: "Back to where you were.",
     sNoBack: "Nothing to go back to.",
     sPlace: (label: string, moved: boolean) =>
-        `Where you clicked: ${label}.${moved ? " Say back to return." : ""}`,
+        `Where you clicked: ${label}.${moved ? " Back returns you." : ""}`,
     sNoPlace: "No click recorded yet.",
     sOnly: (n: number) =>
         n === 1 ? "There is only 1." : `There are only ${n}.`,
@@ -92,7 +99,8 @@ const EN = {
     placeClick: "where you clicked",
     placeNear: (h: string) => `near "${h}"`,
     placeTag: (tag: string) => `the ${tag}`,
-    sBackendError: (e: string) => `Could not reach UniLens: ${e}`,
+    sBackendError:
+        "Could not reach UniLens. Check the connection and ask again.",
     // directions from zoom.directionOf
     dir: {
         "on screen": "on screen",
@@ -108,10 +116,14 @@ type Strings = typeof EN;
 
 const JA: Strings = {
     title: "UniLens",
-    subtitle: "このページについて質問",
+    stationName: "ユニレンズ",
     pin: "次の質問でもチャットをこの位置に表示",
     unpin: "位置の固定をやめる",
     close: "チャットを閉じる",
+    minimize: "チャットを最小化",
+    expand: "チャット全体を表示",
+    sMinimized: "チャットを最小化しました。",
+    sExpanded: "チャット全体を表示しました。",
     emptyHint:
         "クリックしたところについて質問するか、下のボタンを選んでください。",
     placeholder: "このページについて質問…",
@@ -128,17 +140,19 @@ const JA: Strings = {
     promptSummary: "このページを短く要約してください。",
     promptTranslate: "今見ている内容を日本語に翻訳してください。",
     highlightAll: (n: number) => (n > 1 ? `${n}か所すべて表示` : "ハイライト"),
+    allShort: "すべて",
     prevEvidence: "前の出典",
     nextEvidence: "次の出典",
     back: "戻る",
     backTitle: "読んでいた場所に戻る",
-    whereClicked: "クリックした場所",
-    whereClickedTitle: "この質問をした場所に戻る",
-    ofN: (i: number, n: number) => `${n}件中 ${i}`,
-    ofTotal: (n: number) => `${n}件中`,
-    found: (n: number) => `${n}か所見つかりました`,
+    placeEntry: (n: number, label: string) =>
+        `クリックした場所 P${n}: ${label}。移動する`,
     evidenceLabel: (n: number, label: string) => `出典 ${n}: ${label}`,
     sAsking: "送信しました。回答を待っています…",
+    sCapturing: "クリックした場所を取り込んでいます…",
+    sNewPlace: (n: number, label: string) =>
+        `新しい場所 P${n}: ${label}。質問をどうぞ。`,
+    sCovered: "出典が隠れないよう、チャットを最小化しました。",
     sUpdatingView: "今の表示を送っています…",
     sAnswer: (n: number) =>
         n ? `回答しました。出典 ${n}件。` : "回答しました。",
@@ -153,8 +167,8 @@ const JA: Strings = {
             ? `${n}か所すべて表示: ${labels}。`
             : `表示しています: ${labels}。`,
     sItem: (i: number, n: number, label: string) =>
-        n > 1 ? `出典 ${n}件中 ${i}、${label}` : `出典、${label}`,
-    sMoved: "。表示しました。「戻る」で元の場所に戻れます。",
+        n > 1 ? `出典 ${n}件中 ${i}件目、${label}` : `出典、${label}`,
+    sMoved: "。移動しました。「戻る」で元の場所へ。",
     sWhere: (where: string) => `、${where}。`,
     sBack: "元の場所に戻りました。",
     sNoBack: "戻る場所がありません。",
@@ -171,7 +185,8 @@ const JA: Strings = {
     placeClick: "クリックした場所",
     placeNear: (h: string) => `「${h}」の近く`,
     placeTag: (tag: string) => `${tag} 要素`,
-    sBackendError: (e: string) => `UniLens に接続できません: ${e}`,
+    sBackendError:
+        "UniLens に接続できません。接続を確認して、もう一度質問してください。",
     dir: {
         "on screen": "画面内",
         above: "上にあります",
