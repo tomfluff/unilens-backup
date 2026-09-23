@@ -376,6 +376,37 @@ export function getView(): { x: number; y: number } {
         : { x: window.scrollX, y: window.scrollY };
 }
 
+export type ClientRect = {
+    left: number;
+    top: number;
+    width: number;
+    height: number;
+};
+
+/**
+ * An element's client box. A box-less element (display:contents) reports 0x0 at the
+ * viewport origin; its content is the union of its children's boxes. Still 0x0 when
+ * nothing inside renders: callers treat that as "not on screen", never as (0, 0).
+ */
+export function boxOf(
+    el: Element,
+    measure: (el: Element) => ClientRect = (e) => e.getBoundingClientRect(),
+): ClientRect {
+    const r = measure(el);
+    if (r.width || r.height) return r;
+    const parts = Array.from(el.children, (c) => boxOf(c, measure)).filter(
+        (b) => b.width || b.height,
+    );
+    if (!parts.length) return { left: 0, top: 0, width: 0, height: 0 };
+    const left = Math.min(...parts.map((b) => b.left));
+    const top = Math.min(...parts.map((b) => b.top));
+    const right = Math.max(...parts.map((b) => b.left + b.width));
+    const bottom = Math.max(...parts.map((b) => b.top + b.height));
+    return { left, top, width: right - left, height: bottom - top };
+}
+
+export const isEmptyBox = (b: ClientRect) => !b.width && !b.height;
+
 /** client coords -> content (layout) coords, correct under either engine */
 export function clientToContent(
     clientX: number,

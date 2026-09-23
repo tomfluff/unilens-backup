@@ -111,6 +111,50 @@ describe("showHighlights", () => {
         expect(layerBoxes().length).toBe(1);
     });
 
+    it("never draws a box-less target at the screen corner; announces instead", () => {
+        const { registry } = mount();
+        setCurrentCapture("c1");
+        const token = nextToken();
+        const drawn = showHighlights(
+            [{ id: "n1", role: "target" }],
+            registry,
+            "c1",
+            token,
+            { measure: () => rect(0, 0, 0, 0), label: "Choose Pro" },
+        );
+        expect(drawn).toBe(true); // not stale, just nothing to outline
+        expect(layerBoxes()).toHaveLength(0);
+        expect(hasHighlight()).toBe(false);
+        expect(live()?.textContent).toContain("not showing");
+    });
+
+    it("outlines a display:contents wrapper by its children's union", () => {
+        const li = document.createElement("li");
+        const a = document.createElement("span");
+        const b = document.createElement("span");
+        li.append(a, b);
+        document.body.appendChild(li);
+        const boxes = new Map<Element, ReturnType<typeof rect>>([
+            [li, rect(0, 0, 0, 0)],
+            [a, rect(50, 400, 20, 30)],
+            [b, rect(80, 400, 500, 30)],
+        ]);
+        setCurrentCapture("c1");
+        const token = nextToken();
+        showHighlights(
+            [{ id: "n1", role: "target" }],
+            new Map([["n1", li]]),
+            "c1",
+            token,
+            { measure: (el) => boxes.get(el) ?? rect(0, 0, 0, 0) },
+        );
+        const box = layerBoxes()[0] as HTMLElement;
+        // offset 3 + band 2 outside the union (50,400)-(580,430)
+        expect(box.style.left).toBe("45px");
+        expect(box.style.top).toBe("395px");
+        expect(box.style.width).toBe("540px");
+    });
+
     it("removes and announces an element that left the page", () => {
         const { el, registry } = mount();
         show(registry);

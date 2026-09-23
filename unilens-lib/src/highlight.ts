@@ -12,7 +12,14 @@
 import { HIGHLIGHT_PRESETS, type HighlightStyle } from "./highlightStyles";
 import { setTargets } from "./minimap";
 import { getSettings } from "./settings";
-import { getZoom, isOwnMutation, onViewChange, onZoomChange } from "./zoom";
+import {
+    boxOf,
+    getZoom,
+    isEmptyBox,
+    isOwnMutation,
+    onViewChange,
+    onZoomChange,
+} from "./zoom";
 
 export type HighlightRole = "target" | "anchor" | "source";
 export interface Highlight {
@@ -171,7 +178,9 @@ function render() {
             gone.push(entry);
             continue;
         }
-        const r = measure(el);
+        const r = boxOf(el, measure);
+        // collapsed since it was drawn (an accordion closed): hide, never park at (0, 0)
+        box.style.display = isEmptyBox(r) ? "none" : "";
         // the box sits `offset` outside the element; the inner band is its border,
         // the outer band its outline, both real strokes so forced colours keep them
         Object.assign(box.style, {
@@ -206,7 +215,7 @@ function render() {
             dimBox.remove();
             dimBox = null;
         } else {
-            const r = measure(first.el);
+            const r = boxOf(first.el, measure);
             Object.assign(dimBox.style, {
                 left: `${r.left}px`,
                 top: `${r.top}px`,
@@ -306,9 +315,16 @@ export function showHighlights(
     measure = opts.measure ?? defaultMeasure;
     const preset = currentPreset();
     const host = ensureLayer();
+    let unplaceable = 0;
     for (const h of set) {
         const el = registry.get(h.id);
         if (!el?.isConnected) continue;
+        // nothing rendered to outline: drawing it would put the ring at the screen's
+        // top-left corner (display:contents, collapsed, zero-size)
+        if (isEmptyBox(boxOf(el, measure))) {
+            unplaceable++;
+            continue;
+        }
         const box = document.createElement("div");
         box.className = CLASS;
         box.dataset.role = h.role; // TODO phase 2: style anchor/source distinctly
@@ -333,7 +349,11 @@ export function showHighlights(
         host.appendChild(box);
         boxes.push({ el, box, role: h.role });
     }
-    if (!boxes.length) return true;
+    if (!boxes.length) {
+        if (unplaceable)
+            announce("Found it, but it is not showing on the page right now.");
+        return true;
+    }
     if (preset.dimOthers) {
         dimBox = document.createElement("div");
         dimBox.className = `${CLASS}-dim`;
