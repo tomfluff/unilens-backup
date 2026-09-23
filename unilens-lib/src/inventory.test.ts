@@ -195,15 +195,21 @@ describe("buildInventory: skipping and structure", () => {
         expect(inv.registry.get("n0")).toBe(document.body);
     });
 
-    it("stops descending past maxDepth", () => {
-        const inv = build(
-            `<nav><div><div><p>deep</p></div></div><a href="#">shallow</a></nav>`,
-            {
-                maxDepth: 2,
-            },
+    it("caps depth on the emitted tree, not on DOM nesting", () => {
+        // real pages wrap content 15-20 divs deep; collapsed wrappers must not count
+        const wrapped = build(
+            `<div><div><div><div><div><p>deep</p></div></div></div></div></div>`,
+            { maxDepth: 1 },
         );
-        expect(byName(inv, "shallow")).toBeDefined();
-        expect(byName(inv, "deep")).toBeUndefined();
+        expect(byName(wrapped, "deep")).toBeDefined();
+        const nested = build(
+            `<nav aria-label="Outer"><section aria-label="Inner"><p>x</p><p>y</p></section><a href="#">z</a></nav>`,
+            { maxDepth: 2 },
+        );
+        expect(byName(nested, "Outer")).toBeDefined(); // level 1
+        expect(byName(nested, "Inner")).toBeDefined(); // level 2
+        expect(byName(nested, "z")).toBeDefined(); // level 2
+        expect(byName(nested, "x")).toBeUndefined(); // level 3
     });
 
     it("adds an additive region summary on regions at or above summaryDepth", () => {
@@ -216,10 +222,17 @@ describe("buildInventory: skipping and structure", () => {
         expect(region?.text).toContain("¥980");
         expect(region?.text).toContain("Choose");
         expect(byName(inv, "¥980")).toBeDefined(); // leaf kept, summary is additive
-        const deeper = build(
-            `<div><div><section aria-label="Deep"><p>x</p><p>y</p></section></div></div>`,
+        // depth is the inventory tree's: wrapper divs collapse and do not count
+        const wrapped = build(
+            `<div><div><section aria-label="Top"><p>x</p><p>y</p></section></div></div>`,
             { summaryDepth: 1 },
         );
+        expect(byName(wrapped, "Top")?.text).toContain("x");
+        const deeper = build(
+            `<nav aria-label="Outer"><section aria-label="Deep"><p>x</p><p>y</p></section><a href="#">z</a></nav>`,
+            { summaryDepth: 1 },
+        );
+        expect(byName(deeper, "Outer")?.text).toContain("z");
         expect(byName(deeper, "Deep")?.text).toBeUndefined();
     });
 
@@ -242,6 +255,56 @@ describe("buildInventory: skipping and structure", () => {
             parentId: null,
         });
         expect(inv.truncated).toBe(0);
+    });
+});
+
+describe("buildInventory: geometry", () => {
+    it("converts both box corners to content space, so sizes shrink under zoom", () => {
+        document.body.innerHTML = `<p data-box="200,100,300,60">zoomed</p>`;
+        // page zoom 2 with the view panned to (40, 1000) in client px
+        const inv = buildInventory(document.body, OPTS, measure, (x, y) => ({
+            x: (x + 40) / 2,
+            y: (y + 1000) / 2,
+        }));
+        expect(byName(inv, "zoomed")?.rect).toEqual({
+            x: 120,
+            y: 550,
+            w: 150,
+            h: 30,
+        });
+    });
+
+    it("gives a box-less wrapper (display:contents) the union of its children", () => {
+        document.body.innerHTML = `
+      <ul><li data-box="0,0,0,0"><span data-box="50,400,20,30">※</span><span data-box="80,400,500,30">footnote</span></li>
+      <li data-box="0,0,0,0"><span data-box="50,440,20,30">†</span><span data-box="80,440,500,30">other</span></li></ul>`;
+        // the viewport origin maps to content (93, 8060): a 0x0 box must not land there
+        const inv = buildInventory(document.body, OPTS, measure, (x, y) => ({
+            x: x + 93,
+            y: y + 8060,
+        }));
+        const li = inv.nodes.find(
+            (n) =>
+                n.role === "container" &&
+                inv.nodes.some((c) => c.parentId === n.id && c.name === "※"),
+        );
+        expect(li?.rect).toEqual({ x: 143, y: 8460, w: 530, h: 30 });
+        expect(li?.visible).toBe(true);
+    });
+
+    it("keeps a node with no box at all at 0x0 instead of the viewport corner", () => {
+        document.body.innerHTML = `<div><span data-box="0,0,0,0">collapsed</span><p>x</p></div>`;
+        const inv = buildInventory(document.body, OPTS, measure, (x, y) => ({
+            x: x + 93,
+            y: y + 8060,
+        }));
+        expect(byName(inv, "collapsed")?.rect).toEqual({
+            x: 0,
+            y: 0,
+            w: 0,
+            h: 0,
+        });
+        expect(byName(inv, "collapsed")?.visible).toBe(false);
     });
 });
 

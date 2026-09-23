@@ -55,9 +55,10 @@ export interface WireNode {
 }
 
 export interface InventoryOptions {
-    /** stop descending past this depth; body is 0 */
+    /** deepest level of the emitted inventory tree (root is 0). Wrapper elements that
+     * collapse away do not count: real pages nest their content 15-20 divs deep */
     maxDepth: number;
-    /** regions at or above this depth carry a text summary */
+    /** regions at or above this inventory-tree depth carry a text summary */
     summaryDepth: number;
     /** max chars per name / summary */
     summaryCap: number;
@@ -270,7 +271,6 @@ function isLabelled(el: Element): boolean {
 
 interface Walked {
     el: Element;
-    depth: number;
     role: InventoryRole | null;
     name: string;
     /** qualifies in its own right (role or text) */
@@ -303,16 +303,20 @@ export function buildInventory(
         b.x + b.width > 0 &&
         b.y + b.height > 0;
 
-    // pass 1: post-order marking
-    const mark = (el: Element, depth: number): Walked | null => {
+    // pass 1: post-order marking over the whole DOM; depth is capped on the emitted
+    // tree in pass 2, where wrapper divs have already collapsed away
+    const mark = (el: Element): Walked | null => {
         if (isSkipped(el)) return null;
-        const box = measure(el);
+        let box = measure(el);
         const children: Walked[] = [];
-        if (depth < opts.maxDepth)
-            for (const c of el.children) {
-                const w = mark(c, depth + 1);
-                if (w) children.push(w);
-            }
+        for (const c of el.children) {
+            const w = mark(c);
+            if (w) children.push(w);
+        }
+        // display:contents (and other box-less wrappers) report a 0x0 rect at the
+        // viewport origin; their content is the union of their children's boxes
+        if (box.width === 0 && box.height === 0 && children.length)
+            box = unionOf(children.map((c) => c.box));
         const role = roleOf(el);
         const name = nameOf(el, role, opts.summaryCap);
         // a labelled container is a region, not a text leaf: its name came from
@@ -333,7 +337,6 @@ export function buildInventory(
             ((own || region) && visible) || children.some((c) => c.hasVisible);
         return {
             el,
-            depth,
             role,
             name,
             own,
@@ -344,14 +347,15 @@ export function buildInventory(
             hasVisible,
         };
     };
-    const tree = mark(root, 0);
+    const tree = mark(root);
 
     // pass 2: pre-order emit; unqualified intermediates collapse (parent = nearest emitted)
     const nodes: InventoryNode[] = [];
     const registry = new Map<string, Element>();
-    const emit = (w: Walked, parentId: string | null) => {
+    const emit = (w: Walked, parentId: string | null, level: number) => {
         let id = parentId;
         if (w.own || w.region) {
+            if (level > opts.maxDepth) return;
             id = `n${nodes.length}`;
             // text leaves already covered by an interactable/heading ancestor's name are
             // merged into it (AgentOccam): a <span> inside a link named by its content
@@ -367,21 +371,15 @@ export function buildInventory(
                 parentNode.role !== "landmark" &&
                 parentNode.name.includes(w.name);
             if (!mergeable) {
-                const c = toContent(w.box.x, w.box.y);
                 const node: InventoryNode = {
                     id,
                     role: w.role ?? (w.own ? "text" : "container"),
                     name: w.name,
-                    rect: {
-                        x: Math.round(c.x),
-                        y: Math.round(c.y),
-                        w: Math.round(w.box.width),
-                        h: Math.round(w.box.height),
-                    },
+                    rect: contentRect(w.box, toContent),
                     visible: w.visible,
                     parentId,
                 };
-                if (w.region && w.depth <= opts.summaryDepth) {
+                if (w.region && level <= opts.summaryDepth) {
                     // built from descendant names, never textContent: a textarea's draft
                     // or an editable field's contents must never reach the inventory
                     const names: string[] = [];
@@ -401,9 +399,10 @@ export function buildInventory(
                 registry.set(id, w.el);
             } else id = parentId;
         }
-        for (const c of w.children) emit(c, id);
+        const next = id === parentId ? level : level + 1;
+        for (const c of w.children) emit(c, id, next);
     };
-    if (tree) emit(tree, null);
+    if (tree) emit(tree, null, 0);
 
     // budget guard: drop the leaves farthest from the viewport centre first; never a
     // region, heading or landmark, never a node something kept still points at
@@ -450,6 +449,35 @@ export function buildInventory(
         }
     }
     return { nodes: kept, wire: kept.map(wireOf), registry, truncated, bytes };
+}
+
+type Box = Walked["box"];
+
+function unionOf(boxes: Box[]): Box {
+    const real = boxes.filter((b) => b.width > 0 || b.height > 0);
+    if (!real.length) return { x: 0, y: 0, width: 0, height: 0 };
+    const x = Math.min(...real.map((b) => b.x));
+    const y = Math.min(...real.map((b) => b.y));
+    const r = Math.max(...real.map((b) => b.x + b.width));
+    const btm = Math.max(...real.map((b) => b.y + b.height));
+    return { x, y, width: r - x, height: btm - y };
+}
+
+/**
+ * Client box to content space. Both corners go through toContent: under the page
+ * zoom a client box is `scale` times its content size. A box-less node stays 0x0 at
+ * the origin rather than borrowing the viewport's corner as its position.
+ */
+function contentRect(b: Box, toContent: ToContent): InventoryNode["rect"] {
+    if (b.width === 0 && b.height === 0) return { x: 0, y: 0, w: 0, h: 0 };
+    const a = toContent(b.x, b.y);
+    const z = toContent(b.x + b.width, b.y + b.height);
+    return {
+        x: Math.round(a.x),
+        y: Math.round(a.y),
+        w: Math.round(z.x - a.x),
+        h: Math.round(z.y - a.y),
+    };
 }
 
 function byteLength(s: string): number {
