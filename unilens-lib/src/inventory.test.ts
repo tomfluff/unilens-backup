@@ -337,6 +337,30 @@ describe("buildInventory: budget guard", () => {
         expect(inv.truncated).toBeGreaterThan(0);
     });
 
+    it("holds the hard caps even when leaves alone cannot, without orphaning a node", () => {
+        const sections = Array.from(
+            { length: 30 },
+            (_, i) =>
+                `<section aria-label="S${i}" data-box="0,${i * 300},400,200"><h2 data-box="0,${i * 300},400,30">Heading ${i}</h2><p data-box="0,${i * 300 + 40},400,20">text ${i}</p><p data-box="0,${i * 300 + 70},400,20">more ${i}</p></section>`,
+        ).join("");
+        const inv = build(sections, { maxNodes: 20 });
+        expect(inv.nodes.length).toBeLessThanOrEqual(20);
+        const ids = new Set(inv.nodes.map((n) => n.id));
+        for (const n of inv.nodes)
+            if (n.parentId) expect(ids.has(n.parentId)).toBe(true);
+        expect(inv.nodes[0].id).toBe("n0"); // the root is never dropped
+        expect(inv.bytes).toBe(
+            new TextEncoder().encode(JSON.stringify(inv.wire)).length,
+        );
+    });
+
+    it("prunes a 3000-node page without quadratic re-serialisation", () => {
+        const t0 = performance.now();
+        const inv = build(many(3000), { maxNodes: 900 });
+        expect(inv.nodes.length).toBeLessThanOrEqual(900);
+        expect(performance.now() - t0).toBeLessThan(3000);
+    });
+
     it("serialises with short keys and integer boxes", () => {
         const inv = build(`<a href="#" data-box="10.4,20.6,30.2,40.9">L</a>`);
         const w = inv.wire.find((x) => x.n === "L");

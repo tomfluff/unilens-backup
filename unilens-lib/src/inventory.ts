@@ -136,6 +136,9 @@ const LANDMARK_ROLES = new Set([
 ]);
 const INPUT_TAGS = new Set(["input", "select", "textarea"]);
 const SKIP_TAGS = new Set(["script", "style", "template", "noscript", "svg"]);
+/** recursion guard only: the HTML parser nests at most 512 deep; the knob that shapes the
+ * inventory is maxDepth, counted on the emitted tree */
+const DOM_DEPTH_LIMIT = 256;
 
 const collapse = (s: string | null | undefined) =>
     (s ?? "").replace(/\s+/g, " ").trim();
@@ -305,14 +308,15 @@ export function buildInventory(
 
     // pass 1: post-order marking over the whole DOM; depth is capped on the emitted
     // tree in pass 2, where wrapper divs have already collapsed away
-    const mark = (el: Element): Walked | null => {
+    const mark = (el: Element, domDepth = 0): Walked | null => {
         if (isSkipped(el)) return null;
         let box = measure(el);
         const children: Walked[] = [];
-        for (const c of el.children) {
-            const w = mark(c);
-            if (w) children.push(w);
-        }
+        if (domDepth < DOM_DEPTH_LIMIT)
+            for (const c of el.children) {
+                const w = mark(c, domDepth + 1);
+                if (w) children.push(w);
+            }
         // display:contents (and other box-less wrappers) report a 0x0 rect at the
         // viewport origin; their content is the union of their children's boxes
         if (box.width === 0 && box.height === 0 && children.length)
@@ -419,12 +423,20 @@ export function buildInventory(
         if (n.parentId) wn.p = n.parentId;
         return wn;
     };
-    const size = (list: InventoryNode[]) =>
-        byteLength(JSON.stringify(list.map(wireOf)));
-    let kept = nodes;
-    let bytes = size(kept);
-    let truncated = 0;
-    if (bytes > opts.maxBytes || kept.length > opts.maxNodes) {
+    // Leaves go first, farthest from the viewport centre first; headings, landmarks
+    // and containers only once leaves alone cannot meet the budget, because the caps
+    // are hard (the backend rejects past them). A node is dropped only once nothing
+    // kept points at it, so the tree never orphans. Byte cost is tracked per node:
+    // re-serializing after every drop is quadratic on a real page.
+    const cost = nodes.map((n) => byteLength(JSON.stringify(wireOf(n))) + 1);
+    let bytes = 1 + cost.reduce((a, b) => a + b, 0); // "[" + each node and its "," / "]"
+    const kids = new Map<string, number>();
+    for (const n of nodes)
+        if (n.parentId) kids.set(n.parentId, (kids.get(n.parentId) ?? 0) + 1);
+    const dropped = new Set<number>();
+    const over = () =>
+        bytes > opts.maxBytes || nodes.length - dropped.size > opts.maxNodes;
+    if (over()) {
         const centre = toContent(vw / 2, vh / 2);
         const dist = (n: InventoryNode) =>
             Math.hypot(
@@ -435,19 +447,33 @@ export function buildInventory(
             n.role === "container" ||
             n.role === "heading" ||
             n.role === "landmark";
-        const order = [...kept].sort((a, b) => dist(b) - dist(a));
-        const keptIds = new Set(kept.map((n) => n.id));
-        for (const n of order) {
-            if (bytes <= opts.maxBytes && kept.length <= opts.maxNodes) break;
-            if (protectedRole(n)) continue;
-            if (kept.some((m) => m.parentId === n.id)) continue;
-            keptIds.delete(n.id);
-            kept = kept.filter((m) => m.id !== n.id);
-            registry.delete(n.id);
-            truncated++;
-            bytes = size(kept);
+        const order = nodes
+            .map((n, i) => ({ i, d: dist(n) }))
+            .sort((a, b) => b.d - a.d)
+            .map((x) => x.i);
+        for (const protect of [true, false]) {
+            let progress = true;
+            // dropping a leaf can make its parent a leaf: sweep until nothing moves
+            while (over() && progress) {
+                progress = false;
+                for (const i of order) {
+                    if (!over()) break;
+                    const n = nodes[i];
+                    if (i === 0 || dropped.has(i) || kids.get(n.id)) continue;
+                    if (protect && protectedRole(n)) continue;
+                    dropped.add(i);
+                    bytes -= cost[i];
+                    if (n.parentId)
+                        kids.set(n.parentId, (kids.get(n.parentId) ?? 1) - 1);
+                    registry.delete(n.id);
+                    progress = true;
+                }
+            }
         }
     }
+    const kept = nodes.filter((_, i) => !dropped.has(i));
+    const truncated = dropped.size;
+    bytes = byteLength(JSON.stringify(kept.map(wireOf)));
     return { nodes: kept, wire: kept.map(wireOf), registry, truncated, bytes };
 }
 
