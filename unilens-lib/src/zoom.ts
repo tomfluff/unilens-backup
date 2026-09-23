@@ -422,18 +422,23 @@ export function isOwnUI(target: EventTarget | null): boolean {
     );
 }
 
+/** where the user was before each move to evidence, newest last (capped) */
+const viewHistory: { cx: number; cy: number }[] = [];
+const HISTORY_CAP = 20;
+
 /**
  * Bring an element to the middle of the screen under either pan engine. Leaves the
  * view alone when the element is already fully on screen, so the page never moves
- * without need, unless `always`. False when the element has no box.
+ * without need, unless `always`. Every move is remembered so the user can return
+ * to where they were reading ("back" / "戻る"). Returns what happened.
  */
 export function revealElement(
     el: Element,
     measure?: (el: Element) => ClientRect,
     opts: { always?: boolean } = {},
-): boolean {
+): "moved" | "in-view" | "none" {
     const r = boxOf(el, measure);
-    if (isEmptyBox(r)) return false;
+    if (isEmptyBox(r)) return "none";
     // under browser pinch zoom the user sees the visual viewport, a window inside the
     // layout viewport that client rects are measured in
     const vv = window.visualViewport;
@@ -448,13 +453,61 @@ export function revealElement(
         r.left + r.width <= L + W &&
         r.top + r.height <= T + H
     )
-        return true;
+        return "in-view";
     const v = getView();
+    rememberView(W, H);
     setView(
         v.x + r.left + r.width / 2 - (L + W / 2),
         v.y + r.top + r.height / 2 - (T + H / 2),
     );
+    return "moved";
+}
+
+/** remembered in content space, so a zoom change in between still returns right */
+function rememberView(W: number, H: number) {
+    const v = getView();
+    viewHistory.push({ cx: (v.x + W / 2) / scale, cy: (v.y + H / 2) / scale });
+    if (viewHistory.length > HISTORY_CAP) viewHistory.shift();
+}
+
+/**
+ * Centre a content-space point (where the user clicked, when the element it was
+ * on is gone). Remembered like any move, so "back" returns.
+ */
+export function revealPoint(x: number, y: number) {
+    const W = window.visualViewport?.width ?? window.innerWidth;
+    const H = window.visualViewport?.height ?? window.innerHeight;
+    rememberView(W, H);
+    setView(x * scale - W / 2, y * scale - H / 2);
+}
+
+export const canReturn = () => viewHistory.length > 0;
+
+/** undo the latest move to evidence; false when there is nothing to return to */
+export function returnToPreviousView(): boolean {
+    const prev = viewHistory.pop();
+    if (!prev) return false;
+    const vv = window.visualViewport;
+    const W = vv?.width ?? window.innerWidth;
+    const H = vv?.height ?? window.innerHeight;
+    setView(prev.cx * scale - W / 2, prev.cy * scale - H / 2);
     return true;
+}
+
+/** where an element is relative to the screen, for spoken status */
+export function directionOf(
+    el: Element,
+    measure?: (el: Element) => ClientRect,
+): "on screen" | "above" | "below" | "to the left" | "to the right" | "" {
+    const r = boxOf(el, measure);
+    if (isEmptyBox(r)) return "";
+    const W = window.visualViewport?.width ?? window.innerWidth;
+    const H = window.visualViewport?.height ?? window.innerHeight;
+    if (r.top + r.height < 0) return "above";
+    if (r.top > H) return "below";
+    if (r.left + r.width < 0) return "to the left";
+    if (r.left > W) return "to the right";
+    return "on screen";
 }
 
 /** client coords -> content (layout) coords, correct under either engine */

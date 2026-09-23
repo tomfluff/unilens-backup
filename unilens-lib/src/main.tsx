@@ -27,6 +27,7 @@ import {
 } from "./highlight";
 import { initHint } from "./hint";
 import { initMinimap } from "./minimap";
+import { recordPlace } from "./places";
 import { initSettings } from "./SettingsPanel";
 import { getSettings, updateSetting } from "./settings";
 import { setSpeechBackend } from "./speech";
@@ -73,6 +74,19 @@ function dismissPopover() {
     closePopover();
 }
 
+/** a short name for where the user clicked, for "where I clicked" buttons and speech */
+function placeLabel(cap: CaptureResult): string {
+    const e = cap.meta.element;
+    if (cap.meta.region) return "the area you selected";
+    if (!e) return "where you clicked";
+    const text = (e.text ?? e.alt ?? "").trim();
+    // a short text names the thing itself; a long one is a whole section, whose
+    // heading names it better
+    if (text && text.length <= 40) return text;
+    if (e.nearestHeading) return `near "${e.nearestHeading}"`;
+    return text ? `${text.slice(0, 40)}…` : `the ${e.tag}`;
+}
+
 /** the element the open popover's question was asked about, for view refreshes */
 let askedAbout: Element | undefined;
 /** bumped whenever the popover's capture is retired (new capture, close): a refresh
@@ -108,6 +122,15 @@ async function refreshCapture(
         if (gen !== generation) return null;
         tagLastCapture(id);
         setCurrentCapture(id);
+        // same question point as the capture it refreshes
+        recordPlace({
+            captureId: id,
+            at: Date.now(),
+            x: cap.meta.clickX,
+            y: cap.meta.clickY,
+            el: askedAbout?.isConnected ? askedAbout : undefined,
+            label: placeLabel(cap),
+        });
         return { id, cap };
     } catch (err) {
         console.warn(
@@ -221,6 +244,14 @@ export function init(options: InitOptions = {}) {
         }
         // the id exists only now, after upload: this is where the guard learns it
         setCurrentCapture(id);
+        recordPlace({
+            captureId: id,
+            at: Date.now(),
+            x: cap.meta.clickX,
+            y: cap.meta.clickY,
+            el,
+            label: placeLabel(cap),
+        });
         openPopover(clientX, clientY, id, cap, backend);
     }
 

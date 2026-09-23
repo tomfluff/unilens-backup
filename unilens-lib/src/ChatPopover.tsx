@@ -12,6 +12,7 @@ import {
     speakable,
 } from "./evidence";
 import {
+    announce,
     clearHighlights,
     hasHighlight,
     nextToken,
@@ -20,6 +21,7 @@ import {
     showHighlights,
 } from "./highlight";
 import { labelOfWire, type WireNode } from "./inventory";
+import { goToPlace, latestPlace, type Place, placeOf } from "./places";
 import { getSettings, useSettings } from "./settings";
 import {
     listen,
@@ -28,7 +30,12 @@ import {
     stopSpeaking,
     sttSupported,
 } from "./speech";
-import { revealElement } from "./zoom";
+import {
+    canReturn,
+    directionOf,
+    returnToPreviousView,
+    revealElement,
+} from "./zoom";
 
 interface Msg {
     id: string;
@@ -44,6 +51,8 @@ interface Msg {
     cite?: CiteSource;
     /** still streaming: an unfinished marker at the end stays hidden */
     streaming?: boolean;
+    /** a question's capture, so its bubble can offer "where I clicked" */
+    captureId?: string;
     /** a question sent with a fresh view: its close-up, shown small under the question */
     view?: string;
 }
@@ -239,6 +248,29 @@ const SentView = styled.img`
 `;
 
 /** the navigator wraps as one unit, never "‹ 1 of 3" on one line and "›" on the next */
+/** under a question: back to the place it was asked about (explicit sizes: host CSS leaks) */
+const PlaceButton = styled.button`
+    display: block;
+    margin: 6px 0 0;
+    padding: 2px 8px;
+    min-height: 24px;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    border: 1px solid rgba(255, 255, 255, 0.45);
+    border-radius: 10px;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    cursor: pointer;
+    text-align: left;
+    &:focus-visible {
+        outline: 3px solid #00c8ff;
+        outline-offset: 1px;
+    }
+`;
+
 const NavGroup = styled.span`
     display: inline-flex;
     align-items: center;
@@ -462,12 +494,17 @@ export default function ChatPopover({
                     setMessages(
                         d.history.map(
                             (
-                                h: { role: string; text: string },
+                                h: {
+                                    role: string;
+                                    text: string;
+                                    capture_id?: string;
+                                },
                                 idx: number,
                             ) => ({
                                 id: `hist-${idx}-${Date.now()}`,
                                 role: h.role as Msg["role"],
                                 text: h.text,
+                                captureId: h.capture_id,
                             }),
                         ),
                     );
@@ -548,6 +585,8 @@ export default function ChatPopover({
     };
 
     const [active, setActive] = useState<Active>(null);
+    /** a move to evidence can be undone: the Back button shows */
+    const [returnable, setReturnable] = useState(false);
     // Escape (or a new capture) clears the outline: the pressed buttons must follow
     useEffect(() => onHighlightsCleared(() => setActive(null)), []);
 
@@ -562,6 +601,7 @@ export default function ChatPopover({
                 ? c.ids.map((id, i) => ({ id, i }))
                 : [{ id: c.ids[index], i: index }];
         const label = (id: string) => labelOfWire(id, src.inventory);
+        // status is announced here, after any move, so it can say where the item is
         showHighlights(
             picks.map(({ id, i }) => ({
                 id,
@@ -571,21 +611,31 @@ export default function ChatPopover({
             src.registry,
             src.id,
             nextToken(),
-            {
-                userInitiated: true,
-                label:
-                    index === "all" && n > 1
-                        ? `${n} items: ${c.ids.map(label).join(", ")}`
-                        : `${n > 1 ? `${picks[0].i + 1} of ${n}, ` : ""}${label(picks[0].id)}`,
-            },
+            { userInitiated: true },
         );
+        const el = src.registry.get(picks[0].id);
+        const where = el ? directionOf(el) : "";
         // the moveToEvidence setting decides whether choosing an item moves the page;
         // "never" leaves finding it to the off-screen cues and the minimap
         const move = getSettings().moveToEvidence;
-        if (reveal && move !== "never") {
-            const el = src.registry.get(picks[0].id);
-            if (el) revealElement(el, undefined, { always: move === "always" });
-        }
+        const moved =
+            reveal && move !== "never" && el
+                ? revealElement(el, undefined, {
+                      always: move === "always",
+                  }) === "moved"
+                : false;
+        setReturnable(canReturn());
+        if (hasHighlight())
+            announce(
+                index === "all" && n > 1
+                    ? `${n} sources: ${c.ids.map(label).join(", ")}.`
+                    : `Source ${n > 1 ? `${picks[0].i + 1} of ${n}` : ""}, ${label(picks[0].id)}` +
+                          (moved
+                              ? ". Brought into view; say back to return."
+                              : where && where !== "on screen"
+                                ? `, ${where}.`
+                                : "."),
+            );
         // nothing placeable (collapsed, box-less): showHighlights announced it; no button
         // may look pressed over an empty page
         setActive(hasHighlight() ? { msgId: m.id, index } : null);
@@ -620,7 +670,50 @@ export default function ChatPopover({
     }
 
     /** "next", "show all", "the second one": steer the last cited reply without a model call */
+    /** take the user back to where they clicked, and outline what they clicked on */
+    function goPlace(p: Place): string {
+        const r = goToPlace(p);
+        // outline what was clicked only when it is a thing, not a whole section
+        const box = p.el?.isConnected ? p.el.getBoundingClientRect() : null;
+        if (
+            p.el &&
+            box &&
+            box.width <= window.innerWidth &&
+            box.height <= window.innerHeight / 2
+        )
+            showHighlights(
+                [{ id: "click", role: "anchor" }],
+                new Map([["click", p.el]]),
+                cur.current.id,
+                nextToken(),
+                { userInitiated: true },
+            );
+        setReturnable(canReturn());
+        const note = `Where you clicked: ${p.label}.${r === "moved" ? " Say back to return." : ""}`;
+        announce(note);
+        return note;
+    }
+
     function runNav(cmd: NavCommand, text: string): boolean {
+        if (cmd.kind === "return" || cmd.kind === "place") {
+            let note: string;
+            if (cmd.kind === "return") {
+                note = returnToPreviousView()
+                    ? "Back to where you were."
+                    : "Nothing to go back to.";
+                setReturnable(canReturn());
+                announce(note);
+            } else {
+                const p = latestPlace();
+                note = p ? goPlace(p) : "No click recorded yet.";
+            }
+            setMessages((m) => [
+                ...m,
+                { id: `user-${Date.now()}`, role: "user", text },
+                { id: `nav-${Date.now()}`, role: "assistant", text: note },
+            ]);
+            return true;
+        }
         const last = [...messages]
             .reverse()
             .find((m) => (cited(m)?.ids.length ?? 0) > 0);
@@ -783,7 +876,10 @@ export default function ChatPopover({
     async function sendText(text: string) {
         if (!text || busy) return;
         const userId = `user-${Date.now()}`;
-        setMessages((m) => [...m, { id: userId, role: "user", text }]);
+        setMessages((m) => [
+            ...m,
+            { id: userId, role: "user", text, captureId: cur.current.id },
+        ]);
         setBusy(true);
         // minted at ask time: an auto-highlight for this reply loses to anything newer
         const token = nextToken();
@@ -971,6 +1067,33 @@ export default function ChatPopover({
                             ) : (
                                 <>
                                     {m.text}
+                                    {(() => {
+                                        // once per place: the first question asked there
+                                        const place = placeOf(m.captureId);
+                                        const first =
+                                            place &&
+                                            messages.findIndex(
+                                                (x) =>
+                                                    x.role === "user" &&
+                                                    placeOf(x.captureId) ===
+                                                        place,
+                                            ) === i;
+                                        return place && first ? (
+                                            <PlaceButton
+                                                type="button"
+                                                onClick={() => goPlace(place)}
+                                                title="Go back to where you clicked to ask this"
+                                                style={{
+                                                    fontSize: Math.max(
+                                                        12,
+                                                        fs - 3,
+                                                    ),
+                                                }}
+                                            >
+                                                Where I clicked: {place.label}
+                                            </PlaceButton>
+                                        ) : null;
+                                    })()}
                                     {m.view && (
                                         <SentView
                                             src={m.view}
@@ -1087,6 +1210,31 @@ export default function ChatPopover({
                                                 ›
                                             </QuickActionButton>
                                         </NavGroup>
+                                    )}
+                                    {returnable && mine && (
+                                        <QuickActionButton
+                                            type="button"
+                                            onClick={() => {
+                                                const ok =
+                                                    returnToPreviousView();
+                                                setReturnable(canReturn());
+                                                announce(
+                                                    ok
+                                                        ? "Back to where you were."
+                                                        : "Nothing to go back to.",
+                                                );
+                                            }}
+                                            chipBg={C.chipBg}
+                                            chipBorder={C.chipBorder}
+                                            chipText={C.chipText}
+                                            busy={false}
+                                            title="Return to where you were reading"
+                                            style={{
+                                                fontSize: Math.max(12, fs - 2),
+                                            }}
+                                        >
+                                            Back
+                                        </QuickActionButton>
                                     )}
                                 </EvidenceRow>
                             )}

@@ -1,5 +1,13 @@
 import { describe, expect, it, vi } from "vitest";
-import { isOwnUI, onViewChange, revealElement, setView } from "./zoom";
+import {
+    canReturn,
+    directionOf,
+    isOwnUI,
+    onViewChange,
+    returnToPreviousView,
+    revealElement,
+    setView,
+} from "./zoom";
 
 describe("onViewChange", () => {
     it("returns an unsubscribe that stops later notifications", () => {
@@ -27,10 +35,10 @@ describe("revealElement", () => {
         window.scrollTo = scroll as unknown as typeof window.scrollTo;
         const el = document.createElement("div");
         // jsdom viewport is 1024x768 and scrollX/Y are 0
-        expect(revealElement(el, () => box(100, 2000))).toBe(true);
+        expect(revealElement(el, () => box(100, 2000))).toBe("moved");
         expect(scroll).toHaveBeenLastCalledWith(150 - 512, 2020 - 384);
         scroll.mockClear();
-        expect(revealElement(el, () => box(100, 200))).toBe(true);
+        expect(revealElement(el, () => box(100, 200))).toBe("in-view");
         expect(scroll).not.toHaveBeenCalled();
     });
 
@@ -43,7 +51,7 @@ describe("revealElement", () => {
         });
         const el = document.createElement("div");
         // inside the layout viewport but left of the pinched visual viewport
-        expect(revealElement(el, () => box(100, 250))).toBe(true);
+        expect(revealElement(el, () => box(100, 250))).toBe("moved");
         expect(scroll).toHaveBeenLastCalledWith(150 - 500, 270 - 350);
         Object.defineProperty(window, "visualViewport", {
             configurable: true,
@@ -59,9 +67,32 @@ describe("revealElement", () => {
         expect(scroll).toHaveBeenCalledWith(150 - 512, 220 - 384);
     });
 
+    it("remembers each move so the user can return to where they were", () => {
+        const scroll = vi.fn();
+        window.scrollTo = scroll as unknown as typeof window.scrollTo;
+        while (returnToPreviousView()); // clean history from earlier tests
+        expect(canReturn()).toBe(false);
+        const el = document.createElement("div");
+        revealElement(el, () => box(100, 3000));
+        expect(canReturn()).toBe(true);
+        scroll.mockClear();
+        expect(returnToPreviousView()).toBe(true);
+        // jsdom view is (0, 0), so returning centres the old view centre again
+        expect(scroll).toHaveBeenCalledWith(0, 0);
+        expect(canReturn()).toBe(false);
+        expect(returnToPreviousView()).toBe(false);
+    });
+
+    it("names where an element is, for spoken status", () => {
+        const el = document.createElement("div");
+        expect(directionOf(el, () => box(100, 3000))).toBe("below");
+        expect(directionOf(el, () => box(100, -300))).toBe("above");
+        expect(directionOf(el, () => box(100, 200))).toBe("on screen");
+    });
+
     it("refuses an element with no box", () => {
         const el = document.createElement("div");
-        expect(revealElement(el, () => box(0, 0, 0, 0))).toBe(false);
+        expect(revealElement(el, () => box(0, 0, 0, 0))).toBe("none");
     });
 });
 

@@ -75,6 +75,10 @@ export const speakable = (text: string) => text.replace(MARKER, "");
 export type NavCommand =
     | { kind: "next" }
     | { kind: "prev" }
+    /** return to where the user was before the latest move to evidence */
+    | { kind: "return" }
+    /** go to where the user last clicked to ask */
+    | { kind: "place" }
     | { kind: "all" }
     | { kind: "clear" }
     | { kind: "nth"; n: number };
@@ -104,7 +108,20 @@ export function navCommand(message: string): NavCommand | null {
         .replace(/[.!?。]+$/, "");
     const show = "(?:show |highlight |go to )?(?:me )?(?:the )?";
     if (new RegExp(`^${show}next(?: one)?$`).test(m)) return { kind: "next" };
-    if (new RegExp(`^${show}(?:prev|previous|back|last one)(?: one)?$`).test(m))
+    if (
+        /^(?:go |take me )?(?:back )?to (?:where i (?:clicked|asked)|my click)$|^where i (?:clicked|asked)$|^my click$|^クリックした(?:場所|所|ところ)(?:へ|に)?(?:戻る|行く)?$/.test(
+            m,
+        )
+    )
+        return { kind: "place" };
+    // "back" returns the view to where the user was; "previous" steps the evidence
+    if (
+        /^(?:go )?back(?: to where i was)?$|^return$|^戻る$|^戻って$|^もどる$/.test(
+            m,
+        )
+    )
+        return { kind: "return" };
+    if (new RegExp(`^${show}(?:prev|previous|last one)(?: one)?$`).test(m))
         return { kind: "prev" };
     if (/^(?:show |highlight )?(?:me )?(?:them )?all(?: of them)?$/.test(m))
         return { kind: "all" };

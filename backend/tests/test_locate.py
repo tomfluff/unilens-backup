@@ -168,14 +168,19 @@ def test_unknown_ids_are_dropped(client, capture, monkeypatch):
 
 # ── History ─────────────────────────────────────────────────────────────────
 
-EXCHANGE = [{"role": "user", "text": Q}, {"role": "assistant", "text": Q}]
+
+def exchange(cap_id):
+    return [
+        {"role": "user", "text": Q, "capture_id": cap_id},
+        {"role": "assistant", "text": Q},
+    ]
 
 
 def test_history_appended_to_chat_json(client, capture):
     cap = capture()
     _locate(client, cap)
     chat = (app_module.CAPTURES_DIR / cap / "chat.json").read_text()
-    assert json.loads(chat) == EXCHANGE
+    assert json.loads(chat) == exchange(cap)
 
 
 def test_history_appended_to_the_session(client, capture):
@@ -183,7 +188,7 @@ def test_history_appended_to_the_session(client, capture):
     sid = "abcdefabcdef"  # minted syntax; anything else is "no session"
     app_module._save_session(sid, {"captures": [cap], "history": []})
     _locate(client, cap, session_id=sid)
-    assert app_module._load_session(sid)["history"] == EXCHANGE
+    assert app_module._load_session(sid)["history"] == exchange(cap)
     assert (app_module.CAPTURES_DIR / cap / "chat.json").read_text() == "[]"
 
 

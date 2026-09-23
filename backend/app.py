@@ -1059,7 +1059,7 @@ def create_app():
             # deltas went out as the model wrote them; history keeps only real ids
             reply = _strip_unknown_cites("".join(parts), cite_ids)
             new_history = history + [
-                {"role": "user", "text": message},
+                {"role": "user", "text": message, "capture_id": cap_id},
                 {"role": "assistant", "text": reply},
             ]
             _save_history(cap_dir, sid, session, new_history)
@@ -1115,7 +1115,7 @@ def create_app():
         latency_ms = round((time.perf_counter() - t0) * 1000)
 
         history += [
-            {"role": "user", "text": message},
+            {"role": "user", "text": message, "capture_id": cap_id},
             {"role": "assistant", "text": reply},
         ]
         _save_history(cap_dir, sid, session, history)
@@ -1189,7 +1189,7 @@ def create_app():
         highlights = [h.model_dump() for h in result.highlights if h.id in ids]
 
         history += [
-            {"role": "user", "text": question},
+            {"role": "user", "text": question, "capture_id": cap_id},
             {"role": "assistant", "text": result.answer},
         ]
         _save_history(cap_dir, sid, session, history)

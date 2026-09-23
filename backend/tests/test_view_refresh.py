@@ -30,3 +30,24 @@ def test_session_note_marks_a_view_refresh_as_the_same_question(client):
 
 def test_system_prompt_explains_view_refresh():
     assert "metadata.viewRefresh" in app_module.SYSTEM_PROMPT
+
+
+def test_history_records_which_capture_each_question_came_from(client):
+    """The popover offers "where I clicked" per question: it needs the capture id."""
+    first = client.post(
+        "/api/capture",
+        json={"image": "data:image/png;base64," + PNG_B64, "meta": {"clickX": 1}},
+    ).get_json()
+    sid = first["session_id"]
+    client.post(
+        "/api/chat",
+        json={"capture_id": first["id"], "session_id": sid, "message": "what is this?"},
+    )
+    body = client.post(
+        "/api/chat/stream",
+        json={"capture_id": first["id"], "session_id": sid, "message": "and this?"},
+    ).get_data(as_text=True)
+    assert '"done": true' in body
+    history = app_module._load_session(sid)["history"]
+    users = [h for h in history if h["role"] == "user"]
+    assert [h.get("capture_id") for h in users] == [first["id"], first["id"]]
