@@ -471,9 +471,18 @@ export function revealElement(
     let cx = L + W / 2;
     let cy = T + H / 2;
     if (a) {
+        // bands beside the popover only help when the page can pan sideways: at 100%
+        // most pages cannot, so the element goes above or below the popover instead
+        const canPanX = frozen
+            ? layoutW * scale > W
+            : document.documentElement.scrollWidth > window.innerWidth;
         const bands = [
-            { x: L, y: T, w: a.left - L, h: H },
-            { x: a.right, y: T, w: L + W - a.right, h: H },
+            ...(canPanX
+                ? [
+                      { x: L, y: T, w: a.left - L, h: H },
+                      { x: a.right, y: T, w: L + W - a.right, h: H },
+                  ]
+                : []),
             { x: L, y: T, w: W, h: a.top - T },
             { x: L, y: a.bottom, w: W, h: T + H - a.bottom },
         ].filter((b) => b.w > 0 && b.h > 0);
@@ -482,7 +491,8 @@ export function revealElement(
             (p, q) => q.w * q.h - p.w * p.h,
         )[0];
         if (pick) {
-            cx = pick.x + pick.w / 2;
+            // a full-width band keeps the element's own x: no sideways move is possible
+            cx = canPanX ? pick.x + pick.w / 2 : r.left + r.width / 2;
             cy = pick.y + pick.h / 2;
         }
     }

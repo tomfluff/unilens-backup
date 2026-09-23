@@ -90,17 +90,35 @@ describe("revealElement", () => {
         expect(directionOf(el, () => box(100, 200))).toBe("on screen");
     });
 
-    it("moves an element the popover covers into the free band beside it", () => {
+    it("moves an element the popover covers above or below it when the page cannot pan sideways", () => {
         const scroll = vi.fn();
         window.scrollTo = scroll as unknown as typeof window.scrollTo;
         const el = document.createElement("div");
-        // jsdom viewport 1024x768; popover on the right half; element under it
-        const popover = { left: 600, top: 0, right: 1024, bottom: 768 };
-        expect(revealElement(el, () => box(700, 300), { avoid: popover })).toBe(
+        // jsdom viewport 1024x768, no horizontal overflow; popover over the lower half
+        const popover = { left: 300, top: 400, right: 700, bottom: 768 };
+        expect(revealElement(el, () => box(400, 500), { avoid: popover })).toBe(
             "moved",
         );
-        // centred in the free left band (0..600 wide): x 750 -> 300, y stays centred
+        // x unchanged (cannot pan sideways); centred in the band above: y 520 -> 200
+        expect(scroll).toHaveBeenLastCalledWith(0, 520 - 200);
+    });
+
+    it("uses the band beside the popover when the page can pan sideways", () => {
+        const scroll = vi.fn();
+        window.scrollTo = scroll as unknown as typeof window.scrollTo;
+        Object.defineProperty(document.documentElement, "scrollWidth", {
+            configurable: true,
+            value: 3000,
+        });
+        const el = document.createElement("div");
+        const popover = { left: 600, top: 0, right: 1024, bottom: 768 };
+        revealElement(el, () => box(700, 300), { avoid: popover });
+        // centred in the free left band (0..600): x 750 -> 300
         expect(scroll).toHaveBeenLastCalledWith(750 - 300, 320 - 384);
+        Object.defineProperty(document.documentElement, "scrollWidth", {
+            configurable: true,
+            value: 0,
+        });
     });
 
     it("refuses an element with no box", () => {

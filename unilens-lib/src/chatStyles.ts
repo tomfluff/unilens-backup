@@ -51,7 +51,8 @@ ${R} .ulc-tools { display: flex; align-items: center; gap: .35em; margin-top: .5
 ${R} .ulc-speak { display: inline-grid; place-items: center; width: 2.2em; height: 2.2em; padding: 0; border-radius: 999px; background: transparent; border: 1px solid currentColor; }
 ${R} .ulc-place { display: inline-flex; align-items: center; gap: .35em; max-width: 100%; margin-top: .45em; padding: .2em .6em; min-height: 2em; border-radius: 999px; background: transparent; border: 1px solid currentColor; font-size: 1em; }
 ${R} .ulc-place span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-${R} .ulc-quick { display: flex; flex-wrap: wrap; gap: .4em; flex: none; }
+${R} .ulc-quick { display: grid; grid-template-columns: repeat(3, 1fr); gap: .35em; flex: none; }
+${R} .ulc-quick button { min-width: 0; line-height: 1.2; padding-left: .3em; padding-right: .3em; }
 ${R} .ulc-in { display: flex; gap: .45em; flex: none; align-items: center; }
 ${R} .ulc-in input::placeholder { opacity: 1; }
 ${R} .ulc-status { flex: none; min-height: 1.6em; font-size: 1em; display: flex; align-items: center; gap: .45em; overflow: hidden; line-height: 1.35; }
@@ -108,7 +109,7 @@ ${A} .ulc-speak, ${A} .ulc-place { color: var(--muted); border-color: #9ca3af; }
 ${A}${HC} .ulc-speak, ${A}${HC} .ulc-place { color: #fff; border-color: #fff; }
 ${A} .ulc-me .ulc-place { color: var(--acc-fg); border-color: currentColor; }
 ${A} .ulc-quick { padding: .55em 1em 0; border-top: 1px solid var(--line); }
-${A} .ulc-quick button { min-height: 2.2em; padding: 0 .8em; border: 1px solid #6b7280; border-radius: 999px; background: var(--soft); color: var(--fg); font-size: 1em; }
+${A} .ulc-quick button { min-height: 2.3em; border: 1px solid #6b7280; border-radius: 999px; background: var(--soft); color: var(--fg); font-size: 1em; }
 ${A}${HC} .ulc-quick button { border: 2px solid #fff; }
 ${A} .ulc-in { padding: .6em .8em .35em; }
 ${A} .ulc-in input { height: 2.8em; padding: 0 .85em; border: 1px solid #6b7280; border-radius: 12px; background: var(--bg); color: var(--fg); caret-color: var(--acc); }
@@ -116,7 +117,6 @@ ${A}${HC} .ulc-in input { border: 2px solid #fff; }
 ${A} .ulc-in input::placeholder { color: var(--muted); }
 ${A} .ulc-in .ulc-ib { width: 2.8em; height: 2.8em; border-radius: 12px; }
 ${A} .ulc-in .ulc-go { background: var(--acc); color: var(--acc-fg); }
-${A} .ulc-in .ulc-go:disabled { background: var(--soft); color: var(--muted); opacity: 1; }
 ${A} .ulc-log { scrollbar-color: #9ca3af transparent; }
 ${A}${HC} .ulc-log { scrollbar-color: #fff #000; }
 ${A} .ulc-in .ulc-ib[aria-pressed="true"] { background: #dc2626; color: #fff; }
@@ -157,9 +157,8 @@ ${G} .ulc-key.ulc-full { grid-column: 1 / -1; display: flex; justify-content: ce
 ${G} .ulc-speak, ${G} .ulc-place { color: var(--muted); border-color: #8a929e; }
 ${G} .ulc-bot .ulc-speak { color: var(--label-fg); border-color: currentColor; }
 ${G} .ulc-quick { margin-top: 10px; }
-${G} .ulc-quick button { flex: 1; min-height: 2.6em; padding: 0 .3em; border: 1.5px solid #8a929e; border-radius: 10px; background: transparent; color: #fff; font-size: 1em; }
+${G} .ulc-quick button { min-height: 2.6em; border: 1.5px solid #8a929e; border-radius: 10px; background: transparent; color: #fff; font-size: 1em; }
 ${G} .ulc-log { scrollbar-color: #6b7280 transparent; }
-${G} .ulc-in .ulc-go:disabled { background: var(--key); color: var(--muted); opacity: 1; }
 ${G}${HC} .ulc-quick button { border: 2px solid #ffd400; color: #ffd400; }
 ${G} .ulc-in { margin-top: 8px; }
 ${G} .ulc-in input { height: 3em; padding: 0 .8em; border: 2px solid #8a929e; border-radius: 10px; background: #0f1114; color: #fff; caret-color: var(--lcd); }
@@ -196,7 +195,7 @@ ${S} .unilens-cite { display: inline-flex; align-items: center; justify-content:
 ${S} .unilens-cite[aria-current="true"] { background: var(--line); color: #fff; }
 ${S}${HC} .unilens-cite[aria-current="true"] { color: #000; }
 ${S} .ulc-signs { display: grid; grid-template-columns: 1fr 1fr; gap: .45em; margin-top: .85em; }
-${S} .ulc-sign { display: flex; align-items: center; gap: .45em; min-height: 2.9em; padding: 0 .7em; border: 0; border-radius: 4px; background: var(--exit); color: var(--exit-fg); font-weight: 700; text-align: left; }
+${S} .ulc-sign { display: flex; align-items: center; gap: .35em; min-height: 2.9em; padding: 0 .5em; line-height: 1.2; border: 0; border-radius: 4px; background: var(--exit); color: var(--exit-fg); font-weight: 700; text-align: left; }
 ${S} .ulc-sign.ulc-span { grid-column: 1 / -1; }
 ${S} .ulc-sign[aria-pressed="true"] { box-shadow: inset 0 0 0 3px #111; }
 ${S} .ulc-codes { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; gap: .4em; padding: .35em; border-radius: 4px; background: #f1f2f3; }
@@ -207,9 +206,8 @@ ${S} .ulc-of { margin-left: auto; padding-right: .3em; font-weight: 700; font-va
 ${S} .ulc-speak, ${S} .ulc-place { color: var(--muted); border-color: #8a8f95; }
 ${S}${HC} .ulc-speak, ${S}${HC} .ulc-place { color: #fff; border-color: #fff; }
 ${S} .ulc-quick { padding: .6em .8em 0; }
-${S} .ulc-quick button { flex: 1; min-height: 2.5em; border: 2px solid var(--fg); border-radius: 4px; background: transparent; color: var(--fg); font-weight: 700; font-size: 1em; }
+${S} .ulc-quick button { min-height: 2.5em; border: 2px solid var(--fg); border-radius: 4px; background: transparent; color: var(--fg); font-weight: 600; font-size: 1em; }
 ${S} .ulc-log { scrollbar-color: #8a8f95 transparent; }
-${S} .ulc-in .ulc-go:disabled { background: transparent; color: var(--muted); border-color: #8a8f95; opacity: 1; }
 ${S} .ulc-in { padding: .6em .8em .35em; }
 ${S} .ulc-in input { height: 2.9em; padding: 0 .7em; border: 2px solid var(--fg); border-radius: 4px; background: var(--panel); color: var(--fg); caret-color: var(--line); }
 ${S} .ulc-in input::placeholder { color: var(--muted); }
@@ -220,6 +218,11 @@ ${S} .ulc-in .ulc-ib[aria-pressed="true"] { background: var(--err); border-color
 ${S} .ulc-status { padding: 0 .8em .65em; color: var(--muted); }
 ${S} :focus-visible { outline: 3px solid #111; outline-offset: 2px; box-shadow: 0 0 0 6px var(--exit); }
 ${S}${HC} :focus-visible { outline-color: #fff; }
+/* send stays quiet until there is text; last, so no style or contrast rule overrides it,
+   and the arrow keeps at least 3:1 against its own ground in every mode */
+${A} .ulc-in .ulc-go:disabled { background: var(--soft); color: var(--muted); opacity: 1; }
+${G} .ulc-in .ulc-go:disabled { background: var(--key); color: var(--muted); opacity: 1; }
+${S} .ulc-in .ulc-go:disabled { background: transparent; color: var(--fg); border-color: var(--muted); opacity: 1; }
 `;
 
 let injected: HTMLStyleElement | null = null;
