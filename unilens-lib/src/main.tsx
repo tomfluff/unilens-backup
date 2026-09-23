@@ -29,6 +29,7 @@ import { initHint } from "./hint";
 import { initMinimap } from "./minimap";
 import { recordPlace } from "./places";
 import { initSettings } from "./SettingsPanel";
+import { recordCapture } from "./sentLog";
 import { getSettings, updateSetting } from "./settings";
 import { setSpeechBackend } from "./speech";
 import { clientToContent, initZoom, isOwnUI } from "./zoom";
@@ -121,6 +122,7 @@ async function refreshCapture(
         // never let a slow refresh take the guard from a capture opened since
         if (gen !== generation) return null;
         tagLastCapture(id);
+        recordCapture(id, cap, true);
         setCurrentCapture(id);
         // same question point as the capture it refreshes
         recordPlace({
@@ -252,6 +254,7 @@ export function init(options: InitOptions = {}) {
             el,
             label: placeLabel(cap),
         });
+        recordCapture(id, cap);
         openPopover(clientX, clientY, id, cap, backend);
     }
 
