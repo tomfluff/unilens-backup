@@ -5,17 +5,15 @@
 import { useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
 import styled from "styled-components";
-import { HIGHLIGHT_PRESETS, type HighlightPreset } from "./highlightStyles";
 import {
-    AUTO_HIGHLIGHTS,
     type BoolSettingKey,
     clampSetting,
-    ESCAPE_ORDERS,
+    ENUM_CHOICES,
+    type EnumKey,
     NUMBER_KNOBS,
     type NumSettingKey,
     SELECT_CHOICES,
     type SelectKnobKey,
-    type Settings,
     TOGGLE_LABELS,
     updateSetting,
     useSettings,
@@ -29,6 +27,16 @@ const SettingsSelect = styled.select`
     border: 1px solid rgba(255, 255, 255, 0.25);
     border-radius: 6px;
     padding: 3px 6px;
+`;
+
+const SettingsColor = styled.input`
+    margin-left: auto;
+    width: 3em;
+    height: 1.8em;
+    padding: 0;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    border-radius: 6px;
+    background: none;
 `;
 
 const SettingsNumber = styled.input`
@@ -47,9 +55,7 @@ const SELECT_KNOBS = Object.keys(SELECT_CHOICES) as SelectKnobKey[];
 const NUMBER_ROWS = (Object.keys(NUMBER_KNOBS) as NumSettingKey[]).filter(
     (key) => !Object.hasOwn(SELECT_CHOICES, key),
 );
-const PRESETS = Object.keys(HIGHLIGHT_PRESETS) as HighlightPreset[];
-const ESCAPE_KEYS = Object.keys(ESCAPE_ORDERS) as Settings["escapeOrder"][];
-const AUTO_KEYS = Object.keys(AUTO_HIGHLIGHTS) as Settings["autoHighlight"][];
+const ENUM_ROWS = Object.keys(ENUM_CHOICES) as EnumKey[];
 
 /**
  * Free-number row. Uncontrolled and committed on blur/Enter so typing "160" into a
@@ -261,72 +267,41 @@ function Panel() {
                 ))}
 
                 <SettingLabel>
-                    Highlight style
-                    <SettingsSelect
-                        value={clampSetting(
-                            "highlightStyle",
-                            settings.highlightStyle,
-                        )}
+                    Highlight colour
+                    <SettingsColor
+                        type="color"
+                        value={clampSetting("hlColor", settings.hlColor)}
                         onChange={(e) =>
                             updateSetting(
-                                "highlightStyle",
-                                e.currentTarget.value as HighlightPreset,
+                                "hlColor",
+                                clampSetting("hlColor", e.currentTarget.value),
                             )
                         }
-                    >
-                        {PRESETS.map((preset) => (
-                            <option key={preset} value={preset}>
-                                {preset}
-                            </option>
-                        ))}
-                    </SettingsSelect>
+                    />
                 </SettingLabel>
 
-                <SettingLabel>
-                    Auto-highlight
-                    <SettingsSelect
-                        value={clampSetting(
-                            "autoHighlight",
-                            settings.autoHighlight,
-                        )}
-                        onChange={(e) =>
-                            updateSetting(
-                                "autoHighlight",
-                                e.currentTarget
-                                    .value as Settings["autoHighlight"],
-                            )
-                        }
-                    >
-                        {AUTO_KEYS.map((k) => (
-                            <option key={k} value={k}>
-                                {AUTO_HIGHLIGHTS[k]}
-                            </option>
-                        ))}
-                    </SettingsSelect>
-                </SettingLabel>
-
-                <SettingLabel>
-                    Escape order
-                    <SettingsSelect
-                        value={clampSetting(
-                            "escapeOrder",
-                            settings.escapeOrder,
-                        )}
-                        onChange={(e) =>
-                            updateSetting(
-                                "escapeOrder",
-                                e.currentTarget
-                                    .value as Settings["escapeOrder"],
-                            )
-                        }
-                    >
-                        {ESCAPE_KEYS.map((order) => (
-                            <option key={order} value={order}>
-                                {ESCAPE_ORDERS[order]}
-                            </option>
-                        ))}
-                    </SettingsSelect>
-                </SettingLabel>
+                {ENUM_ROWS.map((key) => (
+                    <SettingLabel key={key}>
+                        {ENUM_CHOICES[key].label}
+                        <SettingsSelect
+                            value={String(clampSetting(key, settings[key]))}
+                            onChange={(e) =>
+                                updateSetting(
+                                    key,
+                                    clampSetting(key, e.currentTarget.value),
+                                )
+                            }
+                        >
+                            {Object.entries(ENUM_CHOICES[key].choices).map(
+                                ([value, label]) => (
+                                    <option key={value} value={value}>
+                                        {label}
+                                    </option>
+                                ),
+                            )}
+                        </SettingsSelect>
+                    </SettingLabel>
+                ))}
 
                 {NUMBER_ROWS.map((key) => (
                     <NumberRow key={key} setting={key} value={settings[key]} />

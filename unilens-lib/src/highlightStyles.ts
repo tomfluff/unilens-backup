@@ -1,37 +1,89 @@
 /**
- * Highlight style presets — the visual design of the located-element outline is a
- * research variable, not a fixed look (docs/research/2026-09-19-phase1-research-probes.md).
- * highlight.ts renders from one of these parameter objects; adding a style is adding
- * a row. `wcag-ring` is the default and the floor: W3C Technique C40, two colour
- * bands ≥9:1 apart so one of them always clears 3:1 against a solid background.
+ * The highlight look, in layers (builder's decision, 2026-09-23). Some choices
+ * exclude each other and some stack:
+ *
+ *   backdrop   one of: none | dim | spotlight   (both darken the page, so never both)
+ *   outline    one of: ring | band | brackets | underline | none
+ *   additions  any of: fill, glow, numbered badges
+ *   colour     one, for everything but the two-band ring
+ *
+ * The look stays a research variable (docs/research/2026-09-19-phase1-research-probes.md);
+ * highlight.ts and minimap.ts render from lookFrom(settings). The two-band ring is
+ * W3C Technique C40: black and white bands, so one of them always clears 3:1.
  */
 
-export interface HighlightStyle {
-    /** two nested bands; width in screen px per band comes from the ringWidth setting */
-    ring?: { inner: string; outer: string; offset: number };
-    /** translucent tint over the element */
-    fill?: { color: string; alpha: number };
-    /** soft halo outside the ring */
-    glow?: { color: string; blur: number; spread: number };
-    /** darken everything except the element */
-    dimOthers?: { alpha: number };
-    /** brief opacity pulse when the highlight appears; never under reduced motion */
-    pulse?: { cycles: number; ms: number; minOpacity: number };
+export const BACKDROPS = {
+    none: "No backdrop",
+    dim: "Dim the rest of the page",
+    spotlight: "Spotlight (darker, soft edges)",
+} as const;
+export type Backdrop = keyof typeof BACKDROPS;
+
+export const OUTLINES = {
+    band: "Thick band in the colour",
+    ring: "Two-band ring (black and white)",
+    brackets: "Corner brackets",
+    underline: "Marker underline",
+    none: "No outline",
+} as const;
+export type Outline = keyof typeof OUTLINES;
+
+export interface HighlightLook {
+    backdrop: Backdrop;
+    outline: Outline;
+    fill: boolean;
+    glow: boolean;
+    badges: boolean;
+    color: string;
 }
 
-const RING = { inner: "#000", outer: "#fff", offset: 3 };
+export const BACKDROP_ALPHA: Record<Exclude<Backdrop, "none">, number> = {
+    dim: 0.55,
+    spotlight: 0.72,
+};
+/** spotlight hole feather, px of blur */
+export const SPOTLIGHT_FEATHER = 14;
+export const FILL_ALPHA = 0.3;
+export const RING = { inner: "#000", outer: "#fff" };
+/** dark edge drawn around coloured strokes so a yellow band still reads on white */
+export const EDGE = "#000";
+/** gap between the element and its outline, px */
+export const OUTLINE_OFFSET = 3;
 
-export const HIGHLIGHT_PRESETS = {
-    "wcag-ring": { ring: RING },
-    "yellow-fill": { ring: RING, fill: { color: "#ffe600", alpha: 0.35 } },
-    glow: { ring: RING, glow: { color: "#ffd400", blur: 18, spread: 6 } },
-    "dim-others": { ring: RING, dimOthers: { alpha: 0.55 } },
-    "dim-yellow-glow": {
-        ring: RING,
-        fill: { color: "#ffe600", alpha: 0.35 },
-        glow: { color: "#ffd400", blur: 18, spread: 6 },
-        dimOthers: { alpha: 0.55 },
-    },
-} satisfies Record<string, HighlightStyle>;
+export const isHexColor = (s: unknown): s is string =>
+    typeof s === "string" && /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(s);
 
-export type HighlightPreset = keyof typeof HIGHLIGHT_PRESETS;
+export function lookFrom(s: {
+    hlBackdrop: Backdrop;
+    hlOutline: Outline;
+    hlFill: boolean;
+    hlGlow: boolean;
+    hlBadges: boolean;
+    hlColor: string;
+}): HighlightLook {
+    return {
+        backdrop: s.hlBackdrop,
+        outline: s.hlOutline,
+        fill: s.hlFill,
+        glow: s.hlGlow,
+        badges: s.hlBadges,
+        color: isHexColor(s.hlColor) ? s.hlColor : "#ffd400",
+    };
+}
+
+/**
+ * The outline actually drawn. "No outline" with nothing else on would draw
+ * nothing at all; a highlight must always be visible, so it falls back to the ring.
+ */
+export function drawnOutline(look: HighlightLook): Outline {
+    const other = look.fill || look.glow || look.backdrop !== "none";
+    return look.outline === "none" && !other ? "ring" : look.outline;
+}
+
+export function colorWithAlpha(hex: string, alpha: number): string {
+    const m = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.exec(hex);
+    if (!m) return hex;
+    const h = m[1].length === 3 ? [...m[1]].map((c) => c + c).join("") : m[1];
+    const n = Number.parseInt(h, 16);
+    return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${alpha})`;
+}

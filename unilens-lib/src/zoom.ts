@@ -423,13 +423,14 @@ export function isOwnUI(target: EventTarget | null): boolean {
 }
 
 /**
- * "Scroll to": bring an element to the middle of the screen under either pan
- * engine. Leaves the view alone when the element is already fully on screen, so
- * the page never moves without need. False when the element has no box.
+ * Bring an element to the middle of the screen under either pan engine. Leaves the
+ * view alone when the element is already fully on screen, so the page never moves
+ * without need, unless `always`. False when the element has no box.
  */
 export function revealElement(
     el: Element,
     measure?: (el: Element) => ClientRect,
+    opts: { always?: boolean } = {},
 ): boolean {
     const r = boxOf(el, measure);
     if (isEmptyBox(r)) return false;
@@ -441,6 +442,7 @@ export function revealElement(
     const W = vv?.width ?? window.innerWidth;
     const H = vv?.height ?? window.innerHeight;
     if (
+        !opts.always &&
         r.left >= L &&
         r.top >= T &&
         r.left + r.width <= L + W &&

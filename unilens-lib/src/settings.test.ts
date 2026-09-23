@@ -66,11 +66,14 @@ describe("clampSetting", () => {
         expect(clampSetting("autoHighlight", "toString")).toBe(
             defaults.autoHighlight,
         );
-        const gone = "neon" as Settings["highlightStyle"];
-        expect(clampSetting("highlightStyle", gone)).toBe(
-            defaults.highlightStyle,
+        const gone = "neon" as Settings["hlOutline"];
+        expect(clampSetting("hlOutline", gone)).toBe(defaults.hlOutline);
+        expect(clampSetting("hlOutline", "brackets")).toBe("brackets");
+        expect(clampSetting("hlBackdrop", "spotlight")).toBe("spotlight");
+        expect(clampSetting("offscreenCue", "pointer")).toBe("pointer");
+        expect(clampSetting("moveToEvidence", "sideways")).toBe(
+            defaults.moveToEvidence,
         );
-        expect(clampSetting("highlightStyle", "glow")).toBe("glow");
     });
 
     it("coerces numeric strings before clamping", () => {
@@ -89,12 +92,19 @@ describe("clampSetting", () => {
     });
 
     it("never treats a prototype key as a table entry", () => {
-        expect(clampSetting("highlightStyle", "constructor")).toBe(
-            defaults.highlightStyle,
+        expect(clampSetting("hlOutline", "constructor")).toBe(
+            defaults.hlOutline,
         );
         expect(clampSetting("escapeOrder", "toString")).toBe(
             defaults.escapeOrder,
         );
+    });
+
+    it("accepts only a hex highlight colour", () => {
+        expect(clampSetting("hlColor", "#ff00aa")).toBe("#ff00aa");
+        expect(clampSetting("hlColor", "#f0a")).toBe("#f0a");
+        for (const bad of ["red", "#ff00aa;background:url(x)", 7, "#12345"])
+            expect(clampSetting("hlColor", bad)).toBe(defaults.hlColor);
     });
 
     it("passes booleans and pinnedPos through, defaulting a non-boolean", () => {
@@ -110,27 +120,29 @@ describe("hydration", () => {
             "unilens-settings",
             JSON.stringify({
                 state: {
-                    highlightStyle: "nope",
+                    hlOutline: "nope",
+                    hlColor: "javascript:alert(1)",
                     escapeOrder: "x",
                     inventoryMaxDepth: "99",
                     captureRes: 0.75,
                     ringWidth: 4,
                     zoom: "yes",
                     bogusKey: 1,
-                    pulse: "constructor",
+                    hlBadges: "constructor",
                 },
                 version: 0,
             }),
         );
         await useSettings.persist.rehydrate();
         const s = getSettings();
-        expect(s.highlightStyle).toBe(defaults.highlightStyle);
+        expect(s.hlOutline).toBe(defaults.hlOutline);
+        expect(s.hlColor).toBe(defaults.hlColor);
         expect(s.escapeOrder).toBe(defaults.escapeOrder);
         expect(s.inventoryMaxDepth).toBe(NUMBER_KNOBS.inventoryMaxDepth.max);
         expect(s.captureRes).toBe(defaults.captureRes);
         expect(s.ringWidth).toBe(4);
         expect(s.zoom).toBe(defaults.zoom);
-        expect(s.pulse).toBe(defaults.pulse);
+        expect(s.hlBadges).toBe(defaults.hlBadges);
         expect(Object.hasOwn(s, "bogusKey")).toBe(false);
         expect(Object.keys(s).sort()).toEqual(Object.keys(defaults).sort());
         localStorage.removeItem("unilens-settings");

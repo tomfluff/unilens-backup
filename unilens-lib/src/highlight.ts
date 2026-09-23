@@ -4,21 +4,35 @@
  * transform, so screen pixels are screen pixels) and re-lays them as the page
  * scrolls, pans, zooms or mutates.
  *
- * Rendering comes from the selected HIGHLIGHT_PRESETS entry (see highlightStyles.ts);
- * this file owns geometry, lifetime, the current-capture guard, the single Escape
- * listener, and the ARIA live region. Nothing here touches the host page's DOM.
+ * The look comes from the layered settings (highlightStyles.ts: one backdrop, one
+ * outline, stacking fill/glow/badges, one colour). This file owns geometry, the
+ * off-screen cues, lifetime, the current-capture guard, the single Escape listener,
+ * and the ARIA live region. Nothing here touches the host page's DOM.
  */
 
-import { HIGHLIGHT_PRESETS, type HighlightStyle } from "./highlightStyles";
+import {
+    BACKDROP_ALPHA,
+    colorWithAlpha,
+    drawnOutline,
+    EDGE,
+    FILL_ALPHA,
+    type HighlightLook,
+    lookFrom,
+    OUTLINE_OFFSET,
+    RING,
+    SPOTLIGHT_FEATHER,
+} from "./highlightStyles";
 import { setTargets } from "./minimap";
 import { getSettings } from "./settings";
 import {
     boxOf,
+    type ClientRect,
     getZoom,
     isEmptyBox,
     isOwnMutation,
     onViewChange,
     onZoomChange,
+    revealElement,
 } from "./zoom";
 
 export type HighlightRole = "target" | "anchor" | "source";
@@ -39,7 +53,18 @@ const CLASS = "unilens-hl";
 let layer: HTMLDivElement | null = null;
 let styleEl: HTMLStyleElement | null = null;
 let liveRegion: HTMLDivElement | null = null;
-let boxes: { el: Element; box: HTMLDivElement; role: HighlightRole }[] = [];
+interface Drawn {
+    el: Element;
+    box: HTMLDivElement;
+    role: HighlightRole;
+    badge?: string;
+    /** the look the box's decorations were built for; rebuilt when it changes */
+    decoKey?: string;
+}
+let boxes: Drawn[] = [];
+let cueHost: HTMLDivElement | null = null;
+/** last pointer position, for the pointer cue; null until the mouse moves */
+let pointer: { x: number; y: number } | null = null;
 let dimBox: HTMLDivElement | null = null;
 let measure: Measure = defaultMeasure;
 
@@ -132,6 +157,14 @@ export function init() {
     if (installed) return;
     installed = true;
     window.addEventListener("keydown", onKey);
+    // the pointer cue needs to know where the mouse is before the first highlight
+    window.addEventListener(
+        "mousemove",
+        (e) => {
+            pointer = { x: e.clientX, y: e.clientY };
+        },
+        { passive: true, capture: true },
+    );
 }
 
 // ── rendering ────────────────────────────────────────────────────────────────
@@ -153,10 +186,10 @@ function ensureLayer() {
     if (!styleEl) {
         styleEl = document.createElement("style");
         styleEl.textContent = `
-@keyframes ${CLASS}-pulse { 0%,100% { opacity: 1 } 50% { opacity: var(--${CLASS}-min, .35) } }
-[data-unilens-layer] .${CLASS}[data-pulse] { animation: ${CLASS}-pulse var(--${CLASS}-ms, 600ms) ease-in-out var(--${CLASS}-cycles, 2); }
-@media (prefers-reduced-motion: reduce) { [data-unilens-layer] .${CLASS} { animation: none !important } }
 @media (forced-colors: active) {
+  [data-unilens-layer] .${CLASS}-deco { forced-color-adjust: none; background: CanvasText !important; stroke: CanvasText !important }
+  [data-unilens-layer] .${CLASS}-deco path { stroke: CanvasText !important }
+  [data-unilens-layer] .${CLASS}-cue { forced-color-adjust: none }
   [data-unilens-layer] .${CLASS} { forced-color-adjust: none; border-color: Canvas !important; outline-color: CanvasText !important; background: transparent !important; box-shadow: none !important }
   [data-unilens-layer] .${CLASS}-dim { display: none !important }
   [data-unilens-layer] .${CLASS}-badge { forced-color-adjust: none; background: CanvasText !important; color: Canvas !important; border-color: Canvas !important }
@@ -173,15 +206,111 @@ function bandWidth(): number {
     return Math.min(8, Math.max(3, s.ringWidth * getZoom().scale));
 }
 
-// hydration sanitises highlightStyle; the fallback is defence in depth against a hot store edit
-const currentPreset = (): HighlightStyle =>
-    HIGHLIGHT_PRESETS[getSettings().highlightStyle] ??
-    HIGHLIGHT_PRESETS["wcag-ring"];
+const currentLook = (): HighlightLook => lookFrom(getSettings());
+
+const SVG_NS = "http://www.w3.org/2000/svg";
+
+/** px from the element's edge to the box's edge, for the outline drawn */
+function padFor(outline: string, w: number): number {
+    if (outline === "ring") return OUTLINE_OFFSET + w;
+    if (outline === "band") return OUTLINE_OFFSET + 3 * w;
+    if (outline === "brackets") return OUTLINE_OFFSET + 2 * w;
+    return OUTLINE_OFFSET;
+}
+
+/** bracket corners as one path, inset by half the stroke so it stays inside the box */
+function bracketPath(W: number, H: number, t: number): string {
+    const L = Math.min(28, Math.max(12, 0.28 * Math.min(W, H)));
+    const a = t / 2;
+    return (
+        `M${a} ${L + a}V${a}H${L + a}` +
+        `M${W - L - a} ${a}H${W - a}V${L + a}` +
+        `M${W - a} ${H - L - a}V${H - a}H${W - L - a}` +
+        `M${L + a} ${H - a}H${a}V${H - L - a}`
+    );
+}
+
+function makeBadge(text: string): HTMLDivElement {
+    const badge = document.createElement("div");
+    badge.className = `${CLASS}-badge`;
+    badge.textContent = text;
+    Object.assign(badge.style, {
+        position: "absolute",
+        left: "-14px",
+        top: "-14px",
+        minWidth: "24px",
+        height: "24px",
+        padding: "0 5px",
+        boxSizing: "border-box",
+        borderRadius: "12px",
+        border: "2px solid #fff",
+        background: "#000",
+        color: "#fff",
+        font: "700 14px/20px system-ui, sans-serif",
+        textAlign: "center",
+    });
+    return badge;
+}
+
+/** (re)build a box's children for the current look: badge, brackets, underline bar */
+function decorate(
+    entry: Drawn,
+    look: HighlightLook,
+    outline: string,
+    w: number,
+) {
+    const key = `${outline}|${look.badges}|${look.color}|${w}`;
+    if (entry.decoKey === key) return;
+    entry.decoKey = key;
+    entry.box.replaceChildren();
+    if (look.badges && entry.badge)
+        entry.box.appendChild(makeBadge(entry.badge));
+    if (outline === "brackets") {
+        const svg = document.createElementNS(SVG_NS, "svg");
+        svg.setAttribute("class", `${CLASS}-brackets`);
+        Object.assign(svg.style, {
+            position: "absolute",
+            left: "0",
+            top: "0",
+            width: "100%",
+            height: "100%",
+            overflow: "visible",
+        });
+        for (const [stroke, width] of [
+            [EDGE, 2 * w + 2],
+            [look.color, 2 * w],
+        ] as const) {
+            const path = document.createElementNS(SVG_NS, "path");
+            path.setAttribute("class", `${CLASS}-deco`);
+            path.setAttribute("fill", "none");
+            path.setAttribute("stroke", stroke);
+            path.setAttribute("stroke-width", String(width));
+            path.setAttribute("stroke-linecap", "square");
+            svg.appendChild(path);
+        }
+        entry.box.appendChild(svg);
+    }
+    if (outline === "underline") {
+        const bar = document.createElement("div");
+        bar.className = `${CLASS}-deco`;
+        Object.assign(bar.style, {
+            position: "absolute",
+            left: "0",
+            right: "0",
+            top: "100%",
+            height: `${2 * w + 2}px`,
+            background: look.color,
+            outline: `1px solid ${EDGE}`,
+        });
+        entry.box.appendChild(bar);
+    }
+}
 
 function render() {
-    const preset = currentPreset();
+    const look = currentLook();
+    const outline = drawnOutline(look);
     const w = bandWidth();
-    const offset = preset.ring?.offset ?? 0;
+    const pad = padFor(outline, w);
     const gone: typeof boxes = [];
     for (const entry of boxes) {
         const { el, box } = entry;
@@ -192,23 +321,40 @@ function render() {
         const r = boxOf(el, measure);
         // collapsed since it was drawn (an accordion closed): hide, never park at (0, 0)
         box.style.display = isEmptyBox(r) ? "none" : "";
-        // the box sits `offset` outside the element; the inner band is its border,
-        // the outer band its outline, both real strokes so forced colours keep them
+        decorate(entry, look, outline, w);
+        const band = outline === "band" ? 3 * w : outline === "ring" ? w : 0;
+        const shadows = [
+            outline === "band" ? `inset 0 0 0 2px ${EDGE}` : "",
+            look.glow ? `0 0 18px 6px ${look.color}` : "",
+        ].filter(Boolean);
         Object.assign(box.style, {
-            left: `${r.left - offset - w}px`,
-            top: `${r.top - offset - w}px`,
-            width: `${r.width + 2 * (offset + w)}px`,
-            height: `${r.height + 2 * (offset + w)}px`,
-            border: preset.ring ? `${w}px solid ${preset.ring.inner}` : "0",
-            outline: preset.ring ? `${w}px solid ${preset.ring.outer}` : "none",
+            left: `${r.left - pad}px`,
+            top: `${r.top - pad}px`,
+            width: `${r.width + 2 * pad}px`,
+            height: `${r.height + 2 * pad}px`,
+            // real strokes, not shadows, so forced colours keep them
+            border: band
+                ? `${band}px solid ${outline === "ring" ? RING.inner : look.color}`
+                : "0",
+            outline:
+                outline === "ring"
+                    ? `${w}px solid ${RING.outer}`
+                    : outline === "band"
+                      ? `2px solid ${EDGE}`
+                      : "none",
             outlineOffset: "0",
-            background: preset.fill
-                ? colorWithAlpha(preset.fill.color, preset.fill.alpha)
+            background: look.fill
+                ? colorWithAlpha(look.color, FILL_ALPHA)
                 : "transparent",
-            boxShadow: preset.glow
-                ? `0 0 ${preset.glow.blur}px ${preset.glow.spread}px ${preset.glow.color}`
-                : "none",
+            boxShadow: shadows.length ? shadows.join(", ") : "none",
         });
+        const paths = box.querySelectorAll("path");
+        if (paths.length)
+            for (const path of paths)
+                path.setAttribute(
+                    "d",
+                    bracketPath(r.width + 2 * pad, r.height + 2 * pad, 2 * w),
+                );
     }
     for (const g of gone) {
         g.box.remove();
@@ -216,37 +362,280 @@ function render() {
     }
     if (gone.length) {
         announce("That element is no longer on the page.");
-        setTargets(boxes.map((b) => b.el)); // the minimap must not keep a detached target
+        syncMinimap(); // the minimap must not keep a detached target
         if (!boxes.length) for (const cb of clearedListeners) cb();
     }
-    if (dimBox) {
-        // one darkened layer over the viewport with a hole per outlined element: an
-        // even-odd path, so several targets all stay bright
-        const holes = boxes
-            .map((b) => boxOf(b.el, measure))
-            .filter((r) => !isEmptyBox(r))
-            .map(
-                (r) =>
-                    `M${r.left} ${r.top}h${r.width}v${r.height}h${-r.width}Z`,
-            );
-        if (!holes.length) {
-            dimBox.remove();
-            dimBox = null;
-        } else {
-            const W = window.innerWidth;
-            const H = window.innerHeight;
-            dimBox.style.clipPath = `path(evenodd, "M0 0H${W}V${H}H0Z${holes.join("")}")`;
-        }
-    }
+    renderBackdrop(look);
+    renderCues(look);
     if (!boxes.length) teardownSubscriptions();
 }
 
-function colorWithAlpha(hex: string, alpha: number): string {
-    const m = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.exec(hex);
-    if (!m) return hex;
-    const h = m[1].length === 3 ? [...m[1]].map((c) => c + c).join("") : m[1];
-    const n = Number.parseInt(h, 16);
-    return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${alpha})`;
+/**
+ * Dim or spotlight: one darkened layer over the viewport with a hole per outlined
+ * element (an even-odd path), so several targets all stay bright. The spotlight
+ * blurs the layer's wrapper, which feathers the holes; the path overshoots the
+ * viewport so the blur never lightens the screen's own edges.
+ */
+function renderBackdrop(look: HighlightLook) {
+    const rects = boxes
+        .map((b) => boxOf(b.el, measure))
+        .filter((r) => !isEmptyBox(r));
+    if (look.backdrop === "none" || !rects.length) {
+        dimBox?.remove();
+        dimBox = null;
+        return;
+    }
+    if (!dimBox) {
+        dimBox = document.createElement("div");
+        dimBox.className = `${CLASS}-dim`;
+        Object.assign(dimBox.style, {
+            position: "fixed",
+            left: "0",
+            top: "0",
+            width: "100vw",
+            height: "100vh",
+            pointerEvents: "none",
+        });
+        const shade = document.createElement("div");
+        Object.assign(shade.style, { position: "absolute", inset: "0" });
+        dimBox.appendChild(shade);
+        ensureLayer().insertBefore(dimBox, layer?.firstChild ?? null); // under the boxes
+    }
+    const spot = look.backdrop === "spotlight";
+    const o = spot ? 3 * SPOTLIGHT_FEATHER : 0;
+    const W = window.innerWidth;
+    const H = window.innerHeight;
+    dimBox.style.filter = spot ? `blur(${SPOTLIGHT_FEATHER}px)` : "";
+    const shade = dimBox.firstElementChild as HTMLDivElement;
+    Object.assign(shade.style, {
+        left: `${-o}px`,
+        top: `${-o}px`,
+        width: `${W + 2 * o}px`,
+        height: `${H + 2 * o}px`,
+        background: `rgba(0,0,0,${BACKDROP_ALPHA[look.backdrop]})`,
+    });
+    const holes = rects
+        .map(
+            (r) =>
+                `M${r.left + o} ${r.top + o}h${r.width}v${r.height}h${-r.width}Z`,
+        )
+        .join("");
+    shade.style.clipPath = `path(evenodd, "M0 0H${W + 2 * o}V${H + 2 * o}H0Z${holes}")`;
+}
+
+/** where a cue sits: on the inset screen edge toward the target, or on a circle round the pointer */
+export function cuePosition(
+    mode: "edge" | "pointer",
+    target: ClientRect,
+    view: { w: number; h: number },
+    from: { x: number; y: number } | null,
+    radius: number,
+): { x: number; y: number; angle: number } {
+    const tx = target.left + target.width / 2;
+    const ty = target.top + target.height / 2;
+    const c =
+        mode === "pointer" && from ? from : { x: view.w / 2, y: view.h / 2 };
+    const dx = tx - c.x;
+    const dy = ty - c.y;
+    const angle = Math.atan2(dy, dx);
+    if (mode === "pointer" && from) {
+        const len = Math.hypot(dx, dy) || 1;
+        return {
+            x: c.x + (dx / len) * radius,
+            y: c.y + (dy / len) * radius,
+            angle,
+        };
+    }
+    const m = 32; // inset: the whole cue stays on screen
+    const sx =
+        dx > 0 ? (view.w - m - c.x) / dx : dx < 0 ? (m - c.x) / dx : Infinity;
+    const sy =
+        dy > 0 ? (view.h - m - c.y) / dy : dy < 0 ? (m - c.y) / dy : Infinity;
+    const k = Math.min(sx, sy);
+    return { x: c.x + dx * k, y: c.y + dy * k, angle };
+}
+
+const CUE = 48;
+
+/**
+ * Keep cues apart and out from under the chat popover. Edge cues slide along
+ * their edge; pointer cues slide round their circle. Positions are cue centres.
+ */
+export function settleCues(
+    cues: { x: number; y: number; angle: number }[],
+    mode: "edge" | "pointer",
+    view: { w: number; h: number },
+    avoid: { left: number; top: number; right: number; bottom: number } | null,
+    from: { x: number; y: number } | null,
+    radius: number,
+): { x: number; y: number; angle: number }[] {
+    const gap = CUE + 4;
+    if (mode === "pointer" && from) {
+        const step = gap / radius;
+        const sorted = [...cues].sort((a, b) => a.angle - b.angle);
+        for (let i = 1; i < sorted.length; i++)
+            if (sorted[i].angle - sorted[i - 1].angle < step)
+                sorted[i] = { ...sorted[i], angle: sorted[i - 1].angle + step };
+        return sorted.map((c) => ({
+            ...c,
+            x: from.x + Math.cos(c.angle) * radius,
+            y: from.y + Math.sin(c.angle) * radius,
+        }));
+    }
+    const m = 32;
+    // which edge a cue sits on decides the axis it may slide along
+    const horizontal = (c: { y: number }) =>
+        Math.abs(c.y - m) < 1 || Math.abs(c.y - (view.h - m)) < 1;
+    const out: { x: number; y: number; angle: number }[] = [];
+    for (const edgeIsH of [true, false]) {
+        const group = cues
+            .filter((c) => horizontal(c) === edgeIsH)
+            .map((c) => ({ ...c }));
+        const along = (c: { x: number; y: number }) => (edgeIsH ? c.x : c.y);
+        const set = (c: { x: number; y: number }, v: number) => {
+            if (edgeIsH) c.x = v;
+            else c.y = v;
+        };
+        const len = edgeIsH ? view.w : view.h;
+        const lo = avoid
+            ? (edgeIsH ? avoid.left : avoid.top) - CUE / 2 - 8
+            : Number.NEGATIVE_INFINITY;
+        const hi = avoid
+            ? (edgeIsH ? avoid.right : avoid.bottom) + CUE / 2 + 8
+            : Number.NEGATIVE_INFINITY;
+        const blocked = (c: { x: number; y: number }) =>
+            !!avoid &&
+            c.x + CUE / 2 > avoid.left &&
+            c.x - CUE / 2 < avoid.right &&
+            c.y + CUE / 2 > avoid.top &&
+            c.y - CUE / 2 < avoid.bottom;
+        // cues the popover would cover move to its nearer side (or the side with room)
+        for (const c of group) {
+            if (!blocked(c)) continue;
+            const v = along(c);
+            set(c, (v - lo < hi - v && lo >= m) || hi > len - m ? lo : hi);
+        }
+        // then space them out away from the popover: cues before it stack backward,
+        // cues after it forward, so spacing never pushes one back under it
+        const mid = avoid ? (lo + hi) / 2 : Number.NEGATIVE_INFINITY;
+        const before = group
+            .filter((c) => along(c) < mid)
+            .sort((a, b) => along(b) - along(a));
+        const after = group
+            .filter((c) => along(c) >= mid)
+            .sort((a, b) => along(a) - along(b));
+        for (let i = 1; i < before.length; i++)
+            if (along(before[i - 1]) - along(before[i]) < gap)
+                set(before[i], along(before[i - 1]) - gap);
+        for (let i = 1; i < after.length; i++)
+            if (along(after[i]) - along(after[i - 1]) < gap)
+                set(after[i], along(after[i - 1]) + gap);
+        for (const c of group) set(c, Math.min(len - m, Math.max(m, along(c))));
+        out.push(...group);
+    }
+    return out;
+}
+
+/**
+ * Off-screen cues: an arrow per outlined element that is entirely outside the
+ * screen, at the screen edge (a button that brings it into view) or on a circle
+ * round the pointer (points only, never catches clicks). Numbered like the chips.
+ */
+function renderCues(look: HighlightLook) {
+    const mode = getSettings().offscreenCue;
+    const W = window.innerWidth;
+    const H = window.innerHeight;
+    const off =
+        mode === "none"
+            ? []
+            : boxes
+                  .map((b) => ({ b, r: boxOf(b.el, measure) }))
+                  .filter(
+                      ({ r }) =>
+                          !isEmptyBox(r) &&
+                          (r.left + r.width < 0 ||
+                              r.top + r.height < 0 ||
+                              r.left > W ||
+                              r.top > H),
+                  );
+    if (!off.length) {
+        cueHost?.remove();
+        cueHost = null;
+        return;
+    }
+    if (!cueHost) {
+        cueHost = document.createElement("div");
+        cueHost.className = `${CLASS}-cues`;
+        ensureLayer().appendChild(cueHost);
+    }
+    cueHost.replaceChildren();
+    const cueMode = mode as "edge" | "pointer";
+    const radius = getSettings().cueRadius;
+    const pop = document
+        .getElementById("unilens-root")
+        ?.firstElementChild?.getBoundingClientRect();
+    const raw = off.map(({ r }) =>
+        cuePosition(cueMode, r, { w: W, h: H }, pointer, radius),
+    );
+    const settled = settleCues(
+        raw.map((p, i) => ({ ...p, i })),
+        cueMode,
+        { w: W, h: H },
+        pop && pop.width ? pop : null,
+        pointer,
+        radius,
+    ) as { x: number; y: number; angle: number; i: number }[];
+    for (const p of settled) {
+        const { b } = off[p.i];
+        const cue = document.createElement(mode === "edge" ? "button" : "div");
+        cue.className = `${CLASS}-cue`;
+        const where =
+            Math.abs(Math.cos(p.angle)) > Math.abs(Math.sin(p.angle))
+                ? p.angle > -Math.PI / 2 && p.angle < Math.PI / 2
+                    ? "to the right"
+                    : "to the left"
+                : p.angle > 0
+                  ? "below"
+                  : "above";
+        const label = `${b.badge ? `Item ${b.badge}` : "The highlighted item"} is ${where}`;
+        Object.assign(cue.style, {
+            position: "fixed",
+            left: `${p.x - 24}px`,
+            top: `${p.y - 24}px`,
+            width: "48px",
+            height: "48px",
+            padding: "0",
+            margin: "0",
+            border: "0",
+            background: "none",
+            cursor: mode === "edge" ? "pointer" : "default",
+            pointerEvents: mode === "edge" ? "auto" : "none",
+        });
+        const deg = (p.angle * 180) / Math.PI;
+        // digits only: the number is written into SVG markup
+        const num =
+            look.badges && /^\d{1,3}$/.test(b.badge ?? "") ? b.badge : "";
+        cue.innerHTML = `<svg width="48" height="48" viewBox="0 0 48 48" aria-hidden="true"><g transform="rotate(${deg} 24 24)"><path d="M36 14 L47 24 L36 34 Z" fill="${look.color}" stroke="${EDGE}" stroke-width="2"/></g><circle cx="24" cy="24" r="15" fill="${EDGE}" stroke="${look.color}" stroke-width="3"/><text x="24" y="29" text-anchor="middle" font-family="system-ui, sans-serif" font-weight="700" font-size="15" fill="#fff">${num}</text></svg>`;
+        if (mode === "edge") {
+            cue.setAttribute("type", "button");
+            cue.setAttribute("aria-label", `${label}. Go there.`);
+            cue.title = `${label}. Go there.`;
+            cue.addEventListener("click", () => {
+                revealElement(b.el, measure);
+                announce(
+                    `${b.badge ? `Item ${b.badge}` : "Highlighted item"} brought into view.`,
+                );
+            });
+        } else cue.setAttribute("aria-hidden", "true");
+        cueHost.appendChild(cue);
+    }
+}
+
+function syncMinimap() {
+    setTargets(
+        boxes.map((b) => b.el),
+        boxes.map((b) => b.badge ?? ""),
+    );
 }
 
 // ── re-lay: one rAF per frame no matter how many triggers fire ───────────────
@@ -270,7 +659,12 @@ function setupSubscriptions() {
         capture: true,
     });
     window.addEventListener("resize", scheduleRelay);
+    const onPointer = () => {
+        if (getSettings().offscreenCue === "pointer") scheduleRelay();
+    };
+    window.addEventListener("mousemove", onPointer, { passive: true });
     unsubs = [
+        () => window.removeEventListener("mousemove", onPointer),
         () =>
             window.removeEventListener("scroll", scheduleRelay, {
                 capture: true,
@@ -333,7 +727,6 @@ export function showHighlights(
     }
     clearHighlights();
     measure = opts.measure ?? defaultMeasure;
-    const preset = currentPreset();
     const host = ensureLayer();
     let unplaceable = 0;
     for (const h of set) {
@@ -354,64 +747,17 @@ export function showHighlights(
             pointerEvents: "none",
             borderRadius: "4px",
         });
-        if (preset.pulse && getSettings().pulse) {
-            box.dataset.pulse = "";
-            box.style.setProperty(`--${CLASS}-ms`, `${preset.pulse.ms}ms`);
-            box.style.setProperty(
-                `--${CLASS}-cycles`,
-                `${preset.pulse.cycles}`,
-            );
-            box.style.setProperty(
-                `--${CLASS}-min`,
-                `${preset.pulse.minOpacity}`,
-            );
-        }
-        if (h.badge) {
-            const badge = document.createElement("div");
-            badge.className = `${CLASS}-badge`;
-            badge.textContent = h.badge;
-            Object.assign(badge.style, {
-                position: "absolute",
-                left: "-14px",
-                top: "-14px",
-                minWidth: "24px",
-                height: "24px",
-                padding: "0 5px",
-                boxSizing: "border-box",
-                borderRadius: "12px",
-                border: "2px solid #fff",
-                background: "#000",
-                color: "#fff",
-                font: "700 14px/20px system-ui, sans-serif",
-                textAlign: "center",
-            });
-            box.appendChild(badge);
-        }
         host.appendChild(box);
-        boxes.push({ el, box, role: h.role });
+        boxes.push({ el, box, role: h.role, badge: h.badge });
     }
     if (!boxes.length) {
         if (unplaceable)
             announce("Found it, but it is not showing on the page right now.");
         return true;
     }
-    if (preset.dimOthers) {
-        dimBox = document.createElement("div");
-        dimBox.className = `${CLASS}-dim`;
-        Object.assign(dimBox.style, {
-            position: "fixed",
-            left: "0",
-            top: "0",
-            width: "100vw",
-            height: "100vh",
-            pointerEvents: "none",
-            background: `rgba(0,0,0,${preset.dimOthers.alpha})`,
-        });
-        host.insertBefore(dimBox, host.firstChild); // under the ring boxes
-    }
     render();
     setupSubscriptions();
-    setTargets(boxes.map((b) => b.el));
+    syncMinimap();
     if (opts.label) announce(`Found: ${opts.label}`);
     return true;
 }
@@ -422,6 +768,8 @@ export function clearHighlights() {
     boxes = [];
     dimBox?.remove();
     dimBox = null;
+    cueHost?.remove();
+    cueHost = null;
     teardownSubscriptions();
     setTargets([]);
     if (had) for (const cb of clearedListeners) cb();

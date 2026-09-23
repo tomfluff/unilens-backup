@@ -566,7 +566,7 @@ export default function ChatPopover({
             picks.map(({ id, i }) => ({
                 id,
                 role: "target" as const,
-                badge: n > 1 ? String(i + 1) : undefined,
+                badge: String(i + 1),
             })),
             src.registry,
             src.id,
@@ -579,9 +579,12 @@ export default function ChatPopover({
                         : `${n > 1 ? `${picks[0].i + 1} of ${n}, ` : ""}${label(picks[0].id)}`,
             },
         );
-        if (reveal) {
+        // the moveToEvidence setting decides whether choosing an item moves the page;
+        // "never" leaves finding it to the off-screen cues and the minimap
+        const move = getSettings().moveToEvidence;
+        if (reveal && move !== "never") {
             const el = src.registry.get(picks[0].id);
-            if (el) revealElement(el);
+            if (el) revealElement(el, undefined, { always: move === "always" });
         }
         // nothing placeable (collapsed, box-less): showHighlights announced it; no button
         // may look pressed over an empty page
@@ -597,13 +600,12 @@ export default function ChatPopover({
         const mode = getSettings().autoHighlight;
         if (!c.ids.length || mode === "never") return;
         if (mode === "where" && !asksToLocate(question)) return;
-        const n = c.ids.length;
         // guarded: a newer question or capture since this one was asked wins
         const drawn = showHighlights(
             c.ids.map((id, i) => ({
                 id,
                 role: "target" as const,
-                badge: n > 1 ? String(i + 1) : undefined,
+                badge: String(i + 1),
             })),
             src.registry,
             src.id,
@@ -1022,19 +1024,6 @@ export default function ChatPopover({
                                         {n > 1
                                             ? `Highlight all ${n}`
                                             : "Highlight"}
-                                    </QuickActionButton>
-                                    <QuickActionButton
-                                        type="button"
-                                        onClick={() => point(m, at, true)}
-                                        chipBg={C.chipBg}
-                                        chipBorder={C.chipBorder}
-                                        chipText={C.chipText}
-                                        busy={false}
-                                        style={{
-                                            fontSize: Math.max(12, fs - 2),
-                                        }}
-                                    >
-                                        Scroll to
                                     </QuickActionButton>
                                     {n > 1 && (
                                         <NavGroup>

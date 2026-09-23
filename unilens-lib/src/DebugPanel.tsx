@@ -284,7 +284,10 @@ function DebugPanel({ sources }: { sources: DebugSources }) {
                     {(inv
                         ? `${inv.nodes} nodes · ${Math.round(inv.bytes / 1024)}KB · ~${Math.round(inv.bytes / 4)} tokens · ${inv.truncated} dropped`
                         : "none yet") +
-                        `\nstyle ${getSettings().highlightStyle}`}
+                        (() => {
+                            const st = getSettings();
+                            return `\nhighlight ${st.hlOutline} · ${st.hlBackdrop}${st.hlFill ? " · fill" : ""}${st.hlGlow ? " · glow" : ""}${st.hlBadges ? " · badges" : ""} · ${st.hlColor} · cue ${st.offscreenCue}`;
+                        })()}
                 </RowText>
             </Section>
 

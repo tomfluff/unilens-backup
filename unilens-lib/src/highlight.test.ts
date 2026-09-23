@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
     announce,
     clearHighlights,
+    cuePosition,
     escapeAction,
     hasHighlight,
     init,
@@ -10,9 +11,9 @@ import {
     registerPopoverClose,
     relayNow,
     setCurrentCapture,
+    settleCues,
     showHighlights,
 } from "./highlight";
-import type { HighlightPreset } from "./highlightStyles";
 import { updateSetting, useSettings } from "./settings";
 
 const rect = (left: number, top: number, width: number, height: number) => ({
@@ -51,20 +52,24 @@ beforeEach(() => {
     document.body.innerHTML = "";
     updateSetting("autoRead", false);
     updateSetting("escapeOrder", "highlight");
-    updateSetting("highlightStyle", "wcag-ring");
+    updateSetting("hlOutline", "ring");
+    updateSetting("hlBackdrop", "none");
+    updateSetting("hlFill", false);
+    updateSetting("hlGlow", false);
+    updateSetting("hlBadges", true);
+    updateSetting("hlColor", "#ffd400");
+    updateSetting("offscreenCue", "none");
     updateSetting("ringWidth", 2);
     updateSetting("ringScale", false);
 });
 
 describe("showHighlights", () => {
-    it("draws with the default preset when the store holds an unknown style", () => {
+    it("falls back to the ring when the store holds an unknown outline", () => {
         const { registry } = mount();
         // bypasses clampSetting on purpose: the fallback is for a hot store edit
-        useSettings.setState({ highlightStyle: "nope" as HighlightPreset });
+        useSettings.setState({ hlOutline: "nope" as "ring" });
         expect(show(registry, ["n1"], "Choose Pro")).toBe(true);
-        expect((layerBoxes()[0] as HTMLElement).style.border).toContain(
-            "2px solid",
-        );
+        expect(layerBoxes()).toHaveLength(1);
     });
 
     it("draws one box per target with the preset's geometry", () => {
@@ -178,8 +183,11 @@ describe("showHighlights", () => {
         expect(hasHighlight()).toBe(false);
     });
 
-    it("applies fill, glow and dim from the preset", () => {
-        updateSetting("highlightStyle", "dim-yellow-glow");
+    it("stacks fill and glow in the chosen colour over a dim backdrop", () => {
+        updateSetting("hlFill", true);
+        updateSetting("hlGlow", true);
+        updateSetting("hlBackdrop", "dim");
+        updateSetting("hlColor", "#ffe600");
         const { registry } = mount();
         show(registry);
         const box = layerBoxes()[0] as HTMLElement;
@@ -191,7 +199,7 @@ describe("showHighlights", () => {
     });
 
     it("dims around every target, one hole each", () => {
-        updateSetting("highlightStyle", "dim-others");
+        updateSetting("hlBackdrop", "dim");
         const a = document.createElement("button");
         const b = document.createElement("button");
         document.body.append(a, b);
@@ -213,7 +221,9 @@ describe("showHighlights", () => {
             nextToken(),
             { measure: (el) => boxes.get(el) ?? rect(0, 0, 0, 0) },
         );
-        const dim = document.querySelector(".unilens-hl-dim") as HTMLElement;
+        const dim = document.querySelector(
+            ".unilens-hl-dim > div",
+        ) as HTMLElement;
         expect(dim.style.clipPath).toContain("evenodd");
         expect(dim.style.clipPath).toContain("M10 20h30v40h-30Z");
         expect(dim.style.clipPath).toContain("M300 400h50v60h-50Z");
@@ -224,7 +234,7 @@ describe("showHighlights", () => {
     it("keeps the whole viewport dimmed when the target is far off-screen", () => {
         // the old dim was a 200vmax box-shadow around the target: once the page moved
         // the target more than that away, content between them was not dimmed
-        updateSetting("highlightStyle", "dim-others");
+        updateSetting("hlBackdrop", "dim");
         const { registry } = mount();
         setCurrentCapture("c1");
         showHighlights(
@@ -240,7 +250,7 @@ describe("showHighlights", () => {
         expect(dim.style.width).toBe("100vw");
         expect(dim.style.height).toBe("100vh");
         expect(dim.style.boxShadow).toBe("");
-        expect(dim.style.clipPath).toContain(
+        expect((dim.firstElementChild as HTMLElement).style.clipPath).toContain(
             `M0 0H${window.innerWidth}V${window.innerHeight}H0Z`,
         );
     });
@@ -369,5 +379,186 @@ describe("clearHighlights", () => {
         expect(names).toContain("scroll");
         expect(names).toContain("resize");
         removed.mockRestore();
+    });
+});
+
+describe("layered look", () => {
+    const one = (m = () => rect(100, 200, 50, 20)) => {
+        const { registry } = mount();
+        setCurrentCapture("c1");
+        showHighlights(
+            [{ id: "n1", role: "target", badge: "1" }],
+            registry,
+            "c1",
+            nextToken(),
+            { measure: m },
+        );
+        return layerBoxes()[0] as HTMLElement;
+    };
+
+    it("band: a thick stroke in the colour between two dark edges", () => {
+        updateSetting("hlOutline", "band");
+        updateSetting("hlColor", "#ff00aa");
+        const box = one();
+        expect(box.style.border).toBe("6px solid rgb(255, 0, 170)");
+        expect(box.style.outline).toMatch(/^2px solid (#000|rgb\(0, 0, 0\))$/);
+        expect(box.style.boxShadow).toMatch(/^inset 0(px)? 0(px)? 0(px)? 2px/);
+    });
+
+    it("brackets and underline draw decorations instead of a border", () => {
+        updateSetting("hlOutline", "brackets");
+        let box = one();
+        expect(box.style.border).toBe("0px");
+        expect(box.querySelectorAll("path")).toHaveLength(2);
+        expect(box.querySelector("path")?.getAttribute("d")).toMatch(/^M/);
+        clearHighlights();
+        updateSetting("hlOutline", "underline");
+        box = one();
+        expect(box.querySelector(".unilens-hl-deco")).not.toBeNull();
+    });
+
+    it("badges are an addition the user can turn off", () => {
+        updateSetting("hlBadges", false);
+        one();
+        expect(document.querySelector(".unilens-hl-badge")).toBeNull();
+        clearHighlights();
+        updateSetting("hlBadges", true);
+        one();
+        expect(document.querySelector(".unilens-hl-badge")?.textContent).toBe(
+            "1",
+        );
+    });
+
+    it("spotlight feathers the holes and overshoots the screen edges", () => {
+        updateSetting("hlBackdrop", "spotlight");
+        one();
+        const wrap = document.querySelector(".unilens-hl-dim") as HTMLElement;
+        const shade = wrap.firstElementChild as HTMLElement;
+        expect(wrap.style.filter).toBe("blur(14px)");
+        expect(shade.style.left).toBe("-42px");
+        expect(shade.style.background).toBe("rgba(0, 0, 0, 0.72)");
+        // hole shifted by the overshoot so it still lands on the element
+        expect(shade.style.clipPath).toContain("M142 242h50v20h-50Z");
+    });
+});
+
+describe("off-screen cues", () => {
+    it("places an edge cue on the inset screen edge toward the target", () => {
+        const p = cuePosition(
+            "edge",
+            rect(500, 3000, 100, 40),
+            { w: 1000, h: 800 },
+            null,
+            90,
+        );
+        expect(p.y).toBe(800 - 32);
+        expect(p.angle).toBeGreaterThan(0); // pointing down
+    });
+
+    it("places a pointer cue on a circle round the pointer", () => {
+        const p = cuePosition(
+            "pointer",
+            rect(1000, 100, 0, 0),
+            { w: 1000, h: 800 },
+            { x: 100, y: 100 },
+            90,
+        );
+        expect(p).toMatchObject({ x: 190, y: 100, angle: 0 });
+    });
+
+    it("keeps edge cues apart and slides one out from under the popover", () => {
+        const view = { w: 1000, h: 800 };
+        const bottom = (x: number) => ({ x, y: 768, angle: Math.PI / 2 });
+        const apart = settleCues(
+            [bottom(500), bottom(510)],
+            "edge",
+            view,
+            null,
+            null,
+            90,
+        );
+        expect(Math.abs(apart[1].x - apart[0].x)).toBeGreaterThanOrEqual(52);
+        const popover = { left: 400, top: 500, right: 740, bottom: 800 };
+        const moved = settleCues(
+            [bottom(500), bottom(560), bottom(600)],
+            "edge",
+            view,
+            popover,
+            null,
+            90,
+        );
+        for (const c of moved)
+            expect(c.x + 24 <= popover.left || c.x - 24 >= popover.right).toBe(
+                true,
+            );
+        const xs = moved.map((c) => c.x).sort((a, b) => a - b);
+        for (let k = 1; k < xs.length; k++)
+            expect(xs[k] - xs[k - 1]).toBeGreaterThanOrEqual(52);
+    });
+
+    it("spreads pointer cues round the circle", () => {
+        const from = { x: 300, y: 300 };
+        const cues = [0, 0.05].map((angle) => ({ x: 0, y: 0, angle }));
+        const [a, b] = settleCues(
+            cues,
+            "pointer",
+            { w: 1000, h: 800 },
+            null,
+            from,
+            90,
+        );
+        expect(Math.hypot(b.x - a.x, b.y - a.y)).toBeGreaterThan(48);
+        expect(Math.hypot(a.x - from.x, a.y - from.y)).toBeCloseTo(90);
+    });
+
+    it("draws an edge cue only for a target off screen, and it brings the target in", () => {
+        updateSetting("offscreenCue", "edge");
+        const scroll = vi.fn();
+        window.scrollTo = scroll as unknown as typeof window.scrollTo;
+        const { registry } = mount();
+        setCurrentCapture("c1");
+        showHighlights(
+            [{ id: "n1", role: "target", badge: "2" }],
+            registry,
+            "c1",
+            nextToken(),
+            { measure: () => rect(100, 5000, 50, 20) },
+        );
+        const cue = document.querySelector(
+            ".unilens-hl-cue",
+        ) as HTMLButtonElement;
+        expect(cue.tagName).toBe("BUTTON");
+        expect(cue.getAttribute("aria-label")).toBe(
+            "Item 2 is below. Go there.",
+        );
+        expect(cue.textContent).toContain("2");
+        cue.click();
+        expect(scroll).toHaveBeenCalled();
+    });
+
+    it("draws no cue when the target is on screen, and a pointer cue never takes clicks", () => {
+        updateSetting("offscreenCue", "pointer");
+        const { registry } = mount();
+        setCurrentCapture("c1");
+        showHighlights(
+            [{ id: "n1", role: "target", badge: "1" }],
+            registry,
+            "c1",
+            nextToken(),
+            { measure: () => rect(100, 200, 50, 20) },
+        );
+        expect(document.querySelector(".unilens-hl-cue")).toBeNull();
+        clearHighlights();
+        showHighlights(
+            [{ id: "n1", role: "target", badge: "1" }],
+            registry,
+            "c1",
+            nextToken(),
+            { measure: () => rect(100, -900, 50, 20) },
+        );
+        const cue = document.querySelector(".unilens-hl-cue") as HTMLElement;
+        expect(cue.tagName).toBe("DIV");
+        expect(cue.style.pointerEvents).toBe("none");
+        expect(cue.getAttribute("aria-hidden")).toBe("true");
     });
 });

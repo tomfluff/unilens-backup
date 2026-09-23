@@ -51,6 +51,14 @@ describe("revealElement", () => {
         });
     });
 
+    it("centres an on-screen element too when asked to always", () => {
+        const scroll = vi.fn();
+        window.scrollTo = scroll as unknown as typeof window.scrollTo;
+        const el = document.createElement("div");
+        revealElement(el, () => box(100, 200), { always: true });
+        expect(scroll).toHaveBeenCalledWith(150 - 512, 220 - 384);
+    });
+
     it("refuses an element with no box", () => {
         const el = document.createElement("div");
         expect(revealElement(el, () => box(0, 0, 0, 0))).toBe(false);

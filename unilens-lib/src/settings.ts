@@ -5,7 +5,13 @@
  */
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { HIGHLIGHT_PRESETS, type HighlightPreset } from "./highlightStyles";
+import {
+    BACKDROPS,
+    type Backdrop,
+    isHexColor,
+    OUTLINES,
+    type Outline,
+} from "./highlightStyles";
 
 export interface Settings {
     zoom: boolean;
@@ -51,10 +57,28 @@ export interface Settings {
     ringWidth: number;
     /** scale the outline with the zoom level instead of a fixed screen width */
     ringScale: boolean;
-    /** pulse the outline briefly when a highlight appears */
-    pulse: boolean;
     /** minimap target marker size in px */
     minimapMarkerSize: number;
+    /** highlight look, in layers (highlightStyles.ts): one backdrop, one outline, additions */
+    hlBackdrop: Backdrop;
+    hlOutline: Outline;
+    hlFill: boolean;
+    hlGlow: boolean;
+    /** numbers on the outlines, matching the chips in the chat */
+    hlBadges: boolean;
+    /** the highlight colour, #rgb or #rrggbb; the two-band ring stays black and white */
+    hlColor: string;
+    /** how an outlined element outside the screen is pointed at */
+    offscreenCue: "none" | "edge" | "pointer";
+    /** radius of the pointer cue circle, px */
+    cueRadius: number;
+    /** minimap target marker: see-through fill or outline; dim, glow and numbers stack */
+    mmShape: "filled" | "outlined";
+    mmDim: boolean;
+    mmGlow: boolean;
+    mmNumbers: boolean;
+    /** whether choosing a piece of evidence moves the page to it */
+    moveToEvidence: "offscreen" | "always" | "never";
     /** answers cite the page elements they used, as numbered chips that highlight */
     citeEvidence: boolean;
     /** re-capture before a message when the user scrolled, panned or zoomed since the last one */
@@ -63,8 +87,6 @@ export interface Settings {
     autoHighlight: "where" | "always" | "never";
     /** what Escape dismisses first when a highlight and the popover are both up */
     escapeOrder: "highlight" | "popover" | "both";
-    /** which HIGHLIGHT_PRESETS entry the located-element outline is drawn with */
-    highlightStyle: HighlightPreset;
 }
 
 const DEFAULTS: Settings = {
@@ -99,13 +121,24 @@ const DEFAULTS: Settings = {
     inventoryMaxNodes: 900,
     ringWidth: 2,
     ringScale: false,
-    pulse: false,
     minimapMarkerSize: 8,
+    hlBackdrop: "none",
+    hlOutline: "band",
+    hlFill: false,
+    hlGlow: false,
+    hlBadges: true,
+    hlColor: "#ffd400",
+    offscreenCue: "none",
+    cueRadius: 90,
+    mmShape: "filled",
+    mmDim: false,
+    mmGlow: false,
+    mmNumbers: true,
+    moveToEvidence: "offscreen",
     citeEvidence: true,
     refreshView: true,
     autoHighlight: "where",
     escapeOrder: "highlight",
-    highlightStyle: "wcag-ring",
 };
 
 /** keys of Settings whose value is a boolean — the on/off rows in the panel */
@@ -136,7 +169,12 @@ export const TOGGLE_LABELS: Record<BoolSettingKey, string> = {
     debugView: "Debug view (ctrl+shift+D)",
     inventory: "Send page inventory with captures",
     ringScale: "Scale the outline with zoom",
-    pulse: "Pulse the outline briefly",
+    hlFill: "Highlight: colour fill",
+    hlGlow: "Highlight: glow",
+    hlBadges: "Highlight: numbered badges",
+    mmDim: "Minimap: dim the map around targets",
+    mmGlow: "Minimap: glow around targets",
+    mmNumbers: "Minimap: numbers on targets",
     citeEvidence: "Answers cite page elements",
     refreshView: "Send my new view with follow-ups",
 };
@@ -194,6 +232,12 @@ export const NUMBER_KNOBS: Record<
         max: 32,
         step: 2,
     },
+    cueRadius: {
+        label: "Pointer cue radius (px)",
+        min: 40,
+        max: 240,
+        step: 10,
+    },
 };
 
 /** the escapeOrder choices with their panel labels; the keys are the valid stored values */
@@ -209,6 +253,40 @@ export const AUTO_HIGHLIGHTS: Record<Settings["autoHighlight"], string> = {
     always: "Outline evidence of every answer",
     never: "Outline only when I click",
 };
+
+/**
+ * Every string-valued setting with a fixed set of values: the panel renders one
+ * <select> per row, in this order, and hydration rejects anything not listed.
+ */
+export const ENUM_CHOICES = {
+    hlOutline: { label: "Highlight outline", choices: OUTLINES },
+    hlBackdrop: { label: "Highlight backdrop", choices: BACKDROPS },
+    offscreenCue: {
+        label: "Off-screen cue",
+        choices: {
+            none: "None",
+            edge: "Arrows at the screen edge",
+            pointer: "Arrows around the pointer",
+        },
+    },
+    mmShape: {
+        label: "Minimap marker",
+        choices: { filled: "Filled, see-through", outlined: "Outlined" },
+    },
+    moveToEvidence: {
+        label: "Move the page to evidence",
+        choices: {
+            offscreen: "Only when it is off-screen",
+            always: "Always centre it",
+            never: "Never (cues only)",
+        },
+    },
+    autoHighlight: { label: "Auto-highlight", choices: AUTO_HIGHLIGHTS },
+    escapeOrder: { label: "Escape order", choices: ESCAPE_ORDERS },
+} as const satisfies Partial<
+    Record<keyof Settings, { label: string; choices: Record<string, string> }>
+>;
+export type EnumKey = keyof typeof ENUM_CHOICES;
 
 /**
  * Numeric settings offered as a named-choice <select> rather than a free number.
@@ -251,20 +329,14 @@ export function clampSetting<K extends keyof Settings>(
         const { min, max } = NUMBER_KNOBS[key as NumSettingKey];
         return Math.min(max, Math.max(min, n)) as Settings[K];
     }
-    if (key === "escapeOrder") {
-        return Object.hasOwn(ESCAPE_ORDERS, String(value))
+    if (Object.hasOwn(ENUM_CHOICES, key)) {
+        const { choices } = ENUM_CHOICES[key as EnumKey];
+        return Object.hasOwn(choices, String(value))
             ? (value as Settings[K])
             : fallback;
     }
-    if (key === "autoHighlight") {
-        return Object.hasOwn(AUTO_HIGHLIGHTS, String(value))
-            ? (value as Settings[K])
-            : fallback;
-    }
-    if (key === "highlightStyle") {
-        return Object.hasOwn(HIGHLIGHT_PRESETS, String(value))
-            ? (value as Settings[K])
-            : fallback;
+    if (key === "hlColor") {
+        return isHexColor(value) ? (value as Settings[K]) : fallback;
     }
     if (typeof fallback === "boolean") {
         return typeof value === "boolean" ? (value as Settings[K]) : fallback;
