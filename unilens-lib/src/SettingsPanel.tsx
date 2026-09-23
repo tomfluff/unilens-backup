@@ -7,6 +7,7 @@ import { createRoot } from "react-dom/client";
 import styled from "styled-components";
 import { HIGHLIGHT_PRESETS, type HighlightPreset } from "./highlightStyles";
 import {
+    AUTO_HIGHLIGHTS,
     type BoolSettingKey,
     clampSetting,
     ESCAPE_ORDERS,
@@ -48,6 +49,7 @@ const NUMBER_ROWS = (Object.keys(NUMBER_KNOBS) as NumSettingKey[]).filter(
 );
 const PRESETS = Object.keys(HIGHLIGHT_PRESETS) as HighlightPreset[];
 const ESCAPE_KEYS = Object.keys(ESCAPE_ORDERS) as Settings["escapeOrder"][];
+const AUTO_KEYS = Object.keys(AUTO_HIGHLIGHTS) as Settings["autoHighlight"][];
 
 /**
  * Free-number row. Uncontrolled and committed on blur/Enter so typing "160" into a
@@ -275,6 +277,29 @@ function Panel() {
                         {PRESETS.map((preset) => (
                             <option key={preset} value={preset}>
                                 {preset}
+                            </option>
+                        ))}
+                    </SettingsSelect>
+                </SettingLabel>
+
+                <SettingLabel>
+                    Auto-highlight
+                    <SettingsSelect
+                        value={clampSetting(
+                            "autoHighlight",
+                            settings.autoHighlight,
+                        )}
+                        onChange={(e) =>
+                            updateSetting(
+                                "autoHighlight",
+                                e.currentTarget
+                                    .value as Settings["autoHighlight"],
+                            )
+                        }
+                    >
+                        {AUTO_KEYS.map((k) => (
+                            <option key={k} value={k}>
+                                {AUTO_HIGHLIGHTS[k]}
                             </option>
                         ))}
                     </SettingsSelect>

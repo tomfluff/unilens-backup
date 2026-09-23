@@ -37,7 +37,7 @@ export interface Settings {
     pinnedPos: { left: number; top: number } | null;
     /** send the page inventory (interactables, headings, text) with every capture */
     inventory: boolean;
-    /** stop descending past this depth (body = 0) when building the inventory */
+    /** deepest level of the inventory tree (body = 0); collapsed wrapper divs do not count */
     inventoryMaxDepth: number;
     /** nodes at or above this depth also carry a subtree text summary */
     inventorySummaryDepth: number;
@@ -55,8 +55,10 @@ export interface Settings {
     pulse: boolean;
     /** minimap target marker size in px */
     minimapMarkerSize: number;
-    /** send the screenshots with a locate ("where is X?") request */
-    locateScreenshot: boolean;
+    /** answers cite the page elements they used, as numbered chips that highlight */
+    citeEvidence: boolean;
+    /** when an answer's evidence is outlined without a click */
+    autoHighlight: "where" | "always" | "never";
     /** what Escape dismisses first when a highlight and the popover are both up */
     escapeOrder: "highlight" | "popover" | "both";
     /** which HIGHLIGHT_PRESETS entry the located-element outline is drawn with */
@@ -97,7 +99,8 @@ const DEFAULTS: Settings = {
     ringScale: false,
     pulse: false,
     minimapMarkerSize: 8,
-    locateScreenshot: true,
+    citeEvidence: true,
+    autoHighlight: "where",
     escapeOrder: "highlight",
     highlightStyle: "wcag-ring",
 };
@@ -131,7 +134,7 @@ export const TOGGLE_LABELS: Record<BoolSettingKey, string> = {
     inventory: "Send page inventory with captures",
     ringScale: "Scale the outline with zoom",
     pulse: "Pulse the outline briefly",
-    locateScreenshot: "Send screenshot with locate",
+    citeEvidence: "Answers cite page elements",
 };
 
 /** keys of Settings whose value is a number — the integer knob rows in the panel */
@@ -196,6 +199,13 @@ export const ESCAPE_ORDERS: Record<Settings["escapeOrder"], string> = {
     both: "Escape clears the outline and closes the popover",
 };
 
+/** the autoHighlight choices with their panel labels; the keys are the valid stored values */
+export const AUTO_HIGHLIGHTS: Record<Settings["autoHighlight"], string> = {
+    where: "Outline evidence when I ask where / to show",
+    always: "Outline evidence of every answer",
+    never: "Outline only when I click",
+};
+
 /**
  * Numeric settings offered as a named-choice <select> rather than a free number.
  * The panel renders these; hydration rejects a stored value that is not one of them.
@@ -239,6 +249,11 @@ export function clampSetting<K extends keyof Settings>(
     }
     if (key === "escapeOrder") {
         return Object.hasOwn(ESCAPE_ORDERS, String(value))
+            ? (value as Settings[K])
+            : fallback;
+    }
+    if (key === "autoHighlight") {
+        return Object.hasOwn(AUTO_HIGHLIGHTS, String(value))
             ? (value as Settings[K])
             : fallback;
     }

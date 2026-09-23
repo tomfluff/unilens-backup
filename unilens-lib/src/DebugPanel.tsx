@@ -19,8 +19,8 @@ import {
     getLastInventoryDebug,
     getTraceDebug,
 } from "./capture";
+import { getLastEvidenceDebug } from "./evidence";
 import { getDwellDebug } from "./hint";
-import { getLastLocateDebug } from "./locate";
 import { getSettings, updateSetting, useSettings } from "./settings";
 import { getTargetZoom, getView, getZoom, getZoomTrace } from "./zoom";
 
@@ -218,7 +218,7 @@ function DebugPanel({ sources }: { sources: DebugSources }) {
     const zt = getZoomTrace(Date.now());
     const c = getCaptureDebug();
     const inv = getLastInventoryDebug();
-    const loc = getLastLocateDebug();
+    const ev = getLastEvidenceDebug();
 
     return (
         <PanelContainer>
@@ -288,13 +288,15 @@ function DebugPanel({ sources }: { sources: DebugSources }) {
                 </RowText>
             </Section>
 
-            <Section title="Last locate">
+            <Section title="Last answer's evidence">
                 <RowText>
-                    {loc
-                        ? `${loc.code} · token ${loc.token} · ${fmtAge(Date.now() - loc.at)} ago` +
-                          `\n${loc.bubble || "(no answer)"}` +
-                          loc.highlights
-                              .map((h) => `\n${h.id} ${h.role}: ${h.label}`)
+                    {ev
+                        ? `${ev.ids.length} cited · ${ev.dropped} unknown id${ev.dropped === 1 ? "" : "s"} dropped · ${fmtAge(Date.now() - ev.at)} ago` +
+                          ev.ids
+                              .map(
+                                  (id, i) =>
+                                      `\n${i + 1}. ${id}: ${ev.labels[i]}`,
+                              )
                               .join("")
                         : "none yet"}
                 </RowText>

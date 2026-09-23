@@ -62,6 +62,10 @@ describe("clampSetting", () => {
         const stale = "gone" as Settings["escapeOrder"];
         expect(clampSetting("escapeOrder", stale)).toBe(defaults.escapeOrder);
         expect(clampSetting("escapeOrder", "both")).toBe("both");
+        expect(clampSetting("autoHighlight", "always")).toBe("always");
+        expect(clampSetting("autoHighlight", "toString")).toBe(
+            defaults.autoHighlight,
+        );
         const gone = "neon" as Settings["highlightStyle"];
         expect(clampSetting("highlightStyle", gone)).toBe(
             defaults.highlightStyle,
