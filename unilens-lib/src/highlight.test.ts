@@ -177,6 +177,61 @@ describe("showHighlights", () => {
         expect(document.querySelector(".unilens-hl-dim")).toBeNull();
     });
 
+    it("dims around every target, one hole each", () => {
+        updateSetting("highlightStyle", "dim-others");
+        const a = document.createElement("button");
+        const b = document.createElement("button");
+        document.body.append(a, b);
+        const boxes = new Map<Element, ReturnType<typeof rect>>([
+            [a, rect(10, 20, 30, 40)],
+            [b, rect(300, 400, 50, 60)],
+        ]);
+        setCurrentCapture("c1");
+        showHighlights(
+            [
+                { id: "a", role: "target", badge: "1" },
+                { id: "b", role: "target", badge: "2" },
+            ],
+            new Map([
+                ["a", a],
+                ["b", b],
+            ]),
+            "c1",
+            nextToken(),
+            { measure: (el) => boxes.get(el) ?? rect(0, 0, 0, 0) },
+        );
+        const dim = document.querySelector(".unilens-hl-dim") as HTMLElement;
+        expect(dim.style.clipPath).toContain("evenodd");
+        expect(dim.style.clipPath).toContain("M10 20h30v40h-30Z");
+        expect(dim.style.clipPath).toContain("M300 400h50v60h-50Z");
+        const badges = [...document.querySelectorAll(".unilens-hl-badge")];
+        expect(badges.map((x) => x.textContent)).toEqual(["1", "2"]);
+    });
+
+    it("draws a user's click for an older capture; a late answer stays dropped", () => {
+        const { registry } = mount();
+        setCurrentCapture("c2"); // the view was refreshed since this message
+        expect(
+            showHighlights(
+                [{ id: "n1", role: "target" }],
+                registry,
+                "c1",
+                nextToken(),
+                { measure },
+            ),
+        ).toBe(false);
+        expect(
+            showHighlights(
+                [{ id: "n1", role: "target" }],
+                registry,
+                "c1",
+                nextToken(),
+                { measure, userInitiated: true },
+            ),
+        ).toBe(true);
+        expect(layerBoxes()).toHaveLength(1);
+    });
+
     it("scales the band with zoom only when ringScale is on", () => {
         updateSetting("ringScale", true);
         const { registry } = mount();

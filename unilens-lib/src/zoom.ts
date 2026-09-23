@@ -407,6 +407,34 @@ export function boxOf(
 
 export const isEmptyBox = (b: ClientRect) => !b.width && !b.height;
 
+/**
+ * "Scroll to": bring an element to the middle of the screen under either pan
+ * engine. Leaves the view alone when the element is already fully on screen, so
+ * the page never moves without need. False when the element has no box.
+ */
+export function revealElement(
+    el: Element,
+    measure?: (el: Element) => ClientRect,
+): boolean {
+    const r = boxOf(el, measure);
+    if (isEmptyBox(r)) return false;
+    const W = window.innerWidth;
+    const H = window.innerHeight;
+    if (
+        r.left >= 0 &&
+        r.top >= 0 &&
+        r.left + r.width <= W &&
+        r.top + r.height <= H
+    )
+        return true;
+    const v = getView();
+    setView(
+        v.x + r.left + r.width / 2 - W / 2,
+        v.y + r.top + r.height / 2 - H / 2,
+    );
+    return true;
+}
+
 /** client coords -> content (layout) coords, correct under either engine */
 export function clientToContent(
     clientX: number,

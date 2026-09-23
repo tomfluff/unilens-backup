@@ -25,6 +25,8 @@ export type HighlightRole = "target" | "anchor" | "source";
 export interface Highlight {
     id: string;
     role: HighlightRole;
+    /** number drawn on the outline; matches the chip in the chat bubble */
+    badge?: string;
 }
 export type Rect = { left: number; top: number; width: number; height: number };
 /** injectable so jsdom tests (where every rect is zeros) can supply geometry */
@@ -149,6 +151,7 @@ function ensureLayer() {
 @media (forced-colors: active) {
   [data-unilens-layer] .${CLASS} { forced-color-adjust: none; border-color: Canvas !important; outline-color: CanvasText !important; background: transparent !important; box-shadow: none !important }
   [data-unilens-layer] .${CLASS}-dim { display: none !important }
+  [data-unilens-layer] .${CLASS}-badge { forced-color-adjust: none; background: CanvasText !important; color: Canvas !important; border-color: Canvas !important }
 }`;
         document.head.appendChild(styleEl);
     }
@@ -208,20 +211,22 @@ function render() {
         setTargets(boxes.map((b) => b.el)); // the minimap must not keep a detached target
     }
     if (dimBox) {
-        // ponytail: dims around one element only; phase 1 sends one highlight. It must
-        // be the target, not whichever entry came first, once anchors/sources arrive
-        const first = boxes.find((b) => b.role === "target") ?? boxes[0];
-        if (!first) {
+        // one darkened layer over the viewport with a hole per outlined element: an
+        // even-odd path, so several targets all stay bright
+        const holes = boxes
+            .map((b) => boxOf(b.el, measure))
+            .filter((r) => !isEmptyBox(r))
+            .map(
+                (r) =>
+                    `M${r.left} ${r.top}h${r.width}v${r.height}h${-r.width}Z`,
+            );
+        if (!holes.length) {
             dimBox.remove();
             dimBox = null;
         } else {
-            const r = boxOf(first.el, measure);
-            Object.assign(dimBox.style, {
-                left: `${r.left}px`,
-                top: `${r.top}px`,
-                width: `${r.width}px`,
-                height: `${r.height}px`,
-            });
+            const W = window.innerWidth;
+            const H = window.innerHeight;
+            dimBox.style.clipPath = `path(evenodd, "M0 0H${W}V${H}H0Z${holes.join("")}")`;
         }
     }
     if (!boxes.length) teardownSubscriptions();
@@ -291,11 +296,14 @@ export interface ShowOptions {
     /** announced as "Found: <label>"; the caller derives it from the inventory */
     label?: string;
     measure?: Measure;
+    /** a click on a chip or button: draws whatever capture the message belongs to.
+     * The guard is for answers that arrive late; a click is never late */
+    userInitiated?: boolean;
 }
 
 /**
  * Draw the set. Returns false (and draws nothing) when the answer is for another
- * capture or an older question than the latest issued.
+ * capture or an older question than the latest issued, unless the user asked for it.
  */
 export function showHighlights(
     set: Highlight[],
@@ -304,7 +312,10 @@ export function showHighlights(
     token: number,
     opts: ShowOptions = {},
 ): boolean {
-    if (captureId !== currentCapture || token !== issued) {
+    if (
+        !opts.userInitiated &&
+        (captureId !== currentCapture || token !== issued)
+    ) {
         console.debug("[UniLens] dropped stale highlight", {
             captureId,
             token,
@@ -346,6 +357,27 @@ export function showHighlights(
                 `${preset.pulse.minOpacity}`,
             );
         }
+        if (h.badge) {
+            const badge = document.createElement("div");
+            badge.className = `${CLASS}-badge`;
+            badge.textContent = h.badge;
+            Object.assign(badge.style, {
+                position: "absolute",
+                left: "-14px",
+                top: "-14px",
+                minWidth: "24px",
+                height: "24px",
+                padding: "0 5px",
+                boxSizing: "border-box",
+                borderRadius: "12px",
+                border: "2px solid #fff",
+                background: "#000",
+                color: "#fff",
+                font: "700 14px/20px system-ui, sans-serif",
+                textAlign: "center",
+            });
+            box.appendChild(badge);
+        }
         host.appendChild(box);
         boxes.push({ el, box, role: h.role });
     }
@@ -359,8 +391,12 @@ export function showHighlights(
         dimBox.className = `${CLASS}-dim`;
         Object.assign(dimBox.style, {
             position: "fixed",
+            left: "0",
+            top: "0",
+            width: "100vw",
+            height: "100vh",
             pointerEvents: "none",
-            boxShadow: `0 0 0 200vmax rgba(0,0,0,${preset.dimOthers.alpha})`,
+            background: `rgba(0,0,0,${preset.dimOthers.alpha})`,
         });
         host.insertBefore(dimBox, host.firstChild); // under the ring boxes
     }
@@ -371,13 +407,22 @@ export function showHighlights(
     return true;
 }
 
+const clearedListeners = new Set<() => void>();
+/** the popover's pressed buttons follow the outline: Escape or a new capture clears it */
+export function onHighlightsCleared(cb: () => void): () => void {
+    clearedListeners.add(cb);
+    return () => clearedListeners.delete(cb);
+}
+
 export function clearHighlights() {
+    const had = boxes.length > 0;
     for (const b of boxes) b.box.remove();
     boxes = [];
     dimBox?.remove();
     dimBox = null;
     teardownSubscriptions();
     setTargets([]);
+    if (had) for (const cb of clearedListeners) cb();
 }
 
 /** synchronous re-lay, for tests and for callers that just moved the view themselves */
