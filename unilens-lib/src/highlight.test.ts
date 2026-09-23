@@ -221,6 +221,30 @@ describe("showHighlights", () => {
         expect(badges.map((x) => x.textContent)).toEqual(["1", "2"]);
     });
 
+    it("keeps the whole viewport dimmed when the target is far off-screen", () => {
+        // the old dim was a 200vmax box-shadow around the target: once the page moved
+        // the target more than that away, content between them was not dimmed
+        updateSetting("highlightStyle", "dim-others");
+        const { registry } = mount();
+        setCurrentCapture("c1");
+        showHighlights(
+            [{ id: "n1", role: "target" }],
+            registry,
+            "c1",
+            nextToken(),
+            { measure: () => rect(100, 9000, 50, 20) },
+        );
+        const dim = document.querySelector(".unilens-hl-dim") as HTMLElement;
+        expect(dim.style.left).toBe("0px");
+        expect(dim.style.top).toBe("0px");
+        expect(dim.style.width).toBe("100vw");
+        expect(dim.style.height).toBe("100vh");
+        expect(dim.style.boxShadow).toBe("");
+        expect(dim.style.clipPath).toContain(
+            `M0 0H${window.innerWidth}V${window.innerHeight}H0Z`,
+        );
+    });
+
     it("draws a user's click for an older capture; a late answer stays dropped", () => {
         const { registry } = mount();
         setCurrentCapture("c2"); // the view was refreshed since this message
