@@ -35,6 +35,19 @@ Either way, no images in the browser. The backend's session history (`/api/sessi
 **Priority:** P3
 **Depends on:** our chat stack landing on main (see the PR #13 decision)
 
+### Follow-ups from the review of #14–#16
+
+**What:** Five smaller findings from the 2026-09-24 review of the three stacked PRs. The builder kept them for later. Reports are in `.local/reviews/2026-09-24-prs-14-16/`.
+- **Citation ids across a view refresh.** Ids are numbered by position on each capture. After lazy-loaded content shifts the page, an earlier answer's `[[n30]]` can name a different element on the refreshed capture. Strip or namespace the ids of history turns that belong to another capture (`backend/app.py`, building `provider_history`).
+- **Page text outside the datamarked block.** The clicked element's text, its nearest heading and the session note reach the prompt verbatim, and a code comment claims the inventory is the only page text the model sees. Datamark or delimit them the same way, and correct the comment.
+- **Minimap redraws.** While zoomed, each highlight step rebuilds the whole minimap twice, forcing layout each time. Cache the page skeleton and redraw only the targets.
+- **A click during a streaming answer drops that capture from the session.** `chat_stream` writes back the session it loaded before streaming. Reload it before saving, or lock per session.
+- **No tests for the chat's async flows.** The capture queue, refresh binding, voice cancel and failed-capture paths were checked in the browser only. Add jsdom tests with mocked capture and fetch.
+
+**Effort:** M
+**Priority:** P3
+**Depends on:** #14–#16 merged
+
 ### Harden UniLens against host pages
 
 **What:** Build a local "hostile host" test page and run the end-to-end checks against it. Then address the open items in `docs/research/2026-09-24-host-page-hazards.md`, in order of how often study pages will hit them. First up: inner scroll containers, stale cited elements, patched built-ins, and the CSP limits of the embed.
@@ -181,7 +194,7 @@ The spread lives in `settleCues` in `unilens-lib/src/highlight.ts`.
 
 ### Participant session protocol for the first low-vision session
 
-**What:** A one-page protocol in `docs/research/`: consent text (captures are a full-page PNG plus a text inventory of page elements, stored locally under `backend/captures` with the retention policy; no form values are ever captured), magnifier/zoom and high-contrast setup, the ~20-question task list per mirror, and what the observer records (time to acquisition, corrections, whether the target started off-screen, one surprise).
+**What:** A one-page protocol in `docs/research/`: consent text (captures are a full-page PNG plus a text inventory of page elements, stored locally under `backend/captures` with the retention policy. The text inventory never holds what was typed in a field, but the screenshot shows whatever is on screen, field contents included; passwords stay masked), magnifier/zoom and high-contrast setup, the ~20-question task list per mirror, and what the observer records (time to acquisition, corrections, whether the target started off-screen, one surprise).
 
 **Why:** Eventually a study needs a repeatable protocol. Builder's call (2026-09-19): the features are developed and decided first with the builder as the tester; participant testing and its protocol are considered only at the very end, after the fact.
 
