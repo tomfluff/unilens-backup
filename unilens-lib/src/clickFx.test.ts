@@ -53,6 +53,19 @@ describe("click feedback", () => {
         expect(shown(".ul-fx-frame .br")).toBe(4);
     });
 
+    it("keeps the centring out of every scaled transform, so it stays on the click", () => {
+        clickFeedback(10, 10);
+        const css = [...document.querySelectorAll("style")]
+            .map((st) => st.textContent ?? "")
+            .find((t) => t.includes(".ul-fx-at"));
+        // centred by the translate property, which applies outside scale and transform
+        expect(css).toMatch(
+            /\.ul-fx-at \{ translate: -50% -50%; transform-origin: 50% 50%/,
+        );
+        // a translate(-50%) inside a scaled transform drifts off the click as it scales
+        expect(css).not.toMatch(/translate\(-50%/);
+    });
+
     it("drops the edge's pin when it is off", () => {
         updateSetting("clickFx", "edge");
         updateSetting("fxPin", false);

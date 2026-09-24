@@ -44,10 +44,13 @@ const TEMPO: Record<Settings["fxSpeed"], number> = {
 const CSS = `
 .ul-fx { position: fixed; z-index: 2147483647; pointer-events: none; box-sizing: border-box; }
 .ul-fx *, .ul-fx *::before, .ul-fx *::after { box-sizing: border-box; }
-.ul-fx-at { transform: translate(-50%, -50%); transform-origin: 0 0; scale: var(--k, 1); }
+/* centred on the click whatever it scales to: the centring lives in the translate
+   property, which applies outside scale and transform, and scaling is about the
+   element's own centre (size setting: scale; animations: transform) */
+.ul-fx-at { translate: -50% -50%; transform-origin: 50% 50%; scale: var(--k, 1); }
 .ul-fx i { position: absolute; display: block; border-radius: 50%; }
 .ul-fx-ripple { width: 72px; height: 72px; border-radius: 50%; border: 4px solid var(--ul-fx); box-shadow: 0 0 0 2px #000, inset 0 0 0 2px #000; animation: ul-fx-ripple .55s cubic-bezier(.22, 1, .36, 1) forwards; }
-@keyframes ul-fx-ripple { from { transform: translate(-50%, -50%) scale(.2); opacity: 1; } to { transform: translate(-50%, -50%) scale(1); opacity: 0; } }
+@keyframes ul-fx-ripple { from { transform: scale(.2); opacity: 1; } to { transform: scale(1); opacity: 0; } }
 @keyframes ul-fx-in { from { opacity: 0; } to { opacity: 1; } }
 @keyframes ul-fx-breathe { 0%, 100% { transform: scale(.78); opacity: .75; } 50% { transform: scale(1.08); opacity: 1; } }
 @keyframes ul-fx-turn { to { transform: rotate(1turn); } }
@@ -73,7 +76,7 @@ const CSS = `
 @keyframes ul-fx-swell { 0%, 100% { transform: scale(.86); } 50% { transform: scale(1.04); } }
 
 /* sonar */
-.ul-fx-sonar { width: 0; height: 0; transform: none; }
+.ul-fx-sonar { width: 0; height: 0; }
 .ul-fx-sonar i { left: -75px; top: -75px; width: 150px; height: 150px; background: radial-gradient(closest-side, color-mix(in srgb, var(--ul-fx) 10%, transparent) 55%, color-mix(in srgb, var(--ul-fx) 70%, transparent) 88%, transparent); box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--ul-fx2) 60%, transparent); transform: scale(.15); opacity: 0; animation: ul-fx-ping calc(1.8s * var(--t, 1)) cubic-bezier(.22, 1, .36, 1) infinite; }
 .ul-fx-sonar.outline i { background: none; border: 4px solid var(--ul-fx); box-shadow: 0 0 0 2px #000, inset 0 0 0 2px #000; }
 .ul-fx-sonar .c { left: -13px; top: -13px; width: 26px; height: 26px; background: var(--ul-fx) !important; border: 0 !important; box-shadow: 0 0 0 3px #000, 0 0 0 6px #fff !important; transform: none; opacity: 1; animation: none; }
@@ -112,11 +115,10 @@ const CSS = `
 
 /* endings: the same three for every style */
 .ul-fx-fade { opacity: 0 !important; transition: opacity .35s ease; }
-.ul-fx-fly.ul-fx-at { transform: translate(calc(-50% + var(--dx, 0px)), calc(-50% + var(--dy, 0px))) scale(.12); opacity: 0 !important; transition: transform .6s cubic-bezier(.65, 0, .35, 1), opacity .2s .5s; }
-.ul-fx-fly.ul-fx-sonar { transform: translate(var(--dx, 0px), var(--dy, 0px)) scale(.12); opacity: 0 !important; transition: transform .6s cubic-bezier(.65, 0, .35, 1), opacity .2s .5s; }
+.ul-fx-fly.ul-fx-at { translate: calc(-50% + var(--dx, 0px)) calc(-50% + var(--dy, 0px)); scale: calc(var(--k, 1) * .12); opacity: 0 !important; transition: translate .6s cubic-bezier(.65, 0, .35, 1), scale .6s cubic-bezier(.65, 0, .35, 1), opacity .2s .5s; }
 .ul-fx-fly.ul-fx-frame { animation: none; transform: translate(var(--dx, 0px), var(--dy, 0px)) scale(var(--sx, 1), var(--sy, 1)); opacity: 0 !important; transition: transform .6s cubic-bezier(.65, 0, .35, 1), opacity .25s .45s; }
 .ul-fx-found { width: 150px; height: 150px; border-radius: 50%; background: radial-gradient(closest-side, transparent 60%, var(--ul-fx) 80%, transparent); animation: ul-fx-found .7s cubic-bezier(.22, 1, .36, 1) forwards; }
-@keyframes ul-fx-found { 0% { transform: translate(-50%, -50%) scale(.3); opacity: 1; } 100% { transform: translate(-50%, -50%) scale(2.4); opacity: 0; } }
+@keyframes ul-fx-found { 0% { transform: scale(.3); opacity: 1; } 100% { transform: scale(2.4); opacity: 0; } }
 
 @media (prefers-reduced-motion: reduce) {
   .ul-fx, .ul-fx *, .ul-fx *::before { animation: none !important; transition: none !important; }
