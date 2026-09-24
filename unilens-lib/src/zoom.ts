@@ -456,10 +456,13 @@ const RUN_SLOP = 4;
 function atDestination(r: ClientRect): ClientRect {
     if (!tween) return r;
     const v = getView();
+    // field by field: a DOMRect's fields are prototype getters, which a spread drops,
+    // and a box with no size sends the move to NaN (the top of the page)
     return {
-        ...r,
         left: r.left + v.x - tween.to.x,
         top: r.top + v.y - tween.to.y,
+        width: r.width,
+        height: r.height,
     };
 }
 
@@ -628,7 +631,7 @@ export function onViewChange(cb: (x: number, y: number) => void): () => void {
 
 // ── Eased moves ────────────────────────────────────────────────────────────
 // Every programmatic move (to evidence, back, a minimap click) glides with an
-// ease-out over motionMs(); 0 (the instant setting, or reduced motion) jumps in the
+// ease-in-out over motionMs(); 0 (the instant setting, or reduced motion) jumps in the
 // same call, as before. A glide is a string of jumps, one per frame, so both engines
 // and every view listener follow it frame by frame. Anything the user does to move
 // the page cancels it on the spot, so it never fights them.
@@ -637,6 +640,7 @@ interface Tween {
     from: { x: number; y: number };
     /** the destination, clamped to where the view can actually go */
     to: { x: number; y: number };
+    /** the first frame's timestamp: NaN until that frame runs */
     start: number;
     ms: number;
     raf: number;
@@ -751,13 +755,18 @@ export function setView(x: number, y: number) {
         jumpView(x, y);
         return;
     }
-    tween = { from, to, start: performance.now(), ms, raf: 0 };
+    // the clock starts on the first frame, read from the frame's own timestamp. Never
+    // performance.now(): host pages replace it (SoftBank's vendor bundle swaps in a
+    // Date-based polyfill running ~600ms behind the frame clock), and a start taken
+    // before this click's own work is done makes the first frame land partway there
+    tween = { from, to, start: Number.NaN, ms, raf: 0 };
     tween.raf = requestAnimationFrame(glide);
 }
 
 function glide(now: number) {
     const tw = tween;
     if (!tw) return;
+    if (Number.isNaN(tw.start)) tw.start = now;
     const t = Math.min(1, Math.max(0, (now - tw.start) / tw.ms));
     if (t >= 1) {
         tween = null;
@@ -768,7 +777,9 @@ function glide(now: number) {
     // own (outline, cues, minimap) then queue behind it, and every frame they draw
     // after this step has moved the page, never one step behind it
     tw.raf = requestAnimationFrame(glide);
-    const e = 1 - (1 - t) ** 3; // cubic ease-out: quick start, gentle landing
+    // cubic ease-in-out: leaves from where the reader is without a lurch (an ease-out
+    // moved 14% on its first frame, felt as a jump) and lands gently
+    const e = t < 0.5 ? 4 * t ** 3 : 1 - (-2 * t + 2) ** 3 / 2;
     jumpView(
         tw.from.x + (tw.to.x - tw.from.x) * e,
         tw.from.y + (tw.to.y - tw.from.y) * e,

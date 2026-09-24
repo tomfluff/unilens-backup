@@ -48,6 +48,8 @@ export type Measure = (el: Element) => Rect;
 const defaultMeasure: Measure = (el) => el.getBoundingClientRect();
 
 const LAYER_Z = "2147483645"; // under the minimap (…646) and the popover (…647)
+/** pointer cues follow the pointer over everything, the chat included */
+const POINTER_CUE_Z = "2147483647";
 const CLASS = "unilens-hl";
 
 let layer: HTMLDivElement | null = null;
@@ -542,9 +544,9 @@ function edgeLoop(view: View, m: number) {
 }
 
 /**
- * Where a cue sits: on the inset screen edge toward the target, or on a circle
- * round the pointer (kept inside the view). `angle` is the true bearing from
- * there to the target's centre.
+ * Where a cue sits: on the inset screen edge toward the target, or on the circle
+ * round the pointer, wherever that falls (a pointer cue is pinned to the pointer,
+ * never to the page). `angle` is the true bearing from there to the target's centre.
  */
 export function cuePosition(
     mode: "edge" | "pointer",
@@ -556,27 +558,32 @@ export function cuePosition(
 ): Cue {
     const tx = target.left + target.width / 2;
     const ty = target.top + target.height / 2;
-    const m = cueInset(size);
     let p: Pt;
     if (mode === "pointer" && from) {
         const dx = tx - from.x;
         const dy = ty - from.y;
         const len = Math.hypot(dx, dy) || 1;
-        p = clampTo(view, m, {
+        p = {
             x: from.x + (dx / len) * radius,
             y: from.y + (dy / len) * radius,
-        });
-    } else p = edgePoint(view, m, tx, ty);
+        };
+    } else p = edgePoint(view, cueInset(size), tx, ty);
     return { x: p.x, y: p.y, angle: bearing(p, tx, ty), tx, ty };
 }
 
 /**
- * Keep cues apart, inside the view and out from under the chat popover, then aim
- * each one at its target from wherever it ended up: a move never skews an arrow.
- * Pointer cues spread round their circle; one the popover covers moves outward
- * along its own ray from the pointer, and failing that to its edge spot. Edge cues
- * slide along the inset edge to the nearest free place. Positions are cue centres;
- * the result is in the input's order.
+ * Settle the cues, then aim each one at its target from wherever it ended up: a
+ * move never skews an arrow. Positions are cue centres; the result is in the
+ * input's order.
+ *
+ * Pointer cues are pinned to the pointer: each sits on the circle round it, and
+ * cues that crowd one direction spread round the circle. Nothing else moves them,
+ * not the view's edge and not the chat (`view` and `avoid` are ignored), so they
+ * follow the pointer wherever it goes. They are drawn above the chat instead.
+ * TODO: many arrows spread far round the circle; find a better way to show a crowd.
+ *
+ * Edge cues keep apart and out from under the chat popover: each slides along the
+ * inset edge to the nearest free place.
  */
 export function settleCues<C extends Cue>(
     cues: C[],
@@ -587,37 +594,9 @@ export function settleCues<C extends Cue>(
     radius: number,
     size: number,
 ): C[] {
-    const m = cueInset(size);
     const gap = cueGap(size);
-    const half = size / 2 + CUE_MARGIN;
-    const blocked = (p: Pt) =>
-        !!avoid &&
-        p.x + half > avoid.left &&
-        p.x - half < avoid.right &&
-        p.y + half > avoid.top &&
-        p.y - half < avoid.bottom;
-    const placed: Pt[] = [];
-    const free = (p: Pt) =>
-        !blocked(p) &&
-        placed.every((q) => Math.hypot(p.x - q.x, p.y - q.y) >= gap - 1e-6);
-    const loop = edgeLoop(view, m);
-    /** the nearest place along the inset edge from `start` that passes `ok` */
-    const slide = (start: Pt, ok: (p: Pt) => boolean): Pt | null => {
-        const s0 = loop.of(start);
-        const step = Math.max(2, size / 16);
-        for (let d = 0; d <= loop.P / 2; d += step)
-            for (const s of d ? [s0 + d, s0 - d] : [s0]) {
-                const p = loop.at(s);
-                if (ok(p)) return p;
-            }
-        return null;
-    };
-    // somewhere free on the edge; else clear of the chat at least; else where it was
-    const onEdge = (start: Pt) =>
-        slide(start, free) ?? slide(start, (p) => !blocked(p)) ?? start;
     const out: C[] = [...cues];
-    const place = (i: number, p: Pt) => {
-        placed.push(p);
+    const aim = (i: number, p: Pt) => {
         const c = cues[i];
         out[i] = { ...c, x: p.x, y: p.y, angle: bearing(p, c.tx, c.ty) };
     };
@@ -650,37 +629,51 @@ export function settleCues<C extends Cue>(
         });
         for (let k = 1; k < seq.length; k++)
             if (seq[k].a - seq[k - 1].a < step) seq[k].a = seq[k - 1].a + step;
-        const { x0, x1, y0, y1 } = insetBox(view, m);
-        const inView = (p: Pt) =>
-            p.x >= x0 && p.x <= x1 && p.y >= y0 && p.y <= y1;
-        for (const { i, a } of seq) {
-            const ray = (r: number) => ({
-                x: from.x + Math.cos(a) * r,
-                y: from.y + Math.sin(a) * r,
+        for (const { i, a } of seq)
+            aim(i, {
+                x: from.x + Math.cos(a) * radius,
+                y: from.y + Math.sin(a) * radius,
             });
-            let p: Pt | null = clampTo(view, m, ray(radius));
-            if (!free(p)) {
-                // covered or crowded: step outward along the ray while it stays in view
-                p = null;
-                for (let r = radius + size / 2; ; r += size / 2) {
-                    const q = ray(r);
-                    if (!inView(q)) break;
-                    if (free(q)) {
-                        p = q;
-                        break;
-                    }
-                }
-            }
-            const c = cues[i];
-            place(i, p ?? onEdge(edgePoint(view, m, c.tx, c.ty)));
-        }
         return out;
     }
-    // edge: settle in order along the loop, so neighbours keep their order where they can
+
+    const m = cueInset(size);
+    const half = size / 2 + CUE_MARGIN;
+    const blocked = (p: Pt) =>
+        !!avoid &&
+        p.x + half > avoid.left &&
+        p.x - half < avoid.right &&
+        p.y + half > avoid.top &&
+        p.y - half < avoid.bottom;
+    const placed: Pt[] = [];
+    const free = (p: Pt) =>
+        !blocked(p) &&
+        placed.every((q) => Math.hypot(p.x - q.x, p.y - q.y) >= gap - 1e-6);
+    const loop = edgeLoop(view, m);
+    /** the nearest place along the inset edge from `start` that passes `ok` */
+    const slide = (start: Pt, ok: (p: Pt) => boolean): Pt | null => {
+        const s0 = loop.of(start);
+        const step = Math.max(2, size / 16);
+        for (let d = 0; d <= loop.P / 2; d += step)
+            for (const s of d ? [s0 + d, s0 - d] : [s0]) {
+                const p = loop.at(s);
+                if (ok(p)) return p;
+            }
+        return null;
+    };
+    // settle in order along the loop, so neighbours keep their order where they can;
+    // each takes somewhere free, else clear of the chat at least, else where it was
     const order = cues
         .map((c, i) => ({ i, s: loop.of(c) }))
         .sort((p, q) => p.s - q.s);
-    for (const { i } of order) place(i, onEdge(cues[i]));
+    for (const { i } of order) {
+        const p =
+            slide(cues[i], free) ??
+            slide(cues[i], (q) => !blocked(q)) ??
+            cues[i];
+        placed.push(p);
+        aim(i, p);
+    }
     return out;
 }
 
@@ -726,6 +719,37 @@ function aimCue(el: HTMLElement, angle: number) {
 }
 
 /**
+ * Where the cues are drawn. Edge cues sit in the highlight layer, under the chat,
+ * which they keep clear of. Pointer cues get their own layer on top of everything,
+ * so the chat never covers one; it never takes a click, so the chat stays usable.
+ */
+function ensureCueHost(top: boolean): HTMLDivElement {
+    if (cueHost && (cueHost.dataset.top === "") === top) return cueHost;
+    // a mode change: the old host goes, and every cue is rebuilt in the new one
+    cueHost?.remove();
+    cueEls.clear();
+    const host = document.createElement("div");
+    host.className = `${CLASS}-cues`;
+    const layer = ensureLayer(); // also installs the forced-colours styles
+    if (top) {
+        host.dataset.top = "";
+        host.setAttribute("data-unilens-layer", ""); // the forced-colours rules apply here too
+        Object.assign(host.style, {
+            position: "fixed",
+            left: "0",
+            top: "0",
+            width: "0",
+            height: "0",
+            pointerEvents: "none",
+            zIndex: POINTER_CUE_Z,
+        });
+        document.documentElement.appendChild(host);
+    } else layer.appendChild(host);
+    cueHost = host;
+    return host;
+}
+
+/**
  * Off-screen cues: an arrow per outlined element that is entirely outside the
  * visible area, at its edge (a button that brings the element in) or on a circle
  * round the pointer (points only, never catches clicks). Numbered like the chips.
@@ -760,12 +784,8 @@ function renderCues(look: HighlightLook) {
         cueHost = null;
         return;
     }
-    if (!cueHost) {
-        cueHost = document.createElement("div");
-        cueHost.className = `${CLASS}-cues`;
-        ensureLayer().appendChild(cueHost);
-    }
     const cueMode = mode as "edge" | "pointer";
+    const host = ensureCueHost(cueMode === "pointer");
     const { cueRadius: radius, cueSize: size } = getSettings();
     // work in visual-viewport coordinates, place in layout (fixed) coordinates
     // explicit fields: a DOMRect keeps them as prototype getters, so spreading one copies nothing
@@ -834,7 +854,7 @@ function renderCues(look: HighlightLook) {
                     );
                 });
             } else el.setAttribute("aria-hidden", "true");
-            cueHost.appendChild(el);
+            host.appendChild(el);
             entry = { el, sig };
             cueEls.set(b, entry);
         }

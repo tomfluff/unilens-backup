@@ -22,7 +22,7 @@ let backendUrl = "";
 let audioEl: HTMLAudioElement | null = null;
 let stateCb: ((s: SpeechState) => void) | null = null;
 
-export type SpeechState = "loading" | "playing" | "idle";
+export type SpeechState = "loading" | "playing" | "paused" | "idle";
 
 /** set by init() — enables API TTS (better mixed-language voices) */
 export function setSpeechBackend(url: string) {
@@ -91,6 +91,27 @@ export function stopSpeaking() {
     setState("idle");
 }
 
+/** hold the reading where it is; resumeSpeaking carries on from there */
+export function pauseSpeaking() {
+    if (audioEl && !audioEl.paused) {
+        audioEl.pause();
+        setStateSafe("paused");
+    } else if (speechSynthesis.speaking && !speechSynthesis.paused) {
+        speechSynthesis.pause();
+        setStateSafe("paused");
+    }
+}
+
+export function resumeSpeaking() {
+    if (audioEl?.paused) {
+        void audioEl.play();
+        setStateSafe("playing");
+    } else if (speechSynthesis.paused) {
+        speechSynthesis.resume();
+        setStateSafe("playing");
+    }
+}
+
 export function isSpeaking(): boolean {
     return speechSynthesis.speaking || (audioEl != null && !audioEl.paused);
 }
@@ -126,11 +147,12 @@ export const sttSupported = recognitionCtor() != null;
 export function listen(
     onResult: (transcript: string) => void,
     onEnd: () => void,
+    lang?: string,
 ): (() => void) | null {
     const Ctor = recognitionCtor();
     if (!Ctor) return null;
     const rec = new Ctor();
-    rec.lang = navigator.language || "en-US";
+    rec.lang = lang || navigator.language || "en-US";
     rec.interimResults = true;
     rec.onresult = (e) => {
         let text = "";

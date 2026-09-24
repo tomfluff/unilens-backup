@@ -41,9 +41,15 @@ const EN = {
     emptyHint: "Ask about what you clicked, or pick a quick action below.",
     placeholder: "Ask about this page…",
     send: "Send",
-    micStart: "Speak your question",
+    micStart: "Dictate into the field",
     micStop: "Stop listening",
+    voiceStart: "Record a voice message",
+    voiceStop: "Stop and send",
+    placeholderListening: "Listening…",
     readAloud: "Read aloud",
+    readLast: "Read the last answer aloud",
+    pauseReading: "Pause reading",
+    resumeReading: "Resume reading",
     stopReading: "Stop reading",
     preparingAudio: "Preparing audio…",
     quickExplain: "Explain",
@@ -74,9 +80,12 @@ const EN = {
             : "Answer ready.",
     sError: "Something went wrong. You can ask again.",
     sListening: "Listening… speak your question.",
+    sRecording: "Recording. Speak, then pause or press stop to send.",
+    sNothingHeard: "Nothing was heard. Try again.",
     sStoppedListening: "Stopped listening.",
     sReading: "Reading the answer aloud.",
     sStoppedReading: "Stopped reading.",
+    sPausedReading: "Reading paused.",
     sCleared: "Outlines cleared.",
     sAll: (n: number, labels: string) =>
         n > 1 ? `Showing all ${n}: ${labels}.` : `Showing it: ${labels}.`,
@@ -128,9 +137,15 @@ const JA: Strings = {
         "クリックしたところについて質問するか、下のボタンを選んでください。",
     placeholder: "このページについて質問…",
     send: "送信",
-    micStart: "声で質問する",
+    micStart: "声で入力する",
     micStop: "聞き取りを止める",
+    voiceStart: "音声メッセージを録音",
+    voiceStop: "止めて送信",
+    placeholderListening: "聞き取り中…",
     readAloud: "読み上げる",
+    readLast: "最後の回答を読み上げる",
+    pauseReading: "読み上げを一時停止",
+    resumeReading: "読み上げを再開",
     stopReading: "読み上げを止める",
     preparingAudio: "音声を準備しています…",
     quickExplain: "説明して",
@@ -158,9 +173,12 @@ const JA: Strings = {
         n ? `回答しました。出典 ${n}件。` : "回答しました。",
     sError: "エラーが起きました。もう一度質問できます。",
     sListening: "聞き取り中… 質問をどうぞ。",
+    sRecording: "録音中。話し終えたら少し待つか、停止を押すと送信します。",
+    sNothingHeard: "聞き取れませんでした。もう一度どうぞ。",
     sStoppedListening: "聞き取りを止めました。",
     sReading: "回答を読み上げています。",
     sStoppedReading: "読み上げを止めました。",
+    sPausedReading: "読み上げを一時停止しました。",
     sCleared: "ハイライトを消しました。",
     sAll: (n: number, labels: string) =>
         n > 1
@@ -198,3 +216,12 @@ const JA: Strings = {
 };
 
 export const chatText = (): Strings => (chatLang() === "ja" ? JA : EN);
+
+/** the language to hear the user in: the one they chose for the chat, else their own
+ *  browser's (on "auto" the chat follows the page, but people speak their language) */
+export function speechLang(): string {
+    const pick = getSettings().chatLanguage;
+    if (pick === "ja") return "ja-JP";
+    if (pick === "en") return "en-US";
+    return navigator.language || "en-US";
+}

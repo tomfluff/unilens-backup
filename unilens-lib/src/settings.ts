@@ -37,8 +37,10 @@ export interface Settings {
     debugView: boolean;
     /** capture render scale: 1 = screen resolution, 0.5 = reduced */
     captureRes: number;
-    /** chat bubble font size in px */
+    /** chat scale: the base size in px the whole chat panel is drawn in (em) */
     chatFontSize: number;
+    /** the conversation's text size on top of the chat scale, percent */
+    chatTextScale: number;
     /** popover pinned position — null = follow the cursor (survives reloads) */
     pinnedPos: { left: number; top: number } | null;
     /** debug panel: where it was dragged to (null = top-right) and whether it is folded */
@@ -130,6 +132,7 @@ const DEFAULTS: Settings = {
     debugView: false,
     captureRes: 1,
     chatFontSize: 14,
+    chatTextScale: 100,
     pinnedPos: null,
     debugPanel: { pos: null, collapsed: false },
     inventory: true,
@@ -184,24 +187,24 @@ export const TOGGLE_LABELS: Record<BoolSettingKey, string> = {
     dragPopover: "Movable popover (drag header)",
     elementContext: "Clicked-element context capture",
     regionSelect: "Alt+drag region select",
-    highContrast: "High-contrast chat",
+    highContrast: "High contrast",
     continuity: "Conversation continuity",
     autoRead: "Read replies aloud",
     voiceInput: "Voice input (mic)",
     hints: "Proactive help hints",
-    minimap: "Minimap while zoomed",
+    minimap: "Show the minimap while zoomed",
     lensPan: "Lens panning (freeze page while zoomed)",
     debugView: "Debug view (ctrl+shift+D)",
     inventory: "Send page inventory with captures",
-    ringScale: "Scale the outline with zoom",
-    hlFill: "Highlight: colour fill",
-    hlGlow: "Highlight: glow",
-    hlBadges: "Highlight: numbered badges",
-    mmDim: "Minimap: dim the map around targets",
-    mmGlow: "Minimap: glow around targets",
-    mmNumbers: "Minimap: numbers on targets",
+    ringScale: "Outline grows with the zoom",
+    hlFill: "Colour fill",
+    hlGlow: "Glow",
+    hlBadges: "Numbered badges",
+    mmDim: "Dim the map around targets",
+    mmGlow: "Glow around targets",
+    mmNumbers: "Numbers on targets",
     citeEvidence: "Answers cite page elements",
-    sounds: "Chat sounds for every action",
+    sounds: "A sound for every action",
     refreshView: "Send my new view with follow-ups",
 };
 
@@ -220,7 +223,8 @@ export const NUMBER_KNOBS: Record<
     { label: string; min: number; max: number; step: number }
 > = {
     captureRes: { label: "Capture resolution", min: 0.5, max: 1, step: 0.5 },
-    chatFontSize: { label: "Chat text size", min: 14, max: 20, step: 3 },
+    chatFontSize: { label: "Chat scale", min: 14, max: 20, step: 3 },
+    chatTextScale: { label: "Text size (%)", min: 80, max: 200, step: 10 },
     inventoryMaxDepth: {
         label: "Inventory max depth",
         min: 1,
@@ -255,19 +259,19 @@ export const NUMBER_KNOBS: Record<
     },
     ringWidth: { label: "Outline width (px)", min: 1, max: 6, step: 1 },
     minimapMarkerSize: {
-        label: "Minimap marker min size (px)",
+        label: "Marker min size (px)",
         min: 8,
         max: 32,
         step: 2,
     },
     cueRadius: {
-        label: "Pointer cue radius (px)",
+        label: "Distance from the pointer (px)",
         min: 40,
         max: 240,
         step: 10,
     },
     cueSize: {
-        label: "Off-screen cue size (px)",
+        label: "Arrow size (px)",
         min: 48,
         max: 128,
         step: 8,
@@ -300,7 +304,7 @@ export const AUTO_HIGHLIGHTS: Record<Settings["autoHighlight"], string> = {
  */
 export const ENUM_CHOICES = {
     chatStyle: {
-        label: "Chat style",
+        label: "Style",
         choices: {
             assistant: "Assistant",
             audioGuide: "Audio guide",
@@ -308,28 +312,28 @@ export const ENUM_CHOICES = {
         },
     },
     chatLanguage: {
-        label: "Chat language",
+        label: "Language",
         choices: { auto: "Follow the page", en: "English", ja: "日本語" },
     },
-    hlOutline: { label: "Highlight outline", choices: OUTLINES },
-    hlBackdrop: { label: "Highlight backdrop", choices: BACKDROPS },
+    hlOutline: { label: "Outline", choices: OUTLINES },
+    hlBackdrop: { label: "Backdrop", choices: BACKDROPS },
     offscreenCue: {
-        label: "Off-screen cue",
+        label: "Arrows",
         choices: {
             none: "None",
-            edge: "Arrows at the screen edge",
-            pointer: "Arrows around the pointer",
+            edge: "At the screen edge",
+            pointer: "Around the pointer",
         },
     },
     motion: {
-        label: "Page and chat movement",
+        label: "Movement",
         choices: {
             smooth: "Smooth (instant under reduced motion)",
             instant: "Instant",
         },
     },
     mmShape: {
-        label: "Minimap marker",
+        label: "Marker",
         choices: { filled: "Filled, see-through", outlined: "Outlined" },
     },
     moveToEvidence: {
@@ -363,6 +367,97 @@ export const SELECT_CHOICES = {
     ],
 } satisfies Partial<Record<NumSettingKey, { value: number; label: string }[]>>;
 export type SelectKnobKey = keyof typeof SELECT_CHOICES;
+
+/**
+ * The settings panel, in groups a person looks for ("where is the glow?"): each
+ * group holds everything about one thing, whatever kind of control it is. Every
+ * toggle, choice and number appears in exactly one group (settings.test.ts).
+ */
+export const PANEL_SECTIONS: {
+    title: string;
+    open?: boolean;
+    keys: (keyof Settings)[];
+}[] = [
+    {
+        title: "Chat",
+        open: true,
+        keys: [
+            "chatStyle",
+            "chatLanguage",
+            "chatFontSize",
+            "chatTextScale",
+            "highContrast",
+            "sounds",
+            "quickActions",
+            "voiceInput",
+            "autoRead",
+            "streamReplies",
+            "dragPopover",
+            "continuity",
+            "escapeOrder",
+        ],
+    },
+    {
+        title: "Answers and sources",
+        keys: [
+            "citeEvidence",
+            "autoHighlight",
+            "moveToEvidence",
+            "refreshView",
+        ],
+    },
+    {
+        title: "Highlight look",
+        open: true,
+        keys: [
+            "hlOutline",
+            "hlBackdrop",
+            "hlColor",
+            "hlFill",
+            "hlGlow",
+            "hlBadges",
+            "ringWidth",
+            "ringScale",
+        ],
+    },
+    {
+        title: "Off-screen arrows",
+        keys: ["offscreenCue", "cueSize", "cueRadius"],
+    },
+    { title: "Movement", keys: ["motion", "motionMs"] },
+    {
+        title: "Minimap",
+        keys: [
+            "minimap",
+            "mmShape",
+            "mmDim",
+            "mmGlow",
+            "mmNumbers",
+            "minimapMarkerSize",
+        ],
+    },
+    {
+        title: "Page zoom",
+        keys: ["zoom", "zoomKeys", "smoothZoom", "smartZoom", "lensPan"],
+    },
+    { title: "Asking", keys: ["regionSelect", "elementContext", "hints"] },
+    {
+        title: "Capture and research",
+        keys: [
+            "mouseTrace",
+            "zoomTrace",
+            "viewportCrop",
+            "captureRes",
+            "inventory",
+            "inventoryMaxDepth",
+            "inventorySummaryDepth",
+            "inventorySummaryCap",
+            "inventoryMaxBytes",
+            "inventoryMaxNodes",
+            "debugView",
+        ],
+    },
+];
 
 /**
  * Persisted values can be stale, out of range or the wrong type (an old build, a

@@ -354,7 +354,7 @@ UniLens is a chat that opens beside what a magnifier user clicked on someone els
 
 Two alternates share every control, state, sound slot and knob, and change only the material. **Audio guide** is a graphite museum handset: white label cards for answers, black number discs, a row of keypad keys, and an amber display that serves as the status line. **Station signs** is Japanese railway wayfinding: a dark sign band with a U roundel and bilingual name, station-code chips (U1, U2) ringed in line blue, exit-yellow action signs, and a pale information strip as the status line. Each style has its own high-contrast rendition in black, white and signal yellow, bound through the same custom properties. It is never a filter.
 
-The system is built for 100–400% magnification. Type, targets and panel all scale in em from one text-size setting. Every action is shown on the status line and heard as a short earcon in the style's own sound palette. Nothing relies on colour alone, a small cue or motion. Confirmed rejections from the direction contract: the decorated chatbot (gradient header, sparkle icon, emoji controls, tiny grey chips).
+The system is built for 100–400% magnification. Type, targets and panel all scale in em from the chat scale setting, and a separate text-size slider scales the conversation text on top of it. Every action is shown on the control it acts on and heard as a short earcon in the style's own sound palette. Nothing relies on colour alone, a small cue or motion. Confirmed rejections from the direction contract: the decorated chatbot (gradient header, sparkle icon, emoji controls, tiny grey chips).
 
 **Key Characteristics:**
 - One scoped stylesheet with three styles (`data-style`: assistant, audioGuide, station), each a set of CSS custom properties with a real high-contrast rebinding (`data-hc`).
@@ -362,7 +362,7 @@ The system is built for 100–400% magnification. Type, targets and panel all sc
 - Mounted on `<html>`, outside `<body>`, so the page's zoom transform and layout never reach it. The accessibility widget, the highlight layer and the minimap mount on `<html>` the same way.
 - Em sizing from `chatFontSize` (14px default, 17, 20), so the text-size setting grows the whole panel, its targets and its type together.
 - One authored icon family: 24px grid, 2px round stroke, no fill, currentColor. No emoji anywhere.
-- Every action seen and heard: a status line and an earcon for each one.
+- Every action seen and heard: the control's own state (and the status line when folded) plus an earcon for each one.
 - Every highlight, cue and motion value is a knob in the options page (research variables), and each has a shipped default.
 
 ## Colors
@@ -414,13 +414,13 @@ Each style carries its own restrained palette: one accent, one ink, soft neutral
 - **Status display** (700, 1em, 1.35): the Audio guide's amber display and the Station's strip. At most two lines, one on a short screen.
 
 ### Named Rules
-**The Em Rule.** Every size in the chat is in em of `--ul-fs`, which is set from `chatFontSize` (14, 17 or 20px). The panel (24.3em × 30em), targets, radii on signs and type all scale together. Only the Audio guide's frame spacing (12px inset, 8px and 6px gaps) and the 4px level-meter bars are fixed px.
+**The Em Rule.** Every size in the chat is in em of `--ul-fs`, which is set from the chat scale, `chatFontSize` (14, 17 or 20px). The conversation text (messages, place entries, the input) is further multiplied by `--ul-text`, the text-size slider (`chatTextScale`, 80–200%). The panel (24.3em × 30em), targets, radii on signs and type all scale together. Only the Audio guide's frame spacing (12px inset, 8px and 6px gaps) and the 4px level-meter bars are fixed px.
 
 **The Readable Face Rule.** Faces are chosen for reading, not flavour: the platform UI face for the Assistant, BIZ UD Gothic for the sign styles, and a Japanese face in every stack. Nothing is set below 0.92em (inline code).
 
 ## Layout
 
-The chat is a fixed, draggable card (z-index 2147483647) placed next to the click. It sits at least 8px inside the window (`calc(100vw - 16px)`), and it glides to a new click instead of reopening. The card is one flex column: header (drag handle), log (the only scrolling part), quick actions (a three-column grid), input row (mic, field, send) and status line. Folded ("mini"), it keeps only the header and the status.
+The chat is a fixed, draggable card (z-index 2147483646, one below the off-screen arrows so they are never clipped by it) placed next to the click. It sits at least 8px inside the window (`calc(100vw - 16px)`), and it glides to a new click instead of reopening. The card is one flex column: header (drag handle), log (the only scrolling part), quick actions (a three-column grid), and input row (mic, field, send). Folded ("mini"), it keeps only the header and the status line.
 
 - **Size:** width min(24.3em, 100vw − 16px), 340px at the default text size; height min(30em, 100vh − 16px).
 - **Narrow screens (≤480px wide):** the chat docks as a bottom sheet, full width minus 16px and half the window high, so what it points at stays visible above it.
@@ -431,7 +431,7 @@ The chat is a fixed, draggable card (z-index 2147483647) placed next to the clic
 
 **The Room For The Answer Rule.** When height runs out, chrome gives way before the log does: header padding, key heights, the subtitle, then the quick actions. The log always keeps three lines, and the input never leaves the panel.
 
-**The One Home Per Fact Rule.** Each fact appears once. "What just happened" lives only on the status line, and in the sign styles the status line *is* the amber display or the information strip, never a second band above it. There is no "places found" count and no subtitle in the Assistant.
+**The One Home Per Fact Rule.** Each fact appears once. The current source lives on the controls row (the lit key or code, "2/3"); "what just happened" is spoken by the live region and shown on the status line only when the chat is folded, where in the sign styles it *is* the amber display or the information strip. There is no "places found" count and no subtitle in the Assistant.
 
 ## Elevation & Depth
 
@@ -506,21 +506,21 @@ Mic, field, send. The field placeholder is "Ask about this page…" / このペ�
 - **Station:** a 2.9em field (4px, 2px ink border); 2.9em keys; send is line blue.
 
 ### Status line (signature)
-The one home for what just happened, e.g. "Source 2 of 3, …. Moved there; Back returns you." At most two lines, one on a short screen.
-- **Assistant:** plain slate text under the input, always present.
+What just happened, e.g. "Source 2 of 3, …. Moved there; Back returns you." It shows **only on the folded chat** (header plus status), where it is the chat's whole face. Open, the chat shows each action on the control itself (pressed, current, the outline on the page), and the live region speaks the status for screen readers; a line of small text under the input was space taken from the answer and hard to read at magnification. At most two lines, one on a short screen.
+- **Assistant:** plain slate text under the header.
 - **Audio guide:** the amber display (10px, 700, at least 2.6em).
 - **Station:** the pale information strip with a line-blue top rule (700, at least 2.5em).
-- The sign styles show the status line only when there is a status, a reading or a listening.
+- While a click is being captured, a dashed "Capturing…" entry stands in the log where its place entry will appear.
 
 ### Sound
 Each of the eleven actions has an earcon: press, chip, all, move, back, send, done, error, micOn, micOff and clear. Earcons are synthesized with WebAudio at gain 0.05 and last under 150ms each. They play in the style's own palette:
 - **Assistant:** soft sine pops and short glides (520–900Hz).
 - **Audio guide:** keypad DTMF pairs (e.g. 1336+941Hz) and a square-wave click.
 - **Station:** triangle-wave chimes on C6, E6 and G6. "Move" is a rising arpeggio and "back" a falling one.
-The `sounds` setting silences earcons, and the status line still shows every action.
+The `sounds` setting silences earcons; the controls' own states and the live region still carry every action.
 
 ### Motion
-One setting drives all movement: `motion` (smooth by default, or instant) with `motionMs` (350ms default, 100–1000). It covers page moves to evidence, Back, minimap and cue jumps, log scrolling and the chat's glide to a new click. Page moves ease out on a cubic curve (1 − (1 − t)³); the chat glides with `cubic-bezier(.22, 1, .36, 1)`. Any wheel, touch or key from the user cancels a glide. With `prefers-reduced-motion` set, every move, smooth zoom, the caret and the level meter are instant or still.
+One setting drives all movement: `motion` (smooth by default, or instant) with `motionMs` (350ms default, 100–1000). It covers page moves to evidence, Back, minimap and cue jumps, log scrolling and the chat's glide to a new click. Page moves ease in and out on a cubic curve, so they leave from where the reader is without a lurch; each glide is timed from animation-frame timestamps only, never `performance.now`, which host pages may replace (SoftBank's does). The chat glides with `cubic-bezier(.22, 1, .36, 1)`. Any wheel, touch or key from the user cancels a glide. With `prefers-reduced-motion` set, every move, smooth zoom, the caret, the level meter and the recording pulse are instant or still.
 
 ### Page highlight and off-screen cues (research variables)
 The chat drives the page layer, which is detached from `<body>` like the chat. The shipped defaults:
@@ -537,7 +537,7 @@ Authored as one family: 24px grid, 2px round stroke, round joins, no fill, curre
 ### Do:
 - **Do** revert every element except SVG to browser defaults before styling (`all: revert`), and set every visual property explicitly. The host page's CSS must not reach the chat.
 - **Do** mount UniLens surfaces (chat, highlight layer, cues, minimap, the accessibility widget) on `<html>`, outside the zoomed `<body>`.
-- **Do** size everything in em of `--ul-fs`, so the text-size setting (14/17/20px) scales the panel, targets and type together.
+- **Do** size everything in em of `--ul-fs`, so the chat scale (14/17/20px) scales the panel, targets and type together; scale only the conversation text with `--ul-text`.
 - **Do** give every new action a status-line message in English and Japanese, plus an earcon slot in all three palettes.
 - **Do** build each new control once and render it in all three styles and all three high-contrast renditions, with the same behaviour and accessible name.
 - **Do** keep every target at 24px or more at the smallest text size (inline chips 1.75em; keys and controls 2em and up) and focus always visible: a 3px outline, plus a 6px halo in the sign styles.

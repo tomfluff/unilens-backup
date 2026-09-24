@@ -14,6 +14,42 @@
 **Priority:** P2
 **Depends on:** None (independent of the highlighting steps; best landed before step two's trial runner, which fires many requests quickly)
 
+### Live voice conversation
+
+**What:** Turn the voice message into a live exchange: speak, hear the answer read back, and speak again without touching the chat. Barge-in stops the reading when the user starts talking.
+
+**Why:** The builder's direction (2026-09-24): "in the future, what we want to do is enable sort of like live interactions." The voice message button is the first step.
+
+**Context:**
+- Today the voice message records with the browser's SpeechRecognition, which ends on a pause. It sends the transcript as a typed message (`toggleVoiceMessage` in `unilens-lib/src/ChatPopover.tsx`).
+- Reading aloud uses `/api/tts` with a native fallback, and has play, pause and stop (`speech.ts`).
+- Next steps:
+  - a conversation mode that reads each answer aloud and listens again after it;
+  - a way to interrupt, spoken or a key;
+  - the earcons as turn-taking cues;
+  - possibly a streaming speech API instead of browser STT, for Japanese quality and interruption.
+
+**Effort:** M
+**Priority:** P2
+**Depends on:** None
+
+### Many pointer arrows pointing the same way
+
+**What:** Decide how "arrows around the pointer" show several targets that lie in about the same direction. Today they spread round the cursor circle so they do not stack. The spreading moves each arrow away from its true direction, and it reads as noise when there are many.
+
+**Why:** The builder tested pointer mode and found the spreading "not the best kind of behavior we want", but had no better answer yet (2026-09-24). Arrows are now fixed to the cursor: a cue's position depends only on the pointer, its target and the other cues, never on page elements or the chat.
+
+**Context:** Options to try with participants:
+- one arrow per direction, with a count badge ("3");
+- stacking the numbers inside one arrowhead;
+- a fan that opens only on hover.
+
+The spread lives in `settleCues` in `unilens-lib/src/highlight.ts`.
+
+**Effort:** S–M
+**Priority:** P3
+**Depends on:** None
+
 ### Move research knobs out of the participant-facing settings panel
 
 **What:** Render the inventory/locate research knobs (`inventoryMaxDepth`, `inventorySummaryDepth`, `inventorySummaryCap`, `inventoryMaxBytes`, `locateScreenshot`, `escapeOrder`) in a "Research" section of `DebugPanel` (ctrl+shift+D) instead of `SettingsPanel`, and clamp persisted values on read.

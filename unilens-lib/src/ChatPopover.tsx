@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import type { CaptureResult } from "./capture";
-import { chatLang, chatText } from "./chatI18n";
+import { chatLang, chatText, speechLang } from "./chatI18n";
 import { ensureChatStyles } from "./chatStyles";
 import { type Earcon, earcon, releaseAudio } from "./earcons";
 import {
@@ -30,13 +30,15 @@ import {
     MicIcon,
     MinimizeIcon,
     NextIcon,
+    PauseIcon,
     PinIcon,
     PlaceIcon,
+    PlayIcon,
     PrevIcon,
     SendIcon,
-    SpeakerIcon,
     StopIcon,
     WaitIcon,
+    WaveIcon,
 } from "./icons";
 import { labelOfWire, type WireNode } from "./inventory";
 import {
@@ -50,6 +52,8 @@ import { recordAsk, type SentAsk } from "./sentLog";
 import { getSettings, motionMs, useSettings } from "./settings";
 import {
     listen,
+    pauseSpeaking,
+    resumeSpeaking,
     type SpeechState,
     speak,
     stopSpeaking,
@@ -285,7 +289,10 @@ export default function ChatPopover({
     /** folded to its header and status line, out of the page's way */
     const [mini, setMini] = useState(false);
 
-    const [listening, setListening] = useState(false);
+    /** the mic is on: dictating into the field, or recording a message that sends itself */
+    const [listening, setListening] = useState<false | "dictate" | "message">(
+        false,
+    );
     const stopListenRef = useRef<(() => void) | null>(null);
     /** which message is being spoken and its phase */
     const [speaking, setSpeaking] = useState<{
@@ -293,17 +300,79 @@ export default function ChatPopover({
         phase: SpeechState;
     } | null>(null);
 
-    function speakMessage(idx: number, text: string) {
-        if (speaking?.idx === idx) {
-            stopSpeaking();
-            act("press", T.sStoppedReading);
-            return;
-        }
+    function readMessage(idx: number, text: string) {
         act("press", T.sReading);
         speak(text, (s) =>
             setSpeaking(s === "idle" ? null : { idx, phase: s }),
         );
     }
+
+    /** a message's reading controls: play, then pause / resume, and stop while it reads */
+    const readControls = (
+        idx: number,
+        text: string,
+        cls: string,
+        playLabel = T.readAloud,
+    ) => {
+        const phase = speaking?.idx === idx ? speaking.phase : null;
+        const main =
+            phase === "playing"
+                ? {
+                      label: T.pauseReading,
+                      icon: <PauseIcon />,
+                      run: () => {
+                          pauseSpeaking();
+                          act("press", T.sPausedReading);
+                      },
+                  }
+                : phase === "paused"
+                  ? {
+                        label: T.resumeReading,
+                        icon: <PlayIcon />,
+                        run: () => {
+                            resumeSpeaking();
+                            act("press", T.sReading);
+                        },
+                    }
+                  : phase === "loading"
+                    ? {
+                          label: T.preparingAudio,
+                          icon: <WaitIcon />,
+                          run: () => {},
+                      }
+                    : {
+                          label: playLabel,
+                          icon: <PlayIcon />,
+                          run: () => readMessage(idx, text),
+                      };
+        return (
+            <>
+                <button
+                    type="button"
+                    className={cls}
+                    aria-label={main.label}
+                    title={main.label}
+                    onClick={main.run}
+                >
+                    {main.icon}
+                </button>
+                {phase && (
+                    <button
+                        type="button"
+                        className={cls}
+                        aria-label={T.stopReading}
+                        title={T.stopReading}
+                        onClick={() => {
+                            stopSpeaking();
+                            act("press", T.sStoppedReading);
+                        }}
+                    >
+                        <StopIcon />
+                    </button>
+                )}
+            </>
+        );
+    };
 
     // Focus moves into the chat when it opens and back to where it was when it
     // closes, so keyboard and screen-reader users are never left on the page behind.
@@ -330,11 +399,46 @@ export default function ChatPopover({
         const stop = listen(
             (transcript) => setInput(transcript),
             () => setListening(false),
+            speechLang(),
         );
         if (stop) {
             stopListenRef.current = stop;
-            setListening(true);
+            setListening("dictate");
             act("micOn", T.sListening);
+        }
+    }
+
+    /** a voice message: speak, and it goes to the assistant when the speaker pauses or
+     *  presses stop. The transcript shows in the field as it is heard. (A first step
+     *  toward live voice conversation, TODOS.md.) */
+    const heard = useRef("");
+    function toggleVoiceMessage() {
+        if (listening) {
+            stopListenRef.current?.();
+            return;
+        }
+        heard.current = "";
+        const stop = listen(
+            (transcript) => {
+                heard.current = transcript;
+                setInput(transcript);
+                // the folded chat has no field: what is heard shows on its status line
+                setStatus(transcript);
+            },
+            () => {
+                setListening(false);
+                const text = heard.current.trim();
+                heard.current = "";
+                setInput("");
+                if (text) submitRef.current(text);
+                else act("error", T.sNothingHeard);
+            },
+            speechLang(),
+        );
+        if (stop) {
+            stopListenRef.current = stop;
+            setListening("message");
+            act("micOn", T.sRecording);
         }
     }
 
@@ -915,13 +1019,21 @@ export default function ChatPopover({
         }
     }
 
+    /** a typed or spoken message: a navigation command, or a question for the model */
+    function submit(text: string) {
+        const nav = navCommand(text);
+        if (nav && !busy && runNav(nav, text)) return;
+        sendText(text);
+    }
+    // a voice message ends in a callback set up renders ago: it sends with the latest
+    const submitRef = useRef(submit);
+    submitRef.current = submit;
+
     function send() {
         const text = input.trim();
         if (!text) return;
         setInput("");
-        const nav = navCommand(text);
-        if (nav && !busy && runNav(nav, text)) return;
-        sendText(text);
+        submit(text);
     }
 
     const QUICK: [string, string][] = [
@@ -1071,12 +1183,6 @@ export default function ChatPopover({
             c && c.ids.length > 0 && !m.streaming
                 ? controlsFor(m, c, at, allOn)
                 : null;
-        const speakLabel =
-            speaking?.idx === i
-                ? speaking.phase === "loading"
-                    ? T.preparingAudio
-                    : T.stopReading
-                : T.readAloud;
         rows.push(
             <div key={m.id} className="ulc-turn" data-turn={m.id}>
                 <div
@@ -1108,23 +1214,9 @@ export default function ChatPopover({
                     )}
                     {/* read aloud sits at the end of the answer, not on a row of its own */}
                     {m.text && !m.streaming && (
-                        <button
-                            type="button"
-                            className="ulc-speak"
-                            onClick={() => speakMessage(i, speakable(m.text))}
-                            aria-label={speakLabel}
-                            title={speakLabel}
-                        >
-                            {speaking?.idx === i ? (
-                                speaking.phase === "loading" ? (
-                                    <WaitIcon />
-                                ) : (
-                                    <StopIcon />
-                                )
-                            ) : (
-                                <SpeakerIcon />
-                            )}
-                        </button>
+                        <span className="ulc-read">
+                            {readControls(i, speakable(m.text), "ulc-speak")}
+                        </span>
                     )}
                     {style === "assistant" && controls}
                 </div>
@@ -1135,10 +1227,42 @@ export default function ChatPopover({
     // the click that opened (or moved) the chat, before anything is asked there
     const here = placeOf(captureId);
     if (here && here !== lastPlace) rows.push(placeRow(here, "where-now"));
+    // a new click is being captured: it shows where its entry will appear
+    if (capturing)
+        rows.push(
+            <div key="capturing" className="ulc-where is-pending">
+                <WaitIcon />
+                <span>{T.sCapturing}</span>
+            </div>,
+        );
 
     const ms = motionMs();
-    const statusShown =
-        style === "assistant" || Boolean(status) || speaking || listening;
+    const voiceOK = settings.voiceInput && sttSupported;
+    /** record a voice message: next to send, and in the folded chat's header */
+    const voiceButton = (cls: string) => (
+        <button
+            type="button"
+            className={`${cls} ulc-voice`}
+            aria-pressed={listening === "message"}
+            aria-label={listening === "message" ? T.voiceStop : T.voiceStart}
+            title={listening === "message" ? T.voiceStop : T.voiceStart}
+            onClick={toggleVoiceMessage}
+            disabled={listening === "dictate" || busy}
+        >
+            {listening === "message" ? <StopIcon /> : <WaveIcon />}
+        </button>
+    );
+    let lastAnswer = -1;
+    for (let k = messages.length - 1; k >= 0; k--) {
+        const m = messages[k];
+        if (m.role === "assistant" && m.text && !m.streaming && !m.error) {
+            lastAnswer = k;
+            break;
+        }
+    }
+    // the status line only on the folded chat: open, the chat shows each action on the
+    // control itself, and the live region speaks it
+    const statusShown = mini && (Boolean(status) || speaking || listening);
 
     return (
         <div
@@ -1163,6 +1287,7 @@ export default function ChatPopover({
                             ? `left ${ms}ms cubic-bezier(.22,1,.36,1), top ${ms}ms cubic-bezier(.22,1,.36,1)`
                             : "none",
                     "--ul-fs": `${fs}px`,
+                    "--ul-text": settings.chatTextScale / 100,
                 } as React.CSSProperties
             }
         >
@@ -1183,6 +1308,16 @@ export default function ChatPopover({
                     <b>{style === "station" ? T.stationName : T.title}</b>
                     {style === "station" && <small>{T.otherName}</small>}
                 </div>
+                {/* folded, the chat keeps its voice: record a message, hear the last answer */}
+                {mini && voiceOK && voiceButton("ulc-ib")}
+                {mini &&
+                    lastAnswer >= 0 &&
+                    readControls(
+                        lastAnswer,
+                        speakable(messages[lastAnswer].text),
+                        "ulc-ib",
+                        T.readLast,
+                    )}
                 <button
                     type="button"
                     className="ulc-ib"
@@ -1262,10 +1397,15 @@ export default function ChatPopover({
                         <button
                             type="button"
                             className="ulc-ib"
-                            aria-pressed={listening}
-                            aria-label={listening ? T.micStop : T.micStart}
-                            title={listening ? T.micStop : T.micStart}
+                            aria-pressed={listening === "dictate"}
+                            aria-label={
+                                listening === "dictate" ? T.micStop : T.micStart
+                            }
+                            title={
+                                listening === "dictate" ? T.micStop : T.micStart
+                            }
                             onClick={toggleMic}
+                            disabled={listening === "message"}
                         >
                             <MicIcon />
                         </button>
@@ -1283,9 +1423,13 @@ export default function ChatPopover({
                             e.nativeEvent.keyCode !== 229 &&
                             send()
                         }
-                        placeholder={T.placeholder}
+                        placeholder={
+                            listening ? T.placeholderListening : T.placeholder
+                        }
                         aria-label={T.placeholder}
+                        readOnly={listening === "message"}
                     />
+                    {voiceOK && voiceButton("ulc-ib")}
                     <button
                         type="button"
                         className="ulc-ib ulc-go"

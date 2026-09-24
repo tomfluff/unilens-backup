@@ -12,8 +12,10 @@ import {
     type EnumKey,
     NUMBER_KNOBS,
     type NumSettingKey,
+    PANEL_SECTIONS,
     SELECT_CHOICES,
     type SelectKnobKey,
+    type Settings,
     TOGGLE_LABELS,
     updateSetting,
     useSettings,
@@ -49,13 +51,30 @@ const SettingsNumber = styled.input`
     padding: 3px 6px;
 `;
 
-// captureRes and chatFontSize render as named-choice selects (Screen/Reduced,
-// Normal/Large), not free-number rows.
-const SELECT_KNOBS = Object.keys(SELECT_CHOICES) as SelectKnobKey[];
-const NUMBER_ROWS = (Object.keys(NUMBER_KNOBS) as NumSettingKey[]).filter(
-    (key) => !Object.hasOwn(SELECT_CHOICES, key),
-);
-const ENUM_ROWS = Object.keys(ENUM_CHOICES) as EnumKey[];
+const SettingsRange = styled.input`
+    margin-left: auto;
+    width: 7em;
+    accent-color: #00c8ff;
+`;
+
+/** number knobs shown as a slider with its value, not a typed number */
+const SLIDERS = new Set<NumSettingKey>(["chatTextScale"]);
+
+const Section = styled.details`
+    border-top: 1px solid rgba(255, 255, 255, 0.15);
+    padding: 2px 0;
+
+    &:first-child {
+        border-top: 0;
+    }
+`;
+
+const SectionTitle = styled.summary`
+    cursor: pointer;
+    padding: 6px 0;
+    font-weight: 700;
+    color: #9fe6ff;
+`;
 
 /**
  * Free-number row. Uncontrolled and committed on blur/Enter so typing "160" into a
@@ -220,6 +239,125 @@ function ZoomControls() {
     );
 }
 
+/** one control, drawn by what kind of value the setting holds */
+function Row({
+    setting,
+    settings,
+}: {
+    setting: keyof Settings;
+    settings: Settings;
+}) {
+    if (Object.hasOwn(TOGGLE_LABELS, setting)) {
+        const key = setting as BoolSettingKey;
+        return (
+            <SettingLabel>
+                <input
+                    type="checkbox"
+                    checked={settings[key]}
+                    onChange={(e) =>
+                        updateSetting(key, e.currentTarget.checked)
+                    }
+                />
+                {TOGGLE_LABELS[key]}
+            </SettingLabel>
+        );
+    }
+    if (Object.hasOwn(ENUM_CHOICES, setting)) {
+        const key = setting as EnumKey;
+        return (
+            <SettingLabel>
+                {ENUM_CHOICES[key].label}
+                <SettingsSelect
+                    value={String(clampSetting(key, settings[key]))}
+                    onChange={(e) =>
+                        updateSetting(
+                            key,
+                            clampSetting(key, e.currentTarget.value),
+                        )
+                    }
+                >
+                    {Object.entries(ENUM_CHOICES[key].choices).map(
+                        ([value, label]) => (
+                            <option key={value} value={value}>
+                                {label}
+                            </option>
+                        ),
+                    )}
+                </SettingsSelect>
+            </SettingLabel>
+        );
+    }
+    if (setting === "hlColor")
+        return (
+            <SettingLabel>
+                Colour
+                <SettingsColor
+                    type="color"
+                    value={clampSetting("hlColor", settings.hlColor)}
+                    onChange={(e) =>
+                        updateSetting(
+                            "hlColor",
+                            clampSetting("hlColor", e.currentTarget.value),
+                        )
+                    }
+                />
+            </SettingLabel>
+        );
+    if (Object.hasOwn(SELECT_CHOICES, setting)) {
+        const key = setting as SelectKnobKey;
+        return (
+            <SettingLabel>
+                {NUMBER_KNOBS[key].label}
+                <SettingsSelect
+                    value={String(clampSetting(key, settings[key]))}
+                    onChange={(e) =>
+                        updateSetting(
+                            key,
+                            clampSetting(key, e.currentTarget.value),
+                        )
+                    }
+                >
+                    {SELECT_CHOICES[key].map((c) => (
+                        <option key={c.value} value={c.value}>
+                            {c.label}
+                        </option>
+                    ))}
+                </SettingsSelect>
+            </SettingLabel>
+        );
+    }
+    if (Object.hasOwn(NUMBER_KNOBS, setting)) {
+        const key = setting as NumSettingKey;
+        const knob = NUMBER_KNOBS[key];
+        if (SLIDERS.has(key)) {
+            const v = clampSetting(key, settings[key]);
+            return (
+                <SettingLabel>
+                    {knob.label.replace(" (%)", "")} {v}%
+                    <SettingsRange
+                        type="range"
+                        min={knob.min}
+                        max={knob.max}
+                        step={knob.step}
+                        value={v}
+                        onChange={(e) =>
+                            updateSetting(
+                                key,
+                                clampSetting(
+                                    key,
+                                    e.currentTarget.valueAsNumber,
+                                ),
+                            )
+                        }
+                    />
+                </SettingLabel>
+            );
+        }
+        return <NumberRow setting={key} value={settings[key]} />;
+    }
+    return null;
+}
+
 function Panel() {
     // subscribes to the store — re-renders when settings change anywhere
     const settings = useSettings();
@@ -232,79 +370,13 @@ function Panel() {
           stay put, so the controls are always reachable. Budget leaves room for the
           panel's offset from the bottom, its title and its zoom row. */}
             <SettingsList>
-                {(Object.keys(TOGGLE_LABELS) as BoolSettingKey[]).map((key) => (
-                    <SettingLabel key={key}>
-                        <input
-                            type="checkbox"
-                            checked={settings[key]}
-                            onChange={(e) =>
-                                updateSetting(key, e.currentTarget.checked)
-                            }
-                        />
-                        {TOGGLE_LABELS[key]}
-                    </SettingLabel>
-                ))}
-
-                {SELECT_KNOBS.map((key) => (
-                    <SettingLabel key={key}>
-                        {NUMBER_KNOBS[key].label}
-                        <SettingsSelect
-                            value={String(clampSetting(key, settings[key]))}
-                            onChange={(e) =>
-                                updateSetting(
-                                    key,
-                                    clampSetting(key, e.currentTarget.value),
-                                )
-                            }
-                        >
-                            {SELECT_CHOICES[key].map((c) => (
-                                <option key={c.value} value={c.value}>
-                                    {c.label}
-                                </option>
-                            ))}
-                        </SettingsSelect>
-                    </SettingLabel>
-                ))}
-
-                <SettingLabel>
-                    Highlight colour
-                    <SettingsColor
-                        type="color"
-                        value={clampSetting("hlColor", settings.hlColor)}
-                        onChange={(e) =>
-                            updateSetting(
-                                "hlColor",
-                                clampSetting("hlColor", e.currentTarget.value),
-                            )
-                        }
-                    />
-                </SettingLabel>
-
-                {ENUM_ROWS.map((key) => (
-                    <SettingLabel key={key}>
-                        {ENUM_CHOICES[key].label}
-                        <SettingsSelect
-                            value={String(clampSetting(key, settings[key]))}
-                            onChange={(e) =>
-                                updateSetting(
-                                    key,
-                                    clampSetting(key, e.currentTarget.value),
-                                )
-                            }
-                        >
-                            {Object.entries(ENUM_CHOICES[key].choices).map(
-                                ([value, label]) => (
-                                    <option key={value} value={value}>
-                                        {label}
-                                    </option>
-                                ),
-                            )}
-                        </SettingsSelect>
-                    </SettingLabel>
-                ))}
-
-                {NUMBER_ROWS.map((key) => (
-                    <NumberRow key={key} setting={key} value={settings[key]} />
+                {PANEL_SECTIONS.map((g) => (
+                    <Section key={g.title} open={g.open}>
+                        <SectionTitle>{g.title}</SectionTitle>
+                        {g.keys.map((key) => (
+                            <Row key={key} setting={key} settings={settings} />
+                        ))}
+                    </Section>
                 ))}
             </SettingsList>
 

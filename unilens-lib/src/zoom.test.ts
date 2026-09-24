@@ -214,13 +214,9 @@ describe("page moves: eased, cancellable, and Back as a bookmark", () => {
         });
     });
 
-    /** an element at a content-space top, measured live against the scroll */
-    const at = (top: number) => () => ({
-        left: 100,
-        top: top - pos.y,
-        width: 100,
-        height: 40,
-    });
+    /** an element at a content-space top, measured live against the scroll, as the
+     *  DOMRect a browser returns (its fields are prototype getters, not own props) */
+    const at = (top: number) => () => new DOMRect(100, top - pos.y, 100, 40);
     const el = document.createElement("div");
 
     const smooth = (ms = 300) => {
@@ -262,6 +258,32 @@ describe("page moves: eased, cancellable, and Back as a bookmark", () => {
             expect(seen[i]).toBeLessThanOrEqual(1000);
         }
         expect(getTargetView()).toEqual(getView());
+    });
+
+    it("starts from where the page is, whatever the host page did to performance.now", () => {
+        smooth(300);
+        // SoftBank's vendor bundle swaps in a Date-based performance.now that runs
+        // behind the frame clock by as long as the page took to load (~600ms)
+        const frameClock = performance.now.bind(performance);
+        const hostNow = vi
+            .spyOn(performance, "now")
+            .mockImplementation(() => frameClock() - 600);
+        try {
+            const seen: number[] = [];
+            const off = onViewChange((_x, y) => seen.push(y));
+            setView(0, 1000);
+            vi.advanceTimersByTime(40); // the first two frames
+            off();
+            // the glide steps off from where the page was: no leap partway (or all
+            // the way) there on its first frame
+            expect(seen.length).toBeGreaterThanOrEqual(2);
+            expect(seen[0]).toBe(0);
+            expect(Math.max(...seen)).toBeLessThan(250);
+            vi.advanceTimersByTime(400);
+            expect(pos.y).toBe(1000);
+        } finally {
+            hostNow.mockRestore();
+        }
     });
 
     it("stops where it is when the user wheels, but not for a wheel over UniLens' own panel", () => {
@@ -310,8 +332,14 @@ describe("page moves: eased, cancellable, and Back as a bookmark", () => {
         // but on screen once the move lands: no second move, and it is not "below"
         expect(directionOf(el, at(1500))).toBe("on screen");
         expect(revealElement(el, at(1500))).toBe("in-view");
-        // a second move mid-glide continues the run
+        // a second move mid-glide continues the run, and heads for the element on
+        // from where the page had got to, never via the page top
+        const here = pos.y;
+        expect(here).toBeGreaterThan(0);
         expect(revealElement(el, at(3000))).toBe("moved");
+        expect(getTargetView()).toEqual({ x: 0, y: 3000 + 20 - 384 });
+        vi.advanceTimersByTime(40);
+        expect(pos.y).toBeGreaterThan(here);
         vi.advanceTimersByTime(400);
         expect(pos.y).toBe(3000 + 20 - 384);
         expect(returnToPreviousView()).toBe(true);

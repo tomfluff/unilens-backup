@@ -2,9 +2,11 @@ import { describe, expect, it } from "vitest";
 import {
     type BoolSettingKey,
     clampSetting,
+    ENUM_CHOICES,
     getSettings,
     NUMBER_KNOBS,
     type NumSettingKey,
+    PANEL_SECTIONS,
     type Settings,
     TOGGLE_LABELS,
     useSettings,
@@ -41,6 +43,18 @@ describe("settings tables", () => {
         for (const key of boolKeys) {
             expect(TOGGLE_LABELS[key], key).toBeTruthy();
         }
+    });
+
+    it("puts every panel control in exactly one group", () => {
+        const controls = [
+            ...Object.keys(TOGGLE_LABELS),
+            ...Object.keys(ENUM_CHOICES),
+            ...Object.keys(NUMBER_KNOBS),
+            "hlColor",
+        ];
+        const placed = PANEL_SECTIONS.flatMap((g) => g.keys as string[]);
+        expect(new Set(placed).size, "a key in two groups").toBe(placed.length);
+        expect([...placed].sort()).toEqual([...new Set(controls)].sort());
     });
 });
 

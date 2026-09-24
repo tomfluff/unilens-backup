@@ -93,6 +93,21 @@ export const PlaceIcon = () => (
         <circle cx="12" cy="9.5" r="2.5" />
     </Icon>
 );
+export const PlayIcon = () => (
+    <Icon>
+        <path d="M8 5.5v13l10-6.5z" />
+    </Icon>
+);
+export const PauseIcon = () => (
+    <Icon>
+        <path d="M9 5v14M15 5v14" />
+    </Icon>
+);
+export const WaveIcon = () => (
+    <Icon>
+        <path d="M4 10v4M8 7v10M12 4v16M16 7v10M20 10v4" />
+    </Icon>
+);
 export const MinimizeIcon = () => (
     <Icon>
         <path d="M6 12h12" />

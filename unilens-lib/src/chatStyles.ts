@@ -25,7 +25,7 @@ ${R} { all: revert; }
 ${R} *:not(svg):not(svg *) { all: revert; }
 ${B}, ${B} * { box-sizing: border-box; }
 ${R} {
-  position: fixed; z-index: 2147483647; display: flex; flex-direction: column;
+  position: fixed; z-index: 2147483646; display: flex; flex-direction: column;
   width: min(24.3em, calc(100vw - 16px)); height: min(30em, calc(100vh - 16px)); overflow: hidden;
   font-size: var(--ul-fs, 14px); line-height: 1.5; text-align: left;
   -webkit-font-smoothing: antialiased;
@@ -42,12 +42,17 @@ ${R} .ulc-title small { display: block; font-size: 1em; }
 ${R} .ulc-ib { display: grid; place-items: center; flex: none; padding: 0; }
 ${R} .ulc-log { flex: 1; overflow-y: auto; overscroll-behavior: contain; display: flex; flex-direction: column; gap: .7em; scrollbar-width: thin; }
 ${R} .ulc-turn { display: flex; flex-direction: column; align-items: flex-start; gap: .1em; }
-${R} .ulc-msg { max-width: 92%; white-space: pre-wrap; overflow-wrap: anywhere; }
+${R} .ulc-msg { max-width: 92%; white-space: pre-wrap; overflow-wrap: anywhere; font-size: calc(var(--ul-text, 1) * 1em); }
 ${R} .ulc-me { align-self: flex-end; max-width: 85%; }
 ${R} .ulc-bot { align-self: flex-start; }
 ${R} .ulc-speak { display: inline-grid; place-items: center; width: 2em; height: 2em; margin-left: .35em; padding: 0; vertical-align: middle; border-radius: 999px; background: transparent; border: 1px solid currentColor; }
 ${R} .ulc-speak svg { width: 1.1em; height: 1.1em; }
-${R} .ulc-where { display: inline-flex; align-items: center; gap: .4em; flex: none; max-width: 100%; min-height: 2.3em; padding: .15em .75em .15em .5em; font-size: .95em; line-height: 1.3; }
+${R} .ulc-read { display: inline-flex; gap: .3em; margin-left: .35em; vertical-align: middle; }
+${R} .ulc-read .ulc-speak { margin-left: 0; }
+${R} .ulc-voice[aria-pressed="true"] { animation: ulc-rec 1.2s ease-in-out infinite; }
+@keyframes ulc-rec { 50% { box-shadow: 0 0 0 .3em rgba(220, 38, 38, .35); } }
+${R} .ulc-where { display: inline-flex; align-items: center; gap: .4em; flex: none; max-width: 100%; min-height: 2.3em; padding: .15em .75em .15em .5em; font-size: calc(var(--ul-text, 1) * .95em); line-height: 1.3; }
+${R} .ulc-where.is-pending { border-style: dashed; cursor: default; }
 ${R} .ulc-where b { flex: none; font-variant-numeric: tabular-nums; }
 ${R} .ulc-where span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 ${R} .ulc-ctl { display: flex; align-items: center; gap: .35em; min-width: 0; }
@@ -56,11 +61,12 @@ ${R} .ulc-c span { overflow: hidden; text-overflow: ellipsis; }
 ${R} .ulc-quick { display: grid; grid-template-columns: repeat(3, 1fr); gap: .35em; flex: none; }
 ${R} .ulc-quick button { min-width: 0; line-height: 1.2; padding-left: .3em; padding-right: .3em; }
 ${R} .ulc-in { display: flex; gap: .45em; flex: none; align-items: center; }
+${R} .ulc-in input { font-size: calc(var(--ul-text, 1) * 1em); }
 ${R} .ulc-in input::placeholder { opacity: 1; }
 ${R} .ulc-status { flex: none; min-height: 1.6em; font-size: 1em; display: flex; align-items: center; gap: .45em; overflow: hidden; line-height: 1.35; }
 ${R} .ulc-status span { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
 ${R}[data-short="true"] .ulc-status span { -webkit-line-clamp: 1; }
-${R} .ulc-empty { opacity: .9; }
+${R} .ulc-empty { opacity: .9; font-size: calc(var(--ul-text, 1) * 1em); }
 ${R} .ulc-caret { display: inline-block; width: .5em; height: 1.05em; vertical-align: -.15em; margin-left: .1em; background: currentColor; animation: ulc-blink 1s steps(2) infinite; }
 ${R} .ulc-lvl { display: inline-flex; gap: 3px; align-items: center; height: 1.2em; }
 ${R} .ulc-lvl i { display: block; width: 4px; height: 40%; border-radius: 2px; background: currentColor; animation: ulc-lvl .9s ease-in-out infinite; }
@@ -69,7 +75,7 @@ ${R} .ulc-lvl i:nth-child(2) { animation-delay: .15s } ${R} .ulc-lvl i:nth-child
 @keyframes ulc-lvl { 0%, 100% { height: 30% } 50% { height: 100% } }
 @media (prefers-reduced-motion: reduce) {
   ${R} { transition: none !important; }
-  ${R} .ulc-caret, ${R} .ulc-lvl i { animation: none !important; }
+  ${R} .ulc-caret, ${R} .ulc-lvl i, ${R} .ulc-voice { animation: none !important; }
 }
 ${R} .unilens-cite { display: inline-grid; place-items: center; min-width: 1.75em; height: 1.75em; padding: 0 .3em; margin: 0 .12em; border: 0; border-radius: 999px; font-weight: 700; font-size: 1em; line-height: 1; vertical-align: .08em; font-variant-numeric: tabular-nums; cursor: pointer; }
 ${B} code { font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace; font-size: .92em; }
@@ -140,7 +146,7 @@ ${G}${HC} .ulc-ib { border: 2px solid #ffd400; }
 ${G} .ulc-ib[aria-pressed="true"] { background: var(--lcd); color: var(--lcd-fg); }
 ${G} .ulc-log { padding: 12px 2px 4px; }
 ${G} .ulc-me { align-self: stretch; max-width: none; color: var(--muted); }
-${G} .ulc-bot { align-self: stretch; max-width: none; background: var(--label); color: var(--label-fg); border-radius: 6px; padding: 1em 1.05em; line-height: 1.75; font-size: 1.05em; }
+${G} .ulc-bot { align-self: stretch; max-width: none; background: var(--label); color: var(--label-fg); border-radius: 6px; padding: 1em 1.05em; line-height: 1.75; font-size: calc(var(--ul-text, 1) * 1.05em); }
 ${G}${HC} .ulc-bot { border: 2px solid #fff; }
 ${G} .ulc-bot.is-err { background: var(--body2); color: #fff; border: 3px solid var(--err); }
 ${G} .ulc-bot.is-quiet { background: var(--body2); color: #fff; border: 2px dashed var(--muted); }
@@ -184,7 +190,7 @@ ${S} .ulc-ib[aria-pressed="true"] { background: var(--exit); color: var(--exit-f
 ${S} .ulc-log { padding: .8em .8em .3em; }
 ${S} .ulc-me { position: relative; align-self: stretch; max-width: none; padding-left: 1em; color: var(--muted); }
 ${S} .ulc-me::before { content: ""; position: absolute; left: 0; top: .55em; width: .5em; height: .5em; background: var(--fg); }
-${S} .ulc-bot { align-self: stretch; max-width: none; font-size: 1.05em; line-height: 1.75; }
+${S} .ulc-bot { align-self: stretch; max-width: none; font-size: calc(var(--ul-text, 1) * 1.05em); line-height: 1.75; }
 ${S} .ulc-bot.is-err { border: 3px solid var(--err); padding: .8em; border-radius: 4px; }
 ${S} .ulc-bot.is-quiet { border: 2px dashed #8a8f95; padding: .8em; border-radius: 4px; }
 ${S} .unilens-cite { display: inline-flex; align-items: center; justify-content: center; min-width: 2.5em; height: 1.75em; padding: 0 .35em; border: .22em solid var(--line); border-radius: .35em; background: #fff; color: #111; font-size: 1em; white-space: nowrap; }

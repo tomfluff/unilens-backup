@@ -455,7 +455,15 @@ const degOff = (a: number, b: number) => {
     return (Math.min(d, 2 * Math.PI - d) * 180) / Math.PI;
 };
 
-/** what every settled layout must hold, whatever moved the cues */
+/** every arrow points at its target from where the cue is drawn */
+function expectAimed(cues: Cue[]) {
+    for (const c of cues)
+        expect(
+            degOff(c.angle, Math.atan2(c.ty - c.y, c.tx - c.x)),
+        ).toBeLessThanOrEqual(1);
+}
+
+/** what every settled edge layout must hold, whatever moved the cues */
 function expectSettled(
     cues: Cue[],
     view: { w: number; h: number },
@@ -463,11 +471,8 @@ function expectSettled(
     size: number,
 ) {
     const m = size / 2 + 8;
+    expectAimed(cues);
     for (const c of cues) {
-        // the arrow points at the target from where the cue is drawn
-        expect(
-            degOff(c.angle, Math.atan2(c.ty - c.y, c.tx - c.x)),
-        ).toBeLessThanOrEqual(1);
         // the whole cue, plus the margin, is on screen
         expect(c.x).toBeGreaterThanOrEqual(m - 1e-6);
         expect(c.x).toBeLessThanOrEqual(view.w - m + 1e-6);
@@ -529,27 +534,32 @@ describe("off-screen cues", () => {
         expect(p).toMatchObject({ x: 190, y: 100, angle: 0 });
     });
 
-    it("keeps pointer cues inside the view when the pointer is at its edge", () => {
+    it("pins pointer cues to the pointer, whatever the view or the chat", () => {
+        // the pointer at the bottom edge, inside the chat
         const from = { x: 500, y: 790 };
-        const targets = [
+        const chat = { left: 300, top: 500, right: 800, bottom: 800 };
+        const cues = [
             [500, 3000],
-            [-500, 2000],
-            [3000, 790],
-            [1500, 1200],
-        ];
-        const placed = targets.map(([tx, ty]) =>
-            cueAt("pointer", tx, ty, view, from, 90, 72),
+            [-3000, 790],
+            [3000, -2000],
+        ].map(([tx, ty]) => cueAt("pointer", tx, ty, view, from, 90, 72));
+        const free = settleCues(cues, "pointer", view, null, from, 90, 72);
+        // the chat and the view change nothing
+        expect(settleCues(cues, "pointer", view, chat, from, 90, 72)).toEqual(
+            free,
         );
-        for (const c of placed) {
-            expect(c.y).toBeLessThanOrEqual(800 - 44);
-            expect(c.y).toBeGreaterThanOrEqual(44);
-        }
-        expectSettled(
-            settleCues(placed, "pointer", view, null, from, 90, 72),
-            view,
-            null,
-            72,
-        );
+        expect(
+            settleCues(cues, "pointer", { w: 300, h: 200 }, chat, from, 90, 72),
+        ).toEqual(free);
+        // far apart, so none spread: each sits on its own bearing at the radius,
+        // the one below the pointer past the view's edge
+        free.forEach((c, i) => {
+            expect(c.x).toBeCloseTo(cues[i].x);
+            expect(c.y).toBeCloseTo(cues[i].y);
+            expect(Math.hypot(c.x - from.x, c.y - from.y)).toBeCloseTo(90);
+        });
+        expect(free[0]).toMatchObject({ x: 500, y: 880 });
+        expectAimed(free);
     });
 
     it("keeps edge cues apart and slides one out from under the popover", () => {
@@ -634,7 +644,8 @@ describe("off-screen cues", () => {
             52 - 1e-6,
         );
         expect(Math.hypot(a.x - from.x, a.y - from.y)).toBeCloseTo(90);
-        expectSettled([a, b], view, null, 48);
+        expect(Math.hypot(b.x - from.x, b.y - from.y)).toBeCloseTo(90);
+        expectAimed([a, b]);
     });
 
     it("spaces the pointer cues that wrap round past ±π", () => {
@@ -654,40 +665,7 @@ describe("off-screen cues", () => {
         expect(Math.hypot(b.x - a.x, b.y - a.y)).toBeGreaterThanOrEqual(
             52 - 1e-6,
         );
-        expectSettled([a, b], view, null, 48);
-    });
-
-    it("pushes a pointer cue the popover covers outward along its own ray", () => {
-        const from = { x: 300, y: 300 };
-        const popover = { left: 360, top: 250, right: 700, bottom: 700 };
-        const [c] = settleCues(
-            [cueAt("pointer", 3000, 300, view, from, 90, 72)],
-            "pointer",
-            view,
-            popover,
-            from,
-            90,
-            72,
-        );
-        expect(c.y).toBeCloseTo(300); // still on the ray from the pointer
-        expect(c.x - 36).toBeGreaterThanOrEqual(popover.right);
-        expectSettled([c], view, popover, 72);
-    });
-
-    it("falls back to the edge when no radius clears the popover", () => {
-        const from = { x: 300, y: 300 };
-        const popover = { left: 360, top: 250, right: 1000, bottom: 700 };
-        const [c] = settleCues(
-            [cueAt("pointer", 3000, 300, view, from, 90, 72)],
-            "pointer",
-            view,
-            popover,
-            from,
-            90,
-            72,
-        );
-        expect(c.x).toBeCloseTo(1000 - 44); // on the right edge, above the popover
-        expectSettled([c], view, popover, 72);
+        expectAimed([a, b]);
     });
 
     it("holds every rule for any pointer, popover, size and set of targets", () => {
@@ -729,7 +707,26 @@ describe("off-screen cues", () => {
             });
             const out = settleCues(cues, mode, view, pop, from, radius, size);
             expect(out).toHaveLength(n);
-            expectSettled(out, view, pop, size);
+            if (mode === "edge") {
+                expectSettled(out, view, pop, size);
+                continue;
+            }
+            expectAimed(out);
+            expect(
+                settleCues(
+                    cues,
+                    mode,
+                    { w: 1, h: 1 },
+                    null,
+                    from,
+                    radius,
+                    size,
+                ),
+            ).toEqual(out);
+            for (const c of out)
+                expect(Math.hypot(c.x - from.x, c.y - from.y)).toBeCloseTo(
+                    radius,
+                );
         }
     });
 
@@ -912,6 +909,7 @@ describe("off-screen cues", () => {
         const cues = drawnCues(where);
         expect(cues).toHaveLength(3);
         expect(cues[0].size).toBe(96);
+        expect(cues[0].el.closest("#unilens-highlight-layer")).not.toBeNull();
         expectSettled(
             cues,
             { w: window.innerWidth, h: window.innerHeight },
@@ -932,24 +930,71 @@ describe("off-screen cues", () => {
         );
     });
 
-    it("keeps a pointer cue inside the view when the pointer is at the bottom edge", () => {
+    it("draws pointer cues on the pointer's circle over the chat, never taking clicks", () => {
         updateSetting("offscreenCue", "pointer");
         init();
+        const from = { x: 500, y: window.innerHeight - 5 };
         window.dispatchEvent(
-            new MouseEvent("mousemove", {
-                clientX: 500,
-                clientY: window.innerHeight - 5,
-            }),
+            new MouseEvent("mousemove", { clientX: from.x, clientY: from.y }),
         );
-        const where = [rect(480, 3000, 40, 20), rect(-900, 2000, 40, 20)];
+        // the chat sits under the pointer
+        const chat = { left: 300, top: 500, right: 800, bottom: 768 };
+        const root = document.createElement("div");
+        root.id = "unilens-root";
+        const panel = document.createElement("div");
+        panel.getBoundingClientRect = () =>
+            ({
+                ...chat,
+                width: chat.right - chat.left,
+                height: chat.bottom - chat.top,
+            }) as DOMRect;
+        root.appendChild(panel);
+        document.body.appendChild(root);
+        const where = [
+            rect(480, 3000, 40, 20),
+            rect(-3000, 700, 40, 20),
+            rect(3000, -2000, 40, 20),
+        ];
         showAt(where);
         const cues = drawnCues(where);
-        expect(cues).toHaveLength(2);
-        expectSettled(
-            cues,
-            { w: window.innerWidth, h: window.innerHeight },
-            null,
-            72,
-        );
+        expect(cues).toHaveLength(3);
+        expectAimed(cues);
+        cues.forEach((c, i) => {
+            const want = cuePosition(
+                "pointer",
+                where[i],
+                { w: window.innerWidth, h: window.innerHeight },
+                from,
+                90,
+                72,
+            );
+            expect(c.x).toBeCloseTo(want.x);
+            expect(c.y).toBeCloseTo(want.y);
+            expect(Math.hypot(c.x - from.x, c.y - from.y)).toBeCloseTo(90);
+            expect(c.el.style.pointerEvents).toBe("none");
+        });
+        // their own layer above the chat, which never takes a click
+        const host = cues[0].el.parentElement as HTMLElement;
+        expect(host.parentElement).toBe(document.documentElement);
+        expect(host.style.zIndex).toBe("2147483647");
+        expect(host.style.pointerEvents).toBe("none");
+        expect(cues[0].el.closest("#unilens-highlight-layer")).toBeNull();
+        // the chat going away moves nothing
+        root.remove();
+        relayNow();
+        const after = drawnCues(where);
+        after.forEach((c, i) => {
+            expect(c.x).toBeCloseTo(cues[i].x);
+            expect(c.y).toBeCloseTo(cues[i].y);
+        });
+        // back to edge cues: they return to the highlight layer, under the chat
+        updateSetting("offscreenCue", "edge");
+        relayNow();
+        expect(
+            document
+                .querySelector(".unilens-hl-cue")
+                ?.closest("#unilens-highlight-layer"),
+        ).not.toBeNull();
+        expect(document.querySelectorAll(".unilens-hl-cues")).toHaveLength(1);
     });
 });
