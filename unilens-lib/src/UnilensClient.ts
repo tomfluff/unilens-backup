@@ -1,8 +1,13 @@
 import autoBind from "auto-bind";
-import { getSettings } from "./settings";
+import { RequestApi } from "./requestApi";
+import { type Settings, useSettings } from "./settings";
+
+//------------------------------------------------------------------------------
+// Types
+//------------------------------------------------------------------------------
 
 // Represents a predicate on a MouseEvent
-type Trigger = (e: MouseEvent) => boolean
+type Trigger = (e: MouseEvent) => boolean;
 
 export type Options = Partial<{
     trigger: Trigger; // the predicate to determine if to open the unilens popover or not
@@ -14,11 +19,18 @@ export type Options = Partial<{
 
 export type OptionKey = keyof Options;
 
+//------------------------------------------------------------------------------
+// Consts
+//------------------------------------------------------------------------------
+
 // Represents default options, used for fetching options if they are not defined
 const kDefaultOptions: Options = {
-    trigger: ((e: MouseEvent) => e.altKey),
+    trigger: (e: MouseEvent) => e.altKey,
+};
 
-}
+//------------------------------------------------------------------------------
+// UnilensClient implementation
+//------------------------------------------------------------------------------
 
 /**
  * A client representing a single instance or connection of the unilens library.
@@ -26,17 +38,31 @@ const kDefaultOptions: Options = {
  * This establishes a connection to the backend, to localstorage, and any other external resources.
  */
 export class UnilensClient {
-    options: Options = {}
+    /* Params */
+    options: Options = {};
     sessionId: string | null = null;
 
+    /* Other clients */
+    requestApi: RequestApi;
+
+    /* Constructor */
     constructor(options: Options = {}) {
-        autoBind(this)
+        autoBind(this);
         // Apply default options
         this.options = {
             ...kDefaultOptions,
             ...options,
-        }
+        };
+        // Set up clients
+        this.requestApi = new RequestApi(this);
     }
+
+    /* Client shims */
+    api(): RequestApi {
+        return this.requestApi;
+    }
+
+    /* Options-related handlers */
 
     // Get an option by key, accounting for defaults
     getOption(optionKey: OptionKey) {
@@ -44,13 +70,19 @@ export class UnilensClient {
     }
 
     getOptions(): Options {
-        return {...this.options};
+        return { ...this.options };
     }
 
     getBackend() {
         return this.options.backend;
     }
 
+    /* Settings-related handlers */
+    getSettings(): Settings {
+        return useSettings.getState();
+    }
+
+    /* Session-related handlers */
 
     setSessionId(sessionId: string | null) {
         this.sessionId = sessionId;

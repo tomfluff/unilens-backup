@@ -1,8 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import styled from "styled-components";
 import type { CaptureResult } from "./capture";
-import { getSettings, useSettings, updateSetting } from "./settings";
-import { UnilensClient } from "./UnilensClient";
+import { getSettings, updateSetting, useSettings } from "./settings";
 import {
     listen,
     type SpeechState,
@@ -10,6 +9,7 @@ import {
     stopSpeaking,
     sttSupported,
 } from "./speech";
+import type { UnilensClient } from "./UnilensClient";
 
 interface Msg {
     id: string;
@@ -456,10 +456,10 @@ export default function ChatPopover({
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-                    capture_id: captureId,
-                    message: text,
-                    session_id: unilens.getSessionId(),
-                }),
+                capture_id: captureId,
+                message: text,
+                session_id: unilens.getSessionId(),
+            }),
         });
         if (!res.ok || !res.body) {
             const data = await res.json().catch(() => ({}));
@@ -516,10 +516,10 @@ export default function ChatPopover({
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-                    capture_id: captureId,
-                    message: text,
-                    session_id: unilens.getSessionId(),
-                }),
+                capture_id: captureId,
+                message: text,
+                session_id: unilens.getSessionId(),
+            }),
         });
         const data = await res.json();
         const info = data.provider != null ? fmtInfo(data) : undefined;

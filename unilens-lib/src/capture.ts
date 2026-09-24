@@ -46,6 +46,13 @@ export interface CaptureMeta {
     region?: { x: number; y: number; w: number; h: number };
 }
 
+export type Capture = {
+    clientX: number;
+    clientY: number;
+    captureId: string;
+    cap: CaptureResult;
+};
+
 export interface ElementContext {
     tag: string;
     id?: string;
