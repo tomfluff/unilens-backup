@@ -75,14 +75,14 @@ const CSS = `
 @keyframes ul-fx-turn { to { transform: rotate(1turn); } }
 
 /* orb */
-.ul-fx-orb { width: 112px; height: 112px; animation: ul-fx-in .3s both; }
+.ul-fx-orb { width: 112px; height: 112px; animation: ul-fx-in .3s backwards; }
 .ul-fx-orb i { inset: 0; margin: auto; }
 .ul-fx-orb .halo { width: 112px; height: 112px; background: radial-gradient(closest-side, color-mix(in srgb, var(--ul-fx) 55%, transparent), transparent); animation: ul-fx-breathe calc(1.8s * var(--t, 1)) ease-in-out infinite; }
 .ul-fx-orb .swirl { width: 70px; height: 70px; background: conic-gradient(var(--ul-fx), var(--ul-fx2), var(--ul-fx)); filter: blur(5px); opacity: .8; animation: ul-fx-turn calc(2.6s * var(--t, 1)) linear infinite; }
 .ul-fx-orb .core { width: 30px; height: 30px; background: radial-gradient(circle at 35% 35%, #fff, var(--ul-fx) 45%, var(--ul-fx2)); box-shadow: 0 0 0 2px rgba(0, 0, 0, .75), 0 0 0 4px rgba(255, 255, 255, .85); animation: ul-fx-breathe calc(1.8s * var(--t, 1)) ease-in-out calc(-.9s * var(--t, 1)) infinite; }
 
 /* aurora */
-.ul-fx-aurora { width: 170px; height: 170px; animation: ul-fx-in .35s both; }
+.ul-fx-aurora { width: 170px; height: 170px; animation: ul-fx-in .35s backwards; }
 .ul-fx-aurora .body { position: absolute; inset: 0; animation: ul-fx-swell calc(1.6s * var(--t, 1)) ease-in-out infinite; }
 .ul-fx-aurora .spin { position: absolute; inset: 0; animation: ul-fx-turn calc(3.2s * var(--t, 1)) linear infinite; }
 .ul-fx-aurora .spin.two { animation-duration: calc(4.4s * var(--t, 1)); animation-direction: reverse; }
@@ -102,8 +102,8 @@ const CSS = `
 @keyframes ul-fx-ping { 0% { transform: scale(.15); opacity: .95; } 100% { transform: scale(1); opacity: 0; } }
 
 /* frame: corner brackets by default, or the highlight's own outline */
-.ul-fx-frame { transform-origin: 0 0; animation: ul-fx-in .2s both, ul-fx-hug calc(1.4s * var(--t, 1)) ease-in-out infinite; }
-.ul-fx-frame.still { animation: ul-fx-in .2s both; }
+.ul-fx-frame { transform-origin: 0 0; animation: ul-fx-in .2s backwards, ul-fx-hug calc(1.4s * var(--t, 1)) ease-in-out infinite; }
+.ul-fx-frame.still { animation: ul-fx-in .2s backwards; }
 .ul-fx-frame .br { position: absolute; width: calc(22px * var(--k, 1)); height: calc(22px * var(--k, 1)); border: calc(5px * var(--k, 1)) solid var(--ul-fx); border-radius: 0; filter: drop-shadow(0 0 1.5px #000) drop-shadow(0 0 1.5px #000); }
 .ul-fx-frame .tl { left: -12px; top: -12px; border-right: 0; border-bottom: 0; }
 .ul-fx-frame .tr { right: -12px; top: -12px; border-left: 0; border-bottom: 0; }
@@ -115,7 +115,7 @@ const CSS = `
 @keyframes ul-fx-sweep { to { transform: translateX(340%); } }
 
 /* edge */
-.ul-fx-edge { inset: 0; animation: ul-fx-in .35s both; }
+.ul-fx-edge { inset: 0; animation: ul-fx-in .35s backwards; }
 .ul-fx-edge .strip { position: absolute; overflow: hidden; filter: blur(calc(var(--ew, 18px) * .4)); }
 .ul-fx-edge .strip::before { content: ""; position: absolute; top: 0; bottom: 0; left: 0; width: 300%; background: repeating-linear-gradient(90deg, var(--ul-fx) 0 12%, var(--ul-fx2) 22%, var(--ul-fx3) 30%, var(--ul-fx) 40% 50%); animation: ul-fx-flow calc(2.4s * var(--t, 1)) linear infinite; }
 .ul-fx-edge.plain .strip::before { background: var(--ul-fx); animation: none; }
@@ -129,10 +129,14 @@ const CSS = `
 .ul-fx-pin { width: 22px; height: 22px; }
 .ul-fx-pin > i { inset: 0; background: var(--ul-fx); box-shadow: 0 0 0 3px #000, 0 0 0 6px #fff; animation: ul-fx-breathe calc(1.6s * var(--t, 1)) ease-in-out infinite; }
 
-/* endings: the same three for every style */
-.ul-fx-fade { opacity: 0 !important; transition: opacity .35s ease; }
-.ul-fx-fly.ul-fx-at { translate: calc(-50% + var(--dx, 0px)) calc(-50% + var(--dy, 0px)); scale: calc(var(--k, 1) * .12); opacity: 0 !important; transition: translate .6s cubic-bezier(.65, 0, .35, 1), scale .6s cubic-bezier(.65, 0, .35, 1), opacity .2s .5s; }
-.ul-fx-fly.ul-fx-frame { animation: none; transform: translate(var(--dx, 0px), var(--dy, 0px)) scale(var(--sx, 1), var(--sy, 1)); opacity: 0 !important; transition: transform .6s cubic-bezier(.65, 0, .35, 1), opacity .25s .45s; }
+/* endings: the same three for every style. The entrances fill backwards only, so
+   once they end they hold nothing and an ending's opacity can transition. A flight
+   goes to the browser's top layer: it lands on its entry, so for those .6s it is
+   meant to be over the chat */
+.ul-fx[popover] { inset: auto; margin: 0; padding: 0; border: 0; background: transparent; overflow: visible; color: inherit; }
+.ul-fx-fade { opacity: 0; transition: opacity .35s ease; }
+.ul-fx-fly.ul-fx-at { translate: calc(-50% + var(--dx, 0px)) calc(-50% + var(--dy, 0px)); scale: calc(var(--k, 1) * .12); opacity: 0; transition: translate .6s cubic-bezier(.65, 0, .35, 1), scale .6s cubic-bezier(.65, 0, .35, 1), opacity .2s .5s; }
+.ul-fx-fly.ul-fx-frame { animation: none; transform: translate(var(--dx, 0px), var(--dy, 0px)) scale(var(--sx, 1), var(--sy, 1)); opacity: 0; transition: transform .6s cubic-bezier(.65, 0, .35, 1), opacity .25s .45s; }
 .ul-fx-found { width: 150px; height: 150px; border-radius: 50%; background: radial-gradient(closest-side, transparent 60%, var(--ul-fx) 80%, transparent); animation: ul-fx-found .7s cubic-bezier(.22, 1, .36, 1) forwards; }
 @keyframes ul-fx-found { 0% { transform: scale(.3); opacity: 1; } 100% { transform: scale(2.4); opacity: 0; } }
 
@@ -276,7 +280,7 @@ export function clickFeedback(
     x: number,
     y: number,
     box?: Box,
-): (dest?: () => Element | null | undefined) => void {
+): (dest?: () => DOMRect | null | undefined) => void {
     const s = getSettings();
     const kind = s.clickFx;
     if (s.fxRipple) {
@@ -308,8 +312,7 @@ export function clickFeedback(
         // two frames: the chat renders its new place entry first
         requestAnimationFrame(() =>
             requestAnimationFrame(() => {
-                const d =
-                    ending === "fly" ? dest?.()?.getBoundingClientRect() : null;
+                const d = ending === "fly" ? dest?.() : null;
                 if (ending === "found") {
                     const f = at(make("ul-fx-found ul-fx-at"), x, y);
                     setTimeout(() => f.remove(), 800);
@@ -342,6 +345,15 @@ export function clickFeedback(
                                 "--dy",
                                 `${d.top + d.height / 2 - y}px`,
                             );
+                        }
+                        // under the chat while working, over it for the flight into it:
+                        // the browser's top layer, which beats any z-index and, unlike
+                        // re-inserting the element, restarts no animation
+                        try {
+                            el.setAttribute("popover", "manual");
+                            el.showPopover();
+                        } catch {
+                            /* no Popover API: it flies under the chat */
                         }
                         el.classList.add("ul-fx-fly");
                     } else el.classList.add("ul-fx-fade");

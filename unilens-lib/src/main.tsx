@@ -299,10 +299,31 @@ export function init(options: InitOptions = {}) {
         });
         recordCapture(id, cap);
         openPopover(clientX, clientY, id, cap, backend);
-        // the ending may fly into the chat: to the new place entry, its last one
-        endFx(() =>
-            [...document.querySelectorAll("#unilens-root .ulc-where")].pop(),
-        );
+        // the ending may fly into the chat, to the new place entry: where it will be once
+        // the chat has glided to the click and its log has scrolled to the entry
+        endFx(() => {
+            const chat = document.querySelector<HTMLElement>(
+                "#unilens-root .ul-chat",
+            );
+            const log = chat?.querySelector(".ulc-log");
+            const entry = [
+                ...(log?.querySelectorAll(".ulc-where") ?? []),
+            ].pop();
+            if (!chat || !log || !entry) return null;
+            const r = entry.getBoundingClientRect();
+            const c = chat.getBoundingClientRect();
+            const glideX = Number.parseFloat(chat.style.left) - c.left || 0;
+            const glideY = Number.parseFloat(chat.style.top) - c.top || 0;
+            const scroll =
+                Math.max(0, log.scrollHeight - log.clientHeight) -
+                log.scrollTop;
+            return new DOMRect(
+                r.left + glideX,
+                r.top + glideY - scroll,
+                r.width,
+                r.height,
+            );
+        });
     }
 
     // ── Alt+drag region select ───────────────────────────────────────────────

@@ -420,7 +420,7 @@ Each style carries its own restrained palette: one accent, one ink, soft neutral
 
 ## Layout
 
-The chat is a fixed, draggable card on the top layer (z-index 2147483647): nothing UniLens draws covers it, not the click feedback or the pointer arrows (…646), nor the highlights (…645) placed next to the click. It sits at least 8px inside the window (`calc(100vw - 16px)`), and it glides to a new click instead of reopening. The card is one flex column: header (drag handle), log (the only scrolling part), quick actions (a three-column grid), and input row (mic, field, send). Folded ("mini"), it keeps only the header and the status line.
+The chat is a fixed, draggable card on the top layer (z-index 2147483647): nothing UniLens draws covers it, not the click feedback or the pointer arrows (…646), nor the highlights (…645). The one exception is a click-feedback flight into the chat: for its 0.6s it rises into the browser's top layer (Popover API) and lands on its new place entry. It aims where the entry will be once the chat has glided to the click and its log has scrolled placed next to the click. It sits at least 8px inside the window (`calc(100vw - 16px)`), and it glides to a new click instead of reopening. The card is one flex column: header (drag handle), log (the only scrolling part), quick actions (a three-column grid), and input row (mic, field, send). Folded ("mini"), it keeps only the header and the status line.
 
 - **Size:** width min(24.3em, 100vw − 16px), 340px at the default text size; height min(30em, 100vh − 16px).
 - **Narrow screens (≤480px wide):** the chat docks as a bottom sheet, full width minus 16px and half the window high, so what it points at stays visible above it.
