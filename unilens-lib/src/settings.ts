@@ -669,6 +669,62 @@ export const getSettings = () => useSettings.getState();
 /** subscribe to settings changes (returns unsubscribe) — lets open UI re-render live */
 export const onSettingsChange = (cb: () => void) => useSettings.subscribe(cb);
 
+/** the file format of an exported settings file; `version` is for future migrations */
+const EXPORT_KIND = "unilens-settings";
+
+/** every setting, as a JSON file to download (Export in the settings panel) */
+export function exportSettings(): string {
+    const s = getSettings();
+    const settings = Object.fromEntries(
+        (Object.keys(DEFAULTS) as (keyof Settings)[]).map((k) => [k, s[k]]),
+    );
+    return JSON.stringify(
+        {
+            kind: EXPORT_KIND,
+            version: 1,
+            exported: new Date().toISOString(),
+            settings,
+        },
+        null,
+        2,
+    );
+}
+
+/**
+ * Apply a settings file (Import in the settings panel): an exported file, or a bare
+ * object of settings written by hand. It goes through the same checks as stored
+ * settings: out-of-range numbers are clamped, wrong types and unknown choices fall
+ * back to the default, unknown keys are ignored, and old keys are migrated. Keys
+ * the file leaves out keep their current value. Throws when the text is not a
+ * settings file at all.
+ */
+export function importSettings(text: string): {
+    applied: number;
+    ignored: string[];
+} {
+    let data: unknown;
+    try {
+        data = JSON.parse(text);
+    } catch {
+        throw new Error("not JSON");
+    }
+    const obj = (x: unknown): x is Record<string, unknown> =>
+        typeof x === "object" && x !== null && !Array.isArray(x);
+    if (!obj(data)) throw new Error("not a settings object");
+    const wrapped = data.kind === EXPORT_KIND;
+    const stored = wrapped ? data.settings : data;
+    if (!obj(stored)) throw new Error("no settings in the file");
+    const known = new Set(Object.keys(DEFAULTS));
+    // the old minimap keys are not settings any more, but they still migrate
+    const legacy = new Set(["mmShape", "mmDim"]);
+    const keys = Object.keys(stored);
+    useSettings.setState(mergePersisted(stored, getSettings()));
+    return {
+        applied: keys.filter((k) => known.has(k)).length,
+        ignored: keys.filter((k) => !known.has(k) && !legacy.has(k)),
+    };
+}
+
 /** programmatic settings change (e.g. keyboard shortcuts) — persists + notifies */
 export function updateSetting<K extends keyof Settings>(
     key: K,

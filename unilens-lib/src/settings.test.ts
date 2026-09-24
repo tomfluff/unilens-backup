@@ -3,7 +3,9 @@ import {
     type BoolSettingKey,
     clampSetting,
     ENUM_CHOICES,
+    exportSettings,
     getSettings,
+    importSettings,
     NUMBER_KNOBS,
     type NumSettingKey,
     PANEL_SECTIONS,
@@ -178,5 +180,70 @@ describe("hydration", () => {
         expect(s.mmBackdrop).toBe("dim");
         localStorage.removeItem("unilens-settings");
         useSettings.setState(defaults);
+    });
+});
+
+describe("settings files", () => {
+    const reset = () => useSettings.setState({ ...defaults });
+
+    it("exports every setting, and importing the file restores them", () => {
+        reset();
+        useSettings.setState({
+            chatStyle: "station",
+            cueSize: 96,
+            sounds: false,
+        });
+        const file = exportSettings();
+        const parsed = JSON.parse(file);
+        expect(parsed.kind).toBe("unilens-settings");
+        expect(Object.keys(parsed.settings).sort()).toEqual([...keys].sort());
+        reset();
+        expect(getSettings().chatStyle).toBe(defaults.chatStyle);
+        const { applied, ignored } = importSettings(file);
+        expect(applied).toBe(keys.length);
+        expect(ignored).toEqual([]);
+        expect(getSettings()).toMatchObject({
+            chatStyle: "station",
+            cueSize: 96,
+            sounds: false,
+        });
+        reset();
+    });
+
+    it("checks an imported file like stored settings, and keeps what it leaves out", () => {
+        reset();
+        useSettings.setState({ motion: "instant" });
+        const { applied, ignored } = importSettings(
+            JSON.stringify({
+                cueSize: 9999,
+                chatStyle: "not a style",
+                sounds: "yes",
+                somethingNew: 1,
+                mmShape: "outlined",
+            }),
+        );
+        const s = getSettings();
+        expect(s.cueSize).toBe(NUMBER_KNOBS.cueSize.max);
+        expect(s.chatStyle).toBe(defaults.chatStyle);
+        expect(s.sounds).toBe(defaults.sounds);
+        // a bare object of settings works, old keys still migrate, the rest stays
+        expect(s.mmOutline).toBe("band");
+        expect(s.motion).toBe("instant");
+        expect(applied).toBe(3);
+        expect(ignored).toEqual(["somethingNew"]);
+        reset();
+    });
+
+    it("refuses a file that is not settings, and changes nothing", () => {
+        reset();
+        const before = { ...getSettings() };
+        for (const text of [
+            "not json",
+            "[1,2]",
+            "42",
+            '{"kind":"unilens-settings","settings":[]}',
+        ])
+            expect(() => importSettings(text)).toThrow();
+        expect(getSettings()).toEqual(before);
     });
 });
