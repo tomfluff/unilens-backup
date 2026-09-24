@@ -80,6 +80,8 @@ export interface Settings {
     offscreenCue: "none" | "edge" | "pointer";
     /** radius of the pointer cue circle, px */
     cueRadius: number;
+    /** what an Alt+click shows while the page is captured (clickFx.ts) */
+    clickFx: "orb" | "aurora" | "sonar" | "frame" | "edge";
     /** the waiting orb at an Alt+click: its glossy core, and its turning two-tone swirl
      *  (the soft halo always shows) */
     fxCore: boolean;
@@ -163,6 +165,7 @@ const DEFAULTS: Settings = {
     offscreenCue: "none",
     cueRadius: 90,
     cueSize: 72,
+    clickFx: "orb",
     fxCore: true,
     fxSwirl: true,
     motion: "smooth",
@@ -221,8 +224,8 @@ export const TOGGLE_LABELS: Record<BoolSettingKey, string> = {
     citeEvidence: "Answers cite page elements",
     sounds: "A sound for every action",
     refreshView: "Send my new view with follow-ups",
-    fxCore: "Glossy core",
-    fxSwirl: "Two-tone swirl",
+    fxCore: "Orb: glossy core",
+    fxSwirl: "Orb: two-tone swirl",
 };
 
 /** keys of Settings whose value is a number — the integer knob rows in the panel */
@@ -342,6 +345,16 @@ export const ENUM_CHOICES = {
             pointer: "Around the pointer",
         },
     },
+    clickFx: {
+        label: "Style",
+        choices: {
+            orb: "Breathing orb",
+            aurora: "Aurora",
+            sonar: "Sonar",
+            frame: "Frame what was clicked",
+            edge: "Screen edge glow",
+        },
+    },
     motion: {
         label: "Movement",
         choices: {
@@ -458,7 +471,7 @@ export const PANEL_SECTIONS: {
         keys: ["zoom", "zoomKeys", "smoothZoom", "smartZoom", "lensPan"],
     },
     { title: "Asking", keys: ["regionSelect", "elementContext", "hints"] },
-    { title: "Waiting at the click", keys: ["fxCore", "fxSwirl"] },
+    { title: "Waiting at the click", keys: ["clickFx", "fxCore", "fxSwirl"] },
     {
         title: "Capture and research",
         keys: [

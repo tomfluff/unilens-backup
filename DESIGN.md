@@ -513,7 +513,14 @@ What just happened, e.g. "Source 2 of 3, …. Moved there; Back returns you." It
 - While a click is being captured, a dashed "Capturing…" entry stands in the log where its place entry will appear.
 
 ### Click feedback and waiting
-- **Alt+click:** a ripple where the click lands (72px ring in the highlight colour with dark rims, 0.55s), then a breathing orb (112px) on the same spot until the chat has the capture: a soft halo in the highlight colour, a slowly turning two-tone gradient (the highlight colour and the chat style's accent) and a solid core with dark and light rims. Its layers breathe out of step, on transform and opacity only, so they keep moving while the capture holds the main thread. Both sit outside `<body>`, never take a click, and are still under reduced motion. The capture waits two frames so they paint before it holds the main thread.
+- **Alt+click:** a ripple where the click lands (72px ring in the highlight colour with dark rims, 0.55s), then a "working" state until the chat has the capture, chosen by `clickFx`. Each one colours itself from the highlight colour and the chat style's accent:
+  - **Breathing orb** (default): a 112px orb at the click. Its three layers breathe out of step: a soft halo, a slowly turning two-tone swirl and a glossy core with dark and light rims. The core and swirl are toggles (`fxCore`, `fxSwirl`). It shrinks and fades at the end.
+  - **Aurora:** a 170px soft colour body at the click with a black dot on the exact point. It gathers into a dot and flies into the chat's new place entry.
+  - **Sonar:** a solid beacon with filled rings going out. It ends in one wide "found" pulse.
+  - **Frame what was clicked:** corner brackets and a scanning sheen on the clicked element or dragged region. It frames a small box instead when the element covers most of the screen. The frame then flies into the chat and becomes the place entry.
+  - **Screen edge glow:** the screen's edges glow with a slow gradient, because the whole page is being captured, while a pin marks the click.
+
+  Every style sits outside `<body>`, never takes a click, and moves by transform and opacity only, so it keeps moving while the capture holds the main thread; the capture also waits two frames so the style paints first. Under reduced motion each style holds still and ends without flying. The studies behind these choices were the Click Feedback Studies mockups; F, "comet to the chat", was dropped.
 - **An answer on its way:** three dots in an answer bubble until its first words arrive.
 
 ### Every outline can be turned off from the chat

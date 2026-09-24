@@ -240,6 +240,8 @@ export function init(options: InitOptions = {}) {
         pointY: number,
         el?: Element,
         region?: { x: number; y: number; w: number; h: number },
+        /** the dragged region on screen, for feedback that frames it */
+        regionBox?: DOMRectReadOnly,
     ) {
         // (pointX, pointY) is the client point being asked about — the click, or the centre
         // of a drag. clientToContent handles both pan engines.
@@ -253,7 +255,11 @@ export function init(options: InitOptions = {}) {
         askedAbout = el;
         // seen at once: a ripple where the click landed, then a breathing orb there
         // until the chat has the capture
-        const stopFx = clickFeedback(pointX, pointY);
+        const endFx = clickFeedback(
+            pointX,
+            pointY,
+            regionBox ?? el?.getBoundingClientRect(),
+        );
         // the capture takes a moment: say so now, in the open chat or out loud
         if (popProps && getSettings().continuity) {
             popProps = { ...popProps, capturing: true };
@@ -271,7 +277,7 @@ export function init(options: InitOptions = {}) {
             );
             cap = await capture(Math.round(p.x), Math.round(p.y), el, region);
         } catch (err) {
-            stopFx();
+            endFx();
             throw err;
         }
         let id = "local";
@@ -292,8 +298,11 @@ export function init(options: InitOptions = {}) {
             label: placeLabel(cap),
         });
         recordCapture(id, cap);
-        stopFx();
         openPopover(clientX, clientY, id, cap, backend);
+        // the ending may fly into the chat: to the new place entry, its last one
+        endFx(() =>
+            [...document.querySelectorAll("#unilens-root .ulc-where")].pop(),
+        );
     }
 
     // ── Alt+drag region select ───────────────────────────────────────────────
@@ -398,6 +407,12 @@ export function init(options: InitOptions = {}) {
             centerClientY,
             el,
             region,
+            new DOMRect(
+                Math.min(start.clientX, e.clientX),
+                Math.min(start.clientY, e.clientY),
+                Math.abs(e.clientX - start.clientX),
+                Math.abs(e.clientY - start.clientY),
+            ),
         );
     });
 

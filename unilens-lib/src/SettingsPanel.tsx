@@ -388,6 +388,11 @@ function Panel() {
                                     !(
                                         settings.mmFollowHighlight &&
                                         MM_OWN_LOOK.has(key)
+                                    ) &&
+                                    // the orb's own layers only while the orb is chosen
+                                    !(
+                                        settings.clickFx !== "orb" &&
+                                        (key === "fxCore" || key === "fxSwirl")
                                     ),
                             )
                             .map((key) => (

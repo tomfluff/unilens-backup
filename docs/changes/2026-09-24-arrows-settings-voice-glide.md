@@ -42,6 +42,8 @@ They also asked for a voice-message button (a step toward live voice interaction
   - **Outlines can always be turned off.** The click entry and a lit source are toggles.
   - **Voice buttons** show in every browser. Where speech recognition is missing they explain in the chat instead of vanishing.
 
+- **Click feedback styles.** After the builder compared six live studies, five became the `clickFx` setting ("Waiting at the click", Style): breathing orb (default), aurora, sonar, frame what was clicked, and screen edge glow. The "comet to the chat" study was dropped, because it left the click at once.
+
 ## Consequences
 
 - Near the screen edge a pointer arrow can be partly off-screen, by design: its place follows the cursor alone.
