@@ -127,6 +127,7 @@ type RecognitionCtor = new () => {
     onerror: () => void;
     start: () => void;
     stop: () => void;
+    abort?: () => void;
 };
 
 function recognitionCtor(): RecognitionCtor | null {
@@ -140,15 +141,16 @@ function recognitionCtor(): RecognitionCtor | null {
 export const sttSupported = recognitionCtor() != null;
 
 /**
- * Start listening; transcript goes to onResult as it firms up, onEnd fires when
- * recognition stops (silence or stop()). Returns a stop function, or null if
- * unsupported.
+ * Start listening; transcript goes to onResult as it firms up, onEnd fires once when
+ * recognition stops (silence, stop() or an error: Chrome fires error then end).
+ * Returns a stop function, or null if unsupported. stop(true) cancels: nothing is
+ * delivered and onEnd never fires (the chat closed mid-sentence).
  */
 export function listen(
     onResult: (transcript: string) => void,
     onEnd: () => void,
     lang?: string,
-): (() => void) | null {
+): ((cancel?: boolean) => void) | null {
     const Ctor = recognitionCtor();
     if (!Ctor) return null;
     const rec = new Ctor();
@@ -160,8 +162,19 @@ export function listen(
             text += e.results[i][0].transcript;
         onResult(text);
     };
-    rec.onend = onEnd;
-    rec.onerror = onEnd;
+    let done = false;
+    const end = () => {
+        if (done) return;
+        done = true;
+        onEnd();
+    };
+    rec.onend = end;
+    rec.onerror = end;
     rec.start();
-    return () => rec.stop();
+    return (cancel = false) => {
+        if (!cancel) return rec.stop();
+        done = true;
+        if (rec.abort) rec.abort();
+        else rec.stop();
+    };
 }

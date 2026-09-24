@@ -70,6 +70,15 @@ const EN = {
     // status line and live region
     sAsking: "Sent. Waiting for the answer…",
     sCapturing: "Capturing what you clicked…",
+    sCaptureFailed: "Could not capture this page. Try clicking again.",
+    sAskQueued: "Asking once the new place is captured…",
+    hGone: "That element is no longer on the page.",
+    hFound: (label: string) => `Found: ${label}`,
+    hNotShowing: "Found it, but it is not showing on the page right now.",
+    hItem: (badge?: string) =>
+        badge ? `Item ${badge}` : "The highlighted item",
+    hGoThere: (item: string, where: string) => `${item} is ${where}. Go there.`,
+    hBrought: (item: string) => `${item} brought into view.`,
     sNewPlace: (n: number, label: string) =>
         `New place, P${n}: ${label}. Ask about it.`,
     sCovered: " The chat is minimized so it does not cover the source.",
@@ -167,6 +176,16 @@ const JA: Strings = {
     evidenceLabel: (n: number, label: string) => `出典 ${n}: ${label}`,
     sAsking: "送信しました。回答を待っています…",
     sCapturing: "クリックした場所を取り込んでいます…",
+    sCaptureFailed:
+        "このページを取り込めませんでした。もう一度クリックしてください。",
+    sAskQueued: "新しい場所を取り込んだら質問します…",
+    hGone: "その要素はもうページにありません。",
+    hFound: (label: string) => `見つかりました：${label}`,
+    hNotShowing: "見つかりましたが、いまはページに表示されていません。",
+    hItem: (badge?: string) => (badge ? `${badge}番` : "強調した項目"),
+    hGoThere: (item: string, where: string) =>
+        `${item}は${where}。押すと移動します。`,
+    hBrought: (item: string) => `${item}を表示しました。`,
     sNewPlace: (n: number, label: string) =>
         `新しい場所 P${n}: ${label}。質問をどうぞ。`,
     sCovered: "出典が隠れないよう、チャットを最小化しました。",

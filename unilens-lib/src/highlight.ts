@@ -10,6 +10,7 @@
  * and the ARIA live region. Nothing here touches the host page's DOM.
  */
 
+import { chatText } from "./chatI18n";
 import {
     BACKDROP_ALPHA,
     colorWithAlpha,
@@ -95,6 +96,8 @@ let issued = 0;
 export function setCurrentCapture(id: string | null) {
     currentCapture = id;
 }
+
+export const getCurrentCapture = () => currentCapture;
 
 /** locate.ts mints one per request; only the latest may draw */
 export function nextToken(): number {
@@ -429,7 +432,7 @@ function render() {
         lastRects.delete(g);
     }
     if (gone.length) {
-        announce("That element is no longer on the page.");
+        announce(chatText().hGone);
         syncMinimap(); // the minimap must not keep a detached target
         if (!boxes.length) for (const cb of clearedListeners) cb();
     }
@@ -881,9 +884,7 @@ function renderCues(look: HighlightLook) {
                 el.setAttribute("type", "button");
                 el.addEventListener("click", () => {
                     revealElement(b.el, measure);
-                    announce(
-                        `${b.badge ? `Item ${b.badge}` : "Highlighted item"} brought into view.`,
-                    );
+                    announce(chatText().hBrought(chatText().hItem(b.badge)));
                 });
             } else el.setAttribute("aria-hidden", "true");
             host.appendChild(el);
@@ -899,7 +900,8 @@ function renderCues(look: HighlightLook) {
                   ? "below"
                   : "above";
         if (cueMode === "edge") {
-            const label = `${b.badge ? `Item ${b.badge}` : "The highlighted item"} is ${where}. Go there.`;
+            const T = chatText();
+            const label = T.hGoThere(T.hItem(b.badge), T.dir[where] ?? where);
             entry.el.setAttribute("aria-label", label);
             entry.el.title = label;
         }
@@ -1053,14 +1055,13 @@ export function showHighlights(
         boxes.push({ el, box, role: h.role, badge: h.badge });
     }
     if (!boxes.length) {
-        if (unplaceable)
-            announce("Found it, but it is not showing on the page right now.");
+        if (unplaceable) announce(chatText().hNotShowing);
         return true;
     }
     render();
     setupSubscriptions();
     syncMinimap();
-    if (opts.label) announce(`Found: ${opts.label}`);
+    if (opts.label) announce(chatText().hFound(opts.label));
     return true;
 }
 

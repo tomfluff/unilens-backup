@@ -95,6 +95,9 @@ interface CiteSource {
 }
 
 /** the log entry for the click behind a capture, when that click is a known place */
+/** the capture a message goes against: the one the chat is on, or a refresh of it */
+type Current = { id: string; cap: CaptureResult };
+
 const placeEntry = (captureId: string): Msg[] =>
     placeOf(captureId)
         ? [{ id: `place-${captureId}`, role: "place", text: "", captureId }]
@@ -304,7 +307,7 @@ export default function ChatPopover({
     const [listening, setListening] = useState<false | "dictate" | "message">(
         false,
     );
-    const stopListenRef = useRef<(() => void) | null>(null);
+    const stopListenRef = useRef<((cancel?: boolean) => void) | null>(null);
     /** which message is being spoken and its phase */
     const [speaking, setSpeaking] = useState<{
         idx: number;
@@ -390,12 +393,17 @@ export default function ChatPopover({
     // Speech, the mic and the audio context stop with it.
     const inputRef = useRef<HTMLInputElement>(null);
     const rootRef = useRef<HTMLDivElement>(null);
+    /** the header's fold button, where the keyboard goes when the chat folds itself */
+    const foldRef = useRef<HTMLButtonElement>(null);
+    /** a question asked while a new place is captured: it waits for that place */
+    const waiting = useRef<{ text: string; msgId: string } | null>(null);
     useEffect(() => {
         const before = document.activeElement as HTMLElement | null;
         inputRef.current?.focus({ preventScroll: true });
         return () => {
             stopSpeaking();
-            stopListenRef.current?.();
+            // cancel, not stop: a stop delivers what was heard and sends it
+            stopListenRef.current?.(true);
             releaseAudio();
             if (before?.isConnected) before.focus({ preventScroll: true });
         };
@@ -551,13 +559,24 @@ export default function ChatPopover({
         setMessages((ms) => [...ms, ...placeEntry(captureId)]);
         // the new place is the latest entry: follow it
         stick.current = true;
-        requestAnimationFrame(() =>
-            logScroll({ top: scrollRef.current?.scrollHeight ?? 0 }),
-        );
+        requestAnimationFrame(() => {
+            logScroll({ top: scrollRef.current?.scrollHeight ?? 0 });
+            // the next thing typed is about the new place: the field takes the
+            // keyboard back, unless the user is already working in the chat
+            if (!rootRef.current?.contains(document.activeElement))
+                inputRef.current?.focus({ preventScroll: true });
+        });
     }, [captureId]);
     // biome-ignore lint/correctness/useExhaustiveDependencies: on the capturing edge only
     useEffect(() => {
         if (capturing) act("send", T.sCapturing);
+        else if (waiting.current) {
+            // declared after the new-capture effect, so cur.current is already the new
+            // place (or, if the capture failed, the one the chat still has)
+            const w = waiting.current;
+            waiting.current = null;
+            sendText(w.text, w.msgId);
+        }
     }, [capturing]);
     // a bigger text size or a narrower window must not push the chat off screen
     // biome-ignore lint/correctness/useExhaustiveDependencies: re-clamp on size changes only
@@ -630,6 +649,7 @@ export default function ChatPopover({
         });
     // while following, the log stays at its end when it changes size (the status line
     // growing a line, the quick actions hiding), not only when a message changes
+    // biome-ignore lint/correctness/useExhaustiveDependencies: a fold unmounts the log; unfolding makes a new one
     useEffect(() => {
         const log = scrollRef.current;
         if (!log || typeof ResizeObserver === "undefined") return;
@@ -638,7 +658,7 @@ export default function ChatPopover({
         });
         ro.observe(log);
         return () => ro.disconnect();
-    }, []);
+    }, [mini]);
     /** a finished answer taller than the log opens at its first line, not its last:
      *  the log followed the stream down, but reading starts at the top */
     const showAnswerStart = (id: string) =>
@@ -669,11 +689,11 @@ export default function ChatPopover({
 
     // The capture the next message goes against: the one this popover opened on, until
     // a follow-up after a scroll/pan/zoom re-captures the new view into the session
-    const cur = useRef({ id: captureId, cap: capture });
+    const cur = useRef<Current>({ id: captureId, cap: capture });
 
     // ── evidence: [[id]] citations in replies become chips and an action row ────
-    const citeSource = (): CiteSource | undefined => {
-        const { id, cap } = cur.current;
+    const citeSource = (on = cur.current): CiteSource | undefined => {
+        const { id, cap } = on;
         return id !== "local" && cap.inventory?.length && cap.registry
             ? { id, inventory: cap.inventory, registry: cap.registry }
             : undefined;
@@ -759,7 +779,16 @@ export default function ChatPopover({
                 const h = Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top);
                 const area = Math.max(1, a.width * a.height);
                 if (w > 0 && h > 0 && (w * h) / area > 0.2) {
+                    // folding removes the control that has focus: the keyboard moves
+                    // to the unfold button, not to the page
+                    const hadFocus = rootRef.current?.contains(
+                        document.activeElement,
+                    );
                     setMini(true);
+                    if (hadFocus)
+                        requestAnimationFrame(() =>
+                            foldRef.current?.focus({ preventScroll: true }),
+                        );
                     act("press", T.sCovered);
                 }
             }, motionMs() + 80);
@@ -790,19 +819,22 @@ export default function ChatPopover({
     ) {
         const c = cited(m);
         const src = m.cite;
-        act("done", chatText().sAnswer(c?.ids.length ?? 0));
+        // one status for the answer and what it found: two writes in a row would
+        // cut the first off before a screen reader says it
+        let said = chatText().sAnswer(c?.ids.length ?? 0);
+        const done = () => act("done", said);
         showAnswerStart(m.id);
         // asked where, pointed nowhere: "nothing found", styled apart from an answer
         if (c && !c.ids.length && asksToLocate(question))
             setMessages((ms) =>
                 ms.map((x) => (x.id === m.id ? { ...x, quiet: true } : x)),
             );
-        if (!c || !src) return;
+        if (!c || !src) return done();
         ask.cited = c.ids;
         recordEvidence(m.text, c.ids, (id) => labelOfWire(id, src.inventory));
         const mode = getSettings().autoHighlight;
-        if (!c.ids.length || mode === "never") return;
-        if (mode === "where" && !asksToLocate(question)) return;
+        if (!c.ids.length || mode === "never") return done();
+        if (mode === "where" && !asksToLocate(question)) return done();
         // guarded: a newer question or capture since this one was asked wins
         const drawn = showHighlights(
             c.ids.map((id, i) => ({
@@ -813,13 +845,14 @@ export default function ChatPopover({
             src.registry,
             src.id,
             token,
-            {
-                label: c.ids
-                    .map((id) => labelOfWire(id, src.inventory))
-                    .join(", "),
-            },
         );
-        if (drawn && hasHighlight()) setActive({ msgId: m.id, index: "all" });
+        if (drawn && hasHighlight()) {
+            setActive({ msgId: m.id, index: "all" });
+            said += ` ${chatText().hFound(
+                c.ids.map((id) => labelOfWire(id, src.inventory)).join(", "),
+            )}`;
+        }
+        done();
     }
 
     /** "next", "show all", "the second one": steer the last cited reply without a model call */
@@ -920,13 +953,18 @@ export default function ChatPopover({
             m.map((x) => (x.id === id ? { ...x, ...patch } : x)),
         );
 
-    async function sendStreaming(text: string, token: number, ask: SentAsk) {
-        const cite = citeSource();
+    async function sendStreaming(
+        text: string,
+        token: number,
+        ask: SentAsk,
+        on: Current,
+    ) {
+        const cite = citeSource(on);
         const res = await fetch(`${backend}/api/chat/stream`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-                capture_id: cur.current.id,
+                capture_id: on.id,
                 message: text,
                 session_id: sessionId,
                 cite: getSettings().citeEvidence,
@@ -1007,13 +1045,18 @@ export default function ChatPopover({
         }
     }
 
-    async function sendPlain(text: string, token: number, ask: SentAsk) {
-        const cite = citeSource();
+    async function sendPlain(
+        text: string,
+        token: number,
+        ask: SentAsk,
+        on: Current,
+    ) {
+        const cite = citeSource(on);
         const res = await fetch(`${backend}/api/chat`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-                capture_id: cur.current.id,
+                capture_id: on.id,
                 message: text,
                 session_id: sessionId,
                 cite: getSettings().citeEvidence,
@@ -1038,40 +1081,62 @@ export default function ChatPopover({
         if (getSettings().autoRead && data.reply) speak(speakable(data.reply));
     }
 
-    async function sendText(text: string) {
+    /** queuedId: a question that waited for a new place's capture, already in the log */
+    async function sendText(text: string, queuedId?: string) {
         if (!text || busy) return;
-        setMessages((m) => [
-            ...m,
-            {
-                id: `user-${Date.now()}`,
-                role: "user",
-                text,
-                captureId: cur.current.id,
-            },
-        ]);
+        if (queuedId)
+            // it waited for the new place: it belongs to the place it now goes to
+            setMessages((m) =>
+                m.map((x) =>
+                    x.id === queuedId ? { ...x, captureId: cur.current.id } : x,
+                ),
+            );
+        else {
+            // one question waits at a time; the capture takes a second or two
+            if (capturing && waiting.current) return;
+            const msgId = `user-${Date.now()}`;
+            setMessages((m) => [
+                ...m,
+                { id: msgId, role: "user", text, captureId: cur.current.id },
+            ]);
+            // a new place is being captured: the question is about it, so it waits
+            // for it (the capturing edge sends it) instead of going to the old one
+            if (capturing) {
+                waiting.current = { text, msgId };
+                stick.current = true;
+                act("send", T.sAskQueued);
+                return;
+            }
+        }
         setBusy(true);
         stick.current = true;
         act("send", T.sAsking);
         // minted at ask time: an auto-highlight for this reply loses to anything newer
         const token = nextToken();
         let ask: SentAsk | undefined;
+        // the capture this question goes against, bound now: a new click that lands
+        // while it refreshes neither takes the question nor is replaced by it
+        let on = cur.current;
         try {
             // the user moved since the last capture: send what they see now
-            if (refreshCapture && cur.current.id !== "local") {
-                const fresh = await refreshCapture(
-                    cur.current.cap,
-                    cur.current.id,
-                    () => setStatus(T.sUpdatingView),
+            if (refreshCapture && on.id !== "local") {
+                const from = on;
+                const fresh = await refreshCapture(from.cap, from.id, () =>
+                    setStatus(T.sUpdatingView),
                 );
-                if (fresh) cur.current = fresh;
+                if (fresh) {
+                    on = fresh;
+                    if (cur.current === from) cur.current = fresh;
+                }
             }
             // developer-facing record of what went out; the debug panel shows it
-            ask = recordAsk(cur.current.id, {
+            ask = recordAsk(on.id, {
                 question: text,
                 cite: getSettings().citeEvidence,
             });
-            if (settings.streamReplies) await sendStreaming(text, token, ask);
-            else await sendPlain(text, token, ask);
+            if (settings.streamReplies)
+                await sendStreaming(text, token, ask, on);
+            else await sendPlain(text, token, ask, on);
         } catch (err) {
             if (ask) ask.error = String(err);
             act("error", T.sError);
@@ -1404,6 +1469,7 @@ export default function ChatPopover({
                         T.readLast,
                     )}
                 <button
+                    ref={foldRef}
                     type="button"
                     className="ulc-ib"
                     aria-expanded={!mini}

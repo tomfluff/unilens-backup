@@ -92,6 +92,17 @@ describe("showHighlights", () => {
         expect(live()?.textContent).toContain("Found: Choose Pro");
     });
 
+    it("speaks in the chat's language", () => {
+        updateSetting("chatLanguage", "ja");
+        try {
+            const { registry } = mount();
+            show(registry, ["n1"], "Choose Pro");
+            expect(live()?.textContent).toContain("見つかりました：Choose Pro");
+        } finally {
+            updateSetting("chatLanguage", "auto");
+        }
+    });
+
     it("is a no-op for another capture or a superseded token", () => {
         const { registry } = mount();
         setCurrentCapture("c2");

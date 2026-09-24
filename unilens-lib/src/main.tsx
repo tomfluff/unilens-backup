@@ -26,6 +26,7 @@ import { earcon } from "./earcons";
 import {
     announce,
     clearHighlights,
+    getCurrentCapture,
     init as initHighlight,
     setCurrentCapture,
 } from "./highlight";
@@ -71,6 +72,8 @@ function setPinnedPos(pos: { left: number; top: number } | null) {
 
 function closePopover() {
     generation++;
+    // a late answer from the closed chat must not draw on the page
+    setCurrentCapture(null);
     root?.unmount();
     root = null;
     popProps = null;
@@ -250,6 +253,7 @@ export function init(options: InitOptions = {}) {
         // while this capture renders and uploads, a late answer for the old one must
         // already be stale, or it could redraw after the clear (Codex review, P1)
         generation++;
+        const before = { capture: getCurrentCapture(), asked: askedAbout };
         setCurrentCapture(null);
         clearHighlights();
         askedAbout = el;
@@ -277,8 +281,22 @@ export function init(options: InitOptions = {}) {
             );
             cap = await capture(Math.round(p.x), Math.round(p.y), el, region);
         } catch (err) {
+            // html2canvas fails on some pages (unsupported CSS): say so, and let the
+            // open chat drop its "Capturing…" row (a waiting question then goes to the
+            // place it has)
             endFx();
-            throw err;
+            console.warn("[UniLens] capture failed:", err);
+            // the open chat carries on with its capture: its answers may draw again,
+            // and a view refresh re-captures what it was asked about
+            setCurrentCapture(before.capture);
+            askedAbout = before.asked;
+            if (popProps?.capturing) {
+                popProps = { ...popProps, capturing: false };
+                paintPopover();
+            }
+            earcon("error");
+            announce(chatText().sCaptureFailed);
+            return;
         }
         let id = "local";
         try {
@@ -298,6 +316,9 @@ export function init(options: InitOptions = {}) {
             label: placeLabel(cap),
         });
         recordCapture(id, cap);
+        // a view refresh that started while this capture ran belongs to the place
+        // before it: retire it, or it would pull the chat back there
+        generation++;
         openPopover(clientX, clientY, id, cap, backend);
         // the ending may fly into the chat, to the new place entry: where it will be once
         // the chat has glided to the click and its log has scrolled to the entry
