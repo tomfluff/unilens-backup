@@ -390,7 +390,22 @@ export default function ChatPopover({
         };
     }, []);
 
+    /** voice buttons show in every browser; without speech recognition they say why */
+    function noVoice() {
+        act("error", T.sNoVoice);
+        setMessages((m) => [
+            ...m,
+            {
+                id: `novoice-${Date.now()}`,
+                role: "assistant",
+                text: T.sNoVoice,
+                quiet: true,
+            },
+        ]);
+    }
+
     function toggleMic() {
+        if (!sttSupported) return noVoice();
         if (listening) {
             stopListenRef.current?.();
             act("micOff", T.sStoppedListening);
@@ -413,6 +428,7 @@ export default function ChatPopover({
      *  toward live voice conversation, TODOS.md.) */
     const heard = useRef("");
     function toggleVoiceMessage() {
+        if (!sttSupported) return noVoice();
         if (listening) {
             stopListenRef.current?.();
             return;
@@ -645,14 +661,41 @@ export default function ChatPopover({
     const [active, setActive] = useState<Active>(null);
     /** a move to evidence can be undone: the Back button shows */
     const [returnable, setReturnable] = useState(false);
+    /** the place whose clicked element is outlined, so its entry shows pressed */
+    const [placeOn, setPlaceOn] = useState<Place | null>(null);
     // Escape (or a new capture) clears the outline: the pressed buttons must follow
-    useEffect(() => onHighlightsCleared(() => setActive(null)), []);
+    useEffect(
+        () =>
+            onHighlightsCleared(() => {
+                setActive(null);
+                setPlaceOn(null);
+            }),
+        [],
+    );
 
     /** outline a reply's evidence (all, or item `index`), on the user's click or command */
-    function point(m: Msg, index: number | "all", reveal: boolean) {
+    function point(
+        m: Msg,
+        index: number | "all",
+        reveal: boolean,
+        toggle = false,
+    ) {
         const c = cited(m);
         const src = m.cite;
         if (!c?.ids.length || !src) return;
+        // the lit source pressed again: its outline goes (every outline can be turned off
+        // from the chat, not only with Escape)
+        if (
+            toggle &&
+            typeof index === "number" &&
+            active?.msgId === m.id &&
+            active.index === index &&
+            hasHighlight()
+        ) {
+            clearHighlights();
+            act("clear", T.sCleared);
+            return;
+        }
         const n = c.ids.length;
         const picks =
             index === "all"
@@ -760,17 +803,22 @@ export default function ChatPopover({
 
     /** "next", "show all", "the second one": steer the last cited reply without a model call */
     /** take the user back to where they clicked, and outline what they clicked on */
-    function goPlace(p: Place): string {
+    function goPlace(p: Place, toggle = false): string {
         const T = chatText();
+        // its entry is a toggle: pressed again, the outline goes and the page stays
+        if (toggle && placeOn === p && hasHighlight()) {
+            clearHighlights();
+            act("clear", T.sCleared);
+            return T.sCleared;
+        }
         const r = goToPlace(p);
         // outline what was clicked only when it is a thing, not a whole section
         const box = p.el?.isConnected ? p.el.getBoundingClientRect() : null;
-        if (
+        const drawn =
             p.el &&
             box &&
             box.width <= window.innerWidth &&
-            box.height <= window.innerHeight / 2
-        )
+            box.height <= window.innerHeight / 2 &&
             showHighlights(
                 [{ id: "click", role: "anchor" }],
                 new Map([["click", p.el]]),
@@ -778,6 +826,7 @@ export default function ChatPopover({
                 nextToken(),
                 { userInitiated: true },
             );
+        setPlaceOn(drawn && hasHighlight() ? p : null);
         setReturnable(canReturn());
         const note = T.sPlace(p.label, r === "moved");
         act(r === "moved" ? "move" : "chip", note);
@@ -1061,7 +1110,8 @@ export default function ChatPopover({
             key={key}
             type="button"
             className="ulc-where"
-            onClick={() => goPlace(p)}
+            onClick={() => goPlace(p, true)}
+            aria-pressed={placeOn === p}
             aria-label={T.placeEntry(placeNumber(p), p.label)}
             title={T.placeEntry(placeNumber(p), p.label)}
         >
@@ -1109,9 +1159,9 @@ export default function ChatPopover({
                                 key={id}
                                 type="button"
                                 className="ulc-c ulc-num"
-                                aria-current={at === k}
+                                aria-pressed={at === k}
                                 aria-label={`${chipText(k + 1)}, ${T.evidenceLabel(k + 1, label(id))}`}
-                                onClick={() => point(m, k, true)}
+                                onClick={() => point(m, k, true, true)}
                             >
                                 {chipText(k + 1)}
                             </button>
@@ -1198,7 +1248,7 @@ export default function ChatPopover({
                                 .closest("[data-cite]")
                                 ?.getAttribute("data-cite");
                             const k = id ? (c?.ids.indexOf(id) ?? -1) : -1;
-                            if (k >= 0) point(m, k, true);
+                            if (k >= 0) point(m, k, true, true);
                         }}
                         // biome-ignore lint/security/noDangerouslySetInnerHtml: HTML is escaped in mdLite before formatting tags and chips are added
                         dangerouslySetInnerHTML={{
@@ -1228,6 +1278,19 @@ export default function ChatPopover({
     // the click that opened (or moved) the chat, before anything is asked there
     const here = placeOf(captureId);
     if (here && here !== lastPlace) rows.push(placeRow(here, "where-now"));
+    // an answer is on its way: dots where it will appear, until its first words do
+    if (busy && messages[messages.length - 1]?.role === "user")
+        rows.push(
+            <div
+                key="typing"
+                className="ulc-msg ulc-bot ulc-typing"
+                aria-hidden="true"
+            >
+                <i />
+                <i />
+                <i />
+            </div>,
+        );
     // a new click is being captured: it shows where its entry will appear
     if (capturing)
         rows.push(
@@ -1238,13 +1301,14 @@ export default function ChatPopover({
         );
 
     const ms = motionMs();
-    const voiceOK = settings.voiceInput && sttSupported;
+    const voiceOK = settings.voiceInput;
     /** record a voice message: next to send, and in the folded chat's header */
     const voiceButton = (cls: string) => (
         <button
             type="button"
             className={`${cls} ulc-voice`}
             aria-pressed={listening === "message"}
+            aria-disabled={!sttSupported}
             aria-label={listening === "message" ? T.voiceStop : T.voiceStart}
             title={listening === "message" ? T.voiceStop : T.voiceStart}
             onClick={toggleVoiceMessage}
@@ -1394,11 +1458,12 @@ export default function ChatPopover({
                 )}
             {!mini && (
                 <div className="ulc-in">
-                    {settings.voiceInput && sttSupported && (
+                    {settings.voiceInput && (
                         <button
                             type="button"
                             className="ulc-ib"
                             aria-pressed={listening === "dictate"}
+                            aria-disabled={!sttSupported}
                             aria-label={
                                 listening === "dictate" ? T.micStop : T.micStart
                             }

@@ -20,6 +20,7 @@ import {
     viewMovedSince,
 } from "./capture";
 import { chatText } from "./chatI18n";
+import { clickFeedback } from "./clickFx";
 import { initDebug } from "./DebugPanel";
 import { earcon } from "./earcons";
 import {
@@ -250,6 +251,9 @@ export function init(options: InitOptions = {}) {
         setCurrentCapture(null);
         clearHighlights();
         askedAbout = el;
+        // seen at once: a ripple where the click landed, then a waiting ring there
+        // until the chat has the capture
+        const stopFx = clickFeedback(pointX, pointY);
         // the capture takes a moment: say so now, in the open chat or out loud
         if (popProps && getSettings().continuity) {
             popProps = { ...popProps, capturing: true };
@@ -258,7 +262,18 @@ export function init(options: InitOptions = {}) {
             earcon("send");
             announce(chatText().sCapturing);
         }
-        const cap = await capture(Math.round(p.x), Math.round(p.y), el, region);
+        let cap: CaptureResult;
+        try {
+            // let the ripple and ring paint first: the capture holds the main thread,
+            // and their animations then run on the compositor while it works
+            await new Promise((r) =>
+                requestAnimationFrame(() => requestAnimationFrame(r)),
+            );
+            cap = await capture(Math.round(p.x), Math.round(p.y), el, region);
+        } catch (err) {
+            stopFx();
+            throw err;
+        }
         let id = "local";
         try {
             id = await uploadCapture(cap, backend);
@@ -277,6 +292,7 @@ export function init(options: InitOptions = {}) {
             label: placeLabel(cap),
         });
         recordCapture(id, cap);
+        stopFx();
         openPopover(clientX, clientY, id, cap, backend);
     }
 

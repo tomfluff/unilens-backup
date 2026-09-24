@@ -35,6 +35,13 @@ They also asked for a voice-message button (a step toward live voice interaction
   - A second bug surfaced once glides really ran: a move requested mid-glide copied a DOMRect by spreading it, lost its size, and sent the page to the top.
   - The curve is now ease-in-out, so the first frame no longer lurches.
 
+- **Later the same day, from testing:**
+  - **Minimap.** It draws in the highlight's layers (backdrop, outline, fill, glow, numbers). "Same look as the highlights" makes it follow the highlight settings. The marker-size knob is now "Smallest target on the map".
+  - **Text size.** The slider scales only a message's words; buttons follow the chat scale, so the controls row fits.
+  - **Alt+click feedback.** A ripple, then a waiting ring at the click until the chat opens, and typing dots until an answer's first words.
+  - **Outlines can always be turned off.** The click entry and a lit source are toggles.
+  - **Voice buttons** show in every browser. Where speech recognition is missing they explain in the chat instead of vanishing.
+
 ## Consequences
 
 - Near the screen edge a pointer arrow can be partly off-screen, by design: its place follows the cursor alone.

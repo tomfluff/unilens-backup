@@ -32,6 +32,7 @@ ${R} {
 }
 ${B} button { font: inherit; color: inherit; cursor: pointer; margin: 0; }
 ${B} button:disabled { cursor: default; opacity: .55; }
+${B} button[aria-disabled="true"] { cursor: not-allowed; opacity: .55; }
 ${B} input { font: inherit; margin: 0; min-width: 0; flex: 1; }
 ${B} p { margin: 0; }
 ${B} svg { display: block; flex: none; width: 1.25em; height: 1.25em; }
@@ -74,10 +75,15 @@ ${R} .ulc-lvl { display: inline-flex; gap: 3px; align-items: center; height: 1.2
 ${R} .ulc-lvl i { display: block; width: 4px; height: 40%; border-radius: 2px; background: currentColor; animation: ulc-lvl .9s ease-in-out infinite; }
 ${R} .ulc-lvl i:nth-child(2) { animation-delay: .15s } ${R} .ulc-lvl i:nth-child(3) { animation-delay: .3s }
 @keyframes ulc-blink { 50% { opacity: 0 } }
+${R} .ulc-typing { display: inline-flex; align-items: center; gap: .35em; min-height: 1.6em; }
+${R} .ulc-typing i { display: block; width: .55em; height: .55em; border-radius: 50%; background: currentColor; opacity: .35; animation: ulc-dot 1.2s ease-in-out infinite; }
+${R} .ulc-typing i:nth-child(2) { animation-delay: .15s } ${R} .ulc-typing i:nth-child(3) { animation-delay: .3s }
+@keyframes ulc-dot { 30% { opacity: 1; transform: translateY(-.25em); } }
 @keyframes ulc-lvl { 0%, 100% { height: 30% } 50% { height: 100% } }
 @media (prefers-reduced-motion: reduce) {
   ${R} { transition: none !important; }
-  ${R} .ulc-caret, ${R} .ulc-lvl i, ${R} .ulc-voice { animation: none !important; }
+  ${R} .ulc-caret, ${R} .ulc-lvl i, ${R} .ulc-voice, ${R} .ulc-typing i { animation: none !important; }
+  ${R} .ulc-typing i { opacity: .7; }
 }
 ${R} .unilens-cite { display: inline-grid; place-items: center; min-width: 1.75em; height: 1.75em; padding: 0 .3em; margin: 0 .12em; border: 0; border-radius: 999px; font-weight: 700; font-size: 1em; line-height: 1; vertical-align: .08em; font-variant-numeric: tabular-nums; cursor: pointer; }
 ${B} code { font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace; font-size: .92em; }
@@ -110,6 +116,8 @@ ${A} .unilens-cite[aria-current="true"] { box-shadow: 0 0 0 2px var(--soft), 0 0
 ${A} .ulc-where { align-self: flex-end; border: 1.5px solid var(--acc); border-radius: 999px; background: var(--bg); color: var(--acc); font-weight: 600; }
 ${A} .ulc-where b { padding: 0 .45em; border-radius: 999px; background: var(--acc); color: var(--acc-fg); }
 ${A}${HC} .ulc-where { border-width: 2px; }
+${A} .ulc-where[aria-pressed="true"] { background: var(--acc); color: var(--acc-fg); }
+${A} .ulc-where[aria-pressed="true"] b { background: var(--acc-fg); color: var(--acc); }
 ${A} .ulc-ctl { margin-top: .6em; }
 ${A} .ulc-c { height: 2.3em; min-width: 2.3em; border: 1px solid #6b7280; border-radius: 999px; background: var(--bg); color: var(--fg); }
 ${A}${HC} .ulc-c { border: 2px solid #fff; }
@@ -157,6 +165,8 @@ ${G} .unilens-cite[aria-current="true"] { background: var(--lcd); color: var(--l
 ${G} .ulc-where { align-self: flex-start; border: 1.5px solid #8a929e; border-radius: 10px; background: transparent; color: var(--muted); }
 ${G} .ulc-where b { padding: 0 .4em; border-radius: 6px; background: var(--lcd); color: var(--lcd-fg); }
 ${G}${HC} .ulc-where { border: 2px solid #ffd400; color: #fff; }
+${G} .ulc-where[aria-pressed="true"] { background: var(--lcd); border-color: var(--lcd); color: var(--lcd-fg); }
+${G} .ulc-where[aria-pressed="true"] b { background: var(--lcd-fg); color: var(--lcd); }
 ${G} .ulc-ctl { align-self: stretch; margin-top: 8px; gap: 6px; }
 ${G} .ulc-c { flex: 1 1 0; min-width: 0; height: 2.8em; border: 0; border-radius: 10px; background: var(--key); color: var(--key-fg); font-weight: 700; font-size: 1.05em; font-variant-numeric: tabular-nums; }
 ${G}${HC} .ulc-c { border: 2px solid #ffd400; }
@@ -205,8 +215,10 @@ ${S} .ulc-c { flex: 1 1 0; min-width: 0; height: 2.6em; border-radius: 4px; font
 ${S} .ulc-arrow { border: 2px solid #6d7278; background: #fff; color: #111; }
 ${S}${HC} .ulc-arrow { border-color: #fff; background: #000; color: #fff; }
 ${S} .ulc-num { border: .22em solid var(--line); background: #fff; color: #111; }
-${S} .ulc-num[aria-current="true"] { background: var(--line); color: #fff; }
-${S}${HC} .ulc-num[aria-current="true"] { color: #000; }
+${S} .ulc-num[aria-pressed="true"] { background: var(--line); color: #fff; }
+${S}${HC} .ulc-num[aria-pressed="true"] { color: #000; }
+${S} .ulc-where[aria-pressed="true"] { background: var(--line); border-color: var(--line); color: #fff; }
+${S}${HC} .ulc-where[aria-pressed="true"] { color: #000; }
 ${S} .ulc-all, ${S} .ulc-back { border: 0; background: var(--exit); color: var(--exit-fg); }
 ${S} .ulc-all.has-label { flex: 3 1 0; padding: 0 .5em; }
 ${S} .ulc-all[aria-pressed="true"] { background: var(--band); color: var(--exit); box-shadow: inset 0 0 0 3px var(--exit); }

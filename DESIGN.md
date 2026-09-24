@@ -512,6 +512,13 @@ What just happened, e.g. "Source 2 of 3, …. Moved there; Back returns you." It
 - **Station:** the pale information strip with a line-blue top rule (700, at least 2.5em).
 - While a click is being captured, a dashed "Capturing…" entry stands in the log where its place entry will appear.
 
+### Click feedback and waiting
+- **Alt+click:** a ripple where the click lands (72px ring in the highlight colour with dark rims, 0.55s), then a turning ring (44px) on the same spot until the chat has the capture. Both sit outside `<body>`, never take a click, and are still under reduced motion. The capture waits two frames so they paint before it holds the main thread.
+- **An answer on its way:** three dots in an answer bubble until its first words arrive.
+
+### Every outline can be turned off from the chat
+Anything the chat outlines on the page has a visible off switch: "Highlight all" is a toggle, a lit source (chip, key or code) pressed again clears its outline, and a place entry is pressed while its clicked element is outlined and clears it on a second press. Escape is a shortcut, never the only way.
+
 ### Sound
 Each of the eleven actions has an earcon: press, chip, all, move, back, send, done, error, micOn, micOff and clear. Earcons are synthesized with WebAudio at gain 0.05 and last under 150ms each. They play in the style's own palette:
 - **Assistant:** soft sine pops and short glides (520–900Hz).

@@ -82,6 +82,8 @@ const EN = {
     sListening: "Listening… speak your question.",
     sRecording: "Recording. Speak, then pause or press stop to send.",
     sNothingHeard: "Nothing was heard. Try again.",
+    sNoVoice:
+        "Voice isn't available in this browser. Chrome, Edge and Safari support it.",
     sStoppedListening: "Stopped listening.",
     sReading: "Reading the answer aloud.",
     sStoppedReading: "Stopped reading.",
@@ -175,6 +177,8 @@ const JA: Strings = {
     sListening: "聞き取り中… 質問をどうぞ。",
     sRecording: "録音中。話し終えたら少し待つか、停止を押すと送信します。",
     sNothingHeard: "聞き取れませんでした。もう一度どうぞ。",
+    sNoVoice:
+        "このブラウザでは音声入力を使えません。Chrome、Edge、Safari で使えます。",
     sStoppedListening: "聞き取りを止めました。",
     sReading: "回答を読み上げています。",
     sStoppedReading: "読み上げを止めました。",
