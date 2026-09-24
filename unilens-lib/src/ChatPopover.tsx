@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import styled from "styled-components";
 import type { CaptureResult } from "./capture";
-import { getSettings, useSettings } from "./settings";
+import { getSettings, useSettings, updateSetting } from "./settings";
 import {
     listen,
     type SpeechState,
@@ -49,8 +49,6 @@ interface Props {
     onClose: () => void;
     /** pinned position carried over from the previous popover, if the user pinned it */
     initialPos?: { left: number; top: number } | null;
-    pinned: boolean;
-    onTogglePin: (pos: { left: number; top: number } | null) => void;
     onMove: (pos: { left: number; top: number }) => void;
 }
 
@@ -259,8 +257,6 @@ export default function ChatPopover({
     sessionId,
     onClose,
     initialPos,
-    pinned,
-    onTogglePin,
     onMove,
 }: Props) {
     const [messages, setMessages] = useState<Msg[]>([]);
@@ -403,6 +399,9 @@ export default function ChatPopover({
     const [pos, setPos] = useState(() =>
         clamp(initialPos ?? { left: x + 12, top: y + 12 }),
     );
+
+    // pinned is now local state; persisted in settings.pinnedPos
+    const [pinnedState, setPinnedState] = useState<boolean>(false);
     const dragRef = useRef<{ dx: number; dy: number } | null>(null);
 
     function onHeaderPointerDown(e: React.PointerEvent) {
@@ -419,6 +418,7 @@ export default function ChatPopover({
         });
         setPos(p);
         onMove(p);
+        if (pinnedState) updateSetting("pinnedPos", p);
     }
     function onHeaderPointerUp() {
         dragRef.current = null;
@@ -594,16 +594,24 @@ export default function ChatPopover({
                 <HeaderButtonsContainer>
                     <PinButton
                         type="button"
-                        onClick={() => onTogglePin(pinned ? null : pos)}
-                        pinned={pinned}
+                        onClick={() => {
+                            if (pinnedState) {
+                                setPinnedState(false);
+                                updateSetting("pinnedPos", null);
+                            } else {
+                                setPinnedState(true);
+                                updateSetting("pinnedPos", pos);
+                            }
+                        }}
+                        pinned={pinnedState}
                         accent={C.accent}
                         title={
-                            pinned
+                            pinnedState
                                 ? "Pinned — click to unpin (reopen at cursor)"
                                 : "Pin position for next captures"
                         }
                     >
-                        📌{pinned ? " pinned" : ""}
+                        📌{pinnedState ? " pinned" : ""}
                     </PinButton>
                     <CloseButton type="button" onClick={onClose}>
                         ✕

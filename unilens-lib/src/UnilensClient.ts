@@ -43,6 +43,10 @@ export class UnilensClient {
         return this.options[optionKey];
     }
 
+    getOptions(): Options {
+        return {...this.options};
+    }
+
     getBackend() {
         return this.options.backend;
     }
