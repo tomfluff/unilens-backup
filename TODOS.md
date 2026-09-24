@@ -14,6 +14,22 @@
 **Priority:** P2
 **Depends on:** None (independent of the highlighting steps; best landed before step two's trial runner, which fires many requests quickly)
 
+### Restore the chat after a page reload, from a UniLens store per site
+
+**What:** After a reload, reopen the conversation the user had on that site: its places, messages and session. Keep it in UniLens's own store, not in the site's storage, and keep each site's store separate. This will be a separate PR from the chat work.
+
+**Why:** PR #13 (a collaborator's refactor, 2026-09-24) restored chats from the host page's `localStorage`. Each chat saved about 830 KB of screenshots there, so the browser's quota ran out after about five clicks and saving stopped silently. The screenshots also sat where the site's own scripts can read them. The builder wants the idea, done robustly (decision 2026-09-24).
+
+**Context:** Still to think through; nothing is decided beyond "own store, per domain, detached from the site". Two options:
+- **IndexedDB from the embedded script.** A UniLens-named database is separate from the site's keys, but it is still the site's origin: the site's scripts can read it, and "clear site data" wipes it.
+- **A small hidden iframe served from the UniLens backend's origin, talked to with `postMessage`.** This is truly detached. Browsers partition a third-party iframe's storage by top-level site, which gives the per-domain split for free.
+
+Either way, store ids and text, not screenshots. The images stay on the backend, and the backend's session history (`/api/session/<id>`) remains the source of truth.
+
+**Effort:** M
+**Priority:** P3
+**Depends on:** our chat stack landing on main (see the PR #13 decision)
+
 ### Harden UniLens against host pages
 
 **What:** Build a local "hostile host" test page and run the end-to-end checks against it. Then address the open items in `docs/research/2026-09-24-host-page-hazards.md`, in order of how often study pages will hit them. First up: inner scroll containers, stale cited elements, patched built-ins, and the CSP limits of the embed.
