@@ -26,7 +26,6 @@ import { earcon } from "./earcons";
 import {
     announce,
     clearHighlights,
-    getCurrentCapture,
     init as initHighlight,
     setCurrentCapture,
 } from "./highlight";
@@ -72,8 +71,6 @@ function setPinnedPos(pos: { left: number; top: number } | null) {
 
 function closePopover() {
     generation++;
-    // a late answer from the closed chat must not draw on the page
-    setCurrentCapture(null);
     root?.unmount();
     root = null;
     popProps = null;
@@ -84,6 +81,12 @@ function closePopover() {
 /** ✕ pressed: dismissing the popover also ends the conversation session */
 function dismissPopover() {
     sessionId = null;
+    // a late answer from the closed chat must not draw on the page. Here, not in
+    // closePopover: a new chat opening calls that too, after its capture's id is set
+    setCurrentCapture(null);
+    committed = { capture: null, asked: undefined };
+    // a capture still running was for this chat: it must not open another
+    latestCapture++;
     closePopover();
 }
 
@@ -103,6 +106,14 @@ function placeLabel(cap: CaptureResult): string {
 
 /** the element the open popover's question was asked about, for view refreshes */
 let askedAbout: Element | undefined;
+/** the capture the open chat is on, and what it was asked about: where a failed
+ *  capture goes back to (nothing, once the chat is closed) */
+let committed: { capture: string | null; asked: Element | undefined } = {
+    capture: null,
+    asked: undefined,
+};
+/** bumped by every new capture: one still running when a newer one starts is dropped */
+let latestCapture = 0;
 /** bumped whenever the popover's capture is retired (new capture, close): a refresh
  *  that finishes after that belongs to a conversation that is gone */
 let generation = 0;
@@ -134,12 +145,16 @@ async function refreshCapture(
             { viewRefresh: true },
         );
         if (gen !== generation) return null;
-        const id = await uploadCapture(cap, backend);
-        // never let a slow refresh take the guard from a capture opened since
+        const up = await uploadCapture(cap, backend);
+        // never let a slow refresh take the guard (or the session) from a capture
+        // opened since, or bring back a closed chat's session
         if (gen !== generation) return null;
+        joinSession(up.session);
+        const id = up.id;
         tagLastCapture(id);
         recordCapture(id, cap, true);
         setCurrentCapture(id);
+        committed = { ...committed, capture: id };
         // same question point as the capture it refreshes: the same place, not a new one
         aliasPlace(id, prevId);
         return { id, cap };
@@ -203,10 +218,12 @@ function openPopover(
 /** current conversation session — new captures join it until the user closes the popover */
 let sessionId: string | null = null;
 
+/** upload a capture. Its session is the caller's to take (joinSession), once it knows
+ *  the capture still belongs to the open chat */
 async function uploadCapture(
     cap: CaptureResult,
     backend: string,
-): Promise<string> {
+): Promise<{ id: string; session: string | null }> {
     const res = await fetch(`${backend}/api/capture`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -221,8 +238,12 @@ async function uploadCapture(
     });
     if (!res.ok) throw new Error(`capture upload failed: HTTP ${res.status}`);
     const data = await res.json();
-    sessionId = getSettings().continuity ? (data.session_id ?? null) : null;
-    return data.id;
+    return { id: data.id, session: data.session_id ?? null };
+}
+
+/** the session the chat's latest upload joined or started, while continuity keeps one */
+function joinSession(session: string | null) {
+    sessionId = getSettings().continuity ? session : null;
 }
 
 export function init(options: InitOptions = {}) {
@@ -253,7 +274,7 @@ export function init(options: InitOptions = {}) {
         // while this capture renders and uploads, a late answer for the old one must
         // already be stale, or it could redraw after the clear (Codex review, P1)
         generation++;
-        const before = { capture: getCurrentCapture(), asked: askedAbout };
+        const mine = ++latestCapture;
         setCurrentCapture(null);
         clearHighlights();
         askedAbout = el;
@@ -286,10 +307,12 @@ export function init(options: InitOptions = {}) {
             // place it has)
             endFx();
             console.warn("[UniLens] capture failed:", err);
+            // a newer click is being captured: the chat and the guard are its to set
+            if (mine !== latestCapture) return;
             // the open chat carries on with its capture: its answers may draw again,
             // and a view refresh re-captures what it was asked about
-            setCurrentCapture(before.capture);
-            askedAbout = before.asked;
+            setCurrentCapture(committed.capture);
+            askedAbout = committed.asked;
             if (popProps?.capturing) {
                 popProps = { ...popProps, capturing: false };
                 paintPopover();
@@ -298,15 +321,24 @@ export function init(options: InitOptions = {}) {
             announce(chatText().sCaptureFailed);
             return;
         }
-        let id = "local";
+        // a newer click is being captured: this one is dropped, and the chat waits for it
+        if (mine !== latestCapture) return endFx();
+        let up: { id: string; session: string | null } | null = null;
         try {
-            id = await uploadCapture(cap, backend);
-            tagLastCapture(id);
+            up = await uploadCapture(cap, backend);
         } catch (err) {
             console.warn("[UniLens] backend unreachable, chat will fail:", err);
         }
+        // dropped here too when a newer click, or a close, came during the upload
+        if (mine !== latestCapture) return endFx();
+        const id = up?.id ?? "local";
+        if (up) {
+            joinSession(up.session);
+            tagLastCapture(id);
+        }
         // the id exists only now, after upload: this is where the guard learns it
         setCurrentCapture(id);
+        committed = { capture: id, asked: el };
         recordPlace({
             captureId: id,
             at: Date.now(),
