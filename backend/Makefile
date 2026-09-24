@@ -5,7 +5,6 @@
 
 PYTHON=python3
 PIP=pip
-PIPX=pipx
 VENV_DIR=.venv
 RM_RF=rm -rf
 
@@ -20,7 +19,7 @@ clean:
 	echo "Cleaning venv"
 	$(RM_RF) $(VENV_DIR)
 	echo "Cleaning pycache"
-	$(RM_RF) __pycache__ **/__pycache__ 
+	find . -type d -name __pycache__ -exec $(RM_RF) {} +
 	echo "Cleaning python intermediates"
 	$(RM_RF) *.pyc *.pyo *.pyd
 

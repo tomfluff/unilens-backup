@@ -91,7 +91,7 @@ const ProgressBar = styled.div`
     margin: 2px 0 4px;
 `;
 
-const ProgressFill = styled.div<{ progress: number; blocked: boolean }>`
+const ProgressFill = styled.div<{ progress: number; blocked: string }>`
     background: ${(props) => (props.blocked ? DIM : GREEN)};
     border-radius: 4px;
     height: 8px;

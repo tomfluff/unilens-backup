@@ -10,7 +10,7 @@ There are four managed packages:
 
 * `backend` - Flask server managed by python `venv`. See `backend/Makefile` for details
 * `unilens-lib` - Unilens library managed by `npm`. See `unilens-lib/Makefile` for details
-* `accessibility-lib` - Unilens library managed by `npm`. See `unilens-lib/Makefile` for details
+* `accessibility-lib` - Accessibility library managed by `npm`. See `accessibility-lib/Makefile` for details
 * `.` - Root dir managed by `npm`. Very small package which is used to serve sample sites such as `softbank-mirror`. `./Makefile` manages all packages
 
 Note that for `.`, the choice of `npm` vs `venv` is relatively arbitrary. We choose `npm` to stay consistent with the client builds.
@@ -25,14 +25,24 @@ backend, and opens a chat popover at the cursor backed by an LLM/VLM.
 unilens-lib/          React + TS — builds a single embeddable dist/unilens.js using esbuild
 accessibility-lib/    React + TS — builds a single embeddable dist/accessibility.js using esbuild
 backend/           Flask — stores captures, /api/chat with OpenAI / Gemini / stub
-softbank-mirror/   Static copy of softbank.jp IR benefit page (test target)
-softbank-mirror-recruit/  Static copy of softbank.jp recruit/disability page (test target; docroot `site/`)
+frontend/softbank-mirror/          Static copy of softbank.jp IR benefit page (port 8000)
+frontend/softbank-mirror-recruit/  Static copy of softbank.jp recruit/disability page (port 8002)
+frontend/dev-demo/                 Hand-written UniLens test page (port 8001)
 ```
 ## Setup and cleanup
+
+See [docs/RUNNING.md](docs/RUNNING.md) for the full setup, run and configuration
+guide, including what to do when `make init` cannot build the backend venv.
+
 To set up backend, unilens lib, and build system:
 ```
 make init
 ```
+
+`make init` builds the backend venv with `python3 -m venv`, which needs your
+distro's venv package (`sudo apt install python3-venv`). If it fails with
+`ensurepip is not available`, follow the uv instructions in
+[docs/RUNNING.md](docs/RUNNING.md).
 
 To clean all packages and intermediates:
 ```
@@ -42,7 +52,7 @@ make clean
 ## Build, Run, and Serve
 
 Verbs:
-* `build` - Build a distribution (unilens lib only)
+* `build` - Build every JS library and copy the bundles into every frontend target
 * `run` - Run a server (without building)
 * `serve` - Build any distributions, run a server, watch for changes
 
@@ -71,7 +81,8 @@ make serve-backend
 
 ### Frontend Only
 
-Run frontend dev demo to a given target dir and watch for changes (proxies /api to Flask):
+Run frontend dev demo to a given target dir and watch for changes. There is no
+proxy — the page calls the backend directly at the URL passed to `UniLens.init`:
 
 ```
 make serve-frontend softbank-mirror
@@ -80,20 +91,24 @@ make serve-frontend softbank-mirror
 
 ```
 make serve-frontend softbank-mirror-recruit
-# Serves `frontend/softbank-mirror-recruit/site` to localhost:8002
+# Serves `frontend/softbank-mirror-recruit` to localhost:8002
+# `/` redirects to /recruit/disability/
 ```
 
 ### Javascript Libs Only
 
 Build and watch unilens lib into a dist
 ```
-make serve-target unilens
+make serve-target unilens-lib
 ```
 
 Build and watch accessibility lib into a dist
 ```
-make serve-target accessibility
+make serve-target accessibility-lib
 ```
+
+These take the directory name, so `make serve-target unilens` fails with
+`'unilens' not a directory`.
 
 ### Run Multiple Frontends
 
@@ -105,9 +120,8 @@ make serve-all
 Alternatively, to run them individually, just run `make serve-backend` separately and then run `make serve-frontend {target}` for each individual target. You can do this just by opening up three terminals. You can also do this via `npx concurrently`, which is included as part of the root `.` distribution:
 ```
 npx concurrently "make serve-backend" "make serve-frontend dev-demo" "make serve-frontend softbank-mirror"
-# Serving frontend from 'dev-demo' to localhost:8000
-# http://0.0.0.0:8080 is already in use. Trying another port.
-# Serving "dev-demo" at http://127.0.0.1:53252
+# Serving frontend from 'dev-demo' to localhost:8001
+# Serving frontend from 'softbank-mirror' to localhost:8000
 ```
 
 ## Format

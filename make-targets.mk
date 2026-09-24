@@ -3,6 +3,9 @@
 # Define all targets here, this allows us to iterate through them
 JS_TARGETS:= unilens-lib accessibility-lib
 
+# Targets with unit tests; add a target here once it has some
+TEST_TARGETS:= accessibility-lib
+
 target_dist_unilens-lib=unilens.js
 target_dist_accessibility-lib=accessibility.js
 
