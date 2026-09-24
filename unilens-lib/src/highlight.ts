@@ -286,7 +286,7 @@ function makeBadge(text: string): HTMLDivElement {
 
 /** (re)build a box's children for the current look: badge, brackets, underline bar */
 function decorate(
-    entry: Drawn,
+    entry: Pick<Drawn, "box" | "badge" | "decoKey">,
     look: HighlightLook,
     outline: string,
     w: number,
@@ -338,11 +338,77 @@ function decorate(
     }
 }
 
+/**
+ * One outline box around `r` (client px) in `look`: the drawing every highlight uses,
+ * and the only one, so anything that should look like a highlight borrows it.
+ */
+function paintBox(
+    entry: Pick<Drawn, "box" | "badge" | "decoKey">,
+    r: { left: number; top: number; width: number; height: number },
+    look: HighlightLook,
+    outline: string,
+    w: number,
+) {
+    const box = entry.box;
+    const pad = padFor(outline, w);
+    // forced colours drop fill, glow and backdrop: an outline-less look needs a ring there
+    box.dataset.outline = outline;
+    decorate(entry, look, outline, w);
+    const band = outline === "band" ? 3 * w : outline === "ring" ? w : 0;
+    const shadows = [
+        outline === "band" ? `inset 0 0 0 2px ${EDGE}` : "",
+        look.glow ? `0 0 18px 6px ${look.color}` : "",
+    ].filter(Boolean);
+    Object.assign(box.style, {
+        left: `${r.left - pad}px`,
+        top: `${r.top - pad}px`,
+        width: `${r.width + 2 * pad}px`,
+        height: `${r.height + 2 * pad}px`,
+        // real strokes, not shadows, so forced colours keep them
+        border: band
+            ? `${band}px solid ${outline === "ring" ? RING.inner : look.color}`
+            : "0",
+        outline:
+            outline === "ring"
+                ? `${w}px solid ${RING.outer}`
+                : outline === "band"
+                  ? `2px solid ${EDGE}`
+                  : "none",
+        outlineOffset: "0",
+        background: look.fill
+            ? colorWithAlpha(look.color, FILL_ALPHA)
+            : "transparent",
+        boxShadow: shadows.length ? shadows.join(", ") : "none",
+    });
+    for (const path of box.querySelectorAll("path"))
+        path.setAttribute(
+            "d",
+            bracketPath(r.width + 2 * pad, r.height + 2 * pad, 2 * w),
+        );
+}
+
+/**
+ * Draw `box` around `r` (client px) exactly as a highlight in the current look would
+ * be drawn, without a badge (the click feedback's frame, before the answer exists).
+ * With no backdrop drawn here, an outline-less look shows its fill or glow; with
+ * neither, the two-band ring, as a highlight on its own would.
+ */
+export function paintOutline(
+    box: HTMLDivElement,
+    r: { left: number; top: number; width: number; height: number },
+) {
+    const look = currentLook();
+    let outline = drawnOutline(look);
+    if (outline === "none" && !look.fill && !look.glow) outline = "ring";
+    box.style.boxSizing = "border-box";
+    box.style.borderRadius = "4px";
+    paintBox({ box }, r, look, outline, bandWidth());
+}
+
 function render() {
     const look = currentLook();
     const outline = drawnOutline(look);
     const w = bandWidth();
-    const pad = padFor(outline, w);
     const gone: typeof boxes = [];
     for (const entry of boxes) {
         const { el, box } = entry;
@@ -354,42 +420,7 @@ function render() {
         lastRects.set(entry, r);
         // collapsed since it was drawn (an accordion closed): hide, never park at (0, 0)
         box.style.display = isEmptyBox(r) ? "none" : "";
-        // forced colours drop fill, glow and backdrop: an outline-less look needs a ring there
-        box.dataset.outline = outline;
-        decorate(entry, look, outline, w);
-        const band = outline === "band" ? 3 * w : outline === "ring" ? w : 0;
-        const shadows = [
-            outline === "band" ? `inset 0 0 0 2px ${EDGE}` : "",
-            look.glow ? `0 0 18px 6px ${look.color}` : "",
-        ].filter(Boolean);
-        Object.assign(box.style, {
-            left: `${r.left - pad}px`,
-            top: `${r.top - pad}px`,
-            width: `${r.width + 2 * pad}px`,
-            height: `${r.height + 2 * pad}px`,
-            // real strokes, not shadows, so forced colours keep them
-            border: band
-                ? `${band}px solid ${outline === "ring" ? RING.inner : look.color}`
-                : "0",
-            outline:
-                outline === "ring"
-                    ? `${w}px solid ${RING.outer}`
-                    : outline === "band"
-                      ? `2px solid ${EDGE}`
-                      : "none",
-            outlineOffset: "0",
-            background: look.fill
-                ? colorWithAlpha(look.color, FILL_ALPHA)
-                : "transparent",
-            boxShadow: shadows.length ? shadows.join(", ") : "none",
-        });
-        const paths = box.querySelectorAll("path");
-        if (paths.length)
-            for (const path of paths)
-                path.setAttribute(
-                    "d",
-                    bracketPath(r.width + 2 * pad, r.height + 2 * pad, 2 * w),
-                );
+        paintBox(entry, r, look, outline, w);
     }
     for (const g of gone) {
         g.box.remove();

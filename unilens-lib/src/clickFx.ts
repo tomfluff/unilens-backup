@@ -17,6 +17,7 @@
  * while the capture holds the main thread. Under reduced motion it holds still and
  * ends without flying.
  */
+import { paintOutline } from "./highlight";
 import { lookFrom } from "./highlightStyles";
 import { getSettings, type Settings } from "./settings";
 import { reducedMotion } from "./zoom";
@@ -107,9 +108,6 @@ const CSS = `
 .ul-fx-frame .tr { right: -12px; top: -12px; border-left: 0; border-bottom: 0; }
 .ul-fx-frame .bl { left: -12px; bottom: -12px; border-right: 0; border-top: 0; }
 .ul-fx-frame .bb { right: -12px; bottom: -12px; border-left: 0; border-top: 0; }
-.ul-fx-frame.band { border: calc(5px * var(--k, 1)) solid var(--ul-fx); border-radius: 4px; box-shadow: 0 0 0 2px #000, inset 0 0 0 2px #000; }
-.ul-fx-frame.ring { border: calc(3px * var(--k, 1)) solid #000; border-radius: 4px; box-shadow: 0 0 0 calc(3px * var(--k, 1)) #fff; }
-.ul-fx-frame.underline::after { content: ""; position: absolute; left: 0; right: 0; bottom: -10px; height: calc(5px * var(--k, 1)); background: var(--ul-fx); box-shadow: 0 0 0 2px #000; }
 .ul-fx-frame .sheen { position: absolute; inset: 0; overflow: hidden; border-radius: 3px; }
 .ul-fx-frame .sheen::before { content: ""; position: absolute; top: -20%; bottom: -20%; width: 45%; background: linear-gradient(100deg, transparent, color-mix(in srgb, var(--ul-fx) 55%, transparent) 45%, rgba(255, 255, 255, .7) 50%, color-mix(in srgb, var(--ul-fx2) 35%, transparent) 60%, transparent); transform: translateX(-120%); animation: ul-fx-sweep calc(1.2s * var(--t, 1)) cubic-bezier(.45, 0, .2, 1) infinite; }
 @keyframes ul-fx-hug { 0%, 100% { scale: 1.04; } 50% { scale: 1; } }
@@ -223,24 +221,25 @@ function working(
         const b = big
             ? { left: x - 32, top: y - 20, width: 64, height: 40 }
             : box;
-        // the highlight's own outline, when chosen and drawable here
-        const hl = s.hlOutline;
-        const shape =
-            s.fxFrameShape === "highlight" && hl !== "brackets" && hl !== "none"
-                ? hl
-                : "brackets";
-        const pad = shape === "brackets" ? 0 : 6;
-        const html =
-            (s.fxSheen ? '<div class="sheen"></div>' : "") +
-            (shape === "brackets"
-                ? '<i class="br tl"></i><i class="br tr"></i><i class="br bl"></i><i class="br bb"></i>'
-                : "");
-        const f = make(`ul-fx-frame ${shape}${s.fxHug ? "" : " still"}`, html);
+        const sheen = s.fxSheen ? '<div class="sheen"></div>' : "";
+        const hug = s.fxHug ? "" : " still";
+        if (s.fxFrameShape === "highlight") {
+            // drawn by the highlight's own painter, so it is the highlight to come,
+            // pixel for pixel: outline, width setting, fill and glow
+            const f = make(`ul-fx-frame${hug}`);
+            paintOutline(f, b);
+            f.insertAdjacentHTML("afterbegin", sheen);
+            return [f];
+        }
+        const f = make(
+            `ul-fx-frame${hug}`,
+            `${sheen}<i class="br tl"></i><i class="br tr"></i><i class="br bl"></i><i class="br bb"></i>`,
+        );
         Object.assign(f.style, {
-            left: `${b.left - pad}px`,
-            top: `${b.top - pad}px`,
-            width: `${b.width + 2 * pad}px`,
-            height: `${b.height + 2 * pad}px`,
+            left: `${b.left}px`,
+            top: `${b.top}px`,
+            width: `${b.width}px`,
+            height: `${b.height}px`,
         });
         return [f];
     }

@@ -536,7 +536,7 @@ What just happened, e.g. "Source 2 of 3, …. Moved there; Back returns you." It
   | Aurora | Dot on the exact point, softness |
   | Aurora and edge | A third colour (coral) |
   | Sonar | 1–3 rings, filled or outlined |
-  | Frame | Corner brackets or the highlight's own outline, scanning sheen, breathing |
+  | Frame | Corner brackets or the highlight's own look, drawn by the highlight's painter (`paintOutline`), so it matches the highlight to come exactly, including width, fill and glow; scanning sheen; breathing |
   | Edge | Thickness, moving gradient or single colour, pin |
 
   The settings panel shows a style's own settings only while that style is chosen.

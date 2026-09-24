@@ -39,14 +39,34 @@ describe("click feedback", () => {
         expect(shown(".ul-fx-sonar .c")).toBe(1);
     });
 
-    it("frames with the highlight's outline when asked, else brackets", () => {
+    it("frames exactly as the highlight draws, when asked, else brackets", () => {
         updateSetting("clickFx", "frame");
         updateSetting("fxFrameShape", "highlight");
         updateSetting("hlOutline", "band");
+        updateSetting("ringWidth", 3);
         const box = { left: 50, top: 50, width: 120, height: 30 };
         clickFeedback(110, 65, box);
-        expect(shown(".ul-fx-frame.band")).toBe(1);
+        const f = document.querySelector<HTMLElement>(".ul-fx-frame");
+        // the highlight's band: three widths of the colour, a dark edge
+        expect(f?.dataset.outline).toBe("band");
+        expect(f?.style.borderWidth).toBe("9px");
         expect(shown(".ul-fx-frame .br")).toBe(0);
+        for (const el of document.querySelectorAll(".ul-fx")) el.remove();
+        // no outline: its fill shows; nothing at all: the ring
+        updateSetting("hlOutline", "none");
+        updateSetting("hlFill", true);
+        clickFeedback(110, 65, box);
+        expect(
+            document.querySelector<HTMLElement>(".ul-fx-frame")?.dataset
+                .outline,
+        ).toBe("none");
+        for (const el of document.querySelectorAll(".ul-fx")) el.remove();
+        updateSetting("hlFill", false);
+        clickFeedback(110, 65, box);
+        expect(
+            document.querySelector<HTMLElement>(".ul-fx-frame")?.dataset
+                .outline,
+        ).toBe("ring");
         for (const el of document.querySelectorAll(".ul-fx")) el.remove();
         updateSetting("fxFrameShape", "brackets");
         clickFeedback(110, 65, box);
