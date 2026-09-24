@@ -251,7 +251,7 @@ export function init(options: InitOptions = {}) {
         setCurrentCapture(null);
         clearHighlights();
         askedAbout = el;
-        // seen at once: a ripple where the click landed, then a waiting ring there
+        // seen at once: a ripple where the click landed, then a breathing orb there
         // until the chat has the capture
         const stopFx = clickFeedback(pointX, pointY);
         // the capture takes a moment: say so now, in the open chat or out loud

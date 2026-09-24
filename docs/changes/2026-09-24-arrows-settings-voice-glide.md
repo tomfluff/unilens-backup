@@ -38,7 +38,7 @@ They also asked for a voice-message button (a step toward live voice interaction
 - **Later the same day, from testing:**
   - **Minimap.** It draws in the highlight's layers (backdrop, outline, fill, glow, numbers). "Same look as the highlights" makes it follow the highlight settings. The marker-size knob is now "Smallest target on the map".
   - **Text size.** The slider scales only a message's words; buttons follow the chat scale, so the controls row fits.
-  - **Alt+click feedback.** A ripple, then a waiting ring at the click until the chat opens, and typing dots until an answer's first words.
+  - **Alt+click feedback.** A ripple, then a breathing two-tone orb at the click until the chat opens (the first spinner was too thin to see), and typing dots until an answer's first words.
   - **Outlines can always be turned off.** The click entry and a lit source are toggles.
   - **Voice buttons** show in every browser. Where speech recognition is missing they explain in the chat instead of vanishing.
 

@@ -513,7 +513,7 @@ What just happened, e.g. "Source 2 of 3, …. Moved there; Back returns you." It
 - While a click is being captured, a dashed "Capturing…" entry stands in the log where its place entry will appear.
 
 ### Click feedback and waiting
-- **Alt+click:** a ripple where the click lands (72px ring in the highlight colour with dark rims, 0.55s), then a turning ring (44px) on the same spot until the chat has the capture. Both sit outside `<body>`, never take a click, and are still under reduced motion. The capture waits two frames so they paint before it holds the main thread.
+- **Alt+click:** a ripple where the click lands (72px ring in the highlight colour with dark rims, 0.55s), then a breathing orb (112px) on the same spot until the chat has the capture: a soft halo in the highlight colour, a slowly turning two-tone gradient (the highlight colour and the chat style's accent) and a solid core with dark and light rims. Its layers breathe out of step, on transform and opacity only, so they keep moving while the capture holds the main thread. Both sit outside `<body>`, never take a click, and are still under reduced motion. The capture waits two frames so they paint before it holds the main thread.
 - **An answer on its way:** three dots in an answer bubble until its first words arrive.
 
 ### Every outline can be turned off from the chat
