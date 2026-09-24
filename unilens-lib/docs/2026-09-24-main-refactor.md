@@ -1,0 +1,17 @@
+---
+Author: Faith Luo
+Date: 2027-09-24
+---
+
+# Refactor `main.tsx`
+
+
+Refactor `main.tsx` to use reuseable window components. Instead of hard-coding only a single static instance of a popover, use dynamically-generated popovers so that it is possible to create multiple windows.
+
+The old behavior of pinned positions is replaced by a more general interface where your entire window state is synced to settings.
+
+This change also introduces cleanup and refactoring to keep the 
+systems reuseable and modular and follow good code style:
+
+- Remove global statics when possible and replace them with a UnilensClient interface to wrap them
+- Break out large functions into smaller hooks and library calls

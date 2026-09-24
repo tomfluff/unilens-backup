@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import styled from "styled-components";
 import type { CaptureResult } from "./capture";
 import { getSettings, useSettings, updateSetting } from "./settings";
+import { UnilensClient } from "./UnilensClient";
 import {
     listen,
     type SpeechState,
@@ -45,7 +46,7 @@ interface Props {
     captureId: string;
     capture: CaptureResult;
     backend: string;
-    sessionId: string | null;
+    unilens: UnilensClient;
     onClose: () => void;
     /** pinned position carried over from the previous popover, if the user pinned it */
     initialPos?: { left: number; top: number } | null;
@@ -254,7 +255,7 @@ export default function ChatPopover({
     captureId,
     capture,
     backend,
-    sessionId,
+    unilens,
     onClose,
     initialPos,
     onMove,
@@ -350,6 +351,7 @@ export default function ChatPopover({
 
     // Continuity: seed the running conversation from the session history
     useEffect(() => {
+        const sessionId = unilens.getSessionId();
         if (!sessionId || captureId === "local") return;
         fetch(`${backend}/api/session/${encodeURIComponent(sessionId)}`)
             .then((r) => r.json())
@@ -370,7 +372,7 @@ export default function ChatPopover({
                 if (d.captures) setSessionCaptures(d.captures);
             })
             .catch(() => {});
-    }, [backend, sessionId, captureId]);
+    }, [backend, captureId, unilens]);
 
     // Ask the backend what it actually received for this capture
     useEffect(() => {
@@ -454,10 +456,10 @@ export default function ChatPopover({
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-                capture_id: captureId,
-                message: text,
-                session_id: sessionId,
-            }),
+                    capture_id: captureId,
+                    message: text,
+                    session_id: unilens.getSessionId(),
+                }),
         });
         if (!res.ok || !res.body) {
             const data = await res.json().catch(() => ({}));
@@ -514,10 +516,10 @@ export default function ChatPopover({
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-                capture_id: captureId,
-                message: text,
-                session_id: sessionId,
-            }),
+                    capture_id: captureId,
+                    message: text,
+                    session_id: unilens.getSessionId(),
+                }),
         });
         const data = await res.json();
         const info = data.provider != null ? fmtInfo(data) : undefined;
@@ -659,7 +661,7 @@ export default function ChatPopover({
                     }}
                 >
                     {stored}
-                    {sessionId &&
+                    {unilens.getSessionId() &&
                         sessionCaptures > 1 &&
                         ` · session: ${sessionCaptures} captures`}
                 </CaptureMetaText>

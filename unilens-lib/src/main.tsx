@@ -30,17 +30,8 @@ import { kUnilensRootId } from "./consts";
 import { useState, useEffect } from "react";
 
 //------------------------------------------------------------------------------
-// Consts
+// Types
 //------------------------------------------------------------------------------
-const kContainerStyles: Partial<CSSStyleDeclaration> = {
-    position: "absolute",
-    top: "0",
-    left: "0",
-    zIndex: "999",
-};
-
-/** build stamp injected by esbuild --define (see the lib Makefile); absent in dev */
-declare const __target_dist_unilens_BUILD__: string;
 
 export interface InitOptions {
     trigger?: (e: MouseEvent) => boolean;
@@ -50,75 +41,21 @@ export interface InitOptions {
     zoom?: boolean;
 }
 
-let root: Root | null = null;
-let container: HTMLDivElement | null = null;
+//------------------------------------------------------------------------------
+// Consts
+//------------------------------------------------------------------------------
+/** build stamp injected by esbuild --define (see the lib Makefile); absent in dev */
+declare const __target_dist_unilens_BUILD__: string;
 
-/**
- * Popover pinned position, persisted in the settings store. Guarded on read:
- * hydrated storage is not trusted to hold finite coordinates.
- */
-function pinnedPos(): { left: number; top: number } | null {
-    const p = getSettings().pinnedPos;
-    return p && Number.isFinite(p.left) && Number.isFinite(p.top) ? p : null;
-}
+const kContainerStyles: Partial<CSSStyleDeclaration> = {
+    position: "absolute",
+    top: "0",
+    left: "0",
+    zIndex: "999",
+};
 
-function setPinnedPos(pos: { left: number; top: number } | null) {
-    updateSetting("pinnedPos", pos);
-}
-
-function closePopover() {
-    root?.unmount();
-    root = null;
-    container?.remove();
-    container = null;
-}
-
-/** ✕ pressed: dismissing the popover also ends the conversation session */
-function dismissPopover() {
-    sessionId = null;
-    closePopover();
-}
-
-function openPopover(
-    clientX: number,
-    clientY: number,
-    captureId: string,
-    cap: CaptureResult,
-    backend: string,
-) {
-    closePopover();
-    container = document.createElement("div");
-    container.id = "unilens-root";
-    // documentElement, not body: body carries the zoom transform, which would
-    // break position:fixed and scale the popover. Also keeps it out of captures.
-    document.documentElement.appendChild(container);
-    root = createRoot(container);
-    const render = () =>
-        root?.render(
-            <ChatPopover
-                x={clientX}
-                y={clientY}
-                captureId={captureId}
-                capture={cap}
-                backend={backend}
-                sessionId={getSettings().continuity ? sessionId : null}
-                onClose={dismissPopover}
-                initialPos={pinnedPos()}
-                onMove={(pos) => {
-                    if (pinnedPos()) setPinnedPos(pos);
-                }}
-            />,
-        );
-    render();
-}
-
-/** current conversation session — new captures join it until the user closes the popover */
-let sessionId: string | null = null;
-
-async function uploadCapture(
-    cap: CaptureResult,
-    backend: string,
-): Promise<string> {
+/** upload a capture to the backend. session id is provided by the UnilensClient instance. */
+async function uploadCapture(unilens: UnilensClient, backend: string, cap: CaptureResult): Promise<string> {
     const res = await fetch(`${backend}/api/capture`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -126,12 +63,12 @@ async function uploadCapture(
             image: cap.image,
             viewport: cap.viewportImage,
             meta: cap.meta,
-            session_id: getSettings().continuity ? sessionId : null,
+            session_id: getSettings().continuity ? unilens.getSessionId() : null,
         }),
     });
     if (!res.ok) throw new Error(`capture upload failed: HTTP ${res.status}`);
     const data = await res.json();
-    sessionId = getSettings().continuity ? (data.session_id ?? null) : null;
+    if (getSettings().continuity) unilens.setSessionId(data.session_id ?? null);
     return data.id;
 }
 
@@ -142,7 +79,13 @@ type Capture = {
     cap: CaptureResult,
 }
 
-function UnilensRoot({unilens}: {unilens: UnilensClient}) {
+function UnilensRoot({
+    unilens,
+    container
+}: {
+    unilens: UnilensClient,
+    container: HTMLDivElement
+}) {
     const [captures, setCaptures] = useState<Capture[]>([]);
 
     useEffect(() => {
@@ -191,7 +134,7 @@ function UnilensRoot({unilens}: {unilens: UnilensClient}) {
             const cap = await capture(Math.round(p.x), Math.round(p.y), el, region);
             let id = "local";
             try {
-                id = await uploadCapture(cap, backend);
+                id = await uploadCapture(unilens, backend, cap);
                 tagLastCapture(id);
             } catch (err) {
                 console.warn("[UniLens] backend unreachable, chat will fail:", err);
@@ -296,7 +239,7 @@ function UnilensRoot({unilens}: {unilens: UnilensClient}) {
         document.addEventListener("click", onClick, true);
 
         initDebug({
-            sessionId: () => sessionId,
+            sessionId: () => unilens.getSessionId(),
             popoverOpen: () => captures.length > 0,
             backend: () => backend,
         });
@@ -322,7 +265,7 @@ function UnilensRoot({unilens}: {unilens: UnilensClient}) {
     }
 
     return <>
-        {captures.map((capture) => (
+            {captures.map((capture) => (
             <ChatPopover
                 key={capture.captureId}
                 x={capture.clientX}
@@ -330,7 +273,7 @@ function UnilensRoot({unilens}: {unilens: UnilensClient}) {
                 captureId={capture.captureId}
                 capture={capture.cap}
                 backend={unilens.getOptions().backend ?? ""}
-                sessionId={getSettings().continuity ? sessionId : null}
+                unilens={unilens}
                 onClose={() => closeCapture(capture.captureId)}
                 initialPos={{left: capture.clientX, top: capture.clientY}}
                 onMove={() => {}}
@@ -345,7 +288,7 @@ export function init(options: InitOptions = {}) {
     const unilens: UnilensClient = new UnilensClient(options);
 
     // Create container element
-    container = document.createElement("div");
+    const container = document.createElement("div");
     container.id = kUnilensRootId;
 
     // documentElement, not body: body carries the zoom transform, which would
@@ -354,13 +297,21 @@ export function init(options: InitOptions = {}) {
     Object.assign(container.style, kContainerStyles);
 
     // Initialize react on container element
-    root = createRoot(container);
+    const root = createRoot(container);
     const render = () =>
         root?.render(
-            <UnilensRoot unilens={unilens}></UnilensRoot>
+            <UnilensRoot
+                container={container}
+                unilens={unilens}
+            />
         );
     render();
+
+    console.log(
+        `[UniLens] initialized (build ${typeof __target_dist_unilens_BUILD__ === "string" ? __target_dist_unilens_BUILD__ : "dev"}) — alt+click to capture, alt+drag to select a region`,
+    );
 }
+
 
 // Expose for plain <script> embeds
 declare global {
