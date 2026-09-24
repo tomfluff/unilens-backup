@@ -7,13 +7,13 @@
 export type Callback<T> = (o: T) => void;
 
 export type Subscription = {
-	unsubscribe: () => void;
+    unsubscribe: () => void;
 };
 
 export type Monomitter<T> = {
-	publish: (o: T) => void;
-	subscribe: (cb: Callback<T>) => Subscription;
-	clear: () => void;
+    publish: (o: T) => void;
+    subscribe: (cb: Callback<T>) => Subscription;
+    clear: () => void;
 };
 
 /**
@@ -23,33 +23,35 @@ export type Monomitter<T> = {
  *                                the most recently set value, if there is one
  */
 export function monomitter<T>(emitLatestOnSubscribe = false): Monomitter<T> {
-	const callbacks = new Set<Callback<T>>();
-	let valueBeenSet = false;
-	let latestValue: T | undefined = undefined;
+    const callbacks = new Set<Callback<T>>();
+    let valueBeenSet = false;
+    let latestValue: T | undefined;
 
-	function publish(value: T) {
-		valueBeenSet = true;
-		latestValue = value;
-		callbacks.forEach((callback) => callback(value));
-	}
+    function publish(value: T) {
+        valueBeenSet = true;
+        latestValue = value;
+        callbacks.forEach((callback) => {
+            callback(value);
+        });
+    }
 
-	function subscribe(callback: (value: T) => void) {
-		callbacks.add(callback);
+    function subscribe(callback: (value: T) => void) {
+        callbacks.add(callback);
 
-		if (emitLatestOnSubscribe && valueBeenSet) {
-			callback(latestValue as T);
-		}
+        if (emitLatestOnSubscribe && valueBeenSet) {
+            callback(latestValue as T);
+        }
 
-		return { unsubscribe: () => callbacks.delete(callback) };
-	}
+        return { unsubscribe: () => callbacks.delete(callback) };
+    }
 
-	function clear() {
-		callbacks.clear();
-	}
+    function clear() {
+        callbacks.clear();
+    }
 
-	return {
-		publish,
-		subscribe,
-		clear,
-	};
+    return {
+        publish,
+        subscribe,
+        clear,
+    };
 }

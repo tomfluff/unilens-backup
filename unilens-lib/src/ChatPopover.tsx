@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import styled from "styled-components";
-import type { Capture, CaptureResult } from "./capture";
+import type { Capture } from "./capture";
 import { getSettings, updateSetting, useSettings } from "./settings";
 import {
     listen,
@@ -250,12 +250,7 @@ export default function ChatPopover({
     initialPos?: { left: number; top: number } | null;
     onMove: (pos: { left: number; top: number }) => void;
 }) {
-    const {
-        clientX: x,
-        clientY: y,
-        captureId,
-        cap: capture,
-    } = captureObj;
+    const { clientX: x, clientY: y, captureId, cap: capture } = captureObj;
 
     const backend: string = unilens.getBackend() ?? "";
 
