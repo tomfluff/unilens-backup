@@ -1,10 +1,14 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import type { CaptureResult } from "./capture";
 import { clearSentLog, getSentLog, recordAsk, recordCapture } from "./sentLog";
+import { updateSetting } from "./settings";
 
 const cap = {} as CaptureResult;
 
-beforeEach(clearSentLog);
+beforeEach(() => {
+    updateSetting("debugView", true);
+    clearSentLog();
+});
 
 describe("sent log", () => {
     it("keeps captures newest first with the questions asked against each", () => {
@@ -29,7 +33,7 @@ describe("sent log", () => {
 
     it("caps the number of captures it holds", () => {
         for (let i = 0; i < 30; i++) recordCapture(`c${i}`, cap);
-        expect(getSentLog()).toHaveLength(20);
+        expect(getSentLog()).toHaveLength(10);
         expect(getSentLog()[0].id).toBe("c29");
     });
 
@@ -50,5 +54,18 @@ describe("sent log", () => {
             recordAsk("gone", { question: "x", cite: false }),
         ).not.toThrow();
         expect(getSentLog()).toHaveLength(0);
+    });
+
+    it("holds nothing while the debug view is off, and drops what it held when it closes", () => {
+        recordCapture("a", cap);
+        expect(getSentLog()).toHaveLength(1);
+        updateSetting("debugView", false);
+        expect(getSentLog()).toHaveLength(0);
+        recordCapture("b", cap);
+        expect(getSentLog()).toHaveLength(0);
+        // an ask still gets its record to fill in, just not kept
+        expect(recordAsk("b", { question: "x", cite: false }).question).toBe(
+            "x",
+        );
     });
 });

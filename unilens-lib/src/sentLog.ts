@@ -4,11 +4,13 @@
  * and each question asked against it with its reply footer. Developer-facing
  * only; the chat window shows the conversation and nothing else.
  *
- * In memory for this page, newest first. ponytail: capped at MAX_CAPTURES
- * because entries hold the image data URLs; the backend's /history page is the
- * durable record.
+ * In memory for this page, newest first, and only while the debug view is on:
+ * entries hold the full-page image data URLs, so a participant's tab keeps none,
+ * and turning the debug view off drops them. ponytail: capped at MAX_CAPTURES;
+ * the backend's /history page is the durable record.
  */
 import type { CaptureResult } from "./capture";
+import { getSettings, useSettings } from "./settings";
 
 export interface SentAsk {
     at: number;
@@ -36,7 +38,7 @@ export interface SentCapture {
     asks: SentAsk[];
 }
 
-const MAX_CAPTURES = 20;
+const MAX_CAPTURES = 10;
 /** one capture can take many follow-ups; the oldest go first */
 const MAX_ASKS = 50;
 let log: SentCapture[] = [];
@@ -49,6 +51,7 @@ export function recordCapture(
     cap: CaptureResult,
     viewRefresh = false,
 ) {
+    if (!getSettings().debugView) return;
     // failed uploads all share the id "local": each is its own record
     log = [
         { id, at: Date.now(), cap, viewRefresh, asks: [] },
@@ -74,3 +77,8 @@ export function recordAsk(
 export function clearSentLog() {
     log = [];
 }
+
+// the debug view closes: its captures go with it
+useSettings.subscribe((s, prev) => {
+    if (prev.debugView && !s.debugView) clearSentLog();
+});
