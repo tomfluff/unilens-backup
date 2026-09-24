@@ -51,6 +51,23 @@ const CSS = `
 .ul-fx i { position: absolute; display: block; border-radius: 50%; }
 .ul-fx-ripple { width: 72px; height: 72px; border-radius: 50%; border: 4px solid var(--ul-fx); box-shadow: 0 0 0 2px #000, inset 0 0 0 2px #000; animation: ul-fx-ripple .55s cubic-bezier(.22, 1, .36, 1) forwards; }
 @keyframes ul-fx-ripple { from { transform: scale(.2); opacity: 1; } to { transform: scale(1); opacity: 0; } }
+/* thick to thin, in the highlight colour only. A border width can't animate off the
+   main thread (the capture holds it), so five rings of falling width take turns as
+   the ripple grows at a steady rate: each ring peaks where its width times the scale
+   is thinner than the ring before, about 8px down to 2px */
+.ul-fx-ripple.taper { border: 0; box-shadow: none; animation: ul-fx-grow .65s linear forwards; }
+.ul-fx-ripple.taper i { inset: 0; border: solid var(--ul-fx); opacity: 0; animation: .65s linear forwards; }
+.ul-fx-ripple.taper .w1 { border-width: 28px; animation-name: ul-fx-w1; }
+.ul-fx-ripple.taper .w2 { border-width: 13px; animation-name: ul-fx-w2; }
+.ul-fx-ripple.taper .w3 { border-width: 7.8px; animation-name: ul-fx-w3; }
+.ul-fx-ripple.taper .w4 { border-width: 4.5px; animation-name: ul-fx-w4; }
+.ul-fx-ripple.taper .w5 { border-width: 2.2px; animation-name: ul-fx-w5; }
+@keyframes ul-fx-grow { from { transform: scale(.28); } to { transform: scale(1); } }
+@keyframes ul-fx-w1 { 0% { opacity: 1; } 20%, 100% { opacity: 0; } }
+@keyframes ul-fx-w2 { 0%, 10% { opacity: 0; } 30% { opacity: 1; } 50%, 100% { opacity: 0; } }
+@keyframes ul-fx-w3 { 0%, 30% { opacity: 0; } 50% { opacity: 1; } 70%, 100% { opacity: 0; } }
+@keyframes ul-fx-w4 { 0%, 50% { opacity: 0; } 70% { opacity: 1; } 90%, 100% { opacity: 0; } }
+@keyframes ul-fx-w5 { 0%, 70% { opacity: 0; } 88% { opacity: 1; } 100% { opacity: 0; } }
 @keyframes ul-fx-in { from { opacity: 0; } to { opacity: 1; } }
 @keyframes ul-fx-breathe { 0%, 100% { transform: scale(.78); opacity: .75; } 50% { transform: scale(1.08); opacity: 1; } }
 @keyframes ul-fx-turn { to { transform: rotate(1turn); } }
@@ -263,8 +280,18 @@ export function clickFeedback(
     const s = getSettings();
     const kind = s.clickFx;
     if (s.fxRipple) {
-        const ripple = at(make("ul-fx-ripple ul-fx-at"), x, y);
-        setTimeout(() => ripple.remove(), 600);
+        const taper = s.fxRippleLook === "taper";
+        const ripple = at(
+            make(
+                `ul-fx-ripple ul-fx-at${taper ? " taper" : ""}`,
+                taper
+                    ? '<i class="w1"></i><i class="w2"></i><i class="w3"></i><i class="w4"></i><i class="w5"></i>'
+                    : "",
+            ),
+            x,
+            y,
+        );
+        setTimeout(() => ripple.remove(), 700);
     }
     const parts = working(kind, s, x, y, box);
     const ending: Ending =

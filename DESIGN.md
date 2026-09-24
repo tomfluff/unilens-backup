@@ -524,7 +524,9 @@ What just happened, e.g. "Source 2 of 3, …. Moved there; Back returns you." It
   - **Ending:** each style's own ending by default, or one for all: fade, fly into the chat, or a found pulse.
   - **Size:** 50–200%.
   - **Speed:** calm, normal or lively; one multiplier on every duration.
-  - **Ripple:** on or off.
+  - **Ripple:** on or off, in one of two looks:
+    - **Black rims** (default): the highlight colour between thin black rims, so it reads on any page.
+    - **Thick to thin:** the highlight colour alone. Five rings of falling width take turns as it grows, about 8px down to 2px, so it stays off the main thread.
 
   Per style:
 

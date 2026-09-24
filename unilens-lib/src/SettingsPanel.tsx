@@ -407,6 +407,10 @@ function Panel() {
                                         settings.mmFollowHighlight &&
                                         MM_OWN_LOOK.has(key)
                                     ) &&
+                                    !(
+                                        key === "fxRippleLook" &&
+                                        !settings.fxRipple
+                                    ) &&
                                     // a click-feedback style's own knobs only while it is chosen
                                     !(
                                         FX_OWN[key] &&

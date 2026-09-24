@@ -92,6 +92,9 @@ export interface Settings {
     fxSize: number;
     fxSpeed: "calm" | "normal" | "lively";
     fxRipple: boolean;
+    /** the ripple: the highlight colour between black rims (reads on any page), or the
+     *  highlight colour alone, thick to thin */
+    fxRippleLook: "rimmed" | "taper";
     /** click feedback, per style: the orb's halo; the aurora's point dot and blur; a
      *  third colour for aurora and edge; the sonar's rings; the frame's shape, sheen
      *  and breathing; the edge's thickness, gradient and pin */
@@ -193,6 +196,7 @@ const DEFAULTS: Settings = {
     fxSize: 100,
     fxSpeed: "normal",
     fxRipple: true,
+    fxRippleLook: "rimmed",
     fxHalo: true,
     fxDot: true,
     fxSoftness: 16,
@@ -413,6 +417,13 @@ export const ENUM_CHOICES = {
             found: "A found pulse",
         },
     },
+    fxRippleLook: {
+        label: "Ripple look",
+        choices: {
+            rimmed: "Highlight colour with black rims",
+            taper: "Highlight colour, thick to thin",
+        },
+    },
     fxSpeed: {
         label: "Speed",
         choices: { calm: "Calm", normal: "Normal", lively: "Lively" },
@@ -552,6 +563,7 @@ export const PANEL_SECTIONS: {
             "fxSize",
             "fxSpeed",
             "fxRipple",
+            "fxRippleLook",
             "fxHalo",
             "fxSwirl",
             "fxCore",
