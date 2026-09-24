@@ -502,7 +502,7 @@ Three equal columns ("Explain", "Summarize", "Translate" / 説明して, 要約�
 - **Station:** transparent 4px signs with a 2px ink border, 600, 2.5em.
 
 ### Input row
-Mic, field, send. The field placeholder is "Ask about this page…" / このページについて質問…, and the caret is in the accent colour. A live mic turns red (Assistant #dc2626, Station red, Audio guide coral; signal yellow in high contrast). Send stays quiet until there is text, and its quiet state keeps its arrow at 3:1 or better against its own ground: the Assistant shows the arrow in slate on mist; the Audio guide in muted on a key; the Station in ink on a transparent key with a muted border.
+Mic, field, send. The mic fills the field with what it hears. With "send what I say when I pause" on (the default), the words go to the assistant on a pause or a second press; off, it stops and leaves them in the field to check and send. The folded chat keeps the mic in its header, and with sending off it unfolds when the mic stops. The field placeholder is "Ask about this page…" / このページについて質問…, and the caret is in the accent colour. A live mic turns red (Assistant #dc2626, Station red, Audio guide coral; signal yellow in high contrast). Send stays quiet until there is text, and its quiet state keeps its arrow at 3:1 or better against its own ground: the Assistant shows the arrow in slate on mist; the Audio guide in muted on a key; the Station in ink on a transparent key with a muted border.
 - **Assistant:** a 2.8em field (12px, 1px control-edge border) and 2.8em keys; send is blue.
 - **Audio guide:** a 3em field with a dark well (#0f1114) and a 2px rim; 3em keys; send is amber.
 - **Station:** a 2.9em field (4px, 2px ink border); 2.9em keys; send is line blue.

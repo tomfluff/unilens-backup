@@ -526,6 +526,10 @@ function Panel() {
                                         key === "fxRippleLook" &&
                                         !settings.fxRipple
                                     ) &&
+                                    !(
+                                        key === "voiceAutoSend" &&
+                                        !settings.voiceInput
+                                    ) &&
                                     // a click-feedback style's own knobs only while it is chosen
                                     !(
                                         FX_OWN[key] &&

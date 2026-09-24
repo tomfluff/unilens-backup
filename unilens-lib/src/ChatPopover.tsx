@@ -38,7 +38,6 @@ import {
     SendIcon,
     StopIcon,
     WaitIcon,
-    WaveIcon,
 } from "./icons";
 import { labelOfWire, type WireNode } from "./inventory";
 import {
@@ -304,9 +303,7 @@ export default function ChatPopover({
     const [mini, setMini] = useState(false);
 
     /** the mic is on: dictating into the field, or recording a message that sends itself */
-    const [listening, setListening] = useState<false | "dictate" | "message">(
-        false,
-    );
+    const [listening, setListening] = useState<false | "voice">(false);
     const stopListenRef = useRef<((cancel?: boolean) => void) | null>(null);
     /** which message is being spoken and its phase */
     const [speaking, setSpeaking] = useState<{
@@ -423,35 +420,18 @@ export default function ChatPopover({
         ]);
     }
 
-    function toggleMic() {
-        if (!sttSupported) return noVoice();
-        if (listening) {
-            stopListenRef.current?.();
-            act("micOff", T.sStoppedListening);
-            return;
-        }
-        const stop = listen(
-            (transcript) => setInput(transcript),
-            () => setListening(false),
-            speechLang(),
-        );
-        if (stop) {
-            stopListenRef.current = stop;
-            setListening("dictate");
-            act("micOn", T.sListening);
-        }
-    }
-
-    /** a voice message: speak, and it goes to the assistant when the speaker pauses or
-     *  presses stop. The transcript shows in the field as it is heard. (A first step
-     *  toward live voice conversation, TODOS.md.) */
+    /** the mic: speak, and the words fill the field as they are heard. With "send
+     *  what I say when I pause" on (voiceAutoSend) they then go to the assistant, on a
+     *  pause or a second press; off, they stay in the field to check and send. (A
+     *  first step toward live voice conversation, TODOS.md.) */
     const heard = useRef("");
-    function toggleVoiceMessage() {
+    function toggleVoice() {
         if (!sttSupported) return noVoice();
         if (listening) {
             stopListenRef.current?.();
             return;
         }
+        const auto = getSettings().voiceAutoSend;
         heard.current = "";
         const stop = listen(
             (transcript) => {
@@ -464,16 +444,28 @@ export default function ChatPopover({
                 setListening(false);
                 const text = heard.current.trim();
                 heard.current = "";
-                setInput("");
-                if (text) submitRef.current(text);
-                else act("error", T.sNothingHeard);
+                if (!text) {
+                    act("error", T.sNothingHeard);
+                    return;
+                }
+                if (auto) {
+                    setInput("");
+                    submitRef.current(text);
+                    return;
+                }
+                // kept to check: the field shows it (a folded chat opens) and has the keyboard
+                setMini(false);
+                act("micOff", T.sHeardCheck);
+                requestAnimationFrame(() =>
+                    inputRef.current?.focus({ preventScroll: true }),
+                );
             },
             speechLang(),
         );
         if (stop) {
             stopListenRef.current = stop;
-            setListening("message");
-            act("micOn", T.sRecording);
+            setListening("voice");
+            act("micOn", auto ? T.sRecording : T.sListening);
         }
     }
 
@@ -1388,18 +1380,26 @@ export default function ChatPopover({
     const talked = messages.some((m) => m.role !== "place");
     const voiceOK = settings.voiceInput;
     /** record a voice message: next to send, and in the folded chat's header */
+    // one voice button, the mic: its words say whether it sends on a pause
+    const voiceLabel = settings.voiceAutoSend
+        ? listening
+            ? T.voiceStop
+            : T.voiceStart
+        : listening
+          ? T.micStop
+          : T.micStart;
     const voiceButton = (cls: string) => (
         <button
             type="button"
             className={`${cls} ulc-voice`}
-            aria-pressed={listening === "message"}
+            aria-pressed={Boolean(listening)}
             aria-disabled={!sttSupported}
-            aria-label={listening === "message" ? T.voiceStop : T.voiceStart}
-            title={listening === "message" ? T.voiceStop : T.voiceStart}
-            onClick={toggleVoiceMessage}
-            disabled={listening === "dictate" || busy}
+            aria-label={voiceLabel}
+            title={voiceLabel}
+            onClick={toggleVoice}
+            disabled={busy && !listening}
         >
-            {listening === "message" ? <StopIcon /> : <WaveIcon />}
+            {listening ? <StopIcon /> : <MicIcon />}
         </button>
     );
     let lastAnswer = -1;
@@ -1540,24 +1540,7 @@ export default function ChatPopover({
             )}
             {!mini && (
                 <div className="ulc-in">
-                    {settings.voiceInput && (
-                        <button
-                            type="button"
-                            className="ulc-ib"
-                            aria-pressed={listening === "dictate"}
-                            aria-disabled={!sttSupported}
-                            aria-label={
-                                listening === "dictate" ? T.micStop : T.micStart
-                            }
-                            title={
-                                listening === "dictate" ? T.micStop : T.micStart
-                            }
-                            onClick={toggleMic}
-                            disabled={listening === "message"}
-                        >
-                            <MicIcon />
-                        </button>
-                    )}
+                    {voiceOK && voiceButton("ulc-ib")}
                     <input
                         ref={inputRef}
                         value={input}
@@ -1575,9 +1558,8 @@ export default function ChatPopover({
                             listening ? T.placeholderListening : T.placeholder
                         }
                         aria-label={T.placeholder}
-                        readOnly={listening === "message"}
+                        readOnly={Boolean(listening)}
                     />
-                    {voiceOK && voiceButton("ulc-ib")}
                     <button
                         type="button"
                         className="ulc-ib ulc-go"

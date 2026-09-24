@@ -30,6 +30,8 @@ export interface Settings {
     continuity: boolean;
     autoRead: boolean;
     voiceInput: boolean;
+    /** the mic sends what was heard when the speaker pauses; off, it stays in the field */
+    voiceAutoSend: boolean;
     hints: boolean;
     minimap: boolean;
     /** freeze the page and pan by transform while zoomed, instead of scrolling it */
@@ -162,6 +164,7 @@ const DEFAULTS: Settings = {
     continuity: true,
     autoRead: false,
     voiceInput: false,
+    voiceAutoSend: true,
     hints: false,
     minimap: true,
     lensPan: false,
@@ -249,6 +252,7 @@ export const TOGGLE_LABELS: Record<BoolSettingKey, string> = {
     continuity: "Conversation continuity",
     autoRead: "Read replies aloud",
     voiceInput: "Voice input (mic)",
+    voiceAutoSend: "Send what I say when I pause",
     hints: "Proactive help hints",
     minimap: "Show the minimap while zoomed",
     lensPan: "Lens panning (freeze page while zoomed)",
@@ -502,6 +506,7 @@ export const PANEL_SECTIONS: {
             "sounds",
             "quickActions",
             "voiceInput",
+            "voiceAutoSend",
             "autoRead",
             "streamReplies",
             "dragPopover",

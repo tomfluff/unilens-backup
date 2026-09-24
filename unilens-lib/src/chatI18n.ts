@@ -43,7 +43,7 @@ const EN = {
     send: "Send",
     micStart: "Dictate into the field",
     micStop: "Stop listening",
-    voiceStart: "Record a voice message",
+    voiceStart: "Speak your question; it sends when you pause",
     voiceStop: "Stop and send",
     placeholderListening: "Listening…",
     readAloud: "Read aloud",
@@ -94,6 +94,7 @@ const EN = {
     sNoVoice:
         "Voice isn't available in this browser. Chrome, Edge and Safari support it.",
     sStoppedListening: "Stopped listening.",
+    sHeardCheck: "Stopped. Check the words, then send.",
     sReading: "Reading the answer aloud.",
     sStoppedReading: "Stopped reading.",
     sPausedReading: "Reading paused.",
@@ -150,7 +151,7 @@ const JA: Strings = {
     send: "送信",
     micStart: "声で入力する",
     micStop: "聞き取りを止める",
-    voiceStart: "音声メッセージを録音",
+    voiceStart: "質問を話す（話し終えると送信）",
     voiceStop: "止めて送信",
     placeholderListening: "聞き取り中…",
     readAloud: "読み上げる",
@@ -199,6 +200,7 @@ const JA: Strings = {
     sNoVoice:
         "このブラウザでは音声入力を使えません。Chrome、Edge、Safari で使えます。",
     sStoppedListening: "聞き取りを止めました。",
+    sHeardCheck: "止めました。内容を確かめて送信してください。",
     sReading: "回答を読み上げています。",
     sStoppedReading: "読み上げを止めました。",
     sPausedReading: "読み上げを一時停止しました。",
