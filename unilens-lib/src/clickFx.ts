@@ -62,7 +62,9 @@ export function clickFeedback(x: number, y: number): () => void {
     // slowly turning gradient and a solid core, animated only by transform and
     // opacity so it keeps moving while the capture holds the main thread
     const orb = spot("ul-fx-orb", x, y);
-    for (const layer of ["halo", "swirl", "core"]) {
+    const s = getSettings();
+    const layers = ["halo", s.fxSwirl && "swirl", s.fxCore && "core"];
+    for (const layer of layers.filter(Boolean) as string[]) {
         const i = document.createElement("i");
         i.className = layer;
         orb.appendChild(i);
