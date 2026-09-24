@@ -25,6 +25,9 @@ import { initSettings } from "./SettingsPanel";
 import { getSettings, updateSetting } from "./settings";
 import { setSpeechBackend } from "./speech";
 import { clientToContent, initZoom } from "./zoom";
+import { UnilensClient } from "./UnilensClient";
+import { kUnilensRootId } from "./consts";
+import { useState } from "react";
 
 /** build stamp injected by esbuild --define (see the lib Makefile); absent in dev */
 declare const __target_dist_unilens_BUILD__: string;
@@ -127,7 +130,61 @@ async function uploadCapture(
     return data.id;
 }
 
+type Capture = {
+    clientX: number,
+    clientY: number,
+    captureId: string,
+    cap: CaptureResult,
+}
+
+function UnilensRoot({unilens}: {unilens: UnilensClient}) {
+    console.log(unilens);
+    const [captures, setCaptures] = useState<Capture[]>();
+    return <>
+        {captures?.map((capture) => (
+            <ChatPopover
+                key={capture.captureId}
+                x={capture.clientX}
+                y={capture.clientY}
+                captureId={capture.captureId}
+                capture={capture.cap}
+                backend={unilens.getBackend() ?? ""}
+                sessionId={getSettings().continuity ? sessionId : null}
+                onClose={() => {}}
+                initialPos={{left: 0, top: 0}}
+                pinned={true}
+                onTogglePin={() => {}}
+                onMove={() => {}}
+            />
+        ))}
+    </>;
+}
+
+// Initialize the React document root and create the unilens client
 export function init(options: InitOptions = {}) {
+    const unilens: UnilensClient = new UnilensClient();
+    container = document.createElement("div");
+    container.id = kUnilensRootId;
+    // documentElement, not body: body carries the zoom transform, which would
+    // break position:fixed and scale the popover. Also keeps it out of captures.
+    document.documentElement.appendChild(container);
+    const containerStyles = {
+        position: "absolute",
+        top: 0,
+        left: 0,
+        zIndex: 999,
+    };
+    Object.assign(container.style, containerStyles);
+    root = createRoot(container);
+    const render = () =>
+        root?.render(
+            <UnilensRoot unilens={unilens}></UnilensRoot>
+        );
+    render();
+}
+
+export function init_2(options: InitOptions = {}) {
+    const unilens: UnilensClient = new UnilensClient();
     const trigger = options.trigger ?? ((e: MouseEvent) => e.altKey);
     const backend = options.backend ?? "";
 

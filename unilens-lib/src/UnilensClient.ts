@@ -1,0 +1,58 @@
+import autoBind from "auto-bind";
+import { getSettings } from "./settings";
+
+// Represents a predicate on a MouseEvent
+type Trigger = (e: MouseEvent) => boolean
+
+export type Options = Partial<{
+    trigger: Trigger; // the predicate to determine if to open the unilens popover or not
+    mouseWindow: number;
+    backend: string;
+    /** ctrl+wheel pinch-style page zoom. Default: true. */
+    zoom: boolean;
+}>;
+
+export type OptionKey = keyof Options;
+
+// Represents default options, used for fetching options if they are not defined
+const kDefaultOptions: Options = {
+    trigger: ((e: MouseEvent) => e.altKey),
+
+}
+
+/**
+ * A client representing a single instance or connection of the unilens library.
+ * Every initialization of unilens on a webpage should have a unilens-client.
+ * This establishes a connection to the backend, to localstorage, and any other external resources.
+ */
+export class UnilensClient {
+    options: Options = {}
+    sessionId: string | null = null;
+
+    constructor(options: Options = {}) {
+        autoBind(this)
+        // Apply default options
+        this.options = {
+            ...kDefaultOptions,
+            ...options,
+        }
+    }
+
+    // Get an option by key, accounting for defaults
+    getOption(optionKey: OptionKey) {
+        return this.options[optionKey];
+    }
+
+    getBackend() {
+        return this.options.backend;
+    }
+
+
+    setSessionId(sessionId: string | null) {
+        this.sessionId = sessionId;
+    }
+
+    getSessionId() {
+        return this.sessionId;
+    }
+}
