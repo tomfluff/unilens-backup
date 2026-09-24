@@ -162,4 +162,21 @@ describe("hydration", () => {
         localStorage.removeItem("unilens-settings");
         useSettings.setState(defaults);
     });
+
+    it("carries an older minimap shape and dim switch into the new layers", async () => {
+        localStorage.setItem(
+            "unilens-settings",
+            JSON.stringify({
+                state: { mmShape: "outlined", mmDim: true },
+                version: 0,
+            }),
+        );
+        await useSettings.persist.rehydrate();
+        const s = getSettings();
+        expect(s.mmOutline).toBe("band");
+        expect(s.mmFill).toBe(false);
+        expect(s.mmBackdrop).toBe("dim");
+        localStorage.removeItem("unilens-settings");
+        useSettings.setState(defaults);
+    });
 });

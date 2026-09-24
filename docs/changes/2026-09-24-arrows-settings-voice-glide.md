@@ -26,7 +26,7 @@ They also asked for a voice-message button (a step toward live voice interaction
   - Edge mode is unchanged.
 - **Settings in groups.** Chat, Answers and sources, Highlight look, Off-screen arrows, Movement, Minimap, Page zoom, Asking, and Capture and research. Each group folds, and each holds every kind of control about its topic. A test keeps every control in exactly one group.
 - **Status line only when minimized.** Open, the controls show each action, and the live region speaks it. While a click is being captured, a dashed "Capturing…" entry stands in the log.
-- **Chat scale and text size.** The old text-size choice is now "Chat scale" (the whole panel). A new "Text size" slider (80–200%) scales the conversation text on top of it.
+- **Chat scale and text size.** The old text-size choice is now "Chat scale" (the whole panel). A new "Text size" slider (80–200%) scales the words of each message on top of it; buttons, place entries and the input follow the chat scale, so the controls row never overflows.
 - **Voice message.** A button next to send records a message with the browser's speech recognition. The transcript fills the field as it is heard and is sent when the speaker pauses or presses stop. Recognition listens in the chat language the user chose, or else their browser's language. The dictation mic stays for text they want to edit first.
 - **Reading aloud** has play, pause, resume and stop on every answer. Minimized, the header keeps the voice-message button and "read the last answer".
 - **The page glide starts where the reader is.**

@@ -64,7 +64,8 @@ export interface Settings {
     ringWidth: number;
     /** scale the outline with the zoom level instead of a fixed screen width */
     ringScale: boolean;
-    /** minimap target marker size in px */
+    /** the smallest a target is drawn on the minimap, px: a link on a long page would
+     *  otherwise shrink below a pixel */
     minimapMarkerSize: number;
     /** highlight look, in layers (highlightStyles.ts): one backdrop, one outline, additions */
     hlBackdrop: Backdrop;
@@ -87,8 +88,13 @@ export interface Settings {
     /** how long an eased move takes, ms */
     motionMs: number;
     /** minimap target marker: see-through fill or outline; dim, glow and numbers stack */
-    mmShape: "filled" | "outlined";
-    mmDim: boolean;
+    /** the minimap draws with the highlight look instead of its own */
+    mmFollowHighlight: boolean;
+    /** the minimap's own look, in the highlight's layers: one backdrop, one outline,
+     *  then fill, glow and numbers (mmGlow, mmNumbers) on top; colour is hlColor */
+    mmBackdrop: Backdrop;
+    mmOutline: Outline;
+    mmFill: boolean;
     mmGlow: boolean;
     mmNumbers: boolean;
     /** whether choosing a piece of evidence moves the page to it */
@@ -155,8 +161,10 @@ const DEFAULTS: Settings = {
     cueSize: 72,
     motion: "smooth",
     motionMs: 350,
-    mmShape: "filled",
-    mmDim: false,
+    mmFollowHighlight: false,
+    mmBackdrop: "none",
+    mmOutline: "none",
+    mmFill: true,
     mmGlow: false,
     mmNumbers: true,
     moveToEvidence: "offscreen",
@@ -200,7 +208,8 @@ export const TOGGLE_LABELS: Record<BoolSettingKey, string> = {
     hlFill: "Colour fill",
     hlGlow: "Glow",
     hlBadges: "Numbered badges",
-    mmDim: "Dim the map around targets",
+    mmFollowHighlight: "Same look as the highlights",
+    mmFill: "Colour fill (see-through)",
     mmGlow: "Glow around targets",
     mmNumbers: "Numbers on targets",
     citeEvidence: "Answers cite page elements",
@@ -259,7 +268,7 @@ export const NUMBER_KNOBS: Record<
     },
     ringWidth: { label: "Outline width (px)", min: 1, max: 6, step: 1 },
     minimapMarkerSize: {
-        label: "Marker min size (px)",
+        label: "Smallest target on the map (px)",
         min: 8,
         max: 32,
         step: 2,
@@ -332,10 +341,8 @@ export const ENUM_CHOICES = {
             instant: "Instant",
         },
     },
-    mmShape: {
-        label: "Marker",
-        choices: { filled: "Filled, see-through", outlined: "Outlined" },
-    },
+    mmOutline: { label: "Outline", choices: OUTLINES },
+    mmBackdrop: { label: "Backdrop", choices: BACKDROPS },
     moveToEvidence: {
         label: "Move the page to evidence",
         choices: {
@@ -429,8 +436,10 @@ export const PANEL_SECTIONS: {
         title: "Minimap",
         keys: [
             "minimap",
-            "mmShape",
-            "mmDim",
+            "mmFollowHighlight",
+            "mmOutline",
+            "mmBackdrop",
+            "mmFill",
             "mmGlow",
             "mmNumbers",
             "minimapMarkerSize",
@@ -507,6 +516,13 @@ function mergePersisted(persisted: unknown, current: Settings): Settings {
             next[key] = clampSetting(key, stored[key]) as never;
         }
     }
+    // older builds stored the minimap look as a shape and a dim switch
+    if (!Object.hasOwn(stored, "mmOutline") && stored.mmShape === "outlined") {
+        next.mmOutline = "band";
+        next.mmFill = false;
+    }
+    if (!Object.hasOwn(stored, "mmBackdrop") && stored.mmDim === true)
+        next.mmBackdrop = "dim";
     return next;
 }
 

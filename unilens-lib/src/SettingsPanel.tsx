@@ -57,6 +57,15 @@ const SettingsRange = styled.input`
     accent-color: #00c8ff;
 `;
 
+/** the minimap's own look: hidden while it follows the highlight look */
+const MM_OWN_LOOK = new Set<keyof Settings>([
+    "mmOutline",
+    "mmBackdrop",
+    "mmFill",
+    "mmGlow",
+    "mmNumbers",
+]);
+
 /** number knobs shown as a slider with its value, not a typed number */
 const SLIDERS = new Set<NumSettingKey>(["chatTextScale"]);
 
@@ -373,9 +382,21 @@ function Panel() {
                 {PANEL_SECTIONS.map((g) => (
                     <Section key={g.title} open={g.open}>
                         <SectionTitle>{g.title}</SectionTitle>
-                        {g.keys.map((key) => (
-                            <Row key={key} setting={key} settings={settings} />
-                        ))}
+                        {g.keys
+                            .filter(
+                                (key) =>
+                                    !(
+                                        settings.mmFollowHighlight &&
+                                        MM_OWN_LOOK.has(key)
+                                    ),
+                            )
+                            .map((key) => (
+                                <Row
+                                    key={key}
+                                    setting={key}
+                                    settings={settings}
+                                />
+                            ))}
                     </Section>
                 ))}
             </SettingsList>

@@ -576,7 +576,7 @@ export default function ChatPopover({
             const tr = turn.getBoundingClientRect();
             // keep from the turn's top when it fits, else from the answer's last two
             // lines: controls with no answer above them read as an empty reply
-            const text = turn.querySelector(".ulc-bot > span");
+            const text = turn.querySelector(".ulc-text");
             const line =
                 Number.parseFloat(getComputedStyle(turn).lineHeight) || 24;
             const top =
@@ -1192,6 +1192,7 @@ export default function ChatPopover({
                         click handler serves them (keyboard Enter/Space clicks too) */}
                     {/* biome-ignore lint/a11y/noStaticElementInteractions lint/a11y/useKeyWithClickEvents: delegation only; the targets are real <button> chips, which click on Enter and Space */}
                     <span
+                        className="ulc-text"
                         onClick={(e) => {
                             const id = (e.target as HTMLElement)
                                 .closest("[data-cite]")

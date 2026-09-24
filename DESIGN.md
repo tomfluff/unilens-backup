@@ -414,7 +414,7 @@ Each style carries its own restrained palette: one accent, one ink, soft neutral
 - **Status display** (700, 1em, 1.35): the Audio guide's amber display and the Station's strip. At most two lines, one on a short screen.
 
 ### Named Rules
-**The Em Rule.** Every size in the chat is in em of `--ul-fs`, which is set from the chat scale, `chatFontSize` (14, 17 or 20px). The conversation text (messages, place entries, the input) is further multiplied by `--ul-text`, the text-size slider (`chatTextScale`, 80–200%). The panel (24.3em × 30em), targets, radii on signs and type all scale together. Only the Audio guide's frame spacing (12px inset, 8px and 6px gaps) and the 4px level-meter bars are fixed px.
+**The Em Rule.** Every size in the chat is in em of `--ul-fs`, which is set from the chat scale, `chatFontSize` (14, 17 or 20px). The words of each message are further multiplied by `--ul-text`, the text-size slider (`chatTextScale`, 80–200%); controls, place entries and the input stay on the chat scale so rows of buttons never overflow. The panel (24.3em × 30em), targets, radii on signs and type all scale together. Only the Audio guide's frame spacing (12px inset, 8px and 6px gaps) and the 4px level-meter bars are fixed px.
 
 **The Readable Face Rule.** Faces are chosen for reading, not flavour: the platform UI face for the Assistant, BIZ UD Gothic for the sign styles, and a Japanese face in every stack. Nothing is set below 0.92em (inline code).
 
