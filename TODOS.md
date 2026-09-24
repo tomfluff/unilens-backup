@@ -14,6 +14,26 @@
 **Priority:** P2
 **Depends on:** None (independent of the highlighting steps; best landed before step two's trial runner, which fires many requests quickly)
 
+### Harden UniLens against host pages
+
+**What:** Build a local "hostile host" test page and run the end-to-end checks against it. Then address the open items in `docs/research/2026-09-24-host-page-hazards.md`, in order of how often study pages will hit them. First up: inner scroll containers, stale cited elements, patched built-ins, and the CSP limits of the embed.
+
+**Why:** SoftBank's vendor bundle replaced `performance.now` with a lagging clock, which made every page glide jump. It was found only by accident (2026-09-24). The builder asked to keep these hazards in mind and record them.
+
+**Context:** The research note lists each hazard with where it hits our code, what already guards against it, and what to try. The test page should have:
+- a replaced clock;
+- a strict CSP;
+- an inner scroller;
+- shadow DOM and an iframe;
+- a capture-phase stopPropagation handler;
+- a non-streaming fetch;
+- `!important` button rules;
+- a changing carousel.
+
+**Effort:** M
+**Priority:** P2
+**Depends on:** None
+
 ### Live voice conversation
 
 **What:** Turn the voice message into a live exchange: speak, hear the answer read back, and speak again without touching the chat. Barge-in stops the reading when the user starts talking.
