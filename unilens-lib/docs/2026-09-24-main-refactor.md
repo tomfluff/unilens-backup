@@ -18,3 +18,7 @@ systems reuseable and modular and follow good code style:
 - Wrap component logic in `UnilensRoot.tsx` to isolate the implementation of the React logic from the `init` scaffolding
 - Add `Monomitter` event bus
 - Separate click-event generation logic from handling logic by creating `clickHandlers.ts` which generates a monomitter that any interaction can subscribe to
+
+Incidental:
+- Removes the `regionSelect` setting in order to more generically support click-and-drag actions. Can easily be re-added if needed.
+- Removes `pinnedState` settingin favor of a more general setting to save the entire session

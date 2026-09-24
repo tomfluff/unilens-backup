@@ -18,7 +18,6 @@ export interface Settings {
     quickActions: boolean;
     dragPopover: boolean;
     elementContext: boolean;
-    regionSelect: boolean;
     highContrast: boolean;
     continuity: boolean;
     autoRead: boolean;
@@ -32,8 +31,6 @@ export interface Settings {
     captureRes: number;
     /** chat bubble font size in px */
     chatFontSize: number;
-    /** popover pinned position — null = follow the cursor (survives reloads) */
-    pinnedPos: { left: number; top: number } | null;
 }
 
 const DEFAULTS: Settings = {
@@ -48,7 +45,6 @@ const DEFAULTS: Settings = {
     quickActions: true,
     dragPopover: true,
     elementContext: true,
-    regionSelect: true,
     highContrast: false,
     continuity: true,
     autoRead: false,
@@ -59,7 +55,6 @@ const DEFAULTS: Settings = {
     debugView: false,
     captureRes: 1,
     chatFontSize: 14,
-    pinnedPos: null,
 };
 
 /** keys of Settings whose value is a boolean — the on/off rows in the panel */
@@ -79,7 +74,6 @@ export const TOGGLE_LABELS: Record<BoolSettingKey, string> = {
     quickActions: "Quick-action chips",
     dragPopover: "Movable popover (drag header)",
     elementContext: "Clicked-element context capture",
-    regionSelect: "Alt+drag region select",
     highContrast: "High-contrast chat",
     continuity: "Conversation continuity",
     autoRead: "Read replies aloud",

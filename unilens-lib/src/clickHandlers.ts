@@ -6,7 +6,6 @@
 
 import { useEffect, useState } from "react";
 import { type Monomitter, monomitter } from "./Monomitter";
-import { getSettings } from "./settings";
 import type { Trigger } from "./types";
 
 //------------------------------------------------------------------------------
@@ -76,8 +75,10 @@ export function useClickOrDragBox(
 
         function onMouseDown(evt: Event) {
             const e = evt as MouseEvent;
+            // Only begin a potential drag if the trigger predicate accepts this
+            // mousedown (for example the Alt key may be required).
+            if (!clickTrigger(e)) return;
             cancelDrag();
-            if (!getSettings().regionSelect || !clickTrigger(e)) return;
             dragStart = { clientX: e.clientX, clientY: e.clientY };
             e.preventDefault();
         }

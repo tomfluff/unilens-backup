@@ -250,7 +250,7 @@ export default function ChatPopover({
     initialPos?: { left: number; top: number } | null;
     onMove: (pos: { left: number; top: number }) => void;
 }) {
-    const { clientX: x, clientY: y, captureId, cap: capture } = captureObj;
+    const { clientX, clientY, captureId, cap: capture } = captureObj;
 
     const backend: string = unilens.getBackend() ?? "";
 
@@ -393,31 +393,40 @@ export default function ChatPopover({
         top: Math.min(Math.max(p.top, 8), window.innerHeight - PANEL_H - 8),
     });
     const [pos, setPos] = useState(() =>
-        clamp(initialPos ?? { left: x + 12, top: y + 12 }),
+        clamp(initialPos ?? { left: clientX + 12, top: clientY + 12 }),
     );
 
-    // pinned is now local state; persisted in settings.pinnedPos
-    const [pinnedState, setPinnedState] = useState<boolean>(false);
+    // initialize from the carried `initialPos` or persisted setting so
+    // reopening a pinned popover restores the pinned state
+    const [pinnedState, setPinnedState] = useState<boolean>(() => false);
     const dragRef = useRef<{ dx: number; dy: number } | null>(null);
 
-    function onHeaderPointerDown(e: React.PointerEvent) {
+    function onHeaderMouseDown(e: React.MouseEvent) {
+        // don't allow dragging when the popover is pinned
+        if (pinnedState) return;
         if (!settings.dragPopover) return;
         if ((e.target as HTMLElement).tagName === "BUTTON") return;
         dragRef.current = { dx: e.clientX - pos.left, dy: e.clientY - pos.top };
-        (e.target as HTMLElement).setPointerCapture(e.pointerId);
+
+        // attach window listeners so dragging continues outside the header
+        window.addEventListener("mousemove", onHeaderMouseMoveWindow);
+        window.addEventListener("mouseup", onHeaderMouseUpWindow);
     }
-    function onHeaderPointerMove(e: React.PointerEvent) {
+
+    function onHeaderMouseMoveWindow(ev: MouseEvent) {
         if (!dragRef.current) return;
         const p = clamp({
-            left: e.clientX - dragRef.current.dx,
-            top: e.clientY - dragRef.current.dy,
+            left: ev.clientX - dragRef.current.dx,
+            top: ev.clientY - dragRef.current.dy,
         });
         setPos(p);
         onMove(p);
-        if (pinnedState) updateSetting("pinnedPos", p);
     }
-    function onHeaderPointerUp() {
+
+    function onHeaderMouseUpWindow() {
         dragRef.current = null;
+        window.removeEventListener("mousemove", onHeaderMouseMoveWindow);
+        window.removeEventListener("mouseup", onHeaderMouseUpWindow);
     }
 
     useEffect(() => {
@@ -581,10 +590,8 @@ export default function ChatPopover({
             <HeaderContainer
                 headerBg={C.headerBg}
                 headerBorder={C.headerBorder}
-                onPointerDown={onHeaderPointerDown}
-                onPointerMove={onHeaderPointerMove}
-                onPointerUp={onHeaderPointerUp}
-                style={{ cursor: settings.dragPopover ? "grab" : "default" }}
+                onMouseDown={onHeaderMouseDown}
+                style={{ cursor: settings.dragPopover && !pinnedState ? "grab" : "default" }}
             >
                 <HeaderTitle accent={C.accent}>UniLens</HeaderTitle>
                 <HeaderButtonsContainer>
@@ -593,10 +600,8 @@ export default function ChatPopover({
                         onClick={() => {
                             if (pinnedState) {
                                 setPinnedState(false);
-                                updateSetting("pinnedPos", null);
                             } else {
                                 setPinnedState(true);
-                                updateSetting("pinnedPos", pos);
                             }
                         }}
                         pinned={pinnedState}

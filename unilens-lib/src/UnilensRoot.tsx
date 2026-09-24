@@ -14,6 +14,7 @@ import { initSettings } from "./SettingsPanel";
 import { setSpeechBackend } from "./speech";
 import type { UnilensClient } from "./UnilensClient";
 import { clientToContent, initZoom } from "./zoom";
+import { addCapture, removeCapture, UnilensState, useUnilensState } from "./sessionState";
 
 //------------------------------------------------------------------------------
 // UnilensRoot implementation
@@ -26,11 +27,9 @@ export function UnilensRoot({
     unilens: UnilensClient;
     container: HTMLDivElement;
 }) {
-    const [captures, setCaptures] = useState<Capture[]>([]);
+    const [state, actions] = useUnilensState(unilens);
 
-    const trigger = unilens.getOptions().trigger;
-    const clickActionEmitter = useClickOrDragBox(document, trigger);
-
+    // Init a bunch of things off of unilens client
     useEffect(() => {
         const options = unilens.getOptions();
         const backend = unilens.getOptions().backend;
@@ -41,6 +40,16 @@ export function UnilensRoot({
         initSettings();
         setSpeechBackend(backend);
 
+        initDebug({
+            sessionId: () => unilens.getSessionId(),
+            popoverOpen: () => state.captures.length > 0,
+            backend: () => backend,
+        });
+    }, [unilens, state.captures.length])
+
+    // Subscribe capture to click-or-drag-box emitter
+    const clickActionEmitter = useClickOrDragBox(document, unilens.getOptions().trigger);
+    useEffect(() => {
         // Use centralized click/drag emitter to handle alt-click and region drag
 
         async function doCapture(
@@ -68,10 +77,7 @@ export function UnilensRoot({
                     err,
                 );
             }
-            setCaptures((prev) => [
-                ...prev,
-                { clientX, clientY, captureId: id, cap },
-            ]);
+            actions.addCapture({ clientX, clientY, captureId: id, cap, pinned: false })
         }
 
         // subscribe to the click/drag emitter
@@ -113,34 +119,22 @@ export function UnilensRoot({
             }
         });
 
-        initDebug({
-            sessionId: () => unilens.getSessionId(),
-            popoverOpen: () => captures.length > 0,
-            backend: () => backend,
-        });
-
         initHint((clientX, clientY) => {
             const el = document.elementFromPoint(clientX, clientY) ?? undefined;
             void doCapture(clientX, clientY, clientX, clientY, el);
         });
 
         return sub.unsubscribe;
-    }, [unilens, container, clickActionEmitter, captures.length]);
-
-    function closeCapture(id: string) {
-        setCaptures((captures) => [
-            ...captures.filter((c) => c.captureId !== id),
-        ]);
-    }
+    }, [unilens, container, clickActionEmitter, actions.addCapture]);
 
     return (
         <>
-            {captures.map((capture) => (
+            {state.captures.map((capture) => (
                 <ChatPopover
                     key={capture.captureId}
                     captureObj={capture}
                     unilens={unilens}
-                    onClose={() => closeCapture(capture.captureId)}
+                    onClose={() => actions.removeCapture(capture.captureId)}
                     initialPos={{ left: capture.clientX, top: capture.clientY }}
                     onMove={() => {}}
                 />

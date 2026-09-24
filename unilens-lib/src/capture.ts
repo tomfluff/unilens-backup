@@ -47,10 +47,14 @@ export interface CaptureMeta {
 }
 
 export type Capture = {
-    clientX: number;
-    clientY: number;
-    captureId: string;
-    cap: CaptureResult;
+    // Capture data
+    captureId: string; // capture ID
+    cap: CaptureResult; // metadata about the capture
+
+    // Layout data
+    pinned: false; // If it is pinned or not
+    clientX: number; // X position on the screen
+    clientY: number; // Y position on the screen
 };
 
 export interface ElementContext {
