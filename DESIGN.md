@@ -426,7 +426,7 @@ The chat is a fixed, draggable card on the top layer (z-index 2147483647): nothi
 - **Narrow screens (≤480px wide):** the chat docks as a bottom sheet, full width minus 16px and half the window high, so what it points at stays visible above it.
 - **Short screens (≤560px high, e.g. a laptop at 200–300% browser zoom):** height is at most 66% of the window, but never less than 16em (header, three lines of log and the input). The header, keys, input and status shrink, and the subtitle hides. Quick actions hide once a conversation starts, and the status clamps to one line. If the chat still covers a source it moved to, it folds itself.
 - **Log rhythm:** 0.7em between entries. The Assistant insets by 1em and aligns bubbles (user right, max 85%; answers left, max 92%). The Audio guide and Station stretch every entry to full width and set the user's words as a plain muted line: a bullet square on the Station, no bubble on the Audio guide.
-- **Place entries** open each new place in the log, before what was asked there: right-aligned in Assistant, left-aligned in the other two.
+- **Place entries:** every click is kept in the log in the order it happened, whether or not anything was asked there. A click during an answer lands between the question and the answer. Right-aligned in Assistant, left-aligned in the other two.
 - **Rows inside:** 0.35em between controls and between quick actions, 0.45em in the input row and status line. The Audio guide uses 8px between its bands inside a 12px handset inset.
 
 **The Room For The Answer Rule.** When height runs out, chrome gives way before the log does: header padding, key heights, the subtitle, then the quick actions. The log always keeps three lines, and the input never leaves the panel.

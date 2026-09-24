@@ -68,7 +68,9 @@ import {
 
 interface Msg {
     id: string;
-    role: "user" | "assistant";
+    /** "place": a click, its own entry in the log (captureId names the place), whether
+     *  or not anything is asked there */
+    role: "user" | "assistant" | "place";
     text: string;
     /** a system failure (rate limit, backend, network), not an answer: styled apart so a
      *  participant can tell "the model didn't find it" from "something broke" */
@@ -91,6 +93,12 @@ interface CiteSource {
     inventory: WireNode[];
     registry: Map<string, Element>;
 }
+
+/** the log entry for the click behind a capture, when that click is a known place */
+const placeEntry = (captureId: string): Msg[] =>
+    placeOf(captureId)
+        ? [{ id: `place-${captureId}`, role: "place", text: "", captureId }]
+        : [];
 
 /** which reply's evidence is outlined: all of it, or one item of it */
 type Active = { msgId: string; index: number | "all" } | null;
@@ -248,7 +256,10 @@ export default function ChatPopover({
     capturing,
 }: Props) {
     ensureChatStyles();
-    const [messages, setMessages] = useState<Msg[]>([]);
+    // the log opens with the click that opened the chat
+    const [messages, setMessages] = useState<Msg[]>(() =>
+        placeEntry(captureId),
+    );
     /** the last action, shown on the status line: every action is seen as well as heard */
     const [status, setStatus] = useState("");
     /** every action: its sound, the visible status line, and the one live region */
@@ -466,24 +477,32 @@ export default function ChatPopover({
         fetch(`${backend}/api/session/${encodeURIComponent(sessionId)}`)
             .then((r) => r.json())
             .then((d) => {
-                if (Array.isArray(d.history))
-                    setMessages(
-                        d.history.map(
-                            (
-                                h: {
-                                    role: string;
-                                    text: string;
-                                    capture_id?: string;
-                                },
-                                idx: number,
-                            ) => ({
-                                id: `hist-${idx}-${Date.now()}`,
-                                role: h.role as Msg["role"],
-                                text: h.text,
-                                captureId: h.capture_id,
-                            }),
-                        ),
-                    );
+                if (!Array.isArray(d.history)) return;
+                // earlier questions, each place entered before the first one asked there
+                const seeded: Msg[] = [];
+                let last: Place | undefined;
+                d.history.forEach(
+                    (
+                        h: { role: string; text: string; capture_id?: string },
+                        idx: number,
+                    ) => {
+                        const p =
+                            h.role === "user"
+                                ? placeOf(h.capture_id)
+                                : undefined;
+                        if (p && p !== last && h.capture_id)
+                            seeded.push(...placeEntry(h.capture_id));
+                        if (p) last = p;
+                        seeded.push({
+                            id: `hist-${idx}-${Date.now()}`,
+                            role: h.role as Msg["role"],
+                            text: h.text,
+                            captureId: h.capture_id,
+                        });
+                    },
+                );
+                // then what this chat has added since it opened (its own click)
+                setMessages((ms) => [...seeded, ...ms]);
             })
             .catch(() => {});
     }, []);
@@ -528,6 +547,8 @@ export default function ChatPopover({
             );
         const p = placeOf(captureId);
         act("chip", p ? T.sNewPlace(placeNumber(p), p.label) : "");
+        // every click stays in the log, in order, asked about or not
+        setMessages((ms) => [...ms, ...placeEntry(captureId)]);
         // the new place is the latest entry: follow it
         stick.current = true;
         requestAnimationFrame(() =>
@@ -892,12 +913,12 @@ export default function ChatPopover({
         return true;
     }
 
-    /** replace fields of the last (streaming) assistant message */
-    const patchLast = (patch: Partial<Msg>) =>
-        setMessages((m) => [
-            ...m.slice(0, -1),
-            { ...m[m.length - 1], ...patch },
-        ]);
+    /** replace fields of one message: a streaming reply patches itself by id, since a
+     *  click during the stream appends its place entry after it */
+    const patchMsg = (id: string, patch: Partial<Msg>) =>
+        setMessages((m) =>
+            m.map((x) => (x.id === id ? { ...x, ...patch } : x)),
+        );
 
     async function sendStreaming(text: string, token: number, ask: SentAsk) {
         const cite = citeSource();
@@ -946,13 +967,13 @@ export default function ChatPopover({
                 const data = JSON.parse(ev.slice(6));
                 if (data.delta) {
                     full += data.delta;
-                    patchLast({ text: full });
+                    patchMsg(msgId, { text: full });
                 } else if (data.error) {
                     // the backend ends the stream after an error, with no "done"
                     ended = true;
                     ask.error = data.error;
                     act("error", chatText().sError);
-                    patchLast({
+                    patchMsg(msgId, {
                         text: `${full}\n[error: ${data.error}]`,
                         streaming: false,
                         error: true,
@@ -960,7 +981,7 @@ export default function ChatPopover({
                 } else if (data.done) {
                     ended = true;
                     ask.reply = data;
-                    patchLast({ streaming: false });
+                    patchMsg(msgId, { streaming: false });
                     onReplyDone(
                         { id: msgId, role: "assistant", text: full, cite },
                         text,
@@ -982,7 +1003,7 @@ export default function ChatPopover({
         // connection dropped with neither "done" nor "error": stop hiding the tail
         if (!ended) {
             ask.error = "stream ended without a reply";
-            patchLast({ streaming: false });
+            patchMsg(msgId, { streaming: false });
         }
     }
 
@@ -1208,16 +1229,15 @@ export default function ChatPopover({
         );
     }
 
-    // the log, with each click as its own entry before what was asked there
+    // the log: every click as its own entry, questions and answers, in order
     const rows: React.ReactNode[] = [];
-    let lastPlace: Place | undefined;
     messages.forEach((m, i) => {
-        if (m.role === "user") {
+        if (m.role === "place") {
             const p = placeOf(m.captureId);
-            if (p && p !== lastPlace) {
-                rows.push(placeRow(p, `where-${m.id}`));
-                lastPlace = p;
-            }
+            if (p) rows.push(placeRow(p, m.id));
+            return;
+        }
+        if (m.role === "user") {
             rows.push(
                 <div key={m.id} className="ulc-msg ulc-me">
                     {m.text}
@@ -1275,11 +1295,9 @@ export default function ChatPopover({
             </div>,
         );
     });
-    // the click that opened (or moved) the chat, before anything is asked there
-    const here = placeOf(captureId);
-    if (here && here !== lastPlace) rows.push(placeRow(here, "where-now"));
     // an answer is on its way: dots where it will appear, until its first words do
-    if (busy && messages[messages.length - 1]?.role === "user")
+    const lastTalk = messages.findLast((m) => m.role !== "place");
+    if (busy && lastTalk?.role === "user")
         rows.push(
             <div
                 key="typing"
@@ -1301,6 +1319,8 @@ export default function ChatPopover({
         );
 
     const ms = motionMs();
+    /** anything asked or answered yet (place entries alone are not a conversation) */
+    const talked = messages.some((m) => m.role !== "place");
     const voiceOK = settings.voiceInput;
     /** record a voice message: next to send, and in the folded chat's header */
     const voiceButton = (cls: string) => (
@@ -1434,28 +1454,24 @@ export default function ChatPopover({
                     }}
                 >
                     {rows}
-                    {messages.length === 0 && (
-                        <p className="ulc-empty">{T.emptyHint}</p>
-                    )}
+                    {!talked && <p className="ulc-empty">{T.emptyHint}</p>}
                 </div>
             )}
 
-            {!mini &&
-                settings.quickActions &&
-                !(short && messages.length > 0) && (
-                    <div className="ulc-quick">
-                        {QUICK.map(([label, prompt]) => (
-                            <button
-                                type="button"
-                                key={label}
-                                onClick={() => sendText(prompt)}
-                                disabled={busy}
-                            >
-                                {label}
-                            </button>
-                        ))}
-                    </div>
-                )}
+            {!mini && settings.quickActions && !(short && talked) && (
+                <div className="ulc-quick">
+                    {QUICK.map(([label, prompt]) => (
+                        <button
+                            type="button"
+                            key={label}
+                            onClick={() => sendText(prompt)}
+                            disabled={busy}
+                        >
+                            {label}
+                        </button>
+                    ))}
+                </div>
+            )}
             {!mini && (
                 <div className="ulc-in">
                     {settings.voiceInput && (
