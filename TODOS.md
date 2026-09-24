@@ -16,15 +16,20 @@
 
 ### Restore the chat after a page reload, from a UniLens store per site
 
-**What:** After a reload, reopen the conversation the user had on that site: its places, messages and session. Keep it in UniLens's own store, not in the site's storage, and keep each site's store separate. This will be a separate PR from the chat work.
+**What:** Keep a local history of the user's interaction state, and after a reload reopen the conversation they had on that site. Save interaction data only, never screenshots:
+- where the user clicked, and the elements clicked (their places, P1, P2…);
+- the zoom level and the view;
+- the messages, and the capture and session ids that point to the rest on the backend.
 
-**Why:** PR #13 (a collaborator's refactor, 2026-09-24) restored chats from the host page's `localStorage`. Each chat saved about 830 KB of screenshots there, so the browser's quota ran out after about five clicks and saving stopped silently. The screenshots also sat where the site's own scripts can read them. The builder wants the idea, done robustly (decision 2026-09-24).
+Keep it in UniLens's own store, not in the site's storage, and keep each site's store separate. This will be a separate PR from the chat work.
+
+**Why:** PR #13 (a collaborator's refactor, 2026-09-24) restored chats from the host page's `localStorage`. It saved each window's whole capture, including the full-page and close-up screenshots as base64: about 830 KB per click. The browser's quota ran out after about five clicks and saving stopped silently, and the screenshots sat where the site's own scripts can read them. The builder wants the idea, with interaction data only (decision 2026-09-24): the screenshots already live on the backend under their capture id.
 
 **Context:** Still to think through; nothing is decided beyond "own store, per domain, detached from the site". Two options:
 - **IndexedDB from the embedded script.** A UniLens-named database is separate from the site's keys, but it is still the site's origin: the site's scripts can read it, and "clear site data" wipes it.
 - **A small hidden iframe served from the UniLens backend's origin, talked to with `postMessage`.** This is truly detached. Browsers partition a third-party iframe's storage by top-level site, which gives the per-domain split for free.
 
-Either way, store ids and text, not screenshots. The images stay on the backend, and the backend's session history (`/api/session/<id>`) remains the source of truth.
+Either way, no images in the browser. The backend's session history (`/api/session/<id>`) stays the source of truth for what the model saw.
 
 **Effort:** M
 **Priority:** P3
