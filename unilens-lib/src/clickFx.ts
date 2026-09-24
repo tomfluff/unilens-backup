@@ -43,7 +43,8 @@ const TEMPO: Record<Settings["fxSpeed"], number> = {
 
 // durations are calc(… * var(--t)): the speed setting; sizes use scale: var(--k)
 const CSS = `
-.ul-fx { position: fixed; z-index: 2147483647; pointer-events: none; box-sizing: border-box; }
+/* over the page and its highlights, under the chat: the chat is never covered */
+.ul-fx { position: fixed; z-index: 2147483646; pointer-events: none; box-sizing: border-box; }
 .ul-fx *, .ul-fx *::before, .ul-fx *::after { box-sizing: border-box; }
 /* centred on the click whatever it scales to: the centring lives in the translate
    property, which applies outside scale and transform, and scaling is about the

@@ -48,8 +48,9 @@ export type Measure = (el: Element) => Rect;
 const defaultMeasure: Measure = (el) => el.getBoundingClientRect();
 
 const LAYER_Z = "2147483645"; // under the minimap (…646) and the popover (…647)
-/** pointer cues follow the pointer over everything, the chat included */
-const POINTER_CUE_Z = "2147483647";
+/** pointer cues follow the pointer over the page and its highlights; the chat stays
+ *  on top of them (the builder's call: the chat is never covered) */
+const POINTER_CUE_Z = "2147483646";
 const CLASS = "unilens-hl";
 
 let layer: HTMLDivElement | null = null;
@@ -610,7 +611,7 @@ export function cuePosition(
  * Pointer cues are pinned to the pointer: each sits on the circle round it, and
  * cues that crowd one direction spread round the circle. Nothing else moves them,
  * not the view's edge and not the chat (`view` and `avoid` are ignored), so they
- * follow the pointer wherever it goes. They are drawn above the chat instead.
+ * follow the pointer wherever it goes; near the chat they pass under it.
  * TODO: many arrows spread far round the circle; find a better way to show a crowd.
  *
  * Edge cues keep apart and out from under the chat popover: each slides along the

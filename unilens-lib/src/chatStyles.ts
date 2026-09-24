@@ -25,7 +25,7 @@ ${R} { all: revert; }
 ${R} *:not(svg):not(svg *) { all: revert; }
 ${B}, ${B} * { box-sizing: border-box; }
 ${R} {
-  position: fixed; z-index: 2147483646; display: flex; flex-direction: column;
+  position: fixed; z-index: 2147483647; display: flex; flex-direction: column;
   width: min(24.3em, calc(100vw - 16px)); height: min(30em, calc(100vh - 16px)); overflow: hidden;
   font-size: var(--ul-fs, 14px); line-height: 1.5; text-align: left;
   -webkit-font-smoothing: antialiased;

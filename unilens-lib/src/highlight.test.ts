@@ -973,10 +973,10 @@ describe("off-screen cues", () => {
             expect(Math.hypot(c.x - from.x, c.y - from.y)).toBeCloseTo(90);
             expect(c.el.style.pointerEvents).toBe("none");
         });
-        // their own layer above the chat, which never takes a click
+        // their own layer over the highlights, under the chat, and never taking a click
         const host = cues[0].el.parentElement as HTMLElement;
         expect(host.parentElement).toBe(document.documentElement);
-        expect(host.style.zIndex).toBe("2147483647");
+        expect(host.style.zIndex).toBe("2147483646");
         expect(host.style.pointerEvents).toBe("none");
         expect(cues[0].el.closest("#unilens-highlight-layer")).toBeNull();
         // the chat going away moves nothing

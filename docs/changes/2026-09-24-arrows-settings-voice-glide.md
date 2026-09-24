@@ -21,7 +21,7 @@ They also asked for a voice-message button (a step toward live voice interaction
 - **Pointer arrows are fixed to the cursor.**
   - Each arrow sits on the `cueRadius` circle at its bearing and points at its target.
   - No page element, chat or screen edge moves it.
-  - Pointer arrows draw above the chat (their own layer; the chat moves to z-index 2147483646) and never take a click.
+  - Pointer arrows draw in their own layer and never take a click. At first they drew above the chat; the builder then asked for the chat on top of everything UniLens draws, so the arrows and the click feedback sit just under it.
   - Several arrows in one direction still spread round the circle; how to show many arrows is filed in TODOS.md.
   - Edge mode is unchanged.
 - **Settings in groups.** Chat, Answers and sources, Highlight look, Off-screen arrows, Movement, Minimap, Page zoom, Asking, and Capture and research. Each group folds, and each holds every kind of control about its topic. A test keeps every control in exactly one group.
