@@ -11,7 +11,6 @@
  *   backend      Flask base URL. Default: '' (same origin).
  */
 import { createRoot } from "react-dom/client";
-import { kUnilensRootId } from "./consts";
 import { UnilensClient } from "./UnilensClient";
 import { UnilensRoot } from "./UnilensRoot";
 
@@ -32,6 +31,8 @@ export interface InitOptions {
 //------------------------------------------------------------------------------
 /** build stamp injected by esbuild --define (see the lib Makefile); absent in dev */
 declare const __target_dist_unilens_BUILD__: string;
+
+export const kUnilensRootId = "unilens-root";
 
 const kContainerStyles: Partial<CSSStyleDeclaration> = {
     position: "absolute",

@@ -1,21 +1,19 @@
 import autoBind from "auto-bind";
 import { RequestApi } from "./requestApi";
 import { type Settings, useSettings } from "./settings";
+import type { Trigger } from "./types";
 
 //------------------------------------------------------------------------------
 // Types
 //------------------------------------------------------------------------------
 
-// Represents a predicate on a MouseEvent
-type Trigger = (e: MouseEvent) => boolean;
-
-export type Options = Partial<{
+export type Options = {
     trigger: Trigger; // the predicate to determine if to open the unilens popover or not
     mouseWindow: number;
     backend: string;
     /** ctrl+wheel pinch-style page zoom. Default: true. */
     zoom: boolean;
-}>;
+};
 
 export type OptionKey = keyof Options;
 
@@ -26,6 +24,9 @@ export type OptionKey = keyof Options;
 // Represents default options, used for fetching options if they are not defined
 const kDefaultOptions: Options = {
     trigger: (e: MouseEvent) => e.altKey,
+    mouseWindow: 5,
+    zoom: true,
+    backend: "",
 };
 
 //------------------------------------------------------------------------------
@@ -39,14 +40,14 @@ const kDefaultOptions: Options = {
  */
 export class UnilensClient {
     /* Params */
-    options: Options = {};
+    options: Options = kDefaultOptions;
     sessionId: string | null = null;
 
     /* Other clients */
     requestApi: RequestApi;
 
     /* Constructor */
-    constructor(options: Options = {}) {
+    constructor(options: Partial<Options> = {}) {
         autoBind(this);
         // Apply default options
         this.options = {

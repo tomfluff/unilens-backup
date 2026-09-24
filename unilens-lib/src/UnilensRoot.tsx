@@ -16,6 +16,18 @@ import type { UnilensClient } from "./UnilensClient";
 import { clientToContent, initZoom } from "./zoom";
 
 //------------------------------------------------------------------------------
+// Consts
+//------------------------------------------------------------------------------
+
+const kDragBoxBaseStyles: Partial<CSSStyleDeclaration> = {
+    position: "fixed" as const,
+    border: "2px solid rgba(255,0,200,0.9)",
+    background: "rgba(255,0,200,0.08)",
+    pointerEvents: "none" as const,
+    zIndex: "2147483646",
+};
+
+//------------------------------------------------------------------------------
 // UnilensRoot implementation
 //------------------------------------------------------------------------------
 
@@ -30,8 +42,8 @@ export function UnilensRoot({
 
     useEffect(() => {
         const options = unilens.getOptions();
-        const trigger = options.trigger ?? ((e: MouseEvent) => e.altKey);
-        const backend = options.backend ?? "";
+        const trigger = unilens.getOptions().trigger;
+        const backend = unilens.getOptions().backend;
 
         startTrace(options.mouseWindow ?? 2.5);
         if (options.zoom ?? true) initZoom();
@@ -43,13 +55,7 @@ export function UnilensRoot({
         let dragBox: HTMLDivElement | null = null;
         let suppressClick = false;
 
-        const dragBoxBaseStyles = {
-            position: "fixed" as const,
-            border: "2px solid rgba(255,0,200,0.9)",
-            background: "rgba(255,0,200,0.08)",
-            pointerEvents: "none" as const,
-            zIndex: "2147483646",
-        };
+        
 
         function removeDragBox() {
             dragBox?.remove();
@@ -112,7 +118,7 @@ export function UnilensRoot({
             const h = Math.abs(e.clientY - dragStart.clientY);
             if (!dragBox && (w > 6 || h > 6)) {
                 dragBox = document.createElement("div");
-                Object.assign(dragBox.style, dragBoxBaseStyles as any);
+                Object.assign(dragBox.style, kDragBoxBaseStyles);
                 document.documentElement.appendChild(dragBox);
             }
             if (dragBox) {
@@ -207,11 +213,10 @@ export function UnilensRoot({
             document.removeEventListener("click", onClick, true);
             removeDragBox();
         };
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [unilens, container?.contains, captures.length]);
+    }, [unilens, container, setCapture]);
 
-    function closeCapture(id: string) {
-        setCaptures((prev) => prev.filter((c) => c.captureId !== id));
+    function closeCapture(capture) {
+        setCaptures((captures) => [...captures.filter((c) => c.captureId !== capture.captureId)]);
     }
 
     return (
@@ -219,13 +224,9 @@ export function UnilensRoot({
             {captures.map((capture) => (
                 <ChatPopover
                     key={capture.captureId}
-                    x={capture.clientX}
-                    y={capture.clientY}
-                    captureId={capture.captureId}
-                    capture={capture.cap}
-                    backend={unilens.getOptions().backend ?? ""}
+                    captureObj={capture}
                     unilens={unilens}
-                    onClose={() => closeCapture(capture.captureId)}
+                    onClose={() => closeCapture(capture)}
                     initialPos={{ left: capture.clientX, top: capture.clientY }}
                     onMove={() => {}}
                 />

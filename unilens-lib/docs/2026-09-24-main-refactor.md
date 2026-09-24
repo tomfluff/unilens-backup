@@ -14,4 +14,5 @@ This change also introduces cleanup and refactoring to keep the
 systems reuseable and modular and follow good code style:
 
 - Remove global statics when possible and replace them with a UnilensClient interface to wrap them
-- Break out large functions into smaller hooks and library calls
+- Break out large functions into smaller hooks and library calls, including creating a separate `RequestApi.ts` to handle communication with the backend
+- Wrap component logic in `UnilensRoot.tsx` to isolate the implementation of the React logic from the `init` scaffolding

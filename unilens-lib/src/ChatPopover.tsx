@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import styled from "styled-components";
-import type { CaptureResult } from "./capture";
+import type { Capture, CaptureResult } from "./capture";
 import { getSettings, updateSetting, useSettings } from "./settings";
 import {
     listen,
@@ -38,19 +38,6 @@ function mdLite(text: string): { __html: string } {
         )
         .replace(/^[-*] (.+)$/gm, "• $1");
     return { __html: h };
-}
-
-interface Props {
-    x: number; // client coords of the triggering click
-    y: number;
-    captureId: string;
-    capture: CaptureResult;
-    backend: string;
-    unilens: UnilensClient;
-    onClose: () => void;
-    /** pinned position carried over from the previous popover, if the user pinned it */
-    initialPos?: { left: number; top: number } | null;
-    onMove: (pos: { left: number; top: number }) => void;
 }
 
 const PANEL_W = 340;
@@ -250,16 +237,28 @@ const CaptureMetaText = styled.div`
 `;
 
 export default function ChatPopover({
-    x,
-    y,
-    captureId,
-    capture,
-    backend,
+    captureObj,
     unilens,
     onClose,
     initialPos,
     onMove,
-}: Props) {
+}: {
+    captureObj: Capture;
+    unilens: UnilensClient;
+    onClose: () => void;
+    /** pinned position carried over from the previous popover, if the user pinned it */
+    initialPos?: { left: number; top: number } | null;
+    onMove: (pos: { left: number; top: number }) => void;
+}) {
+    const {
+        clientX: x,
+        clientY: y,
+        captureId,
+        cap: capture,
+    } = captureObj;
+
+    const backend: string = unilens.getBackend() ?? "";
+
     const [messages, setMessages] = useState<Msg[]>([]);
     const [input, setInput] = useState("");
     const [busy, setBusy] = useState(false);
