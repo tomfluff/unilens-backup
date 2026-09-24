@@ -1,6 +1,5 @@
-import autoBind from "auto-bind";
 import { RequestApi } from "./requestApi";
-import { type Settings, useSettings } from "./settings";
+import { getSettings, type Settings } from "./settings";
 import type { Trigger } from "./types";
 
 //------------------------------------------------------------------------------
@@ -24,7 +23,7 @@ export type OptionKey = keyof Options;
 // Represents default options, used for fetching options if they are not defined
 const kDefaultOptions: Options = {
     trigger: (e: MouseEvent) => e.altKey,
-    mouseWindow: 5,
+    mouseWindow: 2.5,
     zoom: true,
     backend: "",
 };
@@ -36,11 +35,12 @@ const kDefaultOptions: Options = {
 /**
  * A client representing a single instance or connection of the unilens library.
  * Every initialization of unilens on a webpage should have a unilens-client.
- * This establishes a connection to the backend, to localstorage, and any other external resources.
+ * This establishes a connection to the backend and any other external resources.
  */
 export class UnilensClient {
     /* Params */
     options: Options = kDefaultOptions;
+    /** the conversation session: new captures join it until the user closes the chat */
     sessionId: string | null = null;
 
     /* Other clients */
@@ -48,11 +48,13 @@ export class UnilensClient {
 
     /* Constructor */
     constructor(options: Partial<Options> = {}) {
-        autoBind(this);
-        // Apply default options
+        // Apply default options, also for options given as undefined
+        const given = Object.fromEntries(
+            Object.entries(options).filter(([, v]) => v != null),
+        );
         this.options = {
             ...kDefaultOptions,
-            ...options,
+            ...given,
         };
         // Set up clients
         this.requestApi = new RequestApi(this);
@@ -66,7 +68,7 @@ export class UnilensClient {
     /* Options-related handlers */
 
     // Get an option by key, accounting for defaults
-    getOption(optionKey: OptionKey) {
+    getOption<K extends OptionKey>(optionKey: K): Options[K] {
         return this.options[optionKey];
     }
 
@@ -80,7 +82,7 @@ export class UnilensClient {
 
     /* Settings-related handlers */
     getSettings(): Settings {
-        return useSettings.getState();
+        return getSettings();
     }
 
     /* Session-related handlers */

@@ -16,6 +16,8 @@ export type ClickEvent = {
     type: "click";
     x: number;
     y: number;
+    /** the element clicked */
+    target?: Element;
 };
 
 export type DragBoxEvent = {
@@ -24,15 +26,24 @@ export type DragBoxEvent = {
     y: number;
     width: number;
     height: number;
+    /** where the pointer was released */
+    endX: number;
+    endY: number;
 };
 
 export type ClickOrDragBoxEvent = ClickEvent | DragBoxEvent;
+
+/** which mouse events count: a click, and a mousedown that may start a drag */
+export type ClickOrDragTriggers = {
+    click: Trigger;
+    drag: Trigger;
+};
 
 //------------------------------------------------------------------------------
 // Consts
 //------------------------------------------------------------------------------
 
-const kDragBoxBaseStyles: Partial<CSSStyleDeclaration> = {
+const kDragBoxBaseStyles = {
     position: "fixed" as const,
     border: "2px solid rgba(255,0,200,0.9)",
     background: "rgba(255,0,200,0.08)",
@@ -45,14 +56,14 @@ const kDragBoxBaseStyles: Partial<CSSStyleDeclaration> = {
  * - If the user clicks-and-drags, make a box
  * - Otherwise, check for a trigger
  * Returns a monomitter which streams these events.
- * @param {Trigger} clickTrigger - predicate to determine what counts as a click or not
- * @returns Cleanup function
+ * @param triggers - predicates for what counts as a click, and as the start of a
+ *                   drag. Keep the object stable: a new one re-attaches the listeners.
  */
 export function useClickOrDragBox(
     el: HTMLElement | Document,
-    clickTrigger: Trigger,
+    triggers: ClickOrDragTriggers,
 ) {
-    const [emitter, _setEmitter] = useState<Monomitter<ClickOrDragBoxEvent>>(
+    const [emitter] = useState<Monomitter<ClickOrDragBoxEvent>>(() =>
         monomitter<ClickOrDragBoxEvent>(),
     );
 
@@ -75,18 +86,21 @@ export function useClickOrDragBox(
 
         function onMouseDown(evt: Event) {
             const e = evt as MouseEvent;
-            // Only begin a potential drag if the trigger predicate accepts this
-            // mousedown (for example the Alt key may be required).
-            if (!clickTrigger(e)) return;
+            // stale state must never survive into a new interaction: if the click that
+            // was supposed to consume suppressClick never fired, or a drag never saw
+            // its mouseup (released over browser chrome), clear both here
             cancelDrag();
+            if (!triggers.drag(e)) return;
             dragStart = { clientX: e.clientX, clientY: e.clientY };
-            e.preventDefault();
+            e.preventDefault(); // no text selection while dragging
         }
 
         function onMouseMove(evt: Event) {
             const e = evt as MouseEvent;
             if (!dragStart) return;
-            if ((e as MouseEvent).buttons === 0) {
+            // button already released but we never saw the mouseup (happened over
+            // browser chrome / outside the page): the drag is over, abandon it
+            if (e.buttons === 0) {
                 cancelDrag();
                 return;
             }
@@ -94,7 +108,7 @@ export function useClickOrDragBox(
             const h = Math.abs(e.clientY - dragStart.clientY);
             if (!dragBox && (w > 6 || h > 6)) {
                 dragBox = document.createElement("div");
-                Object.assign(dragBox.style, kDragBoxBaseStyles as any);
+                Object.assign(dragBox.style, kDragBoxBaseStyles);
                 document.documentElement.appendChild(dragBox);
             }
             if (dragBox) {
@@ -117,22 +131,23 @@ export function useClickOrDragBox(
                 Math.abs(e.clientX - start.clientX),
                 Math.abs(e.clientY - start.clientY),
             );
-            if (dist < 10) return;
-            suppressClick = true;
+            if (dist < 10) return; // a plain click: let the click handler run
+            suppressClick = true; // the click event that follows belongs to this drag
+            // the browser dispatches that click immediately after mouseup; if it never
+            // comes (mixed targets, keyboard click next), expire the flag so it cannot
+            // swallow an unrelated click later
             window.setTimeout(() => {
                 suppressClick = false;
             }, 150);
-            const left = Math.min(e.clientX, start.clientX);
-            const top = Math.min(e.clientY, start.clientY);
-            const width = Math.abs(e.clientX - start.clientX);
-            const height = Math.abs(e.clientY - start.clientY);
             emitter.publish({
                 type: "drag_box",
-                x: left,
-                y: top,
-                width,
-                height,
-            } as DragBoxEvent);
+                x: Math.min(e.clientX, start.clientX),
+                y: Math.min(e.clientY, start.clientY),
+                width: Math.abs(e.clientX - start.clientX),
+                height: Math.abs(e.clientY - start.clientY),
+                endX: e.clientX,
+                endY: e.clientY,
+            });
         }
 
         function onClick(evt: Event) {
@@ -143,31 +158,34 @@ export function useClickOrDragBox(
                 e.stopPropagation();
                 return;
             }
-            if (!clickTrigger(e)) return;
+            if (!triggers.click(e)) return;
             e.preventDefault();
             e.stopPropagation();
             emitter.publish({
                 type: "click",
                 x: e.clientX,
                 y: e.clientY,
-            } as ClickEvent);
+                target: e.target instanceof Element ? e.target : undefined,
+            });
         }
 
+        // pointer released outside the window: no mouseup/click ever arrives, so
+        // abandon the drag instead of leaving the rubber band and flags stuck
         window.addEventListener("blur", cancelDrag);
         el.addEventListener("mousedown", onMouseDown);
         el.addEventListener("mousemove", onMouseMove);
         el.addEventListener("mouseup", onMouseUp);
-        el.addEventListener("click", onClick, true);
+        el.addEventListener("click", onClick);
 
         return () => {
             window.removeEventListener("blur", cancelDrag);
             el.removeEventListener("mousedown", onMouseDown);
             el.removeEventListener("mousemove", onMouseMove);
             el.removeEventListener("mouseup", onMouseUp);
-            el.removeEventListener("click", onClick, true);
+            el.removeEventListener("click", onClick);
             removeDragBox();
         };
-    }, [el, clickTrigger, emitter.publish]);
+    }, [el, triggers, emitter]);
 
     return emitter;
 }
