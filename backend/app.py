@@ -486,6 +486,19 @@ MAX_INVENTORY_NODES = 5000
 MAX_QUESTION_CHARS = 500
 
 
+def _scrub(value):
+    """Page text with any lone surrogate replaced. A client that cuts a string inside
+    a surrogate pair sends half an emoji; it is not valid UTF-8, and the model client
+    would refuse every prompt built from this capture."""
+    if isinstance(value, str):
+        return value.encode("utf-8", "replace").decode("utf-8")
+    if isinstance(value, list):
+        return [_scrub(v) for v in value]
+    if isinstance(value, dict):
+        return {k: _scrub(v) for k, v in value.items()}
+    return value
+
+
 def _inventory_error(inventory: list) -> str | None:
     """Why an uploaded inventory is rejected, or None if every node conforms."""
     seen: set[str] = set()
@@ -815,14 +828,18 @@ def create_app():
             )
         data = request.get_json(force=True)
         image = data.get("image", "")
-        meta = data.get("meta", {})
-        inventory = data.get("inventory")
+        meta = _scrub(data.get("meta", {}))
+        inventory = _scrub(data.get("inventory"))
         if not image.startswith("data:image/png;base64,"):
             return jsonify({"error": "image must be a PNG data URL"}), 400
         if inventory is not None:
             if not isinstance(inventory, list):
                 return jsonify({"error": "inventory must be a list of nodes"}), 400
-            inventory_text = json.dumps(inventory)
+            # measured as the client measures it: compact UTF-8 (the default ASCII
+            # escapes would count Japanese text at twice its size)
+            inventory_text = json.dumps(
+                inventory, ensure_ascii=False, separators=(",", ":")
+            )
             if len(inventory_text.encode("utf-8")) > MAX_INVENTORY_BYTES:
                 return jsonify({"error": "inventory too large"}), 413
             if len(inventory) > MAX_INVENTORY_NODES:

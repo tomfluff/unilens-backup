@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import {
     buildInventory,
+    clip,
     type InventoryOptions,
     inventoryOptionsFrom,
     labelOf,
@@ -120,6 +121,45 @@ describe("buildInventory: names", () => {
         expect(byName(inv, "Query")).toBeDefined();
         expect(byName(inv, "Message")).toBeDefined();
         expect(byName(inv, "Note")).toBeDefined();
+    });
+
+    it("never opens a rich-text editor or a textbox widget, and names a field by its label only", () => {
+        const inv = build(`
+      <div contenteditable="true" aria-label="Compose">first line<div>my private second line</div><p>secret paragraph</p></div>
+      <div role="textbox" aria-label="Comment"><span>typed comment</span></div>
+      <label>Bio <textarea>saved bio</textarea></label>
+      <div contenteditable="false"><p>Plain text</p></div>`);
+        const json = JSON.stringify(inv.wire);
+        for (const secret of [
+            "first line",
+            "my private second line",
+            "secret paragraph",
+            "typed comment",
+            "saved bio",
+        ])
+            expect(json).not.toContain(secret);
+        expect(byName(inv, "Compose")?.role).toBe("input");
+        expect(byName(inv, "Comment")?.role).toBe("input");
+        // the label's own text is a node too; the field is named by it, without its contents
+        expect(
+            inv.nodes.some((n) => n.role === "input" && n.name === "Bio"),
+        ).toBe(true);
+        // contenteditable="false" is ordinary content
+        expect(byName(inv, "Plain text")).toBeDefined();
+    });
+});
+
+describe("clip", () => {
+    it("cuts on code points, never inside an emoji", () => {
+        const s = `${"a".repeat(159)}😀tail`;
+        const out = clip(s, 160);
+        expect(out).toBe(`${"a".repeat(159)}😀…`);
+        expect(() => new TextEncoder().encode(out)).not.toThrow();
+        // a lone surrogate would show as a replacement character here
+        expect(new TextDecoder().decode(new TextEncoder().encode(out))).toBe(
+            out,
+        );
+        expect(clip("short", 160)).toBe("short");
     });
 });
 

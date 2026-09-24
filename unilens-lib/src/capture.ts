@@ -6,6 +6,7 @@
 import html2canvas from "html2canvas";
 import {
     buildInventory,
+    clip,
     type Inventory,
     inventoryOptionsFrom,
     type WireNode,
@@ -78,7 +79,7 @@ export interface ElementContext {
 export function describeElement(el: Element): ElementContext {
     const cap = (s: string | null | undefined, n = 200) => {
         const t = s?.replace(/\s+/g, " ").trim();
-        return t ? (t.length > n ? `${t.slice(0, n)}…` : t) : undefined;
+        return t ? clip(t, n) : undefined;
     };
 
     const path = [];

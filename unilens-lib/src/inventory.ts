@@ -135,6 +135,8 @@ const LANDMARK_ROLES = new Set([
     "search",
 ]);
 const INPUT_TAGS = new Set(["input", "select", "textarea"]);
+/** ARIA widgets that hold what the user typed: fields, like the native ones */
+const FIELD_ROLES = new Set(["textbox", "searchbox", "combobox"]);
 const SKIP_TAGS = new Set(["script", "style", "template", "noscript", "svg"]);
 /** recursion guard only: the HTML parser nests at most 512 deep; the knob that shapes the
  * inventory is maxDepth, counted on the emitted tree */
@@ -142,7 +144,17 @@ const DOM_DEPTH_LIMIT = 256;
 
 const collapse = (s: string | null | undefined) =>
     (s ?? "").replace(/\s+/g, " ").trim();
-const cap = (s: string, n: number) => (s.length > n ? `${s.slice(0, n)}…` : s);
+/**
+ * At most `n` characters, then "…". Cuts on code points, never inside a surrogate
+ * pair: a half emoji is invalid UTF-8, and the model client refuses the whole prompt.
+ * Code points are also what the backend's length check counts.
+ */
+export function clip(s: string, n: number): string {
+    if (s.length <= n) return s;
+    const cps = Array.from(s);
+    return cps.length > n ? `${cps.slice(0, n).join("")}…` : s;
+}
+const cap = clip;
 
 /** first match wins; null = not a candidate in its own right */
 export function roleOf(el: Element): InventoryRole | null {
@@ -157,7 +169,12 @@ export function roleOf(el: Element): InventoryRole | null {
         return "button";
     if ((tag === "a" && el.hasAttribute("href")) || role === "link")
         return "link";
-    if (INPUT_TAGS.has(tag) || el.hasAttribute("contenteditable"))
+    if (
+        INPUT_TAGS.has(tag) ||
+        (el.hasAttribute("contenteditable") &&
+            el.getAttribute("contenteditable") !== "false") ||
+        (role !== null && FIELD_ROLES.has(role))
+    )
         return "input";
     if (/^h[1-6]$/.test(tag) || role === "heading") return "heading";
     if (LANDMARK_TAGS.has(tag) || (role !== null && LANDMARK_ROLES.has(role)))
@@ -199,10 +216,11 @@ function labelFor(el: Element): string {
     const id = el.getAttribute("id");
     if (id) {
         const lbl = doc.querySelector(`label[for="${CSS.escape(id)}"]`);
-        if (lbl) return collapse(lbl.textContent);
+        if (lbl) return contentText(lbl);
     }
+    // a wrapping label's text, not the field's: <label>Bio <textarea>…</textarea></label>
     const wrap = el.closest("label");
-    return wrap ? collapse(wrap.textContent) : "";
+    return wrap ? contentText(wrap) : "";
 }
 
 function labelledBy(el: Element): string {
@@ -211,7 +229,10 @@ function labelledBy(el: Element): string {
     return collapse(
         ids
             .split(/\s+/)
-            .map((id) => el.ownerDocument.getElementById(id)?.textContent ?? "")
+            .map((id) => {
+                const ref = el.ownerDocument.getElementById(id);
+                return ref ? contentText(ref) : "";
+            })
             .join(" "),
     );
 }
@@ -312,7 +333,9 @@ export function buildInventory(
         if (isSkipped(el)) return null;
         let box = measure(el);
         const children: Walked[] = [];
-        if (domDepth < DOM_DEPTH_LIMIT)
+        // a field's children are what the user typed (a rich-text editor keeps its
+        // lines in <p>/<div>): the field is named by its label and never opened
+        if (domDepth < DOM_DEPTH_LIMIT && roleOf(el) !== "input")
             for (const c of el.children) {
                 const w = mark(c, domDepth + 1);
                 if (w) children.push(w);

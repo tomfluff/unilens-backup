@@ -142,3 +142,42 @@ def test_capture_rejects_a_non_string_role_and_a_newline_id(client):
             json={"image": PNG_B64, "meta": {}, "inventory": [bad]},
         )
         assert r.status_code == 400, bad
+
+
+def test_capture_repairs_half_an_emoji(client):
+    # a client cut a string inside a surrogate pair: stored and prompted text must
+    # still be valid UTF-8, or every chat on this capture fails
+    half = "a" * 159 + "\ud83d"
+    meta = {**META, "element": {"tag": "p", "text": half}}
+    nodes = [ROOT, _node(i="n1", n=half)]
+    body = {
+        "image": "data:image/png;base64," + PNG_B64,
+        "meta": meta,
+        "inventory": nodes,
+    }
+    res = client.post("/api/capture", json=body)
+    assert res.status_code == 200, res.get_json()
+    cap_dir = app_module.CAPTURES_DIR / res.get_json()["id"]
+    for name in ("inventory.json", "meta.json"):
+        text = (cap_dir / name).read_text(encoding="utf-8")
+        assert "\\ud83d" not in text
+        json.dumps(json.loads(text), ensure_ascii=False).encode("utf-8")
+    stored = json.loads((cap_dir / "inventory.json").read_text())
+    assert stored[1]["n"] == "a" * 159 + "?"
+    app_module._inventory_block(stored).encode("utf-8")
+
+
+def test_capture_measures_inventory_bytes_as_the_client_does(client):
+    # 900 bytes of Japanese per node in UTF-8, 1,800 as ASCII escapes: under the
+    # 1 MB cap the way the client counts it
+    nodes = [ROOT] + [_node(i=f"n{k}", n="あ" * 300) for k in range(1, 801)]
+    compact = json.dumps(nodes, ensure_ascii=False, separators=(",", ":")).encode(
+        "utf-8"
+    )
+    assert len(compact) < 1_000_000 < len(json.dumps(nodes))
+    body = {
+        "image": "data:image/png;base64," + PNG_B64,
+        "meta": META,
+        "inventory": nodes,
+    }
+    assert client.post("/api/capture", json=body).status_code == 200

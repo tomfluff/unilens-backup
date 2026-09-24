@@ -207,16 +207,18 @@ export const NUMBER_KNOBS: Record<
         max: 10,
         step: 1,
     },
+    // the backend refuses a text over 1,000 characters (the cap plus its "…") and an
+    // inventory over 1 MB, which would fail the whole capture upload
     inventorySummaryCap: {
         label: "Inventory text cap (chars)",
         min: 20,
-        max: 1000,
+        max: 990,
         step: 10,
     },
     inventoryMaxBytes: {
         label: "Inventory byte cap",
         min: 10000,
-        max: 2000000,
+        max: 1000000,
         step: 10000,
     },
     inventoryMaxNodes: {
