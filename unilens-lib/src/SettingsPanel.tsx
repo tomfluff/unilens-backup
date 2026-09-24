@@ -66,8 +66,26 @@ const MM_OWN_LOOK = new Set<keyof Settings>([
     "mmNumbers",
 ]);
 
+/** the click-feedback knobs that belong to some styles only */
+const FX_OWN: Partial<Record<keyof Settings, Settings["clickFx"][]>> = {
+    fxHalo: ["orb"],
+    fxSwirl: ["orb"],
+    fxCore: ["orb"],
+    fxDot: ["aurora"],
+    fxSoftness: ["aurora"],
+    fxThirdTone: ["aurora", "edge"],
+    fxRings: ["sonar"],
+    fxRingStyle: ["sonar"],
+    fxFrameShape: ["frame"],
+    fxSheen: ["frame"],
+    fxHug: ["frame"],
+    fxEdgeWidth: ["edge"],
+    fxEdgeGradient: ["edge"],
+    fxPin: ["edge"],
+};
+
 /** number knobs shown as a slider with its value, not a typed number */
-const SLIDERS = new Set<NumSettingKey>(["chatTextScale"]);
+const SLIDERS = new Set<NumSettingKey>(["chatTextScale", "fxSize"]);
 
 const Section = styled.details`
     border-top: 1px solid rgba(255, 255, 255, 0.15);
@@ -389,10 +407,10 @@ function Panel() {
                                         settings.mmFollowHighlight &&
                                         MM_OWN_LOOK.has(key)
                                     ) &&
-                                    // the orb's own layers only while the orb is chosen
+                                    // a click-feedback style's own knobs only while it is chosen
                                     !(
-                                        settings.clickFx !== "orb" &&
-                                        (key === "fxCore" || key === "fxSwirl")
+                                        FX_OWN[key] &&
+                                        !FX_OWN[key]?.includes(settings.clickFx)
                                     ),
                             )
                             .map((key) => (

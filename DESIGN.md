@@ -520,6 +520,25 @@ What just happened, e.g. "Source 2 of 3, …. Moved there; Back returns you." It
   - **Frame what was clicked:** corner brackets and a scanning sheen on the clicked element or dragged region. It frames a small box instead when the element covers most of the screen. The frame then flies into the chat and becomes the place entry.
   - **Screen edge glow:** the screen's edges glow with a slow gradient, because the whole page is being captured, while a pin marks the click.
 
+  Shared settings for every style:
+  - **Ending:** each style's own ending by default, or one for all: fade, fly into the chat, or a found pulse.
+  - **Size:** 50–200%.
+  - **Speed:** calm, normal or lively; one multiplier on every duration.
+  - **Ripple:** on or off.
+
+  Per style:
+
+  | Style | Settings |
+  |---|---|
+  | Orb | Halo, swirl and core (the halo stays if all three are off) |
+  | Aurora | Dot on the exact point, softness |
+  | Aurora and edge | A third colour (coral) |
+  | Sonar | 1–3 rings, filled or outlined |
+  | Frame | Corner brackets or the highlight's own outline, scanning sheen, breathing |
+  | Edge | Thickness, moving gradient or single colour, pin |
+
+  The settings panel shows a style's own settings only while that style is chosen.
+
   Every style sits outside `<body>`, never takes a click, and moves by transform and opacity only, so it keeps moving while the capture holds the main thread; the capture also waits two frames so the style paints first. Under reduced motion each style holds still and ends without flying. The studies behind these choices were the Click Feedback Studies mockups; F, "comet to the chat", was dropped.
 - **An answer on its way:** three dots in an answer bubble until its first words arrive.
 

@@ -42,7 +42,7 @@ They also asked for a voice-message button (a step toward live voice interaction
   - **Outlines can always be turned off.** The click entry and a lit source are toggles.
   - **Voice buttons** show in every browser. Where speech recognition is missing they explain in the chat instead of vanishing.
 
-- **Click feedback styles.** After the builder compared six live studies, five became the `clickFx` setting ("Waiting at the click", Style): breathing orb (default), aurora, sonar, frame what was clicked, and screen edge glow. The "comet to the chat" study was dropped, because it left the click at once.
+- **Click feedback styles.** After the builder compared six live studies, five became the `clickFx` setting ("Waiting at the click", Style): breathing orb (default), aurora, sonar, frame what was clicked, and screen edge glow. The "comet to the chat" study was dropped, because it left the click at once. Endings are no longer tied to the styles: "Ending" offers each style's own, or fade, fly into the chat, or a found pulse for any style. Shared settings add size, speed and the ripple. Each style has its own settings: orb layers; the aurora's dot, softness and third colour; the sonar's ring count and look; the frame's shape (it can follow the highlight outline), sheen and breathing; the edge's thickness, gradient and pin.
 
 ## Consequences
 

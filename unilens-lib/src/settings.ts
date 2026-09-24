@@ -86,6 +86,27 @@ export interface Settings {
      *  (the soft halo always shows) */
     fxCore: boolean;
     fxSwirl: boolean;
+    /** click feedback, shared: the ending (the style's own, or one for all), size in
+     *  percent, tempo, and the ripple on the click */
+    fxEnding: "auto" | "fade" | "fly" | "found";
+    fxSize: number;
+    fxSpeed: "calm" | "normal" | "lively";
+    fxRipple: boolean;
+    /** click feedback, per style: the orb's halo; the aurora's point dot and blur; a
+     *  third colour for aurora and edge; the sonar's rings; the frame's shape, sheen
+     *  and breathing; the edge's thickness, gradient and pin */
+    fxHalo: boolean;
+    fxDot: boolean;
+    fxSoftness: number;
+    fxThirdTone: boolean;
+    fxRings: number;
+    fxRingStyle: "filled" | "outline";
+    fxFrameShape: "brackets" | "highlight";
+    fxSheen: boolean;
+    fxHug: boolean;
+    fxEdgeWidth: number;
+    fxEdgeGradient: boolean;
+    fxPin: boolean;
     /** size of an off-screen cue arrow, px */
     cueSize: number;
     /** page moves, chat scrolling and the chat's move to a new click: eased or instant.
@@ -168,6 +189,22 @@ const DEFAULTS: Settings = {
     clickFx: "orb",
     fxCore: true,
     fxSwirl: true,
+    fxEnding: "auto",
+    fxSize: 100,
+    fxSpeed: "normal",
+    fxRipple: true,
+    fxHalo: true,
+    fxDot: true,
+    fxSoftness: 16,
+    fxThirdTone: true,
+    fxRings: 3,
+    fxRingStyle: "filled",
+    fxFrameShape: "brackets",
+    fxSheen: true,
+    fxHug: true,
+    fxEdgeWidth: 18,
+    fxEdgeGradient: true,
+    fxPin: true,
     motion: "smooth",
     motionMs: 350,
     mmFollowHighlight: false,
@@ -226,6 +263,14 @@ export const TOGGLE_LABELS: Record<BoolSettingKey, string> = {
     refreshView: "Send my new view with follow-ups",
     fxCore: "Orb: glossy core",
     fxSwirl: "Orb: two-tone swirl",
+    fxRipple: "Ripple on the click",
+    fxHalo: "Orb: halo",
+    fxDot: "Aurora: dot on the exact point",
+    fxThirdTone: "Third colour (coral)",
+    fxSheen: "Frame: scanning sheen",
+    fxHug: "Frame: breathing",
+    fxEdgeGradient: "Edge: moving gradient",
+    fxPin: "Edge: pin at the click",
 };
 
 /** keys of Settings whose value is a number — the integer knob rows in the panel */
@@ -290,6 +335,10 @@ export const NUMBER_KNOBS: Record<
         max: 240,
         step: 10,
     },
+    fxSize: { label: "Size (%)", min: 50, max: 200, step: 10 },
+    fxSoftness: { label: "Aurora: softness (px)", min: 6, max: 30, step: 2 },
+    fxRings: { label: "Sonar: rings", min: 1, max: 3, step: 1 },
+    fxEdgeWidth: { label: "Edge: thickness (px)", min: 8, max: 40, step: 2 },
     cueSize: {
         label: "Arrow size (px)",
         min: 48,
@@ -353,6 +402,30 @@ export const ENUM_CHOICES = {
             sonar: "Sonar",
             frame: "Frame what was clicked",
             edge: "Screen edge glow",
+        },
+    },
+    fxEnding: {
+        label: "Ending",
+        choices: {
+            auto: "The style's own",
+            fade: "Fade",
+            fly: "Fly into the chat",
+            found: "A found pulse",
+        },
+    },
+    fxSpeed: {
+        label: "Speed",
+        choices: { calm: "Calm", normal: "Normal", lively: "Lively" },
+    },
+    fxRingStyle: {
+        label: "Sonar: rings look",
+        choices: { filled: "Filled", outline: "Outlined" },
+    },
+    fxFrameShape: {
+        label: "Frame: shape",
+        choices: {
+            brackets: "Corner brackets",
+            highlight: "Same as the highlight outline",
         },
     },
     motion: {
@@ -471,7 +544,30 @@ export const PANEL_SECTIONS: {
         keys: ["zoom", "zoomKeys", "smoothZoom", "smartZoom", "lensPan"],
     },
     { title: "Asking", keys: ["regionSelect", "elementContext", "hints"] },
-    { title: "Waiting at the click", keys: ["clickFx", "fxCore", "fxSwirl"] },
+    {
+        title: "Waiting at the click",
+        keys: [
+            "clickFx",
+            "fxEnding",
+            "fxSize",
+            "fxSpeed",
+            "fxRipple",
+            "fxHalo",
+            "fxSwirl",
+            "fxCore",
+            "fxDot",
+            "fxSoftness",
+            "fxThirdTone",
+            "fxRings",
+            "fxRingStyle",
+            "fxFrameShape",
+            "fxSheen",
+            "fxHug",
+            "fxEdgeWidth",
+            "fxEdgeGradient",
+            "fxPin",
+        ],
+    },
     {
         title: "Capture and research",
         keys: [
