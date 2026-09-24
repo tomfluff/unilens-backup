@@ -2,11 +2,22 @@
  * UniLens settings panel — gear button (bottom-left) opening a small React panel.
  * Store lives in settings.ts; this file is UI only.
  */
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import styled from "styled-components";
 import {
     type BoolSettingKey,
+    clampSetting,
+    ENUM_CHOICES,
+    type EnumKey,
+    exportSettings,
+    importSettings,
+    NUMBER_KNOBS,
+    type NumSettingKey,
+    PANEL_SECTIONS,
+    SELECT_CHOICES,
+    type SelectKnobKey,
+    type Settings,
     TOGGLE_LABELS,
     updateSetting,
     useSettings,
@@ -21,6 +32,118 @@ const SettingsSelect = styled.select`
     border-radius: 6px;
     padding: 3px 6px;
 `;
+
+const SettingsColor = styled.input`
+    margin-left: auto;
+    width: 3em;
+    height: 1.8em;
+    padding: 0;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    border-radius: 6px;
+    background: none;
+`;
+
+const SettingsNumber = styled.input`
+    margin-left: auto;
+    width: 7em;
+    background: #26263e;
+    color: #eee;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    border-radius: 6px;
+    padding: 3px 6px;
+`;
+
+const SettingsRange = styled.input`
+    margin-left: auto;
+    width: 7em;
+    accent-color: #00c8ff;
+`;
+
+/** the minimap's own look: hidden while it follows the highlight look */
+const MM_OWN_LOOK = new Set<keyof Settings>([
+    "mmOutline",
+    "mmBackdrop",
+    "mmFill",
+    "mmGlow",
+    "mmNumbers",
+]);
+
+/** the click-feedback knobs that belong to some styles only */
+const FX_OWN: Partial<Record<keyof Settings, Settings["clickFx"][]>> = {
+    fxHalo: ["orb"],
+    fxSwirl: ["orb"],
+    fxCore: ["orb"],
+    fxDot: ["aurora"],
+    fxSoftness: ["aurora"],
+    fxThirdTone: ["aurora", "edge"],
+    fxRings: ["sonar"],
+    fxRingStyle: ["sonar"],
+    fxFrameShape: ["frame"],
+    fxSheen: ["frame"],
+    fxHug: ["frame"],
+    fxEdgeWidth: ["edge"],
+    fxEdgeGradient: ["edge"],
+    fxPin: ["edge"],
+};
+
+/** number knobs shown as a slider with its value, not a typed number */
+const SLIDERS = new Set<NumSettingKey>(["chatTextScale", "fxSize"]);
+
+const Section = styled.details`
+    border-top: 1px solid rgba(255, 255, 255, 0.15);
+    padding: 2px 0;
+
+    &:first-child {
+        border-top: 0;
+    }
+`;
+
+const SectionTitle = styled.summary`
+    cursor: pointer;
+    padding: 6px 0;
+    font-weight: 700;
+    color: #9fe6ff;
+`;
+
+/**
+ * Free-number row. Uncontrolled and committed on blur/Enter so typing "160" into a
+ * field whose min is 20 is not clamped to "20" mid-keystroke; the key remounts it
+ * when the store changes elsewhere, so it never shows a stale value.
+ */
+function NumberRow({
+    setting,
+    value,
+}: {
+    setting: NumSettingKey;
+    value: number;
+}) {
+    const knob = NUMBER_KNOBS[setting];
+    const shown = clampSetting(setting, value);
+    // Write the clamped value back: when it equals the stored one the key does not
+    // change, so nothing else would replace the out-of-range text in the field.
+    const commit = (el: HTMLInputElement) => {
+        const v = clampSetting(setting, el.valueAsNumber);
+        el.value = String(v);
+        updateSetting(setting, v);
+    };
+    return (
+        <SettingLabel>
+            {knob.label}
+            <SettingsNumber
+                key={shown}
+                type="number"
+                min={knob.min}
+                max={knob.max}
+                step={knob.step}
+                defaultValue={shown}
+                onBlur={(e) => commit(e.currentTarget)}
+                onKeyDown={(e) => {
+                    if (e.key === "Enter") e.currentTarget.blur();
+                }}
+            />
+        </SettingLabel>
+    );
+}
 
 const ZoomButton = styled.button`
     width: 28px;
@@ -43,6 +166,119 @@ const ZoomResetButton = styled.button`
     font-weight: 700;
     cursor: pointer;
 `;
+
+const FileRow = styled.div`
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid rgba(255, 255, 255, 0.15);
+`;
+
+const FileButton = styled.button`
+    flex: 1;
+    min-height: 28px;
+    padding: 4px 10px;
+    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    background: transparent;
+    color: #eee;
+    font: inherit;
+    cursor: pointer;
+
+    /* the host page's own button styles must not reach in (SoftBank underlines a
+       focused button in blue) */
+    &:hover,
+    &:focus {
+        color: #eee;
+        text-decoration: none;
+    }
+    &:hover {
+        background: rgba(255, 255, 255, 0.08);
+    }
+    &:focus-visible {
+        outline: 2px solid #00c8ff;
+        outline-offset: 2px;
+    }
+`;
+
+const FileStatus = styled.div`
+    flex-basis: 100%;
+    font-size: 12px;
+    color: #b8c0cc;
+
+    &:empty {
+        display: none;
+    }
+`;
+
+/** a settings file bigger than this is not one: every setting fits in a few KB */
+const MAX_SETTINGS_FILE = 256 * 1024;
+
+/** save every setting to a JSON file, or load them from one (a study's configuration,
+ *  a participant's own setup, a condition to switch to) */
+function SettingsFile() {
+    const [status, setStatus] = useState("");
+    const picker = useRef<HTMLInputElement>(null);
+
+    function save() {
+        const url = URL.createObjectURL(
+            new Blob([exportSettings()], { type: "application/json" }),
+        );
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `unilens-settings-${new Date().toISOString().slice(0, 10)}.json`;
+        document.documentElement.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+        setStatus("Settings saved to a file.");
+    }
+
+    async function load(file: File) {
+        if (file.size > MAX_SETTINGS_FILE) {
+            setStatus("That file is too large to be UniLens settings.");
+            return;
+        }
+        try {
+            const { applied, ignored } = importSettings(await file.text());
+            const skipped = ignored.length
+                ? ` Ignored ${ignored.length} unknown: ${ignored.slice(0, 3).join(", ")}${ignored.length > 3 ? "…" : ""}.`
+                : "";
+            setStatus(`Loaded ${applied} settings.${skipped}`);
+        } catch {
+            setStatus("That file is not UniLens settings. Nothing changed.");
+        }
+    }
+
+    return (
+        <FileRow>
+            <FileButton type="button" onClick={save}>
+                Export settings
+            </FileButton>
+            <FileButton type="button" onClick={() => picker.current?.click()}>
+                Import settings…
+            </FileButton>
+            <input
+                ref={picker}
+                type="file"
+                accept="application/json,.json"
+                hidden
+                onChange={(e) => {
+                    const file = e.currentTarget.files?.[0];
+                    // cleared, so choosing the same file again imports it again
+                    e.currentTarget.value = "";
+                    if (file) void load(file);
+                }}
+            />
+            <FileStatus role="status" aria-live="polite">
+                {status}
+            </FileStatus>
+        </FileRow>
+    );
+}
 
 const ZoomControlsContainer = styled.div`
     display: flex;
@@ -145,64 +381,173 @@ function ZoomControls() {
     );
 }
 
+/** one control, drawn by what kind of value the setting holds */
+function Row({
+    setting,
+    settings,
+}: {
+    setting: keyof Settings;
+    settings: Settings;
+}) {
+    if (Object.hasOwn(TOGGLE_LABELS, setting)) {
+        const key = setting as BoolSettingKey;
+        return (
+            <SettingLabel>
+                <input
+                    type="checkbox"
+                    checked={settings[key]}
+                    onChange={(e) =>
+                        updateSetting(key, e.currentTarget.checked)
+                    }
+                />
+                {TOGGLE_LABELS[key]}
+            </SettingLabel>
+        );
+    }
+    if (Object.hasOwn(ENUM_CHOICES, setting)) {
+        const key = setting as EnumKey;
+        return (
+            <SettingLabel>
+                {ENUM_CHOICES[key].label}
+                <SettingsSelect
+                    value={String(clampSetting(key, settings[key]))}
+                    onChange={(e) =>
+                        updateSetting(
+                            key,
+                            clampSetting(key, e.currentTarget.value),
+                        )
+                    }
+                >
+                    {Object.entries(ENUM_CHOICES[key].choices).map(
+                        ([value, label]) => (
+                            <option key={value} value={value}>
+                                {label}
+                            </option>
+                        ),
+                    )}
+                </SettingsSelect>
+            </SettingLabel>
+        );
+    }
+    if (setting === "hlColor")
+        return (
+            <SettingLabel>
+                Colour
+                <SettingsColor
+                    type="color"
+                    value={clampSetting("hlColor", settings.hlColor)}
+                    onChange={(e) =>
+                        updateSetting(
+                            "hlColor",
+                            clampSetting("hlColor", e.currentTarget.value),
+                        )
+                    }
+                />
+            </SettingLabel>
+        );
+    if (Object.hasOwn(SELECT_CHOICES, setting)) {
+        const key = setting as SelectKnobKey;
+        return (
+            <SettingLabel>
+                {NUMBER_KNOBS[key].label}
+                <SettingsSelect
+                    value={String(clampSetting(key, settings[key]))}
+                    onChange={(e) =>
+                        updateSetting(
+                            key,
+                            clampSetting(key, e.currentTarget.value),
+                        )
+                    }
+                >
+                    {SELECT_CHOICES[key].map((c) => (
+                        <option key={c.value} value={c.value}>
+                            {c.label}
+                        </option>
+                    ))}
+                </SettingsSelect>
+            </SettingLabel>
+        );
+    }
+    if (Object.hasOwn(NUMBER_KNOBS, setting)) {
+        const key = setting as NumSettingKey;
+        const knob = NUMBER_KNOBS[key];
+        if (SLIDERS.has(key)) {
+            const v = clampSetting(key, settings[key]);
+            return (
+                <SettingLabel>
+                    {knob.label.replace(" (%)", "")} {v}%
+                    <SettingsRange
+                        type="range"
+                        min={knob.min}
+                        max={knob.max}
+                        step={knob.step}
+                        value={v}
+                        onChange={(e) =>
+                            updateSetting(
+                                key,
+                                clampSetting(
+                                    key,
+                                    e.currentTarget.valueAsNumber,
+                                ),
+                            )
+                        }
+                    />
+                </SettingLabel>
+            );
+        }
+        return <NumberRow setting={key} value={settings[key]} />;
+    }
+    return null;
+}
+
 function Panel() {
     // subscribes to the store — re-renders when settings change anywhere
     const settings = useSettings();
 
     return (
-        <PanelContainer>
+        <PanelContainer id="unilens-settings-panel">
             <PanelTitle>UniLens settings</PanelTitle>
 
             {/* The feature list outgrew the window. It scrolls; the title and zoom controls
           stay put, so the controls are always reachable. Budget leaves room for the
           panel's offset from the bottom, its title and its zoom row. */}
             <SettingsList>
-                {(Object.keys(TOGGLE_LABELS) as BoolSettingKey[]).map((key) => (
-                    <SettingLabel key={key}>
-                        <input
-                            type="checkbox"
-                            checked={settings[key]}
-                            onChange={(e) =>
-                                updateSetting(key, e.currentTarget.checked)
-                            }
-                        />
-                        {TOGGLE_LABELS[key]}
-                    </SettingLabel>
+                {PANEL_SECTIONS.map((g) => (
+                    <Section key={g.title} open={g.open}>
+                        <SectionTitle>{g.title}</SectionTitle>
+                        {g.keys
+                            .filter(
+                                (key) =>
+                                    !(
+                                        settings.mmFollowHighlight &&
+                                        MM_OWN_LOOK.has(key)
+                                    ) &&
+                                    !(
+                                        key === "fxRippleLook" &&
+                                        !settings.fxRipple
+                                    ) &&
+                                    !(
+                                        key === "voiceAutoSend" &&
+                                        !settings.voiceInput
+                                    ) &&
+                                    // a click-feedback style's own knobs only while it is chosen
+                                    !(
+                                        FX_OWN[key] &&
+                                        !FX_OWN[key]?.includes(settings.clickFx)
+                                    ),
+                            )
+                            .map((key) => (
+                                <Row
+                                    key={key}
+                                    setting={key}
+                                    settings={settings}
+                                />
+                            ))}
+                    </Section>
                 ))}
-
-                <SettingLabel>
-                    Capture resolution
-                    <SettingsSelect
-                        value={String(settings.captureRes)}
-                        onChange={(e) =>
-                            updateSetting(
-                                "captureRes",
-                                parseFloat(e.currentTarget.value),
-                            )
-                        }
-                    >
-                        <option value="1">Screen (1x)</option>
-                        <option value="0.5">Reduced (0.5x)</option>
-                    </SettingsSelect>
-                </SettingLabel>
-
-                <SettingLabel>
-                    Chat text size
-                    <SettingsSelect
-                        value={String(settings.chatFontSize)}
-                        onChange={(e) =>
-                            updateSetting(
-                                "chatFontSize",
-                                parseInt(e.currentTarget.value, 10),
-                            )
-                        }
-                    >
-                        <option value="14">Normal</option>
-                        <option value="17">Large</option>
-                        <option value="20">X-Large</option>
-                    </SettingsSelect>
-                </SettingLabel>
             </SettingsList>
+
+            <SettingsFile />
 
             {/* manual zoom is part of the zoom feature — hide it when the toggle is off */}
             {settings.zoom && <ZoomControls />}
@@ -218,6 +563,8 @@ function SettingsLauncher() {
             <GearButton
                 type="button"
                 title="UniLens settings"
+                aria-expanded={open}
+                aria-controls="unilens-settings-panel"
                 onClick={() => setOpen((o) => !o)}
             >
                 ⚙

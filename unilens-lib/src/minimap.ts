@@ -10,10 +10,20 @@
  * out of captures — same as the rest of the UniLens chrome.
  */
 
-import { getSettings } from "./settings";
 import {
+    BACKDROP_ALPHA,
+    colorWithAlpha,
+    drawnOutline,
+    EDGE,
+    minimapLook,
+    RING,
+} from "./highlightStyles";
+import { getSettings, onSettingsChange } from "./settings";
+import {
+    boxOf,
     getView,
     getZoom,
+    isEmptyBox,
     isOwnMutation,
     onViewChange,
     onZoomChange,
@@ -63,6 +73,182 @@ let mapScale = 0;
 let raf = 0;
 let watcher: MutationObserver | null = null;
 let redrawTimer: number | undefined;
+/** located elements to mark on the map; rects are read live at draw time */
+let targets: Element[] = [];
+/** the chip number of each target, drawn when mmNumbers is on */
+let labels: string[] = [];
+
+/**
+ * Mark the elements the model pointed at, so an outline that lies outside the
+ * magnified viewport is still discoverable (design decision D11). Elements, not
+ * rects: a stored rect goes stale on the next layout shift.
+ */
+export function setTargets(els: Element[], nums: string[] = []) {
+    targets = els;
+    labels = nums;
+    if (box && box.style.display !== "none") redraw();
+}
+
+/** spotlight hole feather on the map, px (the page's is 14; the map is much smaller) */
+const MAP_FEATHER = 4;
+/** the map's fill is stronger than the page's (FILL_ALPHA) so it reads at map scale */
+const MAP_FILL_ALPHA = 0.45;
+/** the backdrop is drawn apart, then laid over the map: cutting its holes on the map
+ *  canvas itself would erase the page skeleton under the targets */
+let shade: HTMLCanvasElement | null = null;
+
+type MapRect = { x: number; y: number; w: number; h: number; n: string };
+
+/** the outline, drawn in the highlight's style at map scale, always with a dark edge
+ *  so a light colour still reads on the map */
+function strokeOutline(
+    g: CanvasRenderingContext2D,
+    r: MapRect,
+    outline: string,
+    color: string,
+) {
+    const stroke = (w: number, c: string, d: number) => {
+        g.lineWidth = w;
+        g.strokeStyle = c;
+        g.strokeRect(r.x - d, r.y - d, r.w + 2 * d, r.h + 2 * d);
+    };
+    if (outline === "band") {
+        stroke(4, EDGE, 1);
+        stroke(2.5, color, 0);
+    } else if (outline === "ring") {
+        // two bands, black inside white: one of them always clears 3:1
+        stroke(4, RING.outer, 1.5);
+        stroke(2, RING.inner, 0);
+    } else if (outline === "brackets") {
+        const L = Math.max(4, Math.min(r.w, r.h) * 0.35);
+        const path = () => {
+            g.beginPath();
+            for (const [x, y, dx, dy] of [
+                [r.x, r.y, 1, 1],
+                [r.x + r.w, r.y, -1, 1],
+                [r.x, r.y + r.h, 1, -1],
+                [r.x + r.w, r.y + r.h, -1, -1],
+            ]) {
+                g.moveTo(x + dx * L, y);
+                g.lineTo(x, y);
+                g.lineTo(x, y + dy * L);
+            }
+        };
+        g.lineCap = "square";
+        path();
+        g.lineWidth = 4.5;
+        g.strokeStyle = EDGE;
+        g.stroke();
+        path();
+        g.lineWidth = 2.5;
+        g.strokeStyle = color;
+        g.stroke();
+    } else if (outline === "underline") {
+        const y = r.y + r.h + 2;
+        g.lineCap = "butt";
+        g.beginPath();
+        g.moveTo(r.x, y);
+        g.lineTo(r.x + r.w, y);
+        g.lineWidth = 5;
+        g.strokeStyle = EDGE;
+        g.stroke();
+        g.lineWidth = 3;
+        g.strokeStyle = color;
+        g.stroke();
+    }
+}
+
+/**
+ * Targets drawn as their real rects on the map, in the same layers as the page
+ * highlight (highlightStyles.ts): a backdrop (dim or spotlight), one outline, and a
+ * see-through fill, glow and the chip numbers on top. The look is the minimap's own
+ * or, with mmFollowHighlight, the highlight's. Numbers are opaque over the fill so
+ * they read at map scale. Tiny targets grow to the minimum marker size.
+ */
+function drawTargets(g: CanvasRenderingContext2D, scale: number) {
+    const s = getSettings();
+    const look = minimapLook(s);
+    const outline = drawnOutline(look);
+    const min = s.minimapMarkerSize;
+    const color = look.color;
+    const v = getView();
+    const rects: MapRect[] = [];
+    targets.forEach((el, i) => {
+        if (!el.isConnected) return;
+        const r = boxOf(el);
+        if (isEmptyBox(r)) return;
+        const p = toContent(r.left + v.x, r.top + v.y);
+        const w = (r.width / scale) * mapScale;
+        const h = (r.height / scale) * mapScale;
+        const mw = Math.max(w, min);
+        const mh = Math.max(h, min);
+        rects.push({
+            x: p.x * mapScale + w / 2 - mw / 2,
+            y: p.y * mapScale + h / 2 - mh / 2,
+            w: mw,
+            h: mh,
+            n: labels[i] ?? "",
+        });
+    });
+    if (!rects.length) return;
+    if (look.backdrop !== "none") {
+        const W = g.canvas.width;
+        const H = g.canvas.height;
+        shade ??= document.createElement("canvas");
+        shade.width = W;
+        shade.height = H;
+        const d = shade.getContext("2d");
+        if (d) {
+            d.fillStyle = `rgba(0,0,0,${BACKDROP_ALPHA[look.backdrop]})`;
+            d.fillRect(0, 0, W, H);
+            d.globalCompositeOperation = "destination-out";
+            // spotlight: darker, and its holes have soft edges
+            if (look.backdrop === "spotlight")
+                d.filter = `blur(${MAP_FEATHER}px)`;
+            d.fillStyle = "#000";
+            for (const r of rects)
+                d.fillRect(r.x - 2, r.y - 2, r.w + 4, r.h + 4);
+            g.drawImage(shade, 0, 0);
+        }
+    }
+    for (const r of rects) {
+        g.save();
+        if (look.glow) {
+            g.shadowColor = color;
+            g.shadowBlur = 10;
+        }
+        if (look.fill) {
+            // see-through: the page skeleton under the target stays visible
+            g.fillStyle = colorWithAlpha(color, MAP_FILL_ALPHA);
+            g.fillRect(r.x, r.y, r.w, r.h);
+            if (outline === "none") {
+                g.lineWidth = 1.5;
+                g.strokeStyle = EDGE;
+                g.strokeRect(r.x, r.y, r.w, r.h);
+            }
+        } else if (look.glow && outline === "none") {
+            // a glow alone needs a shape to cast it
+            g.lineWidth = 2;
+            g.strokeStyle = color;
+            g.strokeRect(r.x, r.y, r.w, r.h);
+        }
+        // inside the glow: the outline casts it too
+        strokeOutline(g, r, outline, color);
+        g.restore();
+        if (look.badges && r.n) {
+            g.font = "700 12px system-ui, sans-serif";
+            g.textAlign = "center";
+            g.textBaseline = "middle";
+            g.lineWidth = 3;
+            g.strokeStyle = EDGE;
+            g.fillStyle = "#fff";
+            const cx = r.x + r.w / 2;
+            const cy = r.y + r.h / 2;
+            g.strokeText(r.n, cx, cy);
+            g.fillText(r.n, cx, cy);
+        }
+    }
+}
 
 function build() {
     box = document.createElement("div");
@@ -141,6 +327,7 @@ function drawSkeleton() {
         );
         drawn++;
     }
+    drawTargets(g, scale);
 }
 
 function updateLens() {
@@ -216,4 +403,11 @@ export function initMinimap() {
     window.addEventListener("scroll", scheduleLens, { passive: true });
     onViewChange(scheduleLens); // lens-pan engine: the document never scrolls
     window.addEventListener("resize", redraw);
+    // marker shape, dim, glow, numbers and the highlight colour apply to an open map
+    // at once; debounced, since a redraw repaints the whole page skeleton
+    onSettingsChange(() => {
+        if (!box || box.style.display === "none" || !targets.length) return;
+        clearTimeout(redrawTimer);
+        redrawTimer = window.setTimeout(redraw, 60);
+    });
 }

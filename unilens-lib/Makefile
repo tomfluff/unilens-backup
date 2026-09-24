@@ -2,7 +2,7 @@
 -include ../make-include.mk
 -include ../make-targets.mk
 
-.PHONY: init clean lint bundle build serve format fix
+.PHONY: init clean lint bundle build serve test format fix
 
 # Build stamp: git short hash, surfaced in the init console line
 BUILD_STAMP=$(shell git rev-parse --short HEAD 2>/dev/null || echo dev)
@@ -30,6 +30,10 @@ clean:
 lint:
 	echo "Running type checker..."
 	$(NPX) tsc -b
+
+test:
+	echo "Running unit tests..."
+	$(NPX) vitest run
 
 # Bundle to dist/ without typechecking. The dev server's rebuild-on-save uses this:
 # esbuild strips types without checking them, and tsc costs ~5x esbuild per save.

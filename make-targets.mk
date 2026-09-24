@@ -4,7 +4,7 @@
 JS_TARGETS:= unilens-lib accessibility-lib
 
 # Targets with unit tests; add a target here once it has some
-TEST_TARGETS:= accessibility-lib
+TEST_TARGETS:= backend unilens-lib accessibility-lib
 
 target_dist_unilens-lib=unilens.js
 target_dist_accessibility-lib=accessibility.js

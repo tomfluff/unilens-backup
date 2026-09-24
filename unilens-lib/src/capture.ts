@@ -4,6 +4,13 @@
  * overlays viewport rect + mouse trace + click crosshair, returns PNG + metadata.
  */
 import html2canvas from "html2canvas";
+import {
+    buildInventory,
+    clip,
+    type Inventory,
+    inventoryOptionsFrom,
+    type WireNode,
+} from "./inventory";
 import { getSettings } from "./settings";
 import {
     clientToContent,
@@ -42,8 +49,14 @@ export interface CaptureMeta {
     viewportRect: { x: number; y: number; w: number; h: number };
     /** the DOM element under the alt+click, if enabled */
     element?: ElementContext;
+    /** inventory nodes dropped by the budget guard (the inventory itself travels beside meta) */
+    inventoryTruncated?: number;
+    inventoryBytes?: number;
     /** content-space rect the user selected via alt+drag, if any */
     region?: { x: number; y: number; w: number; h: number };
+    /** a re-capture because the user moved the view mid-conversation: same question
+     *  point (clickX/Y, element), new view */
+    viewRefresh?: boolean;
 }
 
 export type Capture = {
@@ -77,7 +90,7 @@ export interface ElementContext {
 export function describeElement(el: Element): ElementContext {
     const cap = (s: string | null | undefined, n = 200) => {
         const t = s?.replace(/\s+/g, " ").trim();
-        return t ? (t.length > n ? `${t.slice(0, n)}…` : t) : undefined;
+        return t ? clip(t, n) : undefined;
     };
 
     const path = [];
@@ -117,6 +130,10 @@ export interface CaptureResult {
     /** clean full-resolution crop of what the user currently sees (zoom-aware), if enabled */
     viewportImage?: string;
     meta: CaptureMeta;
+    /** page inventory (wire form) when settings.inventory is on; uploaded beside meta */
+    inventory?: WireNode[];
+    /** inventory id → live element; never serialized */
+    registry?: Map<string, Element>;
 }
 
 // ── Mouse trace state ──────────────────────────────────────────────────────
@@ -152,6 +169,69 @@ export interface CaptureDebug {
 let lastCaptureDebug: CaptureDebug | null = null;
 
 export const getCaptureDebug = () => lastCaptureDebug;
+
+/** what the last capture's inventory cost; null until a capture builds one */
+export interface InventoryDebug {
+    nodes: number;
+    bytes: number;
+    /** nodes dropped by the budget guard */
+    truncated: number;
+    at: number;
+}
+
+let lastInventoryDebug: InventoryDebug | null = null;
+
+export const getLastInventoryDebug = () => lastInventoryDebug;
+
+/** capture() records here; exported so the shape is testable without html2canvas */
+export function recordInventoryDebug(
+    inv: Pick<Inventory, "wire" | "bytes" | "truncated"> | undefined,
+) {
+    lastInventoryDebug = inv
+        ? {
+              nodes: inv.wire.length,
+              bytes: inv.bytes,
+              truncated: inv.truncated,
+              at: Date.now(),
+          }
+        : null;
+}
+
+/**
+ * html2canvas measures font baselines by appending a hidden 1x1 probe <img> to the
+ * live body. A host rule such as `img { height: 260px }` inflates the probe and
+ * every glyph then draws hundreds of px off. Pin the probe for the render window.
+ */
+const H2C_PROBE_SRC =
+    "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
+export const FONT_PROBE_GUARD_CSS = `img[src="${H2C_PROBE_SRC}"]{width:1px!important;height:1px!important;display:inline!important;border:0!important;transform:none!important}`;
+
+/** installs the probe guard; returns the remover */
+export function guardFontProbe(doc: Document = document): () => void {
+    const style = doc.createElement("style");
+    style.textContent = FONT_PROBE_GUARD_CSS;
+    doc.head.appendChild(style);
+    return () => style.remove();
+}
+
+/**
+ * Has the user moved the view since this capture enough that the model should see it
+ * again: scrolled or panned by more than VIEW_MOVE of the viewport, or zoomed.
+ * ponytail: fixed 25% threshold; make it a knob if sessions show refreshes too eager or late.
+ */
+const VIEW_MOVE = 0.25;
+export function viewMovedSince(meta: CaptureMeta): boolean {
+    const vvp = window.visualViewport;
+    const { x, y } = getView();
+    const z = getZoom().scale;
+    const pinch = vvp ? Math.round((vvp.scale ?? 1) * 100) / 100 : 1;
+    return (
+        Math.abs(z - meta.zoom) > 0.05 ||
+        Math.abs(pinch - meta.pinchZoom) > 0.05 ||
+        Math.abs(x - meta.scrollX) > meta.viewportW * VIEW_MOVE ||
+        Math.abs(y - meta.scrollY) > meta.viewportH * VIEW_MOVE
+    );
+}
 
 /** main.tsx tags the backend id once the upload completes */
 export function tagLastCapture(id: string) {
@@ -303,8 +383,24 @@ export async function capture(
     clickY: number,
     clickedEl?: Element,
     region?: { x: number; y: number; w: number; h: number },
+    opts: { viewRefresh?: boolean } = {},
 ): Promise<CaptureResult> {
     const captureTime = Date.now();
+
+    // Inventory first: it reads the live layout before anything else touches the page.
+    // `visible` is judged against the real viewport, never the alt+drag region.
+    const inv = getSettings().inventory
+        ? buildInventory(
+              document.body,
+              inventoryOptionsFrom(getSettings(), {
+                  w: window.visualViewport?.width ?? window.innerWidth,
+                  h: window.visualViewport?.height ?? window.innerHeight,
+              }),
+              undefined,
+              clientToContent,
+          )
+        : undefined;
+    recordInventoryDebug(inv);
 
     const vvp = window.visualViewport;
     const dpr = window.devicePixelRatio || 1;
@@ -376,6 +472,7 @@ export async function capture(
 
     let pageCanvas: HTMLCanvasElement;
     let viewportImage: string | undefined;
+    const unguard = guardFontProbe();
     try {
         pageCanvas = await html2canvas(document.body, {
             scrollX: 0,
@@ -390,6 +487,7 @@ export async function capture(
             onclone: stripZoom,
         });
     } finally {
+        unguard();
         for (const f of imageFixes) delete f.el.dataset.unilensImg;
     }
     const tRender = performance.now();
@@ -561,6 +659,11 @@ export async function capture(
                     ? describeElement(clickedEl)
                     : undefined,
             region: region ? vRect : undefined,
+            inventoryTruncated: inv?.truncated,
+            inventoryBytes: inv?.bytes,
+            viewRefresh: opts.viewRefresh || undefined,
         },
+        inventory: inv?.wire,
+        registry: inv?.registry,
     };
 }

@@ -22,7 +22,7 @@ let backendUrl = "";
 let audioEl: HTMLAudioElement | null = null;
 let stateCb: ((s: SpeechState) => void) | null = null;
 
-export type SpeechState = "loading" | "playing" | "idle";
+export type SpeechState = "loading" | "playing" | "paused" | "idle";
 
 /** set by init() — enables API TTS (better mixed-language voices) */
 export function setSpeechBackend(url: string) {
@@ -91,6 +91,27 @@ export function stopSpeaking() {
     setState("idle");
 }
 
+/** hold the reading where it is; resumeSpeaking carries on from there */
+export function pauseSpeaking() {
+    if (audioEl && !audioEl.paused) {
+        audioEl.pause();
+        setStateSafe("paused");
+    } else if (speechSynthesis.speaking && !speechSynthesis.paused) {
+        speechSynthesis.pause();
+        setStateSafe("paused");
+    }
+}
+
+export function resumeSpeaking() {
+    if (audioEl?.paused) {
+        void audioEl.play();
+        setStateSafe("playing");
+    } else if (speechSynthesis.paused) {
+        speechSynthesis.resume();
+        setStateSafe("playing");
+    }
+}
+
 export function isSpeaking(): boolean {
     return speechSynthesis.speaking || (audioEl != null && !audioEl.paused);
 }
@@ -106,6 +127,7 @@ type RecognitionCtor = new () => {
     onerror: () => void;
     start: () => void;
     stop: () => void;
+    abort?: () => void;
 };
 
 function recognitionCtor(): RecognitionCtor | null {
@@ -119,18 +141,20 @@ function recognitionCtor(): RecognitionCtor | null {
 export const sttSupported = recognitionCtor() != null;
 
 /**
- * Start listening; transcript goes to onResult as it firms up, onEnd fires when
- * recognition stops (silence or stop()). Returns a stop function, or null if
- * unsupported.
+ * Start listening; transcript goes to onResult as it firms up, onEnd fires once when
+ * recognition stops (silence, stop() or an error: Chrome fires error then end).
+ * Returns a stop function, or null if unsupported. stop(true) cancels: nothing is
+ * delivered and onEnd never fires (the chat closed mid-sentence).
  */
 export function listen(
     onResult: (transcript: string) => void,
     onEnd: () => void,
-): (() => void) | null {
+    lang?: string,
+): ((cancel?: boolean) => void) | null {
     const Ctor = recognitionCtor();
     if (!Ctor) return null;
     const rec = new Ctor();
-    rec.lang = navigator.language || "en-US";
+    rec.lang = lang || navigator.language || "en-US";
     rec.interimResults = true;
     rec.onresult = (e) => {
         let text = "";
@@ -138,8 +162,19 @@ export function listen(
             text += e.results[i][0].transcript;
         onResult(text);
     };
-    rec.onend = onEnd;
-    rec.onerror = onEnd;
+    let done = false;
+    const end = () => {
+        if (done) return;
+        done = true;
+        onEnd();
+    };
+    rec.onend = end;
+    rec.onerror = end;
     rec.start();
-    return () => rec.stop();
+    return (cancel = false) => {
+        if (!cancel) return rec.stop();
+        done = true;
+        if (rec.abort) rec.abort();
+        else rec.stop();
+    };
 }

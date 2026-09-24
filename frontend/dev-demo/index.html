@@ -30,12 +30,41 @@
       </div>
       <div class="card"><h2>Section three</h2><p>Filler content so the page scrolls.</p></div>
       <div class="card"><h2>Section four</h2><p>More filler content.</p></div>
+
+      <!-- Interactables and content for "where is X?" questions (page inventory targets). -->
+      <nav class="card" aria-label="Demo">
+        <a href="#pricing">Pricing</a> ·
+        <a href="#contact">Contact</a> ·
+        <a href="#top">Back to top</a>
+        <button type="button" onclick="alert('Signed up')">Sign up</button>
+        <button type="button" aria-label="Search" onclick="alert('Search')">&#128269;</button>
+      </nav>
+
+      <div class="card" id="pricing">
+        <h2>Pricing</h2>
+        <p>Starter plan: <span class="price">$9</span> per month.</p>
+        <p>Prices exclude tax; tax is added at checkout based on your region.</p>
+        <table>
+          <tr><th>Plan</th><th>Price</th><th>Seats</th></tr>
+          <tr><td>Starter</td><td>$9</td><td>1</td></tr>
+          <tr><td>Team</td><td>$29</td><td>5</td></tr>
+          <tr><td>Business</td><td>$99</td><td>25</td></tr>
+        </table>
+      </div>
+
+      <form class="card" id="contact" onsubmit="event.preventDefault(); alert('Sent')">
+        <h2>Contact</h2>
+        <p><label for="contact-name">Name</label> <input id="contact-name" name="name" type="text" /></p>
+        <p><label for="contact-email">Email</label> <input id="contact-email" name="email" type="email" /></p>
+        <p><label for="contact-message">Message</label> <textarea id="contact-message" name="message"></textarea></p>
+        <button type="submit">Send message</button>
+      </form>
     </div>
     <script src="accessibility.js"></script>
     <script src="unilens.js"></script>
     <script>
       Accessibility.init()
-      UniLens.init({ mouseWindow: 5 })
+      UniLens.init({ backend: 'http://127.0.0.1:5000', mouseWindow: 5 })
     </script>
   </body>
 </html>
