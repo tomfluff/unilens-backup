@@ -11,6 +11,7 @@ afterEach(() => {
 
 describe("chat language", () => {
     it("follows the page's <html lang> on auto, and a setting overrides it", () => {
+        updateSetting("chatLanguage", "auto");
         document.documentElement.lang = "ja";
         expect(chatLang()).toBe("ja");
         expect(chatText().send).toBe("送信");

@@ -3,6 +3,7 @@ name: UniLens
 description: An in-page AI partner for magnifier users; a chat that looks like the assistant people know and points back at the page.
 colors:
   signal-yellow: "#ffd400"
+  highlight-yellow: "#ffef26"
   pure-black: "#000000"
   pure-white: "#ffffff"
   sign-black: "#111111"
@@ -375,7 +376,8 @@ Each style carries its own restrained palette: one accent, one ink, soft neutral
 - **Line Blue** (#0079c2): the Station's line colour. Used for the band's bottom rule, the roundel ring, the rings on station codes, the current code (filled), send, and the status strip's top rule.
 
 ### Secondary
-- **Signal Yellow** (#ffd400): the high-contrast accent in all three styles. It is also the Station's exit-sign colour for "All" and "Back", the Station's focus halo, and the default page-highlight colour (`hlColor`).
+- **Signal Yellow** (#ffd400): the high-contrast accent in all three styles. It is also the Station's exit-sign colour for "All" and "Back", and the Station's focus halo.
+- **Highlight Yellow** (#ffef26): the default page-highlight colour (`hlColor`), a lighter yellow the builder chose for the page layer (2026-09-25). The user can change it; the chat's yellow stays Signal Yellow.
 
 ### Neutral
 - **Assistant Paper** (#ffffff) / **Assistant Mist** (#f1f3f5): panel surface / answer bubbles, quick actions and icon keys.
@@ -395,7 +397,7 @@ Each style carries its own restrained palette: one accent, one ink, soft neutral
 
 **The Real High Contrast Rule.** High contrast rebinds the style's own tokens to Pure Black, Pure White and Signal Yellow and thickens borders to 2–3px. The style's form, controls and layout stay the same. It is never a CSS filter and never a separate layout. Forced-colors mode gets a 2px CanvasText frame and 1px ButtonText button borders on top.
 
-**The Signal Yellow Rule.** #ffd400 is the one yellow in the product, used for the high-contrast accent, the exit signs and the page highlight. Do not introduce a second yellow.
+**The Signal Yellow Rule.** #ffd400 is the one yellow in the chat, used for the high-contrast accent and the exit signs. The page highlight's default (#ffef26) is the only other yellow, and it lives on the page layer. Do not introduce a third.
 
 ## Typography
 
@@ -513,20 +515,20 @@ What just happened, e.g. "Source 2 of 3, …. Moved there; Back returns you." It
 - While a click is being captured, a dashed "Capturing…" entry stands in the log where its place entry will appear.
 
 ### Click feedback and waiting
-- **Alt+click:** a ripple where the click lands (72px ring in the highlight colour with dark rims, 0.55s), then a "working" state until the chat has the capture, chosen by `clickFx`. Each one colours itself from the highlight colour and the chat style's accent:
-  - **Breathing orb** (default): a 112px orb at the click. Its three layers breathe out of step: a soft halo, a slowly turning two-tone swirl and a glossy core with dark and light rims. The core and swirl are toggles (`fxCore`, `fxSwirl`). It shrinks and fades at the end.
+- **Alt+click:** a ripple where the click lands (72px, in the highlight colour, thick to thin by default), then a "working" state until the chat has the capture, chosen by `clickFx`. Each one colours itself from the highlight colour and the chat style's accent:
+  - **Breathing orb** (default): a 112px orb at the click. Its layers breathe out of step: a soft halo, a slowly turning two-tone swirl and a glossy core with dark and light rims. Each is a toggle (`fxHalo`, `fxSwirl`, `fxCore`); by default only the swirl and the centre dot show. It flies into the chat at the end.
   - **Aurora:** a 170px soft colour body at the click with a black dot on the exact point. It gathers into a dot and flies into the chat's new place entry.
   - **Sonar:** a solid beacon with filled rings going out. It ends in one wide "found" pulse.
   - **Frame what was clicked:** corner brackets and a scanning sheen on the clicked element or dragged region. It frames a small box instead when the element covers most of the screen. The frame then flies into the chat and becomes the place entry.
   - **Screen edge glow:** the screen's edges glow with a slow gradient, because the whole page is being captured, while a pin marks the click.
 
   Shared settings for every style:
-  - **Ending:** each style's own ending by default, or one for all: fade, fly into the chat, or a found pulse.
+  - **Ending:** fly into the chat's new place entry by default; or each style's own ending, a fade, or a found pulse.
   - **Size:** 50–200%.
-  - **Speed:** calm, normal or lively; one multiplier on every duration.
+  - **Speed:** calm, normal or lively (default); one multiplier on every duration.
   - **Ripple:** on or off, in one of two looks:
-    - **Black rims** (default): the highlight colour between thin black rims, so it reads on any page.
-    - **Thick to thin:** the highlight colour alone. Five rings of falling width take turns as it grows, about 8px down to 2px, so it stays off the main thread.
+    - **Black rims:** the highlight colour between thin black rims, so it reads on any page.
+    - **Thick to thin** (default): the highlight colour alone. Five rings of falling width take turns as it grows, about 8px down to 2px, so it stays off the main thread.
 
   Per style:
 
@@ -555,14 +557,14 @@ Each of the eleven actions has an earcon: press, chip, all, move, back, send, do
 The `sounds` setting silences earcons; the controls' own states and the live region still carry every action.
 
 ### Motion
-One setting drives all movement: `motion` (smooth by default, or instant) with `motionMs` (350ms default, 100–1000). It covers page moves to evidence, Back, minimap and cue jumps, log scrolling and the chat's glide to a new click. Page moves ease in and out on a cubic curve, so they leave from where the reader is without a lurch; each glide is timed from animation-frame timestamps only, never `performance.now`, which host pages may replace (SoftBank's does). The chat glides with `cubic-bezier(.22, 1, .36, 1)`. Any wheel, touch or key from the user cancels a glide. With `prefers-reduced-motion` set, every move, smooth zoom, the caret, the level meter and the recording pulse are instant or still.
+One setting drives all movement: `motion` (smooth by default, or instant) with `motionMs` (1000ms default, 100–1000). It covers page moves to evidence, Back, minimap and cue jumps, log scrolling and the chat's glide to a new click. Page moves ease in and out on a cubic curve, so they leave from where the reader is without a lurch; each glide is timed from animation-frame timestamps only, never `performance.now`, which host pages may replace (SoftBank's does). The chat glides with `cubic-bezier(.22, 1, .36, 1)`. Any wheel, touch or key from the user cancels a glide. With `prefers-reduced-motion` set, every move, smooth zoom, the caret, the level meter and the recording pulse are instant or still.
 
 ### Page highlight and off-screen cues (research variables)
 The chat drives the page layer, which is detached from `<body>` like the chat. The shipped defaults:
-- **Highlight:** a thick band in Signal Yellow (2px per band, 1–6), 3px off the element, with a black edge so yellow reads on white. Numbered badges match the chips: 24px, 700 14px/20px, blue in Assistant, #111 in Audio guide, a ringed "U1" in Station.
-- **Highlight options:** a two-band black/white ring (W3C C40), brackets, underline, fill (0.3 alpha), glow, dim (0.55) and spotlight (0.72, 14px feather).
-- **Off-screen cue:** off by default. At `edge` it is a button on the screen edge that brings the element into view; at `pointer` it is an arrow on a `cueRadius` circle (90px, 40–240) round the pointer, which only points and never takes clicks.
-- **Cue geometry:** each arrow is a filled arrowhead in the highlight colour with a 2.5-unit black edge, and a black tail disc with the number upright in white. It is sized by `cueSize` (72px default, 48–128) and drawn at the true bearing to its target. It is kept on screen and pushed outward along its own line when the chat is in the way.
+- **Highlight:** a two-band black and white ring (W3C C40, 2px per band, 1–6), 3px off the element, with a glow in Highlight Yellow. Numbered badges match the chips: 24px, 700 14px/20px, blue in Assistant, #111 in Audio guide, a ringed "U1" in Station.
+- **Highlight options:** a thick band in the highlight colour with a black edge, brackets, underline, fill (0.3 alpha), glow, dim (0.55) and spotlight (0.72, 14px feather).
+- **Off-screen cue:** `edge` by default: a button on the screen edge that brings the element into view. At `pointer` it is an arrow on a `cueRadius` circle (60px default, 40–240) round the pointer, which only points and never takes clicks.
+- **Cue geometry:** each arrow is a filled arrowhead in the highlight colour with a 2.5-unit black edge, and a black tail disc with the number upright in white. It is sized by `cueSize` (48px default, 48–128) and drawn at the true bearing to its target. Pointer arrows are fixed to the cursor: no page element, chat or screen edge moves them.
 
 ### Icons
 Authored as one family: 24px grid, 2px round stroke, round joins, no fill, currentColor, 1.25em (1.1em in the read-aloud button). The set is pin, close, mic, send, speaker, stop, wait, previous, next, highlight-all (four rounded squares), back (a return hook), place (map pin), minimize and expand.

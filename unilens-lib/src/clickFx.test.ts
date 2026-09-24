@@ -12,6 +12,8 @@ beforeEach(() => {
 
 describe("click feedback", () => {
     it("draws the orb's chosen layers, and keeps the halo when all are off", () => {
+        updateSetting("fxHalo", true);
+        updateSetting("fxSwirl", true);
         updateSetting("fxCore", false);
         clickFeedback(100, 100);
         expect(shown(".ul-fx-orb .halo")).toBe(1);
@@ -42,6 +44,8 @@ describe("click feedback", () => {
     it("frames exactly as the highlight draws, when asked, else brackets", () => {
         updateSetting("clickFx", "frame");
         updateSetting("fxFrameShape", "highlight");
+        // the highlight look this test walks through: no glow, so "nothing at all" is
+        updateSetting("hlGlow", false);
         updateSetting("hlOutline", "band");
         updateSetting("ringWidth", 3);
         const box = { left: 50, top: 50, width: 120, height: 30 };
