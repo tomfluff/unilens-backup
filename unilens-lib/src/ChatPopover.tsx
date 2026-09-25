@@ -22,6 +22,7 @@ import {
 } from "./highlight";
 import { labelOfWire, type WireNode } from "./inventory";
 import { goToPlace, latestPlace, type Place, placeOf } from "./places";
+import { recordAsk, type SentAsk } from "./sentLog";
 import { getSettings, useSettings } from "./settings";
 import {
     listen,
@@ -41,8 +42,6 @@ interface Msg {
     id: string;
     role: "user" | "assistant";
     text: string;
-    /** reply footer: provider · model · images · latency */
-    info?: string;
     /** a system failure (rate limit, backend, network), not an answer: styled apart so a
      *  participant can tell "the model didn't find it" from "something broke" */
     error?: boolean;
@@ -53,8 +52,6 @@ interface Msg {
     streaming?: boolean;
     /** a question's capture, so its bubble can offer "where I clicked" */
     captureId?: string;
-    /** a question sent with a fresh view: its close-up, shown small under the question */
-    view?: string;
 }
 
 /** a capture's inventory (for labels) and its id → live element registry */
@@ -172,30 +169,6 @@ const ScrollContainer = styled.div`
     padding: 12px;
 `;
 
-// width/height/object-fit are set explicitly: the popover sits in the host
-// page's light DOM, so a host rule such as `img { height: 260px; object-fit:
-// cover }` would otherwise size these (dev-demo has exactly that rule)
-const CaptureImage = styled.img`
-    width: auto;
-    height: auto;
-    max-width: 100%;
-    object-fit: contain;
-    border-radius: 8px;
-    border: 1px solid #333;
-    display: block;
-`;
-
-const ViewportImage = styled.img`
-    width: auto;
-    height: auto;
-    max-width: 55%;
-    object-fit: contain;
-    border-radius: 6px;
-    border: 1px solid #446;
-    display: block;
-    margin-top: 6px;
-`;
-
 const MessageBubble = styled.div<{
     isUser: boolean;
     userBg: string;
@@ -234,17 +207,6 @@ const MessageBubble = styled.div<{
         outline: 3px solid #00c8ff;
         outline-offset: 1px;
     }
-`;
-
-const SentView = styled.img`
-    display: block;
-    width: 120px;
-    height: auto;
-    max-width: 100%;
-    object-fit: contain;
-    margin-top: 6px;
-    border-radius: 4px;
-    border: 1px solid rgba(255, 255, 255, 0.3);
 `;
 
 /** the navigator wraps as one unit, never "‹ 1 of 3" on one line and "›" on the next */
@@ -292,12 +254,6 @@ const SpeakButton = styled.button<{ speaking: boolean }>`
     cursor: pointer;
     margin-left: 6px;
     opacity: ${(props) => (props.speaking ? 1 : 0.7)};
-`;
-
-const MessageInfo = styled.div<{ hc: boolean }>`
-    font-size: 10px;
-    color: ${(props) => (props.hc ? "#ffd700" : "#88a")};
-    margin-top: 6px;
 `;
 
 const QuickActionsContainer = styled.div`
@@ -372,13 +328,14 @@ const SendButton = styled.button<{ accent: string; hc: boolean }>`
     cursor: pointer;
 `;
 
+const EmptyHint = styled.p`
+    margin: 8px 2px;
+    line-height: 1.5;
+`;
+
 const LoadingText = styled.div`
     color: #889;
     padding: 8px;
-`;
-
-const CaptureMetaText = styled.div`
-    white-space: pre-wrap;
 `;
 
 export default function ChatPopover({
@@ -398,7 +355,6 @@ export default function ChatPopover({
     const [messages, setMessages] = useState<Msg[]>([]);
     const [input, setInput] = useState("");
     const [busy, setBusy] = useState(false);
-    const [stored, setStored] = useState("");
     const scrollRef = useRef<HTMLDivElement>(null);
 
     // store subscription: re-renders when settings change, so text size / contrast apply live
@@ -441,7 +397,6 @@ export default function ChatPopover({
               chipText: "#9cf",
           };
 
-    const [sessionCaptures, setSessionCaptures] = useState(1);
     const [listening, setListening] = useState(false);
     const stopListenRef = useRef<(() => void) | null>(null);
     /** which message is being spoken and its phase */
@@ -508,29 +463,9 @@ export default function ChatPopover({
                             }),
                         ),
                     );
-                if (d.captures) setSessionCaptures(d.captures);
             })
             .catch(() => {});
     }, [backend, sessionId, captureId]);
-
-    // Ask the backend what it actually received for this capture
-    useEffect(() => {
-        if (captureId === "local") {
-            setStored("backend unreachable — nothing uploaded");
-            return;
-        }
-        fetch(`${backend}/api/capture/${encodeURIComponent(captureId)}`)
-            .then((r) => r.json())
-            .then((d) => {
-                const f = d.files ?? {};
-                const kb = (n: string) =>
-                    f[n] != null ? `✓ ${Math.round(f[n] / 1024)}KB` : "✗";
-                setStored(
-                    `backend stored: page ${kb("capture.png")} · close-up ${kb("viewport.png")}`,
-                );
-            })
-            .catch(() => setStored("backend stored: (check failed)"));
-    }, [backend, captureId]);
 
     // Clamp popover inside viewport, near the cursor (or restore pinned position)
     const clamp = (p: { left: number; top: number }) => ({
@@ -642,10 +577,16 @@ export default function ChatPopover({
     }
 
     /** a finished reply: debug readout, then outline it if the auto-highlight knob says so */
-    function onReplyDone(m: Msg, question: string, token: number) {
+    function onReplyDone(
+        m: Msg,
+        question: string,
+        token: number,
+        ask: SentAsk,
+    ) {
         const c = cited(m);
         const src = m.cite;
         if (!c || !src) return;
+        ask.cited = c.ids;
         recordEvidence(m.text, c.ids, (id) => labelOfWire(id, src.inventory));
         const mode = getSettings().autoHighlight;
         if (!c.ids.length || mode === "never") return;
@@ -752,22 +693,14 @@ export default function ChatPopover({
         return true;
     }
 
-    const fmtInfo = (d: {
-        provider: string;
-        model: string;
-        imagesSent: number;
-        latencyMs: number;
-    }) =>
-        `${d.provider} · ${d.model} · ${d.imagesSent} image${d.imagesSent === 1 ? "" : "s"} · ${(d.latencyMs / 1000).toFixed(1)}s`;
-
-    /** replace the text/info of the last (streaming) assistant message */
+    /** replace fields of the last (streaming) assistant message */
     const patchLast = (patch: Partial<Msg>) =>
         setMessages((m) => [
             ...m.slice(0, -1),
             { ...m[m.length - 1], ...patch },
         ]);
 
-    async function sendStreaming(text: string, token: number) {
+    async function sendStreaming(text: string, token: number, ask: SentAsk) {
         const cite = citeSource();
         const res = await fetch(`${backend}/api/chat/stream`, {
             method: "POST",
@@ -781,6 +714,7 @@ export default function ChatPopover({
         });
         if (!res.ok || !res.body) {
             const data = await res.json().catch(() => ({}));
+            ask.error = data.error ?? `HTTP ${res.status}`;
             setMessages((m) => [
                 ...m,
                 {
@@ -816,6 +750,7 @@ export default function ChatPopover({
                 } else if (data.error) {
                     // the backend ends the stream after an error, with no "done"
                     ended = true;
+                    ask.error = data.error;
                     patchLast({
                         text: `${full}\n[error: ${data.error}]`,
                         streaming: false,
@@ -823,11 +758,13 @@ export default function ChatPopover({
                     });
                 } else if (data.done) {
                     ended = true;
-                    patchLast({ info: fmtInfo(data), streaming: false });
+                    ask.reply = data;
+                    patchLast({ streaming: false });
                     onReplyDone(
                         { id: msgId, role: "assistant", text: full, cite },
                         text,
                         token,
+                        ask,
                     );
                     // live read: the user may toggle auto-read while the reply streams
                     if (getSettings().autoRead && full) {
@@ -842,10 +779,13 @@ export default function ChatPopover({
             }
         }
         // connection dropped with neither "done" nor "error": stop hiding the tail
-        if (!ended) patchLast({ streaming: false });
+        if (!ended) {
+            ask.error = "stream ended without a reply";
+            patchLast({ streaming: false });
+        }
     }
 
-    async function sendPlain(text: string, token: number) {
+    async function sendPlain(text: string, token: number, ask: SentAsk) {
         const cite = citeSource();
         const res = await fetch(`${backend}/api/chat`, {
             method: "POST",
@@ -858,49 +798,51 @@ export default function ChatPopover({
             }),
         });
         const data = await res.json();
-        const info = data.provider != null ? fmtInfo(data) : undefined;
+        if (data.provider != null) ask.reply = data;
+        if (data.reply == null) ask.error = data.error ?? `HTTP ${res.status}`;
         const reply: Msg = {
             id: `plain-${Date.now()}`,
             role: "assistant",
             text: data.reply ?? data.error ?? "No reply.",
-            info,
             error: data.reply == null,
             cite: data.reply == null ? undefined : cite,
         };
         setMessages((m) => [...m, reply]);
-        if (data.reply != null) onReplyDone(reply, text, token);
+        if (data.reply != null) onReplyDone(reply, text, token, ask);
         // live read: the user may toggle auto-read while the request is in flight
         if (getSettings().autoRead && data.reply) speak(speakable(data.reply));
     }
 
     async function sendText(text: string) {
         if (!text || busy) return;
-        const userId = `user-${Date.now()}`;
         setMessages((m) => [
             ...m,
-            { id: userId, role: "user", text, captureId: cur.current.id },
+            {
+                id: `user-${Date.now()}`,
+                role: "user",
+                text,
+                captureId: cur.current.id,
+            },
         ]);
         setBusy(true);
         // minted at ask time: an auto-highlight for this reply loses to anything newer
         const token = nextToken();
+        let ask: SentAsk | undefined;
         try {
             // the user moved since the last capture: send what they see now
             if (refreshCapture && cur.current.id !== "local") {
                 const fresh = await refreshCapture(cur.current.cap);
-                if (fresh) {
-                    cur.current = fresh;
-                    const view = fresh.cap.viewportImage;
-                    if (view)
-                        setMessages((m) =>
-                            m.map((x) =>
-                                x.id === userId ? { ...x, view } : x,
-                            ),
-                        );
-                }
+                if (fresh) cur.current = fresh;
             }
-            if (settings.streamReplies) await sendStreaming(text, token);
-            else await sendPlain(text, token);
+            // developer-facing record of what went out; the debug panel shows it
+            ask = recordAsk(cur.current.id, {
+                question: text,
+                cite: getSettings().citeEvidence,
+            });
+            if (settings.streamReplies) await sendStreaming(text, token, ask);
+            else await sendPlain(text, token, ask);
         } catch (err) {
+            if (ask) ask.error = String(err);
             setMessages((m) => [
                 ...m,
                 {
@@ -973,62 +915,12 @@ export default function ChatPopover({
           handing it to the page behind — the list auto-scrolls to the end, so without
           this every further scroll moves the page instead of the chat */}
             <ScrollContainer ref={scrollRef}>
-                <CaptureImage src={capture.image} alt="page capture" />
-                {capture.viewportImage && (
-                    <ViewportImage
-                        src={capture.viewportImage}
-                        alt="close-up of current view"
-                    />
+                {messages.length === 0 && (
+                    <EmptyHint style={{ color: C.dim, fontSize: fs }}>
+                        Ask about what you clicked, or pick a quick action
+                        below.
+                    </EmptyHint>
                 )}
-                <CaptureMetaText
-                    style={{
-                        fontSize: Math.max(11, fs - 3),
-                        color: C.dim,
-                        margin: "6px 0 2px",
-                    }}
-                >
-                    click ({capture.meta.clickX}, {capture.meta.clickY}) ·
-                    scroll {capture.meta.scrollDepth}% ·{" "}
-                    {capture.meta.trace.length} trace pts
-                    {capture.meta.zoom !== 1 && (
-                        <> · zoom {Math.round(capture.meta.zoom * 100)}%</>
-                    )}
-                    {capture.meta.region && (
-                        <>
-                            {" "}
-                            · region {capture.meta.region.w}×
-                            {capture.meta.region.h}
-                        </>
-                    )}
-                </CaptureMetaText>
-                <CaptureMetaText
-                    style={{
-                        fontSize: Math.max(11, fs - 3),
-                        color: hc ? "#fff" : "#7a9",
-                        margin: 0,
-                    }}
-                >
-                    {stored}
-                    {sessionId &&
-                        sessionCaptures > 1 &&
-                        ` · session: ${sessionCaptures} captures`}
-                </CaptureMetaText>
-                {capture.meta.element && (
-                    <CaptureMetaText
-                        style={{
-                            fontSize: Math.max(11, fs - 3),
-                            color: hc ? "#fff" : "#a9c",
-                            margin: "2px 0 0",
-                        }}
-                    >
-                        clicked: &lt;{capture.meta.element.tag}&gt;
-                        {capture.meta.element.text &&
-                            ` "${capture.meta.element.text.slice(0, 60)}${capture.meta.element.text.length > 60 ? "…" : ""}"`}
-                        {capture.meta.element.nearestHeading &&
-                            ` · under "${capture.meta.element.nearestHeading}"`}
-                    </CaptureMetaText>
-                )}
-                <div style={{ margin: "0 0 12px" }} />
                 {messages.map((m, i) => {
                     const c = cited(m);
                     const n = c?.ids.length ?? 0;
@@ -1094,13 +986,6 @@ export default function ChatPopover({
                                             </PlaceButton>
                                         ) : null;
                                     })()}
-                                    {m.view && (
-                                        <SentView
-                                            src={m.view}
-                                            alt="the view sent with this question"
-                                            title="Sent with your current view"
-                                        />
-                                    )}
                                 </>
                             )}
                             {m.role === "assistant" && m.text && (
@@ -1237,14 +1122,6 @@ export default function ChatPopover({
                                         </QuickActionButton>
                                     )}
                                 </EvidenceRow>
-                            )}
-                            {m.info && (
-                                <MessageInfo
-                                    hc={hc}
-                                    style={{ fontSize: Math.max(10, fs - 4) }}
-                                >
-                                    {m.info}
-                                </MessageInfo>
                             )}
                         </MessageBubble>
                     );

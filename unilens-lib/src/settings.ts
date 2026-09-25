@@ -41,6 +41,11 @@ export interface Settings {
     chatFontSize: number;
     /** popover pinned position — null = follow the cursor (survives reloads) */
     pinnedPos: { left: number; top: number } | null;
+    /** debug panel: where it was dragged to (null = top-right) and whether it is folded */
+    debugPanel: {
+        pos: { left: number; top: number } | null;
+        collapsed: boolean;
+    };
     /** send the page inventory (interactables, headings, text) with every capture */
     inventory: boolean;
     /** deepest level of the inventory tree (body = 0); collapsed wrapper divs do not count */
@@ -113,6 +118,7 @@ const DEFAULTS: Settings = {
     captureRes: 1,
     chatFontSize: 14,
     pinnedPos: null,
+    debugPanel: { pos: null, collapsed: false },
     inventory: true,
     inventoryMaxDepth: 12,
     inventorySummaryDepth: 2,
@@ -312,7 +318,7 @@ export type SelectKnobKey = keyof typeof SELECT_CHOICES;
  * hand-edited localStorage). Dispatch is by key: numeric knobs coerce with Number()
  * and clamp into their NUMBER_KNOBS bounds (or must be one of their SELECT_CHOICES),
  * enums must be a table key, booleans must be booleans; anything else falls back to
- * the default. pinnedPos passes through: its consumer validates the coordinates.
+ * the default. pinnedPos and debugPanel pass through: their consumers validate them.
  */
 export function clampSetting<K extends keyof Settings>(
     key: K,
