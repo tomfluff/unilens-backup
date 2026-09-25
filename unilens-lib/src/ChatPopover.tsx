@@ -68,8 +68,9 @@ import {
 interface Msg {
     id: string;
     /** "place": a click, its own entry in the log (captureId names the place), whether
-     *  or not anything is asked there */
-    role: "user" | "assistant" | "place";
+     *  or not anything is asked there. "divider": the chat was hidden and shown again
+     *  here; its text is the time it came back */
+    role: "user" | "assistant" | "place" | "divider";
     text: string;
     /** a system failure (rate limit, backend, network), not an answer: styled apart so a
      *  participant can tell "the model didn't find it" from "something broke" */
@@ -144,6 +145,9 @@ interface Props {
     ) => Promise<{ id: string; cap: CaptureResult } | null>;
     /** a new click is being captured; the chat moves there when it arrives */
     capturing?: boolean;
+    /** closed with ✕: out of sight but kept, conversation and all, until the next
+     *  click shows it again */
+    hidden?: boolean;
 }
 
 /** width and height in em of the chat's font size (chatStyles.ts sizes the panel in em) */
@@ -256,6 +260,7 @@ export default function ChatPopover({
     onMove,
     refreshCapture,
     capturing,
+    hidden = false,
 }: Props) {
     ensureChatStyles();
     // the log opens with the click that opened the chat
@@ -264,8 +269,14 @@ export default function ChatPopover({
     );
     /** the last action, shown on the status line: every action is seen as well as heard */
     const [status, setStatus] = useState("");
+    /** read by callbacks that outlive a render (a stream, a timer): hidden, the chat is
+     *  silent */
+    const hiddenRef = useRef(hidden);
+    hiddenRef.current = hidden;
     /** every action: its sound, the visible status line, and the one live region */
     const act = (kind: Earcon, text?: string) => {
+        // hidden, it makes no sound: the user closed it
+        if (hiddenRef.current) return;
         earcon(kind);
         if (text !== undefined) {
             setStatus(text);
@@ -394,17 +405,65 @@ export default function ChatPopover({
     const foldRef = useRef<HTMLButtonElement>(null);
     /** a question asked while a new place is captured: it waits for that place */
     const waiting = useRef<{ text: string; msgId: string } | null>(null);
+    /** where the keyboard was before the chat opened (or was last shown) */
+    const openedFrom = useRef<HTMLElement | null>(null);
+    /** what closing does, whether the chat is hidden or gone */
+    const quiet = () => {
+        stopSpeaking();
+        // cancel, not stop: a stop delivers what was heard and sends it
+        stopListenRef.current?.(true);
+        releaseAudio();
+        const back = openedFrom.current;
+        if (back?.isConnected) back.focus({ preventScroll: true });
+    };
+    // biome-ignore lint/correctness/useExhaustiveDependencies: on mount and unmount only
     useEffect(() => {
-        const before = document.activeElement as HTMLElement | null;
+        openedFrom.current = document.activeElement as HTMLElement | null;
         inputRef.current?.focus({ preventScroll: true });
-        return () => {
-            stopSpeaking();
-            // cancel, not stop: a stop delivers what was heard and sends it
-            stopListenRef.current?.(true);
-            releaseAudio();
-            if (before?.isConnected) before.focus({ preventScroll: true });
-        };
+        return quiet;
     }, []);
+    // Hidden with ✕, the chat keeps its conversation. Shown again by the next click, it
+    // marks the gap with a divider and the time. Declared before the new-capture
+    // effect, so the divider comes before the new place's entry
+    const wasHidden = useRef(hidden);
+    // biome-ignore lint/correctness/useExhaustiveDependencies: on the hidden edge only
+    useEffect(() => {
+        const was = wasHidden.current;
+        wasHidden.current = hidden;
+        if (hidden) {
+            quiet();
+            // a cancelled mic never reports its end: clear what it would have
+            stopListenRef.current = null;
+            heard.current = "";
+            setListening(false);
+            // a question waiting for the capture this hide dropped goes back to the
+            // field, unsent, rather than to the place before it (ahead of anything
+            // typed since, which stays)
+            const w = waiting.current;
+            if (w) {
+                waiting.current = null;
+                setMessages((ms) => ms.filter((m) => m.id !== w.msgId));
+                setInput((typed) =>
+                    typed.trim() ? `${w.text} ${typed}` : w.text,
+                );
+            }
+            return;
+        }
+        if (!was) return;
+        openedFrom.current = document.activeElement as HTMLElement | null;
+        const time = new Date().toLocaleTimeString(chatLang(), {
+            hour: "numeric",
+            minute: "2-digit",
+        });
+        setMessages((ms) => [
+            ...ms,
+            {
+                id: `shown-${Date.now()}`,
+                role: "divider",
+                text: T.shownAgain(time),
+            },
+        ]);
+    }, [hidden]);
 
     /** voice buttons show in every browser; without speech recognition they say why */
     function noVoice() {
@@ -677,7 +736,11 @@ export default function ChatPopover({
 
     // Escape is owned by highlight.ts (one listener decides per keypress, honouring the
     // escapeOrder setting); the popover only lends it a close callback
-    useEffect(() => registerPopoverClose(onClose), [onClose]);
+    // hidden, Escape is the page's again (it clears highlights, closes nothing)
+    useEffect(
+        () => (hidden ? undefined : registerPopoverClose(onClose)),
+        [onClose, hidden],
+    );
 
     // The capture the next message goes against: the one this popover opened on, until
     // a follow-up after a scroll/pan/zoom re-captures the new view into the session
@@ -1019,7 +1082,7 @@ export default function ChatPopover({
                         ask,
                     );
                     // live read: the user may toggle auto-read while the reply streams
-                    if (getSettings().autoRead && full) {
+                    if (getSettings().autoRead && full && !hiddenRef.current) {
                         const idx = messages.length + 1; // the assistant bubble just added
                         speak(speakable(full), (s) =>
                             setSpeaking(
@@ -1070,7 +1133,8 @@ export default function ChatPopover({
         setMessages((m) => [...m, reply]);
         if (data.reply != null) onReplyDone(reply, text, token, ask);
         // live read: the user may toggle auto-read while the request is in flight
-        if (getSettings().autoRead && data.reply) speak(speakable(data.reply));
+        if (getSettings().autoRead && data.reply && !hiddenRef.current)
+            speak(speakable(data.reply));
     }
 
     /** queuedId: a question that waited for a new place's capture, already in the log */
@@ -1294,6 +1358,14 @@ export default function ChatPopover({
             if (p) rows.push(placeRow(p, m.id));
             return;
         }
+        if (m.role === "divider") {
+            rows.push(
+                <div key={m.id} className="ulc-divider">
+                    <span>{m.text}</span>
+                </div>,
+            );
+            return;
+        }
         if (m.role === "user") {
             rows.push(
                 <div key={m.id} className="ulc-msg ulc-me">
@@ -1353,7 +1425,9 @@ export default function ChatPopover({
         );
     });
     // an answer is on its way: dots where it will appear, until its first words do
-    const lastTalk = messages.findLast((m) => m.role !== "place");
+    const lastTalk = messages.findLast(
+        (m) => m.role === "user" || m.role === "assistant",
+    );
     if (busy && lastTalk?.role === "user")
         rows.push(
             <div
@@ -1377,7 +1451,9 @@ export default function ChatPopover({
 
     const ms = motionMs();
     /** anything asked or answered yet (place entries alone are not a conversation) */
-    const talked = messages.some((m) => m.role !== "place");
+    const talked = messages.some(
+        (m) => m.role === "user" || m.role === "assistant",
+    );
     const voiceOK = settings.voiceInput;
     /** record a voice message: next to send, and in the folded chat's header */
     // one voice button, the mic: its words say whether it sends on a pause
@@ -1431,6 +1507,7 @@ export default function ChatPopover({
                     top: pos.top,
                     width: panelW,
                     height: mini ? "auto" : panelH,
+                    display: hidden ? "none" : undefined,
                     // glides to a new click; never while dragged
                     transition:
                         ms && !dragRef.current

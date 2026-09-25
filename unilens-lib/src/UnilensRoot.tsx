@@ -140,16 +140,21 @@ export function UnilensRoot({
             paint(null);
         }
 
-        /** ✕ pressed: dismissing the chat also ends the conversation session */
-        function dismissChat() {
-            unilens.setSessionId(null);
-            // a late answer from the closed chat must not draw on the page. Here, not in
+        /**
+         * ✕ pressed: the chat hides and keeps its conversation, session included; the
+         * next click shows it again there. (With continuity off, that click opens a
+         * fresh chat instead, as every click does.)
+         */
+        function hideChat() {
+            // a late answer from the hidden chat must not draw on the page. Here, not in
             // closeChat: a new chat opening calls that too, after its capture's id is set
             setCurrentCapture(null);
             committed = { capture: null, asked: undefined };
-            // a capture still running was for this chat: it must not open another
+            // a capture still running was for this chat: it must not show it again
             latestCapture++;
-            closeChat();
+            // a view refresh still running belongs to what was on screen before
+            generation++;
+            repaint({ hidden: true, capturing: false });
         }
 
         /**
@@ -234,7 +239,7 @@ export function UnilensRoot({
                     sessionId: getSettings().continuity
                         ? unilens.getSessionId()
                         : null,
-                    onClose: dismissChat,
+                    onClose: hideChat,
                     refreshCapture,
                     initialPos: pinnedPos(),
                     pinned: pinnedPos() != null,
@@ -279,7 +284,8 @@ export function UnilensRoot({
                 regionBox ?? el?.getBoundingClientRect(),
             );
             // the capture takes a moment: say so now, in the open chat or out loud
-            if (current && getSettings().continuity) {
+            // (a hidden chat says nothing until the capture shows it)
+            if (current && !current.props.hidden && getSettings().continuity) {
                 repaint({ capturing: true });
             } else {
                 earcon("send");
@@ -405,7 +411,7 @@ export function UnilensRoot({
 
         initDebug({
             sessionId: () => unilens.getSessionId(),
-            popoverOpen: () => current != null,
+            popoverOpen: () => current != null && !current.props.hidden,
             backend: () => backend,
         });
 
