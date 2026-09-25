@@ -23,5 +23,5 @@ The chat's ✕ ended the conversation. It dropped the session, so the next click
 
 ## Not in this change
 
-- **Starting over.** A new conversation still needs a page reload. A "New conversation" control is a possible follow-up.
+- **Starting over.** A new conversation still needs a page reload. A "New conversation" button is in TODOS.md as a future step.
 - **Keeping the conversation across a reload.** That is the restore-after-reload PR (TODOS.md), with interaction data only.

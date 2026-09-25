@@ -87,6 +87,22 @@ Either way, no images in the browser. The backend's session history (`/api/sessi
 **Priority:** P2
 **Depends on:** None
 
+### A "New conversation" button
+
+**What:** A control in the chat that starts over: a new session, an empty log, and the places numbered from P1 again. The current conversation stays in the backend's session history.
+
+**Why:** Since #17, ✕ only hides the chat and keeps the conversation, so the only way to start fresh is a page reload. The builder asked for a button as a future step (2026-09-25).
+
+**Context:**
+- The session id lives on `UnilensClient` (`setSessionId(null)` starts a new one with the next capture).
+- The chat's log is ChatPopover state; a fresh chat means a new React key in `UnilensRoot` (`chats++`), as with continuity off.
+- Places are page-wide in `places.ts` (`clearPlaces()` exists).
+- Questions to settle: where it sits (header or the minimized chat), whether it asks to confirm, and what screen readers hear.
+
+**Effort:** S
+**Priority:** P3
+**Depends on:** #17 (✕ hides the chat)
+
 ### A reading that fails midway stops without saying so
 
 **What:** When the streamed read-aloud audio fails partway (network drop, the backend's MP3 stream cut), `onerror` in `speech.ts` ends the reading silently. Decide what should happen: carry on in the browser's voice from about where it stopped, start the answer over in that voice, or say "Reading stopped" and offer play again.
