@@ -132,8 +132,12 @@ function evaluate(): DwellDebug {
         centroid: null,
     };
     if (!getSettings().hints) return { ...d, blocked: "hints disabled" };
-    // the root stays on the page; the chat inside it is what is open
-    if (document.getElementById("unilens-root")?.firstElementChild)
+    // the root stays on the page, and so does a hidden chat: a chat that shows is open
+    if (
+        document
+            .getElementById("unilens-root")
+            ?.firstElementChild?.getClientRects().length
+    )
         return { ...d, blocked: "popover open" };
     if (chip) return { ...d, blocked: "chip visible" };
     if (d.cooldownMs > 0) return { ...d, blocked: "cooldown" };

@@ -33,7 +33,7 @@ const EN = {
     stationName: "UniLens",
     pin: "Keep the chat here for the next question",
     unpin: "Stop keeping the chat here",
-    close: "Close the chat",
+    close: "Hide the chat. It keeps the conversation",
     minimize: "Minimize the chat",
     expand: "Show the whole chat",
     sMinimized: "Chat minimized to its header.",
@@ -66,6 +66,8 @@ const EN = {
     backTitle: "Return to where you were reading",
     placeEntry: (n: number, label: string) =>
         `Where you clicked, P${n}: ${label}. Go there`,
+    /** the divider where a hidden chat was shown again */
+    shownAgain: (time: string) => `Reopened at ${time}`,
     evidenceLabel: (n: number, label: string) => `Source ${n}: ${label}`,
     // status line and live region
     sAsking: "Sent. Waiting for the answer…",
@@ -140,7 +142,7 @@ const JA: Strings = {
     stationName: "ユニレンズ",
     pin: "次の質問でもチャットをこの位置に表示",
     unpin: "位置の固定をやめる",
-    close: "チャットを閉じる",
+    close: "チャットを隠す（会話は残ります）",
     minimize: "チャットを最小化",
     expand: "チャット全体を表示",
     sMinimized: "チャットを最小化しました。",
@@ -174,6 +176,7 @@ const JA: Strings = {
     backTitle: "読んでいた場所に戻る",
     placeEntry: (n: number, label: string) =>
         `クリックした場所 P${n}: ${label}。移動する`,
+    shownAgain: (time: string) => `${time} に再表示`,
     evidenceLabel: (n: number, label: string) => `出典 ${n}: ${label}`,
     sAsking: "送信しました。回答を待っています…",
     sCapturing: "クリックした場所を取り込んでいます…",

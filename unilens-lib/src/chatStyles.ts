@@ -57,6 +57,10 @@ ${R} .ulc-voice[aria-pressed="true"] { animation: ulc-rec 1.2s ease-in-out infin
 @keyframes ulc-rec { 50% { box-shadow: 0 0 0 .3em rgba(220, 38, 38, .35); } }
 ${R} .ulc-where { display: inline-flex; align-items: center; gap: .4em; flex: none; max-width: 100%; min-height: 2.3em; padding: .15em .75em .15em .5em; font-size: .95em; line-height: 1.3; }
 ${R} .ulc-where.is-pending { border-style: dashed; cursor: default; }
+/* where a hidden chat was shown again: a rule across the log, the time in its middle */
+${R} .ulc-divider { display: flex; align-items: center; gap: .6em; flex: none; color: var(--muted); font-size: .95em; line-height: 1.3; font-variant-numeric: tabular-nums; }
+${R} .ulc-divider::before, ${R} .ulc-divider::after { content: ""; flex: 1; border-top: 1.5px solid currentColor; }
+${R}${HC} .ulc-divider::before, ${R}${HC} .ulc-divider::after { border-top-width: 2px; }
 ${R} .ulc-where b { flex: none; font-variant-numeric: tabular-nums; }
 ${R} .ulc-where span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 ${R} .ulc-ctl { display: flex; align-items: center; gap: .35em; min-width: 0; }
