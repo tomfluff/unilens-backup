@@ -21,6 +21,9 @@ function toSpeakable(text: string): string {
 let backendUrl = "";
 let audioEl: HTMLAudioElement | null = null;
 let stateCb: ((s: SpeechState) => void) | null = null;
+/** bumped by every stop (and so by every new reading): a reading whose audio comes back
+ *  after that is dropped, not played over the silence or the newer one */
+let reading = 0;
 
 export type SpeechState = "loading" | "playing" | "paused" | "idle";
 
@@ -34,12 +37,16 @@ function setState(s: SpeechState) {
     if (s === "idle") stateCb = null;
 }
 
-function speakNative(text: string) {
+function speakNative(text: string, mine: number) {
     const u = new SpeechSynthesisUtterance(toSpeakable(text));
     u.lang = guessLang(text);
-    u.onstart = () => setState("playing");
-    u.onend = () => setState("idle");
-    u.onerror = () => setState("idle");
+    // a cancelled utterance can report late: only the current reading's events count
+    u.onstart = () => {
+        if (mine === reading) setState("playing");
+    };
+    u.onend = u.onerror = () => {
+        if (mine === reading) setState("idle");
+    };
     speechSynthesis.speak(u);
 }
 
@@ -49,6 +56,7 @@ function speakNative(text: string) {
  */
 export async function speak(text: string, onState?: (s: SpeechState) => void) {
     stopSpeaking();
+    const mine = reading;
     stateCb = onState ?? null;
     setStateSafe("loading");
     const plain = toSpeakable(text);
@@ -60,21 +68,40 @@ export async function speak(text: string, onState?: (s: SpeechState) => void) {
         });
         if (!res.ok) throw new Error(`tts ${res.status}`);
         const { id } = await res.json();
-        audioEl = new Audio(
+        if (mine !== reading) return;
+        const el = new Audio(
             `${backendUrl}/api/tts/${encodeURIComponent(id)}.mp3`,
         );
-        audioEl.onplaying = () => setState("playing");
-        audioEl.onended = () => {
+        audioEl = el;
+        // media events arrive late: one from a stopped reading must not touch the next,
+        // and a "playing" queued before a pause must not undo it
+        let started = false;
+        el.onplaying = () => {
+            if (audioEl !== el || el.paused) return;
+            started = true;
+            setState("playing");
+        };
+        el.onended = () => {
+            if (audioEl !== el) return;
             audioEl = null;
             setState("idle");
         };
-        audioEl.onerror = () => {
+        // a load failure also rejects play(), whose catch hands the reading to the
+        // browser's voice: only a failure mid-reading ends it here
+        el.onerror = () => {
+            if (audioEl !== el || !started) return;
             audioEl = null;
             setState("idle");
         };
-        await audioEl.play();
-    } catch {
-        speakNative(text);
+        await el.play();
+    } catch (err) {
+        // a stop or a pause interrupts play() (AbortError): not a failure to read aloud
+        if (mine === reading && (err as Error)?.name !== "AbortError") {
+            // the browser's voice takes over: pause and resume must reach it, not the
+            // audio that failed
+            audioEl = null;
+            speakNative(text, mine);
+        }
     }
 }
 
@@ -83,6 +110,7 @@ function setStateSafe(s: SpeechState) {
 }
 
 export function stopSpeaking() {
+    reading++;
     speechSynthesis.cancel();
     if (audioEl) {
         audioEl.pause();
