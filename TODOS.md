@@ -87,6 +87,18 @@ Either way, no images in the browser. The backend's session history (`/api/sessi
 **Priority:** P2
 **Depends on:** None
 
+### A reading that fails midway stops without saying so
+
+**What:** When the streamed read-aloud audio fails partway (network drop, the backend's MP3 stream cut), `onerror` in `speech.ts` ends the reading silently. Decide what should happen: carry on in the browser's voice from about where it stopped, start the answer over in that voice, or say "Reading stopped" and offer play again.
+
+**Why:** Codex review (2026-09-25). Before playback starts, a failure already falls back to the browser's voice. After it starts, the reading just ends, and the user can't tell a finished answer from a cut one.
+
+**Context:** `speak()` in `unilens-lib/src/speech.ts` streams `/api/tts/<id>.mp3` (`backend/app.py`). Resuming mid-answer needs the played time mapped to a text offset. Restarting is simple but repeats what was heard.
+
+**Effort:** S
+**Priority:** P3
+**Depends on:** None
+
 ### Many pointer arrows pointing the same way
 
 **What:** Decide how "arrows around the pointer" show several targets that lie in about the same direction. Today they spread round the cursor circle so they do not stack. The spreading moves each arrow away from its true direction, and it reads as noise when there are many.
