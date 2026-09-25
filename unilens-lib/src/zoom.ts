@@ -376,6 +376,140 @@ export function getView(): { x: number; y: number } {
         : { x: window.scrollX, y: window.scrollY };
 }
 
+export type ClientRect = {
+    left: number;
+    top: number;
+    width: number;
+    height: number;
+};
+
+/**
+ * An element's client box. A box-less element (display:contents) reports 0x0 at the
+ * viewport origin; its content is the union of its children's boxes. Still 0x0 when
+ * nothing inside renders: callers treat that as "not on screen", never as (0, 0).
+ */
+export function boxOf(
+    el: Element,
+    measure: (el: Element) => ClientRect = (e) => e.getBoundingClientRect(),
+): ClientRect {
+    const r = measure(el);
+    if (r.width || r.height) return r;
+    const parts = Array.from(el.children, (c) => boxOf(c, measure)).filter(
+        (b) => b.width || b.height,
+    );
+    if (!parts.length) return { left: 0, top: 0, width: 0, height: 0 };
+    const left = Math.min(...parts.map((b) => b.left));
+    const top = Math.min(...parts.map((b) => b.top));
+    const right = Math.max(...parts.map((b) => b.left + b.width));
+    const bottom = Math.max(...parts.map((b) => b.top + b.height));
+    return { left, top, width: right - left, height: bottom - top };
+}
+
+export const isEmptyBox = (b: ClientRect) => !b.width && !b.height;
+
+/**
+ * An event from UniLens' own chrome (popover, settings, debug panel, minimap, badge,
+ * hint chip): all of it lives on documentElement outside <body>, so the zoom transform
+ * leaves it at 1x. Page gestures (double-click fit, alt+click capture, lens keys) must
+ * ignore it: fast clicks on a settings spinner are a double-click too.
+ */
+export function isOwnUI(target: EventTarget | null): boolean {
+    return (
+        target instanceof Node &&
+        target !== document.documentElement &&
+        document.documentElement.contains(target) &&
+        !document.body.contains(target)
+    );
+}
+
+/** where the user was before each move to evidence, newest last (capped) */
+const viewHistory: { cx: number; cy: number }[] = [];
+const HISTORY_CAP = 20;
+
+/**
+ * Bring an element to the middle of the screen under either pan engine. Leaves the
+ * view alone when the element is already fully on screen, so the page never moves
+ * without need, unless `always`. Every move is remembered so the user can return
+ * to where they were reading ("back" / "戻る"). Returns what happened.
+ */
+export function revealElement(
+    el: Element,
+    measure?: (el: Element) => ClientRect,
+    opts: { always?: boolean } = {},
+): "moved" | "in-view" | "none" {
+    const r = boxOf(el, measure);
+    if (isEmptyBox(r)) return "none";
+    // under browser pinch zoom the user sees the visual viewport, a window inside the
+    // layout viewport that client rects are measured in
+    const vv = window.visualViewport;
+    const L = vv?.offsetLeft ?? 0;
+    const T = vv?.offsetTop ?? 0;
+    const W = vv?.width ?? window.innerWidth;
+    const H = vv?.height ?? window.innerHeight;
+    if (
+        !opts.always &&
+        r.left >= L &&
+        r.top >= T &&
+        r.left + r.width <= L + W &&
+        r.top + r.height <= T + H
+    )
+        return "in-view";
+    const v = getView();
+    rememberView(W, H);
+    setView(
+        v.x + r.left + r.width / 2 - (L + W / 2),
+        v.y + r.top + r.height / 2 - (T + H / 2),
+    );
+    return "moved";
+}
+
+/** remembered in content space, so a zoom change in between still returns right */
+function rememberView(W: number, H: number) {
+    const v = getView();
+    viewHistory.push({ cx: (v.x + W / 2) / scale, cy: (v.y + H / 2) / scale });
+    if (viewHistory.length > HISTORY_CAP) viewHistory.shift();
+}
+
+/**
+ * Centre a content-space point (where the user clicked, when the element it was
+ * on is gone). Remembered like any move, so "back" returns.
+ */
+export function revealPoint(x: number, y: number) {
+    const W = window.visualViewport?.width ?? window.innerWidth;
+    const H = window.visualViewport?.height ?? window.innerHeight;
+    rememberView(W, H);
+    setView(x * scale - W / 2, y * scale - H / 2);
+}
+
+export const canReturn = () => viewHistory.length > 0;
+
+/** undo the latest move to evidence; false when there is nothing to return to */
+export function returnToPreviousView(): boolean {
+    const prev = viewHistory.pop();
+    if (!prev) return false;
+    const vv = window.visualViewport;
+    const W = vv?.width ?? window.innerWidth;
+    const H = vv?.height ?? window.innerHeight;
+    setView(prev.cx * scale - W / 2, prev.cy * scale - H / 2);
+    return true;
+}
+
+/** where an element is relative to the screen, for spoken status */
+export function directionOf(
+    el: Element,
+    measure?: (el: Element) => ClientRect,
+): "on screen" | "above" | "below" | "to the left" | "to the right" | "" {
+    const r = boxOf(el, measure);
+    if (isEmptyBox(r)) return "";
+    const W = window.visualViewport?.width ?? window.innerWidth;
+    const H = window.visualViewport?.height ?? window.innerHeight;
+    if (r.top + r.height < 0) return "above";
+    if (r.top > H) return "below";
+    if (r.left + r.width < 0) return "to the left";
+    if (r.left > W) return "to the right";
+    return "on screen";
+}
+
 /** client coords -> content (layout) coords, correct under either engine */
 export function clientToContent(
     clientX: number,
@@ -385,9 +519,13 @@ export function clientToContent(
     return { x: (clientX + v.x) / scale, y: (clientY + v.y) / scale };
 }
 
-/** minimap follows the lens; there are no scroll events to listen to when frozen */
-export function onViewChange(cb: (x: number, y: number) => void) {
+/** minimap and highlight follow the lens; there are no scroll events to listen to when frozen (returns unsubscribe) */
+export function onViewChange(cb: (x: number, y: number) => void): () => void {
     viewListeners.push(cb);
+    return () => {
+        const i = viewListeners.indexOf(cb);
+        if (i >= 0) viewListeners.splice(i, 1);
+    };
 }
 
 export function setView(x: number, y: number) {
@@ -523,8 +661,8 @@ export function setZoom(target: number, anchorX?: number, anchorY?: number) {
 function onDblClick(e: MouseEvent) {
     if (!getSettings().smartZoom || !getSettings().zoom) return;
     if (!(e.target instanceof HTMLElement)) return;
+    if (isOwnUI(e.target)) return;
     let el: HTMLElement | null = e.target;
-    if (el.closest("#unilens-root")) return;
     // climb inline/tiny elements to a meaningful block
     while (
         el &&
@@ -625,7 +763,7 @@ function onPanKey(e: KeyboardEvent) {
         t &&
         (t.isContentEditable ||
             /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName) ||
-            t.closest?.("#unilens-root"))
+            isOwnUI(t))
     )
         return;
     const v = getView();

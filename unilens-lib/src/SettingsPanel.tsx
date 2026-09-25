@@ -7,6 +7,13 @@ import { createRoot } from "react-dom/client";
 import styled from "styled-components";
 import {
     type BoolSettingKey,
+    clampSetting,
+    ENUM_CHOICES,
+    type EnumKey,
+    NUMBER_KNOBS,
+    type NumSettingKey,
+    SELECT_CHOICES,
+    type SelectKnobKey,
     TOGGLE_LABELS,
     updateSetting,
     useSettings,
@@ -21,6 +28,74 @@ const SettingsSelect = styled.select`
     border-radius: 6px;
     padding: 3px 6px;
 `;
+
+const SettingsColor = styled.input`
+    margin-left: auto;
+    width: 3em;
+    height: 1.8em;
+    padding: 0;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    border-radius: 6px;
+    background: none;
+`;
+
+const SettingsNumber = styled.input`
+    margin-left: auto;
+    width: 7em;
+    background: #26263e;
+    color: #eee;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    border-radius: 6px;
+    padding: 3px 6px;
+`;
+
+// captureRes and chatFontSize render as named-choice selects (Screen/Reduced,
+// Normal/Large), not free-number rows.
+const SELECT_KNOBS = Object.keys(SELECT_CHOICES) as SelectKnobKey[];
+const NUMBER_ROWS = (Object.keys(NUMBER_KNOBS) as NumSettingKey[]).filter(
+    (key) => !Object.hasOwn(SELECT_CHOICES, key),
+);
+const ENUM_ROWS = Object.keys(ENUM_CHOICES) as EnumKey[];
+
+/**
+ * Free-number row. Uncontrolled and committed on blur/Enter so typing "160" into a
+ * field whose min is 20 is not clamped to "20" mid-keystroke; the key remounts it
+ * when the store changes elsewhere, so it never shows a stale value.
+ */
+function NumberRow({
+    setting,
+    value,
+}: {
+    setting: NumSettingKey;
+    value: number;
+}) {
+    const knob = NUMBER_KNOBS[setting];
+    const shown = clampSetting(setting, value);
+    // Write the clamped value back: when it equals the stored one the key does not
+    // change, so nothing else would replace the out-of-range text in the field.
+    const commit = (el: HTMLInputElement) => {
+        const v = clampSetting(setting, el.valueAsNumber);
+        el.value = String(v);
+        updateSetting(setting, v);
+    };
+    return (
+        <SettingLabel>
+            {knob.label}
+            <SettingsNumber
+                key={shown}
+                type="number"
+                min={knob.min}
+                max={knob.max}
+                step={knob.step}
+                defaultValue={shown}
+                onBlur={(e) => commit(e.currentTarget)}
+                onKeyDown={(e) => {
+                    if (e.key === "Enter") e.currentTarget.blur();
+                }}
+            />
+        </SettingLabel>
+    );
+}
 
 const ZoomButton = styled.button`
     width: 28px;
@@ -150,7 +225,7 @@ function Panel() {
     const settings = useSettings();
 
     return (
-        <PanelContainer>
+        <PanelContainer id="unilens-settings-panel">
             <PanelTitle>UniLens settings</PanelTitle>
 
             {/* The feature list outgrew the window. It scrolls; the title and zoom controls
@@ -170,38 +245,67 @@ function Panel() {
                     </SettingLabel>
                 ))}
 
-                <SettingLabel>
-                    Capture resolution
-                    <SettingsSelect
-                        value={String(settings.captureRes)}
-                        onChange={(e) =>
-                            updateSetting(
-                                "captureRes",
-                                parseFloat(e.currentTarget.value),
-                            )
-                        }
-                    >
-                        <option value="1">Screen (1x)</option>
-                        <option value="0.5">Reduced (0.5x)</option>
-                    </SettingsSelect>
-                </SettingLabel>
+                {SELECT_KNOBS.map((key) => (
+                    <SettingLabel key={key}>
+                        {NUMBER_KNOBS[key].label}
+                        <SettingsSelect
+                            value={String(clampSetting(key, settings[key]))}
+                            onChange={(e) =>
+                                updateSetting(
+                                    key,
+                                    clampSetting(key, e.currentTarget.value),
+                                )
+                            }
+                        >
+                            {SELECT_CHOICES[key].map((c) => (
+                                <option key={c.value} value={c.value}>
+                                    {c.label}
+                                </option>
+                            ))}
+                        </SettingsSelect>
+                    </SettingLabel>
+                ))}
 
                 <SettingLabel>
-                    Chat text size
-                    <SettingsSelect
-                        value={String(settings.chatFontSize)}
+                    Highlight colour
+                    <SettingsColor
+                        type="color"
+                        value={clampSetting("hlColor", settings.hlColor)}
                         onChange={(e) =>
                             updateSetting(
-                                "chatFontSize",
-                                parseInt(e.currentTarget.value, 10),
+                                "hlColor",
+                                clampSetting("hlColor", e.currentTarget.value),
                             )
                         }
-                    >
-                        <option value="14">Normal</option>
-                        <option value="17">Large</option>
-                        <option value="20">X-Large</option>
-                    </SettingsSelect>
+                    />
                 </SettingLabel>
+
+                {ENUM_ROWS.map((key) => (
+                    <SettingLabel key={key}>
+                        {ENUM_CHOICES[key].label}
+                        <SettingsSelect
+                            value={String(clampSetting(key, settings[key]))}
+                            onChange={(e) =>
+                                updateSetting(
+                                    key,
+                                    clampSetting(key, e.currentTarget.value),
+                                )
+                            }
+                        >
+                            {Object.entries(ENUM_CHOICES[key].choices).map(
+                                ([value, label]) => (
+                                    <option key={value} value={value}>
+                                        {label}
+                                    </option>
+                                ),
+                            )}
+                        </SettingsSelect>
+                    </SettingLabel>
+                ))}
+
+                {NUMBER_ROWS.map((key) => (
+                    <NumberRow key={key} setting={key} value={settings[key]} />
+                ))}
             </SettingsList>
 
             {/* manual zoom is part of the zoom feature — hide it when the toggle is off */}
@@ -218,6 +322,8 @@ function SettingsLauncher() {
             <GearButton
                 type="button"
                 title="UniLens settings"
+                aria-expanded={open}
+                aria-controls="unilens-settings-panel"
                 onClick={() => setOpen((o) => !o)}
             >
                 ⚙

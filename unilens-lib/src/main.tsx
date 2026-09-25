@@ -17,14 +17,21 @@ import {
     capture,
     startTrace,
     tagLastCapture,
+    viewMovedSince,
 } from "./capture";
 import { initDebug } from "./DebugPanel";
+import {
+    clearHighlights,
+    init as initHighlight,
+    setCurrentCapture,
+} from "./highlight";
 import { initHint } from "./hint";
 import { initMinimap } from "./minimap";
+import { recordPlace } from "./places";
 import { initSettings } from "./SettingsPanel";
 import { getSettings, updateSetting } from "./settings";
 import { setSpeechBackend } from "./speech";
-import { clientToContent, initZoom } from "./zoom";
+import { clientToContent, initZoom, isOwnUI } from "./zoom";
 
 /** build stamp injected by esbuild --define (see the lib Makefile); absent in dev */
 declare const __target_dist_unilens_BUILD__: string;
@@ -54,6 +61,7 @@ function setPinnedPos(pos: { left: number; top: number } | null) {
 }
 
 function closePopover() {
+    generation++;
     root?.unmount();
     root = null;
     container?.remove();
@@ -64,6 +72,73 @@ function closePopover() {
 function dismissPopover() {
     sessionId = null;
     closePopover();
+}
+
+/** a short name for where the user clicked, for "where I clicked" buttons and speech */
+function placeLabel(cap: CaptureResult): string {
+    const e = cap.meta.element;
+    if (cap.meta.region) return "the area you selected";
+    if (!e) return "where you clicked";
+    const text = (e.text ?? e.alt ?? "").trim();
+    // a short text names the thing itself; a long one is a whole section, whose
+    // heading names it better
+    if (text && text.length <= 40) return text;
+    if (e.nearestHeading) return `near "${e.nearestHeading}"`;
+    return text ? `${text.slice(0, 40)}…` : `the ${e.tag}`;
+}
+
+/** the element the open popover's question was asked about, for view refreshes */
+let askedAbout: Element | undefined;
+/** bumped whenever the popover's capture is retired (new capture, close): a refresh
+ *  that finishes after that belongs to a conversation that is gone */
+let generation = 0;
+
+/**
+ * Before a follow-up: if the user scrolled, panned or zoomed since `prev`, capture the
+ * new view (same question point) into the session so the model sees what they see now.
+ * Null when the view has not moved, the knob is off, or the upload fails (the chat
+ * then carries on with the capture it has).
+ */
+async function refreshCapture(
+    prev: CaptureResult,
+    backend: string,
+): Promise<{ id: string; cap: CaptureResult } | null> {
+    // the conversation lives in the session; without one (continuity off) a new capture
+    // would start with an empty history, so the chat stays on the capture it has
+    if (!sessionId || !getSettings().refreshView || !viewMovedSince(prev.meta))
+        return null;
+    const gen = generation;
+    try {
+        const cap = await capture(
+            prev.meta.clickX,
+            prev.meta.clickY,
+            askedAbout?.isConnected ? askedAbout : undefined,
+            undefined,
+            { viewRefresh: true },
+        );
+        if (gen !== generation) return null;
+        const id = await uploadCapture(cap, backend);
+        // never let a slow refresh take the guard from a capture opened since
+        if (gen !== generation) return null;
+        tagLastCapture(id);
+        setCurrentCapture(id);
+        // same question point as the capture it refreshes
+        recordPlace({
+            captureId: id,
+            at: Date.now(),
+            x: cap.meta.clickX,
+            y: cap.meta.clickY,
+            el: askedAbout?.isConnected ? askedAbout : undefined,
+            label: placeLabel(cap),
+        });
+        return { id, cap };
+    } catch (err) {
+        console.warn(
+            "[UniLens] view refresh failed, using the last capture:",
+            err,
+        );
+        return null;
+    }
 }
 
 function openPopover(
@@ -90,6 +165,7 @@ function openPopover(
                 backend={backend}
                 sessionId={getSettings().continuity ? sessionId : null}
                 onClose={dismissPopover}
+                refreshCapture={(prev) => refreshCapture(prev, backend)}
                 initialPos={pinnedPos()}
                 pinned={pinnedPos() != null}
                 onTogglePin={(pos) => {
@@ -118,6 +194,8 @@ async function uploadCapture(
             image: cap.image,
             viewport: cap.viewportImage,
             meta: cap.meta,
+            // beside meta, never inside it: only /api/locate reads it
+            inventory: cap.inventory,
             session_id: getSettings().continuity ? sessionId : null,
         }),
     });
@@ -134,6 +212,7 @@ export function init(options: InitOptions = {}) {
     startTrace(options.mouseWindow ?? 2.5);
     if (options.zoom ?? true) initZoom();
     initMinimap();
+    initHighlight();
     initSettings();
     setSpeechBackend(backend);
 
@@ -148,6 +227,13 @@ export function init(options: InitOptions = {}) {
         // (pointX, pointY) is the client point being asked about — the click, or the centre
         // of a drag. clientToContent handles both pan engines.
         const p = clientToContent(pointX, pointY);
+        // a new capture retires the previous outline and its ids. Retire the id first:
+        // while this capture renders and uploads, a late answer for the old one must
+        // already be stale, or it could redraw after the clear (Codex review, P1)
+        generation++;
+        setCurrentCapture(null);
+        clearHighlights();
+        askedAbout = el;
         const cap = await capture(Math.round(p.x), Math.round(p.y), el, region);
         let id = "local";
         try {
@@ -156,6 +242,16 @@ export function init(options: InitOptions = {}) {
         } catch (err) {
             console.warn("[UniLens] backend unreachable, chat will fail:", err);
         }
+        // the id exists only now, after upload: this is where the guard learns it
+        setCurrentCapture(id);
+        recordPlace({
+            captureId: id,
+            at: Date.now(),
+            x: cap.meta.clickX,
+            y: cap.meta.clickY,
+            el,
+            label: placeLabel(cap),
+        });
         openPopover(clientX, clientY, id, cap, backend);
     }
 
@@ -189,7 +285,7 @@ export function init(options: InitOptions = {}) {
         // its mouseup (released over browser chrome), clear both here
         cancelDrag();
         if (!getSettings().regionSelect || !trigger(e)) return;
-        if (container?.contains(e.target as Node)) return;
+        if (isOwnUI(e.target)) return;
         dragStart = { clientX: e.clientX, clientY: e.clientY };
         e.preventDefault(); // no text selection while dragging
     });
@@ -283,7 +379,7 @@ export function init(options: InitOptions = {}) {
             e.stopPropagation();
             return;
         }
-        if (container?.contains(e.target as Node)) return; // clicks inside the popover
+        if (isOwnUI(e.target)) return; // clicks on our own chrome, never a capture
         if (!trigger(e)) return;
         e.preventDefault();
         e.stopPropagation();

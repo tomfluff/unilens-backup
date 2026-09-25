@@ -1,6 +1,27 @@
 import { useEffect, useRef, useState } from "react";
 import styled from "styled-components";
 import type { CaptureResult } from "./capture";
+import {
+    asksToLocate,
+    type Cited,
+    mdLite,
+    type NavCommand,
+    navCommand,
+    recordEvidence,
+    renderCited,
+    speakable,
+} from "./evidence";
+import {
+    announce,
+    clearHighlights,
+    hasHighlight,
+    nextToken,
+    onHighlightsCleared,
+    registerPopoverClose,
+    showHighlights,
+} from "./highlight";
+import { labelOfWire, type WireNode } from "./inventory";
+import { goToPlace, latestPlace, type Place, placeOf } from "./places";
 import { getSettings, useSettings } from "./settings";
 import {
     listen,
@@ -9,6 +30,12 @@ import {
     stopSpeaking,
     sttSupported,
 } from "./speech";
+import {
+    canReturn,
+    directionOf,
+    returnToPreviousView,
+    revealElement,
+} from "./zoom";
 
 interface Msg {
     id: string;
@@ -16,27 +43,39 @@ interface Msg {
     text: string;
     /** reply footer: provider · model · images · latency */
     info?: string;
+    /** a system failure (rate limit, backend, network), not an answer: styled apart so a
+     *  participant can tell "the model didn't find it" from "something broke" */
+    error?: boolean;
+    /** the capture a reply's [[id]] citations resolve against. Only replies made in this
+     *  popover carry one: history from earlier captures has no live elements to point at */
+    cite?: CiteSource;
+    /** still streaming: an unfinished marker at the end stays hidden */
+    streaming?: boolean;
+    /** a question's capture, so its bubble can offer "where I clicked" */
+    captureId?: string;
+    /** a question sent with a fresh view: its close-up, shown small under the question */
+    view?: string;
 }
 
-/**
- * Minimal markdown for a 340px chat bubble: bold, inline code, dash bullets,
- * headings flattened to bold. HTML is escaped BEFORE any transform, so the
- * only tags in the output are ones we emit ourselves.
- */
-function mdLite(text: string): { __html: string } {
-    let h = text
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;");
-    h = h
-        .replace(/^#{1,4} (.+)$/gm, "<b>$1</b>")
-        .replace(/\*\*([^*\n]+)\*\*/g, "<b>$1</b>")
-        .replace(
-            /`([^`\n]+)`/g,
-            '<code style="background:rgba(255,255,255,0.12);border-radius:3px;padding:0 4px">$1</code>',
-        )
-        .replace(/^[-*] (.+)$/gm, "• $1");
-    return { __html: h };
+/** a capture's inventory (for labels) and its id → live element registry */
+interface CiteSource {
+    id: string;
+    inventory: WireNode[];
+    registry: Map<string, Element>;
+}
+
+/** which reply's evidence is outlined: all of it, or one item of it */
+type Active = { msgId: string; index: number | "all" } | null;
+
+function cited(m: Msg): Cited | null {
+    const src = m.cite;
+    if (!src || m.role !== "assistant" || m.error) return null;
+    return renderCited(
+        m.text,
+        (id) => src.registry.has(id),
+        (id) => labelOfWire(id, src.inventory),
+        m.streaming,
+    );
 }
 
 interface Props {
@@ -52,6 +91,10 @@ interface Props {
     pinned: boolean;
     onTogglePin: (pos: { left: number; top: number } | null) => void;
     onMove: (pos: { left: number; top: number }) => void;
+    /** re-capture if the view moved since `prev`; null when it did not */
+    refreshCapture?: (
+        prev: CaptureResult,
+    ) => Promise<{ id: string; cap: CaptureResult } | null>;
 }
 
 const PANEL_W = 340;
@@ -129,15 +172,24 @@ const ScrollContainer = styled.div`
     padding: 12px;
 `;
 
+// width/height/object-fit are set explicitly: the popover sits in the host
+// page's light DOM, so a host rule such as `img { height: 260px; object-fit:
+// cover }` would otherwise size these (dev-demo has exactly that rule)
 const CaptureImage = styled.img`
+    width: auto;
+    height: auto;
     max-width: 100%;
+    object-fit: contain;
     border-radius: 8px;
     border: 1px solid #333;
     display: block;
 `;
 
 const ViewportImage = styled.img`
+    width: auto;
+    height: auto;
     max-width: 55%;
+    object-fit: contain;
     border-radius: 6px;
     border: 1px solid #446;
     display: block;
@@ -149,6 +201,7 @@ const MessageBubble = styled.div<{
     userBg: string;
     aiBg: string;
     bubbleBorder: string;
+    isError?: boolean;
 }>`
     margin: 6px 0;
     padding: 8px 12px;
@@ -157,7 +210,80 @@ const MessageBubble = styled.div<{
     white-space: pre-wrap;
     background: ${(props) => (props.isUser ? props.userBg : props.aiBg)};
     border: ${(props) => props.bubbleBorder};
+    border-left: ${(props) => (props.isError ? "4px solid #b42318" : undefined)};
     margin-left: ${(props) => (props.isUser ? "auto" : 0)};
+
+    /* citation chips arrive as HTML, so they are styled here; every property is set
+       because host-page button rules reach into the popover */
+    & .unilens-cite {
+        display: inline-block;
+        min-width: 1.6em;
+        height: auto;
+        margin: 0 0.1em;
+        padding: 0 0.35em;
+        border: 2px solid #000;
+        border-radius: 0.8em;
+        background: #ffe600;
+        color: #000;
+        font: 700 0.85em/1.35 system-ui, sans-serif;
+        text-align: center;
+        vertical-align: baseline;
+        cursor: pointer;
+    }
+    & .unilens-cite:focus-visible {
+        outline: 3px solid #00c8ff;
+        outline-offset: 1px;
+    }
+`;
+
+const SentView = styled.img`
+    display: block;
+    width: 120px;
+    height: auto;
+    max-width: 100%;
+    object-fit: contain;
+    margin-top: 6px;
+    border-radius: 4px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+`;
+
+/** the navigator wraps as one unit, never "‹ 1 of 3" on one line and "›" on the next */
+/** under a question: back to the place it was asked about (explicit sizes: host CSS leaks) */
+const PlaceButton = styled.button`
+    display: block;
+    margin: 6px 0 0;
+    padding: 2px 8px;
+    min-height: 24px;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    border: 1px solid rgba(255, 255, 255, 0.45);
+    border-radius: 10px;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    cursor: pointer;
+    text-align: left;
+    &:focus-visible {
+        outline: 3px solid #00c8ff;
+        outline-offset: 1px;
+    }
+`;
+
+const NavGroup = styled.span`
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+`;
+
+const EvidenceRow = styled.div`
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    margin-top: 8px;
 `;
 
 const SpeakButton = styled.button<{ speaking: boolean }>`
@@ -194,6 +320,11 @@ const QuickActionButton = styled.button<{
     color: ${(props) => props.chipText};
     cursor: ${(props) => (props.busy ? "default" : "pointer")};
     opacity: ${(props) => (props.busy ? 0.5 : 1)};
+    &[aria-pressed="true"] {
+        font-weight: 700;
+        outline: 2px solid currentColor;
+        outline-offset: 1px;
+    }
 `;
 
 const InputContainer = styled.div`
@@ -262,6 +393,7 @@ export default function ChatPopover({
     pinned,
     onTogglePin,
     onMove,
+    refreshCapture,
 }: Props) {
     const [messages, setMessages] = useState<Msg[]>([]);
     const [input, setInput] = useState("");
@@ -362,12 +494,17 @@ export default function ChatPopover({
                     setMessages(
                         d.history.map(
                             (
-                                h: { role: string; text: string },
+                                h: {
+                                    role: string;
+                                    text: string;
+                                    capture_id?: string;
+                                },
                                 idx: number,
                             ) => ({
                                 id: `hist-${idx}-${Date.now()}`,
                                 role: h.role as Msg["role"],
                                 text: h.text,
+                                captureId: h.capture_id,
                             }),
                         ),
                     );
@@ -424,15 +561,196 @@ export default function ChatPopover({
         dragRef.current = null;
     }
 
+    // a new bubble (question, reply, error) scrolls into view; streaming deltas do not
+    // move the list, so a user reading back up is not yanked down
+    // biome-ignore lint/correctness/useExhaustiveDependencies: keyed on the count on purpose
     useEffect(() => {
         scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight });
-    }, []);
+    }, [messages.length]);
 
-    useEffect(() => {
-        const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
-        window.addEventListener("keydown", onKey);
-        return () => window.removeEventListener("keydown", onKey);
-    }, [onClose]);
+    // Escape is owned by highlight.ts (one listener decides per keypress, honouring the
+    // escapeOrder setting); the popover only lends it a close callback
+    useEffect(() => registerPopoverClose(onClose), [onClose]);
+
+    // The capture the next message goes against: the one this popover opened on, until
+    // a follow-up after a scroll/pan/zoom re-captures the new view into the session
+    const cur = useRef({ id: captureId, cap: capture });
+
+    // ── evidence: [[id]] citations in replies become chips and an action row ────
+    const citeSource = (): CiteSource | undefined => {
+        const { id, cap } = cur.current;
+        return id !== "local" && cap.inventory?.length && cap.registry
+            ? { id, inventory: cap.inventory, registry: cap.registry }
+            : undefined;
+    };
+
+    const [active, setActive] = useState<Active>(null);
+    /** a move to evidence can be undone: the Back button shows */
+    const [returnable, setReturnable] = useState(false);
+    // Escape (or a new capture) clears the outline: the pressed buttons must follow
+    useEffect(() => onHighlightsCleared(() => setActive(null)), []);
+
+    /** outline a reply's evidence (all, or item `index`), on the user's click or command */
+    function point(m: Msg, index: number | "all", reveal: boolean) {
+        const c = cited(m);
+        const src = m.cite;
+        if (!c?.ids.length || !src) return;
+        const n = c.ids.length;
+        const picks =
+            index === "all"
+                ? c.ids.map((id, i) => ({ id, i }))
+                : [{ id: c.ids[index], i: index }];
+        const label = (id: string) => labelOfWire(id, src.inventory);
+        // status is announced here, after any move, so it can say where the item is
+        showHighlights(
+            picks.map(({ id, i }) => ({
+                id,
+                role: "target" as const,
+                badge: String(i + 1),
+            })),
+            src.registry,
+            src.id,
+            nextToken(),
+            { userInitiated: true },
+        );
+        const el = src.registry.get(picks[0].id);
+        const where = el ? directionOf(el) : "";
+        // the moveToEvidence setting decides whether choosing an item moves the page;
+        // "never" leaves finding it to the off-screen cues and the minimap
+        const move = getSettings().moveToEvidence;
+        const moved =
+            reveal && move !== "never" && el
+                ? revealElement(el, undefined, {
+                      always: move === "always",
+                  }) === "moved"
+                : false;
+        setReturnable(canReturn());
+        if (hasHighlight())
+            announce(
+                index === "all" && n > 1
+                    ? `${n} sources: ${c.ids.map(label).join(", ")}.`
+                    : `Source ${n > 1 ? `${picks[0].i + 1} of ${n}` : ""}, ${label(picks[0].id)}` +
+                          (moved
+                              ? ". Brought into view; say back to return."
+                              : where && where !== "on screen"
+                                ? `, ${where}.`
+                                : "."),
+            );
+        // nothing placeable (collapsed, box-less): showHighlights announced it; no button
+        // may look pressed over an empty page
+        setActive(hasHighlight() ? { msgId: m.id, index } : null);
+    }
+
+    /** a finished reply: debug readout, then outline it if the auto-highlight knob says so */
+    function onReplyDone(m: Msg, question: string, token: number) {
+        const c = cited(m);
+        const src = m.cite;
+        if (!c || !src) return;
+        recordEvidence(m.text, c.ids, (id) => labelOfWire(id, src.inventory));
+        const mode = getSettings().autoHighlight;
+        if (!c.ids.length || mode === "never") return;
+        if (mode === "where" && !asksToLocate(question)) return;
+        // guarded: a newer question or capture since this one was asked wins
+        const drawn = showHighlights(
+            c.ids.map((id, i) => ({
+                id,
+                role: "target" as const,
+                badge: String(i + 1),
+            })),
+            src.registry,
+            src.id,
+            token,
+            {
+                label: c.ids
+                    .map((id) => labelOfWire(id, src.inventory))
+                    .join(", "),
+            },
+        );
+        if (drawn && hasHighlight()) setActive({ msgId: m.id, index: "all" });
+    }
+
+    /** "next", "show all", "the second one": steer the last cited reply without a model call */
+    /** take the user back to where they clicked, and outline what they clicked on */
+    function goPlace(p: Place): string {
+        const r = goToPlace(p);
+        // outline what was clicked only when it is a thing, not a whole section
+        const box = p.el?.isConnected ? p.el.getBoundingClientRect() : null;
+        if (
+            p.el &&
+            box &&
+            box.width <= window.innerWidth &&
+            box.height <= window.innerHeight / 2
+        )
+            showHighlights(
+                [{ id: "click", role: "anchor" }],
+                new Map([["click", p.el]]),
+                cur.current.id,
+                nextToken(),
+                { userInitiated: true },
+            );
+        setReturnable(canReturn());
+        const note = `Where you clicked: ${p.label}.${r === "moved" ? " Say back to return." : ""}`;
+        announce(note);
+        return note;
+    }
+
+    function runNav(cmd: NavCommand, text: string): boolean {
+        if (cmd.kind === "return" || cmd.kind === "place") {
+            let note: string;
+            if (cmd.kind === "return") {
+                note = returnToPreviousView()
+                    ? "Back to where you were."
+                    : "Nothing to go back to.";
+                setReturnable(canReturn());
+                announce(note);
+            } else {
+                const p = latestPlace();
+                note = p ? goPlace(p) : "No click recorded yet.";
+            }
+            setMessages((m) => [
+                ...m,
+                { id: `user-${Date.now()}`, role: "user", text },
+                { id: `nav-${Date.now()}`, role: "assistant", text: note },
+            ]);
+            return true;
+        }
+        const last = [...messages]
+            .reverse()
+            .find((m) => (cited(m)?.ids.length ?? 0) > 0);
+        const n = last ? (cited(last)?.ids.length ?? 0) : 0;
+        if (!last || !n) return false;
+        const cur =
+            active?.msgId === last.id && typeof active.index === "number"
+                ? active.index
+                : -1;
+        let note: string;
+        if (cmd.kind === "clear") {
+            clearHighlights();
+            note = "Cleared.";
+        } else if (cmd.kind === "all") {
+            point(last, "all", false);
+            note = n > 1 ? `Showing all ${n}.` : "Showing it.";
+        } else {
+            const i =
+                cmd.kind === "next"
+                    ? (cur + 1) % n
+                    : cmd.kind === "prev"
+                      ? (cur - 1 + n) % n
+                      : cmd.n - 1;
+            if (i < 0 || i >= n) {
+                note = `There ${n === 1 ? "is only 1" : `are only ${n}`}.`;
+            } else {
+                point(last, i, true);
+                note = `Showing ${i + 1} of ${n}.`;
+            }
+        }
+        setMessages((m) => [
+            ...m,
+            { id: `user-${Date.now()}`, role: "user", text },
+            { id: `nav-${Date.now()}`, role: "assistant", text: note },
+        ]);
+        return true;
+    }
 
     const fmtInfo = (d: {
         provider: string;
@@ -449,14 +767,16 @@ export default function ChatPopover({
             { ...m[m.length - 1], ...patch },
         ]);
 
-    async function sendStreaming(text: string) {
+    async function sendStreaming(text: string, token: number) {
+        const cite = citeSource();
         const res = await fetch(`${backend}/api/chat/stream`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-                capture_id: captureId,
+                capture_id: cur.current.id,
                 message: text,
                 session_id: sessionId,
+                cite: getSettings().citeEvidence,
             }),
         });
         if (!res.ok || !res.body) {
@@ -471,14 +791,16 @@ export default function ChatPopover({
             ]);
             return;
         }
+        const msgId = `stream-${Date.now()}`;
         setMessages((m) => [
             ...m,
-            { id: `stream-${Date.now()}`, role: "assistant", text: "" },
+            { id: msgId, role: "assistant", text: "", cite, streaming: true },
         ]);
         const reader = res.body.getReader();
         const decoder = new TextDecoder();
         let buffer = "";
         let full = "";
+        let ended = false;
         for (;;) {
             const { done, value } = await reader.read();
             if (done) break;
@@ -492,13 +814,25 @@ export default function ChatPopover({
                     full += data.delta;
                     patchLast({ text: full });
                 } else if (data.error) {
-                    patchLast({ text: `${full}\n[error: ${data.error}]` });
+                    // the backend ends the stream after an error, with no "done"
+                    ended = true;
+                    patchLast({
+                        text: `${full}\n[error: ${data.error}]`,
+                        streaming: false,
+                        error: true,
+                    });
                 } else if (data.done) {
-                    patchLast({ info: fmtInfo(data) });
+                    ended = true;
+                    patchLast({ info: fmtInfo(data), streaming: false });
+                    onReplyDone(
+                        { id: msgId, role: "assistant", text: full, cite },
+                        text,
+                        token,
+                    );
                     // live read: the user may toggle auto-read while the reply streams
                     if (getSettings().autoRead && full) {
                         const idx = messages.length + 1; // the assistant bubble just added
-                        speak(full, (s) =>
+                        speak(speakable(full), (s) =>
                             setSpeaking(
                                 s === "idle" ? null : { idx, phase: s },
                             ),
@@ -507,43 +841,65 @@ export default function ChatPopover({
                 }
             }
         }
+        // connection dropped with neither "done" nor "error": stop hiding the tail
+        if (!ended) patchLast({ streaming: false });
     }
 
-    async function sendPlain(text: string) {
+    async function sendPlain(text: string, token: number) {
+        const cite = citeSource();
         const res = await fetch(`${backend}/api/chat`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-                capture_id: captureId,
+                capture_id: cur.current.id,
                 message: text,
                 session_id: sessionId,
+                cite: getSettings().citeEvidence,
             }),
         });
         const data = await res.json();
         const info = data.provider != null ? fmtInfo(data) : undefined;
-        setMessages((m) => [
-            ...m,
-            {
-                id: `plain-${Date.now()}`,
-                role: "assistant",
-                text: data.reply ?? data.error ?? "No reply.",
-                info,
-            },
-        ]);
+        const reply: Msg = {
+            id: `plain-${Date.now()}`,
+            role: "assistant",
+            text: data.reply ?? data.error ?? "No reply.",
+            info,
+            error: data.reply == null,
+            cite: data.reply == null ? undefined : cite,
+        };
+        setMessages((m) => [...m, reply]);
+        if (data.reply != null) onReplyDone(reply, text, token);
         // live read: the user may toggle auto-read while the request is in flight
-        if (getSettings().autoRead && data.reply) speak(data.reply);
+        if (getSettings().autoRead && data.reply) speak(speakable(data.reply));
     }
 
     async function sendText(text: string) {
         if (!text || busy) return;
+        const userId = `user-${Date.now()}`;
         setMessages((m) => [
             ...m,
-            { id: `user-${Date.now()}`, role: "user", text },
+            { id: userId, role: "user", text, captureId: cur.current.id },
         ]);
         setBusy(true);
+        // minted at ask time: an auto-highlight for this reply loses to anything newer
+        const token = nextToken();
         try {
-            if (settings.streamReplies) await sendStreaming(text);
-            else await sendPlain(text);
+            // the user moved since the last capture: send what they see now
+            if (refreshCapture && cur.current.id !== "local") {
+                const fresh = await refreshCapture(cur.current.cap);
+                if (fresh) {
+                    cur.current = fresh;
+                    const view = fresh.cap.viewportImage;
+                    if (view)
+                        setMessages((m) =>
+                            m.map((x) =>
+                                x.id === userId ? { ...x, view } : x,
+                            ),
+                        );
+                }
+            }
+            if (settings.streamReplies) await sendStreaming(text, token);
+            else await sendPlain(text, token);
         } catch (err) {
             setMessages((m) => [
                 ...m,
@@ -562,6 +918,8 @@ export default function ChatPopover({
         const text = input.trim();
         if (!text) return;
         setInput("");
+        const nav = navCommand(text);
+        if (nav && !busy && runNav(nav, text)) return;
         sendText(text);
     }
 
@@ -671,51 +1029,226 @@ export default function ChatPopover({
                     </CaptureMetaText>
                 )}
                 <div style={{ margin: "0 0 12px" }} />
-                {messages.map((m, i) => (
-                    <MessageBubble
-                        key={m.id}
-                        isUser={m.role === "user"}
-                        userBg={C.userBubble}
-                        aiBg={C.aiBubble}
-                        bubbleBorder={C.bubbleBorder}
-                    >
-                        {m.role === "assistant" ? (
-                            // biome-ignore lint/security/noDangerouslySetInnerHtml: HTML is escaped in mdLite before formatting tags are added
-                            <span dangerouslySetInnerHTML={mdLite(m.text)} />
-                        ) : (
-                            m.text
-                        )}
-                        {m.role === "assistant" && m.text && (
-                            <SpeakButton
-                                type="button"
-                                onClick={() => speakMessage(i, m.text)}
-                                speaking={speaking?.idx === i}
-                                style={{ fontSize: Math.max(12, fs - 2) }}
-                                title={
-                                    speaking?.idx === i
+                {messages.map((m, i) => {
+                    const c = cited(m);
+                    const n = c?.ids.length ?? 0;
+                    const mine = active?.msgId === m.id ? active : null;
+                    const at = typeof mine?.index === "number" ? mine.index : 0;
+                    return (
+                        <MessageBubble
+                            key={m.id}
+                            isUser={m.role === "user"}
+                            userBg={C.userBubble}
+                            aiBg={C.aiBubble}
+                            bubbleBorder={C.bubbleBorder}
+                            isError={m.error}
+                        >
+                            {m.role === "assistant" ? (
+                                // Chips are <button data-cite> inside escaped HTML; one delegated
+                                // click handler serves them (keyboard Enter/Space clicks too)
+                                // biome-ignore lint/a11y/noStaticElementInteractions lint/a11y/useKeyWithClickEvents: delegation only; the targets are real <button> chips, which click on Enter and Space
+                                <span
+                                    onClick={(e) => {
+                                        const id = (e.target as HTMLElement)
+                                            .closest("[data-cite]")
+                                            ?.getAttribute("data-cite");
+                                        const k = id
+                                            ? (c?.ids.indexOf(id) ?? -1)
+                                            : -1;
+                                        if (k >= 0) point(m, k, true);
+                                    }}
+                                    // biome-ignore lint/security/noDangerouslySetInnerHtml: HTML is escaped in mdLite before formatting tags and chips are added
+                                    dangerouslySetInnerHTML={{
+                                        __html: c
+                                            ? c.html
+                                            : mdLite(speakable(m.text)),
+                                    }}
+                                />
+                            ) : (
+                                <>
+                                    {m.text}
+                                    {(() => {
+                                        // once per place: the first question asked there
+                                        const place = placeOf(m.captureId);
+                                        const first =
+                                            place &&
+                                            messages.findIndex(
+                                                (x) =>
+                                                    x.role === "user" &&
+                                                    placeOf(x.captureId) ===
+                                                        place,
+                                            ) === i;
+                                        return place && first ? (
+                                            <PlaceButton
+                                                type="button"
+                                                onClick={() => goPlace(place)}
+                                                title="Go back to where you clicked to ask this"
+                                                style={{
+                                                    fontSize: Math.max(
+                                                        12,
+                                                        fs - 3,
+                                                    ),
+                                                }}
+                                            >
+                                                Where I clicked: {place.label}
+                                            </PlaceButton>
+                                        ) : null;
+                                    })()}
+                                    {m.view && (
+                                        <SentView
+                                            src={m.view}
+                                            alt="the view sent with this question"
+                                            title="Sent with your current view"
+                                        />
+                                    )}
+                                </>
+                            )}
+                            {m.role === "assistant" && m.text && (
+                                <SpeakButton
+                                    type="button"
+                                    onClick={() =>
+                                        speakMessage(i, speakable(m.text))
+                                    }
+                                    speaking={speaking?.idx === i}
+                                    style={{ fontSize: Math.max(12, fs - 2) }}
+                                    title={
+                                        speaking?.idx === i
+                                            ? speaking.phase === "loading"
+                                                ? "Preparing audio…"
+                                                : "Stop"
+                                            : "Read aloud"
+                                    }
+                                >
+                                    {speaking?.idx === i
                                         ? speaking.phase === "loading"
-                                            ? "Preparing audio…"
-                                            : "Stop"
-                                        : "Read aloud"
-                                }
-                            >
-                                {speaking?.idx === i
-                                    ? speaking.phase === "loading"
-                                        ? "⏳"
-                                        : "⏹"
-                                    : "🔊"}
-                            </SpeakButton>
-                        )}
-                        {m.info && (
-                            <MessageInfo
-                                hc={hc}
-                                style={{ fontSize: Math.max(10, fs - 4) }}
-                            >
-                                {m.info}
-                            </MessageInfo>
-                        )}
-                    </MessageBubble>
-                ))}
+                                            ? "⏳"
+                                            : "⏹"
+                                        : "🔊"}
+                                </SpeakButton>
+                            )}
+                            {n > 0 && !m.streaming && (
+                                <EvidenceRow>
+                                    <QuickActionButton
+                                        type="button"
+                                        aria-pressed={mine?.index === "all"}
+                                        onClick={() =>
+                                            mine?.index === "all"
+                                                ? clearHighlights()
+                                                : point(m, "all", false)
+                                        }
+                                        chipBg={C.chipBg}
+                                        chipBorder={C.chipBorder}
+                                        chipText={C.chipText}
+                                        busy={false}
+                                        style={{
+                                            fontSize: Math.max(12, fs - 2),
+                                        }}
+                                    >
+                                        {n > 1
+                                            ? `Highlight all ${n}`
+                                            : "Highlight"}
+                                    </QuickActionButton>
+                                    {n > 1 && (
+                                        <NavGroup>
+                                            <QuickActionButton
+                                                type="button"
+                                                aria-label="Previous evidence"
+                                                onClick={() =>
+                                                    point(
+                                                        m,
+                                                        mine &&
+                                                            typeof mine.index ===
+                                                                "number"
+                                                            ? (at - 1 + n) % n
+                                                            : n - 1,
+                                                        true,
+                                                    )
+                                                }
+                                                chipBg={C.chipBg}
+                                                chipBorder={C.chipBorder}
+                                                chipText={C.chipText}
+                                                busy={false}
+                                                style={{
+                                                    fontSize: Math.max(
+                                                        12,
+                                                        fs - 2,
+                                                    ),
+                                                }}
+                                            >
+                                                ‹
+                                            </QuickActionButton>
+                                            <span aria-live="polite">
+                                                {typeof mine?.index === "number"
+                                                    ? `${mine.index + 1} of ${n}`
+                                                    : `${n} found`}
+                                            </span>
+                                            <QuickActionButton
+                                                type="button"
+                                                aria-label="Next evidence"
+                                                onClick={() =>
+                                                    point(
+                                                        m,
+                                                        mine &&
+                                                            typeof mine.index ===
+                                                                "number"
+                                                            ? (at + 1) % n
+                                                            : 0,
+                                                        true,
+                                                    )
+                                                }
+                                                chipBg={C.chipBg}
+                                                chipBorder={C.chipBorder}
+                                                chipText={C.chipText}
+                                                busy={false}
+                                                style={{
+                                                    fontSize: Math.max(
+                                                        12,
+                                                        fs - 2,
+                                                    ),
+                                                }}
+                                            >
+                                                ›
+                                            </QuickActionButton>
+                                        </NavGroup>
+                                    )}
+                                    {returnable && mine && (
+                                        <QuickActionButton
+                                            type="button"
+                                            onClick={() => {
+                                                const ok =
+                                                    returnToPreviousView();
+                                                setReturnable(canReturn());
+                                                announce(
+                                                    ok
+                                                        ? "Back to where you were."
+                                                        : "Nothing to go back to.",
+                                                );
+                                            }}
+                                            chipBg={C.chipBg}
+                                            chipBorder={C.chipBorder}
+                                            chipText={C.chipText}
+                                            busy={false}
+                                            title="Return to where you were reading"
+                                            style={{
+                                                fontSize: Math.max(12, fs - 2),
+                                            }}
+                                        >
+                                            Back
+                                        </QuickActionButton>
+                                    )}
+                                </EvidenceRow>
+                            )}
+                            {m.info && (
+                                <MessageInfo
+                                    hc={hc}
+                                    style={{ fontSize: Math.max(10, fs - 4) }}
+                                >
+                                    {m.info}
+                                </MessageInfo>
+                            )}
+                        </MessageBubble>
+                    );
+                })}
                 {busy && <LoadingText>…</LoadingText>}
             </ScrollContainer>
 
