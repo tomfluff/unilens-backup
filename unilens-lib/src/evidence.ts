@@ -51,6 +51,11 @@ export function renderCited(
     known: (id: string) => boolean,
     labelOf: (id: string) => string,
     streaming = false,
+    /** the chip's accessible name, in the chat's language */
+    nameOf: (n: number, label: string) => string = (n, label) =>
+        `Evidence ${n}: ${label}`,
+    /** what the chip shows: the number, or a code such as "U1" */
+    chipText: (n: number) => string = String,
 ): Cited {
     let t = text.replace(/\uE0FF/g, "");
     if (streaming) t = t.replace(PARTIAL, "");
@@ -63,8 +68,10 @@ export function renderCited(
     });
     const html = mdLite(t).replace(SLOT, (_, n: string) => {
         const id = ids[Number(n) - 1];
-        const label = escapeHtml(labelOf(id));
-        return `<button type="button" class="unilens-cite" data-cite="${id}" aria-label="Evidence ${n}: ${label}" title="${label}">${n}</button>`;
+        const raw = labelOf(id);
+        const label = escapeHtml(raw);
+        const name = escapeHtml(nameOf(Number(n), raw));
+        return `<button type="button" class="unilens-cite" data-cite="${id}" aria-label="${name}" title="${label}">${escapeHtml(chipText(Number(n)))}</button>`;
     });
     return { html, ids };
 }

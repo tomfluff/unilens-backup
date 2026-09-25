@@ -30,6 +30,8 @@ export interface Settings {
     continuity: boolean;
     autoRead: boolean;
     voiceInput: boolean;
+    /** the mic sends what was heard when the speaker pauses; off, it stays in the field */
+    voiceAutoSend: boolean;
     hints: boolean;
     minimap: boolean;
     /** freeze the page and pan by transform while zoomed, instead of scrolling it */
@@ -37,8 +39,10 @@ export interface Settings {
     debugView: boolean;
     /** capture render scale: 1 = screen resolution, 0.5 = reduced */
     captureRes: number;
-    /** chat bubble font size in px */
+    /** chat scale: the base size in px the whole chat panel is drawn in (em) */
     chatFontSize: number;
+    /** the conversation's text size on top of the chat scale, percent */
+    chatTextScale: number;
     /** popover pinned position — null = follow the cursor (survives reloads) */
     pinnedPos: { left: number; top: number } | null;
     /** debug panel: where it was dragged to (null = top-right) and whether it is folded */
@@ -62,7 +66,8 @@ export interface Settings {
     ringWidth: number;
     /** scale the outline with the zoom level instead of a fixed screen width */
     ringScale: boolean;
-    /** minimap target marker size in px */
+    /** the smallest a target is drawn on the minimap, px: a link on a long page would
+     *  otherwise shrink below a pixel */
     minimapMarkerSize: number;
     /** highlight look, in layers (highlightStyles.ts): one backdrop, one outline, additions */
     hlBackdrop: Backdrop;
@@ -77,13 +82,61 @@ export interface Settings {
     offscreenCue: "none" | "edge" | "pointer";
     /** radius of the pointer cue circle, px */
     cueRadius: number;
+    /** what an Alt+click shows while the page is captured (clickFx.ts) */
+    clickFx: "orb" | "aurora" | "sonar" | "frame" | "edge";
+    /** the waiting orb at an Alt+click: its glossy core, and its turning two-tone swirl
+     *  (the soft halo always shows) */
+    fxCore: boolean;
+    fxSwirl: boolean;
+    /** click feedback, shared: the ending (the style's own, or one for all), size in
+     *  percent, tempo, and the ripple on the click */
+    fxEnding: "auto" | "fade" | "fly" | "found";
+    fxSize: number;
+    fxSpeed: "calm" | "normal" | "lively";
+    fxRipple: boolean;
+    /** the ripple: the highlight colour between black rims (reads on any page), or the
+     *  highlight colour alone, thick to thin */
+    fxRippleLook: "rimmed" | "taper";
+    /** click feedback, per style: the orb's halo; the aurora's point dot and blur; a
+     *  third colour for aurora and edge; the sonar's rings; the frame's shape, sheen
+     *  and breathing; the edge's thickness, gradient and pin */
+    fxHalo: boolean;
+    fxDot: boolean;
+    fxSoftness: number;
+    fxThirdTone: boolean;
+    fxRings: number;
+    fxRingStyle: "filled" | "outline";
+    fxFrameShape: "brackets" | "highlight";
+    fxSheen: boolean;
+    fxHug: boolean;
+    fxEdgeWidth: number;
+    fxEdgeGradient: boolean;
+    fxPin: boolean;
+    /** size of an off-screen cue arrow, px */
+    cueSize: number;
+    /** page moves, chat scrolling and the chat's move to a new click: eased or instant.
+     *  Always instant when the system asks for reduced motion */
+    motion: "smooth" | "instant";
+    /** how long an eased move takes, ms */
+    motionMs: number;
     /** minimap target marker: see-through fill or outline; dim, glow and numbers stack */
-    mmShape: "filled" | "outlined";
-    mmDim: boolean;
+    /** the minimap draws with the highlight look instead of its own */
+    mmFollowHighlight: boolean;
+    /** the minimap's own look, in the highlight's layers: one backdrop, one outline,
+     *  then fill, glow and numbers (mmGlow, mmNumbers) on top; colour is hlColor */
+    mmBackdrop: Backdrop;
+    mmOutline: Outline;
+    mmFill: boolean;
     mmGlow: boolean;
     mmNumbers: boolean;
     /** whether choosing a piece of evidence moves the page to it */
     moveToEvidence: "offscreen" | "always" | "never";
+    /** the chat's look: the assistant standard, or the audio-guide or station-sign alternates */
+    chatStyle: "assistant" | "audioGuide" | "station";
+    /** interface language of the chat; auto follows the page, then the browser */
+    chatLanguage: "auto" | "en" | "ja";
+    /** a short sound for every chat action, alongside what is shown */
+    sounds: boolean;
     /** answers cite the page elements they used, as numbered chips that highlight */
     citeEvidence: boolean;
     /** re-capture before a message when the user scrolled, panned or zoomed since the last one */
@@ -99,48 +152,78 @@ const DEFAULTS: Settings = {
     mouseTrace: true,
     zoomTrace: true,
     viewportCrop: true,
-    zoomKeys: true,
+    zoomKeys: false,
     smoothZoom: true,
     smartZoom: true,
     streamReplies: true,
-    quickActions: true,
+    quickActions: false,
     dragPopover: true,
     elementContext: true,
     regionSelect: true,
     highContrast: false,
     continuity: true,
     autoRead: false,
-    voiceInput: true,
-    hints: true,
+    voiceInput: false,
+    voiceAutoSend: true,
+    hints: false,
     minimap: true,
     lensPan: false,
     debugView: false,
     captureRes: 1,
-    chatFontSize: 14,
+    chatFontSize: 17,
+    chatTextScale: 120,
     pinnedPos: null,
     debugPanel: { pos: null, collapsed: false },
     inventory: true,
-    inventoryMaxDepth: 12,
-    inventorySummaryDepth: 2,
+    inventoryMaxDepth: 40,
+    inventorySummaryDepth: 8,
     inventorySummaryCap: 160,
     inventoryMaxBytes: 200000,
     inventoryMaxNodes: 900,
     ringWidth: 2,
     ringScale: false,
-    minimapMarkerSize: 8,
+    minimapMarkerSize: 32,
     hlBackdrop: "none",
-    hlOutline: "band",
+    hlOutline: "ring",
     hlFill: false,
-    hlGlow: false,
+    hlGlow: true,
     hlBadges: true,
-    hlColor: "#ffd400",
-    offscreenCue: "none",
-    cueRadius: 90,
-    mmShape: "filled",
-    mmDim: false,
-    mmGlow: false,
+    hlColor: "#ffef26",
+    offscreenCue: "edge",
+    cueRadius: 60,
+    cueSize: 48,
+    clickFx: "orb",
+    fxCore: false,
+    fxSwirl: true,
+    fxEnding: "fly",
+    fxSize: 100,
+    fxSpeed: "lively",
+    fxRipple: true,
+    fxRippleLook: "taper",
+    fxHalo: false,
+    fxDot: true,
+    fxSoftness: 16,
+    fxThirdTone: true,
+    fxRings: 3,
+    fxRingStyle: "filled",
+    fxFrameShape: "highlight",
+    fxSheen: true,
+    fxHug: true,
+    fxEdgeWidth: 18,
+    fxEdgeGradient: true,
+    fxPin: true,
+    motion: "smooth",
+    motionMs: 1000,
+    mmFollowHighlight: false,
+    mmBackdrop: "none",
+    mmOutline: "none",
+    mmFill: true,
+    mmGlow: true,
     mmNumbers: true,
     moveToEvidence: "offscreen",
+    chatStyle: "assistant",
+    chatLanguage: "en",
+    sounds: true,
     citeEvidence: true,
     refreshView: true,
     autoHighlight: "where",
@@ -165,24 +248,37 @@ export const TOGGLE_LABELS: Record<BoolSettingKey, string> = {
     dragPopover: "Movable popover (drag header)",
     elementContext: "Clicked-element context capture",
     regionSelect: "Alt+drag region select",
-    highContrast: "High-contrast chat",
+    highContrast: "High contrast",
     continuity: "Conversation continuity",
     autoRead: "Read replies aloud",
     voiceInput: "Voice input (mic)",
+    voiceAutoSend: "Send what I say when I pause",
     hints: "Proactive help hints",
-    minimap: "Minimap while zoomed",
+    minimap: "Show the minimap while zoomed",
     lensPan: "Lens panning (freeze page while zoomed)",
     debugView: "Debug view (ctrl+shift+D)",
     inventory: "Send page inventory with captures",
-    ringScale: "Scale the outline with zoom",
-    hlFill: "Highlight: colour fill",
-    hlGlow: "Highlight: glow",
-    hlBadges: "Highlight: numbered badges",
-    mmDim: "Minimap: dim the map around targets",
-    mmGlow: "Minimap: glow around targets",
-    mmNumbers: "Minimap: numbers on targets",
+    ringScale: "Outline grows with the zoom",
+    hlFill: "Colour fill",
+    hlGlow: "Glow",
+    hlBadges: "Numbered badges",
+    mmFollowHighlight: "Same look as the highlights",
+    mmFill: "Colour fill (see-through)",
+    mmGlow: "Glow around targets",
+    mmNumbers: "Numbers on targets",
     citeEvidence: "Answers cite page elements",
+    sounds: "A sound for every action",
     refreshView: "Send my new view with follow-ups",
+    fxCore: "Orb: glossy core",
+    fxSwirl: "Orb: two-tone swirl",
+    fxRipple: "Ripple on the click",
+    fxHalo: "Orb: halo",
+    fxDot: "Aurora: dot on the exact point",
+    fxThirdTone: "Third colour (coral)",
+    fxSheen: "Frame: scanning sheen",
+    fxHug: "Frame: breathing",
+    fxEdgeGradient: "Edge: moving gradient",
+    fxPin: "Edge: pin at the click",
 };
 
 /** keys of Settings whose value is a number — the integer knob rows in the panel */
@@ -200,7 +296,8 @@ export const NUMBER_KNOBS: Record<
     { label: string; min: number; max: number; step: number }
 > = {
     captureRes: { label: "Capture resolution", min: 0.5, max: 1, step: 0.5 },
-    chatFontSize: { label: "Chat text size", min: 14, max: 20, step: 3 },
+    chatFontSize: { label: "Chat scale", min: 14, max: 20, step: 3 },
+    chatTextScale: { label: "Text size (%)", min: 80, max: 200, step: 10 },
     inventoryMaxDepth: {
         label: "Inventory max depth",
         min: 1,
@@ -235,16 +332,32 @@ export const NUMBER_KNOBS: Record<
     },
     ringWidth: { label: "Outline width (px)", min: 1, max: 6, step: 1 },
     minimapMarkerSize: {
-        label: "Minimap marker min size (px)",
+        label: "Smallest target on the map (px)",
         min: 8,
         max: 32,
         step: 2,
     },
     cueRadius: {
-        label: "Pointer cue radius (px)",
+        label: "Distance from the pointer (px)",
         min: 40,
         max: 240,
         step: 10,
+    },
+    fxSize: { label: "Size (%)", min: 50, max: 200, step: 10 },
+    fxSoftness: { label: "Aurora: softness (px)", min: 6, max: 30, step: 2 },
+    fxRings: { label: "Sonar: rings", min: 1, max: 3, step: 1 },
+    fxEdgeWidth: { label: "Edge: thickness (px)", min: 8, max: 40, step: 2 },
+    cueSize: {
+        label: "Arrow size (px)",
+        min: 48,
+        max: 128,
+        step: 8,
+    },
+    motionMs: {
+        label: "Movement duration (ms)",
+        min: 100,
+        max: 1000,
+        step: 50,
     },
 };
 
@@ -267,20 +380,78 @@ export const AUTO_HIGHLIGHTS: Record<Settings["autoHighlight"], string> = {
  * <select> per row, in this order, and hydration rejects anything not listed.
  */
 export const ENUM_CHOICES = {
-    hlOutline: { label: "Highlight outline", choices: OUTLINES },
-    hlBackdrop: { label: "Highlight backdrop", choices: BACKDROPS },
-    offscreenCue: {
-        label: "Off-screen cue",
+    chatStyle: {
+        label: "Style",
         choices: {
-            none: "None",
-            edge: "Arrows at the screen edge",
-            pointer: "Arrows around the pointer",
+            assistant: "Assistant",
+            audioGuide: "Audio guide",
+            station: "Station signs",
         },
     },
-    mmShape: {
-        label: "Minimap marker",
-        choices: { filled: "Filled, see-through", outlined: "Outlined" },
+    chatLanguage: {
+        label: "Language",
+        choices: { auto: "Follow the page", en: "English", ja: "日本語" },
     },
+    hlOutline: { label: "Outline", choices: OUTLINES },
+    hlBackdrop: { label: "Backdrop", choices: BACKDROPS },
+    offscreenCue: {
+        label: "Arrows",
+        choices: {
+            none: "None",
+            edge: "At the screen edge",
+            pointer: "Around the pointer",
+        },
+    },
+    clickFx: {
+        label: "Style",
+        choices: {
+            orb: "Breathing orb",
+            aurora: "Aurora",
+            sonar: "Sonar",
+            frame: "Frame what was clicked",
+            edge: "Screen edge glow",
+        },
+    },
+    fxEnding: {
+        label: "Ending",
+        choices: {
+            auto: "The style's own",
+            fade: "Fade",
+            fly: "Fly into the chat",
+            found: "A found pulse",
+        },
+    },
+    fxRippleLook: {
+        label: "Ripple look",
+        choices: {
+            rimmed: "Highlight colour with black rims",
+            taper: "Highlight colour, thick to thin",
+        },
+    },
+    fxSpeed: {
+        label: "Speed",
+        choices: { calm: "Calm", normal: "Normal", lively: "Lively" },
+    },
+    fxRingStyle: {
+        label: "Sonar: rings look",
+        choices: { filled: "Filled", outline: "Outlined" },
+    },
+    fxFrameShape: {
+        label: "Frame: shape",
+        choices: {
+            brackets: "Corner brackets",
+            highlight: "Same as the highlight outline",
+        },
+    },
+    motion: {
+        label: "Movement",
+        choices: {
+            smooth: "Smooth (instant under reduced motion)",
+            instant: "Instant",
+        },
+    },
+    mmOutline: { label: "Outline", choices: OUTLINES },
+    mmBackdrop: { label: "Backdrop", choices: BACKDROPS },
     moveToEvidence: {
         label: "Move the page to evidence",
         choices: {
@@ -312,6 +483,125 @@ export const SELECT_CHOICES = {
     ],
 } satisfies Partial<Record<NumSettingKey, { value: number; label: string }[]>>;
 export type SelectKnobKey = keyof typeof SELECT_CHOICES;
+
+/**
+ * The settings panel, in groups a person looks for ("where is the glow?"): each
+ * group holds everything about one thing, whatever kind of control it is. Every
+ * toggle, choice and number appears in exactly one group (settings.test.ts).
+ */
+export const PANEL_SECTIONS: {
+    title: string;
+    open?: boolean;
+    keys: (keyof Settings)[];
+}[] = [
+    {
+        title: "Chat",
+        open: true,
+        keys: [
+            "chatStyle",
+            "chatLanguage",
+            "chatFontSize",
+            "chatTextScale",
+            "highContrast",
+            "sounds",
+            "quickActions",
+            "voiceInput",
+            "voiceAutoSend",
+            "autoRead",
+            "streamReplies",
+            "dragPopover",
+            "continuity",
+            "escapeOrder",
+        ],
+    },
+    {
+        title: "Answers and sources",
+        keys: [
+            "citeEvidence",
+            "autoHighlight",
+            "moveToEvidence",
+            "refreshView",
+        ],
+    },
+    {
+        title: "Highlight look",
+        open: true,
+        keys: [
+            "hlOutline",
+            "hlBackdrop",
+            "hlColor",
+            "hlFill",
+            "hlGlow",
+            "hlBadges",
+            "ringWidth",
+            "ringScale",
+        ],
+    },
+    {
+        title: "Off-screen arrows",
+        keys: ["offscreenCue", "cueSize", "cueRadius"],
+    },
+    { title: "Movement", keys: ["motion", "motionMs"] },
+    {
+        title: "Minimap",
+        keys: [
+            "minimap",
+            "mmFollowHighlight",
+            "mmOutline",
+            "mmBackdrop",
+            "mmFill",
+            "mmGlow",
+            "mmNumbers",
+            "minimapMarkerSize",
+        ],
+    },
+    {
+        title: "Page zoom",
+        keys: ["zoom", "zoomKeys", "smoothZoom", "smartZoom", "lensPan"],
+    },
+    { title: "Asking", keys: ["regionSelect", "elementContext", "hints"] },
+    {
+        title: "Waiting at the click",
+        keys: [
+            "clickFx",
+            "fxEnding",
+            "fxSize",
+            "fxSpeed",
+            "fxRipple",
+            "fxRippleLook",
+            "fxHalo",
+            "fxSwirl",
+            "fxCore",
+            "fxDot",
+            "fxSoftness",
+            "fxThirdTone",
+            "fxRings",
+            "fxRingStyle",
+            "fxFrameShape",
+            "fxSheen",
+            "fxHug",
+            "fxEdgeWidth",
+            "fxEdgeGradient",
+            "fxPin",
+        ],
+    },
+    {
+        title: "Capture and research",
+        keys: [
+            "mouseTrace",
+            "zoomTrace",
+            "viewportCrop",
+            "captureRes",
+            "inventory",
+            "inventoryMaxDepth",
+            "inventorySummaryDepth",
+            "inventorySummaryCap",
+            "inventoryMaxBytes",
+            "inventoryMaxNodes",
+            "debugView",
+        ],
+    },
+];
 
 /**
  * Persisted values can be stale, out of range or the wrong type (an old build, a
@@ -361,6 +651,13 @@ function mergePersisted(persisted: unknown, current: Settings): Settings {
             next[key] = clampSetting(key, stored[key]) as never;
         }
     }
+    // older builds stored the minimap look as a shape and a dim switch
+    if (!Object.hasOwn(stored, "mmOutline") && stored.mmShape === "outlined") {
+        next.mmOutline = "band";
+        next.mmFill = false;
+    }
+    if (!Object.hasOwn(stored, "mmBackdrop") && stored.mmDim === true)
+        next.mmBackdrop = "dim";
     return next;
 }
 
@@ -377,10 +674,76 @@ export const getSettings = () => useSettings.getState();
 /** subscribe to settings changes (returns unsubscribe) — lets open UI re-render live */
 export const onSettingsChange = (cb: () => void) => useSettings.subscribe(cb);
 
+/** the file format of an exported settings file; `version` is for future migrations */
+const EXPORT_KIND = "unilens-settings";
+
+/** every setting, as a JSON file to download (Export in the settings panel) */
+export function exportSettings(): string {
+    const s = getSettings();
+    const settings = Object.fromEntries(
+        (Object.keys(DEFAULTS) as (keyof Settings)[]).map((k) => [k, s[k]]),
+    );
+    return JSON.stringify(
+        {
+            kind: EXPORT_KIND,
+            version: 1,
+            exported: new Date().toISOString(),
+            settings,
+        },
+        null,
+        2,
+    );
+}
+
+/**
+ * Apply a settings file (Import in the settings panel): an exported file, or a bare
+ * object of settings written by hand. It goes through the same checks as stored
+ * settings: out-of-range numbers are clamped, wrong types and unknown choices fall
+ * back to the default, unknown keys are ignored, and old keys are migrated. Keys
+ * the file leaves out keep their current value. Throws when the text is not a
+ * settings file at all.
+ */
+export function importSettings(text: string): {
+    applied: number;
+    ignored: string[];
+} {
+    let data: unknown;
+    try {
+        data = JSON.parse(text);
+    } catch {
+        throw new Error("not JSON");
+    }
+    const obj = (x: unknown): x is Record<string, unknown> =>
+        typeof x === "object" && x !== null && !Array.isArray(x);
+    if (!obj(data)) throw new Error("not a settings object");
+    const wrapped = data.kind === EXPORT_KIND;
+    const stored = wrapped ? data.settings : data;
+    if (!obj(stored)) throw new Error("no settings in the file");
+    const known = new Set(Object.keys(DEFAULTS));
+    // the old minimap keys are not settings any more, but they still migrate
+    const legacy = new Set(["mmShape", "mmDim"]);
+    const keys = Object.keys(stored);
+    useSettings.setState(mergePersisted(stored, getSettings()));
+    return {
+        applied: keys.filter((k) => known.has(k)).length,
+        ignored: keys.filter((k) => !known.has(k) && !legacy.has(k)),
+    };
+}
+
 /** programmatic settings change (e.g. keyboard shortcuts) — persists + notifies */
 export function updateSetting<K extends keyof Settings>(
     key: K,
     value: Settings[K],
 ) {
     useSettings.setState({ [key]: value });
+}
+
+/** ms an eased move should take now: 0 when the motion setting is instant or the
+ *  system asks for reduced motion */
+export function motionMs(): number {
+    const s = getSettings();
+    const reduced =
+        typeof matchMedia === "function" &&
+        matchMedia("(prefers-reduced-motion: reduce)").matches;
+    return s.motion === "instant" || reduced ? 0 : s.motionMs;
 }

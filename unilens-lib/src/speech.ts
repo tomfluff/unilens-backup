@@ -21,8 +21,11 @@ function toSpeakable(text: string): string {
 let backendUrl = "";
 let audioEl: HTMLAudioElement | null = null;
 let stateCb: ((s: SpeechState) => void) | null = null;
+/** bumped by every stop (and so by every new reading): a reading whose audio comes back
+ *  after that is dropped, not played over the silence or the newer one */
+let reading = 0;
 
-export type SpeechState = "loading" | "playing" | "idle";
+export type SpeechState = "loading" | "playing" | "paused" | "idle";
 
 /** set by init() — enables API TTS (better mixed-language voices) */
 export function setSpeechBackend(url: string) {
@@ -34,12 +37,16 @@ function setState(s: SpeechState) {
     if (s === "idle") stateCb = null;
 }
 
-function speakNative(text: string) {
+function speakNative(text: string, mine: number) {
     const u = new SpeechSynthesisUtterance(toSpeakable(text));
     u.lang = guessLang(text);
-    u.onstart = () => setState("playing");
-    u.onend = () => setState("idle");
-    u.onerror = () => setState("idle");
+    // a cancelled utterance can report late: only the current reading's events count
+    u.onstart = () => {
+        if (mine === reading) setState("playing");
+    };
+    u.onend = u.onerror = () => {
+        if (mine === reading) setState("idle");
+    };
     speechSynthesis.speak(u);
 }
 
@@ -49,6 +56,7 @@ function speakNative(text: string) {
  */
 export async function speak(text: string, onState?: (s: SpeechState) => void) {
     stopSpeaking();
+    const mine = reading;
     stateCb = onState ?? null;
     setStateSafe("loading");
     const plain = toSpeakable(text);
@@ -60,21 +68,40 @@ export async function speak(text: string, onState?: (s: SpeechState) => void) {
         });
         if (!res.ok) throw new Error(`tts ${res.status}`);
         const { id } = await res.json();
-        audioEl = new Audio(
+        if (mine !== reading) return;
+        const el = new Audio(
             `${backendUrl}/api/tts/${encodeURIComponent(id)}.mp3`,
         );
-        audioEl.onplaying = () => setState("playing");
-        audioEl.onended = () => {
+        audioEl = el;
+        // media events arrive late: one from a stopped reading must not touch the next,
+        // and a "playing" queued before a pause must not undo it
+        let started = false;
+        el.onplaying = () => {
+            if (audioEl !== el || el.paused) return;
+            started = true;
+            setState("playing");
+        };
+        el.onended = () => {
+            if (audioEl !== el) return;
             audioEl = null;
             setState("idle");
         };
-        audioEl.onerror = () => {
+        // a load failure also rejects play(), whose catch hands the reading to the
+        // browser's voice: only a failure mid-reading ends it here
+        el.onerror = () => {
+            if (audioEl !== el || !started) return;
             audioEl = null;
             setState("idle");
         };
-        await audioEl.play();
-    } catch {
-        speakNative(text);
+        await el.play();
+    } catch (err) {
+        // a stop or a pause interrupts play() (AbortError): not a failure to read aloud
+        if (mine === reading && (err as Error)?.name !== "AbortError") {
+            // the browser's voice takes over: pause and resume must reach it, not the
+            // audio that failed
+            audioEl = null;
+            speakNative(text, mine);
+        }
     }
 }
 
@@ -83,12 +110,34 @@ function setStateSafe(s: SpeechState) {
 }
 
 export function stopSpeaking() {
+    reading++;
     speechSynthesis.cancel();
     if (audioEl) {
         audioEl.pause();
         audioEl = null;
     }
     setState("idle");
+}
+
+/** hold the reading where it is; resumeSpeaking carries on from there */
+export function pauseSpeaking() {
+    if (audioEl && !audioEl.paused) {
+        audioEl.pause();
+        setStateSafe("paused");
+    } else if (speechSynthesis.speaking && !speechSynthesis.paused) {
+        speechSynthesis.pause();
+        setStateSafe("paused");
+    }
+}
+
+export function resumeSpeaking() {
+    if (audioEl?.paused) {
+        void audioEl.play();
+        setStateSafe("playing");
+    } else if (speechSynthesis.paused) {
+        speechSynthesis.resume();
+        setStateSafe("playing");
+    }
 }
 
 export function isSpeaking(): boolean {
@@ -106,6 +155,7 @@ type RecognitionCtor = new () => {
     onerror: () => void;
     start: () => void;
     stop: () => void;
+    abort?: () => void;
 };
 
 function recognitionCtor(): RecognitionCtor | null {
@@ -119,18 +169,20 @@ function recognitionCtor(): RecognitionCtor | null {
 export const sttSupported = recognitionCtor() != null;
 
 /**
- * Start listening; transcript goes to onResult as it firms up, onEnd fires when
- * recognition stops (silence or stop()). Returns a stop function, or null if
- * unsupported.
+ * Start listening; transcript goes to onResult as it firms up, onEnd fires once when
+ * recognition stops (silence, stop() or an error: Chrome fires error then end).
+ * Returns a stop function, or null if unsupported. stop(true) cancels: nothing is
+ * delivered and onEnd never fires (the chat closed mid-sentence).
  */
 export function listen(
     onResult: (transcript: string) => void,
     onEnd: () => void,
-): (() => void) | null {
+    lang?: string,
+): ((cancel?: boolean) => void) | null {
     const Ctor = recognitionCtor();
     if (!Ctor) return null;
     const rec = new Ctor();
-    rec.lang = navigator.language || "en-US";
+    rec.lang = lang || navigator.language || "en-US";
     rec.interimResults = true;
     rec.onresult = (e) => {
         let text = "";
@@ -138,8 +190,19 @@ export function listen(
             text += e.results[i][0].transcript;
         onResult(text);
     };
-    rec.onend = onEnd;
-    rec.onerror = onEnd;
+    let done = false;
+    const end = () => {
+        if (done) return;
+        done = true;
+        onEnd();
+    };
+    rec.onend = end;
+    rec.onerror = end;
     rec.start();
-    return () => rec.stop();
+    return (cancel = false) => {
+        if (!cancel) return rec.stop();
+        done = true;
+        if (rec.abort) rec.abort();
+        else rec.stop();
+    };
 }

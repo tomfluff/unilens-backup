@@ -5,7 +5,7 @@
  * Clicking it captures right there — the zero-shortcut entry path.
  */
 import { getSettings } from "./settings";
-import { getZoom } from "./zoom";
+import { getZoom, reducedMotion } from "./zoom";
 
 const DWELL_RADIUS = 80; // px, client coords
 const DWELL_MS = 4000;
@@ -64,6 +64,8 @@ function showChip(x: number, y: number) {
     Object.assign(chip.style, chipStyles, {
         left: `${left}px`,
         top: `${top}px`,
+        // reduced motion: the chip simply appears, no fade
+        transition: reducedMotion() ? "none" : chipStyles.transition,
     });
 
     chip.onclick = (e) => {

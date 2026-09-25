@@ -71,6 +71,33 @@ export function lookFrom(s: {
     };
 }
 
+/** the minimap's look: the highlight's own when it follows it, else its own layers */
+export function minimapLook(s: {
+    mmFollowHighlight: boolean;
+    mmBackdrop: Backdrop;
+    mmOutline: Outline;
+    mmFill: boolean;
+    mmGlow: boolean;
+    mmNumbers: boolean;
+    hlBackdrop: Backdrop;
+    hlOutline: Outline;
+    hlFill: boolean;
+    hlGlow: boolean;
+    hlBadges: boolean;
+    hlColor: string;
+}): HighlightLook {
+    return s.mmFollowHighlight
+        ? lookFrom(s)
+        : lookFrom({
+              hlBackdrop: s.mmBackdrop,
+              hlOutline: s.mmOutline,
+              hlFill: s.mmFill,
+              hlGlow: s.mmGlow,
+              hlBadges: s.mmNumbers,
+              hlColor: s.hlColor,
+          });
+}
+
 /**
  * The outline actually drawn. "No outline" with nothing else on would draw
  * nothing at all; a highlight must always be visible, so it falls back to the ring.

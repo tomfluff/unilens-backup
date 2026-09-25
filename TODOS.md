@@ -6,13 +6,115 @@
 
 **What:** Make in-flight chat, stream, and locate requests cancel or be ignored when the popover closes or a new capture opens it, instead of resolving into a component that no longer exists.
 
-**Why:** `openPopover` (`unilens-lib/src/main.tsx:76-82`) unmounts and re-creates `ChatPopover` on every capture, and `ChatPopover.tsx` has no `AbortController` or unmount guard on any fetch (the only cleanup at `:331` stops speech). A late response from the previous capture can call `setMsgs` on an unmounted tree and, once highlighting lands, call module-level `showHighlights` for the wrong capture. Phase 1 papers over the highlight half with a capture-id guard in `highlight.ts` (eng review issue 1A); the general problem stays.
+**Why:** closing the chat unmounts `ChatPopover`, and `openPopover` (`unilens-lib/src/main.tsx`) re-creates it on a new capture when continuity is off (with continuity on, the open chat is kept since 2026-09-23), and `ChatPopover.tsx` has no `AbortController` or unmount guard on any fetch (the only cleanup at `:331` stops speech). A late response from the previous capture can call `setMsgs` on an unmounted tree and, once highlighting lands, call module-level `showHighlights` for the wrong capture. Phase 1 papers over the highlight half with a capture-id guard in `highlight.ts` (eng review issue 1A); the general problem stays.
 
 **Context:** Parked during the phase-1 eng review on 2026-09-18 at the builder's request so the highlighting work is not blocked on it. The clean fix is one `AbortController` per popover instance, created in the mount effect and aborted in cleanup, passed as `signal` to every `fetch` in `sendStreaming`, `sendPlain`, the session/capture detail fetches, and the future locate call; plus catching `AbortError` so it is not rendered as an error bubble. The stream reader loop also needs to stop on abort. Once that exists, the capture-id guard in `highlight.ts` becomes belt-and-braces rather than the only defence. Start in `ChatPopover.tsx` around the two `fetch(`${backend}/api/chat...` calls (~:453 and ~:513).
 
 **Effort:** S
 **Priority:** P2
 **Depends on:** None (independent of the highlighting steps; best landed before step two's trial runner, which fires many requests quickly)
+
+### Restore the chat after a page reload, from a UniLens store per site
+
+**What:** Keep a local history of the user's interaction state, and after a reload reopen the conversation they had on that site. Save interaction data only, never screenshots:
+- where the user clicked, and the elements clicked (their places, P1, P2…);
+- the zoom level and the view;
+- the messages, and the capture and session ids that point to the rest on the backend.
+
+Keep it in UniLens's own store, not in the site's storage, and keep each site's store separate. This will be a separate PR from the chat work.
+
+**Why:** PR #13 (a collaborator's refactor, 2026-09-24) restored chats from the host page's `localStorage`. It saved each window's whole capture, including the full-page and close-up screenshots as base64: about 830 KB per click. The browser's quota ran out after about five clicks and saving stopped silently, and the screenshots sat where the site's own scripts can read them. The builder wants the idea, with interaction data only (decision 2026-09-24): the screenshots already live on the backend under their capture id.
+
+**Context:** Still to think through; nothing is decided beyond "own store, per domain, detached from the site". Two options:
+- **IndexedDB from the embedded script.** A UniLens-named database is separate from the site's keys, but it is still the site's origin: the site's scripts can read it, and "clear site data" wipes it.
+- **A small hidden iframe served from the UniLens backend's origin, talked to with `postMessage`.** This is truly detached. Browsers partition a third-party iframe's storage by top-level site, which gives the per-domain split for free.
+
+Either way, no images in the browser. The backend's session history (`/api/session/<id>`) stays the source of truth for what the model saw.
+
+**Effort:** M
+**Priority:** P3
+**Depends on:** our chat stack landing on main (see the PR #13 decision)
+
+### Follow-ups from the review of #14–#16
+
+**What:** Five smaller findings from the 2026-09-24 review of the three stacked PRs. The builder kept them for later. Reports are in `.local/reviews/2026-09-24-prs-14-16/`.
+- **Citation ids across a view refresh.** Ids are numbered by position on each capture. After lazy-loaded content shifts the page, an earlier answer's `[[n30]]` can name a different element on the refreshed capture. Strip or namespace the ids of history turns that belong to another capture (`backend/app.py`, building `provider_history`).
+- **Page text outside the datamarked block.** The clicked element's text, its nearest heading and the session note reach the prompt verbatim, and a code comment claims the inventory is the only page text the model sees. Datamark or delimit them the same way, and correct the comment.
+- **Minimap redraws.** While zoomed, each highlight step rebuilds the whole minimap twice, forcing layout each time. Cache the page skeleton and redraw only the targets.
+- **A click during a streaming answer drops that capture from the session.** `chat_stream` writes back the session it loaded before streaming. Reload it before saving, or lock per session.
+- **No tests for the chat's async flows.** The capture queue, refresh binding, voice cancel and failed-capture paths were checked in the browser only. Add jsdom tests with mocked capture and fetch.
+
+**Effort:** M
+**Priority:** P3
+**Depends on:** #14–#16 merged
+
+### Harden UniLens against host pages
+
+**What:** Build a local "hostile host" test page and run the end-to-end checks against it. Then address the open items in `docs/research/2026-09-24-host-page-hazards.md`, in order of how often study pages will hit them. First up: inner scroll containers, stale cited elements, patched built-ins, and the CSP limits of the embed.
+
+**Why:** SoftBank's vendor bundle replaced `performance.now` with a lagging clock, which made every page glide jump. It was found only by accident (2026-09-24). The builder asked to keep these hazards in mind and record them.
+
+**Context:** The research note lists each hazard with where it hits our code, what already guards against it, and what to try. The test page should have:
+- a replaced clock;
+- a strict CSP;
+- an inner scroller;
+- shadow DOM and an iframe;
+- a capture-phase stopPropagation handler;
+- a non-streaming fetch;
+- `!important` button rules;
+- a changing carousel.
+
+**Effort:** M
+**Priority:** P2
+**Depends on:** None
+
+### Live voice conversation
+
+**What:** Turn the voice message into a live exchange: speak, hear the answer read back, and speak again without touching the chat. Barge-in stops the reading when the user starts talking.
+
+**Why:** The builder's direction (2026-09-24): "in the future, what we want to do is enable sort of like live interactions." The voice message button is the first step.
+
+**Context:**
+- Today the voice message records with the browser's SpeechRecognition, which ends on a pause. It sends the transcript as a typed message (`toggleVoiceMessage` in `unilens-lib/src/ChatPopover.tsx`).
+- Reading aloud uses `/api/tts` with a native fallback, and has play, pause and stop (`speech.ts`).
+- Next steps:
+  - a conversation mode that reads each answer aloud and listens again after it;
+  - a way to interrupt, spoken or a key;
+  - the earcons as turn-taking cues;
+  - possibly a streaming speech API instead of browser STT, for Japanese quality and interruption.
+
+**Effort:** M
+**Priority:** P2
+**Depends on:** None
+
+### A reading that fails midway stops without saying so
+
+**What:** When the streamed read-aloud audio fails partway (network drop, the backend's MP3 stream cut), `onerror` in `speech.ts` ends the reading silently. Decide what should happen: carry on in the browser's voice from about where it stopped, start the answer over in that voice, or say "Reading stopped" and offer play again.
+
+**Why:** Codex review (2026-09-25). Before playback starts, a failure already falls back to the browser's voice. After it starts, the reading just ends, and the user can't tell a finished answer from a cut one.
+
+**Context:** `speak()` in `unilens-lib/src/speech.ts` streams `/api/tts/<id>.mp3` (`backend/app.py`). Resuming mid-answer needs the played time mapped to a text offset. Restarting is simple but repeats what was heard.
+
+**Effort:** S
+**Priority:** P3
+**Depends on:** None
+
+### Many pointer arrows pointing the same way
+
+**What:** Decide how "arrows around the pointer" show several targets that lie in about the same direction. Today they spread round the cursor circle so they do not stack. The spreading moves each arrow away from its true direction, and it reads as noise when there are many.
+
+**Why:** The builder tested pointer mode and found the spreading "not the best kind of behavior we want", but had no better answer yet (2026-09-24). Arrows are now fixed to the cursor: a cue's position depends only on the pointer, its target and the other cues, never on page elements or the chat.
+
+**Context:** Options to try with participants:
+- one arrow per direction, with a count badge ("3");
+- stacking the numbers inside one arrowhead;
+- a fan that opens only on hover.
+
+The spread lives in `settleCues` in `unilens-lib/src/highlight.ts`.
+
+**Effort:** S–M
+**Priority:** P3
+**Depends on:** None
 
 ### Move research knobs out of the participant-facing settings panel
 
@@ -62,19 +164,17 @@
 **Priority:** P3
 **Depends on:** None; do it when a second html2canvas fault appears, or before the step-two runner if capture time matters
 
-### Decide the highlight and evidence visuals from the options page
+### Think through "Guide to" in its own session
 
-**What:** Pick highlight style (S), entrance (E), off-screen cue (X), minimap marker (M), chat evidence layout (C) and the meaning of "Guide to" (G) on https://claude.ai/artifact/TmaPQ7ZRpSZ9pEmhn2CnB5, then build the picks as presets/knobs and "Guide to" as the third action.
+**What:** Decide what "Guide to" means for magnifier users, then build it as the third evidence action: a camera move, a drawn trail from the pointer, a step list, or something else.
 
-**Why:** Phase-1 notes (2026-09-23): the WCAG ring is hard to recognise for low vision; the user wants a chosen colour and style, an entrance animation that makes the target findable, and several outlines at once. Citations, chips, the action row and numbered outlines shipped with placeholder visuals.
+**Why:** Builder's call (2026-09-23): clicking a chip or the navigator already moves to an item, so a plain "Scroll to" was removed; "Guide to" must earn its place as deliberate guidance, and needs its own thought session outside phase 1.
 
-**Context:** `highlightStyles.ts` holds presets as parameter rows; `highlight.ts` draws badges and multi-hole dim; `minimap.ts` draws targets as rects in the preset's colours. The edge arrow (X2) and entrance animations need new preset fields. Guide-to options: G1 camera move, G2 trail from the pointer, G3 step list.
+**Context:** Options page https://claude.ai/artifact/TmaPQ7ZRpSZ9pEmhn2CnB5 (G1 camera move, G2 trail, G3 step list). Role-play synthesis on movement: `docs/research/2026-09-23-evidence-movement-roleplay.md`. The Back stack in `zoom.ts` (revealElement, returnToPreviousView) is the return path any guide should use.
 
 **Effort:** M
-**Priority:** P1
-**Depends on:** The builder's picks
-
-## unilens-lib (inventory)
+**Priority:** P2
+**Depends on:** Its own design session
 
 ### Inventory completeness beyond phase 1
 
@@ -106,7 +206,7 @@
 
 ### Participant session protocol for the first low-vision session
 
-**What:** A one-page protocol in `docs/research/`: consent text (captures are a full-page PNG plus a text inventory of page elements, stored locally under `backend/captures` with the retention policy; no form values are ever captured), magnifier/zoom and high-contrast setup, the ~20-question task list per mirror, and what the observer records (time to acquisition, corrections, whether the target started off-screen, one surprise).
+**What:** A one-page protocol in `docs/research/`: consent text (captures are a full-page PNG plus a text inventory of page elements, stored locally under `backend/captures` with the retention policy. The text inventory never holds what was typed in a field, but the screenshot shows whatever is on screen, field contents included; passwords stay masked), magnifier/zoom and high-contrast setup, the ~20-question task list per mirror, and what the observer records (time to acquisition, corrections, whether the target started off-screen, one surprise).
 
 **Why:** Eventually a study needs a repeatable protocol. Builder's call (2026-09-19): the features are developed and decided first with the builder as the tester; participant testing and its protocol are considered only at the very end, after the fact.
 

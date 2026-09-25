@@ -6,6 +6,7 @@ import {
     type HighlightLook,
     isHexColor,
     lookFrom,
+    minimapLook,
     OUTLINES,
 } from "./highlightStyles";
 import { getSettings } from "./settings";
@@ -48,5 +49,37 @@ describe("highlight look", () => {
     it("turns a hex colour into rgba", () => {
         expect(colorWithAlpha("#ff0000", 0.5)).toBe("rgba(255,0,0,0.5)");
         expect(colorWithAlpha("#0f0", 1)).toBe("rgba(0,255,0,1)");
+    });
+});
+
+describe("minimapLook", () => {
+    const base = {
+        ...getSettings(),
+        hlBackdrop: "spotlight" as const,
+        hlOutline: "brackets" as const,
+        hlFill: false,
+        hlGlow: true,
+        hlBadges: false,
+        hlColor: "#00ff00",
+        mmBackdrop: "dim" as const,
+        mmOutline: "none" as const,
+        mmFill: true,
+        mmGlow: false,
+        mmNumbers: true,
+    };
+    it("draws the minimap's own layers, in the highlight colour", () => {
+        expect(minimapLook({ ...base, mmFollowHighlight: false })).toEqual({
+            backdrop: "dim",
+            outline: "none",
+            fill: true,
+            glow: false,
+            badges: true,
+            color: "#00ff00",
+        });
+    });
+    it("takes the highlight look whole when it follows it", () => {
+        expect(minimapLook({ ...base, mmFollowHighlight: true })).toEqual(
+            lookFrom(base),
+        );
     });
 });

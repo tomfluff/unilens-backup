@@ -19,15 +19,19 @@ import {
     tagLastCapture,
     viewMovedSince,
 } from "./capture";
+import { chatText } from "./chatI18n";
+import { clickFeedback } from "./clickFx";
 import { initDebug } from "./DebugPanel";
+import { earcon } from "./earcons";
 import {
+    announce,
     clearHighlights,
     init as initHighlight,
     setCurrentCapture,
 } from "./highlight";
 import { initHint } from "./hint";
 import { initMinimap } from "./minimap";
-import { recordPlace } from "./places";
+import { aliasPlace, recordPlace } from "./places";
 import { initSettings } from "./SettingsPanel";
 import { recordCapture } from "./sentLog";
 import { getSettings, updateSetting } from "./settings";
@@ -47,6 +51,10 @@ export interface InitOptions {
 
 let root: Root | null = null;
 let container: HTMLDivElement | null = null;
+/** what the open chat was last rendered with, so a new click can update it in place */
+let popProps: Parameters<typeof ChatPopover>[0] | null = null;
+const paintPopover = () =>
+    popProps && root?.render(<ChatPopover {...popProps} />);
 
 /**
  * Popover pinned position, persisted in the settings store. Guarded on read:
@@ -65,6 +73,7 @@ function closePopover() {
     generation++;
     root?.unmount();
     root = null;
+    popProps = null;
     container?.remove();
     container = null;
 }
@@ -72,24 +81,39 @@ function closePopover() {
 /** ✕ pressed: dismissing the popover also ends the conversation session */
 function dismissPopover() {
     sessionId = null;
+    // a late answer from the closed chat must not draw on the page. Here, not in
+    // closePopover: a new chat opening calls that too, after its capture's id is set
+    setCurrentCapture(null);
+    committed = { capture: null, asked: undefined };
+    // a capture still running was for this chat: it must not open another
+    latestCapture++;
     closePopover();
 }
 
 /** a short name for where the user clicked, for "where I clicked" buttons and speech */
 function placeLabel(cap: CaptureResult): string {
+    const T = chatText();
     const e = cap.meta.element;
-    if (cap.meta.region) return "the area you selected";
-    if (!e) return "where you clicked";
+    if (cap.meta.region) return T.placeRegion;
+    if (!e) return T.placeClick;
     const text = (e.text ?? e.alt ?? "").trim();
     // a short text names the thing itself; a long one is a whole section, whose
     // heading names it better
     if (text && text.length <= 40) return text;
-    if (e.nearestHeading) return `near "${e.nearestHeading}"`;
-    return text ? `${text.slice(0, 40)}…` : `the ${e.tag}`;
+    if (e.nearestHeading) return T.placeNear(e.nearestHeading);
+    return text ? `${text.slice(0, 40)}…` : T.placeTag(e.tag);
 }
 
 /** the element the open popover's question was asked about, for view refreshes */
 let askedAbout: Element | undefined;
+/** the capture the open chat is on, and what it was asked about: where a failed
+ *  capture goes back to (nothing, once the chat is closed) */
+let committed: { capture: string | null; asked: Element | undefined } = {
+    capture: null,
+    asked: undefined,
+};
+/** bumped by every new capture: one still running when a newer one starts is dropped */
+let latestCapture = 0;
 /** bumped whenever the popover's capture is retired (new capture, close): a refresh
  *  that finishes after that belongs to a conversation that is gone */
 let generation = 0;
@@ -102,12 +126,15 @@ let generation = 0;
  */
 async function refreshCapture(
     prev: CaptureResult,
+    prevId: string,
     backend: string,
+    onStart?: () => void,
 ): Promise<{ id: string; cap: CaptureResult } | null> {
     // the conversation lives in the session; without one (continuity off) a new capture
     // would start with an empty history, so the chat stays on the capture it has
     if (!sessionId || !getSettings().refreshView || !viewMovedSince(prev.meta))
         return null;
+    onStart?.();
     const gen = generation;
     try {
         const cap = await capture(
@@ -118,21 +145,18 @@ async function refreshCapture(
             { viewRefresh: true },
         );
         if (gen !== generation) return null;
-        const id = await uploadCapture(cap, backend);
-        // never let a slow refresh take the guard from a capture opened since
+        const up = await uploadCapture(cap, backend);
+        // never let a slow refresh take the guard (or the session) from a capture
+        // opened since, or bring back a closed chat's session
         if (gen !== generation) return null;
+        joinSession(up.session);
+        const id = up.id;
         tagLastCapture(id);
         recordCapture(id, cap, true);
         setCurrentCapture(id);
-        // same question point as the capture it refreshes
-        recordPlace({
-            captureId: id,
-            at: Date.now(),
-            x: cap.meta.clickX,
-            y: cap.meta.clickY,
-            el: askedAbout?.isConnected ? askedAbout : undefined,
-            label: placeLabel(cap),
-        });
+        committed = { ...committed, capture: id };
+        // same question point as the capture it refreshes: the same place, not a new one
+        aliasPlace(id, prevId);
         return { id, cap };
     } catch (err) {
         console.warn(
@@ -150,45 +174,56 @@ function openPopover(
     cap: CaptureResult,
     backend: string,
 ) {
-    closePopover();
-    container = document.createElement("div");
-    container.id = "unilens-root";
-    // documentElement, not body: body carries the zoom transform, which would
-    // break position:fixed and scale the popover. Also keeps it out of captures.
-    document.documentElement.appendChild(container);
-    root = createRoot(container);
-    const render = () =>
-        root?.render(
-            <ChatPopover
-                x={clientX}
-                y={clientY}
-                captureId={captureId}
-                capture={cap}
-                backend={backend}
-                sessionId={getSettings().continuity ? sessionId : null}
-                onClose={dismissPopover}
-                refreshCapture={(prev) => refreshCapture(prev, backend)}
-                initialPos={pinnedPos()}
-                pinned={pinnedPos() != null}
-                onTogglePin={(pos) => {
-                    setPinnedPos(pos);
-                    render(); // re-render so the pin button reflects state
-                }}
-                onMove={(pos) => {
-                    if (pinnedPos()) setPinnedPos(pos);
-                }}
-            />,
-        );
-    render();
+    // one conversation, one chat: with continuity on, a new click updates the open chat
+    // (it glides to the click and keeps its history and chips) instead of replacing it
+    const keep = root != null && getSettings().continuity;
+    if (!keep) {
+        closePopover();
+        container = document.createElement("div");
+        container.id = "unilens-root";
+        // documentElement, not body: body carries the zoom transform, which would
+        // break position:fixed and scale the popover. Also keeps it out of captures.
+        document.documentElement.appendChild(container);
+        root = createRoot(container);
+    }
+    popProps = {
+        x: clientX,
+        y: clientY,
+        captureId,
+        capture: cap,
+        backend,
+        sessionId: getSettings().continuity ? sessionId : null,
+        onClose: dismissPopover,
+        refreshCapture: (prev, prevId, onStart) =>
+            refreshCapture(prev, prevId, backend, onStart),
+        initialPos: pinnedPos(),
+        pinned: pinnedPos() != null,
+        onTogglePin: (pos) => {
+            setPinnedPos(pos);
+            if (popProps)
+                popProps = {
+                    ...popProps,
+                    pinned: pos != null,
+                    initialPos: pos,
+                };
+            paintPopover(); // re-render so the pin button reflects state
+        },
+        onMove: (pos) => {
+            if (pinnedPos()) setPinnedPos(pos);
+        },
+    };
+    paintPopover();
 }
 
 /** current conversation session — new captures join it until the user closes the popover */
 let sessionId: string | null = null;
 
+/** upload a capture. Its session is the caller's to take (joinSession), once it knows
+ *  the capture still belongs to the open chat */
 async function uploadCapture(
     cap: CaptureResult,
     backend: string,
-): Promise<string> {
+): Promise<{ id: string; session: string | null }> {
     const res = await fetch(`${backend}/api/capture`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -203,8 +238,12 @@ async function uploadCapture(
     });
     if (!res.ok) throw new Error(`capture upload failed: HTTP ${res.status}`);
     const data = await res.json();
-    sessionId = getSettings().continuity ? (data.session_id ?? null) : null;
-    return data.id;
+    return { id: data.id, session: data.session_id ?? null };
+}
+
+/** the session the chat's latest upload joined or started, while continuity keeps one */
+function joinSession(session: string | null) {
+    sessionId = getSettings().continuity ? session : null;
 }
 
 export function init(options: InitOptions = {}) {
@@ -225,6 +264,8 @@ export function init(options: InitOptions = {}) {
         pointY: number,
         el?: Element,
         region?: { x: number; y: number; w: number; h: number },
+        /** the dragged region on screen, for feedback that frames it */
+        regionBox?: DOMRectReadOnly,
     ) {
         // (pointX, pointY) is the client point being asked about — the click, or the centre
         // of a drag. clientToContent handles both pan engines.
@@ -233,19 +274,71 @@ export function init(options: InitOptions = {}) {
         // while this capture renders and uploads, a late answer for the old one must
         // already be stale, or it could redraw after the clear (Codex review, P1)
         generation++;
+        const mine = ++latestCapture;
         setCurrentCapture(null);
         clearHighlights();
         askedAbout = el;
-        const cap = await capture(Math.round(p.x), Math.round(p.y), el, region);
-        let id = "local";
+        // seen at once: a ripple where the click landed, then a breathing orb there
+        // until the chat has the capture
+        const endFx = clickFeedback(
+            pointX,
+            pointY,
+            regionBox ?? el?.getBoundingClientRect(),
+        );
+        // the capture takes a moment: say so now, in the open chat or out loud
+        if (popProps && getSettings().continuity) {
+            popProps = { ...popProps, capturing: true };
+            paintPopover();
+        } else {
+            earcon("send");
+            announce(chatText().sCapturing);
+        }
+        let cap: CaptureResult;
         try {
-            id = await uploadCapture(cap, backend);
-            tagLastCapture(id);
+            // let the ripple and ring paint first: the capture holds the main thread,
+            // and their animations then run on the compositor while it works
+            await new Promise((r) =>
+                requestAnimationFrame(() => requestAnimationFrame(r)),
+            );
+            cap = await capture(Math.round(p.x), Math.round(p.y), el, region);
+        } catch (err) {
+            // html2canvas fails on some pages (unsupported CSS): say so, and let the
+            // open chat drop its "Capturing…" row (a waiting question then goes to the
+            // place it has)
+            endFx();
+            console.warn("[UniLens] capture failed:", err);
+            // a newer click is being captured: the chat and the guard are its to set
+            if (mine !== latestCapture) return;
+            // the open chat carries on with its capture: its answers may draw again,
+            // and a view refresh re-captures what it was asked about
+            setCurrentCapture(committed.capture);
+            askedAbout = committed.asked;
+            if (popProps?.capturing) {
+                popProps = { ...popProps, capturing: false };
+                paintPopover();
+            }
+            earcon("error");
+            announce(chatText().sCaptureFailed);
+            return;
+        }
+        // a newer click is being captured: this one is dropped, and the chat waits for it
+        if (mine !== latestCapture) return endFx();
+        let up: { id: string; session: string | null } | null = null;
+        try {
+            up = await uploadCapture(cap, backend);
         } catch (err) {
             console.warn("[UniLens] backend unreachable, chat will fail:", err);
         }
+        // dropped here too when a newer click, or a close, came during the upload
+        if (mine !== latestCapture) return endFx();
+        const id = up?.id ?? "local";
+        if (up) {
+            joinSession(up.session);
+            tagLastCapture(id);
+        }
         // the id exists only now, after upload: this is where the guard learns it
         setCurrentCapture(id);
+        committed = { capture: id, asked: el };
         recordPlace({
             captureId: id,
             at: Date.now(),
@@ -255,7 +348,35 @@ export function init(options: InitOptions = {}) {
             label: placeLabel(cap),
         });
         recordCapture(id, cap);
+        // a view refresh that started while this capture ran belongs to the place
+        // before it: retire it, or it would pull the chat back there
+        generation++;
         openPopover(clientX, clientY, id, cap, backend);
+        // the ending may fly into the chat, to the new place entry: where it will be once
+        // the chat has glided to the click and its log has scrolled to the entry
+        endFx(() => {
+            const chat = document.querySelector<HTMLElement>(
+                "#unilens-root .ul-chat",
+            );
+            const log = chat?.querySelector(".ulc-log");
+            const entry = [
+                ...(log?.querySelectorAll(".ulc-where") ?? []),
+            ].pop();
+            if (!chat || !log || !entry) return null;
+            const r = entry.getBoundingClientRect();
+            const c = chat.getBoundingClientRect();
+            const glideX = Number.parseFloat(chat.style.left) - c.left || 0;
+            const glideY = Number.parseFloat(chat.style.top) - c.top || 0;
+            const scroll =
+                Math.max(0, log.scrollHeight - log.clientHeight) -
+                log.scrollTop;
+            return new DOMRect(
+                r.left + glideX,
+                r.top + glideY - scroll,
+                r.width,
+                r.height,
+            );
+        });
     }
 
     // ── Alt+drag region select ───────────────────────────────────────────────
@@ -360,6 +481,12 @@ export function init(options: InitOptions = {}) {
             centerClientY,
             el,
             region,
+            new DOMRect(
+                Math.min(start.clientX, e.clientX),
+                Math.min(start.clientY, e.clientY),
+                Math.abs(e.clientX - start.clientX),
+                Math.abs(e.clientY - start.clientY),
+            ),
         );
     });
 

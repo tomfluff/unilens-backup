@@ -6,7 +6,7 @@
  * so annotations align with the unzoomed screenshot at any zoom level.
  */
 
-import { getSettings, onSettingsChange } from "./settings";
+import { getSettings, motionMs, onSettingsChange } from "./settings";
 
 const MIN_ZOOM = 1; // 100% is the floor: zooming out returns to the page, never shrinks it
 const MAX_ZOOM = 5;
@@ -99,7 +99,7 @@ function showBadge() {
             font: "13px sans-serif",
             pointerEvents: "none",
             zIndex: "2147483647",
-            transition: "opacity 0.3s",
+            transition: reducedMotion() ? "none" : "opacity 0.3s",
         });
         // documentElement, not body: body is the transformed element
         document.documentElement.appendChild(badge);
@@ -376,6 +376,23 @@ export function getView(): { x: number; y: number } {
         : { x: window.scrollX, y: window.scrollY };
 }
 
+/**
+ * Where the view is heading: an eased move's destination while one is running, else
+ * where it is. Decisions (is it on screen? where was the user reading?) are made
+ * against this, as if the move had already happened.
+ */
+export function getTargetView(): { x: number; y: number } {
+    return tween ? { ...tween.to } : getView();
+}
+
+/** the system asks for reduced motion: no eased moves, zooms or fades */
+export function reducedMotion(): boolean {
+    return (
+        typeof matchMedia === "function" &&
+        matchMedia("(prefers-reduced-motion: reduce)").matches
+    );
+}
+
 export type ClientRect = {
     left: number;
     top: number;
@@ -422,23 +439,52 @@ export function isOwnUI(target: EventTarget | null): boolean {
     );
 }
 
-/** where the user was before each move to evidence, newest last (capped) */
-const viewHistory: { cx: number; cy: number }[] = [];
-const HISTORY_CAP = 20;
+// ── Back is a bookmark ─────────────────────────────────────────────────────
+// A run of moves to evidence (next, next, the third one) remembers only where the
+// user was reading before its first move, and Back returns there. Moving the page
+// yourself (scroll, pan, zoom, minimap) ends the run: the next move to evidence
+// bookmarks the place you moved to, since that is where you are reading now.
+
+/** where the user was reading before the current run, in content space */
+let bookmark: { cx: number; cy: number } | null = null;
+/** where the run's latest move put the view: still there means the run goes on */
+let runEnd: { x: number; y: number; scale: number } | null = null;
+/** px of drift from runEnd still counted as not having moved (scroll rounding) */
+const RUN_SLOP = 4;
+
+/** an element's client box as it will be once a running move lands */
+function atDestination(r: ClientRect): ClientRect {
+    if (!tween) return r;
+    const v = getView();
+    // field by field: a DOMRect's fields are prototype getters, which a spread drops,
+    // and a box with no size sends the move to NaN (the top of the page)
+    return {
+        left: r.left + v.x - tween.to.x,
+        top: r.top + v.y - tween.to.y,
+        width: r.width,
+        height: r.height,
+    };
+}
 
 /**
  * Bring an element to the middle of the screen under either pan engine. Leaves the
  * view alone when the element is already fully on screen, so the page never moves
- * without need, unless `always`. Every move is remembered so the user can return
- * to where they were reading ("back" / "戻る"). Returns what happened.
+ * without need, unless `always`. The first of a run of moves is bookmarked so the
+ * user can return to where they were reading ("back" / "戻る"). Returns what happened.
  */
 export function revealElement(
     el: Element,
     measure?: (el: Element) => ClientRect,
-    opts: { always?: boolean } = {},
+    opts: {
+        always?: boolean;
+        /** client rect to keep the element out from under (the chat popover) */
+        avoid?: { left: number; top: number; right: number; bottom: number };
+    } = {},
 ): "moved" | "in-view" | "none" {
-    const r = boxOf(el, measure);
-    if (isEmptyBox(r)) return "none";
+    const now = boxOf(el, measure);
+    if (isEmptyBox(now)) return "none";
+    // mid-move, judge from where the page is going, not where it is this frame
+    const r = atDestination(now);
     // under browser pinch zoom the user sees the visual viewport, a window inside the
     // layout viewport that client rects are measured in
     const vv = window.visualViewport;
@@ -446,51 +492,105 @@ export function revealElement(
     const T = vv?.offsetTop ?? 0;
     const W = vv?.width ?? window.innerWidth;
     const H = vv?.height ?? window.innerHeight;
+    const a = opts.avoid;
+    const covered =
+        !!a &&
+        r.left < a.right &&
+        r.left + r.width > a.left &&
+        r.top < a.bottom &&
+        r.top + r.height > a.top;
     if (
         !opts.always &&
+        !covered &&
         r.left >= L &&
         r.top >= T &&
         r.left + r.width <= L + W &&
         r.top + r.height <= T + H
     )
         return "in-view";
-    const v = getView();
+    // aim for the middle of the screen, or with a popover in the way, the middle of
+    // the largest free band beside it (one the element fits in, when there is one)
+    let cx = L + W / 2;
+    let cy = T + H / 2;
+    if (a) {
+        // bands beside the popover only help when the page can pan sideways: at 100%
+        // most pages cannot, so the element goes above or below the popover instead
+        const canPanX = frozen
+            ? layoutW * scale > W
+            : document.documentElement.scrollWidth > window.innerWidth;
+        const bands = [
+            ...(canPanX
+                ? [
+                      { x: L, y: T, w: a.left - L, h: H },
+                      { x: a.right, y: T, w: L + W - a.right, h: H },
+                  ]
+                : []),
+            { x: L, y: T, w: W, h: a.top - T },
+            { x: L, y: a.bottom, w: W, h: T + H - a.bottom },
+        ].filter((b) => b.w > 0 && b.h > 0);
+        const fits = bands.filter((b) => b.w >= r.width && b.h >= r.height);
+        const pick = (fits.length ? fits : bands).sort(
+            (p, q) => q.w * q.h - p.w * p.h,
+        )[0];
+        if (pick) {
+            // a full-width band keeps the element's own x: no sideways move is possible
+            cx = canPanX ? pick.x + pick.w / 2 : r.left + r.width / 2;
+            cy = pick.y + pick.h / 2;
+        }
+    }
+    const v = getTargetView();
     rememberView(W, H);
-    setView(
-        v.x + r.left + r.width / 2 - (L + W / 2),
-        v.y + r.top + r.height / 2 - (T + H / 2),
-    );
+    setView(v.x + r.left + r.width / 2 - cx, v.y + r.top + r.height / 2 - cy);
+    endOfRun();
     return "moved";
 }
 
-/** remembered in content space, so a zoom change in between still returns right */
+/**
+ * Before a move to evidence: bookmark where the user is reading, unless this move
+ * continues a run (the view is still where the last one put it, or heading there).
+ * Remembered in content space, so a zoom change in between still returns right.
+ */
 function rememberView(W: number, H: number) {
-    const v = getView();
-    viewHistory.push({ cx: (v.x + W / 2) / scale, cy: (v.y + H / 2) / scale });
-    if (viewHistory.length > HISTORY_CAP) viewHistory.shift();
+    const v = getTargetView();
+    const continues =
+        bookmark &&
+        runEnd &&
+        runEnd.scale === scale &&
+        Math.abs(v.x - runEnd.x) <= RUN_SLOP &&
+        Math.abs(v.y - runEnd.y) <= RUN_SLOP;
+    if (!continues)
+        bookmark = { cx: (v.x + W / 2) / scale, cy: (v.y + H / 2) / scale };
+}
+
+/** after a move to evidence: the view it lands on is where the run now stands */
+function endOfRun() {
+    runEnd = { ...getTargetView(), scale };
 }
 
 /**
  * Centre a content-space point (where the user clicked, when the element it was
- * on is gone). Remembered like any move, so "back" returns.
+ * on is gone). Part of a run like any move, so "back" returns.
  */
 export function revealPoint(x: number, y: number) {
     const W = window.visualViewport?.width ?? window.innerWidth;
     const H = window.visualViewport?.height ?? window.innerHeight;
     rememberView(W, H);
     setView(x * scale - W / 2, y * scale - H / 2);
+    endOfRun();
 }
 
-export const canReturn = () => viewHistory.length > 0;
+export const canReturn = () => bookmark !== null;
 
-/** undo the latest move to evidence; false when there is nothing to return to */
+/** go back to where the user was reading before the run of moves; false when there is none */
 export function returnToPreviousView(): boolean {
-    const prev = viewHistory.pop();
-    if (!prev) return false;
+    const b = bookmark;
+    if (!b) return false;
+    bookmark = null;
+    runEnd = null;
     const vv = window.visualViewport;
     const W = vv?.width ?? window.innerWidth;
     const H = vv?.height ?? window.innerHeight;
-    setView(prev.cx * scale - W / 2, prev.cy * scale - H / 2);
+    setView(b.cx * scale - W / 2, b.cy * scale - H / 2);
     return true;
 }
 
@@ -499,8 +599,9 @@ export function directionOf(
     el: Element,
     measure?: (el: Element) => ClientRect,
 ): "on screen" | "above" | "below" | "to the left" | "to the right" | "" {
-    const r = boxOf(el, measure);
-    if (isEmptyBox(r)) return "";
+    const now = boxOf(el, measure);
+    if (isEmptyBox(now)) return "";
+    const r = atDestination(now);
     const W = window.visualViewport?.width ?? window.innerWidth;
     const H = window.visualViewport?.height ?? window.innerHeight;
     if (r.top + r.height < 0) return "above";
@@ -528,18 +629,176 @@ export function onViewChange(cb: (x: number, y: number) => void): () => void {
     };
 }
 
+// ── Eased moves ────────────────────────────────────────────────────────────
+// Every programmatic move (to evidence, back, a minimap click) glides with an
+// ease-in-out over motionMs(); 0 (the instant setting, or reduced motion) jumps in the
+// same call, as before. A glide is a string of jumps, one per frame, so both engines
+// and every view listener follow it frame by frame. Anything the user does to move
+// the page cancels it on the spot, so it never fights them.
+
+interface Tween {
+    from: { x: number; y: number };
+    /** the destination, clamped to where the view can actually go */
+    to: { x: number; y: number };
+    /** the first frame's timestamp: NaN until that frame runs */
+    start: number;
+    ms: number;
+    raf: number;
+}
+
+let tween: Tween | null = null;
+/** a pointer is dragging (the minimap lens): follow it directly, no glide */
+let dragging = false;
+let inputWatched = false;
+
+function cancelTween() {
+    if (!tween) return;
+    cancelAnimationFrame(tween.raf);
+    tween = null;
+}
+
+/** keys the page scrolls with, pressed where they would scroll it */
+const SCROLL_KEYS = new Set([
+    "ArrowUp",
+    "ArrowDown",
+    "ArrowLeft",
+    "ArrowRight",
+    "PageUp",
+    "PageDown",
+    "Home",
+    "End",
+    " ",
+]);
+
+function isTypingTarget(t: EventTarget | null): boolean {
+    return (
+        t instanceof HTMLElement &&
+        (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))
+    );
+}
+
+/**
+ * The user taking over (a wheel, touch or press on the page, a scroll key) stops a
+ * glide where it is. Window capture phase, so it runs before the lens engine's own
+ * wheel and key panning. UniLens' own chrome is not the page: scrolling the chat or
+ * clicking an edge cue leaves a glide alone.
+ */
+function watchInput() {
+    if (inputWatched) return;
+    inputWatched = true;
+    const opts = { capture: true, passive: true };
+    const onPage = (e: Event) => {
+        if (!isOwnUI(e.target)) cancelTween();
+    };
+    window.addEventListener("wheel", onPage, opts);
+    window.addEventListener("touchstart", onPage, opts);
+    window.addEventListener(
+        "pointerdown",
+        (e) => {
+            dragging = false;
+            onPage(e);
+        },
+        opts,
+    );
+    window.addEventListener(
+        "pointermove",
+        (e) => {
+            dragging = e.buttons !== 0;
+        },
+        opts,
+    );
+    const endDrag = () => {
+        dragging = false;
+    };
+    window.addEventListener("pointerup", endDrag, opts);
+    window.addEventListener("pointercancel", endDrag, opts);
+    window.addEventListener(
+        "keydown",
+        (e) => {
+            if (
+                SCROLL_KEYS.has(e.key) &&
+                !isTypingTarget(e.target) &&
+                !isOwnUI(e.target)
+            )
+                cancelTween();
+        },
+        opts,
+    );
+}
+
+/** clamp a view offset to where the active engine can actually put the window */
+function clampView(x: number, y: number): { x: number; y: number } {
+    const se = document.scrollingElement ?? document.documentElement;
+    const maxX = frozen
+        ? layoutW * scale - window.innerWidth
+        : se.scrollWidth - se.clientWidth;
+    const maxY = frozen
+        ? layoutH * scale - window.innerHeight
+        : se.scrollHeight - se.clientHeight;
+    return {
+        x: Math.max(0, Math.min(x, Math.max(0, maxX))),
+        y: Math.max(0, Math.min(y, Math.max(0, maxY))),
+    };
+}
+
+/**
+ * Move the view, gliding when motion allows. A new move cancels a running glide and
+ * starts from wherever it had got to; a drag follows the pointer directly.
+ */
 export function setView(x: number, y: number) {
+    watchInput();
+    cancelTween();
+    const ms = dragging ? 0 : motionMs();
+    const from = getView();
+    const to = clampView(x, y);
+    if (!ms || (to.x === from.x && to.y === from.y)) {
+        jumpView(x, y);
+        return;
+    }
+    // the clock starts on the first frame, read from the frame's own timestamp. Never
+    // performance.now(): host pages replace it (SoftBank's vendor bundle swaps in a
+    // Date-based polyfill running ~600ms behind the frame clock), and a start taken
+    // before this click's own work is done makes the first frame land partway there
+    tween = { from, to, start: Number.NaN, ms, raf: 0 };
+    tween.raf = requestAnimationFrame(glide);
+}
+
+function glide(now: number) {
+    const tw = tween;
+    if (!tw) return;
+    if (Number.isNaN(tw.start)) tw.start = now;
+    const t = Math.min(1, Math.max(0, (now - tw.start) / tw.ms));
+    if (t >= 1) {
+        tween = null;
+        jumpView(tw.to.x, tw.to.y, true);
+        return;
+    }
+    // ask for the next frame before moving: listeners that redraw on a frame of their
+    // own (outline, cues, minimap) then queue behind it, and every frame they draw
+    // after this step has moved the page, never one step behind it
+    tw.raf = requestAnimationFrame(glide);
+    // cubic ease-in-out: leaves from where the reader is without a lurch (an ease-out
+    // moved 14% on its first frame, felt as a jump) and lands gently
+    const e = t < 0.5 ? 4 * t ** 3 : 1 - (-2 * t + 2) ** 3 / 2;
+    jumpView(
+        tw.from.x + (tw.to.x - tw.from.x) * e,
+        tw.from.y + (tw.to.y - tw.from.y) * e,
+        true,
+    );
+}
+
+/**
+ * Put the view there now, under either engine, and tell the view listeners
+ * (outline, cues, minimap). `frame`: one step of a glide, which must not be turned
+ * into a smooth scroll of its own by the page's CSS scroll-behavior.
+ */
+function jumpView(x: number, y: number, frame = false) {
     if (frozen) {
-        pan.x = Math.max(
-            0,
-            Math.min(x, Math.max(0, layoutW * scale - window.innerWidth)),
-        );
-        pan.y = Math.max(
-            0,
-            Math.min(y, Math.max(0, layoutH * scale - window.innerHeight)),
-        );
+        pan = clampView(x, y);
         paint();
         applyPins();
+    } else if (frame) {
+        window.scrollTo({ left: x, top: y, behavior: "instant" });
     } else {
         window.scrollTo(x, y);
     }
@@ -589,7 +848,7 @@ function applyScale(s: number) {
     scale = s;
     paint();
     // content point under the anchor stays under the anchor at every frame
-    setView(anchor.cx * s - anchor.ax, anchor.cy * s - anchor.ay);
+    jumpView(anchor.cx * s - anchor.ax, anchor.cy * s - anchor.ay);
     if (s === 1) {
         stopWatching();
         clearPins();
@@ -623,6 +882,7 @@ function setZoomPin(
     if (clamped === targetScale && clamped === scale) return;
     targetScale = clamped;
     anchor = { ax, ay, cx, cy };
+    cancelTween(); // the zoom anchors the view now; a glide would drag it off
     if (clamped !== 1 && !watcher) {
         scanFixed();
         startWatching();
@@ -639,7 +899,7 @@ function setZoomPin(
             zoomTrace.splice(0, zoomTrace.length - ZOOM_TRACE_MAX);
     }
 
-    if (!getSettings().smoothZoom) {
+    if (!getSettings().smoothZoom || reducedMotion()) {
         if (rafId) cancelAnimationFrame(rafId);
         rafId = 0;
         applyScale(targetScale);
@@ -750,7 +1010,7 @@ function onWheel(e: WheelEvent) {
     e.preventDefault(); // frozen document can't scroll — we pan the lens instead
     const k = e.deltaMode === 1 ? 16 : 1; // deltaMode 1 is lines, not px
     const v = getView();
-    setView(v.x + e.deltaX * k, v.y + e.deltaY * k);
+    jumpView(v.x + e.deltaX * k, v.y + e.deltaY * k);
 }
 
 const PAN_STEP = 80;
@@ -794,15 +1054,15 @@ function onPanKey(e: KeyboardEvent) {
             break;
         case "Home":
             e.preventDefault();
-            return setView(0, 0);
+            return jumpView(0, 0);
         case "End":
             e.preventDefault();
-            return setView(v.x, layoutH * scale);
+            return jumpView(v.x, layoutH * scale);
         default:
             return;
     }
     e.preventDefault();
-    setView(v.x + dx, v.y + dy);
+    jumpView(v.x + dx, v.y + dy);
 }
 
 function onKeyDown(e: KeyboardEvent) {
