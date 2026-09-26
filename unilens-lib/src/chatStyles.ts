@@ -64,6 +64,17 @@ ${R}${HC} .ulc-divider::before, ${R}${HC} .ulc-divider::after { border-top-width
 ${R} .ulc-where b { flex: none; font-variant-numeric: tabular-nums; }
 ${R} .ulc-where span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 ${R} .ulc-ctl { display: flex; align-items: center; gap: .35em; min-width: 0; }
+/* Associate response text: the words a source supports, underlined in the chip's
+   color (a bottom border, so the number can sit exactly on it), the line running on
+   into the number, which rests on it; the last word and the number never part */
+${R} .unilens-cite-text { padding-bottom: .06em; border-bottom: max(2px, .12em) solid var(--cite-line, currentColor); cursor: pointer; }
+${R}${HC} .unilens-cite-text { border-bottom-width: max(3px, .16em); }
+/* the selected source: its words on the page outline's color (the number's ring says the rest) */
+${R} .unilens-cite-text[aria-current="true"] { background: color-mix(in srgb, var(--ul-hl, #ffef26) 60%, transparent); box-decoration-break: clone; -webkit-box-decoration-break: clone; }
+${R} .unilens-cite-end { white-space: nowrap; }
+${R} .unilens-cite-text + .unilens-cite { position: relative; top: var(--cite-drop, -.09em); margin-left: .3em; }
+${R} .unilens-cite-text + .unilens-cite::before { content: ""; position: absolute; right: 50%; bottom: 0; width: calc(50% + .3em + 1px); border-bottom: max(2px, .12em) solid var(--cite-line, currentColor); pointer-events: none; }
+${R}${HC} .unilens-cite-text + .unilens-cite::before { border-bottom-width: max(3px, .16em); }
 ${R} .ulc-c { display: inline-flex; align-items: center; justify-content: center; gap: .35em; flex: none; padding: 0; font-size: 1em; white-space: nowrap; }
 ${R} .ulc-c span { overflow: hidden; text-overflow: ellipsis; }
 ${R} .ulc-quick { display: grid; grid-template-columns: repeat(3, 1fr); gap: .35em; flex: none; }
@@ -103,7 +114,7 @@ ${B} b { font-weight: 700; }
 }
 
 /* ── Assistant (default): the assistant-widget convention, done carefully ── */
-${A} { --bg: #fff; --soft: #f1f3f5; --fg: #1f2937; --muted: #4b5563; --line: #d1d5db; --acc: #2563eb; --acc-fg: #fff; --err-bg: #fef2f2; --err: #b91c1c;
+${A} { --cite-line: var(--acc); --bg: #fff; --soft: #f1f3f5; --fg: #1f2937; --muted: #4b5563; --line: #d1d5db; --acc: #2563eb; --acc-fg: #fff; --err-bg: #fef2f2; --err: #b91c1c;
   background: var(--bg); color: var(--fg); border: 1px solid #e5e7eb; border-radius: 16px; font-family: ${SYS};
   box-shadow: 0 16px 40px rgba(17, 24, 39, .18), 0 2px 6px rgba(17, 24, 39, .08); }
 ${A}${HC} { --bg: #000; --soft: #000; --fg: #fff; --muted: #fff; --line: #fff; --acc: #ffd400; --acc-fg: #000; --err-bg: #000; --err: #ffd400; border: 3px solid #fff; }
@@ -154,7 +165,7 @@ ${A} .ulc-status { padding: 0 1em .65em; color: var(--muted); }
 ${A} :focus-visible { outline: 3px solid var(--acc); outline-offset: 2px; }
 
 /* ── Audio guide: graphite handset, amber display, white label, number keys ── */
-${G} { --body: #1c1f24; --body2: #262a31; --key: #2e333b; --key-fg: #fff; --lcd: #ffb000; --lcd-fg: #1c1f24; --label: #fff; --label-fg: #111; --muted: #c9ced6; --disc: #111; --disc-fg: #fff; --err: #ff6b57;
+${G} { --cite-line: var(--lcd); --body: #1c1f24; --body2: #262a31; --key: #2e333b; --key-fg: #fff; --lcd: #ffb000; --lcd-fg: #1c1f24; --label: #fff; --label-fg: #111; --muted: #c9ced6; --disc: #111; --disc-fg: #fff; --err: #ff6b57;
   background: var(--body); color: #fff; border-radius: 22px; padding: 12px; font-family: ${UD}; box-shadow: 0 14px 34px rgba(0, 0, 0, .35); }
 ${G}${HC} { --body: #000; --body2: #000; --key: #000; --key-fg: #ffd400; --lcd: #ffd400; --lcd-fg: #000; --label: #000; --label-fg: #fff; --muted: #fff; --disc: #ffd400; --disc-fg: #000; --err: #ffd400; border: 3px solid #ffd400; }
 ${G} ::selection { background: var(--lcd); color: var(--lcd-fg); }
@@ -199,7 +210,7 @@ ${G} .ulc-status { margin-top: 8px; min-height: 2.6em; padding: .45em .8em; bord
 ${G} :focus-visible { outline: 3px solid #fff; outline-offset: 2px; box-shadow: 0 0 0 6px var(--lcd); }
 
 /* ── Station signs: sign band, blue status strip, station codes, exit-yellow signs ── */
-${S} { --panel: #fff; --fg: #222; --band: #2b2b2b; --band-fg: #fff; --line: #0079c2; --exit: #ffd400; --exit-fg: #111; --muted: #4d5156; --strip: #eef4f9; --strip-fg: #0b3d63; --err: #d0021b;
+${S} { --cite-line: var(--line); --panel: #fff; --fg: #222; --band: #2b2b2b; --band-fg: #fff; --line: #0079c2; --exit: #ffd400; --exit-fg: #111; --muted: #4d5156; --strip: #eef4f9; --strip-fg: #0b3d63; --err: #d0021b;
   background: var(--panel); color: var(--fg); border: 1px solid #c9ccd0; border-radius: 6px; font-family: ${UD}; box-shadow: 0 12px 30px rgba(0, 0, 0, .28); }
 ${S}${HC} { --panel: #000; --fg: #fff; --band: #000; --band-fg: #fff; --line: #ffd400; --muted: #fff; --strip: #000; --strip-fg: #ffd400; --err: #ffd400; border: 3px solid #fff; }
 ${S} ::selection { background: var(--line); color: #fff; }

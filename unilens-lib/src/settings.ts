@@ -141,6 +141,8 @@ export interface Settings {
     citeEvidence: boolean;
     /** a chat covering a source steps aside, to the nearer side (a pinned chat stays) */
     chatMovesAside: boolean;
+    /** underline the fewest words each source supports, joined to its number */
+    associateText: boolean;
     /** re-capture before a message when the user scrolled, panned or zoomed since the last one */
     refreshView: boolean;
     /** when an answer's evidence is outlined without a click */
@@ -228,6 +230,7 @@ const DEFAULTS: Settings = {
     sounds: true,
     citeEvidence: true,
     chatMovesAside: true,
+    associateText: false,
     refreshView: true,
     autoHighlight: "where",
     escapeOrder: "highlight",
@@ -271,6 +274,8 @@ export const TOGGLE_LABELS: Record<BoolSettingKey, string> = {
     mmNumbers: "Numbers on targets",
     citeEvidence: "Answers cite page elements",
     chatMovesAside: "Move the chat out of the way of sources",
+    associateText:
+        "Associate response text (underline what each source supports)",
     sounds: "A sound for every action",
     refreshView: "Send my new view with follow-ups",
     fxCore: "Orb: glossy core",
@@ -522,6 +527,7 @@ export const PANEL_SECTIONS: {
         title: "Answers and sources",
         keys: [
             "citeEvidence",
+            "associateText",
             "autoHighlight",
             "moveToEvidence",
             "chatMovesAside",

@@ -21,6 +21,16 @@ export const unjoin = (text: string) =>
     );
 /** placeholder that survives the markdown pass; a private-use char, stripped from model text first */
 const SLOT = /\uE0FF(\d+)\uE0FF/g;
+/** an open no-wrap group (a phrase's last word) that the next number closes */
+const GROUP = "\uE0FC";
+const GROUPED_SLOT = /(\uE0FC)?\uE0FF(\d+)\uE0FF/g;
+/** a supported phrase's ends, `{{` and `}}` in model text, kept through the markdown pass */
+const OPEN = "\uE0FE";
+const CLOSE = "\uE0FD";
+/** `{{phrase}}` right before a citation (after its marker became a slot) */
+const PHRASE = /\{\{([^{}\n]*?)\}\}(?=\s?\uE0FF\d+\uE0FF)/g;
+/** where the fallback phrase stops looking back: a clause's punctuation */
+const CLAUSE_END = /[.!?。！？、,，;；:：]/g;
 
 const escapeHtml = (s: string) =>
     s
@@ -66,8 +76,10 @@ export function renderCited(
         `Evidence ${n}: ${label}`,
     /** what the chip shows: the number, or a code such as "U1" */
     chipText: (n: number) => string = String,
+    /** underline the words each citation supports ("Associate response text") */
+    phrases = false,
 ): Cited {
-    let t = unjoin(text.replace(/\uE0FF/g, ""));
+    let t = unjoin(text.replace(/[\uE0FC-\uE0FF]/g, ""));
     if (streaming) t = t.replace(PARTIAL_JOINED, "").replace(PARTIAL, "");
     const ids: string[] = [];
     t = t.replace(MARKER, (m, id: string) => {
@@ -76,14 +88,91 @@ export function renderCited(
         if (!n) n = ids.push(id);
         return `${m.startsWith("[") ? "" : " "}\uE0FF${n}\uE0FF`;
     });
-    const html = mdLite(t).replace(SLOT, (_, n: string) => {
-        const id = ids[Number(n) - 1];
-        const raw = labelOf(id);
-        const label = escapeHtml(raw);
-        const name = escapeHtml(nameOf(Number(n), raw));
-        return `<button type="button" class="unilens-cite" data-cite="${id}" aria-label="${name}" title="${label}">${escapeHtml(chipText(Number(n)))}</button>`;
-    });
+    // the model marks the fewest words a citation supports as {{...}} before its marker
+    t = t.replace(PHRASE, phrases ? `${OPEN}$1${CLOSE}` : "$1");
+    // braces not before a citation, and a half-written `{{` while it streams, never show
+    t = t.replace(/\{\{|\}\}/g, "");
+    if (phrases) t = markFallbackPhrases(t);
+    const html = mdLite(t)
+        .replace(
+            // the space before the number goes: the underline runs straight into it
+            /\uE0FE([^\uE0FE\uE0FD]*)\uE0FD\s?(?=\uE0FF(\d+)\uE0FF)/g,
+            (_, words: string, n: string) =>
+                phraseHtml(words, ids[Number(n) - 1]),
+        )
+        .replace(/[\uE0FE\uE0FD]/g, "")
+        .replace(GROUPED_SLOT, (_, grouped: string | undefined, n: string) => {
+            const id = ids[Number(n) - 1];
+            const raw = labelOf(id);
+            const label = escapeHtml(raw);
+            const name = escapeHtml(nameOf(Number(n), raw));
+            const chip = `<button type="button" class="unilens-cite" data-cite="${id}" aria-label="${name}" title="${label}">${escapeHtml(chipText(Number(n)))}</button>`;
+            // after underlined words, the number closes their no-wrap group
+            return grouped ? `${chip}</span>` : chip;
+        });
     return { html, ids };
+}
+
+/**
+ * The underlined words of a citation. Their last word and the number that follows
+ * stay on one line (the number never starts a line alone): the words split in two
+ * spans, the second opening a no-wrap group the number's slot closes.
+ */
+function phraseHtml(words: string, id: string): string {
+    const span = (w: string) =>
+        `<span class="unilens-cite-text" data-cite="${id}">${w}</span>`;
+    // text with markup inside (bold) stays one span; it may wrap before the number
+    if (words.includes("<")) return span(words);
+    // the last word: after the last space, or the last two characters of CJK text
+    const cut = words.includes(" ")
+        ? words.lastIndexOf(" ") + 1
+        : Math.max(0, [...words].length - 2);
+    const chars = [...words];
+    const head = words.includes(" ")
+        ? words.slice(0, cut)
+        : chars.slice(0, cut).join("");
+    const tail = words.includes(" ")
+        ? words.slice(cut)
+        : chars.slice(cut).join("");
+    return `${head ? span(head) : ""}<span class="unilens-cite-end">${span(tail)}${GROUP}`;
+}
+
+/**
+ * A citation the model gave no phrase: underline the last words before it (at most
+ * four, never past the clause's punctuation or the previous citation), so every
+ * citation has words to point at. Words are found by the browser's word segmenter,
+ * which also splits Japanese.
+ */
+function markFallbackPhrases(t: string, max = 4): string {
+    let out = "";
+    let from = 0;
+    for (const m of t.matchAll(SLOT)) {
+        const at = m.index ?? 0;
+        let before = t.slice(from, at);
+        if (!before.trimEnd().endsWith(CLOSE)) {
+            const trimmed = before.replace(/\s+$/, "");
+            // the clause the citation closes: back to its punctuation, or a phrase end
+            let start = 0;
+            for (const c of trimmed.matchAll(CLAUSE_END))
+                if ((c.index ?? 0) < trimmed.length - 1)
+                    start = (c.index ?? 0) + 1;
+            start = Math.max(start, trimmed.lastIndexOf(CLOSE) + 1);
+            const clause = trimmed.slice(start);
+            const words = [
+                ...new Intl.Segmenter(undefined, {
+                    granularity: "word",
+                }).segment(clause),
+            ].filter((w) => w.isWordLike);
+            if (words.length) {
+                const first =
+                    start + words[Math.max(0, words.length - max)].index;
+                before = `${trimmed.slice(0, first)}${OPEN}${trimmed.slice(first)}${CLOSE}${before.slice(trimmed.length)}`;
+            }
+        }
+        out += before + m[0];
+        from = at + m[0].length;
+    }
+    return out + t.slice(from);
 }
 
 /**
@@ -106,8 +195,11 @@ export function sourcesIn(
     });
 }
 
-/** the reply as it should be read aloud or copied: no markers */
-export const speakable = (text: string) => unjoin(text).replace(MARKER, "");
+/** the reply as it should be read aloud or copied: no markers, no phrase braces */
+export const speakable = (text: string) =>
+    unjoin(text)
+        .replace(MARKER, "")
+        .replace(/\{\{|\}\}/g, "");
 
 export type NavCommand =
     | { kind: "next" }

@@ -229,6 +229,16 @@ SELECTION_RULES = (
     "outranks the click point and metadata.element. If the question is plainly "
     "about something else, answer that instead."
 )
+# "Associate response text": the chat underlines the words each citation supports, so the
+# model marks the fewest of them (R3 of the 2026-09-26 report); only when asked
+PHRASE_RULES = (
+    "Also mark what each citation supports: wrap the fewest words that state the "
+    "fact from the page in {{ and }}, immediately before its marker, for example: "
+    "Shareholders get {{¥1,000 of PayPay Money Lite}}[[n30]]. Mark only words of "
+    "your own answer, a few words, never a whole sentence. Never explain or "
+    "mention the braces."
+)
+
 # a selection is a few sources at most; their labels are the page's own words
 SELECTION_MAX = 30  # the chat's own cap; the About line says when it cut
 SELECTION_LABEL_MAX = 160
@@ -296,9 +306,15 @@ def _page_data(inventory, selection) -> str | None:
     return "\n\n".join(parts) or None
 
 
-def _chat_rules(inventory, selection) -> str | None:
+def _chat_rules(inventory, selection, phrases=False) -> str | None:
     rules = [
-        r for r, on in ((EVIDENCE_RULES, inventory), (SELECTION_RULES, selection)) if on
+        r
+        for r, on in (
+            (EVIDENCE_RULES, inventory),
+            (PHRASE_RULES, inventory and phrases),
+            (SELECTION_RULES, selection),
+        )
+        if on
     ]
     return "\n\n".join(rules) or None
 
@@ -392,6 +408,7 @@ def _chat_openai_request(
     inventory=None,
     stream=False,
     selection=None,
+    phrases=False,
 ) -> dict:
     """Keyword arguments for responses.create; pure, so tests can inspect it.
     Without an inventory or a selection the request is exactly the pre-citation one."""
@@ -406,7 +423,7 @@ def _chat_openai_request(
             extra_text=_page_data(inventory, selection),
         ),
     }
-    rules = _chat_rules(inventory, selection)
+    rules = _chat_rules(inventory, selection, phrases)
     if rules:
         req["instructions"] = rules
     if stream:
@@ -415,7 +432,14 @@ def _chat_openai_request(
 
 
 def _call_openai(
-    png_b64, viewport_b64, meta, history, message, inventory=None, selection=None
+    png_b64,
+    viewport_b64,
+    meta,
+    history,
+    message,
+    inventory=None,
+    selection=None,
+    phrases=False,
 ) -> str:
     from openai import OpenAI
 
@@ -428,6 +452,7 @@ def _call_openai(
             message,
             inventory,
             selection=selection,
+            phrases=phrases,
         )
     )
     return response.output_text
@@ -487,12 +512,19 @@ def _gemini_contents(
 
 
 def _chat_gemini_request(
-    png_b64, viewport_b64, meta, history, message, inventory=None, selection=None
+    png_b64,
+    viewport_b64,
+    meta,
+    history,
+    message,
+    inventory=None,
+    selection=None,
+    phrases=False,
 ) -> dict:
     """Keyword arguments for generate_content(_stream); pure, so tests can inspect it."""
     from google.genai import types
 
-    rules = _chat_rules(inventory, selection)
+    rules = _chat_rules(inventory, selection, phrases)
     return {
         "model": GEMINI_MODEL,
         "contents": _gemini_contents(
@@ -512,7 +544,14 @@ def _chat_gemini_request(
 
 
 def _call_gemini(
-    png_b64, viewport_b64, meta, history, message, inventory=None, selection=None
+    png_b64,
+    viewport_b64,
+    meta,
+    history,
+    message,
+    inventory=None,
+    selection=None,
+    phrases=False,
 ) -> str:
     from google import genai
 
@@ -521,14 +560,21 @@ def _call_gemini(
     client = genai.Client()
     response = client.models.generate_content(
         **_chat_gemini_request(
-            png_b64, viewport_b64, meta, history, message, inventory, selection
+            png_b64, viewport_b64, meta, history, message, inventory, selection, phrases
         )
     )
     return response.text
 
 
 def _stream_openai(
-    png_b64, viewport_b64, meta, history, message, inventory=None, selection=None
+    png_b64,
+    viewport_b64,
+    meta,
+    history,
+    message,
+    inventory=None,
+    selection=None,
+    phrases=False,
 ):
     """Yield text deltas from the OpenAI Responses streaming API."""
     from openai import OpenAI
@@ -543,6 +589,7 @@ def _stream_openai(
             inventory,
             stream=True,
             selection=selection,
+            phrases=phrases,
         )
     )
     for event in stream:
@@ -551,7 +598,14 @@ def _stream_openai(
 
 
 def _stream_gemini(
-    png_b64, viewport_b64, meta, history, message, inventory=None, selection=None
+    png_b64,
+    viewport_b64,
+    meta,
+    history,
+    message,
+    inventory=None,
+    selection=None,
+    phrases=False,
 ):
     from google import genai
 
@@ -560,7 +614,7 @@ def _stream_gemini(
     client = genai.Client()
     for chunk in client.models.generate_content_stream(
         **_chat_gemini_request(
-            png_b64, viewport_b64, meta, history, message, inventory, selection
+            png_b64, viewport_b64, meta, history, message, inventory, selection, phrases
         )
     ):
         if chunk.text:
@@ -1169,6 +1223,9 @@ def create_app():
         if isinstance(inventory, str):
             return jsonify({"error": inventory}), 400
         selection = _selection(data)
+        phrases = data.get("mark_phrases", False)
+        if not isinstance(phrases, bool):
+            return jsonify({"error": "mark_phrases must be a boolean"}), 400
         cite_ids = set(_inventory_ids(inventory or []))
 
         provider = _provider()
@@ -1192,6 +1249,7 @@ def create_app():
                     message=message,
                     inventory=inventory,
                     selection=selection,
+                    phrases=phrases,
                 )
                 for delta in deltas:
                     parts.append(delta)
@@ -1239,6 +1297,9 @@ def create_app():
         if isinstance(inventory, str):
             return jsonify({"error": inventory}), 400
         selection = _selection(data)
+        phrases = data.get("mark_phrases", False)
+        if not isinstance(phrases, bool):
+            return jsonify({"error": "mark_phrases must be a boolean"}), 400
 
         provider = _provider()
         t0 = time.perf_counter()
@@ -1253,6 +1314,7 @@ def create_app():
                 message=message,
                 inventory=inventory,
                 selection=selection,
+                phrases=phrases,
             )
             reply = _strip_unknown_cites(reply, set(_inventory_ids(inventory or [])))
         except Exception as e:  # surface provider errors to the popover

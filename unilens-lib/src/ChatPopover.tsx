@@ -132,6 +132,7 @@ function cited(m: Msg): Cited | null {
         m.streaming,
         chatText().evidenceLabel,
         chipText,
+        getSettings().associateText,
     );
 }
 
@@ -253,10 +254,11 @@ function clearOfHostControls(
     return moves.sort((a, c) => d(a) - d(c))[0] ?? p;
 }
 
-/** a chip's HTML with the active one marked, so each style can show which is current */
+/** a chip's HTML with the active one marked (and its underlined words, when the answer
+ *  associates them), so each style can show which is current */
 const markActive = (html: string, id: string | undefined) =>
     id
-        ? html.replace(
+        ? html.replaceAll(
               `data-cite="${id}"`,
               `data-cite="${id}" aria-current="true"`,
           )
@@ -1144,6 +1146,7 @@ export default function ChatPopover({
                 session_id: sessionId,
                 cite: getSettings().citeEvidence,
                 selection: sel ? { items: selectionIn(sel, on) } : undefined,
+                mark_phrases: getSettings().associateText,
             }),
         });
         if (!res.ok || !res.body) {
@@ -1239,6 +1242,7 @@ export default function ChatPopover({
                 session_id: sessionId,
                 cite: getSettings().citeEvidence,
                 selection: sel ? { items: selectionIn(sel, on) } : undefined,
+                mark_phrases: getSettings().associateText,
             }),
         });
         const data = await res.json();
@@ -1646,6 +1650,8 @@ export default function ChatPopover({
                             : "none",
                     "--ul-fs": `${fs}px`,
                     "--ul-text": settings.chatTextScale / 100,
+                    // the page outline's color, for the selected source's words
+                    "--ul-hl": settings.hlColor,
                 } as React.CSSProperties
             }
         >

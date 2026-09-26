@@ -277,3 +277,44 @@ def test_requests_carry_the_selection_as_data_with_its_rule():
     none = app_module._chat_openai_request(**_args(INVENTORY), selection=[])
     assert none["instructions"] == EVIDENCE_RULES
     assert not any("## Selected on the page" in t for t in _openai_texts(none))
+
+
+# ── Phrases: "Associate response text" (R3 of the 2026-09-26 report) ──────
+
+
+@pytest.mark.parametrize("route", ROUTES)
+def test_provider_gets_mark_phrases(client, capture, monkeypatch, route):
+    seen = {}
+
+    def fake(**kw):
+        seen.update(kw)
+        return iter(["ok"]) if route.endswith("stream") else "ok"
+
+    kind = "stream" if route.endswith("stream") else "call"
+    monkeypatch.setitem(app_module.PROVIDERS["stub"], kind, fake)
+    cap = capture(INVENTORY)
+    _reply(client, route, cap, mark_phrases=True)
+    assert seen["phrases"] is True
+    _reply(client, route, cap)
+    assert seen["phrases"] is False
+    res = client.post(
+        route, json={"capture_id": cap, "message": "x", "mark_phrases": "yes"}
+    )
+    assert res.status_code == 400
+
+
+def test_phrase_rule_only_with_an_inventory_and_when_asked():
+    rules = app_module._chat_openai_request(**_args(INVENTORY), phrases=True)[
+        "instructions"
+    ]
+    assert rules == EVIDENCE_RULES + "\n\n" + app_module.PHRASE_RULES
+    assert (
+        app_module._chat_openai_request(**_args(INVENTORY))["instructions"]
+        == EVIDENCE_RULES
+    )
+    # no inventory, nothing to cite: no phrase rule either
+    assert "instructions" not in app_module._chat_openai_request(
+        **_args(None), phrases=True
+    )
+    g = app_module._chat_gemini_request(**_args(INVENTORY), phrases=True)
+    assert app_module.PHRASE_RULES in g["config"].system_instruction

@@ -192,3 +192,85 @@ describe("recordEvidence", () => {
         });
     });
 });
+
+describe("renderCited with phrases (Associate response text)", () => {
+    const known = (id: string) => ["n12", "n13"].includes(id);
+    const label = (id: string) => `label ${id}`;
+    /** each source's underlined words, its spans joined (the last word is its own) */
+    const spans = (html: string) => {
+        const out: [string, string][] = [];
+        for (const m of html.matchAll(
+            /<span class="unilens-cite-text" data-cite="(n\d+)">([^<]*)<\/span>/g,
+        )) {
+            const last = out[out.length - 1];
+            if (last && last[0] === m[1]) last[1] += m[2];
+            else out.push([m[1], m[2]]);
+        }
+        return out;
+    };
+
+    it("underlines the phrase the model marked, right before its chip", () => {
+        const r = renderCited(
+            "Shareholders get {{¥1,000 of PayPay Money Lite}}[[n12]], and more.",
+            known,
+            label,
+            false,
+            undefined,
+            undefined,
+            true,
+        );
+        expect(spans(r.html)).toEqual([["n12", "¥1,000 of PayPay Money Lite"]]);
+        expect(r.html).toMatch(
+            /<span class="unilens-cite-end"><span[^>]*>Lite<\/span><button[^>]*data-cite="n12"[^>]*>1<\/button><\/span>/,
+        );
+        expect(r.html).not.toContain("{{");
+    });
+
+    it("falls back to the last few words of the clause when there are no braces", () => {
+        const r = renderCited(
+            "Yes, you qualify. The benefit is described in the table [[n13]].",
+            known,
+            label,
+            false,
+            undefined,
+            undefined,
+            true,
+        );
+        expect(spans(r.html)).toEqual([["n13", "described in the table"]]);
+    });
+
+    it("finds Japanese words too", () => {
+        const r = renderCited(
+            "対象は、100株以上保有の株主さまです[[n12]]。",
+            known,
+            label,
+            false,
+            undefined,
+            undefined,
+            true,
+        );
+        const [[, words]] = spans(r.html);
+        expect(words.length).toBeGreaterThan(0);
+        expect("100株以上保有の株主さまです".endsWith(words)).toBe(true);
+    });
+
+    it("drops the braces when the setting is off, and never shows a half-written one", () => {
+        const off = renderCited("Get {{¥1,000}}[[n12]].", known, label);
+        expect(off.html).not.toContain("{{");
+        expect(spans(off.html)).toEqual([]);
+        const streaming = renderCited(
+            "Get {{¥1,0",
+            known,
+            label,
+            true,
+            undefined,
+            undefined,
+            true,
+        );
+        expect(streaming.html).toBe("Get ¥1,0");
+    });
+
+    it("reads aloud without braces", () => {
+        expect(speakable("Get {{¥1,000}}[[n12]].")).toBe("Get ¥1,000.");
+    });
+});
