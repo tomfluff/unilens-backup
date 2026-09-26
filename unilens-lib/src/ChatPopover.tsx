@@ -567,10 +567,15 @@ export default function ChatPopover({
     }, []);
 
     // Clamp popover inside viewport, near the cursor (or restore pinned position)
-    const clamp = (p: { left: number; top: number }) => ({
-        left: Math.min(Math.max(p.left, 8), window.innerWidth - panelW - 8),
-        top: Math.min(Math.max(p.top, 8), window.innerHeight - panelH - 8),
-    });
+    const clamp = (p: { left: number; top: number }) => {
+        // folded, the chat is only its header and status line: it may go as low as
+        // that fits, not as low as the whole chat would
+        const h = mini ? (rootRef.current?.offsetHeight ?? panelH) : panelH;
+        return {
+            left: Math.min(Math.max(p.left, 8), window.innerWidth - panelW - 8),
+            top: Math.min(Math.max(p.top, 8), window.innerHeight - h - 8),
+        };
+    };
     /** where the chat sits when placed for the user (not dragged): on screen, and
      *  off the page's own floating controls */
     const settle = (p: { left: number; top: number }) =>
@@ -629,6 +634,11 @@ export default function ChatPopover({
             sendText(w.text, w.msgId);
         }
     }, [capturing]);
+    // unfolded after being dragged low while folded: up just enough to show it whole
+    // biome-ignore lint/correctness/useExhaustiveDependencies: on unfolding only
+    useEffect(() => {
+        if (!mini) setPos((p) => clamp(p));
+    }, [mini]);
     // a bigger text size or a narrower window must not push the chat off screen
     // biome-ignore lint/correctness/useExhaustiveDependencies: re-clamp on size changes only
     useEffect(() => {
