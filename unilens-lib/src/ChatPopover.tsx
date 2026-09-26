@@ -1,4 +1,5 @@
 import { useEffect, useId, useRef, useState } from "react";
+import { aiChoice } from "./ai";
 import type { CaptureResult } from "./capture";
 import { chatLang, chatText, speechLang } from "./chatI18n";
 import { ensureChatStyles } from "./chatStyles";
@@ -1147,6 +1148,7 @@ export default function ChatPopover({
                 cite: getSettings().citeEvidence,
                 selection: sel ? { items: selectionIn(sel, on) } : undefined,
                 mark_phrases: getSettings().associateText,
+                ai: aiChoice(),
             }),
         });
         if (!res.ok || !res.body) {
@@ -1243,6 +1245,7 @@ export default function ChatPopover({
                 cite: getSettings().citeEvidence,
                 selection: sel ? { items: selectionIn(sel, on) } : undefined,
                 mark_phrases: getSettings().associateText,
+                ai: aiChoice(),
             }),
         });
         const data = await res.json();

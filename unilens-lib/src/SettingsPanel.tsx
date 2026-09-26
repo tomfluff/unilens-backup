@@ -5,6 +5,7 @@
 import { useEffect, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import styled from "styled-components";
+import { type AiCatalogue, aiCatalogue, setAiBackend } from "./ai";
 import {
     type BoolSettingKey,
     clampSetting,
@@ -382,6 +383,63 @@ function ZoomControls() {
 }
 
 /** one control, drawn by what kind of value the setting holds */
+/**
+ * A choice whose options come from the backend's catalogue: the model (for the
+ * provider chosen, or the backend's default one) and the read-aloud voice.
+ */
+function CatalogueRow({
+    setting,
+    settings,
+}: {
+    setting: "aiModel" | "ttsVoice";
+    settings: Settings;
+}) {
+    const [cat, setCat] = useState<AiCatalogue | null | undefined>(undefined);
+    useEffect(() => {
+        let live = true;
+        aiCatalogue().then((c) => live && setCat(c));
+        return () => {
+            live = false;
+        };
+    }, []);
+    const provider =
+        settings.aiProvider === "auto" ? cat?.default : settings.aiProvider;
+    const entry = provider ? cat?.providers[provider] : undefined;
+    const options =
+        setting === "aiModel"
+            ? (entry?.models ?? []).map((m) => m.id)
+            : (cat?.voices ?? []);
+    const fallback =
+        setting === "aiModel"
+            ? `Provider default${entry ? ` (${entry.default})` : ""}`
+            : `Default${cat ? ` (${cat.defaultVoice})` : ""}`;
+    const value = settings[setting];
+    return (
+        <SettingLabel>
+            {setting === "aiModel" ? "Model" : "Read-aloud voice"}
+            <SettingsSelect
+                value={options.includes(value) ? value : ""}
+                disabled={!cat}
+                onChange={(e) =>
+                    updateSetting(
+                        setting,
+                        clampSetting(setting, e.currentTarget.value),
+                    )
+                }
+            >
+                <option value="">
+                    {cat === null ? "Backend unreachable" : fallback}
+                </option>
+                {options.map((o) => (
+                    <option key={o} value={o}>
+                        {o}
+                    </option>
+                ))}
+            </SettingsSelect>
+        </SettingLabel>
+    );
+}
+
 function Row({
     setting,
     settings,
@@ -404,6 +462,8 @@ function Row({
             </SettingLabel>
         );
     }
+    if (setting === "aiModel" || setting === "ttsVoice")
+        return <CatalogueRow setting={setting} settings={settings} />;
     if (Object.hasOwn(ENUM_CHOICES, setting)) {
         const key = setting as EnumKey;
         return (
@@ -411,12 +471,14 @@ function Row({
                 {ENUM_CHOICES[key].label}
                 <SettingsSelect
                     value={String(clampSetting(key, settings[key]))}
-                    onChange={(e) =>
+                    onChange={(e) => {
                         updateSetting(
                             key,
                             clampSetting(key, e.currentTarget.value),
-                        )
-                    }
+                        );
+                        // another provider has other models: back to its default
+                        if (key === "aiProvider") updateSetting("aiModel", "");
+                    }}
                 >
                     {Object.entries(ENUM_CHOICES[key].choices).map(
                         ([value, label]) => (
@@ -574,7 +636,8 @@ function SettingsLauncher() {
     );
 }
 
-export function initSettings() {
+export function initSettings(backend = "") {
+    setAiBackend(backend);
     const container = document.createElement("div");
     container.id = "unilens-settings-root";
     // documentElement: outside the zoom-transformed body, excluded from captures

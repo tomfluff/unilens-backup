@@ -122,6 +122,58 @@ def _session_context_note(session: dict, current_cap_id: str) -> str | None:
 OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-5.4-mini")
 GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3-flash-preview")
 
+# AI settings (R2 of the 2026-09-26 report): what the chat may choose per request.
+# A curated list per provider (env-overridable), shown only where the key reaches it;
+# True marks a model that takes a reasoning level. The env default is always offered.
+AI_MODELS = {
+    "openai": [
+        ("gpt-5.4-mini", True),
+        ("gpt-5.4-nano", True),
+        ("gpt-5.4", True),
+        ("gpt-5.5", True),
+        ("gpt-5.6-luna", True),
+        ("gpt-5.6-terra", True),
+        ("gpt-5.6-sol", True),
+        ("gpt-4.1-mini", False),
+    ],
+    "gemini": [
+        ("gemini-3-flash-preview", True),
+        ("gemini-3.5-flash-lite", True),
+        ("gemini-3.5-flash", True),
+        ("gemini-3.8-flash", True),
+        ("gemini-3.1-pro-preview", True),
+        ("gemini-2.5-flash", False),
+    ],
+}
+for _p, _env in (("openai", "AI_OPENAI_MODELS"), ("gemini", "AI_GEMINI_MODELS")):
+    if os.getenv(_env):
+        AI_MODELS[_p] = [
+            (m, m.startswith(("gpt-5", "o", "gemini-3")))
+            for m in os.getenv(_env, "").split(",")
+            if m.strip()
+        ]
+for _p, _m in (("openai", OPENAI_MODEL), ("gemini", GEMINI_MODEL)):
+    if _m not in dict(AI_MODELS[_p]):
+        AI_MODELS[_p].insert(0, (_m, _m.startswith(("gpt-5", "o", "gemini-3"))))
+# the levels every listed reasoning model takes (OpenAI effort, Gemini thinking level)
+REASONING_LEVELS = ("low", "medium", "high")
+TTS_VOICES = (
+    "alloy",
+    "ash",
+    "ballad",
+    "coral",
+    "echo",
+    "fable",
+    "nova",
+    "onyx",
+    "sage",
+    "shimmer",
+    "verse",
+    "marin",
+    "cedar",
+)
+PROVIDER_KEYS = {"openai": "OPENAI_API_KEY", "gemini": "GOOGLE_API_KEY"}
+
 # ── Pilot guardrails ───────────────────────────────────────────────────────
 # Off by default (open dev). Set GUARDRAILS=on for the pilot to enable
 # rate limits and storage pruning.
@@ -324,6 +376,64 @@ def _chat_rules(inventory, selection, phrases=False) -> str | None:
     return "\n\n".join(rules) or None
 
 
+_REACHABLE: dict[str, tuple[float, set[str] | None]] = {}
+
+
+def _reachable_models(provider: str) -> set[str] | None:
+    """The model ids the provider's key can use (listing is free), cached for an
+    hour; None when the listing fails, so the curated list is offered as it is."""
+    at, ids = _REACHABLE.get(provider, (0.0, None))
+    if time.time() - at < 3600:
+        return ids
+    ids = None
+    try:
+        if provider == "openai":
+            from openai import OpenAI
+
+            ids = {m.id for m in OpenAI().models.list()}
+        elif provider == "gemini":
+            from google import genai
+
+            client = genai.Client()
+            ids = {m.name.removeprefix("models/") for m in client.models.list()}
+    except Exception:  # offline, a key without list rights: offer the list as it is
+        ids = None
+    _REACHABLE[provider] = (time.time(), ids)
+    return ids
+
+
+def _ai_models(provider: str) -> list[dict]:
+    reach = _reachable_models(provider)
+    return [
+        {"id": m, "reasoning": r}
+        for m, r in AI_MODELS[provider]
+        if reach is None or m in reach
+    ]
+
+
+def _default_model(provider: str) -> str:
+    return {"openai": OPENAI_MODEL, "gemini": GEMINI_MODEL}.get(provider, "none")
+
+
+def _ai_choice(data: dict) -> dict:
+    """What this request runs on: {provider, model, reasoning}. The request's `ai`
+    choice counts only inside the catalogue (a provider whose key is set, one of its
+    listed models, a listed level on a model that reasons); anything else falls back
+    to the default, so no arbitrary model name reaches a paid API."""
+    raw = data.get("ai") if isinstance(data.get("ai"), dict) else {}
+    provider = raw.get("provider")
+    if provider not in PROVIDER_KEYS or not os.getenv(PROVIDER_KEYS[provider]):
+        provider = _provider()
+    if provider == "stub":
+        return {"provider": "stub", "model": "none", "reasoning": None}
+    models = dict(AI_MODELS[provider])
+    model = raw.get("model") if raw.get("model") in models else None
+    model = model or _default_model(provider)
+    level = raw.get("reasoning")
+    reasoning = level if level in REASONING_LEVELS and models.get(model) else None
+    return {"provider": provider, "model": model, "reasoning": reasoning}
+
+
 def _strip_unknown_cites(text: str, ids: set[str]) -> str:
     """Drop [[id]] markers that name no element of the inventory in use. The
     space before one goes with it only when punctuation or the end follows:
@@ -414,11 +524,12 @@ def _chat_openai_request(
     stream=False,
     selection=None,
     phrases=False,
+    ai=None,
 ) -> dict:
     """Keyword arguments for responses.create; pure, so tests can inspect it.
     Without an inventory or a selection the request is exactly the pre-citation one."""
     req = {
-        "model": OPENAI_MODEL,
+        "model": (ai or {}).get("model") or OPENAI_MODEL,
         "input": _openai_messages(
             png_b64,
             viewport_b64,
@@ -428,6 +539,8 @@ def _chat_openai_request(
             extra_text=_page_data(inventory, selection),
         ),
     }
+    if (ai or {}).get("reasoning"):
+        req["reasoning"] = {"effort": ai["reasoning"]}
     rules = _chat_rules(inventory, selection, phrases)
     if rules:
         req["instructions"] = rules
@@ -445,6 +558,7 @@ def _call_openai(
     inventory=None,
     selection=None,
     phrases=False,
+    ai=None,
 ) -> str:
     from openai import OpenAI
 
@@ -458,6 +572,7 @@ def _call_openai(
             inventory,
             selection=selection,
             phrases=phrases,
+            ai=ai,
         )
     )
     return response.output_text
@@ -525,13 +640,15 @@ def _chat_gemini_request(
     inventory=None,
     selection=None,
     phrases=False,
+    ai=None,
 ) -> dict:
     """Keyword arguments for generate_content(_stream); pure, so tests can inspect it."""
     from google.genai import types
 
     rules = _chat_rules(inventory, selection, phrases)
+    level = (ai or {}).get("reasoning")
     return {
-        "model": GEMINI_MODEL,
+        "model": (ai or {}).get("model") or GEMINI_MODEL,
         "contents": _gemini_contents(
             png_b64,
             viewport_b64,
@@ -543,7 +660,12 @@ def _chat_gemini_request(
         "config": types.GenerateContentConfig(
             system_instruction=(
                 SYSTEM_PROMPT + "\n\n" + rules if rules else SYSTEM_PROMPT
-            )
+            ),
+            **(
+                {"thinking_config": types.ThinkingConfig(thinking_level=level)}
+                if level
+                else {}
+            ),
         ),
     }
 
@@ -557,6 +679,7 @@ def _call_gemini(
     inventory=None,
     selection=None,
     phrases=False,
+    ai=None,
 ) -> str:
     from google import genai
 
@@ -565,7 +688,15 @@ def _call_gemini(
     client = genai.Client()
     response = client.models.generate_content(
         **_chat_gemini_request(
-            png_b64, viewport_b64, meta, history, message, inventory, selection, phrases
+            png_b64,
+            viewport_b64,
+            meta,
+            history,
+            message,
+            inventory,
+            selection,
+            phrases,
+            ai=ai,
         )
     )
     return response.text
@@ -580,6 +711,7 @@ def _stream_openai(
     inventory=None,
     selection=None,
     phrases=False,
+    ai=None,
 ):
     """Yield text deltas from the OpenAI Responses streaming API."""
     from openai import OpenAI
@@ -595,6 +727,7 @@ def _stream_openai(
             stream=True,
             selection=selection,
             phrases=phrases,
+            ai=ai,
         )
     )
     for event in stream:
@@ -611,6 +744,7 @@ def _stream_gemini(
     inventory=None,
     selection=None,
     phrases=False,
+    ai=None,
 ):
     from google import genai
 
@@ -619,7 +753,15 @@ def _stream_gemini(
     client = genai.Client()
     for chunk in client.models.generate_content_stream(
         **_chat_gemini_request(
-            png_b64, viewport_b64, meta, history, message, inventory, selection, phrases
+            png_b64,
+            viewport_b64,
+            meta,
+            history,
+            message,
+            inventory,
+            selection,
+            phrases,
+            ai=ai,
         )
     ):
         if chunk.text:
@@ -1002,6 +1144,28 @@ def create_app():
     def health():
         return jsonify({"status": "ok", "provider": _provider()})
 
+    @app.get("/api/ai")
+    def ai_catalogue():
+        """What the AI settings may choose: providers whose key is set, the models
+        each key reaches, the reasoning levels, and the read-aloud voices."""
+        providers = {
+            p: {
+                "available": bool(os.getenv(key)),
+                "default": _default_model(p),
+                "models": _ai_models(p) if os.getenv(key) else [],
+            }
+            for p, key in PROVIDER_KEYS.items()
+        }
+        return jsonify(
+            {
+                "default": _provider(),
+                "providers": providers,
+                "reasoning": list(REASONING_LEVELS),
+                "voices": list(TTS_VOICES),
+                "defaultVoice": os.getenv("TTS_VOICE", "alloy"),
+            }
+        )
+
     @app.post("/api/capture")
     def save_capture():
         if _rate_limited("capture"):
@@ -1150,7 +1314,7 @@ def create_app():
     # Two-step streaming TTS: POST the text, GET the mp3 by id. The GET streams
     # chunks straight from OpenAI so the <audio> element starts playing before
     # synthesis finishes (an <audio> src can only GET, hence the id hop).
-    tts_texts: dict[str, str] = {}
+    tts_texts: dict[str, tuple[str, str]] = {}
 
     @app.post("/api/tts")
     def tts_prepare():
@@ -1161,14 +1325,17 @@ def create_app():
         if not text:
             return jsonify({"error": "empty text"}), 400
         tid = uuid.uuid4().hex[:12]
-        tts_texts[tid] = text
+        voice = data.get("voice")
+        # a listed voice, or the default: no arbitrary string reaches the API
+        voice = voice if voice in TTS_VOICES else os.getenv("TTS_VOICE", "alloy")
+        tts_texts[tid] = (text, voice)
         if len(tts_texts) > 50:  # drop oldest one-shots that were never fetched
             tts_texts.pop(next(iter(tts_texts)))
         return jsonify({"id": tid})
 
     @app.get("/api/tts/<tid>.mp3")
     def tts_stream(tid):
-        text = tts_texts.pop(tid, None)
+        text, voice = tts_texts.pop(tid, (None, None))
         if text is None:
             return jsonify({"error": "unknown or expired tts id"}), 404
         from openai import OpenAI
@@ -1178,7 +1345,7 @@ def create_app():
         def generate():
             with client.audio.speech.with_streaming_response.create(
                 model=os.getenv("TTS_MODEL", "gpt-4o-mini-tts"),
-                voice=os.getenv("TTS_VOICE", "alloy"),
+                voice=voice,
                 input=text,
                 response_format="mp3",
             ) as resp:
@@ -1233,8 +1400,8 @@ def create_app():
             return jsonify({"error": "mark_phrases must be a boolean"}), 400
         cite_ids = set(_inventory_ids(inventory or []))
 
-        provider = _provider()
-        model = PROVIDERS[provider]["model"]
+        choice = _ai_choice(data)
+        provider, model = choice["provider"], choice["model"]
         images_sent = _images_sent(provider, viewport_b64)
 
         def sse(obj):
@@ -1255,6 +1422,7 @@ def create_app():
                     inventory=inventory,
                     selection=selection,
                     phrases=phrases,
+                    ai=choice,
                 )
                 for delta in deltas:
                     parts.append(delta)
@@ -1306,7 +1474,8 @@ def create_app():
         if not isinstance(phrases, bool):
             return jsonify({"error": "mark_phrases must be a boolean"}), 400
 
-        provider = _provider()
+        choice = _ai_choice(data)
+        provider = choice["provider"]
         t0 = time.perf_counter()
         try:
             reply = _run(
@@ -1320,6 +1489,7 @@ def create_app():
                 inventory=inventory,
                 selection=selection,
                 phrases=phrases,
+                ai=choice,
             )
             reply = _strip_unknown_cites(reply, set(_inventory_ids(inventory or [])))
         except Exception as e:  # surface provider errors to the popover
@@ -1336,7 +1506,7 @@ def create_app():
             {
                 "reply": reply,
                 "provider": provider,
-                "model": PROVIDERS[provider]["model"],
+                "model": choice["model"],
                 "latencyMs": latency_ms,
                 "imagesSent": _images_sent(provider, viewport_b64),
             }

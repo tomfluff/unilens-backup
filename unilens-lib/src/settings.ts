@@ -143,6 +143,13 @@ export interface Settings {
     chatMovesAside: boolean;
     /** underline the fewest words each source supports, joined to its number */
     associateText: boolean;
+    /** AI settings (research): the backend checks each choice against its catalogue */
+    aiProvider: "auto" | "openai" | "gemini";
+    /** a model id from the backend's catalogue; "" = the provider's default */
+    aiModel: string;
+    aiReasoning: "default" | "low" | "medium" | "high";
+    /** the read-aloud voice; "" = the backend's default */
+    ttsVoice: string;
     /** re-capture before a message when the user scrolled, panned or zoomed since the last one */
     refreshView: boolean;
     /** when an answer's evidence is outlined without a click */
@@ -231,6 +238,10 @@ const DEFAULTS: Settings = {
     citeEvidence: true,
     chatMovesAside: true,
     associateText: false,
+    aiProvider: "auto",
+    aiModel: "",
+    aiReasoning: "default",
+    ttsVoice: "",
     refreshView: true,
     autoHighlight: "where",
     escapeOrder: "highlight",
@@ -470,6 +481,23 @@ export const ENUM_CHOICES = {
         },
     },
     autoHighlight: { label: "Auto-highlight", choices: AUTO_HIGHLIGHTS },
+    aiProvider: {
+        label: "Provider",
+        choices: {
+            auto: "Backend default",
+            openai: "OpenAI",
+            gemini: "Gemini",
+        },
+    },
+    aiReasoning: {
+        label: "Reasoning",
+        choices: {
+            default: "Model default",
+            low: "Low",
+            medium: "Medium",
+            high: "High",
+        },
+    },
     escapeOrder: { label: "Escape order", choices: ESCAPE_ORDERS },
 } as const satisfies Partial<
     Record<keyof Settings, { label: string; choices: Record<string, string> }>
@@ -498,6 +526,9 @@ export type SelectKnobKey = keyof typeof SELECT_CHOICES;
  * group holds everything about one thing, whatever kind of control it is. Every
  * toggle, choice and number appears in exactly one group (settings.test.ts).
  */
+/** settings whose choices come from the backend's catalogue (/api/ai), not a table here */
+export const CATALOGUE_KEYS = ["aiModel", "ttsVoice"] as const;
+
 export const PANEL_SECTIONS: {
     title: string;
     open?: boolean;
@@ -597,6 +628,10 @@ export const PANEL_SECTIONS: {
         ],
     },
     {
+        title: "AI (research)",
+        keys: ["aiProvider", "aiModel", "aiReasoning", "ttsVoice"],
+    },
+    {
         title: "Capture and research",
         keys: [
             "mouseTrace",
@@ -646,6 +681,11 @@ export function clampSetting<K extends keyof Settings>(
     }
     if (key === "hlColor") {
         return isHexColor(value) ? (value as Settings[K]) : fallback;
+    }
+    if ((CATALOGUE_KEYS as readonly string[]).includes(key)) {
+        return typeof value === "string" && /^[\w.:-]{0,64}$/.test(value)
+            ? (value as Settings[K])
+            : fallback;
     }
     if (typeof fallback === "boolean") {
         return typeof value === "boolean" ? (value as Settings[K]) : fallback;

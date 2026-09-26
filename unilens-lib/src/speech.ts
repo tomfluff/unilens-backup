@@ -4,6 +4,8 @@
  * API-based backend (assets26 pattern) can replace this later without UI change.
  */
 
+import { getSettings } from "./settings";
+
 /** ja if the text contains kana/kanji, else the browser locale */
 function guessLang(text: string): string {
     return /[぀-ヿ一-鿿]/.test(text) ? "ja-JP" : navigator.language || "en-US";
@@ -64,7 +66,11 @@ export async function speak(text: string, onState?: (s: SpeechState) => void) {
         const res = await fetch(`${backendUrl}/api/tts`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ text: plain }),
+            // the voice chosen in the AI settings; the backend checks it
+            body: JSON.stringify({
+                text: plain,
+                voice: getSettings().ttsVoice || undefined,
+            }),
         });
         if (!res.ok) throw new Error(`tts ${res.status}`);
         const { id } = await res.json();
