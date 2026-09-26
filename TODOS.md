@@ -2,18 +2,6 @@
 
 ## unilens-lib
 
-### Correct abort and close handling in the popover chat
-
-**What:** Make in-flight chat, stream, and locate requests cancel or be ignored when the popover closes or a new capture opens it, instead of resolving into a component that no longer exists.
-
-**Why:** closing the chat unmounts `ChatPopover`, and `openPopover` (`unilens-lib/src/main.tsx`) re-creates it on a new capture when continuity is off (with continuity on, the open chat is kept since 2026-09-23), and `ChatPopover.tsx` has no `AbortController` or unmount guard on any fetch (the only cleanup at `:331` stops speech). A late response from the previous capture can call `setMsgs` on an unmounted tree and, once highlighting lands, call module-level `showHighlights` for the wrong capture. Phase 1 papers over the highlight half with a capture-id guard in `highlight.ts` (eng review issue 1A); the general problem stays.
-
-**Context:** Parked during the phase-1 eng review on 2026-09-18 at the builder's request so the highlighting work is not blocked on it. The clean fix is one `AbortController` per popover instance, created in the mount effect and aborted in cleanup, passed as `signal` to every `fetch` in `sendStreaming`, `sendPlain`, the session/capture detail fetches, and the future locate call; plus catching `AbortError` so it is not rendered as an error bubble. The stream reader loop also needs to stop on abort. Once that exists, the capture-id guard in `highlight.ts` becomes belt-and-braces rather than the only defence. Start in `ChatPopover.tsx` around the two `fetch(`${backend}/api/chat...` calls (~:453 and ~:513).
-
-**Effort:** S
-**Priority:** P2
-**Depends on:** None (independent of the highlighting steps; best landed before step two's trial runner, which fires many requests quickly)
-
 ### Restore the chat after a page reload, from a UniLens store per site
 
 **What:** Keep a local history of the user's interaction state, and after a reload reopen the conversation they had on that site. Save interaction data only, never screenshots:

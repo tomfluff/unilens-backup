@@ -427,11 +427,18 @@ export default function ChatPopover({
         const back = openedFrom.current;
         if (back?.isConnected) back.focus({ preventScroll: true });
     };
+    /** every request this chat makes: a chat that goes (a new chat replaces it with
+     *  continuity off) stops its answers streaming, so no provider keeps writing one
+     *  nobody will see. A hidden chat keeps them: they land in its history */
+    const aborter = useRef(new AbortController());
     // biome-ignore lint/correctness/useExhaustiveDependencies: on mount and unmount only
     useEffect(() => {
         openedFrom.current = document.activeElement as HTMLElement | null;
         inputRef.current?.focus({ preventScroll: true });
-        return quiet;
+        return () => {
+            aborter.current.abort();
+            quiet();
+        };
     }, []);
     // Hidden with ✕, the chat keeps its conversation. Shown again by the next click, it
     // marks the gap with a divider and the time. Declared before the new-capture
@@ -544,7 +551,9 @@ export default function ChatPopover({
     // biome-ignore lint/correctness/useExhaustiveDependencies: seeds once, on mount
     useEffect(() => {
         if (!sessionId || captureId === "local") return;
-        fetch(`${backend}/api/session/${encodeURIComponent(sessionId)}`)
+        fetch(`${backend}/api/session/${encodeURIComponent(sessionId)}`, {
+            signal: aborter.current.signal,
+        })
             .then((r) => r.json())
             .then((d) => {
                 if (!Array.isArray(d.history)) return;
@@ -1093,6 +1102,7 @@ export default function ChatPopover({
     ) {
         const cite = citeSource(on);
         const res = await fetch(`${backend}/api/chat/stream`, {
+            signal: aborter.current.signal,
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -1187,6 +1197,7 @@ export default function ChatPopover({
     ) {
         const cite = citeSource(on);
         const res = await fetch(`${backend}/api/chat`, {
+            signal: aborter.current.signal,
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -1277,6 +1288,8 @@ export default function ChatPopover({
                 await sendStreaming(text, token, ask, on, sel);
             else await sendPlain(text, token, ask, on, sel);
         } catch (err) {
+            // the chat is going: its question was abandoned, not failed
+            if (aborter.current.signal.aborted) return;
             if (ask) ask.error = String(err);
             act("error", T.sError);
             setMessages((m) => [
