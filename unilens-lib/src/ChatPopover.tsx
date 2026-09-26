@@ -150,8 +150,9 @@ interface Props {
     backend: string;
     sessionId: string | null;
     onClose: () => void;
-    /** start over: a new session on this place, an empty log, places from P1 */
-    onNewConversation?: () => void;
+    /** start over on the capture the chat is on: a new session, an empty log, places
+     *  from P1. Resolves false when it could not (the chat stays as it is) */
+    onNewConversation?: (on: Current) => Promise<boolean>;
     /** pinned position carried over from the previous popover, if the user pinned it */
     initialPos?: { left: number; top: number } | null;
     pinned: boolean;
@@ -341,9 +342,18 @@ export default function ChatPopover({
     /** "Start a new conversation?" is on screen, waiting for yes or no */
     const [confirmNew, setConfirmNew] = useState(false);
     const confirmYesRef = useRef<HTMLButtonElement>(null);
+    const newConvRef = useRef<HTMLButtonElement>(null);
+    const confirmAskId = useId();
     useEffect(() => {
         if (confirmNew) confirmYesRef.current?.focus({ preventScroll: true });
     }, [confirmNew]);
+    /** "keep this one": the question goes, and the keyboard goes back to its button */
+    const cancelNew = () => {
+        setConfirmNew(false);
+        requestAnimationFrame(() =>
+            newConvRef.current?.focus({ preventScroll: true }),
+        );
+    };
 
     /** the mic: recording, or (server speech recognition) turning the recording into
      *  text, when the field says so and the button cancels rather than stops */
@@ -818,9 +828,14 @@ export default function ChatPopover({
     // Escape is owned by highlight.ts (one listener decides per keypress, honouring the
     // escapeOrder setting); the popover only lends it a close callback
     // hidden, Escape is the page's again (it clears highlights, closes nothing)
+    // while "start a new conversation?" is asked, Escape answers no instead
+    // biome-ignore lint/correctness/useExhaustiveDependencies: cancelNew only sets state and focuses
     useEffect(
-        () => (hidden ? undefined : registerPopoverClose(onClose)),
-        [onClose, hidden],
+        () =>
+            hidden
+                ? undefined
+                : registerPopoverClose(confirmNew ? cancelNew : onClose),
+        [onClose, hidden, confirmNew],
     );
 
     // The capture the next message goes against: the one this popover opened on, until
@@ -1722,6 +1737,7 @@ export default function ChatPopover({
                 {!mini && onNewConversation && (
                     <button
                         type="button"
+                        ref={newConvRef}
                         className="ulc-ib"
                         aria-label={T.newConversation}
                         title={T.newConversation}
@@ -1813,41 +1829,43 @@ export default function ChatPopover({
                 </div>
             )}
             {!mini && confirmNew && (
-                // biome-ignore lint/a11y/noStaticElementInteractions: Escape here only cancels; the choices are real buttons
-                <div
+                <fieldset
                     className="ulc-confirm"
-                    role="group"
-                    aria-label={T.newConversation}
+                    aria-labelledby={confirmAskId}
                     onKeyDown={(e) => {
                         // Escape cancels the question, and goes no further (not a close)
                         if (e.key !== "Escape") return;
                         e.stopPropagation();
-                        setConfirmNew(false);
+                        cancelNew();
                     }}
                 >
-                    <span>{T.newConvAsk}</span>
+                    <span id={confirmAskId}>{T.newConvAsk}</span>
                     <button
                         ref={confirmYesRef}
                         type="button"
                         className="ulc-c"
-                        onClick={() => {
+                        onClick={async () => {
                             setConfirmNew(false);
-                            onNewConversation?.();
+                            if (await onNewConversation?.(cur.current)) return;
+                            act("error", T.sNewConvFailed);
+                            setMessages((m) => [
+                                ...m,
+                                {
+                                    id: `newconv-${Date.now()}`,
+                                    role: "assistant",
+                                    text: T.sNewConvFailed,
+                                    quiet: true,
+                                },
+                            ]);
+                            newConvRef.current?.focus({ preventScroll: true });
                         }}
                     >
                         {T.newConvYes}
                     </button>
-                    <button
-                        type="button"
-                        className="ulc-c"
-                        onClick={() => {
-                            setConfirmNew(false);
-                            inputRef.current?.focus({ preventScroll: true });
-                        }}
-                    >
+                    <button type="button" className="ulc-c" onClick={cancelNew}>
                         {T.newConvNo}
                     </button>
-                </div>
+                </fieldset>
             )}
             {!mini && about && (
                 <div className="ulc-about" id={aboutId}>

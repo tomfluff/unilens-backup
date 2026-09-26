@@ -31,3 +31,8 @@ def test_starts_a_fresh_session_holding_the_capture(client):
 def test_an_unknown_capture_is_refused(client):
     for body in ({"capture_id": "0123456789ab"}, {"capture_id": ["x"]}, {}):
         assert client.post("/api/session", json=body).status_code == 404
+
+
+def test_a_body_that_is_not_an_object_is_refused(client):
+    assert client.post("/api/session", json=[CAP_ID]).status_code == 400
+    assert client.post("/api/session", data="not json").status_code == 400

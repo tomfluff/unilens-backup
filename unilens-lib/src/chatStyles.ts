@@ -80,7 +80,7 @@ ${R} .ulc-quick { display: grid; grid-template-columns: repeat(3, 1fr); gap: .35
 ${R} .ulc-quick button { min-width: 0; line-height: 1.2; padding-left: .3em; padding-right: .3em; }
 ${R} .ulc-in { display: flex; gap: .45em; flex: none; align-items: center; }
 /* "Start a new conversation?": the question and its two answers, above the field */
-${R} .ulc-confirm { display: flex; flex-wrap: wrap; align-items: center; gap: .45em; flex: none; font-size: .95em; line-height: 1.3; }
+${R} .ulc-confirm { display: flex; flex-wrap: wrap; align-items: center; gap: .45em; flex: none; font-size: .95em; line-height: 1.3; border: 0; margin: 0; padding: 0; min-inline-size: 0; }
 ${R} .ulc-confirm span { flex: 1 1 100%; }
 ${R} .ulc-confirm button.ulc-c { flex: 1 1 0; min-height: 2.4em; padding: 0 .7em; white-space: normal; }
 /* what the next question is about: one line above the field, with a way to drop it */

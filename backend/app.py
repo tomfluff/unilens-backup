@@ -1503,7 +1503,9 @@ def create_app():
         conversation" in the chat)."""
         if _rate_limited("capture"):
             return jsonify({"error": "rate limit: too many new conversations"}), 429
-        data = request.get_json(force=True, silent=True) or {}
+        data = request.get_json(force=True, silent=True)
+        if not isinstance(data, dict):
+            return jsonify({"error": "expected a JSON object"}), 400
         cap_id = data.get("capture_id")
         if not isinstance(cap_id, str) or _capture_dir(cap_id) is None:
             return jsonify({"error": "unknown capture_id"}), 404

@@ -159,43 +159,57 @@ export function UnilensRoot({
 
         /**
          * "New conversation": the old one ends (its session stays in the backend's
-         * history), a new session starts on the place the chat is on, places count
-         * from P1 again, and a fresh, empty chat opens where this one is.
+         * history), a new session starts on the capture the chat is on now, places count
+         * from P1 again, and a fresh, empty chat opens where this one is. False when the
+         * session could not be made: the chat stays as it was, to try again.
          */
-        async function newConversation() {
-            if (!current) return;
-            const props = current.props;
-            const here = placeOf(props.captureId);
-            // what was outlined, a capture on its way, a view refresh: all the old one's
-            clearHighlights();
-            latestCapture++;
+        async function newConversation(on: {
+            id: string;
+            cap: CaptureResult;
+        }): Promise<boolean> {
+            if (!current) return false;
+            const key = current.key;
+            // a capture on its way, a view refresh, what was outlined: all the old one's.
+            // Its late answers must not draw while the new session is made
+            const mine = ++latestCapture;
             generation++;
+            setCurrentCapture(null);
+            clearHighlights();
+            // always a session, continuity or not: without one the backend would answer
+            // from the capture's own history, the old conversation
             let session: string | null = null;
-            if (getSettings().continuity && props.captureId !== "local") {
+            if (on.id !== "local") {
                 try {
-                    session = await unilens.api().newSession(props.captureId);
+                    session = await unilens.api().newSession(on.id);
                 } catch (err) {
-                    // no session: the new chat still starts empty, on this capture
-                    console.warn(
-                        "[UniLens] new conversation without a session:",
-                        err,
-                    );
+                    console.warn("[UniLens] new conversation failed:", err);
+                    if (mine === latestCapture)
+                        setCurrentCapture(committed.capture);
+                    return false;
                 }
             }
-            unilens.setSessionId(session);
+            // a click since then opened or moved the chat: that one stands
+            if (mine !== latestCapture || current?.key !== key) return true;
+            joinSession(session);
+            setCurrentCapture(on.id);
+            committed = { ...committed, capture: on.id };
+            const here = placeOf(on.id);
             clearPlaces();
             if (here) recordPlace({ ...here, at: Date.now() });
             chats++;
             paint({
                 key: chats,
                 props: {
-                    ...props,
+                    ...current.props,
+                    captureId: on.id,
+                    capture: on.cap,
                     sessionId: session,
                     capturing: false,
                     hidden: false,
                     startedOver: true,
                 },
             });
+            return true;
         }
 
         /**
@@ -281,7 +295,7 @@ export function UnilensRoot({
                         ? unilens.getSessionId()
                         : null,
                     onClose: hideChat,
-                    onNewConversation: () => void newConversation(),
+                    onNewConversation: newConversation,
                     refreshCapture,
                     initialPos: pinnedPos(),
                     pinned: pinnedPos() != null,

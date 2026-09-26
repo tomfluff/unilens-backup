@@ -84,6 +84,8 @@ const EN = {
     newConvYes: "New conversation",
     newConvNo: "Keep this one",
     sNewConversation: "New conversation. Ask about where you clicked.",
+    sNewConvFailed:
+        "Couldn't start a new conversation. This one is kept; try again.",
     sNotTranscribed: "Couldn't turn the message into text. Try again.",
     evidenceLabel: (n: number, label: string) => `Source ${n}: ${label}`,
     // status line and live region
@@ -209,6 +211,8 @@ const JA: Strings = {
     newConvYes: "新しい会話",
     newConvNo: "この会話を続ける",
     sNewConversation: "新しい会話です。クリックした場所について質問できます。",
+    sNewConvFailed:
+        "新しい会話を始められませんでした。この会話はそのままです。もう一度お試しください。",
     sNotTranscribed: "音声を文字にできませんでした。もう一度お試しください。",
     evidenceLabel: (n: number, label: string) => `出典 ${n}: ${label}`,
     sAsking: "送信しました。回答を待っています…",
