@@ -202,7 +202,7 @@ def test_a_failed_listing_keeps_the_last_success(monkeypatch):
 
     import openai
 
-    monkeypatch.setattr(openai, "OpenAI", lambda: Client())
+    monkeypatch.setattr(openai, "OpenAI", lambda **kw: Client())
     assert app_module._reachable_models("openai") == {"gpt-5.4"}
     # expire it: the next listing fails, and the last success stays
     until, ids = app_module._REACHABLE["openai"]

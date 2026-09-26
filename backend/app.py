@@ -390,15 +390,16 @@ def _chat_rules(inventory, selection, phrases=False) -> str | None:
 
 
 _REACHABLE: dict[str, tuple[float, set[str] | None]] = {}
-_REACHABLE_LOCK = threading.Lock()
+# one per provider: a stalled OpenAI listing never holds up a Gemini request
+_REACHABLE_LOCKS = {p: threading.Lock() for p in ("openai", "gemini")}
 
 
 def _reachable_models(provider: str) -> set[str] | None:
     """The model ids the provider's key can use (listing is free): a success is kept
     for an hour. When listing fails, the last success stays (for five more minutes);
     with none, None for a minute, so the curated list is offered as it is until the
-    next try. One refresh at a time."""
-    with _REACHABLE_LOCK:
+    next try. One refresh at a time per provider, and a short timeout on it."""
+    with _REACHABLE_LOCKS[provider]:
         until, ids = _REACHABLE.get(provider, (0.0, None))
         if time.time() < until:
             return ids
@@ -406,11 +407,12 @@ def _reachable_models(provider: str) -> set[str] | None:
             if provider == "openai":
                 from openai import OpenAI
 
-                fresh = {m.id for m in OpenAI().models.list()}
+                fresh = {m.id for m in OpenAI(timeout=5, max_retries=0).models.list()}
             else:
                 from google import genai
 
-                client = genai.Client()  # named: a temporary one closes once collected
+                # named: a temporary one closes once collected
+                client = genai.Client(http_options={"timeout": 5000})
                 fresh = {m.name.removeprefix("models/") for m in client.models.list()}
             _REACHABLE[provider] = (time.time() + 3600, fresh)
         except Exception:  # offline, a key without list rights
