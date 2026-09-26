@@ -838,6 +838,8 @@ export default function ChatPopover({
             onHighlightsCleared(() => {
                 setActive(null);
                 setPlaceOn(null);
+                // nothing outlined: nothing for the chat to step aside for
+                window.clearTimeout(stepAside.current);
             }),
         [],
     );
@@ -854,6 +856,8 @@ export default function ChatPopover({
         const c = cited(m);
         const src = m.cite;
         if (!c?.ids.length || !src) return;
+        // a newer choice (or the same one pressed off) replaces a pending side step
+        window.clearTimeout(stepAside.current);
         // the lit source pressed again: its outline goes (every outline can be turned off
         // from the chat, not only with Escape)
         if (
@@ -903,7 +907,6 @@ export default function ChatPopover({
         const shown = picks
             .map(({ id }) => src.registry.get(id))
             .filter((e): e is Element => e != null);
-        window.clearTimeout(stepAside.current);
         if (shown.length && !mini)
             stepAside.current = window.setTimeout(() => {
                 const boxes = shown.map((e) => e.getBoundingClientRect());
