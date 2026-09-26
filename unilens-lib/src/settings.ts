@@ -150,6 +150,10 @@ export interface Settings {
     aiReasoning: "default" | "low" | "medium" | "high";
     /** the read-aloud voice; "" = the backend's default */
     ttsVoice: string;
+    /** who hears a voice message: the browser, else the server (auto), or a provider */
+    sttEngine: "auto" | "browser" | "openai" | "gemini";
+    /** the server's speech-to-text model; "" = the backend's default */
+    sttModel: string;
     /** re-capture before a message when the user scrolled, panned or zoomed since the last one */
     refreshView: boolean;
     /** when an answer's evidence is outlined without a click */
@@ -242,6 +246,8 @@ const DEFAULTS: Settings = {
     aiModel: "",
     aiReasoning: "default",
     ttsVoice: "",
+    sttEngine: "auto",
+    sttModel: "",
     refreshView: true,
     autoHighlight: "where",
     escapeOrder: "highlight",
@@ -489,6 +495,15 @@ export const ENUM_CHOICES = {
             gemini: "Gemini",
         },
     },
+    sttEngine: {
+        label: "Speech recognition",
+        choices: {
+            auto: "Browser, else server",
+            browser: "Browser only",
+            openai: "OpenAI (server)",
+            gemini: "Gemini (server)",
+        },
+    },
     aiReasoning: {
         label: "Reasoning",
         choices: {
@@ -527,7 +542,7 @@ export type SelectKnobKey = keyof typeof SELECT_CHOICES;
  * toggle, choice and number appears in exactly one group (settings.test.ts).
  */
 /** settings whose choices come from the backend's catalogue (/api/ai), not a table here */
-export const CATALOGUE_KEYS = ["aiModel", "ttsVoice"] as const;
+export const CATALOGUE_KEYS = ["aiModel", "ttsVoice", "sttModel"] as const;
 
 export const PANEL_SECTIONS: {
     title: string;
@@ -629,7 +644,14 @@ export const PANEL_SECTIONS: {
     },
     {
         title: "AI (research)",
-        keys: ["aiProvider", "aiModel", "aiReasoning", "ttsVoice"],
+        keys: [
+            "aiProvider",
+            "aiModel",
+            "aiReasoning",
+            "ttsVoice",
+            "sttEngine",
+            "sttModel",
+        ],
     },
     {
         title: "Capture and research",

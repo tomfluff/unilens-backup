@@ -391,7 +391,7 @@ function CatalogueRow({
     setting,
     settings,
 }: {
-    setting: "aiModel" | "ttsVoice" | "aiReasoning";
+    setting: "aiModel" | "ttsVoice" | "aiReasoning" | "sttModel";
     settings: Settings;
 }) {
     const [cat, setCat] = useState<AiCatalogue | null | undefined>(undefined);
@@ -439,18 +439,32 @@ function CatalogueRow({
                 </SettingsSelect>
             </SettingLabel>
         );
+    // the server's speech models: the engine's provider, else the first with a key
+    const sttProvider =
+        settings.sttEngine === "openai" || settings.sttEngine === "gemini"
+            ? settings.sttEngine
+            : Object.keys(cat?.stt ?? {}).find((p) => cat?.stt[p]?.length);
+    const sttOptions = (sttProvider && cat?.stt[sttProvider]) || [];
     const options =
         setting === "aiModel"
             ? (entry?.models ?? []).map((m) => m.id)
-            : (cat?.voices ?? []);
+            : setting === "sttModel"
+              ? sttOptions
+              : (cat?.voices ?? []);
     const fallback =
         setting === "aiModel"
             ? `Provider default${entry ? ` (${entry.default})` : ""}`
-            : `Default${cat ? ` (${cat.defaultVoice})` : ""}`;
+            : setting === "sttModel"
+              ? `Default${sttOptions[0] ? ` (${sttOptions[0]})` : ""}`
+              : `Default${cat ? ` (${cat.defaultVoice})` : ""}`;
     const value = settings[setting];
     return (
         <SettingLabel>
-            {setting === "aiModel" ? "Model" : "Read-aloud voice"}
+            {setting === "aiModel"
+                ? "Model"
+                : setting === "sttModel"
+                  ? "Speech-to-text model (server)"
+                  : "Read-aloud voice"}
             <SettingsSelect
                 value={options.includes(value) ? value : ""}
                 disabled={!cat}
@@ -499,7 +513,8 @@ function Row({
     if (
         setting === "aiModel" ||
         setting === "ttsVoice" ||
-        setting === "aiReasoning"
+        setting === "aiReasoning" ||
+        setting === "sttModel"
     )
         return <CatalogueRow setting={setting} settings={settings} />;
     if (Object.hasOwn(ENUM_CHOICES, setting)) {
@@ -516,6 +531,7 @@ function Row({
                         );
                         // another provider has other models: back to its default
                         if (key === "aiProvider") updateSetting("aiModel", "");
+                        if (key === "sttEngine") updateSetting("sttModel", "");
                     }}
                 >
                     {Object.entries(ENUM_CHOICES[key].choices).map(

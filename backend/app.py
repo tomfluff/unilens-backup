@@ -186,6 +186,18 @@ TTS_VOICES = (
     "cedar",
 )
 PROVIDER_KEYS = {"openai": "OPENAI_API_KEY", "gemini": "GOOGLE_API_KEY"}
+# speech to text for browsers without their own (R1 of the 2026-09-26 report): the
+# recorded message goes here; the first of each list is the default
+STT_MODELS = {
+    "openai": ["whisper-1", "gpt-4o-mini-transcribe", "gpt-4o-transcribe"],
+    "gemini": ["gemini-3.5-transcribe", "gemini-3.5-flash"],
+}
+STT_MAX_BYTES = 10 * 1024 * 1024  # about ten minutes of Opus; a message is seconds
+STT_TYPES = ("audio/webm", "audio/ogg", "audio/mp4", "audio/mpeg", "audio/wav")
+STT_PROMPT = (
+    "Transcribe this audio verbatim, in the language spoken. Reply with the "
+    "transcript only: no quotes, no notes, nothing else."
+)
 
 # ── Pilot guardrails ───────────────────────────────────────────────────────
 # Off by default (open dev). Set GUARDRAILS=on for the pilot to enable
@@ -197,6 +209,7 @@ RATE_LIMITS = {  # (requests, per seconds)
     "capture": (10, 60),
     "chat": (20, 60),
     "locate": (20, 60),
+    "stt": (20, 60),
 }
 
 _rate: dict[tuple[str, str], list[float]] = {}
@@ -455,6 +468,55 @@ def _ai_choice(data: dict) -> dict:
     level = pick("reasoning")
     reasoning = level if level in levels.get(model, _levels_of(model)) else None
     return {"provider": provider, "model": model, "reasoning": reasoning}
+
+
+def _stt_models(provider: str) -> list[str]:
+    reach = _reachable_models(provider)
+    return [m for m in STT_MODELS[provider] if reach is None or m in reach]
+
+
+def _stt_choice(args) -> tuple[str, str] | None:
+    """(provider, model) for a transcription: the request's provider when its key is
+    set, else OpenAI, else Gemini; its model when listed, else the first reachable."""
+    provider = args.get("provider")
+    if provider not in PROVIDER_KEYS or not os.getenv(PROVIDER_KEYS[provider]):
+        provider = next((p for p, k in PROVIDER_KEYS.items() if os.getenv(k)), None)
+    if not provider:
+        return None
+    models = _stt_models(provider) or STT_MODELS[provider]
+    model = args.get("model") if args.get("model") in models else models[0]
+    return provider, model
+
+
+def _transcribe(provider: str, model: str, audio: bytes, mime: str, lang: str) -> str:
+    if provider == "openai":
+        from openai import OpenAI
+
+        ext = mime.split("/")[1]
+        result = OpenAI().audio.transcriptions.create(
+            model=model,
+            file=(f"message.{ext}", audio, mime),
+            **({"language": lang} if lang else {}),
+        )
+        return result.text.strip()
+    from google import genai
+    from google.genai import types
+
+    client = genai.Client()  # named: a temporary one closes once collected
+    part = types.Part.from_bytes(data=audio, mime_type=mime)
+    # a transcription model takes the audio alone and answers in an
+    # audio_transcription part; a general model needs the instruction and answers text
+    transcriber = "transcribe" in model
+    result = client.models.generate_content(
+        model=model, contents=[part] if transcriber else [part, STT_PROMPT]
+    )
+    parts = (
+        result.candidates[0].content.parts
+        if result.candidates and result.candidates[0].content
+        else []
+    ) or []
+    heard = [p.audio_transcription.text for p in parts if p.audio_transcription]
+    return " ".join(t for t in heard if t).strip() or (result.text or "").strip()
 
 
 def _strip_unknown_cites(text: str, ids: set[str]) -> str:
@@ -1186,6 +1248,10 @@ def create_app():
                 "reasoning": list(REASONING_LEVELS),
                 "voices": list(TTS_VOICES),
                 "defaultVoice": os.getenv("TTS_VOICE", "alloy"),
+                "stt": {
+                    p: _stt_models(p) if os.getenv(key) else []
+                    for p, key in PROVIDER_KEYS.items()
+                },
             }
         )
 
@@ -1375,6 +1441,41 @@ def create_app():
                 yield from resp.iter_bytes(4096)
 
         return Response(stream_with_context(generate()), mimetype="audio/mpeg")
+
+    @app.post("/api/stt")
+    def stt():
+        """A recorded voice message, as the raw audio body, to text. For browsers
+        without their own speech recognition (Firefox), or when chosen in the AI
+        settings. ?provider=&model=&lang= (en or ja) are optional."""
+        if _rate_limited("stt"):
+            return jsonify({"error": "rate limit: too many voice messages"}), 429
+        choice = _stt_choice(request.args)
+        if choice is None:
+            return jsonify({"error": "no API key: speech to text unavailable"}), 501
+        mime = (request.mimetype or "").lower()
+        if mime not in STT_TYPES:
+            return jsonify({"error": f"unsupported audio type: {mime or 'none'}"}), 415
+        audio = request.get_data(cache=False)
+        if not audio:
+            return jsonify({"error": "empty audio"}), 400
+        if len(audio) > STT_MAX_BYTES:
+            return jsonify({"error": "audio too long"}), 413
+        lang = request.args.get("lang", "")
+        lang = lang if lang in ("en", "ja") else ""
+        provider, model = choice
+        t0 = time.perf_counter()
+        try:
+            text = _transcribe(provider, model, audio, mime, lang)
+        except Exception as e:  # the chat says it could not hear; the detail is here
+            return jsonify({"error": f"{type(e).__name__}: {e}"}), 502
+        return jsonify(
+            {
+                "text": text,
+                "provider": provider,
+                "model": model,
+                "latencyMs": round((time.perf_counter() - t0) * 1000),
+            }
+        )
 
     @app.get("/api/capture/<cap_id>")
     def capture_info(cap_id):

@@ -52,13 +52,13 @@ import {
 import { recordAsk, type SentAsk } from "./sentLog";
 import { getSettings, motionMs, useSettings } from "./settings";
 import {
-    listen,
+    listenVoice,
     pauseSpeaking,
     resumeSpeaking,
     type SpeechState,
     speak,
     stopSpeaking,
-    sttSupported,
+    voiceEngine,
 } from "./speech";
 import {
     besideTarget,
@@ -512,14 +512,17 @@ export default function ChatPopover({
      *  first step toward live voice conversation, TODOS.md.) */
     const heard = useRef("");
     function toggleVoice() {
-        if (!sttSupported) return noVoice();
+        const s = getSettings();
+        if (!voiceEngine(s.sttEngine)) return noVoice();
         if (listening) {
             stopListenRef.current?.();
             return;
         }
-        const auto = getSettings().voiceAutoSend;
+        const auto = s.voiceAutoSend;
         heard.current = "";
-        const stop = listen(
+        /** the server could not turn the recording into text: already said, once */
+        let failed = false;
+        const stop = listenVoice(
             (transcript) => {
                 heard.current = transcript;
                 setInput(transcript);
@@ -531,7 +534,7 @@ export default function ChatPopover({
                 const text = heard.current.trim();
                 heard.current = "";
                 if (!text) {
-                    act("error", T.sNothingHeard);
+                    if (!failed) act("error", T.sNothingHeard);
                     return;
                 }
                 if (auto) {
@@ -547,6 +550,17 @@ export default function ChatPopover({
                 );
             },
             speechLang(),
+            {
+                engine: s.sttEngine,
+                model: s.sttModel,
+                endOnPause: auto,
+                // recorded for the server (Firefox): the words come once it is text
+                onTranscribing: () => act("press", T.sTranscribing),
+                onError: () => {
+                    failed = true;
+                    act("error", T.sNotTranscribed);
+                },
+            },
         );
         if (stop) {
             stopListenRef.current = stop;
@@ -1605,7 +1619,7 @@ export default function ChatPopover({
             type="button"
             className={`${cls} ulc-voice`}
             aria-pressed={Boolean(listening)}
-            aria-disabled={!sttSupported}
+            aria-disabled={!voiceEngine(settings.sttEngine)}
             aria-label={voiceLabel}
             title={voiceLabel}
             onClick={toggleVoice}

@@ -75,6 +75,8 @@ const EN = {
         `About the first ${k} of ${n} sources`,
     aboutPlace: (n: number, label: string) => `About P${n}: ${label}`,
     aboutDrop: "Stop asking about this (clears the outline)",
+    sTranscribing: "Turning your message into text…",
+    sNotTranscribed: "Couldn't turn the message into text. Try again.",
     evidenceLabel: (n: number, label: string) => `Source ${n}: ${label}`,
     // status line and live region
     sAsking: "Sent. Waiting for the answer…",
@@ -101,7 +103,7 @@ const EN = {
     sRecording: "Recording. Speak, then pause or press stop to send.",
     sNothingHeard: "Nothing was heard. Try again.",
     sNoVoice:
-        "Voice isn't available in this browser. Chrome, Edge and Safari support it.",
+        "Voice isn't available here: this browser can't record. In the settings, speech recognition \"Browser, else server\" works in most browsers.",
     sStoppedListening: "Stopped listening.",
     sHeardCheck: "Stopped. Check the words, then send.",
     sReading: "Reading the answer aloud.",
@@ -190,6 +192,8 @@ const JA: Strings = {
         `出典 ${n} 件のうち最初の ${k} 件について`,
     aboutPlace: (n: number, label: string) => `P${n} について: ${label}`,
     aboutDrop: "これについて聞くのをやめる（強調を消す）",
+    sTranscribing: "音声を文字にしています…",
+    sNotTranscribed: "音声を文字にできませんでした。もう一度お試しください。",
     evidenceLabel: (n: number, label: string) => `出典 ${n}: ${label}`,
     sAsking: "送信しました。回答を待っています…",
     sCapturing: "クリックした場所を取り込んでいます…",
@@ -214,7 +218,7 @@ const JA: Strings = {
     sRecording: "録音中。話し終えたら少し待つか、停止を押すと送信します。",
     sNothingHeard: "聞き取れませんでした。もう一度どうぞ。",
     sNoVoice:
-        "このブラウザでは音声入力を使えません。Chrome、Edge、Safari で使えます。",
+        "ここでは音声入力を使えません（録音できません）。設定の音声認識を「ブラウザ、なければサーバー」にすると、多くのブラウザで使えます。",
     sStoppedListening: "聞き取りを止めました。",
     sHeardCheck: "止めました。内容を確かめて送信してください。",
     sReading: "回答を読み上げています。",

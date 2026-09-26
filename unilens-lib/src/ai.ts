@@ -27,6 +27,8 @@ export interface AiCatalogue {
     reasoning: string[];
     voices: string[];
     defaultVoice: string;
+    /** the speech-to-text models each provider's key reaches (first = default) */
+    stt: Record<string, string[]>;
 }
 
 let backend = "";

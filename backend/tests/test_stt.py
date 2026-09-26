@@ -1,0 +1,64 @@
+"""Speech to text for browsers without their own (R1 of the 2026-09-26 report)."""
+
+import pytest
+
+import app as app_module
+
+
+@pytest.fixture
+def heard(client, monkeypatch):
+    """Keys set, listing offline, and the transcription faked: records its call."""
+    monkeypatch.setenv("OPENAI_API_KEY", "test")
+    monkeypatch.setenv("GOOGLE_API_KEY", "test")
+    monkeypatch.setattr(app_module, "_reachable_models", lambda provider: None)
+    calls = []
+
+    def fake(provider, model, audio, mime, lang):
+        calls.append((provider, model, len(audio), mime, lang))
+        return "how do I apply"
+
+    monkeypatch.setattr(app_module, "_transcribe", fake)
+    return calls
+
+
+def post(client, body=b"OggS...", mime="audio/webm", query=""):
+    return client.post(f"/api/stt{query}", data=body, content_type=mime)
+
+
+def test_transcribes_with_the_default_model(client, heard):
+    res = post(client, query="?lang=ja")
+    assert res.status_code == 200
+    body = res.get_json()
+    assert body["text"] == "how do I apply"
+    assert (body["provider"], body["model"]) == ("openai", "whisper-1")
+    assert heard == [("openai", "whisper-1", 7, "audio/webm", "ja")]
+
+
+def test_a_listed_choice_is_kept_and_anything_else_falls_back(client, heard):
+    post(client, query="?provider=gemini&model=gemini-3.5-flash&lang=xx")
+    post(client, query="?provider=openai&model=gpt-6-voice")
+    assert heard[0][:2] == ("gemini", "gemini-3.5-flash") and heard[0][4] == ""
+    assert heard[1][:2] == ("openai", "whisper-1")
+
+
+@pytest.mark.parametrize(
+    "kw, status",
+    [
+        ({"mime": "text/plain"}, 415),
+        ({"body": b""}, 400),
+        ({"body": b"x" * (app_module.STT_MAX_BYTES + 1)}, 413),
+    ],
+)
+def test_rejects_what_is_not_a_short_voice_message(client, heard, kw, status):
+    assert post(client, **kw).status_code == status
+    assert heard == []
+
+
+def test_without_a_key_it_says_so(client):
+    assert post(client).status_code == 501
+
+
+def test_catalogue_lists_the_speech_models(client, heard):
+    body = client.get("/api/ai").get_json()
+    assert body["stt"]["openai"][0] == "whisper-1"
+    assert "gemini-3.5-transcribe" in body["stt"]["gemini"]
