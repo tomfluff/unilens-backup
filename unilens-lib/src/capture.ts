@@ -3,7 +3,10 @@
  * Tracks mouse trace, captures a full-page screenshot with html2canvas,
  * overlays viewport rect + mouse trace + click crosshair, returns PNG + metadata.
  */
-import html2canvas from "html2canvas";
+// html2canvas-pro: parses modern colors (color-mix, color(), oklch) that make html2canvas
+// 1.4.1 throw. Pinned to 2.0.4: 2.1.0+ loses block ::after boxes, which shifts the render
+// ~30px up and puts the click marker off its element.
+import html2canvas from "html2canvas-pro";
 import {
     buildInventory,
     clip,
