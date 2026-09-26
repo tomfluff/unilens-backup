@@ -23,14 +23,14 @@ export const unjoin = (text: string) =>
 const SLOT = /\uE0FF(\d+)\uE0FF/g;
 /** an open no-wrap group (a phrase's last word) that the next number closes */
 const GROUP = "\uE0FC";
-const GROUPED_SLOT = /(\uE0FC)?\uE0FF(\d+)\uE0FF/g;
+const GROUPED_SLOT = /(\uE0FC)?(\uE0FF\d+\uE0FF(?:\s?\uE0FF\d+\uE0FF)*)/g;
 /** a supported phrase's ends, `{{` and `}}` in model text, kept through the markdown pass */
 const OPEN = "\uE0FE";
 const CLOSE = "\uE0FD";
 /** `{{phrase}}` right before a citation (after its marker became a slot) */
 const PHRASE = /\{\{([^{}\n]*?)\}\}(?=\s?\uE0FF\d+\uE0FF)/g;
 /** where the fallback phrase stops looking back: a clause's punctuation */
-const CLAUSE_END = /[.!?。！？、,，;；:：]/g;
+const CLAUSE_END = /[!?。！？、，;；:：]|[.,](?!\d)|(?<!\d)[.,]/g;
 
 const escapeHtml = (s: string) =>
     s
@@ -92,6 +92,8 @@ export function renderCited(
     t = t.replace(PHRASE, phrases ? `${OPEN}$1${CLOSE}` : "$1");
     // braces not before a citation, and a half-written `{{` while it streams, never show
     t = t.replace(/\{\{|\}\}/g, "");
+    // mid-stream, a lone brace at the end is half of one: it waits for the other
+    if (streaming) t = t.replace(/[{}]$/, "");
     if (phrases) t = markFallbackPhrases(t);
     const html = mdLite(t)
         .replace(
@@ -101,15 +103,22 @@ export function renderCited(
                 phraseHtml(words, ids[Number(n) - 1]),
         )
         .replace(/[\uE0FE\uE0FD]/g, "")
-        .replace(GROUPED_SLOT, (_, grouped: string | undefined, n: string) => {
-            const id = ids[Number(n) - 1];
-            const raw = labelOf(id);
-            const label = escapeHtml(raw);
-            const name = escapeHtml(nameOf(Number(n), raw));
-            const chip = `<button type="button" class="unilens-cite" data-cite="${id}" aria-label="${name}" title="${label}">${escapeHtml(chipText(Number(n)))}</button>`;
-            // after underlined words, the number closes their no-wrap group
-            return grouped ? `${chip}</span>` : chip;
-        });
+        .replace(
+            GROUPED_SLOT,
+            (_, grouped: string | undefined, run: string) => {
+                // each number as its chip, the spacing between them as the model wrote it
+                const chips = run.replace(SLOT, (__, n: string) => {
+                    const id = ids[Number(n) - 1];
+                    const raw = labelOf(id);
+                    const label = escapeHtml(raw);
+                    const name = escapeHtml(nameOf(Number(n), raw));
+                    return `<button type="button" class="unilens-cite" data-cite="${id}" aria-label="${name}" title="${label}">${escapeHtml(chipText(Number(n)))}</button>`;
+                });
+                // after underlined words, the numbers (side by side ones too) close their
+                // no-wrap group, so none starts a line alone
+                return grouped ? `${chips}</span>` : chips;
+            },
+        );
     return { html, ids };
 }
 
@@ -121,20 +130,21 @@ export function renderCited(
 function phraseHtml(words: string, id: string): string {
     const span = (w: string) =>
         `<span class="unilens-cite-text" data-cite="${id}">${w}</span>`;
-    // text with markup inside (bold) stays one span; it may wrap before the number
-    if (words.includes("<")) return span(words);
-    // the last word: after the last space, or the last two characters of CJK text
-    const cut = words.includes(" ")
-        ? words.lastIndexOf(" ") + 1
-        : Math.max(0, [...words].length - 2);
-    const chars = [...words];
-    const head = words.includes(" ")
-        ? words.slice(0, cut)
-        : chars.slice(0, cut).join("");
-    const tail = words.includes(" ")
-        ? words.slice(cut)
-        : chars.slice(cut).join("");
-    return `${head ? span(head) : ""}<span class="unilens-cite-end">${span(tail)}${GROUP}`;
+    const end = (w: string) =>
+        `<span class="unilens-cite-end">${span(w)}${GROUP}`;
+    // markup inside (bold, code) keeps the phrase whole: it goes into the group as is
+    if (words.includes("<")) return end(words);
+    // the last word as the word segmenter finds it, so no word, emoji or CJK run is
+    // cut; a phrase with no word in it stays whole
+    const segments = [
+        ...new Intl.Segmenter(undefined, { granularity: "word" }).segment(
+            words,
+        ),
+    ];
+    const last = segments.findLast((w) => w.isWordLike);
+    const cut = last?.index ?? 0;
+    const head = words.slice(0, cut);
+    return `${head ? span(head) : ""}${end(words.slice(cut))}`;
 }
 
 /**

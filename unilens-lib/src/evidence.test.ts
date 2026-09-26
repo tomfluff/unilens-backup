@@ -274,3 +274,62 @@ describe("renderCited with phrases (Associate response text)", () => {
         expect(speakable("Get {{¥1,000}}[[n12]].")).toBe("Get ¥1,000.");
     });
 });
+
+describe("renderCited phrases: the review's edge cases", () => {
+    const known = (id: string) => ["n12", "n13"].includes(id);
+    const label = (id: string) => `label ${id}`;
+    const on = (text: string, streaming = false) =>
+        renderCited(text, known, label, streaming, undefined, undefined, true);
+    const words = (html: string) =>
+        [
+            ...html.matchAll(
+                /<span class="unilens-cite-text" data-cite="n\d+">([^<]*)<\/span>/g,
+            ),
+        ]
+            .map((m) => m[1])
+            .join("");
+
+    it("keeps an amount whole in the fallback", () => {
+        expect(words(on("The amount is $1,000 [[n12]].").html)).toBe(
+            "The amount is $1,000",
+        );
+        expect(words(on("It costs $1,000.00 [[n12]].").html)).toContain(
+            "1,000.00",
+        );
+    });
+
+    it("keeps side-by-side numbers with the words before the first", () => {
+        const { html } = on("Get {{foo}}[[n12]][[n13]].");
+        expect(html).toMatch(
+            /<span class="unilens-cite-end"><span[^>]*>foo<\/span><button[^>]*n12[^>]*>1<\/button><button[^>]*n13[^>]*>2<\/button><\/span>/,
+        );
+    });
+
+    it("never cuts a word or an emoji to keep the last word with its number", () => {
+        expect(on("See {{PayPay}}[[n12]].").html).toContain(
+            '<span class="unilens-cite-end"><span class="unilens-cite-text" data-cite="n12">PayPay</span>',
+        );
+        expect(on("Hi {{👩‍💻}}[[n12]].").html).toContain("👩‍💻");
+    });
+
+    it("keeps a phrase with markup whole in the group", () => {
+        expect(on("See {{**PayPay Money Lite**}}[[n12]].").html).toContain(
+            '<span class="unilens-cite-end"><span class="unilens-cite-text" data-cite="n12"><b>PayPay Money Lite</b></span><button',
+        );
+    });
+
+    it("never shows a lone brace mid-stream", () => {
+        expect(on("Get {", true).html).toBe("Get ");
+        expect(on("Get {{foo}", true).html).toBe("Get foo");
+    });
+
+    it("renders chips exactly as before with the setting off", () => {
+        const off = renderCited(
+            "A [[n12]][[n13]] and B [[n12]].",
+            known,
+            label,
+        );
+        expect(off.html.match(/<button/g)?.length).toBe(3);
+        expect(off.html).not.toContain("unilens-cite-end");
+    });
+});
