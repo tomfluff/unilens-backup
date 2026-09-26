@@ -139,3 +139,72 @@ def test_done_frame_reports_the_model_used(client, monkeypatch):
     ]
     assert frames[-1]["model"] == "gpt-5.4-nano"
     assert seen["ai"]["reasoning"] == "low"
+
+
+# ── Codex's review ──────────────────────────────────────────────────────────
+
+
+@pytest.mark.parametrize(
+    "ai",
+    [
+        {"provider": []},
+        {"provider": "openai", "model": {"x": 1}},
+        {"provider": "openai", "model": "gpt-5.4", "reasoning": ["high"]},
+    ],
+)
+def test_malformed_choices_fall_back_instead_of_failing(keys, ai):
+    c = choice(ai)
+    assert c["provider"] == "openai" and c["reasoning"] is None
+
+
+def test_a_model_the_key_does_not_reach_falls_back(monkeypatch):
+    monkeypatch.setenv("OPENAI_API_KEY", "test")
+    monkeypatch.setattr(
+        app_module, "_reachable_models", lambda p: {app_module.OPENAI_MODEL}
+    )
+    assert choice({"provider": "openai", "model": "gpt-5.4"})["model"] == (
+        app_module.OPENAI_MODEL
+    )
+
+
+def test_each_model_takes_only_its_levels(keys, monkeypatch):
+    monkeypatch.setitem(
+        app_module.AI_MODELS,
+        "openai",
+        [("gpt-5.4", ("low", "medium", "high")), ("gpt-5-pro", ("high",))],
+    )
+    assert (
+        choice({"provider": "openai", "model": "gpt-5-pro", "reasoning": "low"})[
+            "reasoning"
+        ]
+        is None
+    )
+    assert choice({"provider": "openai", "model": "gpt-5-pro", "reasoning": "high"})[
+        "reasoning"
+    ] == ("high")
+    assert app_module._levels_of("gpt-5.5-pro") == ("high",)
+    assert app_module._levels_of("gpt-4.1") == ()
+
+
+def test_a_failed_listing_keeps_the_last_success(monkeypatch):
+    monkeypatch.setattr(app_module, "_REACHABLE", {})
+    calls = {"n": 0}
+
+    class Models:
+        def list(self):
+            calls["n"] += 1
+            if calls["n"] > 1:
+                raise ConnectionError("offline")
+            return [type("M", (), {"id": "gpt-5.4"})()]
+
+    class Client:
+        models = Models()
+
+    import openai
+
+    monkeypatch.setattr(openai, "OpenAI", lambda: Client())
+    assert app_module._reachable_models("openai") == {"gpt-5.4"}
+    # expire it: the next listing fails, and the last success stays
+    until, ids = app_module._REACHABLE["openai"]
+    app_module._REACHABLE["openai"] = (0.0, ids)
+    assert app_module._reachable_models("openai") == {"gpt-5.4"}

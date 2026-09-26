@@ -20,7 +20,8 @@ export interface AiCatalogue {
         {
             available: boolean;
             default: string;
-            models: { id: string; reasoning: boolean }[];
+            /** each model with the reasoning levels it takes (none: it does not reason) */
+            models: { id: string; reasoning: string[] }[];
         }
     >;
     reasoning: string[];

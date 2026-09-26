@@ -19,6 +19,7 @@ import json
 import os
 import re
 import secrets
+import threading
 import time
 import uuid
 from pathlib import Path
@@ -123,40 +124,52 @@ OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-5.4-mini")
 GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3-flash-preview")
 
 # AI settings (R2 of the 2026-09-26 report): what the chat may choose per request.
-# A curated list per provider (env-overridable), shown only where the key reaches it;
-# True marks a model that takes a reasoning level. The env default is always offered.
+# A curated list per provider (env-overridable), shown only where the key reaches it,
+# each model with the reasoning levels it takes (none: the model does not reason).
+# The env default is always offered.
+_LEVELS = ("low", "medium", "high")
 AI_MODELS = {
     "openai": [
-        ("gpt-5.4-mini", True),
-        ("gpt-5.4-nano", True),
-        ("gpt-5.4", True),
-        ("gpt-5.5", True),
-        ("gpt-5.6-luna", True),
-        ("gpt-5.6-terra", True),
-        ("gpt-5.6-sol", True),
-        ("gpt-4.1-mini", False),
+        ("gpt-5.4-mini", _LEVELS),
+        ("gpt-5.4-nano", _LEVELS),
+        ("gpt-5.4", _LEVELS),
+        ("gpt-5.5", _LEVELS),
+        ("gpt-5.6-luna", _LEVELS),
+        ("gpt-5.6-terra", _LEVELS),
+        ("gpt-5.6-sol", _LEVELS),
+        ("gpt-4.1-mini", ()),
     ],
     "gemini": [
-        ("gemini-3-flash-preview", True),
-        ("gemini-3.5-flash-lite", True),
-        ("gemini-3.5-flash", True),
-        ("gemini-3.8-flash", True),
-        ("gemini-3.1-pro-preview", True),
-        ("gemini-2.5-flash", False),
+        ("gemini-3-flash-preview", _LEVELS),
+        ("gemini-3.5-flash-lite", _LEVELS),
+        ("gemini-3.5-flash", _LEVELS),
+        ("gemini-3.8-flash", _LEVELS),
+        ("gemini-3.1-pro-preview", _LEVELS),
+        ("gemini-2.5-flash", ()),
     ],
 }
+
+
+def _levels_of(model: str) -> tuple[str, ...]:
+    """The reasoning levels a model outside the curated list is assumed to take: pro
+    models high only (OpenAI documents that), GPT-5, o-series and Gemini 3 all three."""
+    if model.startswith(("gpt-5", "o")) and "-pro" in model:
+        return ("high",)
+    return _LEVELS if model.startswith(("gpt-5", "o", "gemini-3")) else ()
+
+
 for _p, _env in (("openai", "AI_OPENAI_MODELS"), ("gemini", "AI_GEMINI_MODELS")):
     if os.getenv(_env):
         AI_MODELS[_p] = [
-            (m, m.startswith(("gpt-5", "o", "gemini-3")))
+            (m.strip(), _levels_of(m.strip()))
             for m in os.getenv(_env, "").split(",")
             if m.strip()
         ]
 for _p, _m in (("openai", OPENAI_MODEL), ("gemini", GEMINI_MODEL)):
     if _m not in dict(AI_MODELS[_p]):
-        AI_MODELS[_p].insert(0, (_m, _m.startswith(("gpt-5", "o", "gemini-3"))))
-# the levels every listed reasoning model takes (OpenAI effort, Gemini thinking level)
-REASONING_LEVELS = ("low", "medium", "high")
+        AI_MODELS[_p].insert(0, (_m, _levels_of(_m)))
+# every level any listed model takes (OpenAI effort, Gemini thinking level)
+REASONING_LEVELS = _LEVELS
 TTS_VOICES = (
     "alloy",
     "ash",
@@ -377,36 +390,43 @@ def _chat_rules(inventory, selection, phrases=False) -> str | None:
 
 
 _REACHABLE: dict[str, tuple[float, set[str] | None]] = {}
+_REACHABLE_LOCK = threading.Lock()
 
 
 def _reachable_models(provider: str) -> set[str] | None:
-    """The model ids the provider's key can use (listing is free), cached for an
-    hour; None when the listing fails, so the curated list is offered as it is."""
-    at, ids = _REACHABLE.get(provider, (0.0, None))
-    if time.time() - at < 3600:
-        return ids
-    ids = None
-    try:
-        if provider == "openai":
-            from openai import OpenAI
+    """The model ids the provider's key can use (listing is free): a success is kept
+    for an hour. When listing fails, the last success stays (for five more minutes);
+    with none, None for a minute, so the curated list is offered as it is until the
+    next try. One refresh at a time."""
+    with _REACHABLE_LOCK:
+        until, ids = _REACHABLE.get(provider, (0.0, None))
+        if time.time() < until:
+            return ids
+        try:
+            if provider == "openai":
+                from openai import OpenAI
 
-            ids = {m.id for m in OpenAI().models.list()}
-        elif provider == "gemini":
-            from google import genai
+                fresh = {m.id for m in OpenAI().models.list()}
+            else:
+                from google import genai
 
-            client = genai.Client()
-            ids = {m.name.removeprefix("models/") for m in client.models.list()}
-    except Exception:  # offline, a key without list rights: offer the list as it is
-        ids = None
-    _REACHABLE[provider] = (time.time(), ids)
-    return ids
+                client = genai.Client()  # named: a temporary one closes once collected
+                fresh = {m.name.removeprefix("models/") for m in client.models.list()}
+            _REACHABLE[provider] = (time.time() + 3600, fresh)
+        except Exception:  # offline, a key without list rights
+            _REACHABLE[provider] = (
+                time.time() + (300 if ids is not None else 60),
+                ids,
+            )
+        return _REACHABLE[provider][1]
 
 
 def _ai_models(provider: str) -> list[dict]:
+    """The provider's models the key reaches, each with the levels it takes."""
     reach = _reachable_models(provider)
     return [
-        {"id": m, "reasoning": r}
-        for m, r in AI_MODELS[provider]
+        {"id": m, "reasoning": list(levels)}
+        for m, levels in AI_MODELS[provider]
         if reach is None or m in reach
     ]
 
@@ -417,20 +437,21 @@ def _default_model(provider: str) -> str:
 
 def _ai_choice(data: dict) -> dict:
     """What this request runs on: {provider, model, reasoning}. The request's `ai`
-    choice counts only inside the catalogue (a provider whose key is set, one of its
-    listed models, a listed level on a model that reasons); anything else falls back
-    to the default, so no arbitrary model name reaches a paid API."""
+    choice counts only inside the catalogue /api/ai shows (a provider whose key is
+    set, one of its models that the key reaches, a level that model takes); anything
+    else, malformed included, falls back to the default, so no arbitrary model name
+    reaches a paid API."""
     raw = data.get("ai") if isinstance(data.get("ai"), dict) else {}
-    provider = raw.get("provider")
+    pick = lambda k: raw.get(k) if isinstance(raw.get(k), str) else None  # noqa: E731
+    provider = pick("provider")
     if provider not in PROVIDER_KEYS or not os.getenv(PROVIDER_KEYS[provider]):
         provider = _provider()
     if provider == "stub":
         return {"provider": "stub", "model": "none", "reasoning": None}
-    models = dict(AI_MODELS[provider])
-    model = raw.get("model") if raw.get("model") in models else None
-    model = model or _default_model(provider)
-    level = raw.get("reasoning")
-    reasoning = level if level in REASONING_LEVELS and models.get(model) else None
+    levels = {m["id"]: m["reasoning"] for m in _ai_models(provider)}
+    model = pick("model") if pick("model") in levels else _default_model(provider)
+    level = pick("reasoning")
+    reasoning = level if level in levels.get(model, _levels_of(model)) else None
     return {"provider": provider, "model": model, "reasoning": reasoning}
 
 

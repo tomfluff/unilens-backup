@@ -391,7 +391,7 @@ function CatalogueRow({
     setting,
     settings,
 }: {
-    setting: "aiModel" | "ttsVoice";
+    setting: "aiModel" | "ttsVoice" | "aiReasoning";
     settings: Settings;
 }) {
     const [cat, setCat] = useState<AiCatalogue | null | undefined>(undefined);
@@ -405,6 +405,40 @@ function CatalogueRow({
     const provider =
         settings.aiProvider === "auto" ? cat?.default : settings.aiProvider;
     const entry = provider ? cat?.providers[provider] : undefined;
+    // the reasoning row: the levels of the model chosen, or of the provider's default
+    const modelId = settings.aiModel || entry?.default;
+    const levels = entry?.models.find((m) => m.id === modelId)?.reasoning ?? [];
+    if (setting === "aiReasoning")
+        return (
+            <SettingLabel>
+                Reasoning
+                <SettingsSelect
+                    value={
+                        levels.includes(settings.aiReasoning)
+                            ? settings.aiReasoning
+                            : "default"
+                    }
+                    disabled={!cat || !levels.length}
+                    onChange={(e) =>
+                        updateSetting(
+                            "aiReasoning",
+                            clampSetting("aiReasoning", e.currentTarget.value),
+                        )
+                    }
+                >
+                    <option value="default">
+                        {cat && !levels.length
+                            ? "Not for this model"
+                            : "Model default"}
+                    </option>
+                    {levels.map((l) => (
+                        <option key={l} value={l}>
+                            {l[0].toUpperCase() + l.slice(1)}
+                        </option>
+                    ))}
+                </SettingsSelect>
+            </SettingLabel>
+        );
     const options =
         setting === "aiModel"
             ? (entry?.models ?? []).map((m) => m.id)
@@ -462,7 +496,11 @@ function Row({
             </SettingLabel>
         );
     }
-    if (setting === "aiModel" || setting === "ttsVoice")
+    if (
+        setting === "aiModel" ||
+        setting === "ttsVoice" ||
+        setting === "aiReasoning"
+    )
         return <CatalogueRow setting={setting} settings={settings} />;
     if (Object.hasOwn(ENUM_CHOICES, setting)) {
         const key = setting as EnumKey;
