@@ -230,7 +230,7 @@ SELECTION_RULES = (
     "about something else, answer that instead."
 )
 # a selection is a few sources at most; their labels are the page's own words
-SELECTION_MAX = 12
+SELECTION_MAX = 30  # the chat's own cap; the About line says when it cut
 SELECTION_LABEL_MAX = 160
 SELECTION_ID_RE = re.compile(r"n\d{1,9}")
 

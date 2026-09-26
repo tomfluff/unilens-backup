@@ -107,6 +107,9 @@ const placeEntry = (captureId: string): Msg[] =>
 /** which reply's evidence is outlined: all of it, or one item of it */
 type Active = { msgId: string; index: number | "all" } | null;
 
+/** the most sources a question carries (the backend's SELECTION_MAX) */
+const SELECTION_MAX = 30;
+
 /** what the user has selected on the page as they ask: one source, all of an
  *  answer's sources, or a place's clicked element */
 interface Selection {
@@ -608,6 +611,12 @@ export default function ChatPopover({
         ),
     );
     const dragRef = useRef<{ dx: number; dy: number } | null>(null);
+    /** the side step waiting for a source move to settle; a pin, a drag or a newer
+     *  choice cancels it */
+    const stepAside = useRef<number | undefined>(undefined);
+    /** the pin as it is now, for callbacks that outlive the render that set them */
+    const pinnedNow = useRef(pinned);
+    pinnedNow.current = pinned;
     // a new click while the chat is open: it glides there (setting "motion") and the
     // log gains the new place; the capture it answers against becomes the new one
     const firstCapture = useRef(true);
@@ -670,6 +679,7 @@ export default function ChatPopover({
 
     function onHeaderPointerDown(e: React.PointerEvent) {
         if (!settings.dragPopover) return;
+        window.clearTimeout(stepAside.current);
         if ((e.target as HTMLElement).closest("button")) return;
         dragRef.current = { dx: e.clientX - pos.left, dy: e.clientY - pos.top };
         (e.target as HTMLElement).setPointerCapture(e.pointerId);
@@ -801,10 +811,12 @@ export default function ChatPopover({
             const src = m?.cite;
             if (src && c?.ids.length) {
                 const ids =
-                    active.index === "all" ? c.ids : [c.ids[active.index]];
+                    active.index === "all"
+                        ? c.ids.slice(0, SELECTION_MAX)
+                        : [c.ids[active.index]];
                 return {
                     kind: active.index === "all" ? "all" : "source",
-                    n: active.index === "all" ? ids.length : active.index + 1,
+                    n: active.index === "all" ? c.ids.length : active.index + 1,
                     items: ids.filter(Boolean).map((id) => ({
                         id,
                         label: labelOfWire(id, src.inventory),
@@ -891,8 +903,9 @@ export default function ChatPopover({
         const shown = picks
             .map(({ id }) => src.registry.get(id))
             .filter((e): e is Element => e != null);
+        window.clearTimeout(stepAside.current);
         if (shown.length && !mini)
-            setTimeout(() => {
+            stepAside.current = window.setTimeout(() => {
                 const boxes = shown.map((e) => e.getBoundingClientRect());
                 const a = {
                     left: Math.min(...boxes.map((r) => r.left)),
@@ -905,7 +918,9 @@ export default function ChatPopover({
                 const w = Math.min(a.right, b.right) - Math.max(a.left, b.left);
                 const h = Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top);
                 if (w <= 0 || h <= 0) return;
-                if (getSettings().chatMovesAside && !pinned) {
+                const aside =
+                    getSettings().chatMovesAside && !pinnedNow.current;
+                if (aside) {
                     const left = besideTarget(a, b, window.innerWidth);
                     if (left != null) {
                         setPos((p) => ({ ...p, left }));
@@ -916,7 +931,9 @@ export default function ChatPopover({
                     1,
                     (a.right - a.left) * (a.bottom - a.top),
                 );
-                if (short && (w * h) / area > 0.2) {
+                // no room beside it (high zoom, or a phone's bottom sheet): a chat still
+                // covering the source folds to its header, if it may move at all
+                if ((short || aside) && (w * h) / area > 0.2) {
                     // folding removes the control that has focus: the keyboard moves
                     // to the unfold button, not to the page
                     const hadFocus = rootRef.current?.contains(
@@ -1664,6 +1681,7 @@ export default function ChatPopover({
                     aria-label={pinned ? T.unpin : T.pin}
                     title={pinned ? T.unpin : T.pin}
                     onClick={() => {
+                        window.clearTimeout(stepAside.current);
                         onTogglePin(pinned ? null : pos);
                         act("press", pinned ? T.unpin : T.pin);
                     }}
@@ -1719,7 +1737,9 @@ export default function ChatPopover({
                         {about.kind === "place"
                             ? T.aboutPlace(about.n, about.items[0].label)
                             : about.kind === "all"
-                              ? T.aboutAll(about.n)
+                              ? about.n > about.items.length
+                                  ? T.aboutFirst(about.items.length, about.n)
+                                  : T.aboutAll(about.n)
                               : T.aboutSource(
                                     chipText(about.n),
                                     about.items[0]?.label ?? "",
