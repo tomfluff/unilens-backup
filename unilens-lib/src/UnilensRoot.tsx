@@ -176,17 +176,18 @@ export function UnilensRoot({
             setCurrentCapture(null);
             clearHighlights();
             // always a session, continuity or not: without one the backend would answer
-            // from the capture's own history, the old conversation
+            // from the capture's own history, the old conversation. A capture that never
+            // reached the backend (offline) has none to start from: the chat stays
             let session: string | null = null;
-            if (on.id !== "local") {
-                try {
-                    session = await unilens.api().newSession(on.id);
-                } catch (err) {
-                    console.warn("[UniLens] new conversation failed:", err);
-                    if (mine === latestCapture)
-                        setCurrentCapture(committed.capture);
-                    return false;
-                }
+            try {
+                if (on.id === "local") throw new Error("capture not uploaded");
+                session = await unilens.api().newSession(on.id);
+            } catch (err) {
+                console.warn("[UniLens] new conversation failed:", err);
+                // superseded (below): that newer chat is not told of this one's failure
+                if (mine !== latestCapture || current?.key !== key) return true;
+                setCurrentCapture(committed.capture);
+                return false;
             }
             // a click since then opened or moved the chat: that one stands
             if (mine !== latestCapture || current?.key !== key) return true;

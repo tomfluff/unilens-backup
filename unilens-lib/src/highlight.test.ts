@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
     announce,
+    claimEscape,
     clearHighlights,
     cuePosition,
     escapeAction,
@@ -311,6 +312,31 @@ describe("announce", () => {
         updateSetting("autoRead", true);
         announce("quiet");
         expect(live()?.textContent).not.toContain("quiet");
+    });
+});
+
+describe("claimEscape", () => {
+    it("answers Escape before the outline and the chat, and then lets go", () => {
+        init();
+        updateSetting("escapeOrder", "highlight");
+        const close = vi.fn();
+        const off = registerPopoverClose(close);
+        show(mount().registry);
+        const claim = vi.fn();
+        const release = claimEscape(claim);
+        const esc = () =>
+            window.dispatchEvent(
+                new KeyboardEvent("keydown", { key: "Escape" }),
+            );
+        esc();
+        expect(claim).toHaveBeenCalledTimes(1);
+        expect(hasHighlight()).toBe(true);
+        expect(close).not.toHaveBeenCalled();
+        release();
+        esc();
+        expect(claim).toHaveBeenCalledTimes(1);
+        expect(hasHighlight()).toBe(false);
+        off();
     });
 });
 

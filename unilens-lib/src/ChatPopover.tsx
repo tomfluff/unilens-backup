@@ -17,6 +17,7 @@ import {
 } from "./evidence";
 import {
     announce,
+    claimEscape,
     clearHighlights,
     hasHighlight,
     nextToken,
@@ -828,14 +829,16 @@ export default function ChatPopover({
     // Escape is owned by highlight.ts (one listener decides per keypress, honouring the
     // escapeOrder setting); the popover only lends it a close callback
     // hidden, Escape is the page's again (it clears highlights, closes nothing)
-    // while "start a new conversation?" is asked, Escape answers no instead
+    useEffect(
+        () => (hidden ? undefined : registerPopoverClose(onClose)),
+        [onClose, hidden],
+    );
+    // while "start a new conversation?" is asked, Escape answers no, before anything
+    // else it would do (clear an outline, close the chat), wherever the keyboard is
     // biome-ignore lint/correctness/useExhaustiveDependencies: cancelNew only sets state and focuses
     useEffect(
-        () =>
-            hidden
-                ? undefined
-                : registerPopoverClose(confirmNew ? cancelNew : onClose),
-        [onClose, hidden, confirmNew],
+        () => (confirmNew && !hidden ? claimEscape(cancelNew) : undefined),
+        [confirmNew, hidden],
     );
 
     // The capture the next message goes against: the one this popover opened on, until
@@ -1832,12 +1835,6 @@ export default function ChatPopover({
                 <fieldset
                     className="ulc-confirm"
                     aria-labelledby={confirmAskId}
-                    onKeyDown={(e) => {
-                        // Escape cancels the question, and goes no further (not a close)
-                        if (e.key !== "Escape") return;
-                        e.stopPropagation();
-                        cancelNew();
-                    }}
                 >
                     <span id={confirmAskId}>{T.newConvAsk}</span>
                     <button
