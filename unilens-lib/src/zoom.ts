@@ -77,7 +77,9 @@ function measureLayout() {
     layoutH = document.documentElement.scrollHeight;
     document.body.style.transform = prev;
     document.documentElement.style.height = prevH;
-    if (window.scrollX !== sx || window.scrollY !== sy) window.scrollTo(sx, sy);
+    // instant: a page's smooth scroll-behavior would animate it, moving the view
+    if (window.scrollX !== sx || window.scrollY !== sy)
+        window.scrollTo({ left: sx, top: sy, behavior: "instant" });
 }
 
 /** re-measure after the page changes size — reactive content, images loading, etc. */
@@ -1064,13 +1066,34 @@ function onKeyDown(e: KeyboardEvent) {
 
 export function initZoom() {
     measureLayout();
+    // content that opens or closes (a tab, an accordion, lazy images) resizes the
+    // page: panning, captures and the minimap need its new size
+    // (ponytail: the body's box only; content positioned outside it is measured again
+    // at each capture, not here)
+    let settle: number | undefined;
+    const onSize = () => {
+        // once it settles: a height animation would otherwise re-measure every frame
+        window.clearTimeout(settle);
+        settle = window.setTimeout(() => {
+            const [w, h] = [layoutW, layoutH];
+            measureLayout();
+            // a page that got shorter must not leave the lens past its end
+            if (frozen && !tween && (w !== layoutW || h !== layoutH))
+                jumpView(pan.x, pan.y);
+        }, 150);
+    };
+    const watchSize = () => {
+        measureLayout();
+        if (typeof ResizeObserver !== "undefined")
+            new ResizeObserver(onSize).observe(document.body);
+    };
     // init() from <head>: dimensions measured mid-parse (or not at all) are
     // wrong — re-measure once the document is fully parsed
     if (document.readyState === "loading") {
-        document.addEventListener("DOMContentLoaded", () => measureLayout(), {
+        document.addEventListener("DOMContentLoaded", watchSize, {
             once: true,
         });
-    }
+    } else if (document.body) watchSize();
     window.addEventListener("resize", () => {
         measureLayout();
         if (scale === 1) return;
