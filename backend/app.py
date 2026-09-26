@@ -506,7 +506,10 @@ def _call_gemini(
 ) -> str:
     from google import genai
 
-    response = genai.Client().models.generate_content(
+    # a named client: a temporary one is closed once collected, which google-genai does
+    # mid-request ("Cannot send a request, as the client has been closed")
+    client = genai.Client()
+    response = client.models.generate_content(
         **_chat_gemini_request(
             png_b64, viewport_b64, meta, history, message, inventory, selection
         )
@@ -542,7 +545,10 @@ def _stream_gemini(
 ):
     from google import genai
 
-    for chunk in genai.Client().models.generate_content_stream(
+    # held for the whole stream: a temporary client is closed once collected, and the
+    # stream then fails on its next chunk ("the client has been closed")
+    client = genai.Client()
+    for chunk in client.models.generate_content_stream(
         **_chat_gemini_request(
             png_b64, viewport_b64, meta, history, message, inventory, selection
         )
@@ -786,7 +792,8 @@ def _locate_gemini_request(
 def _locate_gemini(**kw) -> dict:
     from google import genai
 
-    response = genai.Client().models.generate_content(**_locate_gemini_request(**kw))
+    client = genai.Client()  # named: a temporary one closes once collected
+    response = client.models.generate_content(**_locate_gemini_request(**kw))
     return json.loads(response.text)
 
 
