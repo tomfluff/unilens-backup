@@ -529,10 +529,11 @@ export default function ChatPopover({
                 // the folded chat has no field: what is heard shows on its status line
                 setStatus(transcript);
             },
-            () => {
+            (stopped) => {
                 setListening(false);
                 const text = heard.current.trim();
                 heard.current = "";
+                if (stopped) return act("micOff", T.sStoppedListening);
                 if (!text) {
                     if (!failed) act("error", T.sNothingHeard);
                     return;

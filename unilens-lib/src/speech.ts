@@ -253,7 +253,8 @@ export interface VoiceOptions {
 /** a voice message by whichever engine the settings and the browser allow */
 export function listenVoice(
     onResult: (transcript: string) => void,
-    onEnd: () => void,
+    /** stopped: the message was dropped by Stop while it was being turned into text */
+    onEnd: (stopped?: boolean) => void,
     lang: string | undefined,
     opts: VoiceOptions,
 ): ((cancel?: boolean) => void) | null {
@@ -270,7 +271,7 @@ const MAX_MESSAGE_MS = 60_000;
 
 function record(
     onResult: (transcript: string) => void,
-    onEnd: () => void,
+    onEnd: (stopped?: boolean) => void,
     lang: string | undefined,
     opts: VoiceOptions,
 ): (cancel?: boolean) => void {
@@ -282,10 +283,10 @@ function record(
     let timer: number | undefined;
     const aborter = new AbortController();
     const chunks: Blob[] = [];
-    const finish = () => {
+    const finish = (stopped = false) => {
         if (done) return;
         done = true;
-        onEnd();
+        onEnd(stopped);
     };
     // the mic light goes off as soon as the recording ends
     const release = () => {
@@ -295,13 +296,17 @@ function record(
         ctx = null;
     };
     const stop = () => {
-        if (recorder && recorder.state !== "inactive") recorder.stop();
-        else if (!recorder) {
-            // stopped before the mic was granted: nothing was said
-            cancelled = true;
-            release();
-            finish();
+        if (recorder && recorder.state !== "inactive") {
+            window.clearInterval(timer); // the pause check stops once, not twice
+            recorder.stop();
+            return;
         }
+        // before the mic was granted nothing was said; while the recording is being
+        // turned into text, Stop drops it (auto-send would otherwise still send it)
+        cancelled = true;
+        aborter.abort();
+        release();
+        finish(true);
     };
     navigator.mediaDevices
         .getUserMedia({ audio: true })
@@ -388,8 +393,12 @@ function record(
             }, 100);
         })
         .catch((err) => {
-            // no mic, or permission refused
+            // no mic, permission refused, or the recorder or pause check failed to set
+            // up: the mic goes off, and nothing is sent
             if (cancelled) return;
+            cancelled = true;
+            if (recorder && recorder.state !== "inactive") recorder.stop();
+            release();
             opts.onError?.(String(err));
             finish();
         });

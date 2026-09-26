@@ -476,12 +476,13 @@ def _stt_models(provider: str) -> list[str]:
 
 
 def _stt_choice(args) -> tuple[str, str] | None:
-    """(provider, model) for a transcription: the request's provider when its key is
-    set, else OpenAI, else Gemini; its model when listed, else the first reachable."""
+    """(provider, model) for a transcription: the request's provider (none when its key
+    is not set: the audio never goes to one the settings did not choose); without one,
+    OpenAI, else Gemini. Its model when listed, else the first reachable."""
     provider = args.get("provider")
-    if provider not in PROVIDER_KEYS or not os.getenv(PROVIDER_KEYS[provider]):
+    if provider is None:
         provider = next((p for p, k in PROVIDER_KEYS.items() if os.getenv(k)), None)
-    if not provider:
+    if provider not in PROVIDER_KEYS or not os.getenv(PROVIDER_KEYS[provider]):
         return None
     models = _stt_models(provider) or STT_MODELS[provider]
     model = args.get("model") if args.get("model") in models else models[0]
@@ -1455,7 +1456,14 @@ def create_app():
         mime = (request.mimetype or "").lower()
         if mime not in STT_TYPES:
             return jsonify({"error": f"unsupported audio type: {mime or 'none'}"}), 415
-        audio = request.get_data(cache=False)
+        # never more than the cap is read, declared length or not (chunked)
+        audio = bytearray()
+        while len(audio) <= STT_MAX_BYTES:
+            chunk = request.stream.read(min(1 << 16, STT_MAX_BYTES + 1 - len(audio)))
+            if not chunk:
+                break
+            audio += chunk
+        audio = bytes(audio)
         if not audio:
             return jsonify({"error": "empty audio"}), 400
         if len(audio) > STT_MAX_BYTES:

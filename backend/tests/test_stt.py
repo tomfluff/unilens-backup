@@ -1,5 +1,7 @@
 """Speech to text for browsers without their own (R1 of the 2026-09-26 report)."""
 
+import io
+
 import pytest
 
 import app as app_module
@@ -62,3 +64,26 @@ def test_catalogue_lists_the_speech_models(client, heard):
     body = client.get("/api/ai").get_json()
     assert body["stt"]["openai"][0] == "whisper-1"
     assert "gemini-3.5-transcribe" in body["stt"]["gemini"]
+
+
+def test_a_chosen_provider_without_its_key_never_gets_another(
+    client, heard, monkeypatch
+):
+    monkeypatch.delenv("GOOGLE_API_KEY")
+    assert post(client, query="?provider=gemini").status_code == 501
+    assert post(client, query="?provider=nope").status_code == 501
+    assert heard == []
+
+
+def test_an_undeclared_long_body_is_read_no_further_than_the_cap(client, heard):
+    """chunked: no Content-Length, so only the capped read stands between it and memory"""
+    body = io.BytesIO(b"x" * (app_module.STT_MAX_BYTES + 4096))
+    res = client.post(
+        "/api/stt",
+        input_stream=body,
+        content_type="audio/webm",
+        environ_base={"wsgi.input_terminated": True},
+    )
+    assert res.status_code == 413
+    assert body.tell() <= app_module.STT_MAX_BYTES + 1
+    assert heard == []

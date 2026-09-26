@@ -222,3 +222,100 @@ describe("speak", () => {
         expect(made[0].load).toHaveBeenCalled();
     });
 });
+
+describe("a voice message the server turns into text", () => {
+    /** a MediaRecorder the test drives: stop() flushes one chunk, then fires onstop */
+    class FakeRecorder {
+        static last: FakeRecorder | undefined;
+        static isTypeSupported = () => true;
+        state = "inactive";
+        mimeType = "audio/webm";
+        ondataavailable: (e: { data: Blob }) => void = () => {};
+        onstop: () => void = () => {};
+        constructor() {
+            FakeRecorder.last = this;
+        }
+        start() {
+            this.state = "recording";
+        }
+        stop = vi.fn(() => {
+            this.state = "inactive";
+            this.ondataavailable({ data: new Blob(["x"]) });
+            queueMicrotask(() => this.onstop());
+        });
+    }
+    const track = { stop: vi.fn() };
+    /** the module with a mic and a recorder (read once, when it loads) */
+    async function withMic() {
+        FakeRecorder.last = undefined;
+        track.stop.mockClear();
+        vi.stubGlobal("MediaRecorder", FakeRecorder);
+        Object.defineProperty(navigator, "mediaDevices", {
+            configurable: true,
+            value: { getUserMedia: async () => ({ getTracks: () => [track] }) },
+        });
+        vi.resetModules();
+        return import("./speech");
+    }
+    afterEach(() => {
+        Reflect.deleteProperty(navigator, "mediaDevices");
+    });
+
+    it("drops the message when Stop is pressed while it is being turned into text", async () => {
+        const sp = await withMic();
+        const fetch = vi.fn(
+            (_url: string, init: RequestInit) =>
+                new Promise((_res, reject) =>
+                    init.signal?.addEventListener("abort", () =>
+                        reject(new DOMException("aborted", "AbortError")),
+                    ),
+                ),
+        );
+        vi.stubGlobal("fetch", fetch);
+        const onResult = vi.fn();
+        const onEnd = vi.fn();
+        const onError = vi.fn();
+        const stop = sp.listenVoice(onResult, onEnd, "en", {
+            engine: "openai",
+            endOnPause: false,
+            onError,
+        });
+        await vi.waitFor(() =>
+            expect(FakeRecorder.last?.state).toBe("recording"),
+        );
+        stop?.(); // the message ends: it goes to the server
+        await vi.waitFor(() => expect(fetch).toHaveBeenCalled());
+        stop?.(); // Stop again, while it is being turned into text
+        await vi.waitFor(() => expect(onEnd).toHaveBeenCalledWith(true));
+        await new Promise((r) => setTimeout(r));
+        expect(fetch.mock.calls[0][1].signal?.aborted).toBe(true);
+        expect(onEnd).toHaveBeenCalledTimes(1);
+        expect(onResult).not.toHaveBeenCalled();
+        expect(onError).not.toHaveBeenCalled();
+    });
+
+    it("turns the mic off when the pause check cannot be set up", async () => {
+        const sp = await withMic();
+        vi.stubGlobal(
+            "AudioContext",
+            vi.fn(() => {
+                throw new Error("no audio context");
+            }),
+        );
+        const fetch = vi.fn();
+        vi.stubGlobal("fetch", fetch);
+        const onEnd = vi.fn();
+        const onError = vi.fn();
+        sp.listenVoice(() => {}, onEnd, "en", {
+            engine: "openai",
+            endOnPause: true,
+            onError,
+        });
+        await vi.waitFor(() => expect(onEnd).toHaveBeenCalledTimes(1));
+        expect(onError).toHaveBeenCalledTimes(1);
+        expect(track.stop).toHaveBeenCalled();
+        expect(FakeRecorder.last?.stop).toHaveBeenCalled();
+        await new Promise((r) => setTimeout(r));
+        expect(fetch).not.toHaveBeenCalled();
+    });
+});
