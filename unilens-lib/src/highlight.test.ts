@@ -4,6 +4,7 @@ import {
     clearHighlights,
     cuePosition,
     escapeAction,
+    foldNested,
     hasHighlight,
     init,
     nextToken,
@@ -1007,5 +1008,85 @@ describe("off-screen cues", () => {
                 ?.closest("#unilens-highlight-layer"),
         ).not.toBeNull();
         expect(document.querySelectorAll(".unilens-hl-cues")).toHaveLength(1);
+    });
+});
+
+describe("foldNested (one outline per nested pair)", () => {
+    /** an element with text and a box of the given area (as width x 1) */
+    function node(text: string, area: number, parent?: Element) {
+        const el = document.createElement("div");
+        el.textContent = text;
+        el.dataset.area = String(area);
+        (parent ?? document.body).appendChild(el);
+        return el;
+    }
+    const byArea = (el: Element) =>
+        rect(0, 0, Number((el as HTMLElement).dataset.area), 1);
+    const kept = (items: { el: Element; badge?: string }[]) =>
+        foldNested(items, byArea).map((i) => [i.el.textContent, i.badge]);
+
+    it("keeps the inner one when the outer adds nothing", () => {
+        const outer = node("", 1000);
+        const inner = node("Main menu", 980, outer);
+        // the outer's own text is the inner's: the same thing twice
+        expect(
+            kept([
+                { el: outer, badge: "1" },
+                { el: inner, badge: "2" },
+            ]),
+        ).toEqual([["Main menu", "1·2"]]);
+    });
+
+    it("keeps the outer one when it holds more than the inner", () => {
+        const outer = node("The benefit is ", 1000);
+        const inner = node("PayPay Money Lite", 430, outer);
+        expect(
+            kept([
+                { el: inner, badge: "2" },
+                { el: outer, badge: "1" },
+            ]),
+        ).toEqual([["The benefit is PayPay Money Lite", "1·2"]]);
+    });
+
+    it("folds chains and leaves siblings alone", () => {
+        const a = node("", 1000);
+        const b = node("", 990, a);
+        const c = node("Apply", 985, b);
+        const other = node("Terms", 300);
+        expect(
+            kept([
+                { el: a, badge: "3" },
+                { el: c, badge: "1" },
+                { el: other, badge: "4" },
+                { el: b, badge: "2" },
+            ]),
+        ).toEqual([
+            ["Apply", "1·2·3"],
+            ["Terms", "4"],
+        ]);
+    });
+
+    it("draws one outline for a nested pair", () => {
+        const outer = document.createElement("div");
+        const inner = document.createElement("a");
+        inner.textContent = "Apply";
+        outer.appendChild(inner);
+        document.body.appendChild(outer);
+        const registry = new Map<string, Element>([
+            ["n1", outer],
+            ["n2", inner],
+        ]);
+        setCurrentCapture("c1");
+        showHighlights(
+            [
+                { id: "n1", role: "target", badge: "1" },
+                { id: "n2", role: "target", badge: "2" },
+            ],
+            registry,
+            "c1",
+            nextToken(),
+            { measure },
+        );
+        expect(layerBoxes()).toHaveLength(1);
     });
 });

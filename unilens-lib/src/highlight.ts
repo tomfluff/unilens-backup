@@ -268,8 +268,11 @@ function makeBadge(text: string): HTMLDivElement {
     const style = getSettings().chatStyle;
     const badge = document.createElement("div");
     badge.className = `${CLASS}-badge`;
-    // station codes read "U1", like the chips
-    badge.textContent = style === "station" ? `U${text}` : text;
+    // station codes read "U1", like the chips; a folded pair reads "1·2" (or "U1·U2")
+    badge.textContent = text
+        .split("·")
+        .map((t) => (style === "station" ? `U${t}` : t))
+        .join("·");
     Object.assign(
         badge.style,
         {
@@ -1033,6 +1036,7 @@ export function showHighlights(
     measure = opts.measure ?? defaultMeasure;
     const host = ensureLayer();
     let unplaceable = 0;
+    const placeable: (Highlight & { el: Element })[] = [];
     for (const h of set) {
         const el = registry.get(h.id);
         if (!el?.isConnected) continue;
@@ -1042,6 +1046,10 @@ export function showHighlights(
             unplaceable++;
             continue;
         }
+        placeable.push({ ...h, el });
+    }
+    for (const h of foldNested(placeable, measure)) {
+        const el = h.el;
         const box = document.createElement("div");
         box.className = CLASS;
         box.dataset.role = h.role; // TODO phase 2: style anchor/source distinctly
@@ -1063,6 +1071,51 @@ export function showHighlights(
     syncMinimap();
     if (opts.label) announce(chatText().hFound(opts.label));
     return true;
+}
+
+/**
+ * One outline per nested pair, when several are drawn at once (Yotam, 2026-09-26):
+ * when one element holds another, the inner one stays if the outer adds nothing to it
+ * (the same text, or the inner covers at least 90% of it); otherwise the outer one
+ * stays. The one kept carries both numbers ("1·2"). Pairs fold until none is left, so
+ * chains (a in b in c) fold too. The same element twice counts as a pair.
+ */
+export function foldNested<T extends { el: Element; badge?: string }>(
+    items: T[],
+    measureEl: Measure,
+): T[] {
+    const list = [...items];
+    const text = (e: Element) =>
+        (e.textContent ?? "").replace(/\s+/g, " ").trim();
+    const area = (e: Element) => {
+        const r = measureEl(e);
+        return r.width * r.height;
+    };
+    const byNumber = (x: string, y: string) =>
+        Number(x) - Number(y) || x.localeCompare(y);
+    for (;;) {
+        let pair: [T, T] | null = null;
+        for (const a of list)
+            for (const b of list)
+                if (a !== b && a.el.contains(b.el)) {
+                    pair = [a, b];
+                    break;
+                }
+        if (!pair) return list;
+        const [outer, inner] = pair;
+        const addsNothing =
+            text(outer.el) === text(inner.el) ||
+            area(inner.el) >= 0.9 * area(outer.el);
+        const [keep, drop] = addsNothing ? [inner, outer] : [outer, inner];
+        const badges = [keep.badge, drop.badge]
+            .flatMap((b) => (b ? b.split("·") : []))
+            .sort(byNumber);
+        list.splice(list.indexOf(drop), 1);
+        list[list.indexOf(keep)] = {
+            ...keep,
+            badge: badges.length ? badges.join("·") : undefined,
+        };
+    }
 }
 
 export function clearHighlights() {
