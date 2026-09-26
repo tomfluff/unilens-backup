@@ -775,6 +775,8 @@ export default function ChatPopover({
         index: number | "all",
         reveal: boolean,
         toggle = false,
+        /** pressed in the answer's text: the reader is there, so the log stays put */
+        fromText = false,
     ) {
         const c = cited(m);
         const src = m.cite;
@@ -862,7 +864,9 @@ export default function ChatPopover({
         // nothing placeable (collapsed, box-less): showHighlights announced it; no button
         // may look pressed over an empty page
         setActive(hasHighlight() ? { msgId: m.id, index } : null);
-        revealTurn(m.id);
+        // the controls row sits at the answer's end: keep it in view for a press there,
+        // but a source pressed in the text is where the reader is reading
+        if (!fromText) revealTurn(m.id);
     }
 
     /** a finished reply: debug readout, then outline it if the auto-highlight knob says so */
@@ -1397,7 +1401,7 @@ export default function ChatPopover({
                                 .closest("[data-cite]")
                                 ?.getAttribute("data-cite");
                             const k = id ? (c?.ids.indexOf(id) ?? -1) : -1;
-                            if (k >= 0) point(m, k, true, true);
+                            if (k >= 0) point(m, k, true, true, true);
                         }}
                         // biome-ignore lint/security/noDangerouslySetInnerHtml: HTML is escaped in mdLite before formatting tags and chips are added
                         dangerouslySetInnerHTML={{
