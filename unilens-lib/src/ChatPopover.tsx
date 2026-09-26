@@ -31,6 +31,7 @@ import {
     HighlightIcon,
     MicIcon,
     MinimizeIcon,
+    NewChatIcon,
     NextIcon,
     PauseIcon,
     PinIcon,
@@ -149,6 +150,8 @@ interface Props {
     backend: string;
     sessionId: string | null;
     onClose: () => void;
+    /** start over: a new session on this place, an empty log, places from P1 */
+    onNewConversation?: () => void;
     /** pinned position carried over from the previous popover, if the user pinned it */
     initialPos?: { left: number; top: number } | null;
     pinned: boolean;
@@ -163,6 +166,8 @@ interface Props {
     ) => Promise<{ id: string; cap: CaptureResult } | null>;
     /** a new click is being captured; the chat moves there when it arrives */
     capturing?: boolean;
+    /** this chat is a new conversation the user started (it says so as it opens) */
+    startedOver?: boolean;
     /** closed with ✕: out of sight but kept, conversation and all, until the next
      *  click shows it again */
     hidden?: boolean;
@@ -273,6 +278,7 @@ export default function ChatPopover({
     backend,
     sessionId,
     onClose,
+    onNewConversation,
     initialPos,
     pinned,
     onTogglePin,
@@ -280,6 +286,7 @@ export default function ChatPopover({
     refreshCapture,
     capturing,
     hidden = false,
+    startedOver = false,
 }: Props) {
     ensureChatStyles();
     // the log opens with the click that opened the chat
@@ -331,6 +338,12 @@ export default function ChatPopover({
     const panelH = Math.min(PANEL_H_EM * fs, room, window.innerHeight - 16);
     /** folded to its header and status line, out of the page's way */
     const [mini, setMini] = useState(false);
+    /** "Start a new conversation?" is on screen, waiting for yes or no */
+    const [confirmNew, setConfirmNew] = useState(false);
+    const confirmYesRef = useRef<HTMLButtonElement>(null);
+    useEffect(() => {
+        if (confirmNew) confirmYesRef.current?.focus({ preventScroll: true });
+    }, [confirmNew]);
 
     /** the mic: recording, or (server speech recognition) turning the recording into
      *  text, when the field says so and the button cancels rather than stops */
@@ -445,6 +458,7 @@ export default function ChatPopover({
     const aborter = useRef(new AbortController());
     // biome-ignore lint/correctness/useExhaustiveDependencies: on mount and unmount only
     useEffect(() => {
+        if (startedOver) act("press", T.sNewConversation);
         openedFrom.current = document.activeElement as HTMLElement | null;
         inputRef.current?.focus({ preventScroll: true });
         return () => {
@@ -1705,6 +1719,18 @@ export default function ChatPopover({
                     <b>{style === "station" ? T.stationName : T.title}</b>
                     {style === "station" && <small>{T.otherName}</small>}
                 </div>
+                {!mini && onNewConversation && (
+                    <button
+                        type="button"
+                        className="ulc-ib"
+                        aria-label={T.newConversation}
+                        title={T.newConversation}
+                        aria-expanded={confirmNew}
+                        onClick={() => setConfirmNew(!confirmNew)}
+                    >
+                        <NewChatIcon />
+                    </button>
+                )}
                 {/* folded, the chat keeps its voice: record a message, hear the last answer */}
                 {mini && voiceOK && voiceButton("ulc-ib")}
                 {mini &&
@@ -1784,6 +1810,43 @@ export default function ChatPopover({
                             {label}
                         </button>
                     ))}
+                </div>
+            )}
+            {!mini && confirmNew && (
+                // biome-ignore lint/a11y/noStaticElementInteractions: Escape here only cancels; the choices are real buttons
+                <div
+                    className="ulc-confirm"
+                    role="group"
+                    aria-label={T.newConversation}
+                    onKeyDown={(e) => {
+                        // Escape cancels the question, and goes no further (not a close)
+                        if (e.key !== "Escape") return;
+                        e.stopPropagation();
+                        setConfirmNew(false);
+                    }}
+                >
+                    <span>{T.newConvAsk}</span>
+                    <button
+                        ref={confirmYesRef}
+                        type="button"
+                        className="ulc-c"
+                        onClick={() => {
+                            setConfirmNew(false);
+                            onNewConversation?.();
+                        }}
+                    >
+                        {T.newConvYes}
+                    </button>
+                    <button
+                        type="button"
+                        className="ulc-c"
+                        onClick={() => {
+                            setConfirmNew(false);
+                            inputRef.current?.focus({ preventScroll: true });
+                        }}
+                    >
+                        {T.newConvNo}
+                    </button>
                 </div>
             )}
             {!mini && about && (

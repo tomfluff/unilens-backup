@@ -1496,6 +1496,21 @@ def create_app():
         files = {p.name: p.stat().st_size for p in sorted(cap_dir.iterdir())}
         return jsonify({"id": cap_id, "files": files})
 
+    @app.post("/api/session")
+    def new_session():
+        """A new conversation on a capture the user is already on: a fresh session
+        holding that capture, the old conversation left as it was ("New
+        conversation" in the chat)."""
+        if _rate_limited("capture"):
+            return jsonify({"error": "rate limit: too many new conversations"}), 429
+        data = request.get_json(force=True, silent=True) or {}
+        cap_id = data.get("capture_id")
+        if not isinstance(cap_id, str) or _capture_dir(cap_id) is None:
+            return jsonify({"error": "unknown capture_id"}), 404
+        sid = uuid.uuid4().hex[:12]
+        _save_session(sid, {"captures": [cap_id], "history": []})
+        return jsonify({"session_id": sid})
+
     @app.get("/api/session/<sid>")
     def session_info(sid):
         session = _load_session(sid)

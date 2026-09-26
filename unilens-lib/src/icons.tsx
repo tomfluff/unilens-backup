@@ -30,6 +30,13 @@ export const PinIcon = () => (
         <path d="M12 16v4" />
     </Icon>
 );
+/** a speech bubble with a plus: a new conversation */
+export const NewChatIcon = () => (
+    <Icon>
+        <path d="M5 5h14v10H10l-4 4v-4H5z" />
+        <path d="M12 7.5v5M9.5 10h5" />
+    </Icon>
+);
 export const CloseIcon = () => (
     <Icon>
         <path d="M6 6l12 12M18 6L6 18" />

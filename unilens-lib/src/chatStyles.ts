@@ -79,6 +79,10 @@ ${R} .ulc-c span { overflow: hidden; text-overflow: ellipsis; }
 ${R} .ulc-quick { display: grid; grid-template-columns: repeat(3, 1fr); gap: .35em; flex: none; }
 ${R} .ulc-quick button { min-width: 0; line-height: 1.2; padding-left: .3em; padding-right: .3em; }
 ${R} .ulc-in { display: flex; gap: .45em; flex: none; align-items: center; }
+/* "Start a new conversation?": the question and its two answers, above the field */
+${R} .ulc-confirm { display: flex; flex-wrap: wrap; align-items: center; gap: .45em; flex: none; font-size: .95em; line-height: 1.3; }
+${R} .ulc-confirm span { flex: 1 1 100%; }
+${R} .ulc-confirm button.ulc-c { flex: 1 1 0; min-height: 2.4em; padding: 0 .7em; white-space: normal; }
 /* what the next question is about: one line above the field, with a way to drop it */
 ${R} .ulc-about { display: flex; align-items: center; gap: .4em; flex: none; min-width: 0; color: var(--muted); font-size: .95em; line-height: 1.3; }
 ${R} .ulc-about span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -150,6 +154,7 @@ ${A} .ulc-quick { padding: .55em 1em 0; border-top: 1px solid var(--line); }
 ${A} .ulc-quick button { min-height: 2.3em; border: 1px solid #6b7280; border-radius: 999px; background: var(--soft); color: var(--fg); font-size: 1em; }
 ${A}${HC} .ulc-quick button { border: 2px solid #fff; }
 ${A} .ulc-in { padding: .6em .8em .35em; }
+${A} .ulc-confirm { padding: .5em .8em 0; }
 ${A} .ulc-about { padding: .45em .8em 0; }
 ${A} .ulc-in input { height: 2.8em; padding: 0 .85em; border: 1px solid #6b7280; border-radius: 12px; background: var(--bg); color: var(--fg); caret-color: var(--acc); }
 ${A}${HC} .ulc-in input { border: 2px solid #fff; }
@@ -198,6 +203,7 @@ ${G} .ulc-quick button { min-height: 2.6em; border: 1.5px solid #8a929e; border-
 ${G} .ulc-log { scrollbar-color: #6b7280 transparent; }
 ${G}${HC} .ulc-quick button { border: 2px solid #ffd400; color: #ffd400; }
 ${G} .ulc-in { margin-top: 8px; }
+${G} .ulc-confirm { margin-top: 8px; color: var(--muted); }
 ${G} .ulc-about { margin-top: 8px; }
 ${G} .ulc-in input { height: 3em; padding: 0 .8em; border: 2px solid #8a929e; border-radius: 10px; background: #0f1114; color: #fff; caret-color: var(--lcd); }
 ${G}${HC} .ulc-in input { background: #000; border-color: #fff; }
@@ -249,6 +255,7 @@ ${S} .ulc-quick { padding: .6em .8em 0; }
 ${S} .ulc-quick button { min-height: 2.5em; border: 2px solid var(--fg); border-radius: 4px; background: transparent; color: var(--fg); font-weight: 600; font-size: .94em; }
 ${S} .ulc-log { scrollbar-color: #8a8f95 transparent; }
 ${S} .ulc-in { padding: .6em .8em .35em; }
+${S} .ulc-confirm { padding: .5em .8em 0; }
 ${S} .ulc-about { padding: .45em .8em 0; }
 ${S} .ulc-in input { height: 2.9em; padding: 0 .7em; border: 2px solid var(--fg); border-radius: 4px; background: var(--panel); color: var(--fg); caret-color: var(--line); }
 ${S} .ulc-in input::placeholder { color: var(--muted); }

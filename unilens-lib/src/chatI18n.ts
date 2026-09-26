@@ -78,6 +78,12 @@ const EN = {
     aboutPlace: (n: number, label: string) => `About P${n}: ${label}`,
     aboutDrop: "Stop asking about this (clears the outline)",
     sTranscribing: "Turning your message into text…",
+    newConversation: "Start a new conversation",
+    newConvAsk:
+        "Start a new conversation? This one ends, and its places are cleared.",
+    newConvYes: "New conversation",
+    newConvNo: "Keep this one",
+    sNewConversation: "New conversation. Ask about where you clicked.",
     sNotTranscribed: "Couldn't turn the message into text. Try again.",
     evidenceLabel: (n: number, label: string) => `Source ${n}: ${label}`,
     // status line and live region
@@ -197,6 +203,12 @@ const JA: Strings = {
     aboutPlace: (n: number, label: string) => `P${n} について: ${label}`,
     aboutDrop: "これについて聞くのをやめる（強調を消す）",
     sTranscribing: "音声を文字にしています…",
+    newConversation: "新しい会話を始める",
+    newConvAsk:
+        "新しい会話を始めますか？この会話は終わり、場所の一覧も消えます。",
+    newConvYes: "新しい会話",
+    newConvNo: "この会話を続ける",
+    sNewConversation: "新しい会話です。クリックした場所について質問できます。",
     sNotTranscribed: "音声を文字にできませんでした。もう一度お試しください。",
     evidenceLabel: (n: number, label: string) => `出典 ${n}: ${label}`,
     sAsking: "送信しました。回答を待っています…",

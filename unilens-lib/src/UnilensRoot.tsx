@@ -23,7 +23,7 @@ import { initDebug } from "./DebugPanel";
 import { earcon } from "./earcons";
 import { announce, clearHighlights, setCurrentCapture } from "./highlight";
 import { initHint } from "./hint";
-import { aliasPlace, recordPlace } from "./places";
+import { aliasPlace, clearPlaces, placeOf, recordPlace } from "./places";
 import { recordCapture } from "./sentLog";
 import { getSettings, updateSetting } from "./settings";
 import type { UnilensClient } from "./UnilensClient";
@@ -158,6 +158,47 @@ export function UnilensRoot({
         }
 
         /**
+         * "New conversation": the old one ends (its session stays in the backend's
+         * history), a new session starts on the place the chat is on, places count
+         * from P1 again, and a fresh, empty chat opens where this one is.
+         */
+        async function newConversation() {
+            if (!current) return;
+            const props = current.props;
+            const here = placeOf(props.captureId);
+            // what was outlined, a capture on its way, a view refresh: all the old one's
+            clearHighlights();
+            latestCapture++;
+            generation++;
+            let session: string | null = null;
+            if (getSettings().continuity && props.captureId !== "local") {
+                try {
+                    session = await unilens.api().newSession(props.captureId);
+                } catch (err) {
+                    // no session: the new chat still starts empty, on this capture
+                    console.warn(
+                        "[UniLens] new conversation without a session:",
+                        err,
+                    );
+                }
+            }
+            unilens.setSessionId(session);
+            clearPlaces();
+            if (here) recordPlace({ ...here, at: Date.now() });
+            chats++;
+            paint({
+                key: chats,
+                props: {
+                    ...props,
+                    sessionId: session,
+                    capturing: false,
+                    hidden: false,
+                    startedOver: true,
+                },
+            });
+        }
+
+        /**
          * Before a follow-up: if the user scrolled, panned or zoomed since `prev`, capture
          * the new view (same question point) into the session so the model sees what they
          * see now. Null when the view has not moved, the knob is off, or the upload fails
@@ -240,6 +281,7 @@ export function UnilensRoot({
                         ? unilens.getSessionId()
                         : null,
                     onClose: hideChat,
+                    onNewConversation: () => void newConversation(),
                     refreshCapture,
                     initialPos: pinnedPos(),
                     pinned: pinnedPos() != null,
