@@ -42,6 +42,15 @@ export const placeOf = (captureId: string | undefined) =>
 
 export const latestPlace = () => latest;
 
+/** every place in order, and the other capture ids that stand for one (view
+ *  refreshes), as [id, the place's own capture id] */
+export const allPlaces = () => ({
+    order: [...order],
+    aliases: [...places]
+        .filter(([id, p]) => id !== p.captureId)
+        .map(([id, p]) => [id, p.captureId] as [string, string]),
+});
+
 /**
  * Go back to the exact point the user clicked (not the middle of whatever they
  * clicked on, which can be a whole page section). No move when it is on screen.

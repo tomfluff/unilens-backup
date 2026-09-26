@@ -24,10 +24,25 @@ import { earcon } from "./earcons";
 import { announce, clearHighlights, setCurrentCapture } from "./highlight";
 import { initHint } from "./hint";
 import { aliasPlace, clearPlaces, placeOf, recordPlace } from "./places";
+import {
+    forgetSnapshot,
+    loadSnapshot,
+    pageKey,
+    type Snapshot,
+    savedPlaces,
+    saveSoon,
+} from "./restore";
 import { recordCapture } from "./sentLog";
-import { getSettings, updateSetting } from "./settings";
+import { getSettings, onSettingsChange, updateSetting } from "./settings";
 import type { UnilensClient } from "./UnilensClient";
-import { clientToContent, isOwnUI } from "./zoom";
+import {
+    clientToContent,
+    getTargetView,
+    getZoom,
+    isOwnUI,
+    onViewChange,
+    restoreZoom,
+} from "./zoom";
 
 //------------------------------------------------------------------------------
 // Types
@@ -128,7 +143,87 @@ export function UnilensRoot({
         const paint = (next: Chat | null) => {
             current = next;
             setChat(next);
+            save();
         };
+
+        // ── Restore after a reload (restore.ts) ──────────────────────────────
+        /** the conversation as it is now, to come back after a reload; null when there
+         *  is none to keep (nothing asked yet, continuity off) */
+        const snapshot = (): Snapshot | null => {
+            const s = getSettings();
+            const sessionId = unilens.getSessionId();
+            const on = committed.capture ?? current?.props.captureId;
+            if (!s.restoreAfterReload || !s.continuity) return null;
+            if (!sessionId || !on || on === "local") return null;
+            const v = getTargetView();
+            return {
+                v: 1,
+                savedAt: Date.now(),
+                page: pageKey(),
+                sessionId,
+                captureId: on,
+                open: current != null && !current.props.hidden,
+                ...savedPlaces(),
+                view: { scale: getZoom().scale, x: v.x, y: v.y },
+            };
+        };
+        const save = () => saveSoon(backend, snapshot);
+        /** the first chat a click opens after a reload marks where the page reloaded */
+        let reloadMark = false;
+
+        async function restore() {
+            const s = getSettings();
+            if (!s.restoreAfterReload || !s.continuity) return;
+            // places and the view are measured on the laid-out page
+            if (document.readyState !== "complete")
+                await new Promise((r) =>
+                    window.addEventListener("load", r, { once: true }),
+                );
+            const mine = latestCapture;
+            const snap = await loadSnapshot(backend);
+            if (!snap) return;
+            // the session's history brings the messages back; the capture's meta lets
+            // the chat re-capture the view on the next question
+            let meta: CaptureResult["meta"] | undefined;
+            try {
+                const [ses, cap] = await Promise.all([
+                    fetch(
+                        `${backend}/api/session/${encodeURIComponent(snap.sessionId)}`,
+                    ),
+                    fetch(
+                        `${backend}/api/capture/${encodeURIComponent(snap.captureId)}/detail`,
+                    ),
+                ]);
+                if (!ses.ok || !cap.ok) return;
+                meta = (await cap.json()).meta;
+            } catch {
+                return;
+            }
+            // a click since the page loaded has started its own: that one stands
+            if (!meta || mine !== latestCapture || current) return;
+            unilens.setSessionId(snap.sessionId);
+            if (snap.page === pageKey()) {
+                for (const p of snap.places) recordPlace(p);
+                for (const [id, of] of snap.aliases) aliasPlace(id, of);
+                if (getSettings().zoom && snap.view.scale > 1.01)
+                    restoreZoom(snap.view.scale, snap.view.x, snap.view.y);
+            }
+            const T = chatText();
+            if (!snap.open) {
+                reloadMark = true;
+                announce(T.sRestoredHidden);
+                return;
+            }
+            setCurrentCapture(snap.captureId);
+            committed = { capture: snap.captureId, asked: undefined };
+            openChat(window.innerWidth, window.innerHeight, snap.captureId, {
+                image: "",
+                meta,
+                restored: true,
+            });
+            repaint({ reloaded: "restored" });
+            announce(T.sRestored);
+        }
         /** re-render the open chat with some props changed */
         const repaint = (patch: Partial<ChatProps>) => {
             if (current)
@@ -227,10 +322,11 @@ export function UnilensRoot({
             // the conversation lives in the session; without one (continuity off) a new
             // capture would start with an empty history, so the chat stays on the capture
             // it has
+            // a chat restored after a reload has no live page data: it always re-captures
             if (
                 !unilens.getSessionId() ||
                 !getSettings().refreshView ||
-                !viewMovedSince(prev.meta)
+                !(prev.restored || viewMovedSince(prev.meta))
             )
                 return null;
             onStart?.();
@@ -257,6 +353,7 @@ export function UnilensRoot({
                 // same question point as the capture it refreshes: the same place, not a
                 // new one
                 aliasPlace(id, prevId);
+                save();
                 return { id, cap };
             } catch (err) {
                 console.warn(
@@ -277,6 +374,8 @@ export function UnilensRoot({
             // chat (it glides to the click and keeps its history and chips) instead of
             // replacing it
             const keep = current != null && getSettings().continuity;
+            const reloaded = !keep && reloadMark ? "clicked" : undefined;
+            reloadMark = false;
             if (!keep) {
                 closeChat();
                 chats++;
@@ -297,6 +396,7 @@ export function UnilensRoot({
                         : null,
                     onClose: hideChat,
                     onNewConversation: newConversation,
+                    reloaded,
                     refreshCapture,
                     initialPos: pinnedPos(),
                     pinned: pinnedPos() != null,
@@ -478,7 +578,33 @@ export function UnilensRoot({
             void doCapture(clientX, clientY, clientX, clientY, el);
         });
 
-        return sub.unsubscribe;
+        // zoomed views move by UniLens (a scrolled page, the browser restores itself);
+        // a tab going away is the last chance before a reload or a navigation
+        const offView = onViewChange(save);
+        const onHide = () => {
+            if (document.visibilityState === "hidden")
+                saveSoon(backend, snapshot, true);
+        };
+        document.addEventListener("visibilitychange", onHide);
+        window.addEventListener("pagehide", onHide);
+        // turned off: what was kept is forgotten
+        let keeping =
+            getSettings().restoreAfterReload && getSettings().continuity;
+        const offSettings = onSettingsChange(() => {
+            const now =
+                getSettings().restoreAfterReload && getSettings().continuity;
+            if (keeping && !now) forgetSnapshot(backend);
+            keeping = now;
+        });
+        void restore();
+
+        return () => {
+            sub.unsubscribe();
+            offView();
+            offSettings();
+            document.removeEventListener("visibilitychange", onHide);
+            window.removeEventListener("pagehide", onHide);
+        };
     }, [unilens, container, clickActionEmitter]);
 
     return chat && <ChatPopover key={chat.key} {...chat.props} />;

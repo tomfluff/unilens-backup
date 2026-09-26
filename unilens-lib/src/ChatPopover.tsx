@@ -154,6 +154,10 @@ interface Props {
     /** start over on the capture the chat is on: a new session, an empty log, places
      *  from P1. Resolves false when it could not (the chat stays as it is) */
     onNewConversation?: (on: Current) => Promise<boolean>;
+    /** the conversation goes on from before a page reload: reopened by itself
+     *  ("restored", which leaves the keyboard where it is) or by a click ("clicked").
+     *  A divider marks the reload after the earlier messages */
+    reloaded?: "restored" | "clicked";
     /** pinned position carried over from the previous popover, if the user pinned it */
     initialPos?: { left: number; top: number } | null;
     pinned: boolean;
@@ -289,6 +293,7 @@ export default function ChatPopover({
     capturing,
     hidden = false,
     startedOver = false,
+    reloaded,
 }: Props) {
     ensureChatStyles();
     // the log opens with the click that opened the chat
@@ -471,7 +476,9 @@ export default function ChatPopover({
     useEffect(() => {
         if (startedOver) act("press", T.sNewConversation);
         openedFrom.current = document.activeElement as HTMLElement | null;
-        inputRef.current?.focus({ preventScroll: true });
+        // reopened by itself after a reload: the page keeps the keyboard
+        if (reloaded !== "restored")
+            inputRef.current?.focus({ preventScroll: true });
         return () => {
             aborter.current.abort();
             quiet();
@@ -635,8 +642,25 @@ export default function ChatPopover({
                         });
                     },
                 );
-                // then what this chat has added since it opened (its own click)
-                setMessages((ms) => [...seeded, ...ms]);
+                // the page reloaded here
+                if (reloaded && seeded.length)
+                    seeded.push({
+                        id: `reloaded-${Date.now()}`,
+                        role: "divider",
+                        text: T.reloadedAt(
+                            new Date().toLocaleTimeString(chatLang(), {
+                                hour: "numeric",
+                                minute: "2-digit",
+                            }),
+                        ),
+                    });
+                // then what this chat has added since it opened (its own click), once:
+                // a place the history already entered is not entered again
+                const have = new Set(seeded.map((m) => m.id));
+                setMessages((ms) => [
+                    ...seeded,
+                    ...ms.filter((m) => !have.has(m.id)),
+                ]);
             })
             .catch(() => {});
     }, []);

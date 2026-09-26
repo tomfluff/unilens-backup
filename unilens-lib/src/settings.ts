@@ -28,6 +28,8 @@ export interface Settings {
     regionSelect: boolean;
     highContrast: boolean;
     continuity: boolean;
+    /** after a reload, the conversation on this site comes back (UniLens's own store) */
+    restoreAfterReload: boolean;
     autoRead: boolean;
     voiceInput: boolean;
     /** the mic sends what was heard when the speaker pauses; off, it stays in the field */
@@ -177,6 +179,7 @@ const DEFAULTS: Settings = {
     regionSelect: true,
     highContrast: false,
     continuity: true,
+    restoreAfterReload: true,
     autoRead: false,
     voiceInput: false,
     voiceAutoSend: true,
@@ -273,6 +276,7 @@ export const TOGGLE_LABELS: Record<BoolSettingKey, string> = {
     regionSelect: "Alt+drag region select",
     highContrast: "High contrast",
     continuity: "Conversation continuity",
+    restoreAfterReload: "Keep the conversation across reloads",
     autoRead: "Read replies aloud",
     voiceInput: "Voice input (mic)",
     voiceAutoSend: "Send what I say when I pause",
@@ -566,6 +570,7 @@ export const PANEL_SECTIONS: {
             "streamReplies",
             "dragPopover",
             "continuity",
+            "restoreAfterReload",
             "escapeOrder",
         ],
     },

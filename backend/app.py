@@ -1221,10 +1221,63 @@ def _chat_inventory(cap_dir: Path, data: dict) -> list | None | str:
     return json.loads(inv_path.read_text(encoding="utf-8")) or None
 
 
+# UniLens's own store for each site that embeds the widget (restore after a reload).
+# The widget loads this page in a hidden frame and talks to it with postMessage.
+# IndexedDB here is the backend's origin, not the site's: the site's scripts cannot
+# read it, and browsers partition a third-party frame's storage per top-level site.
+# Keys are prefixed with the embedding page's origin too, so no site reads another's
+# where storage is not partitioned. Only the embedding window is answered.
+STORE_PAGE = """<!doctype html><meta charset="utf-8"><title>UniLens store</title>
+<script>
+const db = new Promise((ok, fail) => {
+  const r = indexedDB.open("unilens", 1);
+  r.onupgradeneeded = () => r.result.createObjectStore("kv");
+  r.onsuccess = () => ok(r.result);
+  r.onerror = () => fail(r.error);
+});
+const run = (mode, fn) => db.then((d) => new Promise((ok, fail) => {
+  const tx = d.transaction("kv", mode);
+  const req = fn(tx.objectStore("kv"));
+  tx.oncomplete = () => ok(req.result);
+  tx.onerror = tx.onabort = () => fail(tx.error);
+}));
+addEventListener("message", (e) => {
+  const m = e.data;
+  if (e.source !== parent || !m || m.unilensStore !== 1 || typeof m.key !== "string")
+    return;
+  const key = e.origin + " " + m.key;
+  const job = m.op === "set" ? run("readwrite", (s) => s.put(m.value, key))
+    : m.op === "del" ? run("readwrite", (s) => s.delete(key))
+    : run("readonly", (s) => s.get(key));
+  const reply = (r) => parent.postMessage({ unilensStore: 1, id: m.id, ...r }, e.origin);
+  job.then((v) => reply({ ok: true, value: m.op === "get" ? v : undefined }),
+           (err) => reply({ ok: false, error: String(err) }));
+});
+parent.postMessage({ unilensStore: 1, ready: true }, "*");
+</script>
+"""
+
+
 def create_app():
     app = Flask(__name__)
     app.config["MAX_CONTENT_LENGTH"] = 25 * 1024 * 1024  # reject absurd payloads
     CORS(app)
+
+    @app.get("/store")
+    def store():
+        """The widget's per-site store (see STORE_PAGE): framed by any page that
+        embeds UniLens, so no frame-ancestors limit; nothing loads from elsewhere."""
+        return Response(
+            STORE_PAGE,
+            mimetype="text/html",
+            headers={
+                "Content-Security-Policy": "default-src 'none'; "
+                "script-src 'unsafe-inline'",
+                "Referrer-Policy": "no-referrer",
+                "X-Content-Type-Options": "nosniff",
+                "Cache-Control": "public, max-age=3600",
+            },
+        )
 
     @app.get("/health")
     def health():

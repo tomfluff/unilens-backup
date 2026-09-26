@@ -70,6 +70,10 @@ const EN = {
         `Where you clicked, P${n}: ${label}. Go there`,
     /** the divider where a hidden chat was shown again */
     shownAgain: (time: string) => `Reopened at ${time}`,
+    reloadedAt: (time: string) => `Page reloaded at ${time}`,
+    sRestored: "Your conversation on this site is back.",
+    sRestoredHidden:
+        "Your conversation on this site is kept. It comes back with your next question.",
     /** above the field while something is selected: what "this" will mean */
     aboutSource: (n: string, label: string) => `About source ${n}: ${label}`,
     aboutAll: (n: number) => `About all ${n} sources`,
@@ -198,6 +202,10 @@ const JA: Strings = {
     placeEntry: (n: number, label: string) =>
         `クリックした場所 P${n}: ${label}。移動する`,
     shownAgain: (time: string) => `${time} に再表示`,
+    reloadedAt: (time: string) => `${time} にページを再読み込み`,
+    sRestored: "このサイトでの会話を元に戻しました。",
+    sRestoredHidden:
+        "このサイトでの会話は残っています。次の質問で表示されます。",
     aboutSource: (n: string, label: string) => `出典 ${n} について: ${label}`,
     aboutAll: (n: number) => `出典 ${n} 件すべてについて`,
     aboutFirst: (k: number, n: number) =>

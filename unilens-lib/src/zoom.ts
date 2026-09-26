@@ -892,6 +892,12 @@ function setZoomPin(
     if (!rafId) rafId = requestAnimationFrame(animate);
 }
 
+/** back to a saved zoom and view (restore after a reload): the view's top-left
+ *  content point goes to the window's top-left */
+export function restoreZoom(target: number, viewX: number, viewY: number) {
+    setZoomPin(target, viewX / target, viewY / target, 0, 0);
+}
+
 /** Zoom to `target`, keeping the content under (anchorX, anchorY) client coords fixed. Defaults to viewport center. */
 export function setZoom(target: number, anchorX?: number, anchorY?: number) {
     const ax = anchorX ?? window.innerWidth / 2;

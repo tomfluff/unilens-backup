@@ -124,6 +124,9 @@ export interface CaptureResult {
     inventory?: WireNode[];
     /** inventory id → live element; never serialized */
     registry?: Map<string, Element>;
+    /** rebuilt after a reload from the backend's meta: no images, inventory or live
+     *  elements, so the next question captures the view again */
+    restored?: boolean;
 }
 
 // ── Mouse trace state ──────────────────────────────────────────────────────
