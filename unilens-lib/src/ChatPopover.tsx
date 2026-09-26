@@ -59,6 +59,7 @@ import {
     sttSupported,
 } from "./speech";
 import {
+    besideTarget,
     canReturn,
     directionOf,
     returnToPreviousView,
@@ -872,21 +873,41 @@ export default function ChatPopover({
             reveal && move !== "never" && el
                 ? revealElement(el, undefined, {
                       always: move === "always",
-                      avoid: rootRef.current?.getBoundingClientRect(),
                   }) === "moved"
                 : false;
         setReturnable(canReturn());
-        // at high zoom there may be no room beside the chat: once the move settles, a
-        // chat still covering the source folds to its header
-        if (short && el && !mini)
+        // once the move settles, a chat covering the source steps aside to the nearer
+        // side (a setting; a pinned chat stays), and at high zoom with no room either
+        // side it folds to its header
+        const shown = picks
+            .map(({ id }) => src.registry.get(id))
+            .filter((e): e is Element => e != null);
+        if (shown.length && !mini)
             setTimeout(() => {
-                const a = el.getBoundingClientRect();
+                const boxes = shown.map((e) => e.getBoundingClientRect());
+                const a = {
+                    left: Math.min(...boxes.map((r) => r.left)),
+                    top: Math.min(...boxes.map((r) => r.top)),
+                    right: Math.max(...boxes.map((r) => r.right)),
+                    bottom: Math.max(...boxes.map((r) => r.bottom)),
+                };
                 const b = rootRef.current?.getBoundingClientRect();
-                if (!b) return;
+                if (!b || dragRef.current) return;
                 const w = Math.min(a.right, b.right) - Math.max(a.left, b.left);
                 const h = Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top);
-                const area = Math.max(1, a.width * a.height);
-                if (w > 0 && h > 0 && (w * h) / area > 0.2) {
+                if (w <= 0 || h <= 0) return;
+                if (getSettings().chatMovesAside && !pinned) {
+                    const left = besideTarget(a, b, window.innerWidth);
+                    if (left != null) {
+                        setPos((p) => ({ ...p, left }));
+                        return;
+                    }
+                }
+                const area = Math.max(
+                    1,
+                    (a.right - a.left) * (a.bottom - a.top),
+                );
+                if (short && (w * h) / area > 0.2) {
                     // folding removes the control that has focus: the keyboard moves
                     // to the unfold button, not to the page
                     const hadFocus = rootRef.current?.contains(

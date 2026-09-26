@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { updateSetting } from "./settings";
 import {
+    besideTarget,
     canReturn,
     directionOf,
     getTargetView,
@@ -97,35 +98,47 @@ describe("revealElement", () => {
         expect(directionOf(el, () => box(100, 200))).toBe("on screen");
     });
 
-    it("moves an element the popover covers above or below it when the page cannot pan sideways", () => {
+    it("centres an element the chat would cover: the chat steps aside instead", () => {
         const scroll = vi.fn();
         window.scrollTo = scroll as unknown as typeof window.scrollTo;
         const el = document.createElement("div");
-        // jsdom viewport 1024x768, no horizontal overflow; popover over the lower half
-        const popover = { left: 300, top: 400, right: 700, bottom: 768 };
-        expect(revealElement(el, () => box(400, 500), { avoid: popover })).toBe(
-            "moved",
-        );
-        // x unchanged (cannot pan sideways); centred in the band above: y 520 -> 200
-        expect(scroll).toHaveBeenLastCalledWith(0, 520 - 200);
+        // jsdom viewport 1024x768: an element below the fold goes to the middle
+        expect(revealElement(el, () => box(400, 1500))).toBe("moved");
+        expect(scroll).toHaveBeenLastCalledWith(450 - 512, 1520 - 384);
     });
 
-    it("uses the band beside the popover when the page can pan sideways", () => {
-        const scroll = vi.fn();
-        window.scrollTo = scroll as unknown as typeof window.scrollTo;
-        Object.defineProperty(document.documentElement, "scrollWidth", {
-            configurable: true,
-            value: 3000,
-        });
-        const el = document.createElement("div");
-        const popover = { left: 600, top: 0, right: 1024, bottom: 768 };
-        revealElement(el, () => box(700, 300), { avoid: popover });
-        // centred in the free left band (0..600): x 750 -> 300
-        expect(scroll).toHaveBeenLastCalledWith(750 - 300, 320 - 384);
-        Object.defineProperty(document.documentElement, "scrollWidth", {
-            configurable: true,
-            value: 0,
-        });
+    it("steps the chat aside to the nearer side that clears the target", () => {
+        // only the right side keeps the chat on screen
+        expect(
+            besideTarget(
+                { left: 400, right: 600 },
+                { left: 450, width: 400 },
+                1280,
+            ),
+        ).toBe(616);
+        // both fit: the nearer one wins
+        expect(
+            besideTarget(
+                { left: 600, right: 700 },
+                { left: 550, width: 300 },
+                1280,
+            ),
+        ).toBe(716);
+        expect(
+            besideTarget(
+                { left: 600, right: 700 },
+                { left: 350, width: 300 },
+                1280,
+            ),
+        ).toBe(284);
+        // a target wider than the room on either side: nowhere to go
+        expect(
+            besideTarget(
+                { left: 50, right: 1230 },
+                { left: 300, width: 400 },
+                1280,
+            ),
+        ).toBeNull();
     });
 
     it("refuses an element with no box", () => {
