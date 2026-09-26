@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import type { CaptureResult } from "./capture";
 import { chatLang, chatText, speechLang } from "./chatI18n";
 import { ensureChatStyles } from "./chatStyles";
@@ -105,6 +105,15 @@ const placeEntry = (captureId: string): Msg[] =>
 
 /** which reply's evidence is outlined: all of it, or one item of it */
 type Active = { msgId: string; index: number | "all" } | null;
+
+/** what the user has selected on the page as they ask: one source, all of an
+ *  answer's sources, or a place's clicked element */
+interface Selection {
+    kind: "source" | "all" | "place";
+    /** the source's or place's number, or how many sources for "all" */
+    n: number;
+    items: { id?: string; label: string }[];
+}
 
 function cited(m: Msg): Cited | null {
     const src = m.cite;
@@ -400,6 +409,7 @@ export default function ChatPopover({
     // closes, so keyboard and screen-reader users are never left on the page behind.
     // Speech, the mic and the audio context stop with it.
     const inputRef = useRef<HTMLInputElement>(null);
+    const aboutId = useId();
     const rootRef = useRef<HTMLDivElement>(null);
     /** the header's fold button, where the keyboard goes when the chat folds itself */
     const foldRef = useRef<HTMLButtonElement>(null);
@@ -769,6 +779,37 @@ export default function ChatPopover({
     const [returnable, setReturnable] = useState(false);
     /** the place whose clicked element is outlined, so its entry shows pressed */
     const [placeOn, setPlaceOn] = useState<Place | null>(null);
+    /**
+     * What "this" means right now: the sources outlined from an answer, or the
+     * element of an outlined place. It goes with the question, so the model answers
+     * about it rather than about the click or the whole view.
+     */
+    function selectionNow(): Selection | null {
+        if (active) {
+            const m = messages.find((x) => x.id === active.msgId);
+            const c = m && cited(m);
+            const src = m?.cite;
+            if (src && c?.ids.length) {
+                const ids =
+                    active.index === "all" ? c.ids : [c.ids[active.index]];
+                return {
+                    kind: active.index === "all" ? "all" : "source",
+                    n: active.index === "all" ? ids.length : active.index + 1,
+                    items: ids.filter(Boolean).map((id) => ({
+                        id,
+                        label: labelOfWire(id, src.inventory),
+                    })),
+                };
+            }
+        }
+        if (placeOn)
+            return {
+                kind: "place",
+                n: placeNumber(placeOn),
+                items: [{ label: placeOn.label }],
+            };
+        return null;
+    }
     // Escape (or a new capture) clears the outline: the pressed buttons must follow
     useEffect(
         () =>
@@ -1027,6 +1068,7 @@ export default function ChatPopover({
         token: number,
         ask: SentAsk,
         on: Current,
+        sel: Selection | null,
     ) {
         const cite = citeSource(on);
         const res = await fetch(`${backend}/api/chat/stream`, {
@@ -1037,6 +1079,7 @@ export default function ChatPopover({
                 message: text,
                 session_id: sessionId,
                 cite: getSettings().citeEvidence,
+                selection: sel ? { items: sel.items } : undefined,
             }),
         });
         if (!res.ok || !res.body) {
@@ -1119,6 +1162,7 @@ export default function ChatPopover({
         token: number,
         ask: SentAsk,
         on: Current,
+        sel: Selection | null,
     ) {
         const cite = citeSource(on);
         const res = await fetch(`${backend}/api/chat`, {
@@ -1129,6 +1173,7 @@ export default function ChatPopover({
                 message: text,
                 session_id: sessionId,
                 cite: getSettings().citeEvidence,
+                selection: sel ? { items: sel.items } : undefined,
             }),
         });
         const data = await res.json();
@@ -1154,6 +1199,9 @@ export default function ChatPopover({
     /** queuedId: a question that waited for a new place's capture, already in the log */
     async function sendText(text: string, queuedId?: string) {
         if (!text || busy) return;
+        // what "this" meant as the user sent it: a view refresh or a new click later
+        // must not change it
+        const sel = selectionNow();
         if (queuedId)
             // it waited for the new place: it belongs to the place it now goes to
             setMessages((m) =>
@@ -1205,8 +1253,8 @@ export default function ChatPopover({
                 cite: getSettings().citeEvidence,
             });
             if (settings.streamReplies)
-                await sendStreaming(text, token, ask, on);
-            else await sendPlain(text, token, ask, on);
+                await sendStreaming(text, token, ask, on, sel);
+            else await sendPlain(text, token, ask, on, sel);
         } catch (err) {
             if (ask) ask.error = String(err);
             act("error", T.sError);
@@ -1503,6 +1551,8 @@ export default function ChatPopover({
     // the status line only on the folded chat: open, the chat shows each action on the
     // control itself, and the live region speaks it
     const statusShown = mini && (Boolean(status) || speaking || listening);
+    /** what the next question is about, shown above the field (and read with it) */
+    const about = selectionNow();
 
     return (
         <div
@@ -1629,11 +1679,38 @@ export default function ChatPopover({
                     ))}
                 </div>
             )}
+            {!mini && about && (
+                <div className="ulc-about" id={aboutId}>
+                    <span>
+                        {about.kind === "place"
+                            ? T.aboutPlace(about.n, about.items[0].label)
+                            : about.kind === "all"
+                              ? T.aboutAll(about.n)
+                              : T.aboutSource(
+                                    chipText(about.n),
+                                    about.items[0]?.label ?? "",
+                                )}
+                    </span>
+                    <button
+                        type="button"
+                        className="ulc-c"
+                        aria-label={T.aboutDrop}
+                        title={T.aboutDrop}
+                        onClick={() => {
+                            clearHighlights();
+                            act("clear", T.sCleared);
+                        }}
+                    >
+                        <CloseIcon />
+                    </button>
+                </div>
+            )}
             {!mini && (
                 <div className="ulc-in">
                     {voiceOK && voiceButton("ulc-ib")}
                     <input
                         ref={inputRef}
+                        aria-describedby={about ? aboutId : undefined}
                         value={input}
                         onChange={(e) => setInput(e.target.value)}
                         // Enter that confirms an IME composition (Japanese, Chinese, Korean)
