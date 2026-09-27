@@ -18,6 +18,12 @@ The builder asked to see which words of an answer each source supports: the fewe
 - **Words are cut where a reader would cut them.** `Intl.Segmenter` finds word ends, so Japanese works, and the last word stays joined to its chip.
 - **The braces never show or get read aloud**, even while an answer streams.
 
+### From the second round of testing (2026-09-27)
+
+- **Numbers sit after the words they support.** `gpt-5.6-terra` put most of its numbers after the sentence's full stop, all at the end of a paragraph (2 of 10 inline, 2 phrases marked). The rules now say where a marker goes, with a wrong and a right example, and that every marker gets its words. On the same two questions, twice each: 11 of 11 inline and 9 phrases marked; Gemini stays inline (16 of 16).
+- **No underline for numbers gathered after a sentence.** The fallback underlined the last four words, as if every gathered source supported them.
+- **The underline and the number are separate.** The line stops at the last word and the number follows a little apart (the builder's choice): a line run into a round number met it at a step that shifted with the font.
+
 ## Not in this change
 
 - Underlines for answers made before the setting was turned on.

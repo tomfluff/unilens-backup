@@ -65,16 +65,15 @@ ${R} .ulc-where b { flex: none; font-variant-numeric: tabular-nums; }
 ${R} .ulc-where span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 ${R} .ulc-ctl { display: flex; align-items: center; gap: .35em; min-width: 0; }
 /* Associate response text: the words a source supports, underlined in the chip's
-   color (a bottom border, so the number can sit exactly on it), the line running on
-   into the number, which rests on it; the last word and the number never part */
+   color. The line stops at the last word and the number follows a little apart, the
+   two related by place, not joined (Yotam, 2026-09-27: a line run into a round number
+   meets it at a step that shifts with the font); the last word and the number never part */
 ${R} .unilens-cite-text { padding-bottom: .06em; border-bottom: max(2px, .12em) solid var(--cite-line, currentColor); cursor: pointer; }
 ${R}${HC} .unilens-cite-text { border-bottom-width: max(3px, .16em); }
 /* the selected source: its words on the page outline's color (the number's ring says the rest) */
 ${R} .unilens-cite-text[aria-current="true"] { background: color-mix(in srgb, var(--ul-hl, #ffef26) 60%, transparent); box-decoration-break: clone; -webkit-box-decoration-break: clone; }
 ${R} .unilens-cite-end { white-space: nowrap; }
-${R} .unilens-cite-text + .unilens-cite { position: relative; top: var(--cite-drop, -.09em); margin-inline-start: .3em; }
-${R} .unilens-cite-text + .unilens-cite::before { content: ""; position: absolute; inset-inline-end: 50%; bottom: 0; width: calc(50% + .3em + 1px); border-bottom: max(2px, .12em) solid var(--cite-line, currentColor); pointer-events: none; }
-${R}${HC} .unilens-cite-text + .unilens-cite::before { border-bottom-width: max(3px, .16em); }
+${R} .unilens-cite-text + .unilens-cite { margin-inline-start: .3em; }
 ${R} .ulc-c { display: inline-flex; align-items: center; justify-content: center; gap: .35em; flex: none; padding: 0; font-size: 1em; white-space: nowrap; }
 ${R} .ulc-c span { overflow: hidden; text-overflow: ellipsis; }
 ${R} .ulc-quick { display: grid; grid-template-columns: repeat(3, 1fr); gap: .35em; flex: none; }

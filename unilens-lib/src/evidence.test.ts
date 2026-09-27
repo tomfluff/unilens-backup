@@ -209,6 +209,32 @@ describe("renderCited with phrases (Associate response text)", () => {
         return out;
     };
 
+    it("underlines nothing for numbers gathered after a sentence (bug 5)", () => {
+        const on = (text: string) =>
+            spans(
+                renderCited(
+                    text,
+                    known,
+                    label,
+                    false,
+                    undefined,
+                    undefined,
+                    true,
+                ).html,
+            );
+        // several numbers after the full stop: no words can be told apart
+        expect(
+            on(
+                "You must hold 100 shares for one year or longer. [[n12]] [[n13]]",
+            ),
+        ).toEqual([]);
+        expect(on("100株以上を1年以上保有。[[n12]][[n13]]")).toEqual([]);
+        // one number right after its words still gets the last words
+        expect(on("You must hold 100 shares for one year [[n12]].")).toEqual([
+            ["n12", "shares for one year"],
+        ]);
+    });
+
     it("underlines the phrase the model marked, right before its chip", () => {
         const r = renderCited(
             "Shareholders get {{¥1,000 of PayPay Money Lite}}[[n12]], and more.",

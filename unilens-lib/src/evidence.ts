@@ -97,7 +97,7 @@ export function renderCited(
     if (phrases) t = markFallbackPhrases(t);
     const html = mdLite(t)
         .replace(
-            // the space before the number goes: the underline runs straight into it
+            // the space before the number goes: the number keeps its own gap (chatStyles)
             /\uE0FE([^\uE0FE\uE0FD]*)\uE0FD\s?(?=\uE0FF(\d+)\uE0FF)/g,
             (_, words: string, n: string) =>
                 phraseHtml(words, ids[Number(n) - 1]),
@@ -151,7 +151,9 @@ function phraseHtml(words: string, id: string): string {
  * A citation the model gave no phrase: underline the last words before it (at most
  * four, never past the clause's punctuation or the previous citation), so every
  * citation has words to point at. Words are found by the browser's word segmenter,
- * which also splits Japanese.
+ * which also splits Japanese. Several numbers gathered after a sentence's end get no
+ * underline: which words each one supports cannot be told, and the last four words
+ * would claim all of them (bug 5 of the 2026-09-27 report).
  */
 function markFallbackPhrases(t: string, max = 4): string {
     let out = "";
@@ -159,7 +161,10 @@ function markFallbackPhrases(t: string, max = 4): string {
     for (const m of t.matchAll(SLOT)) {
         const at = m.index ?? 0;
         let before = t.slice(from, at);
-        if (!before.trimEnd().endsWith(CLOSE)) {
+        const gathered =
+            /^\s?\uE0FF\d+\uE0FF/.test(t.slice(at + m[0].length)) &&
+            /[.!?。！？]["'」』）)]*\s*$/.test(before);
+        if (!gathered && !before.trimEnd().endsWith(CLOSE)) {
             const trimmed = before.replace(/\s+$/, "");
             // the clause the citation closes: back to its punctuation, or a phrase end
             let start = 0;
