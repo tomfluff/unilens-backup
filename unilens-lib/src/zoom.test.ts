@@ -1,10 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { updateSetting } from "./settings";
 import {
+    assistantZoom,
     besideTarget,
     canReturn,
     directionOf,
     getTargetView,
+    getTargetZoom,
     getView,
     isOwnUI,
     onViewChange,
@@ -359,5 +361,75 @@ describe("page moves: eased, cancellable, and Back as a bookmark", () => {
         expect(pos.y).toBe(3000 + 20 - 384); // Back glides as well
         vi.advanceTimersByTime(400);
         expect(pos.y).toBe(0);
+    });
+});
+
+describe("assistantZoom (R1 of the 2026-09-27 report)", () => {
+    const sized = (width: number, height: number) => {
+        const el = document.createElement("div");
+        document.body.appendChild(el);
+        el.getBoundingClientRect = () =>
+            ({ left: 100, top: 100, width, height }) as DOMRect;
+        return el;
+    };
+    beforeEach(() => {
+        updateSetting("smoothZoom", false);
+        window.scrollTo = vi.fn() as unknown as typeof window.scrollTo;
+        assistantZoom("reset");
+        while (returnToPreviousView());
+    });
+    afterEach(() => {
+        assistantZoom("reset");
+    });
+
+    it("fits an element to the screen, as smart zoom does, at most 5x", () => {
+        // jsdom's window is 1024 x 768: a small link would fit at 9.8x
+        expect(assistantZoom(sized(100, 20))).toBe(5);
+        expect(getTargetZoom()).toBe(5);
+        assistantZoom("reset");
+        // a wide block fits its width: (1024 - 48) / 900
+        expect(assistantZoom(sized(900, 300))).toBeCloseTo(976 / 900, 3);
+    });
+
+    it("steps in and out as Ctrl + and Ctrl - do, never below 100%", () => {
+        expect(assistantZoom("in")).toBeCloseTo(1.25, 5);
+        expect(assistantZoom("in")).toBeCloseTo(1.5625, 5);
+        expect(assistantZoom("out")).toBeCloseTo(1.25, 5);
+        expect(assistantZoom("reset")).toBe(1);
+        expect(assistantZoom("out")).toBe(1);
+    });
+
+    it("a box-less wrapper is fitted by its children; nothing to fit changes nothing", () => {
+        const wrap = document.createElement("div");
+        document.body.appendChild(wrap);
+        wrap.getBoundingClientRect = () =>
+            ({ left: 0, top: 0, width: 0, height: 0 }) as DOMRect;
+        // no child with a box: the zoom stays, and no Back is left
+        expect(assistantZoom(wrap)).toBe(1);
+        expect(canReturn()).toBe(false);
+        wrap.appendChild(sized(100, 20));
+        expect(assistantZoom(wrap)).toBe(5);
+    });
+
+    it("a series of zooms is one run: Back returns to before the first", () => {
+        assistantZoom(sized(100, 20));
+        assistantZoom("out");
+        expect(getTargetZoom()).toBeCloseTo(4, 5);
+        expect(returnToPreviousView()).toBe(true);
+        expect(getTargetZoom()).toBe(1);
+    });
+
+    it("a zoom that changes nothing leaves no Back", () => {
+        expect(assistantZoom("reset")).toBe(1);
+        expect(assistantZoom("out")).toBe(1);
+        expect(canReturn()).toBe(false);
+    });
+
+    it("Back returns to where the user was, at the zoom they had", () => {
+        expect(getTargetZoom()).toBe(1);
+        assistantZoom(sized(100, 20));
+        expect(getTargetZoom()).toBe(5);
+        expect(returnToPreviousView()).toBe(true);
+        expect(getTargetZoom()).toBe(1);
     });
 });

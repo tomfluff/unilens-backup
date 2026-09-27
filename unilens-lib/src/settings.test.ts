@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
     type BoolSettingKey,
+    CATALOGUE_KEYS,
     clampSetting,
     ENUM_CHOICES,
     exportSettings,
@@ -52,6 +53,7 @@ describe("settings tables", () => {
             ...Object.keys(TOGGLE_LABELS),
             ...Object.keys(ENUM_CHOICES),
             ...Object.keys(NUMBER_KNOBS),
+            ...CATALOGUE_KEYS,
             "hlColor",
         ];
         const placed = PANEL_SECTIONS.flatMap((g) => g.keys as string[]);

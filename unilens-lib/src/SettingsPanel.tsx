@@ -6,6 +6,12 @@ import { useEffect, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import styled from "styled-components";
 import {
+    type AiCatalogue,
+    aiCatalogue,
+    liveProvider,
+    setAiBackend,
+} from "./ai";
+import {
     type BoolSettingKey,
     clampSetting,
     ENUM_CHOICES,
@@ -382,6 +388,159 @@ function ZoomControls() {
 }
 
 /** one control, drawn by what kind of value the setting holds */
+/**
+ * A choice whose options come from the backend's catalogue: the model (for the
+ * provider chosen, or the backend's default one) and the read-aloud voice.
+ */
+function CatalogueRow({
+    setting,
+    settings,
+}: {
+    setting:
+        | "aiModel"
+        | "ttsModel"
+        | "ttsVoice"
+        | "aiReasoning"
+        | "sttModel"
+        | "liveModel"
+        | "liveVoice";
+    settings: Settings;
+}) {
+    const [cat, setCat] = useState<AiCatalogue | null | undefined>(undefined);
+    useEffect(() => {
+        let live = true;
+        aiCatalogue().then((c) => live && setCat(c));
+        return () => {
+            live = false;
+        };
+    }, []);
+    const provider =
+        settings.aiProvider === "auto" ? cat?.default : settings.aiProvider;
+    const entry = provider ? cat?.providers[provider] : undefined;
+    // the reasoning row: the levels of the model chosen, or of the provider's default
+    const modelId = settings.aiModel || entry?.default;
+    const levels = entry?.models.find((m) => m.id === modelId)?.reasoning ?? [];
+    if (setting === "aiReasoning")
+        return (
+            <SettingLabel>
+                Reasoning
+                <SettingsSelect
+                    value={
+                        levels.includes(settings.aiReasoning)
+                            ? settings.aiReasoning
+                            : "default"
+                    }
+                    disabled={!cat || !levels.length}
+                    onChange={(e) =>
+                        updateSetting(
+                            "aiReasoning",
+                            clampSetting("aiReasoning", e.currentTarget.value),
+                        )
+                    }
+                >
+                    <option value="default">
+                        {cat && !levels.length
+                            ? "Not for this model"
+                            : "Model default"}
+                    </option>
+                    {levels.map((l) => (
+                        <option key={l} value={l}>
+                            {l[0].toUpperCase() + l.slice(1)}
+                        </option>
+                    ))}
+                </SettingsSelect>
+            </SettingLabel>
+        );
+    // the server's speech models: the engine's provider, else the one the server
+    // transcribes with by default (not the first listed: the keys arrive sorted)
+    const sttProvider =
+        settings.sttEngine === "openai" || settings.sttEngine === "gemini"
+            ? settings.sttEngine
+            : (cat?.sttDefault ??
+              Object.keys(cat?.stt ?? {}).find((p) => cat?.stt[p]?.length));
+    const sttOptions = (sttProvider && cat?.stt[sttProvider]) || [];
+    // read aloud: its provider's models or voices (older backends: OpenAI's voices)
+    const ttsProvider =
+        settings.ttsProvider !== "auto"
+            ? settings.ttsProvider
+            : (cat?.ttsDefault ?? undefined);
+    const tts = ttsProvider ? cat?.tts?.[ttsProvider] : undefined;
+    const ttsOptions =
+        (setting === "ttsModel"
+            ? tts?.models
+            : (tts?.voices ?? (cat?.tts ? [] : cat?.voices))) ?? [];
+    // Live: its provider's models or voices
+    const live = cat ? cat.live?.[liveProvider(cat) ?? ""] : undefined;
+    const liveOptions =
+        (setting === "liveModel" ? live?.models : live?.voices) ?? [];
+    const options =
+        setting === "aiModel"
+            ? (entry?.models ?? []).map((m) => m.id)
+            : setting === "sttModel"
+              ? sttOptions
+              : setting === "liveModel" || setting === "liveVoice"
+                ? liveOptions
+                : ttsOptions;
+    const fallback =
+        setting === "aiModel"
+            ? `Provider default${entry ? ` (${entry.default})` : ""}`
+            : setting === "sttModel"
+              ? `Default${sttOptions[0] ? ` (${sttOptions[0]})` : ""}`
+              : setting === "liveModel" || setting === "liveVoice"
+                ? cat && !liveOptions.length
+                    ? "Live unavailable (no key)"
+                    : `Default${liveOptions[0] ? ` (${liveOptions[0]})` : ""}`
+                : // an older backend lists no read-aloud providers: its default
+                  cat?.tts && !ttsOptions.length
+                  ? "Read aloud unavailable (no key)"
+                  : `Default${
+                        setting === "ttsModel"
+                            ? ttsOptions[0]
+                                ? ` (${ttsOptions[0]})`
+                                : ""
+                            : ttsProvider === "openai" || !cat?.tts
+                              ? ` (${cat?.defaultVoice ?? "alloy"})`
+                              : ttsOptions[0]
+                                ? ` (${ttsOptions[0]})`
+                                : ""
+                    }`;
+    const value = settings[setting];
+    return (
+        <SettingLabel>
+            {setting === "aiModel"
+                ? "Model"
+                : setting === "sttModel"
+                  ? "Speech-to-text model (server)"
+                  : setting === "liveModel"
+                    ? "Live model"
+                    : setting === "liveVoice"
+                      ? "Live voice"
+                      : setting === "ttsModel"
+                        ? "Read-aloud model"
+                        : "Read-aloud voice"}
+            <SettingsSelect
+                value={options.includes(value) ? value : ""}
+                disabled={!cat}
+                onChange={(e) =>
+                    updateSetting(
+                        setting,
+                        clampSetting(setting, e.currentTarget.value),
+                    )
+                }
+            >
+                <option value="">
+                    {cat === null ? "Backend unreachable" : fallback}
+                </option>
+                {options.map((o) => (
+                    <option key={o} value={o}>
+                        {o}
+                    </option>
+                ))}
+            </SettingsSelect>
+        </SettingLabel>
+    );
+}
+
 function Row({
     setting,
     settings,
@@ -404,6 +563,16 @@ function Row({
             </SettingLabel>
         );
     }
+    if (
+        setting === "aiModel" ||
+        setting === "ttsModel" ||
+        setting === "ttsVoice" ||
+        setting === "liveModel" ||
+        setting === "liveVoice" ||
+        setting === "aiReasoning" ||
+        setting === "sttModel"
+    )
+        return <CatalogueRow setting={setting} settings={settings} />;
     if (Object.hasOwn(ENUM_CHOICES, setting)) {
         const key = setting as EnumKey;
         return (
@@ -411,12 +580,24 @@ function Row({
                 {ENUM_CHOICES[key].label}
                 <SettingsSelect
                     value={String(clampSetting(key, settings[key]))}
-                    onChange={(e) =>
+                    onChange={(e) => {
                         updateSetting(
                             key,
                             clampSetting(key, e.currentTarget.value),
-                        )
-                    }
+                        );
+                        // another provider has other models: back to its default
+                        if (key === "aiProvider") updateSetting("aiModel", "");
+                        if (key === "sttEngine") updateSetting("sttModel", "");
+                        if (key === "ttsProvider") {
+                            updateSetting("ttsModel", "");
+                            updateSetting("ttsVoice", "");
+                        }
+                        // another provider has other models and voices
+                        if (key === "liveProvider" || key === "aiProvider") {
+                            updateSetting("liveModel", "");
+                            updateSetting("liveVoice", "");
+                        }
+                    }}
                 >
                     {Object.entries(ENUM_CHOICES[key].choices).map(
                         ([value, label]) => (
@@ -574,7 +755,8 @@ function SettingsLauncher() {
     );
 }
 
-export function initSettings() {
+export function initSettings(backend = "") {
+    setAiBackend(backend);
     const container = document.createElement("div");
     container.id = "unilens-settings-root";
     // documentElement: outside the zoom-transformed body, excluded from captures

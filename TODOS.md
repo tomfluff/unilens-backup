@@ -2,26 +2,17 @@
 
 ## unilens-lib
 
-### Restore the chat after a page reload, from a UniLens store per site
+### A zoomed capture takes about 2.7 times as long
 
-**What:** Keep a local history of the user's interaction state, and after a reload reopen the conversation they had on that site. Save interaction data only, never screenshots:
-- where the user clicked, and the elements clicked (their places, P1, P2…);
-- the zoom level and the view;
-- the messages, and the capture and session ids that point to the rest on the backend.
+**What:** At 200% UniLens zoom, a capture of the fully expanded SoftBank page takes about 6.3 s against 2.3 s at 100%, in every html2canvas build. Without CJK fonts it is about 10 times as long. Find where the time goes (the frozen page's transform, the clone, fixed-element pins) and cut it.
 
-Keep it in UniLens's own store, not in the site's storage, and keep each site's store separate. This will be a separate PR from the chat work.
+**Why:** Found by the html2canvas-pro benchmark (2026-09-27). Low-vision users capture while zoomed, so they wait the longest.
 
-**Why:** PR #13 (a collaborator's refactor, 2026-09-24) restored chats from the host page's `localStorage`. It saved each window's whole capture, including the full-page and close-up screenshots as base64: about 830 KB per click. The browser's quota ran out after about five clicks and saving stopped silently, and the screenshots sat where the site's own scripts can read them. The builder wants the idea, with interaction data only (decision 2026-09-24): the screenshots already live on the backend under their capture id.
+**Context:** Benchmark and method: `.local/research/2026-09-27-html2canvas-pro-benchmark.md`. The capture renders the page unzoomed (`capture.ts`), so the zoom should not cost this much.
 
-**Context:** Still to think through; nothing is decided beyond "own store, per domain, detached from the site". Two options:
-- **IndexedDB from the embedded script.** A UniLens-named database is separate from the site's keys, but it is still the site's origin: the site's scripts can read it, and "clear site data" wipes it.
-- **A small hidden iframe served from the UniLens backend's origin, talked to with `postMessage`.** This is truly detached. Browsers partition a third-party iframe's storage by top-level site, which gives the per-domain split for free.
-
-Either way, no images in the browser. The backend's session history (`/api/session/<id>`) stays the source of truth for what the model saw.
-
-**Effort:** M
-**Priority:** P3
-**Depends on:** our chat stack landing on main (see the PR #13 decision)
+**Effort:** S
+**Priority:** P2
+**Depends on:** None
 
 ### Follow-ups from the review of #14–#16
 
@@ -56,24 +47,37 @@ Either way, no images in the browser. The backend's session history (`/api/sessi
 **Priority:** P2
 **Depends on:** None
 
-### Live voice conversation
+### Live talk: what the first version leaves out
 
-**What:** Turn the voice message into a live exchange: speak, hear the answer read back, and speak again without touching the chat. Barge-in stops the reading when the user starts talking.
+**What:** The chat's Live button (a spoken conversation over the OpenAI Realtime or Gemini Live API, `live.ts`) ships with open-mic turn-taking and the options that were clear. Still to do:
+- push-to-talk (hold a key or the button), for users whose screen reader also speaks, or who think aloud;
+- "wait until I say go" (no automatic reply);
+- a language choice beyond the chat's language, and a headset/laptop mic setting (OpenAI noise reduction, Gemini sensitivity);
+- Gemini mishears a question when the page reaches it mid-question (a click, then a question within about 1.7 s; or a scroll, then a question): the audio held while the page is captured arrives all at once after the page, and Gemini hears it wrong ("What about Open Show?"). Sending the held audio at twice its pace made it worse. Option to try: send the page through Gemini's streaming input (`realtimeInput`), beside the audio, instead of `clientContent`, so no audio is held;
+- Gemini's transcripts carry no turn id: words that arrive after the next turn has started go to that turn, and the history keeps a turn's words as they were when it completed;
+- test Gemini on laptop speakers: its audio plays through Web Audio, which the browser's echo canceller may not hear, so it could interrupt itself;
+- test a talk past 10 minutes (Gemini resumes on `goAway`) and near OpenAI's 60-minute limit;
+- host pages whose CSP blocks `wss://generativelanguage.googleapis.com` (Gemini) or the microphone (`Permissions-Policy`).
 
-**Why:** The builder's direction (2026-09-24): "in the future, what we want to do is enable sort of like live interactions." The voice message button is the first step.
+**Why:** The builder asked for live interactions (2026-09-24) and approved a first version with the undecided choices as settings (2026-09-27).
 
-**Context:**
-- Today the voice message records with the browser's SpeechRecognition, which ends on a pause. It sends the transcript as a typed message (`toggleVoiceMessage` in `unilens-lib/src/ChatPopover.tsx`).
-- Reading aloud uses `/api/tts` with a native fallback, and has play, pause and stop (`speech.ts`).
-- Next steps:
-  - a conversation mode that reads each answer aloud and listens again after it;
-  - a way to interrupt, spoken or a key;
-  - the earcons as turn-taking cues;
-  - possibly a streaming speech API instead of browser STT, for Japanese quality and interruption.
+**Context:** Research brief: `.local/research/2026-09-27-realtime-apis.md` (parts E and F list the options and the untested points). Backend: `/api/live/<provider>` and `/api/live/log` in `backend/app.py`.
 
 **Effort:** M
 **Priority:** P2
 **Depends on:** None
+
+### The assistant operates the accessibility panel
+
+**What:** Let the assistant (chat and Live) use the accessibility panel's features on the user's request, as it now zooms: text size, line spacing, colours and contrast, invert.
+
+**Why:** The builder, 2026-09-27: the two widgets are to be brought together, and then the assistant could operate the accessibility features too. The zoom (`assistantZoom`, a `zoom` tool and a `[[zoom:…]]` marker) is the first of these actions.
+
+**Context:** The panel lives in `accessibility-lib/`; its settings are applied through the `--unilens-a11y-*` variables and `data-unilens-a11y-*` attributes on `<html>`. An action would follow the zoom's pattern: a tool for Live, a marker for the chat, a setting that allows it, and Back to undo.
+
+**Effort:** M
+**Priority:** P3
+**Depends on:** bringing the two widgets together
 
 ### A "New conversation" button
 

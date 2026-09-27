@@ -1,9 +1,12 @@
 /**
  * UniLens capture core.
  * Tracks mouse trace, captures a full-page screenshot with html2canvas,
- * overlays viewport rect + mouse trace + click crosshair, returns PNG + metadata.
+ * marks the view, the mouse trail and the click on it, returns PNG + metadata.
  */
-import html2canvas from "html2canvas";
+// html2canvas-pro: parses modern colors (color-mix, color(), oklch) that make html2canvas
+// 1.4.1 throw. Pinned to 2.0.4: 2.1.0+ loses block ::after boxes, which shifts the render
+// ~30px up and puts the click marker off its element.
+import html2canvas from "html2canvas-pro";
 import {
     buildInventory,
     clip,
@@ -58,6 +61,8 @@ export interface CaptureMeta {
     /** a re-capture because the user moved the view mid-conversation: same question
      *  point (clickX/Y, element), new view */
     viewRefresh?: boolean;
+    /** the colour the pointer's trail is drawn in on the full page */
+    trailColor?: "orange" | "lime";
 }
 
 export interface ElementContext {
@@ -124,6 +129,9 @@ export interface CaptureResult {
     inventory?: WireNode[];
     /** inventory id → live element; never serialized */
     registry?: Map<string, Element>;
+    /** rebuilt after a reload from the backend's meta: no images, inventory or live
+     *  elements, so the next question captures the view again */
+    restored?: boolean;
 }
 
 // ── Mouse trace state ──────────────────────────────────────────────────────
@@ -210,7 +218,7 @@ export function guardFontProbe(doc: Document = document): () => void {
  * ponytail: fixed 25% threshold; make it a knob if sessions show refreshes too eager or late.
  */
 const VIEW_MOVE = 0.25;
-export function viewMovedSince(meta: CaptureMeta): boolean {
+export function viewMovedSince(meta: ViewState): boolean {
     const vvp = window.visualViewport;
     const { x, y } = getView();
     const z = getZoom().scale;
@@ -220,6 +228,47 @@ export function viewMovedSince(meta: CaptureMeta): boolean {
         Math.abs(pinch - meta.pinchZoom) > 0.05 ||
         Math.abs(x - meta.scrollX) > meta.viewportW * VIEW_MOVE ||
         Math.abs(y - meta.scrollY) > meta.viewportH * VIEW_MOVE
+    );
+}
+
+/** the page's elements as they are now, against the real viewport */
+function inventoryNow(): Inventory {
+    return buildInventory(
+        document.body,
+        inventoryOptionsFrom(getSettings(), {
+            w: window.visualViewport?.width ?? window.innerWidth,
+            h: window.visualViewport?.height ?? window.innerHeight,
+        }),
+        undefined,
+        clientToContent,
+    );
+}
+
+/** a capture's elements in order, by what and which they are, not where: the
+ *  unnamed containers around them regroup as the view scrolls, and the boxes move */
+const elementsOf = (wire: WireNode[], registry?: Map<string, Element>) =>
+    wire
+        .filter((n) => n.r !== "container" || n.n)
+        .map((n) => ({
+            el: registry?.get(n.i),
+            key: `${n.r}\u0000${n.n}\u0000${n.s ?? ""}`,
+        }));
+
+/**
+ * Have the page's elements changed since this capture: a click opened, closed or
+ * replaced something (even with one of the same name), or a state such as expanded
+ * changed. About 7 ms on the SoftBank mirror. False without an inventory to compare.
+ */
+export function pageChangedSince(
+    cap: Pick<CaptureResult, "inventory" | "registry">,
+): boolean {
+    if (!cap.inventory?.length || !getSettings().inventory) return false;
+    const now = inventoryNow();
+    const was = elementsOf(cap.inventory, cap.registry);
+    const is = elementsOf(now.wire, now.registry);
+    return (
+        was.length !== is.length ||
+        was.some((w, i) => w.key !== is[i].key || (w.el && w.el !== is[i].el))
     );
 }
 
@@ -368,6 +417,212 @@ async function preprocessImages(): Promise<ImageFix[]> {
 }
 
 // ── Core capture ───────────────────────────────────────────────────────────
+/** the part of the page the user sees, in content space (zoom- and pinch-aware) */
+function visibleRect() {
+    const vvp = window.visualViewport;
+    const { x, y } = getView();
+    const { scale: z, layoutW, layoutH } = getZoom();
+    return {
+        x: Math.max(0, Math.round((x + (vvp?.offsetLeft ?? 0)) / z)),
+        y: Math.max(0, Math.round((y + (vvp?.offsetTop ?? 0)) / z)),
+        w: Math.min(layoutW, Math.round((vvp?.width ?? window.innerWidth) / z)),
+        h: Math.min(
+            layoutH,
+            Math.round((vvp?.height ?? window.innerHeight) / z),
+        ),
+    };
+}
+
+/**
+ * The page rendered by html2canvas as content (the zoom transform stripped, so its
+ * pixels are content px times `scale`), whole or only `area`. html2canvas copies the
+ * whole page either way (about 1 s on the SoftBank mirror), so an area saves little.
+ */
+async function renderContent(
+    scale: number,
+    area?: { x: number; y: number; w: number; h: number },
+): Promise<{ canvas: HTMLCanvasElement; tPre: number }> {
+    const { layoutW: pageW, layoutH: pageH } = getZoom();
+    // Read-only: the correction is applied to the clone, never to the live page.
+    // Swapping elements here reflows the real layout mid-capture (measured at +8800px
+    // on a page with an open accordion), which jumps the user's view and leaves the
+    // click marker pointing at whatever moved into its place.
+    const imageFixes = await preprocessImages();
+    imageFixes.forEach((f, i) => {
+        f.el.dataset.unilensImg = String(i);
+    });
+    const tPre = performance.now();
+    const stripZoom = (doc: Document) => {
+        doc.body.style.transform = ""; // render at zoom 1 — coords are content space
+        doc.documentElement.style.height = "";
+        stripFixedPins(doc); // pins compensate for that transform; without it they'd offset the render
+        // swap in the pre-cropped bitmaps. The element stays put and keeps every CSS rule
+        // that matched it, so only its pixels change — no reflow, here or on the live page.
+        for (const el of doc.querySelectorAll<HTMLImageElement>(
+            "[data-unilens-img]",
+        )) {
+            const fix = imageFixes[Number(el.dataset.unilensImg)];
+            el.removeAttribute("data-unilens-img");
+            if (!fix) continue;
+            el.src = fix.dataUrl;
+            el.style.objectFit = "fill"; // already cropped to the box, so draw it 1:1
+        }
+    };
+    const unguard = guardFontProbe();
+    try {
+        const canvas = await html2canvas(document.body, {
+            scrollX: 0,
+            scrollY: 0,
+            ...(area
+                ? { x: area.x, y: area.y, width: area.w, height: area.h }
+                : { width: pageW, height: pageH }),
+            windowWidth: pageW,
+            windowHeight: pageH,
+            useCORS: true,
+            allowTaint: true,
+            scale,
+            onclone: stripZoom,
+        });
+        return { canvas, tPre };
+    } finally {
+        unguard();
+        for (const f of imageFixes) delete f.el.dataset.unilensImg;
+    }
+}
+
+/** where the user's view is: what viewMovedSince compares a later view with */
+export type ViewState = Pick<
+    CaptureMeta,
+    "scrollX" | "scrollY" | "zoom" | "pinchZoom" | "viewportW" | "viewportH"
+>;
+export function viewNow(): ViewState {
+    const vvp = window.visualViewport;
+    const { x, y } = getView();
+    return {
+        scrollX: x,
+        scrollY: y,
+        zoom: getZoom().scale,
+        pinchZoom: vvp ? Math.round((vvp.scale ?? 1) * 100) / 100 : 1,
+        viewportW: vvp ? vvp.width : window.innerWidth,
+        viewportH: vvp ? vvp.height : window.innerHeight,
+    };
+}
+
+/**
+ * What the user sees now, for Live: a JPEG at most `maxW` px wide (the data channel
+ * drops big messages silently), with where it is on the page in content px (the
+ * inventory's boxes) and the zoom. No inventory and no upload: a talk keeps pointing
+ * at the elements of the capture it started with (bug 2 of the 2026-09-27 report).
+ */
+export async function viewPicture(
+    maxW = 1024,
+    /** where the user clicked to ask (content px): ringed when it is in the view */
+    click?: { x: number; y: number },
+): Promise<{
+    jpeg: string;
+    view: { x: number; y: number; w: number; h: number };
+    zoom: number;
+}> {
+    refreshLayout();
+    const view = visibleRect();
+    const zoom = getZoom().scale;
+    // sharp enough to read at the size it is sent, never past twice the page's pixels
+    const scale = Math.min(2, maxW / Math.max(1, view.w));
+    const { canvas } = await renderContent(scale, view);
+    const ctx = canvas.getContext("2d");
+    if (
+        ctx &&
+        click &&
+        click.x >= view.x &&
+        click.y >= view.y &&
+        click.x <= view.x + view.w &&
+        click.y <= view.y + view.h
+    )
+        drawClick(
+            ctx,
+            (click.x - view.x) * scale,
+            (click.y - view.y) * scale,
+            scale,
+            false,
+        );
+    return { jpeg: canvas.toDataURL("image/jpeg", 0.7), view, zoom };
+}
+
+// ── The marks (R3 of the 2026-09-27 report) ─────────────────────────────────
+// The click is the mark that matters most: magenta, a colour pages rarely use, with a
+// white edge so it reads on light and dark pages. Sizes are content px, so a mark
+// looks the same size next to the text in the full page and in the close-up.
+export const MARK = {
+    click: "#ff00ff",
+    edge: "#ffffff",
+    view: "rgba(230, 20, 20, 0.95)",
+    clickRadius: 16,
+} as const;
+/** the pointer's trail, in the colour the settings choose (a knob for now) */
+export const TRAIL_RGB = {
+    orange: "255, 150, 0",
+    lime: "120, 230, 0",
+} as const;
+
+/** where the user clicked: a magenta ring with a white edge; on the full page also a
+ *  dot in its centre (the close-up gets the ring alone, to hide less) */
+export function drawClick(
+    ctx: CanvasRenderingContext2D,
+    x: number,
+    y: number,
+    s: number,
+    dot: boolean,
+) {
+    const ring = (w: number, color: string) => {
+        ctx.beginPath();
+        ctx.arc(x, y, MARK.clickRadius * s, 0, Math.PI * 2);
+        ctx.lineWidth = w * s;
+        ctx.strokeStyle = color;
+        ctx.stroke();
+    };
+    ring(8, MARK.edge);
+    ring(4, MARK.click);
+    if (!dot) return;
+    for (const [r, color] of [
+        [6, MARK.edge],
+        [4, MARK.click],
+    ] as const) {
+        ctx.beginPath();
+        ctx.arc(x, y, r * s, 0, Math.PI * 2);
+        ctx.fillStyle = color;
+        ctx.fill();
+    }
+}
+
+/** the pointer's recent path: faint and thin where older, bright and thick at its
+ *  newest end, over a thin dark edge so it reads on a white page */
+export function drawTrail(
+    ctx: CanvasRenderingContext2D,
+    points: TracePoint[],
+    s: number,
+    color: keyof typeof TRAIL_RGB,
+) {
+    if (points.length < 2) return;
+    const oldest = points[0].t;
+    const span = Math.max(points[points.length - 1].t - oldest, 1);
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+    for (const under of [true, false])
+        for (let i = 1; i < points.length; i++) {
+            const p0 = points[i - 1];
+            const p1 = points[i];
+            const age = (p1.t - oldest) / span;
+            ctx.beginPath();
+            ctx.moveTo(p0.x * s, p0.y * s);
+            ctx.lineTo(p1.x * s, p1.y * s);
+            ctx.strokeStyle = under
+                ? `rgba(0, 0, 0, ${(0.1 + age * 0.35).toFixed(2)})`
+                : `rgba(${TRAIL_RGB[color] ?? TRAIL_RGB.orange}, ${(0.25 + age * 0.75).toFixed(2)})`;
+            ctx.lineWidth = (1 + age * 5 + (under ? 2.5 : 0)) * s;
+            ctx.stroke();
+        }
+}
+
 export async function capture(
     clickX: number,
     clickY: number,
@@ -379,17 +634,7 @@ export async function capture(
 
     // Inventory first: it reads the live layout before anything else touches the page.
     // `visible` is judged against the real viewport, never the alt+drag region.
-    const inv = getSettings().inventory
-        ? buildInventory(
-              document.body,
-              inventoryOptionsFrom(getSettings(), {
-                  w: window.visualViewport?.width ?? window.innerWidth,
-                  h: window.visualViewport?.height ?? window.innerHeight,
-              }),
-              undefined,
-              clientToContent,
-          )
-        : undefined;
+    const inv = getSettings().inventory ? inventoryNow() : undefined;
     recordInventoryDebug(inv);
 
     const vvp = window.visualViewport;
@@ -408,15 +653,6 @@ export async function capture(
     const pageH = zoom.layoutH;
 
     const t0 = performance.now();
-    // Read-only: the correction is applied to the clone, never to the live page.
-    // Swapping elements here reflows the real layout mid-capture (measured at +8800px
-    // on a page with an open accordion), which jumps the user's view and leaves the
-    // click marker pointing at whatever moved into its place.
-    const imageFixes = await preprocessImages();
-    imageFixes.forEach((f, i) => {
-        f.el.dataset.unilensImg = String(i);
-    });
-    const tPre = performance.now();
 
     // Close-up source: the alt+drag selection if given, else the visible region
     // in content space (what the user actually sees, zoom-aware)
@@ -427,29 +663,7 @@ export async function capture(
               w: Math.max(1, Math.min(pageW, Math.round(region.w))),
               h: Math.max(1, Math.min(pageH, Math.round(region.h))),
           }
-        : {
-              x: Math.max(0, Math.round((scrollX + vvpOffsetX) / z)),
-              y: Math.max(0, Math.round((scrollY + vvpOffsetY) / z)),
-              w: Math.min(pageW, Math.round(vpW / z)),
-              h: Math.min(pageH, Math.round(vpH / z)),
-          };
-
-    const stripZoom = (doc: Document) => {
-        doc.body.style.transform = ""; // render at zoom 1 — coords are content space
-        doc.documentElement.style.height = "";
-        stripFixedPins(doc); // pins compensate for that transform; without it they'd offset the render
-        // swap in the pre-cropped bitmaps. The element stays put and keeps every CSS rule
-        // that matched it, so only its pixels change — no reflow, here or on the live page.
-        for (const el of doc.querySelectorAll<HTMLImageElement>(
-            "[data-unilens-img]",
-        )) {
-            const fix = imageFixes[Number(el.dataset.unilensImg)];
-            el.removeAttribute("data-unilens-img");
-            if (!fix) continue;
-            el.src = fix.dataUrl;
-            el.style.objectFit = "fill"; // already cropped to the box, so draw it 1:1
-        }
-    };
+        : visibleRect();
 
     // Single render at the configured resolution (1 = screen res). Both outputs
     // (annotated page + close-up crop) derive from this one canvas — html2canvas
@@ -461,34 +675,16 @@ export async function capture(
         captureScale = Math.sqrt(MAX_PIXELS / (pageW * pageH));
     }
 
-    let pageCanvas: HTMLCanvasElement;
     let viewportImage: string | undefined;
-    const unguard = guardFontProbe();
-    try {
-        pageCanvas = await html2canvas(document.body, {
-            scrollX: 0,
-            scrollY: 0,
-            width: pageW,
-            height: pageH,
-            windowWidth: pageW,
-            windowHeight: pageH,
-            useCORS: true,
-            allowTaint: true,
-            scale: captureScale,
-            onclone: stripZoom,
-        });
-    } finally {
-        unguard();
-        for (const f of imageFixes) delete f.el.dataset.unilensImg;
-    }
+    const { canvas: pageCanvas, tPre } = await renderContent(captureScale);
     const tRender = performance.now();
     console.debug(
         `[UniLens] timings: preprocess ${(tPre - t0).toFixed(0)}ms, render ${(tRender - tPre).toFixed(0)}ms`,
     );
 
     if (getSettings().viewportCrop) {
-        // Crop the visible region from the render BEFORE overlays are drawn —
-        // a clean close-up of exactly what the user is examining.
+        // Crop the visible region from the render BEFORE overlays are drawn: a close-up
+        // of exactly what the user is examining, with only the click's ring on it
         const s = pageCanvas.width / pageW;
         const crop = document.createElement("canvas");
         crop.width = Math.max(1, Math.round(vRect.w * s));
@@ -504,6 +700,12 @@ export async function capture(
             crop.width,
             crop.height,
         );
+        const cctx = crop.getContext("2d");
+        const kx = (clickX - vRect.x) * s;
+        const ky = (clickY - vRect.y) * s;
+        // after a view refresh the click can be off the close-up: no ring then
+        if (cctx && kx >= 0 && ky >= 0 && kx <= crop.width && ky <= crop.height)
+            drawClick(cctx, kx, ky, s, false);
         viewportImage = crop.toDataURL("image/png");
     }
 
@@ -524,74 +726,26 @@ export async function capture(
             w: (vpW / z) * scale,
             h: (vpH / z) * scale,
         };
-        ctx.strokeStyle = "rgba(0,200,255,0.9)";
+        ctx.strokeStyle = MARK.view;
         ctx.lineWidth = 3;
         ctx.strokeRect(vpRect.x, vpRect.y, vpRect.w, vpRect.h);
-        ctx.fillStyle = "rgba(0,200,255,0.08)";
-        ctx.fillRect(vpRect.x, vpRect.y, vpRect.w, vpRect.h);
-        if (recent.length >= 2) {
-            const oldest = recent[0].t;
-            const newest = recent[recent.length - 1].t;
-            const span = Math.max(newest - oldest, 1);
+        drawTrail(ctx, recent, scale, getSettings().trailColor);
 
-            for (let i = 1; i < recent.length; i++) {
-                const p0 = recent[i - 1];
-                const p1 = recent[i];
-                const age = (p1.t - oldest) / span;
-                ctx.beginPath();
-                ctx.moveTo(p0.x * scale, p0.y * scale);
-                ctx.lineTo(p1.x * scale, p1.y * scale);
-                ctx.strokeStyle = `rgba(255, 187, 0, ${(0.15 + age * 0.75).toFixed(2)})`;
-                ctx.lineWidth = (1 + age * 5) * scale;
-                ctx.lineCap = "round";
-                ctx.lineJoin = "round";
-                ctx.stroke();
-            }
-        }
-
-        // Alt+drag selection rect (magenta, distinct from viewport cyan)
+        // Alt+drag selection: the view's red, dashed, so the two boxes differ by line
         if (region) {
-            ctx.strokeStyle = "rgba(255, 0, 200, 0.95)";
+            ctx.strokeStyle = MARK.view;
             ctx.lineWidth = 3;
+            ctx.setLineDash([12, 7]);
             ctx.strokeRect(
                 vRect.x * scale,
                 vRect.y * scale,
                 vRect.w * scale,
                 vRect.h * scale,
             );
-            ctx.fillStyle = "rgba(255, 0, 200, 0.08)";
-            ctx.fillRect(
-                vRect.x * scale,
-                vRect.y * scale,
-                vRect.w * scale,
-                vRect.h * scale,
-            );
+            ctx.setLineDash([]);
         }
 
-        // Click crosshair
-        const cx = clickX * scale;
-        const cy = clickY * scale;
-        ctx.strokeStyle = "#ff4444";
-        ctx.lineWidth = 2.5;
-        ctx.setLineDash([4, 3]);
-        ctx.beginPath();
-        ctx.moveTo(0, cy);
-        ctx.lineTo(pageCanvas.width, cy);
-        ctx.stroke();
-        ctx.beginPath();
-        ctx.moveTo(cx, 0);
-        ctx.lineTo(cx, pageCanvas.height);
-        ctx.stroke();
-        ctx.setLineDash([]);
-        ctx.beginPath();
-        ctx.arc(cx, cy, 18 * scale, 0, Math.PI * 2);
-        ctx.strokeStyle = "#ff4444";
-        ctx.lineWidth = 3;
-        ctx.stroke();
-        ctx.beginPath();
-        ctx.arc(cx, cy, 4 * scale, 0, Math.PI * 2);
-        ctx.fillStyle = "#ff4444";
-        ctx.fill();
+        drawClick(ctx, clickX * scale, clickY * scale, scale, true);
     }
 
     const scrollDepth = Math.round(
@@ -653,6 +807,9 @@ export async function capture(
             inventoryTruncated: inv?.truncated,
             inventoryBytes: inv?.bytes,
             viewRefresh: opts.viewRefresh || undefined,
+            // only when one was drawn: the model is told there is no trail otherwise
+            trailColor:
+                recent.length >= 2 ? getSettings().trailColor : undefined,
         },
         inventory: inv?.wire,
         registry: inv?.registry,

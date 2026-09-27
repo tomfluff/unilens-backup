@@ -30,6 +30,13 @@ export const PinIcon = () => (
         <path d="M12 16v4" />
     </Icon>
 );
+/** a speech bubble with a plus: a new conversation */
+export const NewChatIcon = () => (
+    <Icon>
+        <path d="M5 5h14v10H10l-4 4v-4H5z" />
+        <path d="M12 7.5v5M9.5 10h5" />
+    </Icon>
+);
 export const CloseIcon = () => (
     <Icon>
         <path d="M6 6l12 12M18 6L6 18" />
@@ -39,6 +46,12 @@ export const MicIcon = () => (
     <Icon>
         <rect x="9" y="3" width="6" height="11" rx="3" />
         <path d="M5 11a7 7 0 0 0 14 0M12 18v3" />
+    </Icon>
+);
+/** Live: a spoken conversation, as sound waves */
+export const LiveIcon = () => (
+    <Icon>
+        <path d="M4 10v4M8 7v10M12 4v16M16 7v10M20 10v4" />
     </Icon>
 );
 export const SendIcon = () => (

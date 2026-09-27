@@ -53,7 +53,7 @@ ${R} .ulc-speak { display: inline-grid; place-items: center; width: 2em; height:
 ${R} .ulc-speak svg { width: 1.1em; height: 1.1em; }
 ${R} .ulc-read { display: inline-flex; gap: .3em; margin-left: .35em; vertical-align: middle; }
 ${R} .ulc-read .ulc-speak { margin-left: 0; }
-${R} .ulc-voice[aria-pressed="true"] { animation: ulc-rec 1.2s ease-in-out infinite; }
+${R} .ulc-voice[aria-pressed="true"], ${R} .ulc-live[aria-pressed="true"] { animation: ulc-rec 1.2s ease-in-out infinite; }
 @keyframes ulc-rec { 50% { box-shadow: 0 0 0 .3em rgba(220, 38, 38, .35); } }
 ${R} .ulc-where { display: inline-flex; align-items: center; gap: .4em; flex: none; max-width: 100%; min-height: 2.3em; padding: .15em .75em .15em .5em; font-size: .95em; line-height: 1.3; }
 ${R} .ulc-where.is-pending { border-style: dashed; cursor: default; }
@@ -64,11 +64,25 @@ ${R}${HC} .ulc-divider::before, ${R}${HC} .ulc-divider::after { border-top-width
 ${R} .ulc-where b { flex: none; font-variant-numeric: tabular-nums; }
 ${R} .ulc-where span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 ${R} .ulc-ctl { display: flex; align-items: center; gap: .35em; min-width: 0; }
+/* Associate response text: the words a source supports, underlined in the chip's
+   color. The line stops at the last word and the number follows a little apart, the
+   two related by place, not joined (Yotam, 2026-09-27: a line run into a round number
+   meets it at a step that shifts with the font); the last word and the number never part */
+${R} .unilens-cite-text { padding-bottom: .06em; border-bottom: max(2px, .12em) solid var(--cite-line, currentColor); cursor: pointer; }
+${R}${HC} .unilens-cite-text { border-bottom-width: max(3px, .16em); }
+/* the selected source: its words on the page outline's color (the number's ring says the rest) */
+${R} .unilens-cite-text[aria-current="true"] { background: color-mix(in srgb, var(--ul-hl, #ffef26) 60%, transparent); box-decoration-break: clone; -webkit-box-decoration-break: clone; }
+${R} .unilens-cite-end { white-space: nowrap; }
+${R} .unilens-cite-text + .unilens-cite { margin-inline-start: .3em; }
 ${R} .ulc-c { display: inline-flex; align-items: center; justify-content: center; gap: .35em; flex: none; padding: 0; font-size: 1em; white-space: nowrap; }
 ${R} .ulc-c span { overflow: hidden; text-overflow: ellipsis; }
 ${R} .ulc-quick { display: grid; grid-template-columns: repeat(3, 1fr); gap: .35em; flex: none; }
 ${R} .ulc-quick button { min-width: 0; line-height: 1.2; padding-left: .3em; padding-right: .3em; }
 ${R} .ulc-in { display: flex; gap: .45em; flex: none; align-items: center; }
+/* "Start a new conversation?": the question and its two answers, above the field */
+${R} .ulc-confirm { display: flex; flex-wrap: wrap; align-items: center; gap: .45em; flex: none; font-size: .95em; line-height: 1.3; border: 0; margin: 0; padding: 0; min-inline-size: 0; }
+${R} .ulc-confirm span { flex: 1 1 100%; }
+${R} .ulc-confirm button.ulc-c { flex: 1 1 0; min-height: 2.4em; padding: 0 .7em; white-space: normal; }
 /* what the next question is about: one line above the field, with a way to drop it */
 ${R} .ulc-about { display: flex; align-items: center; gap: .4em; flex: none; min-width: 0; color: var(--muted); font-size: .95em; line-height: 1.3; }
 ${R} .ulc-about span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -91,7 +105,7 @@ ${R} .ulc-typing i:nth-child(2) { animation-delay: .15s } ${R} .ulc-typing i:nth
 @keyframes ulc-lvl { 0%, 100% { height: 30% } 50% { height: 100% } }
 @media (prefers-reduced-motion: reduce) {
   ${R} { transition: none !important; }
-  ${R} .ulc-caret, ${R} .ulc-lvl i, ${R} .ulc-voice, ${R} .ulc-typing i { animation: none !important; }
+  ${R} .ulc-caret, ${R} .ulc-lvl i, ${R} .ulc-voice, ${R} .ulc-live, ${R} .ulc-typing i { animation: none !important; }
   ${R} .ulc-typing i { opacity: .7; }
 }
 ${R} .unilens-cite { display: inline-grid; place-items: center; min-width: 1.75em; height: 1.75em; padding: 0 .3em; margin: 0 .12em; border: 0; border-radius: 999px; font-weight: 700; font-size: 1em; line-height: 1; vertical-align: .08em; font-variant-numeric: tabular-nums; cursor: pointer; }
@@ -103,7 +117,7 @@ ${B} b { font-weight: 700; }
 }
 
 /* ── Assistant (default): the assistant-widget convention, done carefully ── */
-${A} { --bg: #fff; --soft: #f1f3f5; --fg: #1f2937; --muted: #4b5563; --line: #d1d5db; --acc: #2563eb; --acc-fg: #fff; --err-bg: #fef2f2; --err: #b91c1c;
+${A} { --cite-line: var(--acc); --bg: #fff; --soft: #f1f3f5; --fg: #1f2937; --muted: #4b5563; --line: #d1d5db; --acc: #2563eb; --acc-fg: #fff; --err-bg: #fef2f2; --err: #b91c1c;
   background: var(--bg); color: var(--fg); border: 1px solid #e5e7eb; border-radius: 16px; font-family: ${SYS};
   box-shadow: 0 16px 40px rgba(17, 24, 39, .18), 0 2px 6px rgba(17, 24, 39, .08); }
 ${A}${HC} { --bg: #000; --soft: #000; --fg: #fff; --muted: #fff; --line: #fff; --acc: #ffd400; --acc-fg: #000; --err-bg: #000; --err: #ffd400; border: 3px solid #fff; }
@@ -140,6 +154,7 @@ ${A} .ulc-quick { padding: .55em 1em 0; border-top: 1px solid var(--line); }
 ${A} .ulc-quick button { min-height: 2.3em; border: 1px solid #6b7280; border-radius: 999px; background: var(--soft); color: var(--fg); font-size: 1em; }
 ${A}${HC} .ulc-quick button { border: 2px solid #fff; }
 ${A} .ulc-in { padding: .6em .8em .35em; }
+${A} .ulc-confirm { padding: .5em .8em 0; }
 ${A} .ulc-about { padding: .45em .8em 0; }
 ${A} .ulc-in input { height: 2.8em; padding: 0 .85em; border: 1px solid #6b7280; border-radius: 12px; background: var(--bg); color: var(--fg); caret-color: var(--acc); }
 ${A}${HC} .ulc-in input { border: 2px solid #fff; }
@@ -154,7 +169,7 @@ ${A} .ulc-status { padding: 0 1em .65em; color: var(--muted); }
 ${A} :focus-visible { outline: 3px solid var(--acc); outline-offset: 2px; }
 
 /* ── Audio guide: graphite handset, amber display, white label, number keys ── */
-${G} { --body: #1c1f24; --body2: #262a31; --key: #2e333b; --key-fg: #fff; --lcd: #ffb000; --lcd-fg: #1c1f24; --label: #fff; --label-fg: #111; --muted: #c9ced6; --disc: #111; --disc-fg: #fff; --err: #ff6b57;
+${G} { --cite-line: var(--lcd); --body: #1c1f24; --body2: #262a31; --key: #2e333b; --key-fg: #fff; --lcd: #ffb000; --lcd-fg: #1c1f24; --label: #fff; --label-fg: #111; --muted: #c9ced6; --disc: #111; --disc-fg: #fff; --err: #ff6b57;
   background: var(--body); color: #fff; border-radius: 22px; padding: 12px; font-family: ${UD}; box-shadow: 0 14px 34px rgba(0, 0, 0, .35); }
 ${G}${HC} { --body: #000; --body2: #000; --key: #000; --key-fg: #ffd400; --lcd: #ffd400; --lcd-fg: #000; --label: #000; --label-fg: #fff; --muted: #fff; --disc: #ffd400; --disc-fg: #000; --err: #ffd400; border: 3px solid #ffd400; }
 ${G} ::selection { background: var(--lcd); color: var(--lcd-fg); }
@@ -188,6 +203,7 @@ ${G} .ulc-quick button { min-height: 2.6em; border: 1.5px solid #8a929e; border-
 ${G} .ulc-log { scrollbar-color: #6b7280 transparent; }
 ${G}${HC} .ulc-quick button { border: 2px solid #ffd400; color: #ffd400; }
 ${G} .ulc-in { margin-top: 8px; }
+${G} .ulc-confirm { margin-top: 8px; color: var(--muted); }
 ${G} .ulc-about { margin-top: 8px; }
 ${G} .ulc-in input { height: 3em; padding: 0 .8em; border: 2px solid #8a929e; border-radius: 10px; background: #0f1114; color: #fff; caret-color: var(--lcd); }
 ${G}${HC} .ulc-in input { background: #000; border-color: #fff; }
@@ -199,7 +215,7 @@ ${G} .ulc-status { margin-top: 8px; min-height: 2.6em; padding: .45em .8em; bord
 ${G} :focus-visible { outline: 3px solid #fff; outline-offset: 2px; box-shadow: 0 0 0 6px var(--lcd); }
 
 /* ── Station signs: sign band, blue status strip, station codes, exit-yellow signs ── */
-${S} { --panel: #fff; --fg: #222; --band: #2b2b2b; --band-fg: #fff; --line: #0079c2; --exit: #ffd400; --exit-fg: #111; --muted: #4d5156; --strip: #eef4f9; --strip-fg: #0b3d63; --err: #d0021b;
+${S} { --cite-line: var(--line); --panel: #fff; --fg: #222; --band: #2b2b2b; --band-fg: #fff; --line: #0079c2; --exit: #ffd400; --exit-fg: #111; --muted: #4d5156; --strip: #eef4f9; --strip-fg: #0b3d63; --err: #d0021b;
   background: var(--panel); color: var(--fg); border: 1px solid #c9ccd0; border-radius: 6px; font-family: ${UD}; box-shadow: 0 12px 30px rgba(0, 0, 0, .28); }
 ${S}${HC} { --panel: #000; --fg: #fff; --band: #000; --band-fg: #fff; --line: #ffd400; --muted: #fff; --strip: #000; --strip-fg: #ffd400; --err: #ffd400; border: 3px solid #fff; }
 ${S} ::selection { background: var(--line); color: #fff; }
@@ -239,6 +255,7 @@ ${S} .ulc-quick { padding: .6em .8em 0; }
 ${S} .ulc-quick button { min-height: 2.5em; border: 2px solid var(--fg); border-radius: 4px; background: transparent; color: var(--fg); font-weight: 600; font-size: .94em; }
 ${S} .ulc-log { scrollbar-color: #8a8f95 transparent; }
 ${S} .ulc-in { padding: .6em .8em .35em; }
+${S} .ulc-confirm { padding: .5em .8em 0; }
 ${S} .ulc-about { padding: .45em .8em 0; }
 ${S} .ulc-in input { height: 2.9em; padding: 0 .7em; border: 2px solid var(--fg); border-radius: 4px; background: var(--panel); color: var(--fg); caret-color: var(--line); }
 ${S} .ulc-in input::placeholder { color: var(--muted); }

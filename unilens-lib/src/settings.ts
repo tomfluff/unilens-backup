@@ -16,6 +16,8 @@ import {
 export interface Settings {
     zoom: boolean;
     mouseTrace: boolean;
+    /** the colour of the pointer's trail in the pictures the assistant gets */
+    trailColor: "orange" | "lime";
     zoomTrace: boolean;
     viewportCrop: boolean;
     zoomKeys: boolean;
@@ -28,6 +30,8 @@ export interface Settings {
     regionSelect: boolean;
     highContrast: boolean;
     continuity: boolean;
+    /** after a reload, the conversation on this site comes back (UniLens's own store) */
+    restoreAfterReload: boolean;
     autoRead: boolean;
     voiceInput: boolean;
     /** the mic sends what was heard when the speaker pauses; off, it stays in the field */
@@ -141,6 +145,44 @@ export interface Settings {
     citeEvidence: boolean;
     /** a chat covering a source steps aside, to the nearer side (a pinned chat stays) */
     chatMovesAside: boolean;
+    /** the assistant zooms the page when the user asks (the chat and Live) */
+    assistantZoom: boolean;
+    /** underline the fewest words each source supports, joined to its number */
+    associateText: boolean;
+    /** AI settings (research): the backend checks each choice against its catalogue */
+    aiProvider: "auto" | "openai" | "gemini";
+    /** a model id from the backend's catalogue; "" = the provider's default */
+    aiModel: string;
+    aiReasoning: "default" | "low" | "medium" | "high";
+    /** who reads answers aloud (auto: the backend's default) */
+    ttsProvider: "auto" | "openai" | "gemini";
+    /** that provider's read-aloud model; "" = its default */
+    ttsModel: string;
+    /** the read-aloud voice; "" = the provider's default */
+    ttsVoice: string;
+    /** who hears a voice message: the browser, else the server (auto), or a provider */
+    sttEngine: "auto" | "browser" | "openai" | "gemini";
+    /** the server's speech-to-text model; "" = the backend's default */
+    sttModel: string;
+    /** Live, a spoken conversation: the provider (auto: the AI settings', else the
+     *  backend's) */
+    liveProvider: "auto" | "openai" | "gemini";
+    /** a Live model from the backend's catalogue; "" = the provider's default */
+    liveModel: string;
+    /** the Live voice; "" = the provider's default */
+    liveVoice: string;
+    /** how soon a pause ends the user's turn */
+    liveTurnEnd: "patient" | "normal" | "quick";
+    /** speaking over the model stops it */
+    liveBargeIn: boolean;
+    /** the model lights up what it talks about, and its words get source chips */
+    livePoint: boolean;
+    /** a picture of what the user sees goes with the page's elements */
+    liveScreenshot: boolean;
+    /** words show as they are spoken (off: once each turn is complete) */
+    liveCaptions: boolean;
+    /** the model's speaking rate, % (OpenAI; Gemini has none) */
+    liveSpeed: number;
     /** re-capture before a message when the user scrolled, panned or zoomed since the last one */
     refreshView: boolean;
     /** when an answer's evidence is outlined without a click */
@@ -152,6 +194,7 @@ export interface Settings {
 const DEFAULTS: Settings = {
     zoom: true,
     mouseTrace: true,
+    trailColor: "orange",
     zoomTrace: true,
     viewportCrop: true,
     zoomKeys: false,
@@ -164,6 +207,7 @@ const DEFAULTS: Settings = {
     regionSelect: true,
     highContrast: false,
     continuity: true,
+    restoreAfterReload: true,
     autoRead: false,
     voiceInput: false,
     voiceAutoSend: true,
@@ -228,6 +272,25 @@ const DEFAULTS: Settings = {
     sounds: true,
     citeEvidence: true,
     chatMovesAside: true,
+    assistantZoom: true,
+    associateText: false,
+    aiProvider: "auto",
+    aiModel: "",
+    aiReasoning: "default",
+    ttsProvider: "auto",
+    ttsModel: "",
+    ttsVoice: "",
+    sttEngine: "auto",
+    sttModel: "",
+    liveProvider: "auto",
+    liveModel: "",
+    liveVoice: "",
+    liveTurnEnd: "normal",
+    liveBargeIn: true,
+    livePoint: true,
+    liveScreenshot: true,
+    liveCaptions: true,
+    liveSpeed: 100,
     refreshView: true,
     autoHighlight: "where",
     escapeOrder: "highlight",
@@ -253,6 +316,7 @@ export const TOGGLE_LABELS: Record<BoolSettingKey, string> = {
     regionSelect: "Alt+drag region select",
     highContrast: "High contrast",
     continuity: "Conversation continuity",
+    restoreAfterReload: "Keep the conversation across reloads",
     autoRead: "Read replies aloud",
     voiceInput: "Voice input (mic)",
     voiceAutoSend: "Send what I say when I pause",
@@ -271,6 +335,9 @@ export const TOGGLE_LABELS: Record<BoolSettingKey, string> = {
     mmNumbers: "Numbers on targets",
     citeEvidence: "Answers cite page elements",
     chatMovesAside: "Move the chat out of the way of sources",
+    assistantZoom: "The assistant can zoom the page when asked",
+    associateText:
+        "Associate response text (underline what each source supports)",
     sounds: "A sound for every action",
     refreshView: "Send my new view with follow-ups",
     fxCore: "Orb: glossy core",
@@ -283,6 +350,10 @@ export const TOGGLE_LABELS: Record<BoolSettingKey, string> = {
     fxHug: "Frame: breathing",
     fxEdgeGradient: "Edge: moving gradient",
     fxPin: "Edge: pin at the click",
+    liveBargeIn: "Stop it by speaking over it",
+    livePoint: "Light up what it talks about",
+    liveScreenshot: "Send a picture of my view",
+    liveCaptions: "Show words as they are spoken",
 };
 
 /** keys of Settings whose value is a number — the integer knob rows in the panel */
@@ -302,6 +373,12 @@ export const NUMBER_KNOBS: Record<
     captureRes: { label: "Capture resolution", min: 0.5, max: 1, step: 0.5 },
     chatFontSize: { label: "Chat scale", min: 14, max: 20, step: 3 },
     chatTextScale: { label: "Text size (%)", min: 80, max: 200, step: 10 },
+    liveSpeed: {
+        label: "Speaking rate (%, OpenAI)",
+        min: 50,
+        max: 150,
+        step: 10,
+    },
     inventoryMaxDepth: {
         label: "Inventory max depth",
         min: 1,
@@ -465,6 +542,60 @@ export const ENUM_CHOICES = {
         },
     },
     autoHighlight: { label: "Auto-highlight", choices: AUTO_HIGHLIGHTS },
+    aiProvider: {
+        label: "Provider",
+        choices: {
+            auto: "Backend default",
+            openai: "OpenAI",
+            gemini: "Gemini",
+        },
+    },
+    trailColor: {
+        label: "Pointer trail colour (in the assistant's pictures)",
+        choices: { orange: "Orange", lime: "Lime" },
+    },
+    ttsProvider: {
+        label: "Read-aloud provider",
+        choices: {
+            auto: "Backend default",
+            openai: "OpenAI",
+            gemini: "Gemini",
+        },
+    },
+    sttEngine: {
+        label: "Speech recognition",
+        choices: {
+            auto: "Browser, else server",
+            browser: "Browser only",
+            openai: "OpenAI (server)",
+            gemini: "Gemini (server)",
+        },
+    },
+    aiReasoning: {
+        label: "Reasoning",
+        choices: {
+            default: "Model default",
+            low: "Low",
+            medium: "Medium",
+            high: "High",
+        },
+    },
+    liveProvider: {
+        label: "Provider",
+        choices: {
+            auto: "As the AI settings",
+            openai: "OpenAI",
+            gemini: "Gemini",
+        },
+    },
+    liveTurnEnd: {
+        label: "My turn ends after",
+        choices: {
+            patient: "A long pause (take my time)",
+            normal: "A normal pause",
+            quick: "A short pause (snappy)",
+        },
+    },
     escapeOrder: { label: "Escape order", choices: ESCAPE_ORDERS },
 } as const satisfies Partial<
     Record<keyof Settings, { label: string; choices: Record<string, string> }>
@@ -493,6 +624,16 @@ export type SelectKnobKey = keyof typeof SELECT_CHOICES;
  * group holds everything about one thing, whatever kind of control it is. Every
  * toggle, choice and number appears in exactly one group (settings.test.ts).
  */
+/** settings whose choices come from the backend's catalogue (/api/ai), not a table here */
+export const CATALOGUE_KEYS = [
+    "aiModel",
+    "ttsModel",
+    "ttsVoice",
+    "sttModel",
+    "liveModel",
+    "liveVoice",
+] as const;
+
 export const PANEL_SECTIONS: {
     title: string;
     open?: boolean;
@@ -515,6 +656,7 @@ export const PANEL_SECTIONS: {
             "streamReplies",
             "dragPopover",
             "continuity",
+            "restoreAfterReload",
             "escapeOrder",
         ],
     },
@@ -522,9 +664,11 @@ export const PANEL_SECTIONS: {
         title: "Answers and sources",
         keys: [
             "citeEvidence",
+            "associateText",
             "autoHighlight",
             "moveToEvidence",
             "chatMovesAside",
+            "assistantZoom",
             "refreshView",
         ],
     },
@@ -591,9 +735,37 @@ export const PANEL_SECTIONS: {
         ],
     },
     {
+        title: "AI (research)",
+        keys: [
+            "aiProvider",
+            "aiModel",
+            "aiReasoning",
+            "ttsProvider",
+            "ttsModel",
+            "ttsVoice",
+            "sttEngine",
+            "sttModel",
+        ],
+    },
+    {
+        title: "Live interaction",
+        keys: [
+            "liveProvider",
+            "liveModel",
+            "liveVoice",
+            "liveTurnEnd",
+            "liveBargeIn",
+            "livePoint",
+            "liveScreenshot",
+            "liveCaptions",
+            "liveSpeed",
+        ],
+    },
+    {
         title: "Capture and research",
         keys: [
             "mouseTrace",
+            "trailColor",
             "zoomTrace",
             "viewportCrop",
             "captureRes",
@@ -640,6 +812,11 @@ export function clampSetting<K extends keyof Settings>(
     }
     if (key === "hlColor") {
         return isHexColor(value) ? (value as Settings[K]) : fallback;
+    }
+    if ((CATALOGUE_KEYS as readonly string[]).includes(key)) {
+        return typeof value === "string" && /^[\w.:-]{0,64}$/.test(value)
+            ? (value as Settings[K])
+            : fallback;
     }
     if (typeof fallback === "boolean") {
         return typeof value === "boolean" ? (value as Settings[K]) : fallback;

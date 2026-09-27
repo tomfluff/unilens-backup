@@ -185,6 +185,16 @@ export function registerPopoverClose(fn: () => void): () => void {
     };
 }
 
+/** a question on screen ("start a new conversation?") takes Escape first, whatever
+ *  the order: it answers no, and nothing else happens */
+let escapeClaim: (() => void) | null = null;
+export function claimEscape(fn: () => void): () => void {
+    escapeClaim = fn;
+    return () => {
+        if (escapeClaim === fn) escapeClaim = null;
+    };
+}
+
 export function escapeAction(): "clear" | "close" | "both" | "none" {
     const hl = hasHighlight();
     const pop = popoverClose !== null;
@@ -200,6 +210,7 @@ export function escapeAction(): "clear" | "close" | "both" | "none" {
 
 function onKey(e: KeyboardEvent) {
     if (e.key !== "Escape") return;
+    if (escapeClaim) return escapeClaim();
     const a = escapeAction();
     if (a === "clear" || a === "both") clearHighlights();
     if (a === "close" || a === "both") popoverClose?.();

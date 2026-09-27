@@ -7,6 +7,17 @@ export class RequestApi {
         this.unilens = unilens;
     }
 
+    /** a new conversation on a capture: a fresh session holding it */
+    async newSession(captureId: string): Promise<string> {
+        const res = await fetch(`${this.unilens.getBackend()}/api/session`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ capture_id: captureId }),
+        });
+        if (!res.ok) throw new Error(`new session failed: HTTP ${res.status}`);
+        return (await res.json()).session_id;
+    }
+
     /**
      * upload a capture to the backend. session id is provided by the UnilensClient
      * instance. The session the upload joined or started comes back to the caller, who

@@ -55,7 +55,7 @@ export function init(options: InitOptions = {}) {
     if (unilens.getOption("zoom")) initZoom();
     initMinimap();
     initHighlight();
-    initSettings();
+    initSettings(unilens.getBackend());
     setSpeechBackend(unilens.getBackend());
 
     // Create container element
