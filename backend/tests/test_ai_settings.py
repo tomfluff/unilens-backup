@@ -29,8 +29,8 @@ def test_defaults_without_a_choice(keys):
 
 def test_a_listed_choice_is_kept(keys):
     assert choice(
-        {"provider": "gemini", "model": "gemini-3.5-flash", "reasoning": "low"}
-    ) == {"provider": "gemini", "model": "gemini-3.5-flash", "reasoning": "low"}
+        {"provider": "gemini", "model": "gemini-3.7-flash", "reasoning": "low"}
+    ) == {"provider": "gemini", "model": "gemini-3.7-flash", "reasoning": "low"}
 
 
 @pytest.mark.parametrize(
@@ -41,14 +41,15 @@ def test_a_listed_choice_is_kept(keys):
             {"provider": "openai", "model": "gpt-5.5-pro"},
             ("openai", app_module.OPENAI_MODEL, None),
         ),
-        # an unknown level, and a level on a model that does not reason
+        # an unknown level
         (
-            {"provider": "openai", "model": "gpt-5.4", "reasoning": "max"},
-            ("openai", "gpt-5.4", None),
+            {"provider": "openai", "model": "gpt-6-luna", "reasoning": "max"},
+            ("openai", "gpt-6-luna", None),
         ),
+        # a model dropped from the list (R2 of the 2026-09-27 report)
         (
-            {"provider": "openai", "model": "gpt-4.1-mini", "reasoning": "high"},
-            ("openai", "gpt-4.1-mini", None),
+            {"provider": "openai", "model": "gpt-4.1-mini"},
+            ("openai", app_module.OPENAI_MODEL, None),
         ),
         # not a provider, or not a dict at all
         ({"provider": "anthropic"}, ("openai", app_module.OPENAI_MODEL, None)),
@@ -68,18 +69,18 @@ def test_a_provider_without_its_key_is_not_chosen(monkeypatch):
 
 def test_requests_carry_model_and_reasoning():
     args = dict(png_b64=PNG_B64, viewport_b64=None, meta={}, history=[], message="hi")
-    ai = {"provider": "openai", "model": "gpt-5.4", "reasoning": "high"}
+    ai = {"provider": "openai", "model": "gpt-6-luna", "reasoning": "high"}
     req = app_module._chat_openai_request(**args, ai=ai)
-    assert req["model"] == "gpt-5.4"
+    assert req["model"] == "gpt-6-luna"
     assert req["reasoning"] == {"effort": "high"}
     plain = app_module._chat_openai_request(**args)
     assert plain["model"] == app_module.OPENAI_MODEL and "reasoning" not in plain
 
     g = app_module._chat_gemini_request(
         **args,
-        ai={"provider": "gemini", "model": "gemini-3.5-flash", "reasoning": "low"}
+        ai={"provider": "gemini", "model": "gemini-3.7-flash", "reasoning": "low"}
     )
-    assert g["model"] == "gemini-3.5-flash"
+    assert g["model"] == "gemini-3.7-flash"
     assert g["config"].thinking_config.thinking_level.value == "LOW"
     assert app_module._chat_gemini_request(**args)["config"].thinking_config is None
 
@@ -89,13 +90,17 @@ def test_catalogue_lists_what_each_key_reaches(client, monkeypatch):
     monkeypatch.setattr(
         app_module,
         "_reachable_models",
-        lambda p: {"gpt-5.4-mini", "gpt-5.4"} if p == "openai" else None,
+        lambda p: (
+            {"gpt-5.4-mini", "gpt-6-luna", app_module.TTS_MODELS["openai"][0]}
+            if p == "openai"
+            else None
+        ),
     )
     body = client.get("/api/ai").get_json()
     assert body["default"] == "openai"
     assert [m["id"] for m in body["providers"]["openai"]["models"]] == [
+        "gpt-6-luna",
         "gpt-5.4-mini",
-        "gpt-5.4",
     ]
     assert body["providers"]["gemini"] == {
         "available": False,
@@ -104,6 +109,11 @@ def test_catalogue_lists_what_each_key_reaches(client, monkeypatch):
     }
     assert body["reasoning"] == ["low", "medium", "high"]
     assert "alloy" in body["voices"]
+    # read aloud: what each key can speak with, and the one used by default
+    assert body["tts"]["openai"]["models"] == app_module.TTS_MODELS["openai"]
+    assert "alloy" in body["tts"]["openai"]["voices"]
+    assert body["tts"]["gemini"] == {"models": [], "voices": []}
+    assert body["ttsDefault"] == "openai"
 
 
 def test_done_frame_reports_the_model_used(client, monkeypatch):
@@ -149,7 +159,7 @@ def test_done_frame_reports_the_model_used(client, monkeypatch):
     [
         {"provider": []},
         {"provider": "openai", "model": {"x": 1}},
-        {"provider": "openai", "model": "gpt-5.4", "reasoning": ["high"]},
+        {"provider": "openai", "model": "gpt-6-luna", "reasoning": ["high"]},
     ],
 )
 def test_malformed_choices_fall_back_instead_of_failing(keys, ai):
@@ -162,7 +172,7 @@ def test_a_model_the_key_does_not_reach_falls_back(monkeypatch):
     monkeypatch.setattr(
         app_module, "_reachable_models", lambda p: {app_module.OPENAI_MODEL}
     )
-    assert choice({"provider": "openai", "model": "gpt-5.4"})["model"] == (
+    assert choice({"provider": "openai", "model": "gpt-6-sol"})["model"] == (
         app_module.OPENAI_MODEL
     )
 
@@ -171,7 +181,18 @@ def test_each_model_takes_only_its_levels(keys, monkeypatch):
     monkeypatch.setitem(
         app_module.AI_MODELS,
         "openai",
-        [("gpt-5.4", ("low", "medium", "high")), ("gpt-5-pro", ("high",))],
+        [
+            ("gpt-5.4", ("low", "medium", "high")),
+            ("gpt-5-pro", ("high",)),
+            ("gpt-4.1-mini", ()),
+        ],
+    )
+    # a level on a model that does not reason
+    assert (
+        choice({"provider": "openai", "model": "gpt-4.1-mini", "reasoning": "high"})[
+            "reasoning"
+        ]
+        is None
     )
     assert (
         choice({"provider": "openai", "model": "gpt-5-pro", "reasoning": "low"})[
@@ -183,6 +204,7 @@ def test_each_model_takes_only_its_levels(keys, monkeypatch):
         "reasoning"
     ] == ("high")
     assert app_module._levels_of("gpt-5.5-pro") == ("high",)
+    assert app_module._levels_of("gpt-6-astra") == ("low", "medium", "high")
     assert app_module._levels_of("gpt-4.1") == ()
 
 

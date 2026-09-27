@@ -66,9 +66,15 @@ export async function speak(text: string, onState?: (s: SpeechState) => void) {
         const res = await fetch(`${backendUrl}/api/tts`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            // the voice chosen in the AI settings; the backend checks it
+            // the provider, model and voice chosen in the AI settings; the backend
+            // checks each
             body: JSON.stringify({
                 text: plain,
+                provider:
+                    getSettings().ttsProvider === "auto"
+                        ? undefined
+                        : getSettings().ttsProvider,
+                model: getSettings().ttsModel || undefined,
                 voice: getSettings().ttsVoice || undefined,
             }),
         });

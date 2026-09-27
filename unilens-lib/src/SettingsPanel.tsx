@@ -398,6 +398,7 @@ function CatalogueRow({
 }: {
     setting:
         | "aiModel"
+        | "ttsModel"
         | "ttsVoice"
         | "aiReasoning"
         | "sttModel"
@@ -458,6 +459,16 @@ function CatalogueRow({
             : (cat?.sttDefault ??
               Object.keys(cat?.stt ?? {}).find((p) => cat?.stt[p]?.length));
     const sttOptions = (sttProvider && cat?.stt[sttProvider]) || [];
+    // read aloud: its provider's models or voices (older backends: OpenAI's voices)
+    const ttsProvider =
+        settings.ttsProvider !== "auto"
+            ? settings.ttsProvider
+            : (cat?.ttsDefault ?? undefined);
+    const tts = ttsProvider ? cat?.tts?.[ttsProvider] : undefined;
+    const ttsOptions =
+        (setting === "ttsModel"
+            ? tts?.models
+            : (tts?.voices ?? (cat?.tts ? [] : cat?.voices))) ?? [];
     // Live: its provider's models or voices
     const live = cat ? cat.live?.[liveProvider(cat) ?? ""] : undefined;
     const liveOptions =
@@ -469,7 +480,7 @@ function CatalogueRow({
               ? sttOptions
               : setting === "liveModel" || setting === "liveVoice"
                 ? liveOptions
-                : (cat?.voices ?? []);
+                : ttsOptions;
     const fallback =
         setting === "aiModel"
             ? `Provider default${entry ? ` (${entry.default})` : ""}`
@@ -479,7 +490,20 @@ function CatalogueRow({
                 ? cat && !liveOptions.length
                     ? "Live unavailable (no key)"
                     : `Default${liveOptions[0] ? ` (${liveOptions[0]})` : ""}`
-                : `Default${cat ? ` (${cat.defaultVoice})` : ""}`;
+                : // an older backend lists no read-aloud providers: its default
+                  cat?.tts && !ttsOptions.length
+                  ? "Read aloud unavailable (no key)"
+                  : `Default${
+                        setting === "ttsModel"
+                            ? ttsOptions[0]
+                                ? ` (${ttsOptions[0]})`
+                                : ""
+                            : ttsProvider === "openai" || !cat?.tts
+                              ? ` (${cat?.defaultVoice ?? "alloy"})`
+                              : ttsOptions[0]
+                                ? ` (${ttsOptions[0]})`
+                                : ""
+                    }`;
     const value = settings[setting];
     return (
         <SettingLabel>
@@ -491,7 +515,9 @@ function CatalogueRow({
                     ? "Live model"
                     : setting === "liveVoice"
                       ? "Live voice"
-                      : "Read-aloud voice"}
+                      : setting === "ttsModel"
+                        ? "Read-aloud model"
+                        : "Read-aloud voice"}
             <SettingsSelect
                 value={options.includes(value) ? value : ""}
                 disabled={!cat}
@@ -539,6 +565,7 @@ function Row({
     }
     if (
         setting === "aiModel" ||
+        setting === "ttsModel" ||
         setting === "ttsVoice" ||
         setting === "liveModel" ||
         setting === "liveVoice" ||
@@ -561,6 +588,10 @@ function Row({
                         // another provider has other models: back to its default
                         if (key === "aiProvider") updateSetting("aiModel", "");
                         if (key === "sttEngine") updateSetting("sttModel", "");
+                        if (key === "ttsProvider") {
+                            updateSetting("ttsModel", "");
+                            updateSetting("ttsVoice", "");
+                        }
                         // another provider has other models and voices
                         if (key === "liveProvider" || key === "aiProvider") {
                             updateSetting("liveModel", "");

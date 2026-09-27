@@ -37,9 +37,9 @@ def test_transcribes_with_the_default_model(client, heard):
 
 
 def test_a_listed_choice_is_kept_and_anything_else_falls_back(client, heard):
-    post(client, query="?provider=gemini&model=gemini-3.5-flash&lang=xx")
+    post(client, query="?provider=gemini&model=gemini-3.8-flash&lang=xx")
     post(client, query="?provider=openai&model=gpt-6-voice")
-    assert heard[0][:2] == ("gemini", "gemini-3.5-flash") and heard[0][4] == ""
+    assert heard[0][:2] == ("gemini", "gemini-3.8-flash") and heard[0][4] == ""
     assert heard[1][:2] == ("openai", "whisper-1")
 
 

@@ -150,7 +150,11 @@ export interface Settings {
     /** a model id from the backend's catalogue; "" = the provider's default */
     aiModel: string;
     aiReasoning: "default" | "low" | "medium" | "high";
-    /** the read-aloud voice; "" = the backend's default */
+    /** who reads answers aloud (auto: the backend's default) */
+    ttsProvider: "auto" | "openai" | "gemini";
+    /** that provider's read-aloud model; "" = its default */
+    ttsModel: string;
+    /** the read-aloud voice; "" = the provider's default */
     ttsVoice: string;
     /** who hears a voice message: the browser, else the server (auto), or a provider */
     sttEngine: "auto" | "browser" | "openai" | "gemini";
@@ -267,6 +271,8 @@ const DEFAULTS: Settings = {
     aiProvider: "auto",
     aiModel: "",
     aiReasoning: "default",
+    ttsProvider: "auto",
+    ttsModel: "",
     ttsVoice: "",
     sttEngine: "auto",
     sttModel: "",
@@ -537,6 +543,14 @@ export const ENUM_CHOICES = {
             gemini: "Gemini",
         },
     },
+    ttsProvider: {
+        label: "Read-aloud provider",
+        choices: {
+            auto: "Backend default",
+            openai: "OpenAI",
+            gemini: "Gemini",
+        },
+    },
     sttEngine: {
         label: "Speech recognition",
         choices: {
@@ -602,6 +616,7 @@ export type SelectKnobKey = keyof typeof SELECT_CHOICES;
 /** settings whose choices come from the backend's catalogue (/api/ai), not a table here */
 export const CATALOGUE_KEYS = [
     "aiModel",
+    "ttsModel",
     "ttsVoice",
     "sttModel",
     "liveModel",
@@ -713,6 +728,8 @@ export const PANEL_SECTIONS: {
             "aiProvider",
             "aiModel",
             "aiReasoning",
+            "ttsProvider",
+            "ttsModel",
             "ttsVoice",
             "sttEngine",
             "sttModel",

@@ -121,41 +121,43 @@ def _session_context_note(session: dict, current_cap_id: str) -> str | None:
 
 
 OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-5.4-mini")
-GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3-flash-preview")
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.6-flash")
 
 # AI settings (R2 of the 2026-09-26 report): what the chat may choose per request.
 # A curated list per provider (env-overridable), shown only where the key reaches it,
 # each model with the reasoning levels it takes (none: the model does not reason).
 # The env default is always offered.
 _LEVELS = ("low", "medium", "high")
+# Recent models only, and the cheaper ones that suit short answers about a page (R2 of
+# the 2026-09-27 report): no Astra or -pro OpenAI models, nothing deprecated.
 AI_MODELS = {
     "openai": [
+        ("gpt-6-sol", _LEVELS),
+        ("gpt-6-luna", _LEVELS),
+        ("gpt-5.6-sol", _LEVELS),
+        ("gpt-5.6-terra", _LEVELS),
+        ("gpt-5.6-luna", _LEVELS),
         ("gpt-5.4-mini", _LEVELS),
         ("gpt-5.4-nano", _LEVELS),
-        ("gpt-5.4", _LEVELS),
-        ("gpt-5.5", _LEVELS),
-        ("gpt-5.6-luna", _LEVELS),
-        ("gpt-5.6-terra", _LEVELS),
-        ("gpt-5.6-sol", _LEVELS),
-        ("gpt-4.1-mini", ()),
     ],
     "gemini": [
-        ("gemini-3-flash-preview", _LEVELS),
-        ("gemini-3.5-flash-lite", _LEVELS),
-        ("gemini-3.5-flash", _LEVELS),
         ("gemini-3.8-flash", _LEVELS),
+        ("gemini-3.7-flash", _LEVELS),
+        ("gemini-3.6-flash", _LEVELS),
+        ("gemini-3.5-flash-lite", _LEVELS),
+        ("gemini-3.1-flash-lite", _LEVELS),
         ("gemini-3.1-pro-preview", _LEVELS),
-        ("gemini-2.5-flash", ()),
     ],
 }
 
 
 def _levels_of(model: str) -> tuple[str, ...]:
     """The reasoning levels a model outside the curated list is assumed to take: pro
-    models high only (OpenAI documents that), GPT-5, o-series and Gemini 3 all three."""
-    if model.startswith(("gpt-5", "o")) and "-pro" in model:
+    models high only (OpenAI documents that), GPT-5 and 6, o-series and Gemini 3 all
+    three."""
+    if model.startswith(("gpt-5", "gpt-6", "o")) and "-pro" in model:
         return ("high",)
-    return _LEVELS if model.startswith(("gpt-5", "o", "gemini-3")) else ()
+    return _LEVELS if model.startswith(("gpt-5", "gpt-6", "o", "gemini-3")) else ()
 
 
 for _p, _env in (("openai", "AI_OPENAI_MODELS"), ("gemini", "AI_GEMINI_MODELS")):
@@ -189,8 +191,13 @@ PROVIDER_KEYS = {"openai": "OPENAI_API_KEY", "gemini": "GOOGLE_API_KEY"}
 # speech to text for browsers without their own (R1 of the 2026-09-26 report): the
 # recorded message goes here; the first of each list is the default
 STT_MODELS = {
-    "openai": ["whisper-1", "gpt-4o-mini-transcribe", "gpt-4o-transcribe"],
-    "gemini": ["gemini-3.5-transcribe", "gemini-3.5-flash"],
+    "openai": [
+        "whisper-1",
+        "gpt-transcribe",
+        "gpt-4o-mini-transcribe",
+        "gpt-4o-transcribe",
+    ],
+    "gemini": ["gemini-3.5-transcribe", "gemini-3.8-flash"],
 }
 STT_MAX_BYTES = 10 * 1024 * 1024  # about ten minutes of Opus; a message is seconds
 STT_TYPES = ("audio/webm", "audio/ogg", "audio/mp4", "audio/mpeg", "audio/wav")
@@ -226,13 +233,21 @@ LIVE_VOICES = {
 }
 # how soon a pause ends the user's turn: OpenAI's semantic VAD eagerness, and Gemini's
 # end-of-speech sensitivity with the silence it waits for
+# read aloud (R2 of the 2026-09-27 report): OpenAI's model is set in the environment;
+# Gemini's two, with its prebuilt voices (Live's). The first of each is the default
+TTS_MODELS = {
+    "openai": [os.getenv("TTS_MODEL", "gpt-4o-mini-tts")],
+    "gemini": ["gemini-3.8-flash-tts", "gemini-3.8-flash-lite-tts"],
+}
+TTS_VOICES_BY = {"openai": TTS_VOICES, "gemini": LIVE_VOICES["gemini"]}
+TTS_RATE = 24000  # Gemini's speech: 16-bit mono PCM at 24 kHz
 LIVE_TURN_END = {
     "patient": ("low", "END_SENSITIVITY_LOW", 1200),
     "normal": ("auto", "END_SENSITIVITY_HIGH", 800),
     "quick": ("high", "END_SENSITIVITY_HIGH", 500),
 }
 LIVE_SPEED = (0.5, 1.5)  # OpenAI's output speed range; 1.0 is natural
-LIVE_TRANSCRIBE = os.getenv("LIVE_OPENAI_TRANSCRIBE", "gpt-4o-mini-transcribe")
+LIVE_TRANSCRIBE = os.getenv("LIVE_OPENAI_TRANSCRIBE", "gpt-live-transcribe")
 LIVE_SDP_MAX = 64_000
 LIVE_HISTORY_TURNS = 12
 LIVE_LOG_MAX = 4000  # characters in one spoken turn
@@ -610,6 +625,98 @@ def _stt_choice(args) -> tuple[str, str] | None:
     models = _stt_models(provider) or STT_MODELS[provider]
     model = args.get("model") if args.get("model") in models else models[0]
     return provider, model
+
+
+def _tts_models(provider: str) -> list[str]:
+    """The provider's read-aloud models its key reaches (all, when listing fails)."""
+    reach = _reachable_models(provider)
+    return [m for m in TTS_MODELS[provider] if reach is None or m in reach]
+
+
+def _tts_choice(data: dict) -> tuple[str, str, str] | None:
+    """(provider, model, voice) for a reading: the request's provider (none when its key
+    is not set: the text never goes to one the settings did not choose); without one,
+    OpenAI, else Gemini. A listed model and voice, else the provider's defaults, so no
+    arbitrary string reaches a paid API."""
+    provider = data.get("provider") if isinstance(data.get("provider"), str) else None
+    if not provider:
+        provider = next((p for p, k in PROVIDER_KEYS.items() if os.getenv(k)), None)
+    if provider not in PROVIDER_KEYS or not os.getenv(PROVIDER_KEYS[provider]):
+        return None
+    models, voices = (
+        _tts_models(provider) or TTS_MODELS[provider],
+        TTS_VOICES_BY[provider],
+    )
+    model = data.get("model") if data.get("model") in models else models[0]
+    fallback = os.getenv("TTS_VOICE", "alloy") if provider == "openai" else voices[0]
+    voice = data.get("voice") if data.get("voice") in voices else fallback
+    return provider, model, voice
+
+
+def _wav_header(rate: int) -> bytes:
+    """A 16-bit mono WAV header for a stream of unknown length (sizes at their
+    maximum, which browsers play as "until the data ends")."""
+    return (
+        b"RIFF"
+        + (0xFFFFFFFF).to_bytes(4, "little")
+        + b"WAVEfmt "
+        + (16).to_bytes(4, "little")
+        + (1).to_bytes(2, "little")  # PCM
+        + (1).to_bytes(2, "little")  # mono
+        + rate.to_bytes(4, "little")
+        + (rate * 2).to_bytes(4, "little")
+        + (2).to_bytes(2, "little")
+        + (16).to_bytes(2, "little")
+        + b"data"
+        + (0xFFFFFFFF).to_bytes(4, "little")
+    )
+
+
+def _speak_gemini(text: str, model: str, voice: str):
+    """Gemini's speech for `text`, as WAV bytes while it is made. The request is made,
+    and its first audio awaited, before this returns: a refused key or model raises
+    here, while the route can still answer with an error rather than an empty WAV."""
+    from google import genai
+    from google.genai import types
+
+    # the checked key, not whichever the SDK finds; closed when the reading ends or is
+    # stopped (the generator's finally runs when the response is closed)
+    client = genai.Client(api_key=os.getenv(PROVIDER_KEYS["gemini"]))
+    config = types.GenerateContentConfig(
+        response_modalities=["AUDIO"],
+        speech_config=types.SpeechConfig(
+            voice_config=types.VoiceConfig(
+                prebuilt_voice_config=types.PrebuiltVoiceConfig(voice_name=voice)
+            )
+        ),
+    )
+
+    def audio():
+        for chunk in client.models.generate_content_stream(
+            model=model, contents=text, config=config
+        ):
+            content = chunk.candidates[0].content if chunk.candidates else None
+            for part in (content.parts or []) if content else []:
+                if part.inline_data and part.inline_data.data:
+                    yield part.inline_data.data
+
+    chunks = audio()
+    try:
+        first = next(chunks)
+    except BaseException:
+        client.close()
+        raise
+
+    def wav():
+        try:
+            yield _wav_header(TTS_RATE)
+            yield first
+            yield from chunks
+        finally:
+            chunks.close()
+            client.close()
+
+    return wav()
 
 
 def _transcribe(provider: str, model: str, audio: bytes, mime: str, lang: str) -> str:
@@ -1584,6 +1691,16 @@ def create_app():
                 "reasoning": list(REASONING_LEVELS),
                 "voices": list(TTS_VOICES),
                 "defaultVoice": os.getenv("TTS_VOICE", "alloy"),
+                # read aloud per provider, and the one used when none is chosen
+                "tts": {
+                    p: (
+                        {"models": _tts_models(p), "voices": list(TTS_VOICES_BY[p])}
+                        if os.getenv(key)
+                        else {"models": [], "voices": []}
+                    )
+                    for p, key in PROVIDER_KEYS.items()
+                },
+                "ttsDefault": (_tts_choice({}) or (None,))[0],
                 "stt": {
                     p: _stt_models(p) if os.getenv(key) else []
                     for p, key in PROVIDER_KEYS.items()
@@ -1754,33 +1871,43 @@ def create_app():
 
     @app.post("/api/tts")
     def tts_prepare():
-        if not os.getenv("OPENAI_API_KEY"):
-            return jsonify({"error": "no OPENAI_API_KEY — TTS unavailable"}), 501
         data = request.get_json(force=True)
+        data = data if isinstance(data, dict) else {}
+        choice = _tts_choice(data)
+        if choice is None:
+            return jsonify({"error": "no API key: read aloud unavailable"}), 501
         text = _text_field(data, "text")[:2000]
         if not text:
             return jsonify({"error": "empty text"}), 400
         tid = uuid.uuid4().hex[:12]
-        voice = data.get("voice")
-        # a listed voice, or the default: no arbitrary string reaches the API
-        voice = voice if voice in TTS_VOICES else os.getenv("TTS_VOICE", "alloy")
-        tts_texts[tid] = (text, voice)
+        tts_texts[tid] = (text, *choice)
         if len(tts_texts) > 50:  # drop oldest one-shots that were never fetched
             tts_texts.pop(next(iter(tts_texts)))
         return jsonify({"id": tid})
 
     @app.get("/api/tts/<tid>.mp3")
     def tts_stream(tid):
-        text, voice = tts_texts.pop(tid, (None, None))
+        """The reading, streamed: OpenAI's MP3, or Gemini's WAV (the name is the
+        widget's; the type says what it is)."""
+        text, provider, model, voice = tts_texts.pop(tid, (None,) * 4)
         if text is None:
             return jsonify({"error": "unknown or expired tts id"}), 404
+        if provider == "gemini":
+            if not os.getenv(PROVIDER_KEYS["gemini"]):
+                return jsonify({"error": "no API key: read aloud unavailable"}), 501
+            try:
+                wav = _speak_gemini(text, model, voice)
+            except Exception as e:  # the key, the model or the quota: said, not a WAV
+                print(f"[tts] gemini failed: {e}", flush=True)
+                return jsonify({"error": "read aloud failed"}), 502
+            return Response(stream_with_context(wav), mimetype="audio/wav")
         from openai import OpenAI
 
         client = OpenAI()
 
         def generate():
             with client.audio.speech.with_streaming_response.create(
-                model=os.getenv("TTS_MODEL", "gpt-4o-mini-tts"),
+                model=model,
                 voice=voice,
                 input=text,
                 response_format="mp3",

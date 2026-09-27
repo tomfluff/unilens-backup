@@ -29,6 +29,10 @@ export interface AiCatalogue {
     defaultVoice: string;
     /** the speech-to-text models each provider's key reaches (first = default) */
     stt: Record<string, string[]>;
+    /** read aloud: each provider's models and voices its key reaches (first = default) */
+    tts?: Record<string, { models: string[]; voices: string[] }>;
+    /** the provider that reads aloud when none is chosen */
+    ttsDefault?: string | null;
     /** Live: each provider's models its key reaches and its voices (first = default) */
     live: Record<string, { models: string[]; voices: string[] }>;
     /** the provider the server transcribes with when none is chosen */
