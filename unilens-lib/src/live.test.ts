@@ -20,23 +20,46 @@ describe("to16k", () => {
 });
 
 describe("toolCall", () => {
-    it("reads highlight's ids and go_to's one id", () => {
+    it("reads highlight's ids, go_to's one id, and zoom's id or change", () => {
         expect(toolCall("highlight", { ids: ["n1", 2, "n3"] })).toEqual({
             ids: ["n1", "n3"],
-            go: false,
+            act: "light",
         });
         expect(toolCall("go_to", { id: "n7" })).toEqual({
             ids: ["n7"],
-            go: true,
+            act: "go",
+        });
+        expect(toolCall("zoom", { id: "n7" })).toEqual({
+            ids: ["n7"],
+            act: "zoom",
+        });
+        expect(toolCall("zoom", { change: "out" })).toEqual({
+            ids: [],
+            act: "zoom",
+            change: "out",
+        });
+        // "zoom back out to normal" came as both: the reset wins; in + id is into it
+        expect(toolCall("zoom", { id: "n34", change: "reset" })).toEqual({
+            ids: [],
+            act: "zoom",
+            change: "reset",
+        });
+        expect(toolCall("zoom", { id: "n34", change: "in" })).toEqual({
+            ids: ["n34"],
+            act: "zoom",
         });
     });
 
     it("points at nothing for anything else", () => {
-        expect(toolCall("go_to", { id: 7 })).toEqual({ ids: [], go: true });
-        expect(toolCall("highlight", "n1")).toEqual({ ids: [], go: false });
-        expect(toolCall("zoom", { ids: ["n1"] })).toEqual({
+        expect(toolCall("go_to", { id: 7 })).toEqual({ ids: [], act: "go" });
+        expect(toolCall("highlight", "n1")).toEqual({ ids: [], act: "light" });
+        expect(toolCall("zoom", { change: "max" })).toEqual({
             ids: [],
-            go: false,
+            act: "zoom",
+        });
+        expect(toolCall("scroll", { ids: ["n1"] })).toEqual({
+            ids: [],
+            act: "light",
         });
     });
 });

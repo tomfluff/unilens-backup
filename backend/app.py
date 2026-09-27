@@ -269,7 +269,7 @@ LIVE_RULES = (
     "user has moved on the page, their words come with a new picture of what they "
     "see now and where it is on the page: answer about that view. When the page "
     "changes or the user clicks a new place, you receive its elements again: from "
-    "then on use only the ids of the newest inventory. {point}"
+    "then on use only the ids of the newest inventory. {point}{zoom}"
     "{lang}"
 )
 LIVE_POINT = (
@@ -298,29 +298,52 @@ LIVE_GO_DESCRIPTION = (
     "the user asks to go to it, to be taken to it, or to be shown where it is. An "
     "id from the page inventory."
 )
+LIVE_ZOOM_DESCRIPTION = (
+    "Zoom the page, only when the user asks. Give either id, to zoom into one "
+    "element (an id from the page inventory), or change: in or out a step, or "
+    "reset to 100%."
+)
+LIVE_ZOOM = (
+    "When the user asks you to zoom (into something, in, out, or back to normal "
+    "size), call zoom: with the id of what to zoom into, or with change set to in, "
+    "out or reset. "
+)
 
 
-def _live_tools(gemini: bool) -> list[dict]:
-    """The Live tools, in the provider's schema: highlight(ids) and go_to(id)."""
+def _live_tools(gemini: bool, point: bool = True, zoom: bool = False) -> list[dict]:
+    """The Live tools, in the provider's schema: highlight(ids) and go_to(id) when it
+    points, zoom(id | change) when it may zoom."""
     t = (lambda k: k.upper()) if gemini else (lambda k: k)
-    spec = [
-        (
-            "highlight",
-            LIVE_TOOL_DESCRIPTION,
-            "ids",
-            {"type": t("array"), "items": {"type": t("string")}},
-        ),
-        ("go_to", LIVE_GO_DESCRIPTION, "id", {"type": t("string")}),
-    ]
+    string = {"type": t("string")}
+    spec = []
+    if point:
+        spec += [
+            (
+                "highlight",
+                LIVE_TOOL_DESCRIPTION,
+                {"ids": {"type": t("array"), "items": string}},
+                ["ids"],
+            ),
+            ("go_to", LIVE_GO_DESCRIPTION, {"id": string}, ["id"]),
+        ]
+    if zoom:
+        spec.append(
+            (
+                "zoom",
+                LIVE_ZOOM_DESCRIPTION,
+                {"id": string, "change": {**string, "enum": ["in", "out", "reset"]}},
+                [],
+            )
+        )
     tools = []
-    for name, description, arg, schema in spec:
+    for name, description, properties, required in spec:
         tool = {
             "name": name,
             "description": description,
             "parameters": {
                 "type": t("object"),
-                "properties": {arg: schema},
-                "required": [arg],
+                "properties": properties,
+                "required": required,
             },
         }
         # Gemini: the model keeps talking while the page lights up (the result is
@@ -471,6 +494,18 @@ PHRASE_RULES = (
     "a whole sentence. Never explain or mention the braces."
 )
 
+# The assistant zooms the page when the user asks (R1 of the 2026-09-27 report); only
+# when the chat says it may. The widget acts on the marker once the answer is complete
+ZOOM_RULES = (
+    "The user can ask you to zoom the page for them. Only when they ask for a zoom "
+    "(into something, in, out, or back to normal size), add one zoom marker to your "
+    "answer: [[zoom:ID]] with the id of the inventory element to zoom into, the most "
+    "specific one that shows what they asked about; or [[zoom:in]], [[zoom:out]], or "
+    "[[zoom:reset]] for 100%. The page zooms when your answer is complete: say in a "
+    "few words what they will see. Never mention the marker."
+)
+ZOOM_RE = re.compile(r"( ?)\[\[zoom:(n\d+|in|out|reset)\]\]")
+
 # a selection is a few sources at most; their labels are the page's own words
 SELECTION_MAX = 30  # the chat's own cap; the About line says when it cut
 SELECTION_LABEL_MAX = 160
@@ -538,12 +573,13 @@ def _page_data(inventory, selection) -> str | None:
     return "\n\n".join(parts) or None
 
 
-def _chat_rules(inventory, selection, phrases=False) -> str | None:
+def _chat_rules(inventory, selection, phrases=False, zoom=False) -> str | None:
     rules = [
         r
         for r, on in (
             (EVIDENCE_RULES, inventory),
             (PHRASE_RULES, inventory and phrases),
+            (ZOOM_RULES, zoom),
             (SELECTION_RULES, selection),
         )
         if on
@@ -763,6 +799,16 @@ def _transcribe(provider: str, model: str, audio: bytes, mime: str, lang: str) -
     return " ".join(t for t in heard if t).strip() or (result.text or "").strip()
 
 
+def _unzoom(text: str) -> str:
+    """A zoom marker as the history keeps it: a zoom into an element is that element's
+    citation, a step or a reset is gone (it happened once; a later turn must not copy
+    it, and a chat back from a reload must not zoom again)."""
+    return ZOOM_RE.sub(
+        lambda m: f"{m.group(1)}[[{m.group(2)}]]" if m.group(2).startswith("n") else "",
+        text,
+    )
+
+
 def _strip_unknown_cites(text: str, ids: set[str]) -> str:
     """Drop [[id]] markers that name no element of the inventory in use. The
     space before one goes with it only when punctuation or the end follows:
@@ -853,6 +899,7 @@ def _chat_openai_request(
     stream=False,
     selection=None,
     phrases=False,
+    zoom=False,
     ai=None,
 ) -> dict:
     """Keyword arguments for responses.create; pure, so tests can inspect it.
@@ -870,7 +917,7 @@ def _chat_openai_request(
     }
     if (ai or {}).get("reasoning"):
         req["reasoning"] = {"effort": ai["reasoning"]}
-    rules = _chat_rules(inventory, selection, phrases)
+    rules = _chat_rules(inventory, selection, phrases, zoom)
     if rules:
         req["instructions"] = rules
     if stream:
@@ -887,6 +934,7 @@ def _call_openai(
     inventory=None,
     selection=None,
     phrases=False,
+    zoom=False,
     ai=None,
 ) -> str:
     from openai import OpenAI
@@ -901,6 +949,7 @@ def _call_openai(
             inventory,
             selection=selection,
             phrases=phrases,
+            zoom=zoom,
             ai=ai,
         )
     )
@@ -969,12 +1018,13 @@ def _chat_gemini_request(
     inventory=None,
     selection=None,
     phrases=False,
+    zoom=False,
     ai=None,
 ) -> dict:
     """Keyword arguments for generate_content(_stream); pure, so tests can inspect it."""
     from google.genai import types
 
-    rules = _chat_rules(inventory, selection, phrases)
+    rules = _chat_rules(inventory, selection, phrases, zoom)
     level = (ai or {}).get("reasoning")
     return {
         "model": (ai or {}).get("model") or GEMINI_MODEL,
@@ -1008,6 +1058,7 @@ def _call_gemini(
     inventory=None,
     selection=None,
     phrases=False,
+    zoom=False,
     ai=None,
 ) -> str:
     from google import genai
@@ -1025,6 +1076,7 @@ def _call_gemini(
             inventory,
             selection,
             phrases,
+            zoom=zoom,
             ai=ai,
         )
     )
@@ -1040,6 +1092,7 @@ def _stream_openai(
     inventory=None,
     selection=None,
     phrases=False,
+    zoom=False,
     ai=None,
 ):
     """Yield text deltas from the OpenAI Responses streaming API."""
@@ -1056,6 +1109,7 @@ def _stream_openai(
             stream=True,
             selection=selection,
             phrases=phrases,
+            zoom=zoom,
             ai=ai,
         )
     )
@@ -1073,6 +1127,7 @@ def _stream_gemini(
     inventory=None,
     selection=None,
     phrases=False,
+    zoom=False,
     ai=None,
 ):
     from google import genai
@@ -1090,6 +1145,7 @@ def _stream_gemini(
             inventory,
             selection,
             phrases,
+            zoom=zoom,
             ai=ai,
         )
     ):
@@ -1483,6 +1539,8 @@ def _live_choice(provider: str, raw) -> dict:
         "turnEnd": pick("turnEnd", LIVE_TURN_END) or "normal",
         "bargeIn": raw.get("bargeIn") is not False,
         "point": raw.get("point") is not False,
+        # the chat's "The assistant can zoom the page": off unless it says so
+        "zoom": raw.get("zoom") is True,
         "speed": (
             min(max(float(speed), LIVE_SPEED[0]), LIVE_SPEED[1]) if speed_ok else 1.0
         ),
@@ -1493,6 +1551,7 @@ def _live_choice(provider: str, raw) -> dict:
 def _live_instructions(choice: dict) -> str:
     return LIVE_RULES.format(
         point=LIVE_POINT if choice["point"] else "",
+        zoom=LIVE_ZOOM if choice["zoom"] else "",
         lang=LIVE_LANG.get(choice["lang"], ""),
     ).strip()
 
@@ -1558,7 +1617,7 @@ def _live_openai(sdp: str, choice: dict) -> str:
             },
             "output": {"voice": choice["voice"], "speed": choice["speed"]},
         },
-        "tools": _live_tools(gemini=False) if choice["point"] else [],
+        "tools": _live_tools(False, choice["point"], choice["zoom"]),
         "reasoning": {"effort": "low"},
     }
     answer = OpenAI(timeout=20, max_retries=0).realtime.calls.create(
@@ -1598,8 +1657,14 @@ def _live_gemini(choice: dict) -> tuple[str, str]:
             ),
         },
     }
-    if choice["point"]:
-        config["tools"] = [{"function_declarations": _live_tools(gemini=True)}]
+    if choice["point"] or choice["zoom"]:
+        config["tools"] = [
+            {
+                "function_declarations": _live_tools(
+                    True, choice["point"], choice["zoom"]
+                )
+            }
+        ]
     error = None
     for version in ("v1beta", "v1alpha"):
         client = genai.Client(http_options={"api_version": version})  # named: kept open
@@ -2139,6 +2204,9 @@ def create_app():
         phrases = data.get("mark_phrases", False)
         if not isinstance(phrases, bool):
             return jsonify({"error": "mark_phrases must be a boolean"}), 400
+        zoom = data.get("assistant_zoom", False)
+        if not isinstance(zoom, bool):
+            return jsonify({"error": "assistant_zoom must be a boolean"}), 400
         cite_ids = set(_inventory_ids(inventory or []))
 
         choice = _ai_choice(data)
@@ -2163,6 +2231,7 @@ def create_app():
                     inventory=inventory,
                     selection=selection,
                     phrases=phrases,
+                    zoom=zoom,
                     ai=choice,
                 )
                 for delta in deltas:
@@ -2171,8 +2240,9 @@ def create_app():
             except Exception as e:
                 yield sse({"error": f"{type(e).__name__}: {e}"})
                 return
-            # deltas went out as the model wrote them; history keeps only real ids
-            reply = _strip_unknown_cites("".join(parts), cite_ids)
+            # deltas went out as the model wrote them; history keeps only real ids,
+            # checked after a zoom marker became its citation
+            reply = _strip_unknown_cites(_unzoom("".join(parts)), cite_ids)
             new_history = history + [
                 {"role": "user", "text": message, "capture_id": cap_id},
                 {"role": "assistant", "text": reply},
@@ -2214,6 +2284,9 @@ def create_app():
         phrases = data.get("mark_phrases", False)
         if not isinstance(phrases, bool):
             return jsonify({"error": "mark_phrases must be a boolean"}), 400
+        zoom = data.get("assistant_zoom", False)
+        if not isinstance(zoom, bool):
+            return jsonify({"error": "assistant_zoom must be a boolean"}), 400
 
         choice = _ai_choice(data)
         provider = choice["provider"]
@@ -2230,16 +2303,20 @@ def create_app():
                 inventory=inventory,
                 selection=selection,
                 phrases=phrases,
+                zoom=zoom,
                 ai=choice,
             )
-            reply = _strip_unknown_cites(reply, set(_inventory_ids(inventory or [])))
+            ids = set(_inventory_ids(inventory or []))
+            # the widget gets the zoom marker; the history its citation, checked
+            saved = _strip_unknown_cites(_unzoom(reply), ids)
+            reply = _strip_unknown_cites(reply, ids)
         except Exception as e:  # surface provider errors to the popover
             return jsonify({"error": f"{type(e).__name__}: {e}"}), 502
         latency_ms = round((time.perf_counter() - t0) * 1000)
 
         history += [
             {"role": "user", "text": message, "capture_id": cap_id},
-            {"role": "assistant", "text": reply},
+            {"role": "assistant", "text": saved},
         ]
         _save_history(cap_dir, sid, session, history)
 

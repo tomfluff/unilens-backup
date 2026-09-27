@@ -318,3 +318,49 @@ def test_phrase_rule_only_with_an_inventory_and_when_asked():
     )
     g = app_module._chat_gemini_request(**_args(INVENTORY), phrases=True)
     assert app_module.PHRASE_RULES in g["config"].system_instruction
+
+
+def test_zoom_rules_only_when_the_chat_may_zoom():
+    """R1 of the 2026-09-27 report: the model may ask for a zoom only when allowed."""
+    inv = [{"i": "n1", "n": "Apply"}]
+    assert app_module.ZOOM_RULES in app_module._chat_rules(inv, [], False, True)
+    assert app_module.ZOOM_RULES not in app_module._chat_rules(inv, [], False, False)
+
+
+@pytest.mark.parametrize(
+    "text, saved",
+    [
+        # a zoom into an element stays as its citation; a step or a reset goes
+        ("Here it is, larger [[zoom:n1]].", "Here it is, larger [[n1]]."),
+        ("Zooming in [[zoom:in]].", "Zooming in."),
+        ("Back to normal [[zoom:reset]].", "Back to normal."),
+    ],
+)
+def test_history_keeps_no_zoom_to_repeat(text, saved):
+    assert app_module._unzoom(text) == saved
+
+
+def test_the_reply_keeps_its_zoom_marker_for_the_widget(client, capture, monkeypatch):
+    monkeypatch.setitem(
+        app_module.PROVIDERS["stub"], "call", lambda **_: "Zooming in [[zoom:in]]."
+    )
+    cap = capture()
+    res = client.post(
+        "/api/chat",
+        json={"capture_id": cap, "message": "zoom in", "assistant_zoom": True},
+    )
+    assert res.get_json()["reply"] == "Zooming in [[zoom:in]]."
+    assert _saved(cap)[-1]["text"] == "Zooming in."
+    # an invented id: no zoom citation reaches the history
+    monkeypatch.setitem(
+        app_module.PROVIDERS["stub"], "call", lambda **_: "Larger [[zoom:n999]]."
+    )
+    client.post(
+        "/api/chat",
+        json={"capture_id": cap, "message": "zoom", "assistant_zoom": True},
+    )
+    assert _saved(cap)[-1]["text"] == "Larger."
+    bad = client.post(
+        "/api/chat", json={"capture_id": cap, "message": "x", "assistant_zoom": "yes"}
+    )
+    assert bad.status_code == 400

@@ -67,6 +67,18 @@
 **Priority:** P2
 **Depends on:** None
 
+### The assistant operates the accessibility panel
+
+**What:** Let the assistant (chat and Live) use the accessibility panel's features on the user's request, as it now zooms: text size, line spacing, colours and contrast, invert.
+
+**Why:** The builder, 2026-09-27: the two widgets are to be brought together, and then the assistant could operate the accessibility features too. The zoom (`assistantZoom`, a `zoom` tool and a `[[zoom:…]]` marker) is the first of these actions.
+
+**Context:** The panel lives in `accessibility-lib/`; its settings are applied through the `--unilens-a11y-*` variables and `data-unilens-a11y-*` attributes on `<html>`. An action would follow the zoom's pattern: a tool for Live, a marker for the chat, a setting that allows it, and Back to undo.
+
+**Effort:** M
+**Priority:** P3
+**Depends on:** bringing the two widgets together
+
 ### A "New conversation" button
 
 **What:** A control in the chat that starts over: a new session, an empty log, and the places numbered from P1 again. The current conversation stays in the backend's session history.

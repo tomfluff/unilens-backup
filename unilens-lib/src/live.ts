@@ -23,6 +23,8 @@ export interface LiveOptions {
     turnEnd?: "patient" | "normal" | "quick";
     bargeIn?: boolean;
     point?: boolean;
+    /** the assistant may zoom the page (its zoom tool) */
+    zoom?: boolean;
     speed?: number;
     lang?: string;
 }
@@ -37,9 +39,10 @@ export interface LiveEvents {
     ): void;
     onState(state: LiveState): void;
     /** the model points at page elements while its turn `key` (null: not yet
-     *  speaking) goes on: lit where they are, or (`go`, the go_to tool) brought to
-     *  the middle. Returns what the model is told back */
-    onPoint(key: string | null, ids: string[], go: boolean): PointResult;
+     *  speaking) goes on: lit where they are ("light"), brought to the middle ("go",
+     *  go_to), or zoomed into ("zoom": its first id, or `change` a step or a reset).
+     *  Returns what the model is told back */
+    onPoint(key: string | null, call: ToolCall): PointResult;
     /** ended: stopped by the provider, a lost connection, or an error (once) */
     onEnd(error?: string): void;
     /** the user's turn begins (speech, or a typed message): a new picture of their
@@ -53,25 +56,42 @@ export interface LiveEvents {
 export interface PointResult {
     shown: string[];
     sources: string[];
+    /** after a zoom: where it went, as "250%" */
+    zoom?: string;
+}
+
+export interface ToolCall {
+    ids: string[];
+    act: "light" | "go" | "zoom";
+    change?: "in" | "out" | "reset";
 }
 
 /** a tool call's arguments as the chat takes them: highlight's ids, go_to's one id;
  *  anything else (another name, a malformed argument) points at nothing */
-export function toolCall(
-    name: string,
-    args: unknown,
-): { ids: string[]; go: boolean } {
+export function toolCall(name: string, args: unknown): ToolCall {
     const a = (args && typeof args === "object" ? args : {}) as {
         ids?: unknown;
         id?: unknown;
+        change?: unknown;
     };
-    if (name === "go_to")
-        return { ids: typeof a.id === "string" ? [a.id] : [], go: true };
-    if (name !== "highlight") return { ids: [], go: false };
+    const one = typeof a.id === "string" ? [a.id] : [];
+    if (name === "go_to") return { ids: one, act: "go" };
+    if (name === "zoom") {
+        const change =
+            a.change === "in" || a.change === "out" || a.change === "reset"
+                ? a.change
+                : undefined;
+        // out and reset win over an id sent with them (a model sends both for "zoom
+        // back out to normal"); in with an id is a zoom into it
+        return change && (change !== "in" || !one.length)
+            ? { ids: [], act: "zoom", change }
+            : { ids: one, act: "zoom" };
+    }
+    if (name !== "highlight") return { ids: [], act: "light" };
     const ids = Array.isArray(a.ids)
         ? a.ids.filter((i): i is string => typeof i === "string")
         : [];
-    return { ids, go: false };
+    return { ids, act: "light" };
 }
 
 /** what the user sees now, and a line saying where it is on the page (and, when
@@ -393,8 +413,7 @@ async function startOpenAI(
                 try {
                     args = JSON.parse(e.arguments);
                 } catch {}
-                const { ids, go } = toolCall(e.name, args);
-                const result = ev.onPoint(speakingKey, ids, go);
+                const result = ev.onPoint(speakingKey, toolCall(e.name, args));
                 called.add(e.response_id);
                 send({
                     type: "conversation.item.create",
@@ -779,21 +798,22 @@ async function startGemini(
                 const functionResponses = (
                     msg.toolCall.functionCalls ?? []
                 ).map((fc: { id: string; name: string; args?: unknown }) => {
-                    const { ids, go } = toolCall(fc.name, fc.args);
+                    const call = toolCall(fc.name, fc.args);
                     const result = ev.onPoint(
                         said(modelText) ? modelKey() : null,
-                        ids,
-                        go,
+                        call,
                     );
                     // highlight: SILENT, the model takes the result without a new
-                    // turn (else it says its answer again). go_to: WHEN_IDLE, so a
-                    // turn that was only the call still says something ("Here it
-                    // is"). A field of the response, not of its payload
+                    // turn (else it says its answer again). go_to and zoom:
+                    // WHEN_IDLE, so a turn that was only the call still says
+                    // something ("Here it is"). A field of the response, not of its
+                    // payload
                     return {
                         id: fc.id,
                         name: fc.name,
                         response: result,
-                        scheduling: go ? "WHEN_IDLE" : "SILENT",
+                        scheduling:
+                            call.act === "light" ? "SILENT" : "WHEN_IDLE",
                     };
                 });
                 sock.send(

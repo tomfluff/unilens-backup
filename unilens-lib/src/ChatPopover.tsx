@@ -13,6 +13,7 @@ import { ensureChatStyles } from "./chatStyles";
 import { type Earcon, earcon, releaseAudio } from "./earcons";
 import {
     asksToLocate,
+    asksToZoom,
     type Cited,
     mdLite,
     type NavCommand,
@@ -22,6 +23,7 @@ import {
     renderCited,
     sourcesIn,
     speakable,
+    zoomAsked,
 } from "./evidence";
 import {
     announce,
@@ -58,7 +60,9 @@ import {
     type LiveHandle,
     type LiveState,
     type LiveView,
+    type PointResult,
     startLive,
+    type ToolCall,
 } from "./live";
 import {
     goToPlace,
@@ -79,6 +83,7 @@ import {
     voiceEngine,
 } from "./speech";
 import {
+    assistantZoom,
     besideTarget,
     canReturn,
     directionOf,
@@ -106,6 +111,8 @@ interface Msg {
     /** a reply to a where/show question that cited nothing: styled as "nothing found",
      *  apart from an answer and from an error */
     quiet?: boolean;
+    /** the page zoomed for this answer: Back shows under it, cited or not */
+    zoomed?: boolean;
 }
 
 /** a capture's inventory (for labels) and its id → live element registry */
@@ -396,6 +403,8 @@ export default function ChatPopover({
     const livePointed = useRef(new Map<string, LivePoint[]>());
     /** each Live reply's words so far, captions on or off (where it pointed) */
     const liveHeard = useRef(new Map<string, string>());
+    /** what the user last said or typed in the talk: a zoom only when it asks for one */
+    const liveAsked = useRef("");
     /** sources pointed at before the reply's words began: its bubble takes them */
     const livePending = useRef<LivePoint[]>([]);
     /** the mic: recording, or (server speech recognition) turning the recording into
@@ -743,9 +752,96 @@ export default function ChatPopover({
                 const i = ms.findIndex((x) => x.id === m.id);
                 if (i < 0) return [...ms, m];
                 const next = ms.slice();
-                next[i] = m;
+                next[i] = { ...ms[i], ...m };
                 return next;
             });
+        /** what a Live tool call does: light, go to, or zoom (its words already
+         *  checked), and what the model is told back */
+        const pointFor = (key: string | null, call: ToolCall): PointResult => {
+            const none = { shown: [], sources: [] };
+            // the ids of the page its reply began on: a page sent again since
+            // does not change them
+            const src = key ? srcOf(bubble(key)) : talkSrc;
+            if (!src) return none;
+            const zooms = call.act === "zoom";
+            // a zoom a step in or out, or back to 100%: no element; the reply that
+            // asked shows Back under it
+            if (call.change) {
+                const z = Math.round(assistantZoom(call.change) * 100);
+                act("move", T.sZoomed(z));
+                setReturnable(canReturn());
+                if (key)
+                    setMessages((ms) =>
+                        ms.map((x) =>
+                            x.id === bubble(key) ? { ...x, zoomed: true } : x,
+                        ),
+                    );
+                else zoomedNext = true;
+                return { ...none, zoom: `${z}%` };
+            }
+            const valid = call.ids
+                .slice(0, call.act === "light" ? undefined : 1)
+                .filter((i) => src.registry.has(i));
+            const id = key ? bubble(key) : null;
+            const list = id
+                ? (livePointed.current.get(id) ?? [])
+                : livePending.current;
+            // where the reply was when it pointed: its number goes there
+            const at = id ? (liveHeard.current.get(id) ?? "").length : 0;
+            for (const v of valid)
+                if (!list.some((p) => p.id === v)) list.push({ id: v, at });
+            if (id) livePointed.current.set(id, list);
+            // the reply's sources in the chat's numbering: "the second
+            // one" is number 2 (A5 of the 2026-09-27 report)
+            const sources = list.map((p) => p.id);
+            if (!valid.length) return { shown: [], sources };
+            // zoomed into: the zoom first, so the chat's step aside
+            // measures where the element lands
+            const zoom = zooms
+                ? Math.round(
+                      assistantZoom(src.registry.get(valid[0]) as Element) *
+                          100,
+                  )
+                : null;
+            // lit where they are; only go_to moves the page, to the one
+            // the user asked for (bug 3 of the 2026-09-27 report)
+            point(
+                {
+                    id: id ?? "live-pending",
+                    role: "assistant",
+                    text: sources.map((i) => `[[${i}]]`).join(" "),
+                    cite: src,
+                },
+                valid.length === 1 ? sources.indexOf(valid[0]) : "all",
+                call.act === "go",
+                false,
+                false,
+                call.act === "light",
+            );
+            if (zoom !== null) {
+                act("move", T.sZoomed(zoom));
+                setReturnable(canReturn());
+            }
+            if (id)
+                setMessages((ms) =>
+                    ms.map((x) =>
+                        x.id === id ? { ...x, text: withChips(id) } : x,
+                    ),
+                );
+            // no "moved": one already on screen stays put, which the
+            // model took for a failure ("I tried to bring it up")
+            return zoom === null
+                ? { shown: valid, sources }
+                : { shown: valid, sources, zoom: `${zoom}%` };
+        };
+        /** a zoom called before the turn's words were in: done if they ask for it */
+        let zoomWaiting: {
+            key: string | null;
+            call: ToolCall;
+            at: number;
+        } | null = null;
+        /** a zoom done before its reply's words began: its bubble shows Back */
+        let zoomedNext = false;
         /** the view the talk last saw (the capture it starts with, then each new
          *  picture), and a picture being taken */
         let seen: ViewState = on.cap.meta;
@@ -909,6 +1005,7 @@ export default function ChatPopover({
                         turnEnd: s.liveTurnEnd,
                         bargeIn: s.liveBargeIn,
                         point: s.livePoint,
+                        zoom: s.assistantZoom,
                         speed: s.liveSpeed / 100,
                         lang: chatLang(),
                     },
@@ -927,6 +1024,21 @@ export default function ChatPopover({
                             final || getSettings().liveCaptions ? words : "";
                         stick.current = true;
                         if (role === "user") {
+                            if (!words.trim() && !final) {
+                                // a new turn: what it asks is not known yet
+                                liveAsked.current = "";
+                                zoomWaiting = null;
+                            } else if (words.trim()) {
+                                liveAsked.current = words;
+                                const w = zoomWaiting;
+                                zoomWaiting = null;
+                                if (
+                                    w &&
+                                    Date.now() - w.at < 3000 &&
+                                    asksToZoom(words)
+                                )
+                                    pointFor(w.key, w.call);
+                            }
                             setBubble({
                                 id,
                                 role,
@@ -946,9 +1058,13 @@ export default function ChatPopover({
                         }
                         liveWords.current.set(id, shown || "…");
                         liveHeard.current.set(id, words);
+                        // a zoom done before its words began: Back shows under it
+                        const zoomed = zoomedNext || undefined;
+                        zoomedNext = false;
                         setBubble({
                             id,
                             role,
+                            ...(zoomed ? { zoomed } : {}),
                             text: withChips(id),
                             streaming: !final,
                             cite: srcOf(id),
@@ -967,58 +1083,24 @@ export default function ChatPopover({
                         // the user's turn again: said, not only shown above the field
                         if (st === "listening") announce(liveLabel(st));
                     },
-                    onPoint: (key, ids, go) => {
-                        if (!mine() || !getSettings().livePoint)
-                            return { shown: [], sources: [] };
-                        // the ids of the page its reply began on: a page sent again
-                        // since does not change them
-                        const src = key ? srcOf(bubble(key)) : talkSrc;
-                        if (!src) return { shown: [], sources: [] };
-                        const valid = ids.filter((i) => src.registry.has(i));
-                        const id = key ? bubble(key) : null;
-                        const list = id
-                            ? (livePointed.current.get(id) ?? [])
-                            : livePending.current;
-                        // where the reply was when it pointed: its number goes there
-                        const at = id
-                            ? (liveHeard.current.get(id) ?? "").length
-                            : 0;
-                        for (const v of valid)
-                            if (!list.some((p) => p.id === v))
-                                list.push({ id: v, at });
-                        if (id) livePointed.current.set(id, list);
-                        // the reply's sources in the chat's numbering: "the second
-                        // one" is number 2 (A5 of the 2026-09-27 report)
-                        const sources = list.map((p) => p.id);
-                        if (!valid.length) return { shown: [], sources };
-                        // lit where they are; only go_to moves the page, to the one
-                        // the user asked for (bug 3 of the 2026-09-27 report)
-                        point(
-                            {
-                                id: id ?? "live-pending",
-                                role: "assistant",
-                                text: sources.map((i) => `[[${i}]]`).join(" "),
-                                cite: src,
-                            },
-                            valid.length === 1
-                                ? sources.indexOf(valid[0])
-                                : "all",
-                            go,
-                            false,
-                            false,
-                            !go,
-                        );
-                        if (id)
-                            setMessages((ms) =>
-                                ms.map((x) =>
-                                    x.id === id
-                                        ? { ...x, text: withChips(id) }
-                                        : x,
-                                ),
-                            );
-                        // no "moved": one already on screen stays put, which the
-                        // model took for a failure ("I tried to bring it up")
-                        return { shown: valid, sources };
+                    onPoint: (key, call) => {
+                        const none = { shown: [], sources: [] };
+                        if (!mine() || !talkSrc) return none;
+                        const set = getSettings();
+                        const zooms = call.act === "zoom";
+                        if (zooms ? !set.assistantZoom : !set.livePoint)
+                            return none;
+                        if (!zooms) return pointFor(key, call);
+                        // a zoom only when this turn's words ask for one; called
+                        // before they are transcribed, it waits for them (3 s)
+                        if (asksToZoom(liveAsked.current))
+                            return pointFor(key, call);
+                        if (liveAsked.current) return none;
+                        zoomWaiting = { key, call, at: Date.now() };
+                        return {
+                            ...none,
+                            zoom: "once the user's words are in",
+                        };
                     },
                     onTurn: () => (mine() ? take(false) : null),
                     onEnd: (error) => {
@@ -1542,7 +1624,36 @@ export default function ChatPopover({
         // one status for the answer and what it found: two writes in a row would
         // cut the first off before a screen reader says it
         let said = chatText().sAnswer(c?.ids.length ?? 0);
-        const done = () => act("done", said);
+        // the zoom the answer asks for (R1 of the 2026-09-27 report), once it is
+        // complete and after its sources are lit: into an element (lit, and the chat
+        // steps aside), or a step, or back to 100%
+        const asked =
+            getSettings().assistantZoom && asksToZoom(question)
+                ? zoomAsked(m.text)
+                : null;
+        const zoomNow = () => {
+            if (!asked) return;
+            let z: number | null = null;
+            if ("change" in asked) z = assistantZoom(asked.change);
+            else {
+                const el = src?.registry.get(asked.id);
+                if (el?.isConnected) {
+                    z = assistantZoom(el);
+                    const k = c?.ids.indexOf(asked.id) ?? -1;
+                    if (k >= 0) point(m, k, false);
+                }
+            }
+            if (z === null) return;
+            said += ` ${chatText().sZoomed(Math.round(z * 100))}`;
+            setReturnable(canReturn());
+            setMessages((ms) =>
+                ms.map((x) => (x.id === m.id ? { ...x, zoomed: true } : x)),
+            );
+        };
+        const done = () => {
+            zoomNow();
+            act("done", said);
+        };
         showAnswerStart(m.id);
         // asked where, pointed nowhere: "nothing found", styled apart from an answer
         if (c && !c.ids.length && asksToLocate(question))
@@ -1692,6 +1803,7 @@ export default function ChatPopover({
                 cite: getSettings().citeEvidence,
                 selection: sel ? { items: selectionIn(sel, on) } : undefined,
                 mark_phrases: getSettings().associateText,
+                assistant_zoom: getSettings().assistantZoom,
                 ai: aiChoice(),
             }),
         });
@@ -1789,6 +1901,7 @@ export default function ChatPopover({
                 cite: getSettings().citeEvidence,
                 selection: sel ? { items: selectionIn(sel, on) } : undefined,
                 mark_phrases: getSettings().associateText,
+                assistant_zoom: getSettings().assistantZoom,
                 ai: aiChoice(),
             }),
         });
@@ -1841,6 +1954,7 @@ export default function ChatPopover({
                     return;
                 }
             }
+            liveAsked.current = text;
             liveRef.current.say(text);
             if (sessionId)
                 void fetch(`${backend}/api/live/log`, {
@@ -1968,6 +2082,18 @@ export default function ChatPopover({
         act(ok ? "back" : "error", said);
     };
 
+    const backButton = (
+        <button
+            type="button"
+            className="ulc-c ulc-back"
+            aria-label={T.back}
+            title={T.backTitle}
+            onClick={goBack}
+        >
+            <BackIcon />
+        </button>
+    );
+
     /** a click, as its own entry in the log: a pin with its number, which goes there */
     const placeRow = (p: Place, key: string) => (
         <button
@@ -2057,17 +2183,7 @@ export default function ChatPopover({
                         <span>{nav ? T.allShort : T.highlightAll(n)}</span>
                     )}
                 </button>
-                {returnable && (
-                    <button
-                        type="button"
-                        className="ulc-c ulc-back"
-                        aria-label={T.back}
-                        title={T.backTitle}
-                        onClick={goBack}
-                    >
-                        <BackIcon />
-                    </button>
-                )}
+                {returnable && backButton}
             </div>
         );
     }
@@ -2101,9 +2217,13 @@ export default function ChatPopover({
         const at = typeof mine?.index === "number" ? mine.index : -1;
         const allOn = mine?.index === "all";
         const controls =
-            c && c.ids.length > 0 && !m.streaming
-                ? controlsFor(m, c, at, allOn)
-                : null;
+            c && c.ids.length > 0 && !m.streaming ? (
+                controlsFor(m, c, at, allOn)
+            ) : m.zoomed && returnable ? (
+                <div key="back" className="ulc-ctl">
+                    {backButton}
+                </div>
+            ) : null;
         rows.push(
             <div key={m.id} className="ulc-turn" data-turn={m.id}>
                 <div

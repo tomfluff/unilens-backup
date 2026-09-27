@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
     asksToLocate,
+    asksToZoom,
     getLastEvidenceDebug,
     mdLite,
     navCommand,
@@ -9,6 +10,7 @@ import {
     renderCited,
     sourcesIn,
     speakable,
+    zoomAsked,
 } from "./evidence";
 
 const known = (id: string) => ["n3", "n12", "n40"].includes(id);
@@ -434,5 +436,56 @@ describe("placeLiveMarkers (Live's numbers in its spoken words)", () => {
                 none,
             ),
         ).toBe("1,000円分が進呈されます [[n4]]。詳しくはタブにあります。");
+    });
+});
+
+describe("the zoom marker (R1 of the 2026-09-27 report)", () => {
+    it("says what zoom the answer asks for, the first one", () => {
+        expect(zoomAsked("Here it is, larger [[zoom:n12]].")).toEqual({
+            id: "n12",
+        });
+        expect(zoomAsked("Zooming in [[zoom:in]]. [[zoom:out]]")).toEqual({
+            change: "in",
+        });
+        expect(zoomAsked("No zoom here [[n12]].")).toBeNull();
+    });
+
+    it("never shows or reads the marker; a zoom into an element is its source", () => {
+        const r = renderCited(
+            "Here it is [[zoom:n12]]. Back [[zoom:reset]].",
+            known,
+            label,
+        );
+        expect(r.ids).toEqual(["n12"]);
+        expect(r.html).not.toContain("zoom");
+        expect(
+            renderCited("Zooming in [[zoom:i", known, label, true).html,
+        ).toBe("Zooming in");
+        expect(speakable("Zooming in [[zoom:in]].")).toBe("Zooming in.");
+    });
+});
+
+describe("asksToZoom: the assistant zooms only when asked", () => {
+    it("hears a zoom request in English and Japanese", () => {
+        for (const q of [
+            "Can you zoom into that?",
+            "Make it bigger, please",
+            "zoom back out to normal",
+            "そこを拡大して",
+            "もっと大きくして",
+            "元の大きさに戻して",
+        ])
+            expect(asksToZoom(q)).toBe(true);
+    });
+
+    it("does not hear one in other questions", () => {
+        for (const q of [
+            "What do shareholders get?",
+            "Quote the page's text exactly",
+            "株主優待は何ですか？",
+            "What does zoom mean on this page?",
+            "What does [[zoom:in]] mean?",
+        ])
+            expect(asksToZoom(q)).toBe(false);
     });
 });

@@ -108,6 +108,19 @@ def test_both_providers_get_highlight_and_go_to():
     assert gemini[0]["parameters"]["properties"]["ids"]["type"] == "ARRAY"
 
 
+def test_zoom_is_a_tool_only_when_the_chat_may_zoom():
+    """R1 of the 2026-09-27 report: zoom(id | change), declared when allowed."""
+    names = lambda tools: [t["name"] for t in tools]  # noqa: E731
+    assert names(app_module._live_tools(False, True, False)) == ["highlight", "go_to"]
+    assert names(app_module._live_tools(False, False, True)) == ["zoom"]
+    zoom = app_module._live_tools(True, True, True)[-1]
+    assert zoom["parameters"]["properties"]["change"]["enum"] == ["in", "out", "reset"]
+    assert zoom["parameters"]["required"] == []
+    on = app_module._live_choice("openai", {"zoom": True})
+    assert on["zoom"] is True and app_module._live_choice("openai", {})["zoom"] is False
+    assert app_module.LIVE_ZOOM.strip() in app_module._live_instructions(on)
+
+
 def test_the_rules_follow_the_options():
     choice = app_module._live_choice("openai", {"point": False, "lang": "ja"})
     rules = app_module._live_instructions(choice)

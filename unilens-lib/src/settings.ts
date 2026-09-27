@@ -145,6 +145,8 @@ export interface Settings {
     citeEvidence: boolean;
     /** a chat covering a source steps aside, to the nearer side (a pinned chat stays) */
     chatMovesAside: boolean;
+    /** the assistant zooms the page when the user asks (the chat and Live) */
+    assistantZoom: boolean;
     /** underline the fewest words each source supports, joined to its number */
     associateText: boolean;
     /** AI settings (research): the backend checks each choice against its catalogue */
@@ -270,6 +272,7 @@ const DEFAULTS: Settings = {
     sounds: true,
     citeEvidence: true,
     chatMovesAside: true,
+    assistantZoom: true,
     associateText: false,
     aiProvider: "auto",
     aiModel: "",
@@ -332,6 +335,7 @@ export const TOGGLE_LABELS: Record<BoolSettingKey, string> = {
     mmNumbers: "Numbers on targets",
     citeEvidence: "Answers cite page elements",
     chatMovesAside: "Move the chat out of the way of sources",
+    assistantZoom: "The assistant can zoom the page when asked",
     associateText:
         "Associate response text (underline what each source supports)",
     sounds: "A sound for every action",
@@ -664,6 +668,7 @@ export const PANEL_SECTIONS: {
             "autoHighlight",
             "moveToEvidence",
             "chatMovesAside",
+            "assistantZoom",
             "refreshView",
         ],
     },

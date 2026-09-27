@@ -447,8 +447,9 @@ export function isOwnUI(target: EventTarget | null): boolean {
 // yourself (scroll, pan, zoom, minimap) ends the run: the next move to evidence
 // bookmarks the place you moved to, since that is where you are reading now.
 
-/** where the user was reading before the current run, in content space */
-let bookmark: { cx: number; cy: number } | null = null;
+/** where the user was reading before the current run, in content space, and at what
+ *  zoom when the assistant zoomed during the run (Back restores it too) */
+let bookmark: { cx: number; cy: number; scale?: number } | null = null;
 /** where the run's latest move put the view: still there means the run goes on */
 let runEnd: { x: number; y: number; scale: number } | null = null;
 /** px of drift from runEnd still counted as not having moved (scroll rounding) */
@@ -536,12 +537,16 @@ export function besideTarget(
  */
 function rememberView(W: number, H: number) {
     const v = getTargetView();
+    // mid-zoom toward where the run's last zoom is heading: still that run
+    const zooming =
+        runEnd && scale !== targetScale && runEnd.scale === targetScale;
     const continues =
         bookmark &&
         runEnd &&
-        runEnd.scale === scale &&
-        Math.abs(v.x - runEnd.x) <= RUN_SLOP &&
-        Math.abs(v.y - runEnd.y) <= RUN_SLOP;
+        (zooming ||
+            (runEnd.scale === scale &&
+                Math.abs(v.x - runEnd.x) <= RUN_SLOP &&
+                Math.abs(v.y - runEnd.y) <= RUN_SLOP));
     if (!continues)
         bookmark = { cx: (v.x + W / 2) / scale, cy: (v.y + H / 2) / scale };
 }
@@ -574,8 +579,86 @@ export function returnToPreviousView(): boolean {
     const vv = window.visualViewport;
     const W = vv?.width ?? window.innerWidth;
     const H = vv?.height ?? window.innerHeight;
-    setView(b.cx * scale - W / 2, b.cy * scale - H / 2);
+    if (b.scale !== undefined && b.scale !== targetScale)
+        // the frame rememberView saved the centre in: the layout view's
+        setZoomPin(b.scale, b.cx, b.cy, W / 2, H / 2);
+    else setView(b.cx * scale - W / 2, b.cy * scale - H / 2);
     return true;
+}
+
+/** after the assistant zooms: where the zoom will leave the view, so a next zoom or
+ *  move continues the run, and Back returns to before its first */
+function zoomRunEnd() {
+    // landed (instant zoom): the view as it is, clamped at the page's edges;
+    // still zooming: where its anchor will put it
+    runEnd =
+        scale === targetScale
+            ? { ...getTargetView(), scale }
+            : {
+                  x: anchor.cx * targetScale - anchor.ax,
+                  y: anchor.cy * targetScale - anchor.ay,
+                  scale: targetScale,
+              };
+}
+
+/** a zoom step for "zoom in" and "zoom out": the Ctrl + and Ctrl − step */
+const ZOOM_STEP = 1.25;
+
+/**
+ * The assistant zooms, when the user asks it to (R1 of the 2026-09-27 report): into an
+ * element, fitted to the screen and centred as the double-click smart zoom does (at
+ * most MAX_ZOOM), or a step in or out, or back to 100%. Where the user was, and at
+ * what zoom, is bookmarked, so Back returns there. Returns the zoom it goes to.
+ */
+export function assistantZoom(to: Element | "in" | "out" | "reset"): number {
+    if (layoutW === 0) measureLayout();
+    const vv = window.visualViewport;
+    const W = vv?.width ?? window.innerWidth;
+    const H = vv?.height ?? window.innerHeight;
+    // the middle of what the user sees, under browser pinch zoom too
+    const ax = (vv?.offsetLeft ?? 0) + W / 2;
+    const ay = (vv?.offsetTop ?? 0) + H / 2;
+    const clamp = (z: number) => Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, z));
+    // a box-less wrapper (display: contents) is its children's box; nothing to fit
+    // (gone, collapsed) changes nothing, and leaves no Back
+    const r = typeof to === "string" ? null : to.isConnected ? boxOf(to) : null;
+    if (typeof to !== "string" && (!r || isEmptyBox(r))) return targetScale;
+    if (typeof to === "string" || !r) {
+        const z = clamp(
+            to === "reset"
+                ? 1
+                : targetScale * (to === "in" ? ZOOM_STEP : 1 / ZOOM_STEP),
+        );
+        // already there (reset at 100%, out at 100%, in at the most): no Back
+        if (Math.abs(z - targetScale) < 0.001) return z;
+        rememberView(W, H);
+        if (bookmark) bookmark.scale ??= scale;
+        setZoom(z, ax, ay);
+        zoomRunEnd();
+        return z;
+    }
+    const c = clientToContent(r.left + r.width / 2, r.top + r.height / 2);
+    // the element's content size fitted to the screen, with a margin, like smart zoom
+    const z = clamp(
+        Math.min(
+            (W - 48) / Math.max(1, r.width / scale),
+            (H - 48) / Math.max(1, r.height / scale),
+        ),
+    );
+    // already there and settled: a pan (revealElement keeps its own Back); mid-zoom,
+    // a new anchor (else the running zoom's anchor pulls the view back)
+    if (
+        Math.abs(z - targetScale) < 0.01 &&
+        Math.abs(scale - targetScale) < 0.01
+    ) {
+        revealElement(to, undefined, { always: true });
+        return z;
+    }
+    rememberView(W, H);
+    if (bookmark) bookmark.scale ??= scale;
+    setZoomPin(z, c.x, c.y, ax, ay);
+    zoomRunEnd();
+    return z;
 }
 
 /** where an element is relative to the screen, for spoken status */

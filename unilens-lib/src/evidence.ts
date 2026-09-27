@@ -14,6 +14,28 @@ const JOINED = /\[\[(n\d{1,5}(?:\]?\s*,\s*\[?n\d{1,5})+)\]\]/g;
 /** ...and one still streaming in: [[n42], [n4 */
 const PARTIAL_JOINED = /\s?\[\[n\d{1,5}\]?(?:\s*,\s*\[?(?:n\d{0,5}\]?)?)+$/;
 
+/** the assistant asks for a zoom (R1 of the 2026-09-27 report): into an element, a
+ *  step in or out, or back to 100%. Acted on once the answer is complete */
+const ZOOM = /\s?\[\[zoom:(n\d{1,5}|in|out|reset)\]\]/g;
+/** ...and one still streaming in */
+const PARTIAL_ZOOM = /\s?\[\[z(o(o(m(:[a-z0-9]*\]?)?)?)?)?$/;
+export type ZoomAsk = { id: string } | { change: "in" | "out" | "reset" };
+/** the zoom an answer asks for (its first), or null */
+export function zoomAsked(text: string): ZoomAsk | null {
+    const m = [...text.matchAll(ZOOM)][0];
+    if (!m) return null;
+    return m[1].startsWith("n")
+        ? { id: m[1] }
+        : { change: m[1] as "in" | "out" | "reset" };
+}
+/** zoom markers out of the text: one into an element is its source, as a citation */
+const unzoom = (text: string) =>
+    text.replace(ZOOM, (all, what: string) =>
+        what.startsWith("n")
+            ? `${all.startsWith("[") ? "" : " "}[[${what}]]`
+            : "",
+    );
+
 /** a joined marker as one marker per id, the form everything else reads */
 export const unjoin = (text: string) =>
     text.replace(JOINED, (_, ids: string) =>
@@ -79,8 +101,12 @@ export function renderCited(
     /** underline the words each citation supports ("Associate response text") */
     phrases = false,
 ): Cited {
-    let t = unjoin(text.replace(/[\uE0FC-\uE0FF]/g, ""));
-    if (streaming) t = t.replace(PARTIAL_JOINED, "").replace(PARTIAL, "");
+    let t = unjoin(unzoom(text.replace(/[\uE0FC-\uE0FF]/g, "")));
+    if (streaming)
+        t = t
+            .replace(PARTIAL_ZOOM, "")
+            .replace(PARTIAL_JOINED, "")
+            .replace(PARTIAL, "");
     const ids: string[] = [];
     t = t.replace(MARKER, (m, id: string) => {
         if (!known(id)) return "";
@@ -263,7 +289,7 @@ export function placeLiveMarkers(
 
 /** the reply as it should be read aloud or copied: no markers, no phrase braces */
 export const speakable = (text: string) =>
-    unjoin(text)
+    unjoin(unzoom(text))
         .replace(MARKER, "")
         .replace(/\{\{|\}\}/g, "");
 
@@ -335,6 +361,15 @@ export function navCommand(message: string): NavCommand | null {
  * ponytail: keyword heuristic (English + a few Japanese forms); a model-side signal
  * is the upgrade if it misfires in sessions.
  */
+/** the user asks for a zoom (in, out, back to normal, bigger, smaller): the assistant
+ *  zooms only then, whatever its answer or a page it quotes may say. A request, not
+ *  the word: "what does zoom mean?" and a question quoting a marker are not one */
+export const asksToZoom = (message: string) =>
+    !/\[\[/.test(message) &&
+    /\bzoom(ing)? ?(in|out|into|to|back|closer|on|it|that|this)\b|\b(enlarge|magnify|make (it|that|this|the page|them)( \w+)? (bigger|larger|smaller))\b|\b(bigger|larger|smaller|closer),? please\b|\bback to (normal|100 ?%)|拡大|縮小|ズーム|大きく|小さく|元の大きさ|等倍/i.test(
+        message,
+    );
+
 export const asksToLocate = (message: string) =>
     /\b(where|show|find|locate|point|highlight|which (?:one|button|link|part|section))\b|どこ|見せ|表示|探し/i.test(
         message,
