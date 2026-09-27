@@ -156,6 +156,25 @@ export interface Settings {
     sttEngine: "auto" | "browser" | "openai" | "gemini";
     /** the server's speech-to-text model; "" = the backend's default */
     sttModel: string;
+    /** Live, a spoken conversation: the provider (auto: the AI settings', else the
+     *  backend's) */
+    liveProvider: "auto" | "openai" | "gemini";
+    /** a Live model from the backend's catalogue; "" = the provider's default */
+    liveModel: string;
+    /** the Live voice; "" = the provider's default */
+    liveVoice: string;
+    /** how soon a pause ends the user's turn */
+    liveTurnEnd: "patient" | "normal" | "quick";
+    /** speaking over the model stops it */
+    liveBargeIn: boolean;
+    /** the model lights up what it talks about, and its words get source chips */
+    livePoint: boolean;
+    /** a picture of what the user sees goes with the page's elements */
+    liveScreenshot: boolean;
+    /** words show as they are spoken (off: once each turn is complete) */
+    liveCaptions: boolean;
+    /** the model's speaking rate, % (OpenAI; Gemini has none) */
+    liveSpeed: number;
     /** re-capture before a message when the user scrolled, panned or zoomed since the last one */
     refreshView: boolean;
     /** when an answer's evidence is outlined without a click */
@@ -251,6 +270,15 @@ const DEFAULTS: Settings = {
     ttsVoice: "",
     sttEngine: "auto",
     sttModel: "",
+    liveProvider: "auto",
+    liveModel: "",
+    liveVoice: "",
+    liveTurnEnd: "normal",
+    liveBargeIn: true,
+    livePoint: true,
+    liveScreenshot: true,
+    liveCaptions: true,
+    liveSpeed: 100,
     refreshView: true,
     autoHighlight: "where",
     escapeOrder: "highlight",
@@ -309,6 +337,10 @@ export const TOGGLE_LABELS: Record<BoolSettingKey, string> = {
     fxHug: "Frame: breathing",
     fxEdgeGradient: "Edge: moving gradient",
     fxPin: "Edge: pin at the click",
+    liveBargeIn: "Stop it by speaking over it",
+    livePoint: "Light up what it talks about",
+    liveScreenshot: "Send a picture of my view",
+    liveCaptions: "Show words as they are spoken",
 };
 
 /** keys of Settings whose value is a number — the integer knob rows in the panel */
@@ -328,6 +360,12 @@ export const NUMBER_KNOBS: Record<
     captureRes: { label: "Capture resolution", min: 0.5, max: 1, step: 0.5 },
     chatFontSize: { label: "Chat scale", min: 14, max: 20, step: 3 },
     chatTextScale: { label: "Text size (%)", min: 80, max: 200, step: 10 },
+    liveSpeed: {
+        label: "Speaking rate (%, OpenAI)",
+        min: 50,
+        max: 150,
+        step: 10,
+    },
     inventoryMaxDepth: {
         label: "Inventory max depth",
         min: 1,
@@ -517,6 +555,22 @@ export const ENUM_CHOICES = {
             high: "High",
         },
     },
+    liveProvider: {
+        label: "Provider",
+        choices: {
+            auto: "As the AI settings",
+            openai: "OpenAI",
+            gemini: "Gemini",
+        },
+    },
+    liveTurnEnd: {
+        label: "My turn ends after",
+        choices: {
+            patient: "A long pause (take my time)",
+            normal: "A normal pause",
+            quick: "A short pause (snappy)",
+        },
+    },
     escapeOrder: { label: "Escape order", choices: ESCAPE_ORDERS },
 } as const satisfies Partial<
     Record<keyof Settings, { label: string; choices: Record<string, string> }>
@@ -546,7 +600,13 @@ export type SelectKnobKey = keyof typeof SELECT_CHOICES;
  * toggle, choice and number appears in exactly one group (settings.test.ts).
  */
 /** settings whose choices come from the backend's catalogue (/api/ai), not a table here */
-export const CATALOGUE_KEYS = ["aiModel", "ttsVoice", "sttModel"] as const;
+export const CATALOGUE_KEYS = [
+    "aiModel",
+    "ttsVoice",
+    "sttModel",
+    "liveModel",
+    "liveVoice",
+] as const;
 
 export const PANEL_SECTIONS: {
     title: string;
@@ -656,6 +716,20 @@ export const PANEL_SECTIONS: {
             "ttsVoice",
             "sttEngine",
             "sttModel",
+        ],
+    },
+    {
+        title: "Live interaction",
+        keys: [
+            "liveProvider",
+            "liveModel",
+            "liveVoice",
+            "liveTurnEnd",
+            "liveBargeIn",
+            "livePoint",
+            "liveScreenshot",
+            "liveCaptions",
+            "liveSpeed",
         ],
     },
     {

@@ -1,5 +1,5 @@
 import { useEffect, useId, useRef, useState } from "react";
-import { aiChoice } from "./ai";
+import { aiCatalogue, aiChoice, liveProvider } from "./ai";
 import type { CaptureResult } from "./capture";
 import { chatLang, chatText, speechLang } from "./chatI18n";
 import { ensureChatStyles } from "./chatStyles";
@@ -30,6 +30,7 @@ import {
     CloseIcon,
     ExpandIcon,
     HighlightIcon,
+    LiveIcon,
     MicIcon,
     MinimizeIcon,
     NewChatIcon,
@@ -44,6 +45,7 @@ import {
     WaitIcon,
 } from "./icons";
 import { labelOfWire, type WireNode } from "./inventory";
+import { type LiveHandle, type LiveState, startLive } from "./live";
 import {
     goToPlace,
     latestPlace,
@@ -361,6 +363,14 @@ export default function ChatPopover({
         );
     };
 
+    // ── Live: a spoken conversation, its turns as messages (live.ts) ────────────
+    const [live, setLive] = useState<LiveState | null>(null);
+    const liveRef = useRef<LiveHandle | null>(null);
+    /** each live reply's words so far, and the sources it pointed at (its chips) */
+    const liveWords = useRef(new Map<string, string>());
+    const livePointed = useRef(new Map<string, string[]>());
+    /** sources pointed at before the reply's words began: its bubble takes them */
+    const livePending = useRef<string[]>([]);
     /** the mic: recording, or (server speech recognition) turning the recording into
      *  text, when the field says so and the button cancels rather than stops */
     const [listening, setListening] = useState<
@@ -461,6 +471,7 @@ export default function ChatPopover({
     const openedFrom = useRef<HTMLElement | null>(null);
     /** what closing does, whether the chat is hidden or gone */
     const quiet = () => {
+        liveRef.current?.stop();
         stopSpeaking();
         // cancel, not stop: a stop delivers what was heard and sends it
         stopListenRef.current?.(true);
@@ -475,6 +486,8 @@ export default function ChatPopover({
     // biome-ignore lint/correctness/useExhaustiveDependencies: on mount and unmount only
     useEffect(() => {
         if (startedOver) act("press", T.sNewConversation);
+        // the Live button asks it on its click: fetched now, the click starts at once
+        void aiCatalogue();
         openedFrom.current = document.activeElement as HTMLElement | null;
         // reopened by itself after a reload: the page keeps the keyboard
         if (reloaded !== "restored")
@@ -544,7 +557,7 @@ export default function ChatPopover({
     /** the mic: speak, and the words fill the field as they are heard. With "send
      *  what I say when I pause" on (voiceAutoSend) they then go to the assistant, on a
      *  pause or a second press; off, they stay in the field to check and send. (A
-     *  first step toward live voice conversation, TODOS.md.) */
+     *  first step toward live voice conversation; see the Live button.) */
     const heard = useRef("");
     function toggleVoice() {
         const s = getSettings();
@@ -605,6 +618,211 @@ export default function ChatPopover({
             stopListenRef.current = stop;
             setListening("voice");
             act("micOn", auto ? T.sRecording : T.sListening);
+        }
+    }
+
+    /** a note in the log and on the status line, apart from an answer */
+    function sayNote(text: string) {
+        act("error", text);
+        setMessages((m) => [
+            ...m,
+            { id: `note-${Date.now()}`, role: "assistant", text, quiet: true },
+        ]);
+    }
+
+    const liveLabel = (st: LiveState) =>
+        ({
+            connecting: T.sLiveStarting,
+            listening: T.sLiveListening,
+            hearing: T.sLiveHearing,
+            thinking: T.sLiveThinking,
+            speaking: T.sLiveSpeaking,
+        })[st];
+
+    /** Live: talk with the assistant about the page; each turn's words come in as
+     *  messages, and what it talks about lights up. Pressed again, it ends */
+    async function toggleLive() {
+        if (live) {
+            liveRef.current?.stop();
+            return;
+        }
+        const provider = liveProvider(await aiCatalogue());
+        if (!provider) return sayNote(T.sNoLive);
+        setLive("connecting");
+        act("micOn", T.sLiveStarting);
+        stopSpeaking();
+        // the page as it is now: a chat back from a reload, or a moved view, captures
+        // it first (the talk points at its elements)
+        let on = cur.current;
+        if (refreshCapture && on.id !== "local") {
+            const fresh = await refreshCapture(on.cap, on.id, () =>
+                setStatus(T.sUpdatingView),
+            );
+            if (fresh) {
+                on = fresh;
+                cur.current = fresh;
+            }
+        }
+        if (aborter.current.signal.aborted) return;
+        if (on.id === "local") {
+            setLive(null);
+            return sayNote(T.sLiveFailed);
+        }
+        const s = getSettings();
+        const src = citeSource(on);
+        const bubble = (key: string) => `live-${key}`;
+        /** a reply's words, then its sources as chips */
+        const withChips = (id: string) =>
+            [
+                liveWords.current.get(id) ?? "",
+                ...(livePointed.current.get(id) ?? []).map((i) => `[[${i}]]`),
+            ]
+                .join(" ")
+                .trim();
+        const setBubble = (m: Msg) =>
+            setMessages((ms) => {
+                const i = ms.findIndex((x) => x.id === m.id);
+                if (i < 0) return [...ms, m];
+                const next = ms.slice();
+                next[i] = m;
+                return next;
+            });
+        // each finished turn joins the session's history: the text chat goes on from it
+        const log = (role: "user" | "assistant", text: string) => {
+            if (!sessionId) return;
+            void fetch(`${backend}/api/live/log`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    session_id: sessionId,
+                    capture_id: on.id,
+                    role,
+                    text,
+                }),
+            }).catch(() => {});
+        };
+        try {
+            const handle = await startLive(
+                backend,
+                provider,
+                {
+                    captureId: on.id,
+                    sessionId,
+                    screenshot: s.liveScreenshot,
+                    options: {
+                        model: s.liveModel || undefined,
+                        voice: s.liveVoice || undefined,
+                        turnEnd: s.liveTurnEnd,
+                        bargeIn: s.liveBargeIn,
+                        point: s.livePoint,
+                        speed: s.liveSpeed / 100,
+                        lang: chatLang(),
+                    },
+                },
+                {
+                    onWords: (role, key, words, final) => {
+                        const id = bubble(key);
+                        // nothing was heard or said: no bubble
+                        if (final && !words.trim()) {
+                            setMessages((ms) => ms.filter((x) => x.id !== id));
+                            return;
+                        }
+                        // captions off: the words show once the turn is complete
+                        const shown =
+                            final || getSettings().liveCaptions ? words : "";
+                        stick.current = true;
+                        if (role === "user") {
+                            setBubble({
+                                id,
+                                role,
+                                text: shown || "…",
+                                streaming: !final,
+                                captureId: on.id,
+                            });
+                            if (final) log(role, words);
+                            return;
+                        }
+                        if (
+                            !livePointed.current.has(id) &&
+                            livePending.current.length
+                        ) {
+                            livePointed.current.set(id, livePending.current);
+                            livePending.current = [];
+                        }
+                        liveWords.current.set(id, shown || "…");
+                        setBubble({
+                            id,
+                            role,
+                            text: withChips(id),
+                            streaming: !final,
+                            cite: src,
+                        });
+                        if (final) {
+                            liveWords.current.set(id, words);
+                            log(role, withChips(id));
+                        }
+                    },
+                    onState: (st) => {
+                        setLive(st);
+                        setStatus(liveLabel(st));
+                    },
+                    onPoint: (key, ids) => {
+                        if (!src || !getSettings().livePoint) return [];
+                        const valid = ids.filter((i) => src.registry.has(i));
+                        if (!valid.length) return [];
+                        const id = key ? bubble(key) : null;
+                        const list = id
+                            ? (livePointed.current.get(id) ?? [])
+                            : livePending.current;
+                        for (const v of valid)
+                            if (!list.includes(v)) list.push(v);
+                        if (id) livePointed.current.set(id, list);
+                        // drawn and brought into view like a chip pressed in the reply
+                        point(
+                            {
+                                id: id ?? "live-pending",
+                                role: "assistant",
+                                text: list.map((i) => `[[${i}]]`).join(" "),
+                                cite: src,
+                            },
+                            valid.length === 1 ? list.indexOf(valid[0]) : "all",
+                            true,
+                        );
+                        if (id)
+                            setMessages((ms) =>
+                                ms.map((x) =>
+                                    x.id === id
+                                        ? { ...x, text: withChips(id) }
+                                        : x,
+                                ),
+                            );
+                        return valid;
+                    },
+                    onEnd: (error) => {
+                        liveRef.current = null;
+                        setLive(null);
+                        // captions still open are what was said so far
+                        setMessages((ms) =>
+                            ms
+                                .filter((x) => !(x.streaming && x.text === "…"))
+                                .map((x) =>
+                                    x.id.startsWith("live-") && x.streaming
+                                        ? { ...x, streaming: false }
+                                        : x,
+                                ),
+                        );
+                        if (error) sayNote(T.sLiveLost);
+                        else act("micOff", T.sLiveEnded);
+                    },
+                },
+            );
+            // the chat went while it connected
+            if (aborter.current.signal.aborted) return handle.stop();
+            liveRef.current = handle;
+        } catch (err) {
+            console.warn("[UniLens] live talk failed to start:", err);
+            setLive(null);
+            if (!aborter.current.signal.aborted) sayNote(T.sLiveFailed);
         }
     }
 
@@ -1361,6 +1579,28 @@ export default function ChatPopover({
     /** queuedId: a question that waited for a new place's capture, already in the log */
     async function sendText(text: string, queuedId?: string) {
         if (!text || busy) return;
+        // during a live talk, typing is part of it
+        if (liveRef.current) {
+            const id = `live-typed-${Date.now()}`;
+            setMessages((m) => [
+                ...m,
+                { id, role: "user", text, captureId: cur.current.id },
+            ]);
+            stick.current = true;
+            liveRef.current.say(text);
+            if (sessionId)
+                void fetch(`${backend}/api/live/log`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        session_id: sessionId,
+                        capture_id: cur.current.id,
+                        role: "user",
+                        text,
+                    }),
+                }).catch(() => {});
+            return;
+        }
         // what "this" meant as the user sent it: a view refresh or a new click later
         // must not change it
         const sel = selectionNow();
@@ -1702,7 +1942,7 @@ export default function ChatPopover({
             aria-label={voiceLabel}
             title={voiceLabel}
             onClick={toggleVoice}
-            disabled={busy && !listening}
+            disabled={(busy && !listening) || live != null}
         >
             {listening === "transcribing" ? (
                 <WaitIcon />
@@ -1711,6 +1951,19 @@ export default function ChatPopover({
             ) : (
                 <MicIcon />
             )}
+        </button>
+    );
+    const liveButton = (
+        <button
+            type="button"
+            className="ulc-ib ulc-live"
+            aria-pressed={live != null}
+            aria-label={live ? T.liveStop : T.liveStart}
+            title={live ? T.liveStop : T.liveStart}
+            onClick={() => void toggleLive()}
+            disabled={(busy || Boolean(listening)) && !live}
+        >
+            {live ? <StopIcon /> : <LiveIcon />}
         </button>
     );
     let lastAnswer = -1;
@@ -1789,6 +2042,8 @@ export default function ChatPopover({
                 )}
                 {/* folded, the chat keeps its voice: record a message, hear the last answer */}
                 {mini && voiceOK && voiceButton("ulc-ib")}
+                {/* a live talk goes on while folded: it can be ended from here too */}
+                {mini && live && liveButton}
                 {mini &&
                     lastAnswer >= 0 &&
                     readControls(
@@ -1932,6 +2187,7 @@ export default function ChatPopover({
             {!mini && (
                 <div className="ulc-in">
                     {voiceOK && voiceButton("ulc-ib")}
+                    {liveButton}
                     <input
                         ref={inputRef}
                         aria-describedby={about ? aboutId : undefined}

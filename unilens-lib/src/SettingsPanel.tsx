@@ -5,7 +5,12 @@
 import { useEffect, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import styled from "styled-components";
-import { type AiCatalogue, aiCatalogue, setAiBackend } from "./ai";
+import {
+    type AiCatalogue,
+    aiCatalogue,
+    liveProvider,
+    setAiBackend,
+} from "./ai";
 import {
     type BoolSettingKey,
     clampSetting,
@@ -391,7 +396,13 @@ function CatalogueRow({
     setting,
     settings,
 }: {
-    setting: "aiModel" | "ttsVoice" | "aiReasoning" | "sttModel";
+    setting:
+        | "aiModel"
+        | "ttsVoice"
+        | "aiReasoning"
+        | "sttModel"
+        | "liveModel"
+        | "liveVoice";
     settings: Settings;
 }) {
     const [cat, setCat] = useState<AiCatalogue | null | undefined>(undefined);
@@ -447,18 +458,28 @@ function CatalogueRow({
             : (cat?.sttDefault ??
               Object.keys(cat?.stt ?? {}).find((p) => cat?.stt[p]?.length));
     const sttOptions = (sttProvider && cat?.stt[sttProvider]) || [];
+    // Live: its provider's models or voices
+    const live = cat ? cat.live?.[liveProvider(cat) ?? ""] : undefined;
+    const liveOptions =
+        (setting === "liveModel" ? live?.models : live?.voices) ?? [];
     const options =
         setting === "aiModel"
             ? (entry?.models ?? []).map((m) => m.id)
             : setting === "sttModel"
               ? sttOptions
-              : (cat?.voices ?? []);
+              : setting === "liveModel" || setting === "liveVoice"
+                ? liveOptions
+                : (cat?.voices ?? []);
     const fallback =
         setting === "aiModel"
             ? `Provider default${entry ? ` (${entry.default})` : ""}`
             : setting === "sttModel"
               ? `Default${sttOptions[0] ? ` (${sttOptions[0]})` : ""}`
-              : `Default${cat ? ` (${cat.defaultVoice})` : ""}`;
+              : setting === "liveModel" || setting === "liveVoice"
+                ? cat && !liveOptions.length
+                    ? "Live unavailable (no key)"
+                    : `Default${liveOptions[0] ? ` (${liveOptions[0]})` : ""}`
+                : `Default${cat ? ` (${cat.defaultVoice})` : ""}`;
     const value = settings[setting];
     return (
         <SettingLabel>
@@ -466,7 +487,11 @@ function CatalogueRow({
                 ? "Model"
                 : setting === "sttModel"
                   ? "Speech-to-text model (server)"
-                  : "Read-aloud voice"}
+                  : setting === "liveModel"
+                    ? "Live model"
+                    : setting === "liveVoice"
+                      ? "Live voice"
+                      : "Read-aloud voice"}
             <SettingsSelect
                 value={options.includes(value) ? value : ""}
                 disabled={!cat}
@@ -515,6 +540,8 @@ function Row({
     if (
         setting === "aiModel" ||
         setting === "ttsVoice" ||
+        setting === "liveModel" ||
+        setting === "liveVoice" ||
         setting === "aiReasoning" ||
         setting === "sttModel"
     )
@@ -534,6 +561,11 @@ function Row({
                         // another provider has other models: back to its default
                         if (key === "aiProvider") updateSetting("aiModel", "");
                         if (key === "sttEngine") updateSetting("sttModel", "");
+                        // another provider has other models and voices
+                        if (key === "liveProvider" || key === "aiProvider") {
+                            updateSetting("liveModel", "");
+                            updateSetting("liveVoice", "");
+                        }
                     }}
                 >
                     {Object.entries(ENUM_CHOICES[key].choices).map(

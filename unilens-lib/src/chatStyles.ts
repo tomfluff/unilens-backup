@@ -53,7 +53,7 @@ ${R} .ulc-speak { display: inline-grid; place-items: center; width: 2em; height:
 ${R} .ulc-speak svg { width: 1.1em; height: 1.1em; }
 ${R} .ulc-read { display: inline-flex; gap: .3em; margin-left: .35em; vertical-align: middle; }
 ${R} .ulc-read .ulc-speak { margin-left: 0; }
-${R} .ulc-voice[aria-pressed="true"] { animation: ulc-rec 1.2s ease-in-out infinite; }
+${R} .ulc-voice[aria-pressed="true"], ${R} .ulc-live[aria-pressed="true"] { animation: ulc-rec 1.2s ease-in-out infinite; }
 @keyframes ulc-rec { 50% { box-shadow: 0 0 0 .3em rgba(220, 38, 38, .35); } }
 ${R} .ulc-where { display: inline-flex; align-items: center; gap: .4em; flex: none; max-width: 100%; min-height: 2.3em; padding: .15em .75em .15em .5em; font-size: .95em; line-height: 1.3; }
 ${R} .ulc-where.is-pending { border-style: dashed; cursor: default; }
@@ -105,7 +105,7 @@ ${R} .ulc-typing i:nth-child(2) { animation-delay: .15s } ${R} .ulc-typing i:nth
 @keyframes ulc-lvl { 0%, 100% { height: 30% } 50% { height: 100% } }
 @media (prefers-reduced-motion: reduce) {
   ${R} { transition: none !important; }
-  ${R} .ulc-caret, ${R} .ulc-lvl i, ${R} .ulc-voice, ${R} .ulc-typing i { animation: none !important; }
+  ${R} .ulc-caret, ${R} .ulc-lvl i, ${R} .ulc-voice, ${R} .ulc-live, ${R} .ulc-typing i { animation: none !important; }
   ${R} .ulc-typing i { opacity: .7; }
 }
 ${R} .unilens-cite { display: inline-grid; place-items: center; min-width: 1.75em; height: 1.75em; padding: 0 .3em; margin: 0 .12em; border: 0; border-radius: 999px; font-weight: 700; font-size: 1em; line-height: 1; vertical-align: .08em; font-variant-numeric: tabular-nums; cursor: pointer; }

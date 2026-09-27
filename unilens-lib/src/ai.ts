@@ -29,6 +29,8 @@ export interface AiCatalogue {
     defaultVoice: string;
     /** the speech-to-text models each provider's key reaches (first = default) */
     stt: Record<string, string[]>;
+    /** Live: each provider's models its key reaches and its voices (first = default) */
+    live: Record<string, { models: string[]; voices: string[] }>;
     /** the provider the server transcribes with when none is chosen */
     sttDefault?: string | null;
 }
@@ -62,4 +64,21 @@ export function aiChoice(): AiChoice | undefined {
     if (s.aiModel) c.model = s.aiModel;
     if (s.aiReasoning !== "default") c.reasoning = s.aiReasoning;
     return Object.keys(c).length ? c : undefined;
+}
+
+/** who a Live conversation is with: the Live setting, else the AI settings' provider,
+ *  else the backend's; null when that provider has no Live model here */
+export function liveProvider(
+    cat: AiCatalogue | null,
+): "openai" | "gemini" | null {
+    const s = getSettings();
+    const p =
+        s.liveProvider !== "auto"
+            ? s.liveProvider
+            : s.aiProvider !== "auto"
+              ? s.aiProvider
+              : cat?.default;
+    return (p === "openai" || p === "gemini") && cat?.live?.[p]?.models.length
+        ? p
+        : null;
 }

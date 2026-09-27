@@ -48,6 +48,12 @@ export const MicIcon = () => (
         <path d="M5 11a7 7 0 0 0 14 0M12 18v3" />
     </Icon>
 );
+/** Live: a spoken conversation, as sound waves */
+export const LiveIcon = () => (
+    <Icon>
+        <path d="M4 10v4M8 7v10M12 4v16M16 7v10M20 10v4" />
+    </Icon>
+);
 export const SendIcon = () => (
     <Icon>
         <path d="M5 12h13M13 6l6 6-6 6" />

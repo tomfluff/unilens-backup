@@ -47,20 +47,20 @@
 **Priority:** P2
 **Depends on:** None
 
-### Live voice conversation
+### Live talk: what the first version leaves out
 
-**What:** Turn the voice message into a live exchange: speak, hear the answer read back, and speak again without touching the chat. Barge-in stops the reading when the user starts talking.
+**What:** The chat's Live button (a spoken conversation over the OpenAI Realtime or Gemini Live API, `live.ts`) ships with open-mic turn-taking and the options that were clear. Still to do:
+- push-to-talk (hold a key or the button), for users whose screen reader also speaks, or who think aloud;
+- "wait until I say go" (no automatic reply);
+- a language choice beyond the chat's language, and a headset/laptop mic setting (OpenAI noise reduction, Gemini sensitivity);
+- sending the new view when the user scrolls or zooms mid-talk (OpenAI `conversation.item.delete` + a new item; Gemini `clientContent` between turns);
+- test Gemini on laptop speakers: its audio plays through Web Audio, which the browser's echo canceller may not hear, so it could interrupt itself;
+- test a talk past 10 minutes (Gemini resumes on `goAway`) and near OpenAI's 60-minute limit;
+- host pages whose CSP blocks `wss://generativelanguage.googleapis.com` (Gemini) or the microphone (`Permissions-Policy`).
 
-**Why:** The builder's direction (2026-09-24): "in the future, what we want to do is enable sort of like live interactions." The voice message button is the first step.
+**Why:** The builder asked for live interactions (2026-09-24) and approved a first version with the undecided choices as settings (2026-09-27).
 
-**Context:**
-- Today the voice message records with the browser's SpeechRecognition, which ends on a pause. It sends the transcript as a typed message (`toggleVoiceMessage` in `unilens-lib/src/ChatPopover.tsx`).
-- Reading aloud uses `/api/tts` with a native fallback, and has play, pause and stop (`speech.ts`).
-- Next steps:
-  - a conversation mode that reads each answer aloud and listens again after it;
-  - a way to interrupt, spoken or a key;
-  - the earcons as turn-taking cues;
-  - possibly a streaming speech API instead of browser STT, for Japanese quality and interruption.
+**Context:** Research brief: `.local/research/2026-09-27-realtime-apis.md` (parts E and F list the options and the untested points). Backend: `/api/live/<provider>` and `/api/live/log` in `backend/app.py`.
 
 **Effort:** M
 **Priority:** P2
