@@ -53,7 +53,7 @@
 - push-to-talk (hold a key or the button), for users whose screen reader also speaks, or who think aloud;
 - "wait until I say go" (no automatic reply);
 - a language choice beyond the chat's language, and a headset/laptop mic setting (OpenAI noise reduction, Gemini sensitivity);
-- Gemini garbles a question that the page's elements land in the middle of (a click, then a question within about 1.7 s): the words held while the page is captured reach it all at once after the page, and it hears them wrong ("What about Open Show?"). A moved view's picture does the same, less often. Sending them at twice their pace made it worse; `realtimeInput` for the page, instead of `clientContent`, is untried;
+- Gemini mishears a question when the page reaches it mid-question (a click, then a question within about 1.7 s; or a scroll, then a question): the audio held while the page is captured arrives all at once after the page, and Gemini hears it wrong ("What about Open Show?"). Sending the held audio at twice its pace made it worse. Option to try: send the page through Gemini's streaming input (`realtimeInput`), beside the audio, instead of `clientContent`, so no audio is held;
 - Gemini's transcripts carry no turn id: words that arrive after the next turn has started go to that turn, and the history keeps a turn's words as they were when it completed;
 - test Gemini on laptop speakers: its audio plays through Web Audio, which the browser's echo canceller may not hear, so it could interrupt itself;
 - test a talk past 10 minutes (Gemini resumes on `goAway`) and near OpenAI's 60-minute limit;
