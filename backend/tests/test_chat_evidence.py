@@ -152,6 +152,9 @@ def test_stream_sends_deltas_as_written_but_saves_only_known_ids(
         ("Over-long [[n123456]] id", "Over-long id"),
         ("Adjacent [[n2]][[n99]][[n1]].", "Adjacent [[n2]][[n1]]."),
         ("Not a marker [[x1]] or [n2].", "Not a marker [[x1]] or [n2]."),
+        # Gemini joins ids in one marker: split, then checked one by one
+        ("Gets ¥1,000 [[n1], [n2]].", "Gets ¥1,000 [[n1]] [[n2]]."),
+        ("Gets ¥1,000 [[n1, n99, n2]].", "Gets ¥1,000 [[n1]] [[n2]]."),
     ],
 )
 def test_strip_unknown_cites(text, expected):
@@ -215,3 +218,62 @@ def test_gemini_request_adds_rules_and_inventory_only_with_an_inventory():
     assert plain["config"].system_instruction == SYSTEM_PROMPT
     texts = [p.text for c in plain["contents"] for p in c.parts if p.text]
     assert not any(t.startswith("## Page inventory") for t in texts)
+
+
+# ── Selection: what "this" means (bug 5 of the 2026-09-26 report) ──────────
+
+
+@pytest.mark.parametrize("route", ROUTES)
+def test_provider_gets_the_selection_cleaned(client, capture, monkeypatch, route):
+    seen = {}
+
+    def fake(**kw):
+        seen.update(kw)
+        return iter(["ok"]) if route.endswith("stream") else "ok"
+
+    kind = "stream" if route.endswith("stream") else "call"
+    monkeypatch.setitem(app_module.PROVIDERS["stub"], kind, fake)
+    selection = {
+        "items": [
+            {"id": "n3", "label": "  Apply \n now "},
+            {"id": "n3; drop", "label": "kept, id dropped"},
+            {"label": "   "},
+            "not an item",
+            {"id": "n4"},
+        ]
+    }
+    cap = capture(INVENTORY)
+    _reply(client, route, cap, selection=selection)
+    assert seen["selection"] == [
+        {"id": "n3", "label": "Apply now"},
+        {"label": "kept, id dropped"},
+    ]
+    _reply(client, route, cap)
+    assert seen["selection"] == []
+
+
+def test_selection_is_capped():
+    items = [{"id": f"n{i}", "label": "x" * 500} for i in range(40)]
+    got = app_module._selection({"selection": {"items": items}})
+    assert len(got) == app_module.SELECTION_MAX
+    assert all(len(it["label"]) == app_module.SELECTION_LABEL_MAX for it in got)
+    assert app_module._selection({"selection": "n3"}) == []
+
+
+def test_requests_carry_the_selection_as_data_with_its_rule():
+    sel = [{"id": "n3", "label": "Apply now"}]
+    req = app_module._chat_openai_request(**_args(INVENTORY), selection=sel)
+    assert req["instructions"] == EVIDENCE_RULES + "\n\n" + app_module.SELECTION_RULES
+    page = next(t for t in _openai_texts(req) if t.startswith("## Page inventory"))
+    assert "## Selected on the page" in page
+    assert "Apply now" not in page  # labels are datamarked, like the inventory
+    assert '"id":"n3"' in page
+
+    g = app_module._chat_gemini_request(**_args(INVENTORY), selection=sel)
+    assert g["config"].system_instruction.endswith(app_module.SELECTION_RULES)
+
+    # no selection: no rule, no block (the inventory's random delimiters make two
+    # requests differ, so compare what they carry)
+    none = app_module._chat_openai_request(**_args(INVENTORY), selection=[])
+    assert none["instructions"] == EVIDENCE_RULES
+    assert not any("## Selected on the page" in t for t in _openai_texts(none))

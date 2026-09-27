@@ -155,12 +155,12 @@ export function useClickOrDragBox(
             if (suppressClick) {
                 suppressClick = false;
                 e.preventDefault();
-                e.stopPropagation();
+                e.stopImmediatePropagation();
                 return;
             }
             if (!triggers.click(e)) return;
             e.preventDefault();
-            e.stopPropagation();
+            e.stopImmediatePropagation();
             emitter.publish({
                 type: "click",
                 x: e.clientX,
@@ -175,14 +175,19 @@ export function useClickOrDragBox(
         el.addEventListener("mousedown", onMouseDown);
         el.addEventListener("mousemove", onMouseMove);
         el.addEventListener("mouseup", onMouseUp);
-        el.addEventListener("click", onClick);
+        // capture phase, from the window for a document: the page's own handlers (an
+        // accordion, a tab, its own capture listeners on the document) never run on
+        // the trigger click, so what is captured is what was clicked. Only a window
+        // capture listener the page added first still runs.
+        const clickAt: EventTarget = el instanceof Document ? window : el;
+        clickAt.addEventListener("click", onClick, true);
 
         return () => {
             window.removeEventListener("blur", cancelDrag);
             el.removeEventListener("mousedown", onMouseDown);
             el.removeEventListener("mousemove", onMouseMove);
             el.removeEventListener("mouseup", onMouseUp);
-            el.removeEventListener("click", onClick);
+            clickAt.removeEventListener("click", onClick, true);
             removeDragBox();
         };
     }, [el, triggers, emitter]);

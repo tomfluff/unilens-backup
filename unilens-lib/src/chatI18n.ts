@@ -68,6 +68,13 @@ const EN = {
         `Where you clicked, P${n}: ${label}. Go there`,
     /** the divider where a hidden chat was shown again */
     shownAgain: (time: string) => `Reopened at ${time}`,
+    /** above the field while something is selected: what "this" will mean */
+    aboutSource: (n: string, label: string) => `About source ${n}: ${label}`,
+    aboutAll: (n: number) => `About all ${n} sources`,
+    aboutFirst: (k: number, n: number) =>
+        `About the first ${k} of ${n} sources`,
+    aboutPlace: (n: number, label: string) => `About P${n}: ${label}`,
+    aboutDrop: "Stop asking about this (clears the outline)",
     evidenceLabel: (n: number, label: string) => `Source ${n}: ${label}`,
     // status line and live region
     sAsking: "Sent. Waiting for the answer…",
@@ -177,6 +184,12 @@ const JA: Strings = {
     placeEntry: (n: number, label: string) =>
         `クリックした場所 P${n}: ${label}。移動する`,
     shownAgain: (time: string) => `${time} に再表示`,
+    aboutSource: (n: string, label: string) => `出典 ${n} について: ${label}`,
+    aboutAll: (n: number) => `出典 ${n} 件すべてについて`,
+    aboutFirst: (k: number, n: number) =>
+        `出典 ${n} 件のうち最初の ${k} 件について`,
+    aboutPlace: (n: number, label: string) => `P${n} について: ${label}`,
+    aboutDrop: "これについて聞くのをやめる（強調を消す）",
     evidenceLabel: (n: number, label: string) => `出典 ${n}: ${label}`,
     sAsking: "送信しました。回答を待っています…",
     sCapturing: "クリックした場所を取り込んでいます…",

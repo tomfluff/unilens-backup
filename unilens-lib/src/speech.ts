@@ -114,6 +114,11 @@ export function stopSpeaking() {
     speechSynthesis.cancel();
     if (audioEl) {
         audioEl.pause();
+        // a paused element keeps downloading, and the backend streams each reading
+        // live: drop the source so the stream closes (six held streams exhaust the
+        // browser's connections to the backend, and every reading after waits forever)
+        audioEl.removeAttribute("src");
+        audioEl.load();
         audioEl = null;
     }
     setState("idle");

@@ -79,6 +79,8 @@ describe("speak", () => {
         let started: () => void = () => {};
         const playing = new Promise<void>((r) => (started = r));
         class FakeAudio {
+            removeAttribute() {}
+            load() {}
             paused = false;
             reject: (e: Error) => void = () => {};
             play() {
@@ -113,6 +115,8 @@ describe("speak", () => {
         vi.stubGlobal("speechSynthesis", synth);
         vi.stubGlobal("SpeechSynthesisUtterance", class {});
         class BlockedAudio {
+            removeAttribute() {}
+            load() {}
             paused = false;
             play() {
                 return Promise.reject(
@@ -136,6 +140,8 @@ describe("speak", () => {
         vi.stubGlobal("speechSynthesis", { speak: vi.fn(), cancel: vi.fn() });
         const made: LateAudio[] = [];
         class LateAudio {
+            removeAttribute() {}
+            load() {}
             paused = false;
             onended: (() => void) | null = null;
             constructor() {
@@ -165,6 +171,8 @@ describe("speak", () => {
         vi.stubGlobal("speechSynthesis", synth);
         vi.stubGlobal("SpeechSynthesisUtterance", class {});
         class MissingAudio {
+            removeAttribute() {}
+            load() {}
             paused = true;
             onerror: (() => void) | null = null;
             play() {
@@ -181,5 +189,36 @@ describe("speak", () => {
         await speak("hello", (s) => states.push(s));
         expect(synth.speak).toHaveBeenCalled();
         expect(states).not.toContain("idle");
+    });
+
+    it("closes the stopped reading's download", async () => {
+        vi.stubGlobal(
+            "fetch",
+            vi.fn(async () => new Response(JSON.stringify({ id: "x" }))),
+        );
+        vi.stubGlobal("speechSynthesis", { speak: vi.fn(), cancel: vi.fn() });
+        const made: StreamingAudio[] = [];
+        class StreamingAudio {
+            paused = false;
+            src = "stream.mp3";
+            constructor() {
+                made.push(this);
+            }
+            play() {
+                return Promise.resolve();
+            }
+            pause() {
+                this.paused = true;
+            }
+            removeAttribute(name: string) {
+                if (name === "src") this.src = "";
+            }
+            load = vi.fn();
+        }
+        vi.stubGlobal("Audio", StreamingAudio);
+        await speak("hello");
+        stopSpeaking();
+        expect(made[0].src).toBe("");
+        expect(made[0].load).toHaveBeenCalled();
     });
 });

@@ -77,7 +77,9 @@ function measureLayout() {
     layoutH = document.documentElement.scrollHeight;
     document.body.style.transform = prev;
     document.documentElement.style.height = prevH;
-    if (window.scrollX !== sx || window.scrollY !== sy) window.scrollTo(sx, sy);
+    // instant: a page's smooth scroll-behavior would animate it, moving the view
+    if (window.scrollX !== sx || window.scrollY !== sy)
+        window.scrollTo({ left: sx, top: sy, behavior: "instant" });
 }
 
 /** re-measure after the page changes size — reactive content, images loading, etc. */
@@ -471,15 +473,13 @@ function atDestination(r: ClientRect): ClientRect {
  * view alone when the element is already fully on screen, so the page never moves
  * without need, unless `always`. The first of a run of moves is bookmarked so the
  * user can return to where they were reading ("back" / "戻る"). Returns what happened.
+ * A chat covering the element is the chat's to move (`besideTarget`), not the page's:
+ * the element always goes to the middle, where the reader looks first.
  */
 export function revealElement(
     el: Element,
     measure?: (el: Element) => ClientRect,
-    opts: {
-        always?: boolean;
-        /** client rect to keep the element out from under (the chat popover) */
-        avoid?: { left: number; top: number; right: number; bottom: number };
-    } = {},
+    opts: { always?: boolean } = {},
 ): "moved" | "in-view" | "none" {
     const now = boxOf(el, measure);
     if (isEmptyBox(now)) return "none";
@@ -492,57 +492,41 @@ export function revealElement(
     const T = vv?.offsetTop ?? 0;
     const W = vv?.width ?? window.innerWidth;
     const H = vv?.height ?? window.innerHeight;
-    const a = opts.avoid;
-    const covered =
-        !!a &&
-        r.left < a.right &&
-        r.left + r.width > a.left &&
-        r.top < a.bottom &&
-        r.top + r.height > a.top;
     if (
         !opts.always &&
-        !covered &&
         r.left >= L &&
         r.top >= T &&
         r.left + r.width <= L + W &&
         r.top + r.height <= T + H
     )
         return "in-view";
-    // aim for the middle of the screen, or with a popover in the way, the middle of
-    // the largest free band beside it (one the element fits in, when there is one)
-    let cx = L + W / 2;
-    let cy = T + H / 2;
-    if (a) {
-        // bands beside the popover only help when the page can pan sideways: at 100%
-        // most pages cannot, so the element goes above or below the popover instead
-        const canPanX = frozen
-            ? layoutW * scale > W
-            : document.documentElement.scrollWidth > window.innerWidth;
-        const bands = [
-            ...(canPanX
-                ? [
-                      { x: L, y: T, w: a.left - L, h: H },
-                      { x: a.right, y: T, w: L + W - a.right, h: H },
-                  ]
-                : []),
-            { x: L, y: T, w: W, h: a.top - T },
-            { x: L, y: a.bottom, w: W, h: T + H - a.bottom },
-        ].filter((b) => b.w > 0 && b.h > 0);
-        const fits = bands.filter((b) => b.w >= r.width && b.h >= r.height);
-        const pick = (fits.length ? fits : bands).sort(
-            (p, q) => q.w * q.h - p.w * p.h,
-        )[0];
-        if (pick) {
-            // a full-width band keeps the element's own x: no sideways move is possible
-            cx = canPanX ? pick.x + pick.w / 2 : r.left + r.width / 2;
-            cy = pick.y + pick.h / 2;
-        }
-    }
+    const cx = L + W / 2;
+    const cy = T + H / 2;
     const v = getTargetView();
     rememberView(W, H);
     setView(v.x + r.left + r.width / 2 - cx, v.y + r.top + r.height / 2 - cy);
     endOfRun();
     return "moved";
+}
+
+/**
+ * Where a chat covering a target can go instead: the nearer of the two sides that
+ * clear the target by `pad` and keep the chat on screen (8 px margin), as the chat's
+ * new left edge; null when neither side has room (the target is too wide).
+ */
+export function besideTarget(
+    target: { left: number; right: number },
+    chat: { left: number; width: number },
+    viewportW: number,
+    pad = 16,
+): number | null {
+    const sides = [target.left - pad - chat.width, target.right + pad].filter(
+        (x) => x >= 8 && x + chat.width <= viewportW - 8,
+    );
+    if (!sides.length) return null;
+    return sides.sort(
+        (p, q) => Math.abs(p - chat.left) - Math.abs(q - chat.left),
+    )[0];
 }
 
 /**
@@ -1082,13 +1066,34 @@ function onKeyDown(e: KeyboardEvent) {
 
 export function initZoom() {
     measureLayout();
+    // content that opens or closes (a tab, an accordion, lazy images) resizes the
+    // page: panning, captures and the minimap need its new size
+    // (ponytail: the body's box only; content positioned outside it is measured again
+    // at each capture, not here)
+    let settle: number | undefined;
+    const onSize = () => {
+        // once it settles: a height animation would otherwise re-measure every frame
+        window.clearTimeout(settle);
+        settle = window.setTimeout(() => {
+            const [w, h] = [layoutW, layoutH];
+            measureLayout();
+            // a page that got shorter must not leave the lens past its end
+            if (frozen && !tween && (w !== layoutW || h !== layoutH))
+                jumpView(pan.x, pan.y);
+        }, 150);
+    };
+    const watchSize = () => {
+        measureLayout();
+        if (typeof ResizeObserver !== "undefined")
+            new ResizeObserver(onSize).observe(document.body);
+    };
     // init() from <head>: dimensions measured mid-parse (or not at all) are
     // wrong — re-measure once the document is fully parsed
     if (document.readyState === "loading") {
-        document.addEventListener("DOMContentLoaded", () => measureLayout(), {
+        document.addEventListener("DOMContentLoaded", watchSize, {
             once: true,
         });
-    }
+    } else if (document.body) watchSize();
     window.addEventListener("resize", () => {
         measureLayout();
         if (scale === 1) return;

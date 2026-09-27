@@ -17,6 +17,7 @@ import {
     getView,
     getZoom,
     getZoomTrace,
+    refreshLayout,
     stripFixedPins,
     type ZoomEvent,
 } from "./zoom";
@@ -400,6 +401,7 @@ export async function capture(
     const pinchZoom = vvp ? Math.round((vvp.scale ?? 1) * 100) / 100 : 1;
     // the lens offset, which is document scroll or transform pan depending on the engine
     const { x: scrollX, y: scrollY } = getView();
+    refreshLayout(); // the page's size now, even if it grew since the last measure
     const zoom = getZoom();
     const z = zoom.scale;
     const pageW = zoom.layoutW; // unzoomed layout size — the screenshot is rendered without the zoom transform

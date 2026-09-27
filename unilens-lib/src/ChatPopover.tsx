@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import type { CaptureResult } from "./capture";
 import { chatLang, chatText, speechLang } from "./chatI18n";
 import { ensureChatStyles } from "./chatStyles";
@@ -11,6 +11,7 @@ import {
     navCommand,
     recordEvidence,
     renderCited,
+    sourcesIn,
     speakable,
 } from "./evidence";
 import {
@@ -59,6 +60,7 @@ import {
     sttSupported,
 } from "./speech";
 import {
+    besideTarget,
     canReturn,
     directionOf,
     returnToPreviousView,
@@ -105,6 +107,20 @@ const placeEntry = (captureId: string): Msg[] =>
 
 /** which reply's evidence is outlined: all of it, or one item of it */
 type Active = { msgId: string; index: number | "all" } | null;
+
+/** the most sources a question carries (the backend's SELECTION_MAX) */
+const SELECTION_MAX = 30;
+
+/** what the user has selected on the page as they ask: one source, all of an
+ *  answer's sources, or a place's clicked element */
+interface Selection {
+    kind: "source" | "all" | "place";
+    /** the source's or place's number, or how many sources for "all" */
+    n: number;
+    /** a source keeps its element: its id is looked up again in the capture the
+     *  question goes with, which may be a newer one (a view refresh) */
+    items: { id?: string; label: string; el?: Element }[];
+}
 
 function cited(m: Msg): Cited | null {
     const src = m.cite;
@@ -400,6 +416,7 @@ export default function ChatPopover({
     // closes, so keyboard and screen-reader users are never left on the page behind.
     // Speech, the mic and the audio context stop with it.
     const inputRef = useRef<HTMLInputElement>(null);
+    const aboutId = useId();
     const rootRef = useRef<HTMLDivElement>(null);
     /** the header's fold button, where the keyboard goes when the chat folds itself */
     const foldRef = useRef<HTMLButtonElement>(null);
@@ -416,11 +433,18 @@ export default function ChatPopover({
         const back = openedFrom.current;
         if (back?.isConnected) back.focus({ preventScroll: true });
     };
+    /** every request this chat makes: a chat that goes (a new chat replaces it with
+     *  continuity off) stops its answers streaming, so no provider keeps writing one
+     *  nobody will see. A hidden chat keeps them: they land in its history */
+    const aborter = useRef(new AbortController());
     // biome-ignore lint/correctness/useExhaustiveDependencies: on mount and unmount only
     useEffect(() => {
         openedFrom.current = document.activeElement as HTMLElement | null;
         inputRef.current?.focus({ preventScroll: true });
-        return quiet;
+        return () => {
+            aborter.current.abort();
+            quiet();
+        };
     }, []);
     // Hidden with ✕, the chat keeps its conversation. Shown again by the next click, it
     // marks the gap with a divider and the time. Declared before the new-capture
@@ -533,7 +557,9 @@ export default function ChatPopover({
     // biome-ignore lint/correctness/useExhaustiveDependencies: seeds once, on mount
     useEffect(() => {
         if (!sessionId || captureId === "local") return;
-        fetch(`${backend}/api/session/${encodeURIComponent(sessionId)}`)
+        fetch(`${backend}/api/session/${encodeURIComponent(sessionId)}`, {
+            signal: aborter.current.signal,
+        })
             .then((r) => r.json())
             .then((d) => {
                 if (!Array.isArray(d.history)) return;
@@ -567,10 +593,15 @@ export default function ChatPopover({
     }, []);
 
     // Clamp popover inside viewport, near the cursor (or restore pinned position)
-    const clamp = (p: { left: number; top: number }) => ({
-        left: Math.min(Math.max(p.left, 8), window.innerWidth - panelW - 8),
-        top: Math.min(Math.max(p.top, 8), window.innerHeight - panelH - 8),
-    });
+    const clamp = (p: { left: number; top: number }) => {
+        // folded, the chat is only its header and status line: it may go as low as
+        // that fits, not as low as the whole chat would
+        const h = mini ? (rootRef.current?.offsetHeight ?? panelH) : panelH;
+        return {
+            left: Math.min(Math.max(p.left, 8), window.innerWidth - panelW - 8),
+            top: Math.min(Math.max(p.top, 8), window.innerHeight - h - 8),
+        };
+    };
     /** where the chat sits when placed for the user (not dragged): on screen, and
      *  off the page's own floating controls */
     const settle = (p: { left: number; top: number }) =>
@@ -583,6 +614,12 @@ export default function ChatPopover({
         ),
     );
     const dragRef = useRef<{ dx: number; dy: number } | null>(null);
+    /** the side step waiting for a source move to settle; a pin, a drag or a newer
+     *  choice cancels it */
+    const stepAside = useRef<number | undefined>(undefined);
+    /** the pin as it is now, for callbacks that outlive the render that set them */
+    const pinnedNow = useRef(pinned);
+    pinnedNow.current = pinned;
     // a new click while the chat is open: it glides there (setting "motion") and the
     // log gains the new place; the capture it answers against becomes the new one
     const firstCapture = useRef(true);
@@ -629,6 +666,11 @@ export default function ChatPopover({
             sendText(w.text, w.msgId);
         }
     }, [capturing]);
+    // unfolded after being dragged low while folded: up just enough to show it whole
+    // biome-ignore lint/correctness/useExhaustiveDependencies: on unfolding only
+    useEffect(() => {
+        if (!mini) setPos((p) => clamp(p));
+    }, [mini]);
     // a bigger text size or a narrower window must not push the chat off screen
     // biome-ignore lint/correctness/useExhaustiveDependencies: re-clamp on size changes only
     useEffect(() => {
@@ -640,6 +682,7 @@ export default function ChatPopover({
 
     function onHeaderPointerDown(e: React.PointerEvent) {
         if (!settings.dragPopover) return;
+        window.clearTimeout(stepAside.current);
         if ((e.target as HTMLElement).closest("button")) return;
         dragRef.current = { dx: e.clientX - pos.left, dy: e.clientY - pos.top };
         (e.target as HTMLElement).setPointerCapture(e.pointerId);
@@ -759,12 +802,57 @@ export default function ChatPopover({
     const [returnable, setReturnable] = useState(false);
     /** the place whose clicked element is outlined, so its entry shows pressed */
     const [placeOn, setPlaceOn] = useState<Place | null>(null);
+    /**
+     * What "this" means right now: the sources outlined from an answer, or the
+     * element of an outlined place. It goes with the question, so the model answers
+     * about it rather than about the click or the whole view.
+     */
+    function selectionNow(): Selection | null {
+        if (active) {
+            const m = messages.find((x) => x.id === active.msgId);
+            const c = m && cited(m);
+            const src = m?.cite;
+            if (src && c?.ids.length) {
+                const ids =
+                    active.index === "all"
+                        ? c.ids.slice(0, SELECTION_MAX)
+                        : [c.ids[active.index]];
+                return {
+                    kind: active.index === "all" ? "all" : "source",
+                    n: active.index === "all" ? c.ids.length : active.index + 1,
+                    items: ids.filter(Boolean).map((id) => ({
+                        id,
+                        label: labelOfWire(id, src.inventory),
+                        el: src.registry.get(id),
+                    })),
+                };
+            }
+        }
+        if (placeOn)
+            return {
+                kind: "place",
+                n: placeNumber(placeOn),
+                items: [{ label: placeOn.label }],
+            };
+        return null;
+    }
+    /**
+     * The selection as the question sends it: each source by its id in the capture
+     * the question goes with. Choosing a source moves the page, so the question often
+     * goes with a fresh capture, whose ids are not the answer's: its n39 can be the
+     * row that holds both sources (A4 of the 2026-09-27 report). A source that capture
+     * does not hold goes by its label alone.
+     */
+    const selectionIn = (sel: Selection, on: Current) =>
+        sourcesIn(sel.items, citeSource(on)?.registry);
     // Escape (or a new capture) clears the outline: the pressed buttons must follow
     useEffect(
         () =>
             onHighlightsCleared(() => {
                 setActive(null);
                 setPlaceOn(null);
+                // nothing outlined: nothing for the chat to step aside for
+                window.clearTimeout(stepAside.current);
             }),
         [],
     );
@@ -775,10 +863,14 @@ export default function ChatPopover({
         index: number | "all",
         reveal: boolean,
         toggle = false,
+        /** pressed in the answer's text: the reader is there, so the log stays put */
+        fromText = false,
     ) {
         const c = cited(m);
         const src = m.cite;
         if (!c?.ids.length || !src) return;
+        // a newer choice (or the same one pressed off) replaces a pending side step
+        window.clearTimeout(stepAside.current);
         // the lit source pressed again: its outline goes (every outline can be turned off
         // from the chat, not only with Escape)
         if (
@@ -819,21 +911,45 @@ export default function ChatPopover({
             reveal && move !== "never" && el
                 ? revealElement(el, undefined, {
                       always: move === "always",
-                      avoid: rootRef.current?.getBoundingClientRect(),
                   }) === "moved"
                 : false;
         setReturnable(canReturn());
-        // at high zoom there may be no room beside the chat: once the move settles, a
-        // chat still covering the source folds to its header
-        if (short && el && !mini)
-            setTimeout(() => {
-                const a = el.getBoundingClientRect();
+        // once the move settles, a chat covering the source steps aside to the nearer
+        // side (a setting; a pinned chat stays), and at high zoom with no room either
+        // side it folds to its header
+        const shown = picks
+            .map(({ id }) => src.registry.get(id))
+            .filter((e): e is Element => e != null);
+        if (shown.length && !mini)
+            stepAside.current = window.setTimeout(() => {
+                const boxes = shown.map((e) => e.getBoundingClientRect());
+                const a = {
+                    left: Math.min(...boxes.map((r) => r.left)),
+                    top: Math.min(...boxes.map((r) => r.top)),
+                    right: Math.max(...boxes.map((r) => r.right)),
+                    bottom: Math.max(...boxes.map((r) => r.bottom)),
+                };
                 const b = rootRef.current?.getBoundingClientRect();
-                if (!b) return;
+                if (!b || dragRef.current) return;
                 const w = Math.min(a.right, b.right) - Math.max(a.left, b.left);
                 const h = Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top);
-                const area = Math.max(1, a.width * a.height);
-                if (w > 0 && h > 0 && (w * h) / area > 0.2) {
+                if (w <= 0 || h <= 0) return;
+                const aside =
+                    getSettings().chatMovesAside && !pinnedNow.current;
+                if (aside) {
+                    const left = besideTarget(a, b, window.innerWidth);
+                    if (left != null) {
+                        setPos((p) => ({ ...p, left }));
+                        return;
+                    }
+                }
+                const area = Math.max(
+                    1,
+                    (a.right - a.left) * (a.bottom - a.top),
+                );
+                // no room beside it (high zoom, or a phone's bottom sheet): a chat still
+                // covering the source folds to its header, if it may move at all
+                if ((short || aside) && (w * h) / area > 0.2) {
                     // folding removes the control that has focus: the keyboard moves
                     // to the unfold button, not to the page
                     const hadFocus = rootRef.current?.contains(
@@ -862,7 +978,9 @@ export default function ChatPopover({
         // nothing placeable (collapsed, box-less): showHighlights announced it; no button
         // may look pressed over an empty page
         setActive(hasHighlight() ? { msgId: m.id, index } : null);
-        revealTurn(m.id);
+        // the controls row sits at the answer's end: keep it in view for a press there,
+        // but a source pressed in the text is where the reader is reading
+        if (!fromText) revealTurn(m.id);
     }
 
     /** a finished reply: debug readout, then outline it if the auto-highlight knob says so */
@@ -1013,9 +1131,11 @@ export default function ChatPopover({
         token: number,
         ask: SentAsk,
         on: Current,
+        sel: Selection | null,
     ) {
         const cite = citeSource(on);
         const res = await fetch(`${backend}/api/chat/stream`, {
+            signal: aborter.current.signal,
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -1023,6 +1143,7 @@ export default function ChatPopover({
                 message: text,
                 session_id: sessionId,
                 cite: getSettings().citeEvidence,
+                selection: sel ? { items: selectionIn(sel, on) } : undefined,
             }),
         });
         if (!res.ok || !res.body) {
@@ -1105,9 +1226,11 @@ export default function ChatPopover({
         token: number,
         ask: SentAsk,
         on: Current,
+        sel: Selection | null,
     ) {
         const cite = citeSource(on);
         const res = await fetch(`${backend}/api/chat`, {
+            signal: aborter.current.signal,
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -1115,6 +1238,7 @@ export default function ChatPopover({
                 message: text,
                 session_id: sessionId,
                 cite: getSettings().citeEvidence,
+                selection: sel ? { items: selectionIn(sel, on) } : undefined,
             }),
         });
         const data = await res.json();
@@ -1140,6 +1264,9 @@ export default function ChatPopover({
     /** queuedId: a question that waited for a new place's capture, already in the log */
     async function sendText(text: string, queuedId?: string) {
         if (!text || busy) return;
+        // what "this" meant as the user sent it: a view refresh or a new click later
+        // must not change it
+        const sel = selectionNow();
         if (queuedId)
             // it waited for the new place: it belongs to the place it now goes to
             setMessages((m) =>
@@ -1191,9 +1318,11 @@ export default function ChatPopover({
                 cite: getSettings().citeEvidence,
             });
             if (settings.streamReplies)
-                await sendStreaming(text, token, ask, on);
-            else await sendPlain(text, token, ask, on);
+                await sendStreaming(text, token, ask, on, sel);
+            else await sendPlain(text, token, ask, on, sel);
         } catch (err) {
+            // the chat is going: its question was abandoned, not failed
+            if (aborter.current.signal.aborted) return;
             if (ask) ask.error = String(err);
             act("error", T.sError);
             setMessages((m) => [
@@ -1397,7 +1526,7 @@ export default function ChatPopover({
                                 .closest("[data-cite]")
                                 ?.getAttribute("data-cite");
                             const k = id ? (c?.ids.indexOf(id) ?? -1) : -1;
-                            if (k >= 0) point(m, k, true, true);
+                            if (k >= 0) point(m, k, true, true, true);
                         }}
                         // biome-ignore lint/security/noDangerouslySetInnerHtml: HTML is escaped in mdLite before formatting tags and chips are added
                         dangerouslySetInnerHTML={{
@@ -1489,6 +1618,8 @@ export default function ChatPopover({
     // the status line only on the folded chat: open, the chat shows each action on the
     // control itself, and the live region speaks it
     const statusShown = mini && (Boolean(status) || speaking || listening);
+    /** what the next question is about, shown above the field (and read with it) */
+    const about = selectionNow();
 
     return (
         <div
@@ -1566,6 +1697,7 @@ export default function ChatPopover({
                     aria-label={pinned ? T.unpin : T.pin}
                     title={pinned ? T.unpin : T.pin}
                     onClick={() => {
+                        window.clearTimeout(stepAside.current);
                         onTogglePin(pinned ? null : pos);
                         act("press", pinned ? T.unpin : T.pin);
                     }}
@@ -1615,11 +1747,40 @@ export default function ChatPopover({
                     ))}
                 </div>
             )}
+            {!mini && about && (
+                <div className="ulc-about" id={aboutId}>
+                    <span>
+                        {about.kind === "place"
+                            ? T.aboutPlace(about.n, about.items[0].label)
+                            : about.kind === "all"
+                              ? about.n > about.items.length
+                                  ? T.aboutFirst(about.items.length, about.n)
+                                  : T.aboutAll(about.n)
+                              : T.aboutSource(
+                                    chipText(about.n),
+                                    about.items[0]?.label ?? "",
+                                )}
+                    </span>
+                    <button
+                        type="button"
+                        className="ulc-c"
+                        aria-label={T.aboutDrop}
+                        title={T.aboutDrop}
+                        onClick={() => {
+                            clearHighlights();
+                            act("clear", T.sCleared);
+                        }}
+                    >
+                        <CloseIcon />
+                    </button>
+                </div>
+            )}
             {!mini && (
                 <div className="ulc-in">
                     {voiceOK && voiceButton("ulc-ib")}
                     <input
                         ref={inputRef}
+                        aria-describedby={about ? aboutId : undefined}
                         value={input}
                         onChange={(e) => setInput(e.target.value)}
                         // Enter that confirms an IME composition (Japanese, Chinese, Korean)

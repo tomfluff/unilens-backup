@@ -139,6 +139,8 @@ export interface Settings {
     sounds: boolean;
     /** answers cite the page elements they used, as numbered chips that highlight */
     citeEvidence: boolean;
+    /** a chat covering a source steps aside, to the nearer side (a pinned chat stays) */
+    chatMovesAside: boolean;
     /** re-capture before a message when the user scrolled, panned or zoomed since the last one */
     refreshView: boolean;
     /** when an answer's evidence is outlined without a click */
@@ -225,6 +227,7 @@ const DEFAULTS: Settings = {
     chatLanguage: "en",
     sounds: true,
     citeEvidence: true,
+    chatMovesAside: true,
     refreshView: true,
     autoHighlight: "where",
     escapeOrder: "highlight",
@@ -267,6 +270,7 @@ export const TOGGLE_LABELS: Record<BoolSettingKey, string> = {
     mmGlow: "Glow around targets",
     mmNumbers: "Numbers on targets",
     citeEvidence: "Answers cite page elements",
+    chatMovesAside: "Move the chat out of the way of sources",
     sounds: "A sound for every action",
     refreshView: "Send my new view with follow-ups",
     fxCore: "Orb: glossy core",
@@ -520,6 +524,7 @@ export const PANEL_SECTIONS: {
             "citeEvidence",
             "autoHighlight",
             "moveToEvidence",
+            "chatMovesAside",
             "refreshView",
         ],
     },

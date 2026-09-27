@@ -6,6 +6,7 @@ import {
     navCommand,
     recordEvidence,
     renderCited,
+    sourcesIn,
     speakable,
 } from "./evidence";
 
@@ -61,6 +62,62 @@ describe("renderCited", () => {
         const r = renderCited("x \uE0FF1\uE0FF [[n3]]", known, label);
         expect(r.ids).toEqual(["n3"]);
         expect(r.html.match(/unilens-cite/g)).toHaveLength(1);
+    });
+});
+
+describe("joined markers (Gemini's [[n42], [n43]])", () => {
+    const chips = (html: string) =>
+        [...html.matchAll(/data-cite="(n\d+)"[^>]*>(\d+)</g)].map((c) => c[1]);
+
+    it("become one chip per id, in either form", () => {
+        for (const text of [
+            "Starter is $9 [[n12], [n40]].",
+            "Starter is $9 [[n12, n40]].",
+        ]) {
+            const r = renderCited(text, known, label);
+            expect(r.ids).toEqual(["n12", "n40"]);
+            expect(chips(r.html)).toEqual(["n12", "n40"]);
+            expect(r.html).not.toContain("[");
+        }
+    });
+
+    it("stay hidden while they stream in, and are never read aloud", () => {
+        for (const tail of [
+            " [[n12],",
+            " [[n12], [n4",
+            " [[n12], [n40]",
+            " [[n12, n",
+        ])
+            expect(
+                renderCited(`Starter is $9${tail}`, known, label, true).html,
+            ).toBe("Starter is $9");
+        expect(speakable("Starter is $9 [[n12], [n40]].")).toBe(
+            "Starter is $9.",
+        );
+    });
+});
+
+describe("sourcesIn (a chosen source, sent with a newer capture)", () => {
+    const a = document.createElement("p");
+    const b = document.createElement("p");
+
+    it("goes by its id in the capture the question goes with", () => {
+        const now = new Map<string, Element>([
+            ["n39", document.createElement("tr")],
+            ["n42", a],
+        ]);
+        expect(sourcesIn([{ id: "n39", label: "¥1,000", el: a }], now)).toEqual(
+            [{ id: "n42", label: "¥1,000" }],
+        );
+    });
+
+    it("goes by its label when that capture does not hold it, and a place as it is", () => {
+        expect(
+            sourcesIn(
+                [{ id: "n41", label: "Events", el: b }, { label: "P2 · 内容" }],
+                new Map([["n41", a]]),
+            ),
+        ).toEqual([{ label: "Events" }, { label: "P2 · 内容" }]);
     });
 });
 

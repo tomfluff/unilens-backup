@@ -23,6 +23,7 @@ import {
     RING,
     SPOTLIGHT_FEATHER,
 } from "./highlightStyles";
+import { roleOf } from "./inventory";
 import { setTargets } from "./minimap";
 import { getSettings, onSettingsChange } from "./settings";
 import {
@@ -47,6 +48,41 @@ export type Rect = { left: number; top: number; width: number; height: number };
 /** injectable so jsdom tests (where every rect is zeros) can supply geometry */
 export type Measure = (el: Element) => Rect;
 const defaultMeasure: Measure = (el) => el.getBoundingClientRect();
+/** an element's line boxes when it wraps; injectable like Measure */
+export type MeasureLines = (el: Element) => Rect[] | null;
+
+/**
+ * A link (or any inline element) that wraps onto two lines: one box per line, so the
+ * outline covers the element and not the lines' full width, which is most of the
+ * sentence (Yotam, 2026-09-27). Null for anything that is one box: a block, or an
+ * inline on one line. Fragments on the same line (a nested inline) join into one.
+ */
+export const defaultLines: MeasureLines = (el) => {
+    if (getComputedStyle(el).display !== "inline") return null;
+    const lines: Rect[] = [];
+    for (const r of el.getClientRects()) {
+        if (!r.width || !r.height) continue;
+        const same = lines.find(
+            (l) => r.top < l.top + l.height && r.bottom > l.top,
+        );
+        if (!same) {
+            lines.push({
+                left: r.left,
+                top: r.top,
+                width: r.width,
+                height: r.height,
+            });
+            continue;
+        }
+        const right = Math.max(same.left + same.width, r.right);
+        const bottom = Math.max(same.top + same.height, r.bottom);
+        same.left = Math.min(same.left, r.left);
+        same.top = Math.min(same.top, r.top);
+        same.width = right - same.left;
+        same.height = bottom - same.top;
+    }
+    return lines.length > 1 ? lines : null;
+};
 
 const LAYER_Z = "2147483645"; // under the minimap (…646) and the popover (…647)
 /** pointer cues follow the pointer over the page and its highlights; the chat stays
@@ -64,6 +100,9 @@ interface Drawn {
     badge?: string;
     /** the look the box's decorations were built for; rebuilt when it changes */
     decoKey?: string;
+    /** a wrapped inline element's lines after the first (`box` outlines the first
+     *  and carries the badge); empty for anything drawn as one box */
+    lines: { box: HTMLDivElement; decoKey?: string }[];
 }
 let boxes: Drawn[] = [];
 let cueHost: HTMLDivElement | null = null;
@@ -72,10 +111,13 @@ let cueHost: HTMLDivElement | null = null;
 const cueEls = new Map<Drawn, { el: HTMLElement; sig: string }>();
 /** each outlined element's box as of the last full render; pointer moves reuse it */
 let lastRects = new Map<Drawn, ClientRect>();
+/** what was outlined in that render: the element's lines, or its one box */
+let lastParts = new Map<Drawn, ClientRect[]>();
 /** last pointer position, for the pointer cue; null until the mouse moves */
 let pointer: { x: number; y: number } | null = null;
 let dimBox: HTMLDivElement | null = null;
 let measure: Measure = defaultMeasure;
+let measureLines: MeasureLines = defaultLines;
 
 const clearedListeners = new Set<() => void>();
 /** the popover's pressed buttons follow the outline: Escape, a new capture, or the
@@ -268,8 +310,11 @@ function makeBadge(text: string): HTMLDivElement {
     const style = getSettings().chatStyle;
     const badge = document.createElement("div");
     badge.className = `${CLASS}-badge`;
-    // station codes read "U1", like the chips
-    badge.textContent = style === "station" ? `U${text}` : text;
+    // station codes read "U1", like the chips; a folded pair reads "1·2" (or "U1·U2")
+    badge.textContent = text
+        .split("·")
+        .map((t) => (style === "station" ? `U${t}` : t))
+        .join("·");
     Object.assign(
         badge.style,
         {
@@ -424,12 +469,19 @@ function render() {
         lastRects.set(entry, r);
         // collapsed since it was drawn (an accordion closed): hide, never park at (0, 0)
         box.style.display = isEmptyBox(r) ? "none" : "";
-        paintBox(entry, r, look, outline, w);
+        const parts = (!isEmptyBox(r) && measureLines(el)) || [r];
+        lastParts.set(entry, parts);
+        syncLines(entry, parts.length - 1);
+        paintBox(entry, parts[0], look, outline, w);
+        for (const [i, l] of entry.lines.entries())
+            paintBox(l, parts[i + 1], look, outline, w);
     }
     for (const g of gone) {
         g.box.remove();
+        for (const l of g.lines) l.box.remove();
         boxes.splice(boxes.indexOf(g), 1);
         lastRects.delete(g);
+        lastParts.delete(g);
     }
     if (gone.length) {
         announce(chatText().hGone);
@@ -449,7 +501,7 @@ function render() {
  */
 function renderBackdrop(look: HighlightLook) {
     const rects = boxes
-        .map((b) => lastRects.get(b) ?? boxOf(b.el, measure))
+        .flatMap((b) => lastParts.get(b) ?? [boxOf(b.el, measure)])
         .filter((r) => !isEmptyBox(r));
     if (look.backdrop === "none" || !rects.length) {
         dimBox?.remove();
@@ -1003,6 +1055,7 @@ export interface ShowOptions {
     /** announced as "Found: <label>"; the caller derives it from the inventory */
     label?: string;
     measure?: Measure;
+    lines?: MeasureLines;
     /** a click on a chip or button: draws whatever capture the message belongs to.
      * The guard is for answers that arrive late; a click is never late */
     userInitiated?: boolean;
@@ -1012,6 +1065,32 @@ export interface ShowOptions {
  * Draw the set. Returns false (and draws nothing) when the answer is for another
  * capture or an older question than the latest issued, unless the user asked for it.
  */
+function newBox(role: HighlightRole): HTMLDivElement {
+    const box = document.createElement("div");
+    box.className = CLASS;
+    box.dataset.role = role; // TODO phase 2: style anchor/source distinctly
+    Object.assign(box.style, {
+        position: "fixed",
+        boxSizing: "border-box",
+        pointerEvents: "none",
+        borderRadius: "4px",
+    });
+    return box;
+}
+
+/** as many extra line boxes as the element has lines after its first, right after
+ *  its own box (a reflow can add or drop a line) */
+function syncLines(entry: Drawn, n: number) {
+    while (entry.lines.length > n) entry.lines.pop()?.box.remove();
+    while (entry.lines.length < n) {
+        const box = newBox(entry.role);
+        box.dataset.line = String(entry.lines.length + 2);
+        const after = entry.lines.at(-1)?.box ?? entry.box;
+        after.after(box);
+        entry.lines.push({ box });
+    }
+}
+
 export function showHighlights(
     set: Highlight[],
     registry: Map<string, Element>,
@@ -1031,8 +1110,10 @@ export function showHighlights(
     }
     clearHighlights();
     measure = opts.measure ?? defaultMeasure;
+    measureLines = opts.lines ?? defaultLines;
     const host = ensureLayer();
     let unplaceable = 0;
+    const placeable: (Highlight & { el: Element })[] = [];
     for (const h of set) {
         const el = registry.get(h.id);
         if (!el?.isConnected) continue;
@@ -1042,17 +1123,12 @@ export function showHighlights(
             unplaceable++;
             continue;
         }
-        const box = document.createElement("div");
-        box.className = CLASS;
-        box.dataset.role = h.role; // TODO phase 2: style anchor/source distinctly
-        Object.assign(box.style, {
-            position: "fixed",
-            boxSizing: "border-box",
-            pointerEvents: "none",
-            borderRadius: "4px",
-        });
+        placeable.push({ ...h, el });
+    }
+    for (const h of foldNested(placeable, measure)) {
+        const box = newBox(h.role);
         host.appendChild(box);
-        boxes.push({ el, box, role: h.role, badge: h.badge });
+        boxes.push({ el: h.el, box, role: h.role, badge: h.badge, lines: [] });
     }
     if (!boxes.length) {
         if (unplaceable) announce(chatText().hNotShowing);
@@ -1065,9 +1141,70 @@ export function showHighlights(
     return true;
 }
 
+/**
+ * One outline per nested pair, when several are drawn at once (Yotam, 2026-09-26):
+ * when one element holds another, the inner one stays if the outer adds nothing to it
+ * (the same text, or the inner covers at least 90% of it); otherwise the outer one
+ * stays. The one kept carries both numbers ("1·2"). Pairs fold until none is left, so
+ * chains (a in b in c) fold too. The same element twice counts as a pair.
+ * A link or a button inside a sentence is never folded away (Yotam, 2026-09-27): it
+ * is the thing to press, so it keeps its own outline inside the sentence's.
+ */
+export function foldNested<T extends { el: Element; badge?: string }>(
+    items: T[],
+    measureEl: Measure,
+): T[] {
+    const list = [...items];
+    const text = (e: Element) =>
+        (e.textContent ?? "").replace(/\s+/g, " ").trim();
+    const area = (e: Element) => {
+        const r = measureEl(e);
+        return r.width * r.height;
+    };
+    const byNumber = (x: string, y: string) =>
+        Number(x) - Number(y) || x.localeCompare(y);
+    const pressable = (e: Element) => {
+        const r = roleOf(e);
+        return r === "link" || r === "button";
+    };
+    // a link's box is no measure of what it covers: wrapped onto two lines, it spans
+    // nearly its whole paragraph; for one, only the same text counts as nothing added
+    const addsNothing = (outer: Element, inner: Element) =>
+        text(outer) === text(inner) ||
+        (!pressable(inner) && area(inner) >= 0.9 * area(outer));
+    const folds = (outer: Element, inner: Element) =>
+        outer.contains(inner) &&
+        (outer === inner || !pressable(inner) || addsNothing(outer, inner));
+    for (;;) {
+        let pair: [T, T] | null = null;
+        for (const a of list)
+            for (const b of list)
+                if (a !== b && folds(a.el, b.el)) {
+                    pair = [a, b];
+                    break;
+                }
+        if (!pair) return list;
+        const [outer, inner] = pair;
+        const [keep, drop] = addsNothing(outer.el, inner.el)
+            ? [inner, outer]
+            : [outer, inner];
+        const badges = [keep.badge, drop.badge]
+            .flatMap((b) => (b ? b.split("·") : []))
+            .sort(byNumber);
+        list.splice(list.indexOf(drop), 1);
+        list[list.indexOf(keep)] = {
+            ...keep,
+            badge: badges.length ? badges.join("·") : undefined,
+        };
+    }
+}
+
 export function clearHighlights() {
     const had = boxes.length > 0;
-    for (const b of boxes) b.box.remove();
+    for (const b of boxes) {
+        b.box.remove();
+        for (const l of b.lines) l.box.remove();
+    }
     boxes = [];
     dimBox?.remove();
     dimBox = null;
@@ -1075,6 +1212,7 @@ export function clearHighlights() {
     cueHost = null;
     cueEls.clear();
     lastRects = new Map();
+    lastParts = new Map();
     teardownSubscriptions();
     setTargets([]);
     if (had) for (const cb of clearedListeners) cb();

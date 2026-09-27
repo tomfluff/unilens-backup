@@ -123,9 +123,12 @@ html[data-unilens-a11y-html-filter] {
 html[data-unilens-a11y-html-filter]
 :is(
     #unilens-a11y-root,
-    #unilens-root,
-    #unilens-settings-root,
-    #unilens-debug-root,
+    /* the fixed panels, not the roots that hold them: a filter makes its element the
+       containing block of fixed descendants, and these roots sit after <body>, at the
+       bottom of the document, so the chat and the settings button went there */
+    #unilens-root > *,
+    #unilens-settings-root > *,
+    #unilens-debug-root > *,
     [data-unilens-ui]
 ) {
     filter: invert(1) hue-rotate(180deg)

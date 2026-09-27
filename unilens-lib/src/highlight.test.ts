@@ -4,6 +4,7 @@ import {
     clearHighlights,
     cuePosition,
     escapeAction,
+    foldNested,
     hasHighlight,
     init,
     nextToken,
@@ -1007,5 +1008,183 @@ describe("off-screen cues", () => {
                 ?.closest("#unilens-highlight-layer"),
         ).not.toBeNull();
         expect(document.querySelectorAll(".unilens-hl-cues")).toHaveLength(1);
+    });
+});
+
+describe("foldNested (one outline per nested pair)", () => {
+    /** an element with text and a box of the given area (as width x 1) */
+    function node(text: string, area: number, parent?: Element) {
+        const el = document.createElement("div");
+        el.textContent = text;
+        el.dataset.area = String(area);
+        (parent ?? document.body).appendChild(el);
+        return el;
+    }
+    const byArea = (el: Element) =>
+        rect(0, 0, Number((el as HTMLElement).dataset.area), 1);
+    const kept = (items: { el: Element; badge?: string }[]) =>
+        foldNested(items, byArea).map((i) => [i.el.textContent, i.badge]);
+
+    it("keeps the inner one when the outer adds nothing", () => {
+        const outer = node("", 1000);
+        const inner = node("Main menu", 980, outer);
+        // the outer's own text is the inner's: the same thing twice
+        expect(
+            kept([
+                { el: outer, badge: "1" },
+                { el: inner, badge: "2" },
+            ]),
+        ).toEqual([["Main menu", "1·2"]]);
+    });
+
+    it("keeps the outer one when it holds more than the inner", () => {
+        const outer = node("The benefit is ", 1000);
+        const inner = node("PayPay Money Lite", 430, outer);
+        expect(
+            kept([
+                { el: inner, badge: "2" },
+                { el: outer, badge: "1" },
+            ]),
+        ).toEqual([["The benefit is PayPay Money Lite", "1·2"]]);
+    });
+
+    it("folds chains and leaves siblings alone", () => {
+        const a = node("", 1000);
+        const b = node("", 990, a);
+        const c = node("Apply", 985, b);
+        const other = node("Terms", 300);
+        expect(
+            kept([
+                { el: a, badge: "3" },
+                { el: c, badge: "1" },
+                { el: other, badge: "4" },
+                { el: b, badge: "2" },
+            ]),
+        ).toEqual([
+            ["Apply", "1·2·3"],
+            ["Terms", "4"],
+        ]);
+    });
+
+    it("keeps a link's own outline inside a sentence", () => {
+        const sentence = node("The benefit is ", 1000);
+        const link = document.createElement("a");
+        link.href = "#paypay";
+        link.textContent = "PayPay Money Lite";
+        link.dataset.area = "430";
+        sentence.appendChild(link);
+        expect(
+            kept([
+                { el: sentence, badge: "1" },
+                { el: link, badge: "2" },
+            ]),
+        ).toEqual([
+            ["The benefit is PayPay Money Lite", "1"],
+            ["PayPay Money Lite", "2"],
+        ]);
+    });
+
+    it("keeps a sentence whose wrapped link's box covers nearly all of it", () => {
+        // a link over two lines spans its paragraph's box: area says nothing here
+        const sentence = node("The benefit is ", 1000);
+        const link = document.createElement("a");
+        link.href = "#paypay";
+        link.textContent = "PayPay Money Lite";
+        link.dataset.area = "960";
+        sentence.appendChild(link);
+        expect(
+            kept([
+                { el: sentence, badge: "1" },
+                { el: link, badge: "2" },
+            ]),
+        ).toHaveLength(2);
+    });
+
+    it("still folds a link that is all of its container", () => {
+        const wrap = node("", 1000);
+        const link = document.createElement("a");
+        link.href = "#apply";
+        link.textContent = "Apply";
+        link.dataset.area = "980";
+        wrap.appendChild(link);
+        expect(
+            kept([
+                { el: wrap, badge: "1" },
+                { el: link, badge: "2" },
+            ]),
+        ).toEqual([["Apply", "1·2"]]);
+    });
+
+    it("draws one outline for a nested pair", () => {
+        const outer = document.createElement("div");
+        const inner = document.createElement("a");
+        inner.textContent = "Apply";
+        outer.appendChild(inner);
+        document.body.appendChild(outer);
+        const registry = new Map<string, Element>([
+            ["n1", outer],
+            ["n2", inner],
+        ]);
+        setCurrentCapture("c1");
+        showHighlights(
+            [
+                { id: "n1", role: "target", badge: "1" },
+                { id: "n2", role: "target", badge: "2" },
+            ],
+            registry,
+            "c1",
+            nextToken(),
+            { measure },
+        );
+        expect(layerBoxes()).toHaveLength(1);
+    });
+});
+
+describe("a wrapped link", () => {
+    function showWrapped(lines: () => ReturnType<typeof rect>[] | null) {
+        const link = document.createElement("a");
+        link.href = "#paypay";
+        link.textContent = "PayPay Money Lite";
+        document.body.appendChild(link);
+        setCurrentCapture("c1");
+        showHighlights(
+            [{ id: "n1", role: "target", badge: "1" }],
+            new Map([["n1", link]]),
+            "c1",
+            nextToken(),
+            { measure: () => rect(40, 100, 400, 48), lines },
+        );
+    }
+    const badges = () =>
+        [...layerBoxes()].map(
+            (b) => b.querySelector(".unilens-hl-badge")?.textContent ?? "",
+        );
+
+    it("is outlined line by line, with its number on the first", () => {
+        showWrapped(() => [rect(300, 100, 140, 20), rect(40, 128, 60, 20)]);
+        const boxes = [...layerBoxes()] as HTMLElement[];
+        expect(boxes).toHaveLength(2);
+        expect(badges()).toEqual(["1", ""]);
+        // each box hugs its line, not the 400 px wide union of both
+        expect(parseFloat(boxes[0].style.width)).toBeLessThan(200);
+        expect(parseFloat(boxes[1].style.left)).toBeLessThan(
+            parseFloat(boxes[0].style.left),
+        );
+    });
+
+    it("goes back to one box when it no longer wraps, and clears fully", () => {
+        let wrapped = true;
+        showWrapped(() =>
+            wrapped ? [rect(300, 100, 140, 20), rect(40, 128, 60, 20)] : null,
+        );
+        expect(layerBoxes()).toHaveLength(2);
+        wrapped = false;
+        relayNow();
+        expect(layerBoxes()).toHaveLength(1);
+        wrapped = true;
+        relayNow();
+        expect(layerBoxes()).toHaveLength(2);
+        clearHighlights();
+        expect(layerBoxes()).toHaveLength(0);
     });
 });
