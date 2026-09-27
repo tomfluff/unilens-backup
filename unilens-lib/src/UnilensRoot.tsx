@@ -9,6 +9,7 @@ import ChatPopover from "./ChatPopover";
 import {
     type CaptureResult,
     capture,
+    pageChangedSince,
     tagLastCapture,
     viewMovedSince,
 } from "./capture";
@@ -320,10 +321,11 @@ export function UnilensRoot({
         }
 
         /**
-         * Before a follow-up: if the user scrolled, panned or zoomed since `prev`, capture
-         * the new view (same question point) into the session so the model sees what they
-         * see now. Null when the view has not moved, the knob is off, or the upload fails
-         * (the chat then carries on with the capture it has).
+         * Before a follow-up: if the user scrolled, panned or zoomed since `prev`, or the
+         * page's elements changed (a click opened or replaced something), capture the
+         * page again (same question point) into the session so the model sees what they
+         * see now. Null when nothing changed, the knob is off, or the upload fails (the
+         * chat then carries on with the capture it has).
          */
         async function refreshCapture(
             prev: CaptureResult,
@@ -337,7 +339,11 @@ export function UnilensRoot({
             if (
                 !unilens.getSessionId() ||
                 !getSettings().refreshView ||
-                !(prev.restored || viewMovedSince(prev.meta))
+                !(
+                    prev.restored ||
+                    viewMovedSince(prev.meta) ||
+                    pageChangedSince(prev)
+                )
             )
                 return null;
             onStart?.();

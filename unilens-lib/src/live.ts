@@ -74,13 +74,19 @@ export function toolCall(
     return { ids, go: false };
 }
 
-/** what the user sees now, and a line saying where it is on the page */
+/** what the user sees now, and a line saying where it is on the page (and, when
+ *  the page changed, its elements again) */
 export interface LiveView {
-    jpeg: string;
+    /** none when pictures are off: the note goes alone */
+    jpeg?: string;
     note: string;
     /** called once it is sent: until then the view counts as unseen */
     sent?: () => void;
 }
+
+/** views already sent: the page sent as it changed and a turn that shares it
+ *  would both send it */
+const sentViews = new WeakSet<LiveView>();
 
 /** a turn's picture, or nothing once `ms` have passed: a reply never waits longer */
 const within = (view: Promise<LiveView | null> | null, ms: number) =>
@@ -92,11 +98,16 @@ const within = (view: Promise<LiveView | null> | null, ms: number) =>
         : Promise.resolve(null);
 /** how long a reply waits for the picture of a moved view (it takes about 1 s) */
 export const VIEW_WAIT_MS = 2500;
+/** a typed message holds no audio: it waits for a page being taken (about 1.5 s
+ *  after a change) longer */
+const TYPED_WAIT_MS = 10_000;
 
 export interface LiveHandle {
     stop(): void;
     /** a typed message during the conversation */
     say(text: string): void;
+    /** the page again, now and without a reply: for when no one is speaking */
+    see(view: LiveView): void;
 }
 
 export interface LiveRequest {
@@ -150,7 +161,7 @@ async function begin(
 
 /** the close-up of the capture as a small JPEG (the data channel drops big messages
  *  silently), or null */
-async function closeUp(
+export async function closeUp(
     backend: string,
     captureId: string,
 ): Promise<string | null> {
@@ -255,6 +266,7 @@ async function startOpenAI(
     /** the picture of a moved view, taken as the user began speaking */
     let turnView: Promise<LiveView | null> | null = null;
     const sendView = (view: LiveView) => {
+        if (sentViews.has(view)) return;
         const ok = send({
             type: "conversation.item.create",
             item: {
@@ -262,15 +274,21 @@ async function startOpenAI(
                 role: "user",
                 content: [
                     { type: "input_text", text: view.note },
-                    {
-                        type: "input_image",
-                        image_url: view.jpeg,
-                        detail: "auto",
-                    },
+                    ...(view.jpeg
+                        ? [
+                              {
+                                  type: "input_image",
+                                  image_url: view.jpeg,
+                                  detail: "auto",
+                              },
+                          ]
+                        : []),
                 ],
             },
         });
-        if (ok) view.sent?.();
+        if (!ok) return;
+        sentViews.add(view);
+        view.sent?.();
     };
     /** the assistant turn being spoken, for the ids it points at */
     let speakingKey: string | null = null;
@@ -411,8 +429,11 @@ async function startOpenAI(
     };
     return {
         stop: () => end(),
+        see: (view) => {
+            if (!ended) sendView(view);
+        },
         say: async (text) => {
-            const view = await within(ev.onTurn?.() ?? null, VIEW_WAIT_MS);
+            const view = await within(ev.onTurn?.() ?? null, TYPED_WAIT_MS);
             if (ended) return;
             if (view) sendView(view);
             send({
@@ -460,7 +481,16 @@ export function spoken(t: string): string {
 /** a view's note and picture as a Gemini turn's parts */
 const viewParts = (view: LiveView) => [
     { text: view.note },
-    { inlineData: { mimeType: "image/jpeg", data: view.jpeg.split(",")[1] } },
+    ...(view.jpeg
+        ? [
+              {
+                  inlineData: {
+                      mimeType: "image/jpeg",
+                      data: view.jpeg.split(",")[1],
+                  },
+              },
+          ]
+        : []),
 ];
 
 export function to16k(rate: number): (x: Float32Array) => Int16Array {
@@ -635,6 +665,8 @@ async function startGemini(
     };
     /** a picture as part of the user's turn, which it does not end */
     const sendView = (view: LiveView) => {
+        if (sentViews.has(view)) return;
+        sentViews.add(view);
         ws.send(
             JSON.stringify({
                 clientContent: {
@@ -786,9 +818,15 @@ async function startGemini(
     req.signal.addEventListener("abort", onAbort, { once: true });
     return {
         stop: () => end(),
+        see: (view) => {
+            if (!ended && ws.readyState === WebSocket.OPEN) sendView(view);
+        },
         say: async (text) => {
-            const view = await within(ev.onTurn?.() ?? null, VIEW_WAIT_MS);
+            const view = await within(ev.onTurn?.() ?? null, TYPED_WAIT_MS);
             if (ended || ws.readyState !== WebSocket.OPEN) return;
+            // with the message, unless it went already (the page sent as it changed)
+            const fresh = view && !sentViews.has(view) ? view : null;
+            if (fresh) sentViews.add(fresh);
             ws.send(
                 JSON.stringify({
                     clientContent: {
@@ -796,7 +834,7 @@ async function startGemini(
                             {
                                 role: "user",
                                 parts: [
-                                    ...(view ? viewParts(view) : []),
+                                    ...(fresh ? viewParts(fresh) : []),
                                     { text },
                                 ],
                             },
@@ -805,7 +843,7 @@ async function startGemini(
                     },
                 }),
             );
-            view?.sent?.();
+            fresh?.sent?.();
         },
     };
 }

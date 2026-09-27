@@ -154,3 +154,21 @@ def test_catalogue_lists_live_models_and_voices(client, keyed):
     live = client.get("/api/ai").get_json()["live"]
     assert live["openai"]["models"][0] == "gpt-realtime-2.1-mini"
     assert "Kore" in live["gemini"]["voices"]
+
+
+def test_the_page_goes_again_after_it_changed_or_a_new_click(client, cap):
+    """Mid-talk, the new capture's elements: the model points with their ids."""
+    page = lambda cap_id: client.post(  # noqa: E731
+        "/api/live/page", json={"capture_id": cap_id}
+    )
+    ctx = page(cap).get_json()["context"]
+    assert ctx.startswith("The user clicked a new place on the page.")
+    assert "¥1,000" in ctx and '"i":"n1"' in ctx and "## Page inventory" in ctx
+    meta = app_module.CAPTURES_DIR / cap / "meta.json"
+    meta.write_text(json.dumps({"url": "https://example.jp/", "viewRefresh": True}))
+    assert page(cap).get_json()["context"].startswith("The page changed or moved")
+    assert page("nope").status_code == 404
+    assert client.post("/api/live/page", data="x").status_code == 404
+    assert "use only the ids of the newest inventory" in app_module._live_instructions(
+        app_module._live_choice("openai", {})
+    )

@@ -229,6 +229,47 @@ export function viewMovedSince(meta: ViewState): boolean {
     );
 }
 
+/** the page's elements as they are now, against the real viewport */
+function inventoryNow(): Inventory {
+    return buildInventory(
+        document.body,
+        inventoryOptionsFrom(getSettings(), {
+            w: window.visualViewport?.width ?? window.innerWidth,
+            h: window.visualViewport?.height ?? window.innerHeight,
+        }),
+        undefined,
+        clientToContent,
+    );
+}
+
+/** a capture's elements in order, by what and which they are, not where: the
+ *  unnamed containers around them regroup as the view scrolls, and the boxes move */
+const elementsOf = (wire: WireNode[], registry?: Map<string, Element>) =>
+    wire
+        .filter((n) => n.r !== "container" || n.n)
+        .map((n) => ({
+            el: registry?.get(n.i),
+            key: `${n.r}\u0000${n.n}\u0000${n.s ?? ""}`,
+        }));
+
+/**
+ * Have the page's elements changed since this capture: a click opened, closed or
+ * replaced something (even with one of the same name), or a state such as expanded
+ * changed. About 7 ms on the SoftBank mirror. False without an inventory to compare.
+ */
+export function pageChangedSince(
+    cap: Pick<CaptureResult, "inventory" | "registry">,
+): boolean {
+    if (!cap.inventory?.length || !getSettings().inventory) return false;
+    const now = inventoryNow();
+    const was = elementsOf(cap.inventory, cap.registry);
+    const is = elementsOf(now.wire, now.registry);
+    return (
+        was.length !== is.length ||
+        was.some((w, i) => w.key !== is[i].key || (w.el && w.el !== is[i].el))
+    );
+}
+
 /** main.tsx tags the backend id once the upload completes */
 export function tagLastCapture(id: string) {
     if (lastCaptureDebug) lastCaptureDebug.id = id;
@@ -496,17 +537,7 @@ export async function capture(
 
     // Inventory first: it reads the live layout before anything else touches the page.
     // `visible` is judged against the real viewport, never the alt+drag region.
-    const inv = getSettings().inventory
-        ? buildInventory(
-              document.body,
-              inventoryOptionsFrom(getSettings(), {
-                  w: window.visualViewport?.width ?? window.innerWidth,
-                  h: window.visualViewport?.height ?? window.innerHeight,
-              }),
-              undefined,
-              clientToContent,
-          )
-        : undefined;
+    const inv = getSettings().inventory ? inventoryNow() : undefined;
     recordInventoryDebug(inv);
 
     const vvp = window.visualViewport;
