@@ -4,6 +4,7 @@ import {
     getLastEvidenceDebug,
     mdLite,
     navCommand,
+    placeLiveMarkers,
     recordEvidence,
     renderCited,
     sourcesIn,
@@ -357,5 +358,81 @@ describe("renderCited phrases: the review's edge cases", () => {
         );
         expect(off.html.match(/<button/g)?.length).toBe(3);
         expect(off.html).not.toContain("unilens-cite-end");
+    });
+});
+
+describe("placeLiveMarkers (Live's numbers in its spoken words)", () => {
+    const words =
+        "Shareholders get ¥1,000 of PayPay Money Lite. It is in the table under 内容.";
+    const second = words.indexOf("It is");
+    const none = (_: string) => "";
+    const place = (
+        points: { id: string; at: number }[],
+        labelOf: (id: string) => string = none,
+    ) => placeLiveMarkers(words, points, labelOf);
+
+    it("pointed before any words: after the sentence said next", () => {
+        expect(place([{ id: "n1", at: 0 }])).toBe(
+            "Shareholders get ¥1,000 of PayPay Money Lite [[n1]]. It is in the table under 内容.",
+        );
+    });
+
+    it("pointed mid-sentence: at that sentence's end; between sentences: the next", () => {
+        expect(place([{ id: "n2", at: second + 6 }])).toBe(
+            "Shareholders get ¥1,000 of PayPay Money Lite. It is in the table under 内容 [[n2]].",
+        );
+        expect(place([{ id: "n2", at: second - 1 }])).toBe(
+            "Shareholders get ¥1,000 of PayPay Money Lite. It is in the table under 内容 [[n2]].",
+        );
+    });
+
+    it("the sentence that names it wins, and the order it pointed in holds", () => {
+        const label = (id: string) => (id === "n9" ? "the table" : "");
+        expect(place([{ id: "n9", at: 0 }], label)).toBe(
+            "Shareholders get ¥1,000 of PayPay Money Lite. It is in the table under 内容 [[n9]].",
+        );
+        // n2 was pointed at after n9: never before it
+        expect(
+            place(
+                [
+                    { id: "n9", at: 0 },
+                    { id: "n2", at: 0 },
+                ],
+                label,
+            ),
+        ).toBe(
+            "Shareholders get ¥1,000 of PayPay Money Lite. It is in the table under 内容 [[n9]] [[n2]].",
+        );
+    });
+
+    it("a sentence that named it before it pointed does not take its number", () => {
+        const w = "Apply is in the menu. Choose Apply when you are ready.";
+        const label = () => "Apply";
+        expect(
+            placeLiveMarkers(
+                w,
+                [{ id: "n6", at: w.indexOf("Choose") + 3 }],
+                label,
+            ),
+        ).toBe("Apply is in the menu. Choose Apply when you are ready [[n6]].");
+    });
+
+    it("pointed once every word is in (Gemini's words run ahead): the last sentence", () => {
+        expect(place([{ id: "n5", at: words.length }])).toBe(
+            "Shareholders get ¥1,000 of PayPay Money Lite. It is in the table under 内容 [[n5]].",
+        );
+    });
+
+    it("a sentence still being spoken: at the end for now; Japanese sentences too", () => {
+        expect(
+            placeLiveMarkers("It is in the", [{ id: "n3", at: 5 }], none),
+        ).toBe("It is in the [[n3]]");
+        expect(
+            placeLiveMarkers(
+                "1,000円分が進呈されます。詳しくはタブにあります。",
+                [{ id: "n4", at: 0 }],
+                none,
+            ),
+        ).toBe("1,000円分が進呈されます [[n4]]。詳しくはタブにあります。");
     });
 });

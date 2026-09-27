@@ -216,7 +216,7 @@ export function guardFontProbe(doc: Document = document): () => void {
  * ponytail: fixed 25% threshold; make it a knob if sessions show refreshes too eager or late.
  */
 const VIEW_MOVE = 0.25;
-export function viewMovedSince(meta: CaptureMeta): boolean {
+export function viewMovedSince(meta: ViewState): boolean {
     const vvp = window.visualViewport;
     const { x, y } = getView();
     const z = getZoom().scale;
@@ -374,6 +374,117 @@ async function preprocessImages(): Promise<ImageFix[]> {
 }
 
 // ── Core capture ───────────────────────────────────────────────────────────
+/** the part of the page the user sees, in content space (zoom- and pinch-aware) */
+function visibleRect() {
+    const vvp = window.visualViewport;
+    const { x, y } = getView();
+    const { scale: z, layoutW, layoutH } = getZoom();
+    return {
+        x: Math.max(0, Math.round((x + (vvp?.offsetLeft ?? 0)) / z)),
+        y: Math.max(0, Math.round((y + (vvp?.offsetTop ?? 0)) / z)),
+        w: Math.min(layoutW, Math.round((vvp?.width ?? window.innerWidth) / z)),
+        h: Math.min(
+            layoutH,
+            Math.round((vvp?.height ?? window.innerHeight) / z),
+        ),
+    };
+}
+
+/**
+ * The page rendered by html2canvas as content (the zoom transform stripped, so its
+ * pixels are content px times `scale`), whole or only `area`. html2canvas copies the
+ * whole page either way (about 1 s on the SoftBank mirror), so an area saves little.
+ */
+async function renderContent(
+    scale: number,
+    area?: { x: number; y: number; w: number; h: number },
+): Promise<{ canvas: HTMLCanvasElement; tPre: number }> {
+    const { layoutW: pageW, layoutH: pageH } = getZoom();
+    // Read-only: the correction is applied to the clone, never to the live page.
+    // Swapping elements here reflows the real layout mid-capture (measured at +8800px
+    // on a page with an open accordion), which jumps the user's view and leaves the
+    // click marker pointing at whatever moved into its place.
+    const imageFixes = await preprocessImages();
+    imageFixes.forEach((f, i) => {
+        f.el.dataset.unilensImg = String(i);
+    });
+    const tPre = performance.now();
+    const stripZoom = (doc: Document) => {
+        doc.body.style.transform = ""; // render at zoom 1 — coords are content space
+        doc.documentElement.style.height = "";
+        stripFixedPins(doc); // pins compensate for that transform; without it they'd offset the render
+        // swap in the pre-cropped bitmaps. The element stays put and keeps every CSS rule
+        // that matched it, so only its pixels change — no reflow, here or on the live page.
+        for (const el of doc.querySelectorAll<HTMLImageElement>(
+            "[data-unilens-img]",
+        )) {
+            const fix = imageFixes[Number(el.dataset.unilensImg)];
+            el.removeAttribute("data-unilens-img");
+            if (!fix) continue;
+            el.src = fix.dataUrl;
+            el.style.objectFit = "fill"; // already cropped to the box, so draw it 1:1
+        }
+    };
+    const unguard = guardFontProbe();
+    try {
+        const canvas = await html2canvas(document.body, {
+            scrollX: 0,
+            scrollY: 0,
+            ...(area
+                ? { x: area.x, y: area.y, width: area.w, height: area.h }
+                : { width: pageW, height: pageH }),
+            windowWidth: pageW,
+            windowHeight: pageH,
+            useCORS: true,
+            allowTaint: true,
+            scale,
+            onclone: stripZoom,
+        });
+        return { canvas, tPre };
+    } finally {
+        unguard();
+        for (const f of imageFixes) delete f.el.dataset.unilensImg;
+    }
+}
+
+/** where the user's view is: what viewMovedSince compares a later view with */
+export type ViewState = Pick<
+    CaptureMeta,
+    "scrollX" | "scrollY" | "zoom" | "pinchZoom" | "viewportW" | "viewportH"
+>;
+export function viewNow(): ViewState {
+    const vvp = window.visualViewport;
+    const { x, y } = getView();
+    return {
+        scrollX: x,
+        scrollY: y,
+        zoom: getZoom().scale,
+        pinchZoom: vvp ? Math.round((vvp.scale ?? 1) * 100) / 100 : 1,
+        viewportW: vvp ? vvp.width : window.innerWidth,
+        viewportH: vvp ? vvp.height : window.innerHeight,
+    };
+}
+
+/**
+ * What the user sees now, for Live: a JPEG at most `maxW` px wide (the data channel
+ * drops big messages silently), with where it is on the page in content px (the
+ * inventory's boxes) and the zoom. No inventory and no upload: a talk keeps pointing
+ * at the elements of the capture it started with (bug 2 of the 2026-09-27 report).
+ */
+export async function viewPicture(maxW = 1024): Promise<{
+    jpeg: string;
+    view: { x: number; y: number; w: number; h: number };
+    zoom: number;
+}> {
+    refreshLayout();
+    const view = visibleRect();
+    const zoom = getZoom().scale;
+    // sharp enough to read at the size it is sent, never past twice the page's pixels
+    const scale = Math.min(2, maxW / Math.max(1, view.w));
+    const { canvas } = await renderContent(scale, view);
+    return { jpeg: canvas.toDataURL("image/jpeg", 0.7), view, zoom };
+}
+
 export async function capture(
     clickX: number,
     clickY: number,
@@ -414,15 +525,6 @@ export async function capture(
     const pageH = zoom.layoutH;
 
     const t0 = performance.now();
-    // Read-only: the correction is applied to the clone, never to the live page.
-    // Swapping elements here reflows the real layout mid-capture (measured at +8800px
-    // on a page with an open accordion), which jumps the user's view and leaves the
-    // click marker pointing at whatever moved into its place.
-    const imageFixes = await preprocessImages();
-    imageFixes.forEach((f, i) => {
-        f.el.dataset.unilensImg = String(i);
-    });
-    const tPre = performance.now();
 
     // Close-up source: the alt+drag selection if given, else the visible region
     // in content space (what the user actually sees, zoom-aware)
@@ -433,29 +535,7 @@ export async function capture(
               w: Math.max(1, Math.min(pageW, Math.round(region.w))),
               h: Math.max(1, Math.min(pageH, Math.round(region.h))),
           }
-        : {
-              x: Math.max(0, Math.round((scrollX + vvpOffsetX) / z)),
-              y: Math.max(0, Math.round((scrollY + vvpOffsetY) / z)),
-              w: Math.min(pageW, Math.round(vpW / z)),
-              h: Math.min(pageH, Math.round(vpH / z)),
-          };
-
-    const stripZoom = (doc: Document) => {
-        doc.body.style.transform = ""; // render at zoom 1 — coords are content space
-        doc.documentElement.style.height = "";
-        stripFixedPins(doc); // pins compensate for that transform; without it they'd offset the render
-        // swap in the pre-cropped bitmaps. The element stays put and keeps every CSS rule
-        // that matched it, so only its pixels change — no reflow, here or on the live page.
-        for (const el of doc.querySelectorAll<HTMLImageElement>(
-            "[data-unilens-img]",
-        )) {
-            const fix = imageFixes[Number(el.dataset.unilensImg)];
-            el.removeAttribute("data-unilens-img");
-            if (!fix) continue;
-            el.src = fix.dataUrl;
-            el.style.objectFit = "fill"; // already cropped to the box, so draw it 1:1
-        }
-    };
+        : visibleRect();
 
     // Single render at the configured resolution (1 = screen res). Both outputs
     // (annotated page + close-up crop) derive from this one canvas — html2canvas
@@ -467,26 +547,8 @@ export async function capture(
         captureScale = Math.sqrt(MAX_PIXELS / (pageW * pageH));
     }
 
-    let pageCanvas: HTMLCanvasElement;
     let viewportImage: string | undefined;
-    const unguard = guardFontProbe();
-    try {
-        pageCanvas = await html2canvas(document.body, {
-            scrollX: 0,
-            scrollY: 0,
-            width: pageW,
-            height: pageH,
-            windowWidth: pageW,
-            windowHeight: pageH,
-            useCORS: true,
-            allowTaint: true,
-            scale: captureScale,
-            onclone: stripZoom,
-        });
-    } finally {
-        unguard();
-        for (const f of imageFixes) delete f.el.dataset.unilensImg;
-    }
+    const { canvas: pageCanvas, tPre } = await renderContent(captureScale);
     const tRender = performance.now();
     console.debug(
         `[UniLens] timings: preprocess ${(tPre - t0).toFixed(0)}ms, render ${(tRender - tPre).toFixed(0)}ms`,

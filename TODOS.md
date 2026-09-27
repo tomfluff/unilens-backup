@@ -53,7 +53,7 @@
 - push-to-talk (hold a key or the button), for users whose screen reader also speaks, or who think aloud;
 - "wait until I say go" (no automatic reply);
 - a language choice beyond the chat's language, and a headset/laptop mic setting (OpenAI noise reduction, Gemini sensitivity);
-- sending the new view when the user scrolls or zooms mid-talk (OpenAI `conversation.item.delete` + a new item; Gemini `clientContent` between turns);
+- a new page inventory mid-talk: a turn's picture shows the moved view, but the talk points at the elements of the capture it started with, so what appeared since (an opened tab, new content) cannot be lit up;
 - Gemini's transcripts carry no turn id: words that arrive after the next turn has started go to that turn, and the history keeps a turn's words as they were when it completed;
 - test Gemini on laptop speakers: its audio plays through Web Audio, which the browser's echo canceller may not hear, so it could interrupt itself;
 - test a talk past 10 minutes (Gemini resumes on `goAway`) and near OpenAI's 60-minute limit;

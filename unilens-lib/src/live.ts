@@ -37,11 +37,61 @@ export interface LiveEvents {
     ): void;
     onState(state: LiveState): void;
     /** the model points at page elements while its turn `key` (null: not yet
-     *  speaking) goes on; returns the ids that could be shown */
-    onPoint(key: string | null, ids: string[]): string[];
+     *  speaking) goes on: lit where they are, or (`go`, the go_to tool) brought to
+     *  the middle. Returns what the model is told back */
+    onPoint(key: string | null, ids: string[], go: boolean): PointResult;
     /** ended: stopped by the provider, a lost connection, or an error (once) */
     onEnd(error?: string): void;
+    /** the user's turn begins (speech, or a typed message): a new picture of their
+     *  view when it moved since the last one, to go with their words; null at once
+     *  when none is needed */
+    onTurn?(): Promise<LiveView | null> | null;
 }
+
+/** a tool's result for the model: the ids shown, and the reply's sources in the
+ *  chat's numbering (so "the second one" means number 2) */
+export interface PointResult {
+    shown: string[];
+    sources: string[];
+}
+
+/** a tool call's arguments as the chat takes them: highlight's ids, go_to's one id;
+ *  anything else (another name, a malformed argument) points at nothing */
+export function toolCall(
+    name: string,
+    args: unknown,
+): { ids: string[]; go: boolean } {
+    const a = (args && typeof args === "object" ? args : {}) as {
+        ids?: unknown;
+        id?: unknown;
+    };
+    if (name === "go_to")
+        return { ids: typeof a.id === "string" ? [a.id] : [], go: true };
+    if (name !== "highlight") return { ids: [], go: false };
+    const ids = Array.isArray(a.ids)
+        ? a.ids.filter((i): i is string => typeof i === "string")
+        : [];
+    return { ids, go: false };
+}
+
+/** what the user sees now, and a line saying where it is on the page */
+export interface LiveView {
+    jpeg: string;
+    note: string;
+    /** called once it is sent: until then the view counts as unseen */
+    sent?: () => void;
+}
+
+/** a turn's picture, or nothing once `ms` have passed: a reply never waits longer */
+const within = (view: Promise<LiveView | null> | null, ms: number) =>
+    view
+        ? Promise.race([
+              view.catch(() => null),
+              new Promise<null>((ok) => window.setTimeout(() => ok(null), ms)),
+          ])
+        : Promise.resolve(null);
+/** how long a reply waits for the picture of a moved view (it takes about 1 s) */
+export const VIEW_WAIT_MS = 2500;
 
 export interface LiveHandle {
     stop(): void;
@@ -174,8 +224,11 @@ async function startOpenAI(
     };
     pc.addTrack(mic.getAudioTracks()[0], mic);
     const dc = pc.createDataChannel("oai-events");
+    /** false when the channel is not open (yet): nothing was sent */
     const send = (e: Ev) => {
-        if (dc.readyState === "open") dc.send(JSON.stringify(e));
+        if (dc.readyState !== "open") return false;
+        dc.send(JSON.stringify(e));
+        return true;
     };
     const image = req.screenshot ? closeUp(backend, req.captureId) : null;
     let start: Start;
@@ -199,6 +252,26 @@ async function startOpenAI(
     };
 
     const words = new Map<string, string>();
+    /** the picture of a moved view, taken as the user began speaking */
+    let turnView: Promise<LiveView | null> | null = null;
+    const sendView = (view: LiveView) => {
+        const ok = send({
+            type: "conversation.item.create",
+            item: {
+                type: "message",
+                role: "user",
+                content: [
+                    { type: "input_text", text: view.note },
+                    {
+                        type: "input_image",
+                        image_url: view.jpeg,
+                        detail: "auto",
+                    },
+                ],
+            },
+        });
+        if (ok) view.sent?.();
+    };
     /** the assistant turn being spoken, for the ids it points at */
     let speakingKey: string | null = null;
     /** responses that called the tool: the model goes on once it has the result */
@@ -248,15 +321,27 @@ async function startOpenAI(
                 speakingKey = null;
                 continues = null;
                 ev.onState("hearing");
+                // taken while they speak (about 1 s), so it is ready when they stop
+                turnView ??= ev.onTurn?.() ?? null;
                 break;
             case "input_audio_buffer.speech_stopped":
                 ev.onState("thinking");
                 break;
-            case "input_audio_buffer.committed":
+            case "input_audio_buffer.committed": {
                 // the user's bubble goes in now, in order, before any reply; its
                 // words follow (transcription runs apart from the reply)
                 ev.onWords("user", e.item_id, "", false);
+                // the reply starts here, not by itself (create_response is off), so
+                // a moved view's picture is in before it
+                // taken off before waiting: a next turn may start its own meanwhile
+                const pending = turnView;
+                turnView = null;
+                const view = await within(pending, VIEW_WAIT_MS);
+                if (ended) break;
+                if (view) sendView(view);
+                send({ type: "response.create" });
                 break;
+            }
             case "conversation.item.input_audio_transcription.delta":
                 add("user", e.item_id, e.delta);
                 break;
@@ -286,22 +371,19 @@ async function startOpenAI(
                 ev.onState("listening");
                 break;
             case "response.function_call_arguments.done": {
-                let ids: string[] = [];
+                let args: unknown = {};
                 try {
-                    const args = JSON.parse(e.arguments);
-                    if (Array.isArray(args.ids))
-                        ids = args.ids.filter(
-                            (i: unknown) => typeof i === "string",
-                        );
+                    args = JSON.parse(e.arguments);
                 } catch {}
-                const shown = ev.onPoint(speakingKey, ids);
+                const { ids, go } = toolCall(e.name, args);
+                const result = ev.onPoint(speakingKey, ids, go);
                 called.add(e.response_id);
                 send({
                     type: "conversation.item.create",
                     item: {
                         type: "function_call_output",
                         call_id: e.call_id,
-                        output: JSON.stringify({ shown }),
+                        output: JSON.stringify(result),
                     },
                 });
                 break;
@@ -329,7 +411,10 @@ async function startOpenAI(
     };
     return {
         stop: () => end(),
-        say: (text) => {
+        say: async (text) => {
+            const view = await within(ev.onTurn?.() ?? null, VIEW_WAIT_MS);
+            if (ended) return;
+            if (view) sendView(view);
             send({
                 type: "conversation.item.create",
                 item: {
@@ -356,6 +441,28 @@ function b64(pcm: Int16Array): string {
 
 /** the mic's samples at 16 kHz PCM16, whatever the device's rate. ponytail: nearest
  *  sample, no low-pass; speech survives it. A filter if recognition suffers */
+/**
+ * What Gemini said, from its transcript. The transcript can carry text it never says
+ * (A2 of the 2026-09-27 report): "<no speech detected>" for a silent turn, a tool call
+ * written out ("<call:highlight{ids:[n68]}>"), an <LMDX> block of UI markup, runs of
+ * <br>. The words stay; the markup goes, and so does a turn with nothing else.
+ */
+export function spoken(t: string): string {
+    return t
+        .replace(/<LMDX>[\s\S]*?(<\/LMDX>|$)/g, " ")
+        .replace(/<call:[^>]*(>|$)/g, " ")
+        .replace(/<\/?[A-Za-z][^<>]*(>|$)/g, " ")
+        .replace(/^\s*#+\s*/gm, "")
+        .replace(/\s+/g, " ")
+        .trim();
+}
+
+/** a view's note and picture as a Gemini turn's parts */
+const viewParts = (view: LiveView) => [
+    { text: view.note },
+    { inlineData: { mimeType: "image/jpeg", data: view.jpeg.split(",")[1] } },
+];
+
 export function to16k(rate: number): (x: Float32Array) => Int16Array {
     const step = rate / 16000;
     let t = 0;
@@ -418,20 +525,22 @@ async function startGemini(
     src.connect(proc);
     proc.connect(mute);
     mute.connect(ctx.destination);
+    /** the mic's audio while a turn's picture is taken: sent after it */
+    let held: string[] | null = null;
+    const sendAudio = (data: string) =>
+        ws.send(
+            JSON.stringify({
+                realtimeInput: {
+                    audio: { data, mimeType: "audio/pcm;rate=16000" },
+                },
+            }),
+        );
     proc.onaudioprocess = (e) => {
         if (!micOn || ws.readyState !== WebSocket.OPEN) return;
         const pcm = down(e.inputBuffer.getChannelData(0));
-        if (pcm.length)
-            ws.send(
-                JSON.stringify({
-                    realtimeInput: {
-                        audio: {
-                            data: b64(pcm),
-                            mimeType: "audio/pcm;rate=16000",
-                        },
-                    },
-                }),
-            );
+        if (!pcm.length) return;
+        if (held) held.push(b64(pcm));
+        else sendAudio(b64(pcm));
     };
 
     // playback: 24 kHz PCM16 chunks, queued back to back; cut short on barge-in
@@ -504,7 +613,7 @@ async function startGemini(
     const userKey = () => `g-user-${userTurn}`;
     const modelKey = () => `g-model-${modelTurn}`;
     /** a turn that said nothing is transcribed as "<no speech detected>": no bubble */
-    const said = (t: string) => (/^\s*<[^<>]*>?\s*$/.test(t) ? "" : t);
+    const said = (t: string) => spoken(t);
     const openUserTurn = () => {
         // the last turn: its words, or its empty bubble goes
         if (!userText || !userClosed)
@@ -523,6 +632,18 @@ async function startGemini(
             ev.onWords("assistant", modelKey(), said(modelText), true);
         modelText = "";
         modelTurn++;
+    };
+    /** a picture as part of the user's turn, which it does not end */
+    const sendView = (view: LiveView) => {
+        ws.send(
+            JSON.stringify({
+                clientContent: {
+                    turns: [{ role: "user", parts: viewParts(view) }],
+                    turnComplete: false,
+                },
+            }),
+        );
+        view.sent?.();
     };
     const connect = (resume?: string) => {
         const sock = new WebSocket(
@@ -580,6 +701,23 @@ async function startGemini(
                 sawActivity = true;
                 openUserTurn();
                 ev.onState("hearing");
+                // a moved view's picture joins the turn as it is spoken: the rest of
+                // the turn's audio waits for it (at most VIEW_WAIT_MS), so Gemini
+                // cannot end the turn, and answer, before the picture is in (a short
+                // question ends before the page has rendered). What went before this
+                // notice cannot end it either: a turn ends on its trailing silence,
+                // and that is audio held here (Gemini waits for audio, as its
+                // audioStreamEnd, for pauses in the stream, shows)
+                const taking = ev.onTurn?.() ?? null;
+                if (taking && !held) {
+                    held = [];
+                    void within(taking, VIEW_WAIT_MS).then((view) => {
+                        if (view && live()) sendView(view);
+                        const rest = held ?? [];
+                        held = null;
+                        if (live()) for (const data of rest) sendAudio(data);
+                    });
+                }
             }
             const sc = msg.serverContent;
             if (sc) {
@@ -595,7 +733,12 @@ async function startGemini(
                 if (sc.outputTranscription?.text) {
                     modelText += sc.outputTranscription.text;
                     if (said(modelText))
-                        ev.onWords("assistant", modelKey(), modelText, false);
+                        ev.onWords(
+                            "assistant",
+                            modelKey(),
+                            said(modelText),
+                            false,
+                        );
                 }
                 if (sc.interrupted) flush();
                 if (sc.turnComplete) finish();
@@ -603,29 +746,24 @@ async function startGemini(
             if (msg.toolCall) {
                 const functionResponses = (
                     msg.toolCall.functionCalls ?? []
-                ).map(
-                    (fc: {
-                        id: string;
-                        name: string;
-                        args?: { ids?: unknown };
-                    }) => {
-                        const ids = Array.isArray(fc.args?.ids)
-                            ? fc.args.ids.filter((i) => typeof i === "string")
-                            : [];
-                        const shown = ev.onPoint(
-                            modelText ? modelKey() : null,
-                            ids as string[],
-                        );
-                        // SILENT: the model takes the result without a new turn (a
-                        // field of the response, not of its payload)
-                        return {
-                            id: fc.id,
-                            name: fc.name,
-                            response: { shown },
-                            scheduling: "SILENT",
-                        };
-                    },
-                );
+                ).map((fc: { id: string; name: string; args?: unknown }) => {
+                    const { ids, go } = toolCall(fc.name, fc.args);
+                    const result = ev.onPoint(
+                        said(modelText) ? modelKey() : null,
+                        ids,
+                        go,
+                    );
+                    // highlight: SILENT, the model takes the result without a new
+                    // turn (else it says its answer again). go_to: WHEN_IDLE, so a
+                    // turn that was only the call still says something ("Here it
+                    // is"). A field of the response, not of its payload
+                    return {
+                        id: fc.id,
+                        name: fc.name,
+                        response: result,
+                        scheduling: go ? "WHEN_IDLE" : "SILENT",
+                    };
+                });
                 sock.send(
                     JSON.stringify({ toolResponse: { functionResponses } }),
                 );
@@ -648,16 +786,26 @@ async function startGemini(
     req.signal.addEventListener("abort", onAbort, { once: true });
     return {
         stop: () => end(),
-        say: (text) => {
-            if (ws.readyState !== WebSocket.OPEN) return;
+        say: async (text) => {
+            const view = await within(ev.onTurn?.() ?? null, VIEW_WAIT_MS);
+            if (ended || ws.readyState !== WebSocket.OPEN) return;
             ws.send(
                 JSON.stringify({
                     clientContent: {
-                        turns: [{ role: "user", parts: [{ text }] }],
+                        turns: [
+                            {
+                                role: "user",
+                                parts: [
+                                    ...(view ? viewParts(view) : []),
+                                    { text },
+                                ],
+                            },
+                        ],
                         turnComplete: true,
                     },
                 }),
             );
+            view?.sent?.();
         },
     };
 }

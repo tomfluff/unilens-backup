@@ -210,6 +210,57 @@ export function sourcesIn(
     });
 }
 
+/** where a sentence ends: its closing punctuation, then a space, the end, or (after
+ *  Japanese punctuation) anything */
+const SENTENCE_END = /[.!?](?=\s|$|["'」』）)])|[。！？]/g;
+
+/**
+ * Live's source numbers in a spoken reply (bug 4 of the 2026-09-27 report). Speech
+ * cannot carry markers, so each goes where the model was when it pointed: `at`, the
+ * reply's length then. It goes before the end of the sentence being said, or of the
+ * next one when it pointed between sentences or before any words (the model often
+ * points first, then speaks); the sentence that names the element, when one does.
+ * Never before an earlier one: the numbers stay in the order it pointed, which is the
+ * order the model is told.
+ */
+export function placeLiveMarkers(
+    words: string,
+    points: { id: string; at: number }[],
+    labelOf: (id: string) => string,
+): string {
+    const ends = [...words.matchAll(SENTENCE_END)].map((m) => m.index ?? 0);
+    // pointed after the last full sentence, and nothing said since: it belongs to that
+    // sentence for now (Gemini's words run ahead of its voice, so they are often all
+    // in when it points); it moves on if a next sentence begins
+    const endFrom = (i: number) =>
+        ends.find((e) => e >= i) ??
+        (words.slice(i).trim() ? words.length : (ends.at(-1) ?? words.length));
+    let last = 0;
+    const at = points.map(({ id, at }) => {
+        const name = labelOf(id);
+        // where it names it, from the sentence it pointed in on: a sentence before
+        // that one was said before it pointed
+        const from = (ends.findLast((e) => e < at) ?? -1) + 1;
+        const named = name.length >= 3 ? words.indexOf(name, from) : -1;
+        const before = words.slice(0, at).trimEnd();
+        const pos =
+            named >= 0
+                ? endFrom(named + name.length - 1)
+                : !before || /[.!?。！？]["'」』）)]*$/.test(before)
+                  ? endFrom(at)
+                  : endFrom(at);
+        last = Math.max(last, pos);
+        return { id, pos: last };
+    });
+    let out = "";
+    let from = 0;
+    for (const { id, pos } of at) {
+        out += `${words.slice(from, pos).trimEnd()} [[${id}]]`;
+        from = pos;
+    }
+    return out + words.slice(from);
+}
+
 /** the reply as it should be read aloud or copied: no markers, no phrase braces */
 export const speakable = (text: string) =>
     unjoin(text)

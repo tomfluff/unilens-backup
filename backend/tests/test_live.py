@@ -95,6 +95,19 @@ def test_without_a_key_it_says_so(client, cap):
     assert start(client, "gemini", capture_id=cap).status_code == 501
 
 
+def test_both_providers_get_highlight_and_go_to():
+    """Pointing lights things up where they are; go_to is the only tool that moves
+    the page (bug 3 of the 2026-09-27 report)."""
+    openai = app_module._live_tools(gemini=False)
+    gemini = app_module._live_tools(gemini=True)
+    assert [t["name"] for t in openai] == ["highlight", "go_to"]
+    assert all(t["type"] == "function" for t in openai)
+    assert openai[1]["parameters"]["properties"]["id"] == {"type": "string"}
+    assert [t["name"] for t in gemini] == ["highlight", "go_to"]
+    assert all(t["behavior"] == "NON_BLOCKING" for t in gemini)
+    assert gemini[0]["parameters"]["properties"]["ids"]["type"] == "ARRAY"
+
+
 def test_the_rules_follow_the_options():
     choice = app_module._live_choice("openai", {"point": False, "lang": "ja"})
     rules = app_module._live_instructions(choice)

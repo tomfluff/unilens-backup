@@ -1,6 +1,12 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { aiCatalogue, aiChoice, liveProvider } from "./ai";
-import type { CaptureResult } from "./capture";
+import {
+    type CaptureResult,
+    type ViewState,
+    viewMovedSince,
+    viewNow,
+    viewPicture,
+} from "./capture";
 import { chatLang, chatText, speechLang } from "./chatI18n";
 import { ensureChatStyles } from "./chatStyles";
 import { type Earcon, earcon, releaseAudio } from "./earcons";
@@ -10,6 +16,7 @@ import {
     mdLite,
     type NavCommand,
     navCommand,
+    placeLiveMarkers,
     recordEvidence,
     renderCited,
     sourcesIn,
@@ -45,7 +52,12 @@ import {
     WaitIcon,
 } from "./icons";
 import { labelOfWire, type WireNode } from "./inventory";
-import { type LiveHandle, type LiveState, startLive } from "./live";
+import {
+    type LiveHandle,
+    type LiveState,
+    type LiveView,
+    startLive,
+} from "./live";
 import {
     goToPlace,
     latestPlace,
@@ -118,6 +130,9 @@ const SELECTION_MAX = 30;
 
 /** what the user has selected on the page as they ask: one source, all of an
  *  answer's sources, or a place's clicked element */
+/** a source a Live reply pointed at, and how much of the reply was said by then */
+type LivePoint = { id: string; at: number };
+
 interface Selection {
     kind: "source" | "all" | "place";
     /** the source's or place's number, or how many sources for "all" */
@@ -373,9 +388,12 @@ export default function ChatPopover({
     const liveAbort = useRef<AbortController | null>(null);
     /** each live reply's words so far, and the sources it pointed at (its chips) */
     const liveWords = useRef(new Map<string, string>());
-    const livePointed = useRef(new Map<string, string[]>());
+    /** each Live reply's sources in the order it pointed, with where in its words */
+    const livePointed = useRef(new Map<string, LivePoint[]>());
+    /** each Live reply's words so far, captions on or off (where it pointed) */
+    const liveHeard = useRef(new Map<string, string>());
     /** sources pointed at before the reply's words began: its bubble takes them */
-    const livePending = useRef<string[]>([]);
+    const livePending = useRef<LivePoint[]>([]);
     /** the mic: recording, or (server speech recognition) turning the recording into
      *  text, when the field says so and the button cancels rather than stops */
     const [listening, setListening] = useState<
@@ -696,14 +714,17 @@ export default function ChatPopover({
         const s = getSettings();
         const src = citeSource(on);
         const bubble = (key: string) => `live-${key}`;
-        /** a reply's words, then its sources as chips */
-        const withChips = (id: string) =>
-            [
-                liveWords.current.get(id) ?? "",
-                ...(livePointed.current.get(id) ?? []).map((i) => `[[${i}]]`),
-            ]
-                .join(" ")
-                .trim();
+        /** a reply's words, each source's number where it was said (after the words
+         *  while there are none yet) */
+        const withChips = (id: string) => {
+            const w = liveWords.current.get(id) ?? "";
+            const pts = livePointed.current.get(id) ?? [];
+            return !w || w === "…"
+                ? [w, ...pts.map((p) => `[[${p.id}]]`)].join(" ").trim()
+                : placeLiveMarkers(w, pts, (i) =>
+                      src ? labelOfWire(i, src.inventory) : "",
+                  );
+        };
         const setBubble = (m: Msg) =>
             setMessages((ms) => {
                 const i = ms.findIndex((x) => x.id === m.id);
@@ -712,6 +733,10 @@ export default function ChatPopover({
                 next[i] = m;
                 return next;
             });
+        /** the view the talk last saw (the capture it starts with, then each new
+         *  picture), and a picture being taken */
+        let seen: ViewState = on.cap.meta;
+        let taking: Promise<LiveView | null> | null = null;
         // each finished turn joins the session's history, once: the text chat goes on
         // from it
         const logged = new Set<string>();
@@ -780,6 +805,7 @@ export default function ChatPopover({
                             livePending.current = [];
                         }
                         liveWords.current.set(id, shown || "…");
+                        liveHeard.current.set(id, words);
                         setBubble({
                             id,
                             role,
@@ -799,28 +825,42 @@ export default function ChatPopover({
                         // the user's turn again: said, not only shown above the field
                         if (st === "listening") announce(liveLabel(st));
                     },
-                    onPoint: (key, ids) => {
+                    onPoint: (key, ids, go) => {
                         if (!mine() || !src || !getSettings().livePoint)
-                            return [];
+                            return { shown: [], sources: [] };
                         const valid = ids.filter((i) => src.registry.has(i));
-                        if (!valid.length) return [];
                         const id = key ? bubble(key) : null;
                         const list = id
                             ? (livePointed.current.get(id) ?? [])
                             : livePending.current;
+                        // where the reply was when it pointed: its number goes there
+                        const at = id
+                            ? (liveHeard.current.get(id) ?? "").length
+                            : 0;
                         for (const v of valid)
-                            if (!list.includes(v)) list.push(v);
+                            if (!list.some((p) => p.id === v))
+                                list.push({ id: v, at });
                         if (id) livePointed.current.set(id, list);
-                        // drawn and brought into view like a chip pressed in the reply
+                        // the reply's sources in the chat's numbering: "the second
+                        // one" is number 2 (A5 of the 2026-09-27 report)
+                        const sources = list.map((p) => p.id);
+                        if (!valid.length) return { shown: [], sources };
+                        // lit where they are; only go_to moves the page, to the one
+                        // the user asked for (bug 3 of the 2026-09-27 report)
                         point(
                             {
                                 id: id ?? "live-pending",
                                 role: "assistant",
-                                text: list.map((i) => `[[${i}]]`).join(" "),
+                                text: sources.map((i) => `[[${i}]]`).join(" "),
                                 cite: src,
                             },
-                            valid.length === 1 ? list.indexOf(valid[0]) : "all",
-                            true,
+                            valid.length === 1
+                                ? sources.indexOf(valid[0])
+                                : "all",
+                            go,
+                            false,
+                            false,
+                            !go,
                         );
                         if (id)
                             setMessages((ms) =>
@@ -830,7 +870,34 @@ export default function ChatPopover({
                                         : x,
                                 ),
                             );
-                        return valid;
+                        // no "moved": one already on screen stays put, which the
+                        // model took for a failure ("I tried to bring it up")
+                        return { shown: valid, sources };
+                    },
+                    onTurn: () => {
+                        if (!mine() || !getSettings().liveScreenshot)
+                            return null;
+                        // one picture at a time: a turn begun meanwhile shares it
+                        if (taking) return taking;
+                        if (!viewMovedSince(seen)) return null;
+                        const now = viewNow();
+                        taking = viewPicture()
+                            .then(({ jpeg, view, zoom }) => {
+                                return {
+                                    // seen once sent: one that came too late for its
+                                    // turn is taken again for the next
+                                    sent: () => {
+                                        seen = now;
+                                    },
+                                    jpeg,
+                                    note: `The user's view now: x ${view.x} to ${view.x + view.w}, y ${view.y} to ${view.y + view.h} on the page (the coordinates of the inventory's boxes), at ${Math.round(zoom * 100)}% zoom. The picture shows it.`,
+                                };
+                            })
+                            .catch(() => null)
+                            .finally(() => {
+                                taking = null;
+                            });
+                        return taking;
                     },
                     onEnd: (error) => {
                         if (!mine()) return;
@@ -1213,10 +1280,13 @@ export default function ChatPopover({
         toggle = false,
         /** pressed in the answer's text: the reader is there, so the log stays put */
         fromText = false,
-    ) {
+        /** Live pointing as it speaks: outlines only, and neither the page nor the chat
+         *  moves (bug 3 of the 2026-09-27 report: the user is looking at something) */
+        still = false,
+    ): boolean {
         const c = cited(m);
         const src = m.cite;
-        if (!c?.ids.length || !src) return;
+        if (!c?.ids.length || !src) return false;
         // a newer choice (or the same one pressed off) replaces a pending side step
         window.clearTimeout(stepAside.current);
         // the lit source pressed again: its outline goes (every outline can be turned off
@@ -1230,7 +1300,7 @@ export default function ChatPopover({
         ) {
             clearHighlights();
             act("clear", T.sCleared);
-            return;
+            return false;
         }
         const n = c.ids.length;
         const picks =
@@ -1268,7 +1338,7 @@ export default function ChatPopover({
         const shown = picks
             .map(({ id }) => src.registry.get(id))
             .filter((e): e is Element => e != null);
-        if (shown.length && !mini)
+        if (shown.length && !mini && !still)
             stepAside.current = window.setTimeout(() => {
                 const boxes = shown.map((e) => e.getBoundingClientRect());
                 const a = {
@@ -1328,7 +1398,9 @@ export default function ChatPopover({
         setActive(hasHighlight() ? { msgId: m.id, index } : null);
         // the controls row sits at the answer's end: keep it in view for a press there,
         // but a source pressed in the text is where the reader is reading
-        if (!fromText) revealTurn(m.id);
+        // Live pointing as it speaks leaves the log where the reader is
+        if (!fromText && !still) revealTurn(m.id);
+        return moved;
     }
 
     /** a finished reply: debug readout, then outline it if the auto-highlight knob says so */
