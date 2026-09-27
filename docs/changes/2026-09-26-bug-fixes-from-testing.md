@@ -23,6 +23,13 @@ The builder tested main after the #14–#17 merge and filed seven bugs with scre
 - **A page that grew after load no longer captures blank.** The page size was measured at load only, so after a tab or accordion opened, a click below the old end gave a white close-up. It is measured again at every capture, and when the body resizes.
 - **Alt+click no longer also clicks the page's own control.** The trigger click is taken in the window's capture phase, so a FAQ question no longer opens or closes as it is captured.
 
+### From the second round of testing (2026-09-27)
+
+- **A link that wraps onto two lines is outlined line by line.** An outline was the element's bounding box, which for a wrapped link covers most of its sentence. An inline element that wraps now gets one outline per line, with its number on the first; the minimap and the off-screen cues still use its whole box.
+- **A link or a button inside a sentence keeps its own outline** when the two are drawn together (the builder's choice, amending the nested rule above), unless the sentence holds nothing else.
+- **"This" survives a view refresh.** Choosing a source moves the page, so the next question takes a fresh capture whose ids differ from the answer's; the source is now sent by its id in that capture, found by its element. Before, "Translate this" on source 1 translated the row that held both sources.
+- **Gemini's joined citations become chips.** Gemini writes two sources as `[[n42], [n43]]`; the chat, read-aloud and the saved history now split them into one marker each.
+
 ## Not in this change
 
 - Scroll positions inside the page's own scroll containers (TODOS.md, host-page hazards).

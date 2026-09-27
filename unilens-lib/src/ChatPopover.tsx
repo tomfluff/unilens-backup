@@ -11,6 +11,7 @@ import {
     navCommand,
     recordEvidence,
     renderCited,
+    sourcesIn,
     speakable,
 } from "./evidence";
 import {
@@ -116,7 +117,9 @@ interface Selection {
     kind: "source" | "all" | "place";
     /** the source's or place's number, or how many sources for "all" */
     n: number;
-    items: { id?: string; label: string }[];
+    /** a source keeps its element: its id is looked up again in the capture the
+     *  question goes with, which may be a newer one (a view refresh) */
+    items: { id?: string; label: string; el?: Element }[];
 }
 
 function cited(m: Msg): Cited | null {
@@ -820,6 +823,7 @@ export default function ChatPopover({
                     items: ids.filter(Boolean).map((id) => ({
                         id,
                         label: labelOfWire(id, src.inventory),
+                        el: src.registry.get(id),
                     })),
                 };
             }
@@ -832,6 +836,15 @@ export default function ChatPopover({
             };
         return null;
     }
+    /**
+     * The selection as the question sends it: each source by its id in the capture
+     * the question goes with. Choosing a source moves the page, so the question often
+     * goes with a fresh capture, whose ids are not the answer's: its n39 can be the
+     * row that holds both sources (A4 of the 2026-09-27 report). A source that capture
+     * does not hold goes by its label alone.
+     */
+    const selectionIn = (sel: Selection, on: Current) =>
+        sourcesIn(sel.items, citeSource(on)?.registry);
     // Escape (or a new capture) clears the outline: the pressed buttons must follow
     useEffect(
         () =>
@@ -1130,7 +1143,7 @@ export default function ChatPopover({
                 message: text,
                 session_id: sessionId,
                 cite: getSettings().citeEvidence,
-                selection: sel ? { items: sel.items } : undefined,
+                selection: sel ? { items: selectionIn(sel, on) } : undefined,
             }),
         });
         if (!res.ok || !res.body) {
@@ -1225,7 +1238,7 @@ export default function ChatPopover({
                 message: text,
                 session_id: sessionId,
                 cite: getSettings().citeEvidence,
-                selection: sel ? { items: sel.items } : undefined,
+                selection: sel ? { items: selectionIn(sel, on) } : undefined,
             }),
         });
         const data = await res.json();

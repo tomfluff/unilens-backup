@@ -236,6 +236,15 @@ SELECTION_ID_RE = re.compile(r"n\d{1,9}")
 
 # any n-digits id, so an over-long one is stripped rather than let through
 CITE_RE = re.compile(r"( ?)\[\[(n\d+)\]\]")
+# several ids in one marker, as Gemini writes them: [[n42], [n43]] or [[n42, n43]]
+JOINED_CITE_RE = re.compile(r"\[\[(n\d+(?:\]?\s*,\s*\[?n\d+)+)\]\]")
+
+
+def _unjoin_cites(text: str) -> str:
+    """A joined marker as one marker per id, the form the chat and the history read."""
+    return JOINED_CITE_RE.sub(
+        lambda m: " ".join(f"[[{i}]]" for i in re.findall(r"n\d+", m.group(1))), text
+    )
 
 
 def _selection(data: dict) -> list[dict]:
@@ -305,6 +314,7 @@ def _strip_unknown_cites(text: str, ids: set[str]) -> str:
         after = text[m.end() : m.end() + 1]
         return m.group(1) if after and (after.isalnum() or after == "_") else ""
 
+    text = _unjoin_cites(text)
     return CITE_RE.sub(drop, text)
 
 

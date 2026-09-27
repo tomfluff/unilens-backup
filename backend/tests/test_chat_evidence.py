@@ -152,6 +152,9 @@ def test_stream_sends_deltas_as_written_but_saves_only_known_ids(
         ("Over-long [[n123456]] id", "Over-long id"),
         ("Adjacent [[n2]][[n99]][[n1]].", "Adjacent [[n2]][[n1]]."),
         ("Not a marker [[x1]] or [n2].", "Not a marker [[x1]] or [n2]."),
+        # Gemini joins ids in one marker: split, then checked one by one
+        ("Gets ¥1,000 [[n1], [n2]].", "Gets ¥1,000 [[n1]] [[n2]]."),
+        ("Gets ¥1,000 [[n1, n99, n2]].", "Gets ¥1,000 [[n1]] [[n2]]."),
     ],
 )
 def test_strip_unknown_cites(text, expected):

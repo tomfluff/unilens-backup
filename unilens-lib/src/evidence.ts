@@ -9,6 +9,16 @@
 const MARKER = /\s?\[\[(n\d{1,5})\]\]/g;
 /** an unfinished marker at the end of a streaming reply stays hidden until it completes */
 const PARTIAL = /\s?\[(\[(n\d{0,5}(\](?!\]))?)?)?$/;
+/** several ids in one marker, as Gemini writes them: [[n42], [n43]] or [[n42, n43]] */
+const JOINED = /\[\[(n\d{1,5}(?:\]?\s*,\s*\[?n\d{1,5})+)\]\]/g;
+/** ...and one still streaming in: [[n42], [n4 */
+const PARTIAL_JOINED = /\s?\[\[n\d{1,5}\]?(?:\s*,\s*\[?(?:n\d{0,5}\]?)?)+$/;
+
+/** a joined marker as one marker per id, the form everything else reads */
+export const unjoin = (text: string) =>
+    text.replace(JOINED, (_, ids: string) =>
+        (ids.match(/n\d{1,5}/g) ?? []).map((id) => `[[${id}]]`).join(" "),
+    );
 /** placeholder that survives the markdown pass; a private-use char, stripped from model text first */
 const SLOT = /\uE0FF(\d+)\uE0FF/g;
 
@@ -57,8 +67,8 @@ export function renderCited(
     /** what the chip shows: the number, or a code such as "U1" */
     chipText: (n: number) => string = String,
 ): Cited {
-    let t = text.replace(/\uE0FF/g, "");
-    if (streaming) t = t.replace(PARTIAL, "");
+    let t = unjoin(text.replace(/\uE0FF/g, ""));
+    if (streaming) t = t.replace(PARTIAL_JOINED, "").replace(PARTIAL, "");
     const ids: string[] = [];
     t = t.replace(MARKER, (m, id: string) => {
         if (!known(id)) return "";
@@ -76,8 +86,28 @@ export function renderCited(
     return { html, ids };
 }
 
+/**
+ * Chosen sources as a question sends them: each by its id in `registry`, the capture
+ * the question goes with, found by its element. That capture can be newer than the
+ * answer the sources came from (choosing one moves the page, so the question takes a
+ * fresh capture), and its ids are not the answer's. A source it does not hold goes by
+ * its label alone; an item with no element (a place) goes as it is.
+ */
+export function sourcesIn(
+    items: { id?: string; label: string; el?: Element }[],
+    registry: Map<string, Element> | undefined,
+): { id?: string; label: string }[] {
+    return items.map(({ id, label, el }) => {
+        if (!el) return id ? { id, label } : { label };
+        const now = registry
+            ? [...registry].find(([, e]) => e === el)?.[0]
+            : undefined;
+        return now ? { id: now, label } : { label };
+    });
+}
+
 /** the reply as it should be read aloud or copied: no markers */
-export const speakable = (text: string) => text.replace(MARKER, "");
+export const speakable = (text: string) => unjoin(text).replace(MARKER, "");
 
 export type NavCommand =
     | { kind: "next" }
@@ -166,7 +196,7 @@ export function recordEvidence(
     ids: string[],
     labelOf: (id: string) => string,
 ) {
-    const cited = [...text.matchAll(MARKER)].map((m) => m[1]);
+    const cited = [...unjoin(text).matchAll(MARKER)].map((m) => m[1]);
     lastEvidence = {
         ids,
         labels: ids.map(labelOf),
