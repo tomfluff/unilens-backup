@@ -2,6 +2,18 @@
 
 ## unilens-lib
 
+### A zoomed capture takes about 2.7 times as long
+
+**What:** At 200% UniLens zoom, a capture of the fully expanded SoftBank page takes about 6.3 s against 2.3 s at 100%, in every html2canvas build. Without CJK fonts it is about 10 times as long. Find where the time goes (the frozen page's transform, the clone, fixed-element pins) and cut it.
+
+**Why:** Found by the html2canvas-pro benchmark (2026-09-27). Low-vision users capture while zoomed, so they wait the longest.
+
+**Context:** Benchmark and method: `.local/research/2026-09-27-html2canvas-pro-benchmark.md`. The capture renders the page unzoomed (`capture.ts`), so the zoom should not cost this much.
+
+**Effort:** S
+**Priority:** P2
+**Depends on:** None
+
 ### Follow-ups from the review of #14–#16
 
 **What:** Five smaller findings from the 2026-09-24 review of the three stacked PRs. The builder kept them for later. Reports are in `.local/reviews/2026-09-24-prs-14-16/`.
