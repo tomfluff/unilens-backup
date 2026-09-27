@@ -1855,6 +1855,12 @@ def create_app():
         on from the voice conversation. JSON: session_id, capture_id, role, text."""
         if _rate_limited("live_log"):
             return jsonify({"error": "rate limit"}), 429
+        # a turn is a few kilobytes: a body without a declared length is refused too
+        if (
+            not request.content_length
+            or request.content_length > LIVE_LOG_MAX * 4 + 1024
+        ):
+            return jsonify({"error": "too long, or no length"}), 413
         data = request.get_json(force=True, silent=True)
         if not isinstance(data, dict):
             return jsonify({"error": "expected a JSON object"}), 400
@@ -1868,7 +1874,8 @@ def create_app():
             return jsonify({"error": "unknown capture or session"}), 404
         with _LIVE_LOG_LOCK:
             session = _load_session(sid)
-            if session is None:
+            # only into a conversation on that capture: ids alone never pair up
+            if session is None or cap_id not in session.get("captures", []):
                 return jsonify({"error": "unknown session_id"}), 404
             entry = {"role": role, "text": text, "live": True}
             if role == "user":

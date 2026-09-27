@@ -55,6 +55,9 @@ export interface LiveRequest {
     options: LiveOptions;
     /** send a picture of what the user sees, beside the page's elements */
     screenshot: boolean;
+    /** aborted: the start is dropped at once, whatever it was waiting for, and
+     *  nothing it opened stays open */
+    signal: AbortSignal;
 }
 
 type Ev = { type: string; [k: string]: unknown };
@@ -81,6 +84,7 @@ async function begin(
 ): Promise<Start> {
     const res = await fetch(`${backend}/api/live/${provider}`, {
         method: "POST",
+        signal: req.signal,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
             capture_id: req.captureId,
@@ -151,13 +155,18 @@ async function startOpenAI(
     const mic = await navigator.mediaDevices.getUserMedia(micConstraints);
     const pc = new RTCPeerConnection();
     let ended = false;
-    const end = (error?: string) => {
-        if (ended) return;
+    const onAbort = () => end();
+    const close = () => {
         ended = true;
+        req.signal.removeEventListener("abort", onAbort);
         for (const t of mic.getTracks()) t.stop();
         dc.close();
         pc.close();
         speaker.srcObject = null;
+    };
+    const end = (error?: string) => {
+        if (ended) return;
+        close();
         ev.onEnd(error);
     };
     pc.ontrack = (e) => {
@@ -171,11 +180,15 @@ async function startOpenAI(
     const image = req.screenshot ? closeUp(backend, req.captureId) : null;
     let start: Start;
     try {
+        // stopped while the mic was being asked for, or later while connecting
+        req.signal.throwIfAborted();
+        req.signal.addEventListener("abort", onAbort, { once: true });
         await pc.setLocalDescription(await pc.createOffer());
         start = await begin(backend, "openai", req, pc.localDescription?.sdp);
         await pc.setRemoteDescription({ type: "answer", sdp: start.sdp ?? "" });
     } catch (err) {
-        end();
+        // a failed start is reported by the caller, not as an ended talk
+        if (!ended) close();
         throw err;
     }
     pc.onconnectionstatechange = () => {
@@ -375,14 +388,19 @@ async function startGemini(
     const speaker = new Audio();
     speaker.srcObject = out.stream;
     void speaker.play().catch(() => {});
-    const mic = await navigator.mediaDevices.getUserMedia(micConstraints);
-    const image = req.screenshot ? closeUp(backend, req.captureId) : null;
+    let mic: MediaStream | undefined;
     let start: Start;
+    const image = req.screenshot ? closeUp(backend, req.captureId) : null;
     try {
+        mic = await navigator.mediaDevices.getUserMedia(micConstraints);
+        req.signal.throwIfAborted();
         start = await begin(backend, "gemini", req);
+        req.signal.throwIfAborted();
     } catch (err) {
-        for (const t of mic.getTracks()) t.stop();
+        // the mic refused, or the backend: nothing is left running
+        for (const t of mic?.getTracks() ?? []) t.stop();
         void ctx.close();
+        speaker.srcObject = null;
         throw err;
     }
 
@@ -453,9 +471,13 @@ async function startGemini(
         playAt = 0;
     };
 
+    const onAbort = () => end();
     const end = (error?: string) => {
         if (ended) return;
+        // what was said so far stays
+        finish();
         ended = true;
+        req.signal.removeEventListener("abort", onAbort);
         micOn = false;
         window.clearTimeout(quietTimer);
         ws.close();
@@ -466,24 +488,42 @@ async function startGemini(
         ev.onEnd(error);
     };
 
-    // one bubble per turn: the user's opens with their first words, the model's with
-    // its first; both close when the turn completes
-    let turn = 0;
+    // one bubble per turn. The user's opens when they start speaking (the server's
+    // voice activity), so it stands before the reply even when its words come late:
+    // input transcription has no guaranteed order. Words that come after the reply
+    // still go to it. The model's closes when its turn completes. ponytail: the
+    // transcripts carry no turn id, so words later than the next turn's start go to
+    // that turn, and the history keeps the words the turn had when it completed
+    let userTurn = 0;
+    let modelTurn = 0;
     let userText = "";
+    let userClosed = true;
+    /** the server reports voice activity: turns open on it (else on the words) */
+    let sawActivity = false;
     let modelText = "";
-    const userKey = () => `g-user-${turn}`;
-    const modelKey = () => `g-model-${turn}`;
+    const userKey = () => `g-user-${userTurn}`;
+    const modelKey = () => `g-model-${modelTurn}`;
     /** a turn that said nothing is transcribed as "<no speech detected>": no bubble */
     const said = (t: string) => (/^\s*<[^<>]*>?\s*$/.test(t) ? "" : t);
+    const openUserTurn = () => {
+        // the last turn: its words, or its empty bubble goes
+        if (!userText || !userClosed)
+            ev.onWords("user", userKey(), userText, true);
+        userTurn++;
+        userText = "";
+        userClosed = false;
+        ev.onWords("user", userKey(), "", false);
+    };
     const finish = () => {
-        if (userText) ev.onWords("user", userKey(), userText, true);
+        // an empty turn keeps its place: its words may still come
+        if (!userClosed && userText)
+            ev.onWords("user", userKey(), userText, true);
+        userClosed = true;
         if (modelText)
             ev.onWords("assistant", modelKey(), said(modelText), true);
-        userText = "";
         modelText = "";
-        turn++;
+        modelTurn++;
     };
-
     const connect = (resume?: string) => {
         const sock = new WebSocket(
             `${start.ws}?access_token=${encodeURIComponent(start.token ?? "")}`,
@@ -499,14 +539,19 @@ async function startGemini(
                 }),
             );
         sock.onmessage = async (m) => {
+            // a stopped talk, or a connection since replaced, says nothing more
+            const live = () => !ended && ws === sock;
+            if (!live()) return;
             const msg = JSON.parse(
                 m.data instanceof Blob ? await m.data.text() : m.data,
             );
+            if (!live()) return;
             if (msg.setupComplete) {
                 if (!resume) {
                     // the page, as the first user turn, without a reply yet
                     const parts: object[] = [{ text: start.context }];
                     const jpeg = await image;
+                    if (!live()) return;
                     if (jpeg)
                         parts.push({
                             inlineData: {
@@ -526,19 +571,28 @@ async function startGemini(
                 micOn = true;
                 ev.onState("listening");
             }
+            // "type" on the wire (seen); "voiceActivityType" in the SDKs' schema
+            const activity = msg.voiceActivity;
+            if (
+                (activity?.type ?? activity?.voiceActivityType) ===
+                "ACTIVITY_START"
+            ) {
+                sawActivity = true;
+                openUserTurn();
+                ev.onState("hearing");
+            }
             const sc = msg.serverContent;
             if (sc) {
                 for (const p of sc.modelTurn?.parts ?? [])
                     if (p.inlineData?.data) play(p.inlineData.data);
                 if (sc.inputTranscription?.text) {
+                    if (!sawActivity && userClosed) openUserTurn();
                     userText += sc.inputTranscription.text;
-                    ev.onWords("user", userKey(), userText, false);
+                    // late words, after the turn closed, still complete it
+                    ev.onWords("user", userKey(), userText, userClosed);
                     ev.onState("hearing");
                 }
                 if (sc.outputTranscription?.text) {
-                    // the user's turn is over once the model answers it
-                    if (userText && !modelText)
-                        ev.onWords("user", userKey(), userText, true);
                     modelText += sc.outputTranscription.text;
                     if (said(modelText))
                         ev.onWords("assistant", modelKey(), modelText, false);
@@ -591,6 +645,7 @@ async function startGemini(
         sock.onerror = () => {};
     };
     connect();
+    req.signal.addEventListener("abort", onAbort, { once: true });
     return {
         stop: () => end(),
         say: (text) => {

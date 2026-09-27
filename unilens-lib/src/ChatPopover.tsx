@@ -366,6 +366,11 @@ export default function ChatPopover({
     // ── Live: a spoken conversation, its turns as messages (live.ts) ────────────
     const [live, setLive] = useState<LiveState | null>(null);
     const liveRef = useRef<LiveHandle | null>(null);
+    /** bumped by every start and stop: a start still connecting when it changes is
+     *  dropped, its microphone and connection closed */
+    const liveGen = useRef(0);
+    /** the start under way: aborted by a stop, so its mic and requests close at once */
+    const liveAbort = useRef<AbortController | null>(null);
     /** each live reply's words so far, and the sources it pointed at (its chips) */
     const liveWords = useRef(new Map<string, string>());
     const livePointed = useRef(new Map<string, string[]>());
@@ -472,6 +477,9 @@ export default function ChatPopover({
     /** what closing does, whether the chat is hidden or gone */
     const quiet = () => {
         liveRef.current?.stop();
+        liveAbort.current?.abort();
+        liveGen.current++;
+        setLive(null);
         stopSpeaking();
         // cancel, not stop: a stop delivers what was heard and sends it
         stopListenRef.current?.(true);
@@ -643,12 +651,29 @@ export default function ChatPopover({
      *  messages, and what it talks about lights up. Pressed again, it ends */
     async function toggleLive() {
         if (live) {
-            liveRef.current?.stop();
+            if (liveRef.current) liveRef.current.stop();
+            else {
+                // still connecting: that start is dropped, now (and said once, here)
+                liveGen.current++;
+                liveAbort.current?.abort();
+                setLive(null);
+                act("micOff", T.sLiveEnded);
+            }
             return;
         }
-        const provider = liveProvider(await aiCatalogue());
-        if (!provider) return sayNote(T.sNoLive);
+        const gen = ++liveGen.current;
+        const abort = new AbortController();
+        liveAbort.current = abort;
+        /** this start is still the one wanted (not stopped, hidden or gone since) */
+        const mine = () =>
+            gen === liveGen.current && !aborter.current.signal.aborted;
         setLive("connecting");
+        const provider = liveProvider(await aiCatalogue());
+        if (!mine()) return;
+        if (!provider) {
+            setLive(null);
+            return sayNote(T.sNoLive);
+        }
         act("micOn", T.sLiveStarting);
         stopSpeaking();
         // the page as it is now: a chat back from a reload, or a moved view, captures
@@ -663,7 +688,7 @@ export default function ChatPopover({
                 cur.current = fresh;
             }
         }
-        if (aborter.current.signal.aborted) return;
+        if (!mine()) return;
         if (on.id === "local") {
             setLive(null);
             return sayNote(T.sLiveFailed);
@@ -687,9 +712,12 @@ export default function ChatPopover({
                 next[i] = m;
                 return next;
             });
-        // each finished turn joins the session's history: the text chat goes on from it
-        const log = (role: "user" | "assistant", text: string) => {
-            if (!sessionId) return;
+        // each finished turn joins the session's history, once: the text chat goes on
+        // from it
+        const logged = new Set<string>();
+        const log = (id: string, role: "user" | "assistant", text: string) => {
+            if (!sessionId || logged.has(id)) return;
+            logged.add(id);
             void fetch(`${backend}/api/live/log`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -709,6 +737,7 @@ export default function ChatPopover({
                     captureId: on.id,
                     sessionId,
                     screenshot: s.liveScreenshot,
+                    signal: abort.signal,
                     options: {
                         model: s.liveModel || undefined,
                         voice: s.liveVoice || undefined,
@@ -721,6 +750,7 @@ export default function ChatPopover({
                 },
                 {
                     onWords: (role, key, words, final) => {
+                        if (!mine()) return;
                         const id = bubble(key);
                         // nothing was heard or said: no bubble
                         if (final && !words.trim()) {
@@ -739,7 +769,7 @@ export default function ChatPopover({
                                 streaming: !final,
                                 captureId: on.id,
                             });
-                            if (final) log(role, words);
+                            if (final) log(id, role, words);
                             return;
                         }
                         if (
@@ -759,15 +789,19 @@ export default function ChatPopover({
                         });
                         if (final) {
                             liveWords.current.set(id, words);
-                            log(role, withChips(id));
+                            log(id, role, withChips(id));
                         }
                     },
                     onState: (st) => {
+                        if (!mine()) return;
                         setLive(st);
                         setStatus(liveLabel(st));
+                        // the user's turn again: said, not only shown above the field
+                        if (st === "listening") announce(liveLabel(st));
                     },
                     onPoint: (key, ids) => {
-                        if (!src || !getSettings().livePoint) return [];
+                        if (!mine() || !src || !getSettings().livePoint)
+                            return [];
                         const valid = ids.filter((i) => src.registry.has(i));
                         if (!valid.length) return [];
                         const id = key ? bubble(key) : null;
@@ -799,6 +833,8 @@ export default function ChatPopover({
                         return valid;
                     },
                     onEnd: (error) => {
+                        if (!mine()) return;
+                        liveGen.current++;
                         liveRef.current = null;
                         setLive(null);
                         // captions still open are what was said so far
@@ -816,13 +852,14 @@ export default function ChatPopover({
                     },
                 },
             );
-            // the chat went while it connected
-            if (aborter.current.signal.aborted) return handle.stop();
+            // stopped, hidden or gone while it connected
+            if (!mine()) return handle.stop();
             liveRef.current = handle;
         } catch (err) {
+            if (!mine()) return;
             console.warn("[UniLens] live talk failed to start:", err);
             setLive(null);
-            if (!aborter.current.signal.aborted) sayNote(T.sLiveFailed);
+            sayNote(T.sLiveFailed);
         }
     }
 
@@ -2182,6 +2219,12 @@ export default function ChatPopover({
                     >
                         <CloseIcon />
                     </button>
+                </div>
+            )}
+            {!mini && live && (
+                // the talk's state, in words, while the chat is open
+                <div className="ulc-about ulc-livestate">
+                    <span>{liveLabel(live)}</span>
                 </div>
             )}
             {!mini && (

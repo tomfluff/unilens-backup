@@ -113,6 +113,22 @@ def test_spoken_turns_join_the_session_history(client, cap):
     assert log(role="assistant", text="¥1,000 [[n1]] and [[n9]]").status_code == 200
     assert log(role="system", text="x").status_code == 400
     assert log(role="user", text="  ").status_code == 404
+    # a session that is not on that capture
+    other = client.post("/api/session", json={"capture_id": cap}).get_json()
+    app_module._save_session(other["session_id"], {"captures": [], "history": []})
+    assert (
+        client.post(
+            "/api/live/log",
+            json={
+                "session_id": other["session_id"],
+                "capture_id": cap,
+                "role": "user",
+                "text": "x",
+            },
+        ).status_code
+        == 404
+    )
+    assert log(role="user", text="x" * 20000).status_code == 413
     history = client.get(f"/api/session/{sid}").get_json()["history"]
     assert history == [
         {"role": "user", "text": "What do I get?", "live": True, "capture_id": cap},
