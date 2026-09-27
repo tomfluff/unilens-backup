@@ -655,11 +655,24 @@ export default function ChatPopover({
                         ),
                     });
                 // then what this chat has added since it opened (its own click), once:
-                // a place the history already entered is not entered again
+                // a place the history already entered (under any of its captures) is
+                // not entered again
                 const have = new Set(seeded.map((m) => m.id));
+                const places = new Set(
+                    seeded
+                        .filter((m) => m.role === "place")
+                        .map((m) => placeOf(m.captureId)),
+                );
                 setMessages((ms) => [
                     ...seeded,
-                    ...ms.filter((m) => !have.has(m.id)),
+                    ...ms.filter(
+                        (m) =>
+                            !have.has(m.id) &&
+                            !(
+                                m.role === "place" &&
+                                places.has(placeOf(m.captureId))
+                            ),
+                    ),
                 ]);
             })
             .catch(() => {});

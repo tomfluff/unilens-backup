@@ -167,19 +167,24 @@ export function UnilensRoot({
                 view: { scale: getZoom().scale, x: v.x, y: v.y },
             };
         };
-        const save = () => saveSoon(backend, snapshot);
+        /** the chat changed: kept at once (a reload may come any moment); the view
+         *  moving, once it settles */
+        const save = () => saveSoon(backend, snapshot, true);
+        const saveView = () => saveSoon(backend, snapshot);
         /** the first chat a click opens after a reload marks where the page reloaded */
         let reloadMark = false;
 
+        const keeping = () =>
+            getSettings().restoreAfterReload && getSettings().continuity;
         async function restore() {
-            const s = getSettings();
-            if (!s.restoreAfterReload || !s.continuity) return;
+            if (!keeping()) return;
+            // a click from here on starts its own conversation: that one stands
+            const mine = latestCapture;
             // places and the view are measured on the laid-out page
             if (document.readyState !== "complete")
                 await new Promise((r) =>
                     window.addEventListener("load", r, { once: true }),
                 );
-            const mine = latestCapture;
             const snap = await loadSnapshot(backend);
             if (!snap) return;
             // the session's history brings the messages back; the capture's meta lets
@@ -199,13 +204,19 @@ export function UnilensRoot({
             } catch {
                 return;
             }
-            // a click since the page loaded has started its own: that one stands
-            if (!meta || mine !== latestCapture || current) return;
+            // a click since the page loaded, or the setting turned off meanwhile
+            if (!meta || mine !== latestCapture || current || !keeping())
+                return;
             unilens.setSessionId(snap.sessionId);
             if (snap.page === pageKey()) {
                 for (const p of snap.places) recordPlace(p);
                 for (const [id, of] of snap.aliases) aliasPlace(id, of);
-                if (getSettings().zoom && snap.view.scale > 1.01)
+                // unless the user has zoomed already
+                if (
+                    getSettings().zoom &&
+                    snap.view.scale > 1.01 &&
+                    getZoom().scale === 1
+                )
                     restoreZoom(snap.view.scale, snap.view.x, snap.view.y);
             }
             const T = chatText();
@@ -580,21 +591,18 @@ export function UnilensRoot({
 
         // zoomed views move by UniLens (a scrolled page, the browser restores itself);
         // a tab going away is the last chance before a reload or a navigation
-        const offView = onViewChange(save);
+        const offView = onViewChange(saveView);
+        // best effort as the page goes: the frame may be torn down before it writes
         const onHide = () => {
-            if (document.visibilityState === "hidden")
-                saveSoon(backend, snapshot, true);
+            if (document.visibilityState === "hidden") save();
         };
         document.addEventListener("visibilitychange", onHide);
-        window.addEventListener("pagehide", onHide);
+        window.addEventListener("pagehide", save);
         // turned off: what was kept is forgotten
-        let keeping =
-            getSettings().restoreAfterReload && getSettings().continuity;
+        let kept = keeping();
         const offSettings = onSettingsChange(() => {
-            const now =
-                getSettings().restoreAfterReload && getSettings().continuity;
-            if (keeping && !now) forgetSnapshot(backend);
-            keeping = now;
+            if (kept && !keeping()) forgetSnapshot(backend);
+            kept = keeping();
         });
         void restore();
 
@@ -603,7 +611,7 @@ export function UnilensRoot({
             offView();
             offSettings();
             document.removeEventListener("visibilitychange", onHide);
-            window.removeEventListener("pagehide", onHide);
+            window.removeEventListener("pagehide", save);
         };
     }, [unilens, container, clickActionEmitter]);
 

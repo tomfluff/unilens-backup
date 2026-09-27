@@ -2,17 +2,21 @@
  * Restore after a reload: the conversation the user had on this site comes back.
  *
  * Kept in UniLens's own store, a hidden frame served by the backend (`/store`), not in
- * the site's storage: the site's scripts cannot read it, and the browser keeps each
- * site's apart. Interaction data only, never screenshots or messages: the session id
- * (its history, on the backend, brings the messages back), the capture the chat was
- * on, the places, and the zoom and view.
+ * the site's storage: it is not among the site's own keys (its analytics, its "clear
+ * data"), and the browser keeps each site's apart. It does not hide the conversation
+ * from the site itself: a script on the page runs as the widget does, so it could ask
+ * the frame too (and sees the widget's requests anyway). The site that embeds UniLens
+ * is trusted with its own users' conversations; other sites are not.
+ * Interaction data only, never screenshots or messages: the session id (its history,
+ * on the backend, brings the messages back), the capture the chat was on, the places,
+ * and the zoom and view. The page is kept as a hash, not its address.
  */
 import { allPlaces, type Place } from "./places";
 
 export interface Snapshot {
     v: 1;
     savedAt: number;
-    /** the page, without its #hash: places and the view belong to it */
+    /** the page (pageKey): places and the view belong to it */
     page: string;
     sessionId: string;
     /** the capture the chat was on */
@@ -29,7 +33,20 @@ export interface Snapshot {
 export const RESTORE_MAX_AGE_MS = 7 * 24 * 3600 * 1000;
 const KEY = "snapshot";
 
-export const pageKey = () => location.href.split("#")[0];
+/** the page, without its #hash, as a 64-bit hash: its address (and query) is not
+ *  kept. ponytail: two FNV-style hashes, enough to tell a site's pages apart */
+export function pageKey(): string {
+    const url = location.href.split("#")[0];
+    let a = 0x811c9dc5;
+    let b = 0x9747b28c ^ url.length;
+    for (let i = 0; i < url.length; i++) {
+        const c = url.charCodeAt(i);
+        a = Math.imul(a ^ c, 0x01000193);
+        b = Math.imul(b ^ c, 0x5bd1e995);
+    }
+    const hex = (n: number) => (n >>> 0).toString(16).padStart(8, "0");
+    return hex(a) + hex(b);
+}
 
 // ── The store: a hidden frame at the backend's origin, spoken to by postMessage ──
 
@@ -42,9 +59,16 @@ const replies = new Map<
     (m: { ok: boolean; value?: unknown }) => void
 >();
 
-/** false when the frame cannot load (a host page's CSP, offline): nothing is kept */
+/** when the frame last failed to open: it is tried again a minute later */
+let failedAt = -Infinity;
+/** the store's frame, gone quiet or failing: dropped, and opened again a minute later */
+let dropStore = () => {};
+
+/** false when the frame cannot load (a host page's CSP, the backend down): nothing
+ *  is kept until it can */
 function openStore(backend: string): Promise<boolean> {
     if (ready) return ready;
+    if (Date.now() - failedAt < 60_000) return Promise.resolve(false);
     ready = new Promise((resolve) => {
         try {
             frameOrigin = new URL(backend, location.href).origin;
@@ -57,8 +81,7 @@ function openStore(backend: string): Promise<boolean> {
         f.tabIndex = -1;
         f.setAttribute("aria-hidden", "true");
         f.style.display = "none";
-        const timer = window.setTimeout(() => resolve(false), 5000);
-        window.addEventListener("message", (e) => {
+        const onMessage = (e: MessageEvent) => {
             if (e.source !== f.contentWindow || e.origin !== frameOrigin)
                 return;
             const m = e.data;
@@ -70,7 +93,22 @@ function openStore(backend: string): Promise<boolean> {
             }
             replies.get(m.id)?.(m);
             replies.delete(m.id);
-        });
+        };
+        dropStore = () => {
+            console.warn(
+                "[UniLens] the conversation store is not working; nothing is kept across reloads for now",
+            );
+            window.clearTimeout(timer);
+            window.removeEventListener("message", onMessage);
+            f.remove();
+            frame = null;
+            ready = null;
+            failedAt = Date.now();
+            dropStore = () => {};
+            resolve(false);
+        };
+        const timer = window.setTimeout(() => dropStore(), 5000);
+        window.addEventListener("message", onMessage);
         frame = f;
         document.documentElement.appendChild(f);
     });
@@ -86,12 +124,15 @@ async function call(
     const id = ++seq;
     const win = frame.contentWindow;
     return new Promise((resolve) => {
+        // no answer, or its storage failed (blocked, full): tried afresh later
         const timer = window.setTimeout(() => {
             replies.delete(id);
+            dropStore();
             resolve(undefined);
         }, 3000);
         replies.set(id, (m) => {
             window.clearTimeout(timer);
+            if (!m.ok) dropStore();
             resolve(m.ok ? m.value : undefined);
         });
         win.postMessage(
