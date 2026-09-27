@@ -102,7 +102,7 @@ flowchart TB
 
         subgraph CapturePipeline["Capture & Context Pipeline (capture.ts)"]
             H2C["html2canvas<br/>Full-page render"]
-            Annotate["Canvas Annotation:<br/>• Cyan Viewport Box<br/>• Fading Orange Mouse Trace<br/>• Red Click Crosshair<br/>• Magenta Region Box"]
+            Annotate["Canvas Annotation:<br/>• Magenta Click Ring and Dot<br/>• Red Viewport Box<br/>• Fading Mouse Trail (orange or lime)<br/>• Dashed Red Region Box"]
             ElementInspect["Element Inspector (describeElement):<br/>Tag, text, class, role, path, nearest heading"]
             ViewportCrop["Zoom-aware Viewport Crop"]
             MetaPack["Package CaptureMeta & Images"]

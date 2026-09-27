@@ -16,6 +16,8 @@ import {
 export interface Settings {
     zoom: boolean;
     mouseTrace: boolean;
+    /** the colour of the pointer's trail in the pictures the assistant gets */
+    trailColor: "orange" | "lime";
     zoomTrace: boolean;
     viewportCrop: boolean;
     zoomKeys: boolean;
@@ -190,6 +192,7 @@ export interface Settings {
 const DEFAULTS: Settings = {
     zoom: true,
     mouseTrace: true,
+    trailColor: "orange",
     zoomTrace: true,
     viewportCrop: true,
     zoomKeys: false,
@@ -543,6 +546,10 @@ export const ENUM_CHOICES = {
             gemini: "Gemini",
         },
     },
+    trailColor: {
+        label: "Pointer trail colour (in the assistant's pictures)",
+        choices: { orange: "Orange", lime: "Lime" },
+    },
     ttsProvider: {
         label: "Read-aloud provider",
         choices: {
@@ -753,6 +760,7 @@ export const PANEL_SECTIONS: {
         title: "Capture and research",
         keys: [
             "mouseTrace",
+            "trailColor",
             "zoomTrace",
             "viewportCrop",
             "captureRes",

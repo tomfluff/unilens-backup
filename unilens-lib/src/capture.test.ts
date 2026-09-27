@@ -1,11 +1,15 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
     type CaptureMeta,
+    drawClick,
+    drawTrail,
     FONT_PROBE_GUARD_CSS,
     getLastInventoryDebug,
     guardFontProbe,
+    MARK,
     pageChangedSince,
     recordInventoryDebug,
+    TRAIL_RGB,
     viewMovedSince,
 } from "./capture";
 import {
@@ -137,5 +141,56 @@ describe("pageChangedSince", () => {
             pageChangedSince({ inventory: now.wire, registry: now.registry }),
         ).toBe(true);
         expect(pageChangedSince({})).toBe(false);
+    });
+});
+
+describe("the marks (R3 of the 2026-09-27 report)", () => {
+    /** a canvas context that records what is stroked and filled, in what colour */
+    function recorder() {
+        const drawn: string[] = [];
+        const ctx = {
+            strokeStyle: "",
+            fillStyle: "",
+            lineWidth: 0,
+            lineCap: "",
+            lineJoin: "",
+            beginPath() {},
+            arc() {},
+            moveTo() {},
+            lineTo() {},
+            stroke() {
+                drawn.push(`stroke ${ctx.strokeStyle} ${ctx.lineWidth}`);
+            },
+            fill() {
+                drawn.push(`fill ${ctx.fillStyle}`);
+            },
+        };
+        return { ctx: ctx as unknown as CanvasRenderingContext2D, drawn };
+    }
+
+    it("the click: a white-edged magenta ring, with a dot on the full page only", () => {
+        const full = recorder();
+        drawClick(full.ctx, 100, 100, 1, true);
+        expect(full.drawn).toEqual([
+            `stroke ${MARK.edge} 8`,
+            `stroke ${MARK.click} 4`,
+            `fill ${MARK.edge}`,
+            `fill ${MARK.click}`,
+        ]);
+        const close = recorder();
+        drawClick(close.ctx, 100, 100, 2, false);
+        expect(close.drawn).toEqual([
+            `stroke ${MARK.edge} 16`,
+            `stroke ${MARK.click} 8`,
+        ]);
+    });
+
+    it("the trail: in the chosen colour, over a dark edge, brightest at its end", () => {
+        const { ctx, drawn } = recorder();
+        const pts = [0, 1, 2].map((i) => ({ x: i * 10, y: 0, t: i * 100 }));
+        drawTrail(ctx, pts, 1, "lime");
+        expect(drawn).toHaveLength(4); // two segments, each with its edge
+        expect(drawn[0]).toMatch(/^stroke rgba\(0, 0, 0,/);
+        expect(drawn.at(-1)).toBe(`stroke rgba(${TRAIL_RGB.lime}, 1.00) 6`);
     });
 });

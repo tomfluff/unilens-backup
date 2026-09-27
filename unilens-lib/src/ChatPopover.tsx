@@ -837,7 +837,10 @@ export default function ChatPopover({
                 }
                 if (pageOnly || !shots || !viewMovedSince(seen)) return null;
                 const now = viewNow();
-                const { jpeg, view, zoom } = await viewPicture();
+                const { jpeg, view, zoom } = await viewPicture(1024, {
+                    x: on.cap.meta.clickX,
+                    y: on.cap.meta.clickY,
+                });
                 return {
                     // seen once sent: one that came too late for its
                     // turn is taken again for the next
