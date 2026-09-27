@@ -19,6 +19,11 @@ Firefox has no SpeechRecognition, so the voice button did nothing there. The bui
 - **The mic turns off on every ending**, including a recorder that fails to start.
 - **The server reads at most 10 MiB** of a recording, declared or not.
 
+### From the second round of testing (2026-09-27)
+
+- **The speech model list matches what transcribes.** With "Browser, else server", the settings listed Gemini's models (the catalogue's keys arrive sorted) while the server transcribes with OpenAI. The catalogue now names that provider (`sttDefault`), and the list is its.
+- **The chat says when a recording is being turned into text.** The field read "Listening…" and the stop button stayed red until the words came back; now it reads "Turning it into text…", and the button, a wait icon, cancels.
+
 ## Not in this change
 
 - Words appearing while speaking, through the server. That needs a streaming speech API; the Live talk is the step toward it.

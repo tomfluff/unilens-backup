@@ -66,6 +66,18 @@ def test_catalogue_lists_the_speech_models(client, heard):
     assert "gemini-3.5-transcribe" in body["stt"]["gemini"]
 
 
+def test_catalogue_names_the_provider_that_transcribes_by_default(
+    client, heard, monkeypatch
+):
+    """The panel lists this one's models for "Browser, else server" (bug 7): the keys
+    of `stt` arrive sorted, gemini first, while the server takes OpenAI first."""
+    assert client.get("/api/ai").get_json()["sttDefault"] == "openai"
+    monkeypatch.delenv("OPENAI_API_KEY")
+    assert client.get("/api/ai").get_json()["sttDefault"] == "gemini"
+    monkeypatch.delenv("GOOGLE_API_KEY")
+    assert client.get("/api/ai").get_json()["sttDefault"] is None
+
+
 def test_a_chosen_provider_without_its_key_never_gets_another(
     client, heard, monkeypatch
 ):

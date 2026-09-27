@@ -29,6 +29,8 @@ export interface AiCatalogue {
     defaultVoice: string;
     /** the speech-to-text models each provider's key reaches (first = default) */
     stt: Record<string, string[]>;
+    /** the provider the server transcribes with when none is chosen */
+    sttDefault?: string | null;
 }
 
 let backend = "";

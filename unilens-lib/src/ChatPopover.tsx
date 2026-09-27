@@ -332,8 +332,11 @@ export default function ChatPopover({
     /** folded to its header and status line, out of the page's way */
     const [mini, setMini] = useState(false);
 
-    /** the mic is on: dictating into the field, or recording a message that sends itself */
-    const [listening, setListening] = useState<false | "voice">(false);
+    /** the mic: recording, or (server speech recognition) turning the recording into
+     *  text, when the field says so and the button cancels rather than stops */
+    const [listening, setListening] = useState<
+        false | "voice" | "transcribing"
+    >(false);
     const stopListenRef = useRef<((cancel?: boolean) => void) | null>(null);
     /** which message is being spoken and its phase */
     const [speaking, setSpeaking] = useState<{
@@ -556,7 +559,10 @@ export default function ChatPopover({
                 model: s.sttModel,
                 endOnPause: auto,
                 // recorded for the server (Firefox): the words come once it is text
-                onTranscribing: () => act("press", T.sTranscribing),
+                onTranscribing: () => {
+                    setListening("transcribing");
+                    act("press", T.sTranscribing);
+                },
                 onError: () => {
                     failed = true;
                     act("error", T.sNotTranscribed);
@@ -1608,25 +1614,34 @@ export default function ChatPopover({
     const voiceOK = settings.voiceInput;
     /** record a voice message: next to send, and in the folded chat's header */
     // one voice button, the mic: its words say whether it sends on a pause
-    const voiceLabel = settings.voiceAutoSend
-        ? listening
-            ? T.voiceStop
-            : T.voiceStart
-        : listening
-          ? T.micStop
-          : T.micStart;
+    const voiceLabel =
+        listening === "transcribing"
+            ? T.micCancel
+            : settings.voiceAutoSend
+              ? listening
+                  ? T.voiceStop
+                  : T.voiceStart
+              : listening
+                ? T.micStop
+                : T.micStart;
     const voiceButton = (cls: string) => (
         <button
             type="button"
             className={`${cls} ulc-voice`}
-            aria-pressed={Boolean(listening)}
+            aria-pressed={listening === "voice"}
             aria-disabled={!voiceEngine(settings.sttEngine)}
             aria-label={voiceLabel}
             title={voiceLabel}
             onClick={toggleVoice}
             disabled={busy && !listening}
         >
-            {listening ? <StopIcon /> : <MicIcon />}
+            {listening === "transcribing" ? (
+                <WaitIcon />
+            ) : listening ? (
+                <StopIcon />
+            ) : (
+                <MicIcon />
+            )}
         </button>
     );
     let lastAnswer = -1;
@@ -1817,7 +1832,11 @@ export default function ChatPopover({
                             send()
                         }
                         placeholder={
-                            listening ? T.placeholderListening : T.placeholder
+                            listening === "transcribing"
+                                ? T.placeholderTranscribing
+                                : listening
+                                  ? T.placeholderListening
+                                  : T.placeholder
                         }
                         aria-label={T.placeholder}
                         readOnly={Boolean(listening)}

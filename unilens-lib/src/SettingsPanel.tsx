@@ -439,11 +439,13 @@ function CatalogueRow({
                 </SettingsSelect>
             </SettingLabel>
         );
-    // the server's speech models: the engine's provider, else the first with a key
+    // the server's speech models: the engine's provider, else the one the server
+    // transcribes with by default (not the first listed: the keys arrive sorted)
     const sttProvider =
         settings.sttEngine === "openai" || settings.sttEngine === "gemini"
             ? settings.sttEngine
-            : Object.keys(cat?.stt ?? {}).find((p) => cat?.stt[p]?.length);
+            : (cat?.sttDefault ??
+              Object.keys(cat?.stt ?? {}).find((p) => cat?.stt[p]?.length));
     const sttOptions = (sttProvider && cat?.stt[sttProvider]) || [];
     const options =
         setting === "aiModel"

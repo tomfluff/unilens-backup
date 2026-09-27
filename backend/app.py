@@ -1253,6 +1253,9 @@ def create_app():
                     p: _stt_models(p) if os.getenv(key) else []
                     for p, key in PROVIDER_KEYS.items()
                 },
+                # which one "Browser, else server" transcribes with: jsonify sorts the
+                # keys above, so the panel cannot take the first (bug 7, 2026-09-27)
+                "sttDefault": (_stt_choice({}) or (None,))[0],
             }
         )
 
