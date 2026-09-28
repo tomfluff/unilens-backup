@@ -19,6 +19,8 @@ Our other clock use was checked the same day. Each comparison uses a single cloc
 | Hazard | Guard |
 |---|---|
 | Host CSS reaching the chat (`button {…}`, `img { height }`) | Every chat element is reset with `all: revert`, then styled (`chatStyles.ts`) |
+| A host reset reaching the settings and debug panels (`button, input, select { appearance: none }` hid the checkboxes and the selects' arrows; `summary { display: block }` hid the section markers; seen on the recruit mirror) | Inside a `[data-unilens-reset]` root every element is reverted at low specificity (0,0,2), so the panels' own one-class rules still win (`uiReset.ts`). Elements with `hidden` are left alone: Chrome applies `hidden` as a page style, and the revert would undo it |
+| A host `svg { fill: currentColor }` filling outline icons (recruit mirror) | The chat and the accessibility panel restore `fill: none` on `svg[fill="none"]` |
 | A transformed or zoomed `<body>` breaking `position: fixed` | All UniLens UI (chat, settings, highlights, minimap) and the accessibility widget mount on `<html>`, outside `<body>` |
 | UniLens UI captured, inventoried or Alt+clicked as page content | Capture and inventory read `<body>` only; `isOwnUI` ignores clicks outside it |
 | `scroll-behavior: smooth` on the host making each glide frame animate | Glide frames scroll with `behavior: "instant"` |

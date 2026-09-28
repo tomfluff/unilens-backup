@@ -27,6 +27,7 @@ import { getLastEvidenceDebug } from "./evidence";
 import { getDwellDebug } from "./hint";
 import { getSentLog, type SentCapture } from "./sentLog";
 import { getSettings, updateSetting, useSettings } from "./settings";
+import { resetHostStyles } from "./uiReset";
 import { getTargetZoom, getView, getZoom, getZoomTrace } from "./zoom";
 
 export interface DebugSources {
@@ -586,6 +587,7 @@ export function initDebug(sources: DebugSources) {
 
     const container = document.createElement("div");
     container.id = "unilens-debug-root";
+    resetHostStyles(container);
     document.documentElement.appendChild(container);
     createRoot(container).render(<DebugGate sources={sources} />);
 }

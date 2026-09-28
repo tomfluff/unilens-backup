@@ -36,6 +36,8 @@ ${B} button[aria-disabled="true"] { cursor: not-allowed; opacity: .55; }
 ${B} input { font: inherit; margin: 0; min-width: 0; flex: 1; }
 ${B} p { margin: 0; }
 ${B} svg { display: block; flex: none; width: 1.25em; height: 1.25em; }
+/* a host \`svg { fill: currentColor }\` (the recruit mirror) beats the icons' fill attribute */
+${R} svg[fill="none"] { fill: none; }
 ${R} .ulc-hd { display: flex; align-items: center; gap: .55em; flex: none; user-select: none; touch-action: none; }
 ${R} .ulc-title { flex: 1; min-width: 0; line-height: 1.2; }
 ${R} .ulc-title b { display: block; font-weight: 700; }

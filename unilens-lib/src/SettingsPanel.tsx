@@ -28,6 +28,7 @@ import {
     updateSetting,
     useSettings,
 } from "./settings";
+import { resetHostStyles } from "./uiReset";
 import { getTargetZoom, getZoom, onZoomChange, setZoom } from "./zoom";
 
 const SettingsSelect = styled.select`
@@ -759,6 +760,7 @@ export function initSettings(backend = "") {
     setAiBackend(backend);
     const container = document.createElement("div");
     container.id = "unilens-settings-root";
+    resetHostStyles(container);
     // documentElement: outside the zoom-transformed body, excluded from captures
     document.documentElement.appendChild(container);
     createRoot(container).render(<SettingsLauncher />);
