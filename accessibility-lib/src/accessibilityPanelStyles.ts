@@ -55,6 +55,8 @@ const R = `#${ROOT_ID}`;
  * Overlay uses a stable light theme. Page display filters never restyle the panel.
  */
 const LAYOUT_CSS = `
+/* a host \`svg { fill: currentColor }\` (the recruit mirror) beats the icons' fill attribute */
+${R} svg[fill="none"] { fill: none; }
 ${R} {
   --unilens-a11y-panel-base: 15px;
   --unilens-a11y-panel-font-scale: 1;
