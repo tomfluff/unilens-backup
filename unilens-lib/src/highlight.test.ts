@@ -482,6 +482,73 @@ describe("layered look", () => {
         // hole shifted by the overshoot so it still lands on the element
         expect(shade.style.clipPath).toContain("M142 242h50v20h-50Z");
     });
+
+    it("lights a source inside another through the outer hole alone (dim, spotlight)", () => {
+        const p = document.createElement("p");
+        p.textContent = "Shareholders get ";
+        const a = document.createElement("a");
+        a.href = "#paypay";
+        a.textContent = "PayPay Money Lite";
+        p.appendChild(a);
+        document.body.appendChild(p);
+        const boxes = new Map<Element, ReturnType<typeof rect>>([
+            [p, rect(40, 100, 400, 48)],
+            [a, rect(60, 110, 100, 20)],
+        ]);
+        const shades = () =>
+            (
+                document.querySelector(".unilens-hl-dim")
+                    ?.firstElementChild as HTMLElement | null
+            )?.style.clipPath ?? "";
+        const draw = (inner: ReturnType<typeof rect>) => {
+            boxes.set(a, inner);
+            clearHighlights();
+            setCurrentCapture("c1");
+            showHighlights(
+                [
+                    { id: "n1", role: "source", badge: "1" },
+                    { id: "n2", role: "source", badge: "2" },
+                ],
+                new Map<string, Element>([
+                    ["n1", p],
+                    ["n2", a],
+                ]),
+                "c1",
+                nextToken(),
+                {
+                    measure: (el) => boxes.get(el) ?? rect(0, 0, 0, 0),
+                    lines: () => null,
+                },
+            );
+        };
+        for (const backdrop of ["dim", "spotlight"] as const) {
+            updateSetting("hlBackdrop", backdrop);
+            const o = backdrop === "spotlight" ? 42 : 0;
+            draw(rect(60, 110, 100, 20));
+            // the link keeps its own outline, and cuts no hole of its own
+            expect(layerBoxes()).toHaveLength(2);
+            expect(shades()).toContain(`M${40 + o} ${100 + o}h400v48h-400Z`);
+            expect(shades()).not.toContain(`M${60 + o} ${110 + o}`);
+            // the same box twice cuts one hole
+            draw(rect(40, 100, 400, 48));
+            expect(shades().match(/h400v48/g)).toHaveLength(1);
+            // alone, the inner one is lit
+            boxes.set(a, rect(60, 110, 100, 20));
+            clearHighlights();
+            setCurrentCapture("c1");
+            showHighlights(
+                [{ id: "n2", role: "source", badge: "2" }],
+                new Map<string, Element>([["n2", a]]),
+                "c1",
+                nextToken(),
+                {
+                    measure: (el) => boxes.get(el) ?? rect(0, 0, 0, 0),
+                    lines: () => null,
+                },
+            );
+            expect(shades()).toContain(`M${60 + o} ${110 + o}h100v20h-100Z`);
+        }
+    });
 });
 
 type Cue = { x: number; y: number; angle: number; tx: number; ty: number };

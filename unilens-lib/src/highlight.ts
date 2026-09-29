@@ -506,7 +506,8 @@ function render() {
 
 /**
  * Dim or spotlight: one darkened layer over the viewport with a hole per outlined
- * element (an even-odd path), so several targets all stay bright. The spotlight
+ * element (an even-odd path), so several targets all stay bright; one inside another
+ * is lit by the outer one's hole alone. The spotlight
  * blurs the layer's wrapper, which feathers the holes; the path overshoots the
  * viewport so the blur never lightens the screen's own edges.
  */
@@ -548,7 +549,23 @@ function renderBackdrop(look: HighlightLook) {
         height: `${H + 2 * o}px`,
         background: `rgba(0,0,0,${BACKDROP_ALPHA[look.backdrop]})`,
     });
+    // under even-odd a hole inside another is dark again (a link inside its lit
+    // sentence), so a box inside another cuts none: the outer one lights both (Yotam,
+    // 2026-09-28). The same box twice cuts one. ponytail: two boxes that only partly
+    // overlap still darken their overlap; a mask of the union if that shows up
+    const within = (a: ClientRect, b: ClientRect) =>
+        a.left >= b.left - 1 &&
+        a.top >= b.top - 1 &&
+        a.left + a.width <= b.left + b.width + 1 &&
+        a.top + a.height <= b.top + b.height + 1;
     const holes = rects
+        .filter(
+            (r, i) =>
+                !rects.some(
+                    (o, j) =>
+                        j !== i && within(r, o) && (j < i || !within(o, r)),
+                ),
+        )
         .map(
             (r) =>
                 `M${r.left + o} ${r.top + o}h${r.width}v${r.height}h${-r.width}Z`,
