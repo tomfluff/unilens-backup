@@ -2,10 +2,14 @@
 -include ../make-include.mk
 -include ../make-targets.mk
 
-.PHONY: init clean build serve test format fix
+.PHONY: init clean lint bundle build serve test format fix
 
 SRC_DIR=src
 ESBUILD=esbuild src/main.tsx --outfile=dist/$(target_dist_accessibility-lib) --bundle --minify --sourcemap --loader:.css=text --jsx=automatic
+# Plain --watch exits when stdin closes, which is how esbuild notices the parent
+# make has gone away - that keeps a killed run from orphaning a watcher. Detached
+# runs (nohup, CI) have no stdin, so they opt in: make serve WATCH=--watch=forever
+WATCH?=--watch
 BIOME=@biomejs/biome
 BIOMEFLAGS=--config-path ./biome.json --write
 
@@ -27,11 +31,15 @@ test:
 	echo "Running unit tests..."
 	$(NPX) vitest run
 
-# Build bundled js out to dist/, then copy into frontend targets
-build:
+# Bundle to dist/ without typechecking. The dev server's rebuild-on-save uses this:
+# esbuild strips types without checking them, and tsc costs ~5x esbuild per save.
+bundle:
 	echo "Building dist..."
 	$(NPX) $(ESBUILD)
 	$(NPX) node scripts/sync-dist.mjs
+
+# Full build: typecheck, then bundle. This is what `check` runs.
+build: lint bundle
 
 # Watch src/, rebuild, and copy into frontend targets on every save
 serve:

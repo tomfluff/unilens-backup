@@ -5,7 +5,7 @@
  * Clicking it captures right there — the zero-shortcut entry path.
  */
 import { getSettings } from "./settings";
-import { getZoom } from "./zoom";
+import { getZoom, reducedMotion } from "./zoom";
 
 const DWELL_RADIUS = 80; // px, client coords
 const DWELL_MS = 4000;
@@ -64,6 +64,8 @@ function showChip(x: number, y: number) {
     Object.assign(chip.style, chipStyles, {
         left: `${left}px`,
         top: `${top}px`,
+        // reduced motion: the chip simply appears, no fade
+        transition: reducedMotion() ? "none" : chipStyles.transition,
     });
 
     chip.onclick = (e) => {
@@ -130,7 +132,12 @@ function evaluate(): DwellDebug {
         centroid: null,
     };
     if (!getSettings().hints) return { ...d, blocked: "hints disabled" };
-    if (document.getElementById("unilens-root"))
+    // the root stays on the page, and so does a hidden chat: a chat that shows is open
+    if (
+        document
+            .getElementById("unilens-root")
+            ?.firstElementChild?.getClientRects().length
+    )
         return { ...d, blocked: "popover open" };
     if (chip) return { ...d, blocked: "chip visible" };
     if (d.cooldownMs > 0) return { ...d, blocked: "cooldown" };

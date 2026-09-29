@@ -1,11 +1,10 @@
 # Wrapper for setup, teardown, build, and run
 -include ../make-include.mk
 
-.PHONY: init clean activate serve format
+.PHONY: init clean activate serve test format
 
 PYTHON=python3
 PIP=pip
-PIPX=pipx
 VENV_DIR=.venv
 RM_RF=rm -rf
 
@@ -20,7 +19,7 @@ clean:
 	echo "Cleaning venv"
 	$(RM_RF) $(VENV_DIR)
 	echo "Cleaning pycache"
-	$(RM_RF) __pycache__ **/__pycache__ 
+	find . -type d -name __pycache__ -exec $(RM_RF) {} +
 	echo "Cleaning python intermediates"
 	$(RM_RF) *.pyc *.pyo *.pyd
 
@@ -31,7 +30,10 @@ activate:
 serve:
 	. $(VENV_ACTIVATE) && flask --app app.py --debug run --port $(FLASK_PORT)
 
+# Runs the unit tests
+test:
+	. $(VENV_ACTIVATE) && pytest -q
+
 # Runs the formatter
 format:
-	. $(VENV_ACTIVATE) && black app.py
-	
+	. $(VENV_ACTIVATE) && black app.py tests

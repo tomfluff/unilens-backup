@@ -1,43 +1,173 @@
-import { useEffect, useRef, useState } from "react";
-import styled from "styled-components";
-import type { CaptureResult } from "./capture";
-import { getSettings, useSettings } from "./settings";
+import { useEffect, useId, useRef, useState } from "react";
+import { aiCatalogue, aiChoice, liveProvider } from "./ai";
 import {
-    listen,
+    type CaptureResult,
+    pageChangedSince,
+    type ViewState,
+    viewMovedSince,
+    viewNow,
+    viewPicture,
+} from "./capture";
+import { chatLang, chatText, speechLang } from "./chatI18n";
+import { ensureChatStyles } from "./chatStyles";
+import { type Earcon, earcon, releaseAudio } from "./earcons";
+import {
+    asksToLocate,
+    asksToZoom,
+    type Cited,
+    mdLite,
+    type NavCommand,
+    navCommand,
+    placeLiveMarkers,
+    recordEvidence,
+    renderCited,
+    sourcesIn,
+    speakable,
+    zoomAsked,
+} from "./evidence";
+import {
+    announce,
+    claimEscape,
+    clearHighlights,
+    hasHighlight,
+    nextToken,
+    onHighlightsCleared,
+    registerPopoverClose,
+    showHighlights,
+} from "./highlight";
+import {
+    BackIcon,
+    CloseIcon,
+    ExpandIcon,
+    HighlightIcon,
+    LiveIcon,
+    MicIcon,
+    MinimizeIcon,
+    NewChatIcon,
+    NextIcon,
+    PauseIcon,
+    PinIcon,
+    PlaceIcon,
+    PlayIcon,
+    PrevIcon,
+    SendIcon,
+    StopIcon,
+    WaitIcon,
+} from "./icons";
+import { labelOfWire, type WireNode } from "./inventory";
+import {
+    closeUp,
+    type LiveHandle,
+    type LiveState,
+    type LiveView,
+    type PointResult,
+    startLive,
+    type ToolCall,
+} from "./live";
+import {
+    goToPlace,
+    latestPlace,
+    type Place,
+    placeNumber,
+    placeOf,
+} from "./places";
+import { recordAsk, type SentAsk } from "./sentLog";
+import { getSettings, motionMs, useSettings } from "./settings";
+import {
+    listenVoice,
+    pauseSpeaking,
+    resumeSpeaking,
     type SpeechState,
     speak,
     stopSpeaking,
-    sttSupported,
+    voiceEngine,
 } from "./speech";
+import {
+    assistantZoom,
+    besideTarget,
+    canReturn,
+    directionOf,
+    returnToPreviousView,
+    revealElement,
+} from "./zoom";
 
 interface Msg {
     id: string;
-    role: "user" | "assistant";
+    /** "place": a click, its own entry in the log (captureId names the place), whether
+     *  or not anything is asked there. "divider": the chat was hidden and shown again
+     *  here; its text is the time it came back */
+    role: "user" | "assistant" | "place" | "divider";
     text: string;
-    /** reply footer: provider · model · images · latency */
-    info?: string;
+    /** a system failure (rate limit, backend, network), not an answer: styled apart so a
+     *  participant can tell "the model didn't find it" from "something broke" */
+    error?: boolean;
+    /** the capture a reply's [[id]] citations resolve against. Only replies made in this
+     *  popover carry one: history from earlier captures has no live elements to point at */
+    cite?: CiteSource;
+    /** still streaming: an unfinished marker at the end stays hidden */
+    streaming?: boolean;
+    /** a question's capture, so its bubble can offer "where I clicked" */
+    captureId?: string;
+    /** a reply to a where/show question that cited nothing: styled as "nothing found",
+     *  apart from an answer and from an error */
+    quiet?: boolean;
+    /** the page zoomed for this answer: Back shows under it, cited or not */
+    zoomed?: boolean;
 }
 
-/**
- * Minimal markdown for a 340px chat bubble: bold, inline code, dash bullets,
- * headings flattened to bold. HTML is escaped BEFORE any transform, so the
- * only tags in the output are ones we emit ourselves.
- */
-function mdLite(text: string): { __html: string } {
-    let h = text
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;");
-    h = h
-        .replace(/^#{1,4} (.+)$/gm, "<b>$1</b>")
-        .replace(/\*\*([^*\n]+)\*\*/g, "<b>$1</b>")
-        .replace(
-            /`([^`\n]+)`/g,
-            '<code style="background:rgba(255,255,255,0.12);border-radius:3px;padding:0 4px">$1</code>',
-        )
-        .replace(/^[-*] (.+)$/gm, "• $1");
-    return { __html: h };
+/** a capture's inventory (for labels) and its id → live element registry */
+interface CiteSource {
+    id: string;
+    inventory: WireNode[];
+    registry: Map<string, Element>;
 }
+
+/** the log entry for the click behind a capture, when that click is a known place */
+/** the capture a message goes against: the one the chat is on, or a refresh of it */
+type Current = { id: string; cap: CaptureResult };
+
+const placeEntry = (captureId: string): Msg[] =>
+    placeOf(captureId)
+        ? [{ id: `place-${captureId}`, role: "place", text: "", captureId }]
+        : [];
+
+/** which reply's evidence is outlined: all of it, or one item of it */
+type Active = { msgId: string; index: number | "all" } | null;
+
+/** the most sources a question carries (the backend's SELECTION_MAX) */
+const SELECTION_MAX = 30;
+
+/** what the user has selected on the page as they ask: one source, all of an
+ *  answer's sources, or a place's clicked element */
+/** a source a Live reply pointed at, and how much of the reply was said by then */
+type LivePoint = { id: string; at: number };
+
+interface Selection {
+    kind: "source" | "all" | "place";
+    /** the source's or place's number, or how many sources for "all" */
+    n: number;
+    /** a source keeps its element: its id is looked up again in the capture the
+     *  question goes with, which may be a newer one (a view refresh) */
+    items: { id?: string; label: string; el?: Element }[];
+}
+
+function cited(m: Msg): Cited | null {
+    const src = m.cite;
+    if (!src || m.role !== "assistant" || m.error) return null;
+    return renderCited(
+        m.text,
+        (id) => src.registry.has(id),
+        (id) => labelOfWire(id, src.inventory),
+        m.streaming,
+        chatText().evidenceLabel,
+        chipText,
+        getSettings().associateText,
+    );
+}
+
+/** station signs number their sources like station codes */
+const chipText = (n: number) =>
+    getSettings().chatStyle === "station" ? `U${n}` : String(n);
 
 interface Props {
     x: number; // client coords of the triggering click
@@ -47,208 +177,130 @@ interface Props {
     backend: string;
     sessionId: string | null;
     onClose: () => void;
+    /** start over on the capture the chat is on: a new session, an empty log, places
+     *  from P1. Resolves false when it could not (the chat stays as it is) */
+    onNewConversation?: (on: Current) => Promise<boolean>;
+    /** the conversation goes on from before a page reload: reopened by itself
+     *  ("restored", which leaves the keyboard where it is) or by a click ("clicked").
+     *  A divider marks the reload after the earlier messages */
+    reloaded?: "restored" | "clicked";
     /** pinned position carried over from the previous popover, if the user pinned it */
     initialPos?: { left: number; top: number } | null;
     pinned: boolean;
     onTogglePin: (pos: { left: number; top: number } | null) => void;
     onMove: (pos: { left: number; top: number }) => void;
+    /** re-capture if the view moved since `prev`; null when it did not. `onStart`
+     *  runs when it does re-capture, so the chat can say so */
+    refreshCapture?: (
+        prev: CaptureResult,
+        prevId: string,
+        onStart?: () => void,
+    ) => Promise<{ id: string; cap: CaptureResult } | null>;
+    /** a new click is being captured; the chat moves there when it arrives */
+    capturing?: boolean;
+    /** this chat is a new conversation the user started (it says so as it opens) */
+    startedOver?: boolean;
+    /** closed with ✕: out of sight but kept, conversation and all, until the next
+     *  click shows it again */
+    hidden?: boolean;
 }
 
-const PANEL_W = 340;
-const PANEL_H = 420;
+/** width and height in em of the chat's font size (chatStyles.ts sizes the panel in em) */
+const PANEL_W_EM = 24.3;
+const PANEL_H_EM = 30;
+/** the least a chat can be and still work: header, three lines of log, input, status */
+const MIN_H_EM = 16;
 
-// Styled components
-const PopoverContainer = styled.div<{
-    panelBg: string;
-    text: string;
-    hc: boolean;
-}>`
-    position: fixed;
-    width: ${PANEL_W}px;
-    height: ${PANEL_H}px;
-    display: flex;
-    flex-direction: column;
-    background: ${(props) => props.panelBg};
-    color: ${(props) => props.text};
-    border-radius: 12px;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
-    border: ${(props) => (props.hc ? "2px solid #ffd700" : "none")};
-    z-index: 2147483647;
-    font-family: sans-serif;
-    overflow: hidden;
-`;
-
-const HeaderContainer = styled.div<{ headerBg: string; headerBorder: string }>`
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 10px 14px;
-    background: ${(props) => props.headerBg};
-    border-bottom: ${(props) => props.headerBorder};
-    cursor: grab;
-    touch-action: none;
-
-    &:active {
-        cursor: grabbing;
+/** the fixed or sticky ancestor that pins a host element to the screen, if any */
+function fixedRoot(el: Element): Element | null {
+    for (
+        let e: Element | null = el, i = 0;
+        e && i < 8;
+        e = e.parentElement, i++
+    ) {
+        const p = getComputedStyle(e).position;
+        if (p === "fixed" || p === "sticky") return e;
     }
-`;
+    return null;
+}
 
-const HeaderTitle = styled.span<{ accent: string }>`
-    font-weight: 700;
-    color: ${(props) => props.accent};
-`;
+/**
+ * The page's own floating controls (a help or accessibility button pinned to a
+ * corner) must stay usable: a chat placed over one moves the least distance that
+ * clears it. Full-width bars are not controls and are left alone.
+ * ponytail: hit-tests a 22px grid (~300 points, only when the chat is placed); a control under 22px can slip between them
+ */
+function clearOfHostControls(
+    p: { left: number; top: number },
+    w: number,
+    h: number,
+) {
+    const W = window.innerWidth;
+    const H = window.innerHeight;
+    const r = {
+        left: p.left,
+        top: p.top,
+        right: p.left + w,
+        bottom: p.top + h,
+    };
+    const seen = new Set<Element>();
+    let worst: DOMRect | null = null;
+    let worstArea = 0;
+    // a 22px grid over where the chat will be: fine enough for a 24px control
+    const grid = (a: number, b: number) => {
+        const out: number[] = [];
+        for (let v = a + 2; v < b - 2; v += 22) out.push(v);
+        return [...out, b - 2];
+    };
+    for (const py of grid(r.top, r.bottom))
+        for (const px of grid(r.left, r.right))
+            for (const el of document.elementsFromPoint(px, py)) {
+                // the chat itself and the outlines/cues it draws; the display-adjust
+                // widget, the settings gear and the minimap are dodged like host controls
+                if (el.closest("#unilens-root, #unilens-highlight-layer"))
+                    continue;
+                const f = fixedRoot(el);
+                if (!f || seen.has(f)) continue;
+                seen.add(f);
+                const b = f.getBoundingClientRect();
+                if (b.width * b.height > W * H * 0.1) continue;
+                const ow =
+                    Math.min(r.right, b.right) - Math.max(r.left, b.left);
+                const oh =
+                    Math.min(r.bottom, b.bottom) - Math.max(r.top, b.top);
+                if (ow > 0 && oh > 0 && ow * oh > worstArea) {
+                    worst = b;
+                    worstArea = ow * oh;
+                }
+            }
+    if (!worst) return p;
+    const b = worst;
+    const moves = [
+        { left: b.left - 8 - w, top: p.top },
+        { left: b.right + 8, top: p.top },
+        { left: p.left, top: b.top - 8 - h },
+        { left: p.left, top: b.bottom + 8 },
+    ].filter(
+        (m) =>
+            m.left >= 8 &&
+            m.top >= 8 &&
+            m.left + w <= W - 8 &&
+            m.top + h <= H - 8,
+    );
+    const d = (m: { left: number; top: number }) =>
+        Math.hypot(m.left - p.left, m.top - p.top);
+    return moves.sort((a, c) => d(a) - d(c))[0] ?? p;
+}
 
-const HeaderButtonsContainer = styled.span`
-    display: flex;
-    gap: 4px;
-`;
-
-const PinButton = styled.button<{ pinned: boolean; accent: string }>`
-    background: ${(props) => (props.pinned ? props.accent : "none")};
-    border: none;
-    border-radius: 6px;
-    color: ${(props) => (props.pinned ? "#08182e" : "#aaa")};
-    cursor: pointer;
-    font-size: 13px;
-    padding: 2px 8px;
-    font-weight: 700;
-`;
-
-const CloseButton = styled.button`
-    background: none;
-    border: none;
-    color: #aaa;
-    cursor: pointer;
-    font-size: 16px;
-`;
-
-const ScrollContainer = styled.div`
-    flex: 1;
-    overflow-y: auto;
-    overscroll-behavior: contain;
-    padding: 12px;
-`;
-
-const CaptureImage = styled.img`
-    max-width: 100%;
-    border-radius: 8px;
-    border: 1px solid #333;
-    display: block;
-`;
-
-const ViewportImage = styled.img`
-    max-width: 55%;
-    border-radius: 6px;
-    border: 1px solid #446;
-    display: block;
-    margin-top: 6px;
-`;
-
-const MessageBubble = styled.div<{
-    isUser: boolean;
-    userBg: string;
-    aiBg: string;
-    bubbleBorder: string;
-}>`
-    margin: 6px 0;
-    padding: 8px 12px;
-    border-radius: 10px;
-    max-width: 85%;
-    white-space: pre-wrap;
-    background: ${(props) => (props.isUser ? props.userBg : props.aiBg)};
-    border: ${(props) => props.bubbleBorder};
-    margin-left: ${(props) => (props.isUser ? "auto" : 0)};
-`;
-
-const SpeakButton = styled.button<{ speaking: boolean }>`
-    background: none;
-    border: none;
-    cursor: pointer;
-    margin-left: 6px;
-    opacity: ${(props) => (props.speaking ? 1 : 0.7)};
-`;
-
-const MessageInfo = styled.div<{ hc: boolean }>`
-    font-size: 10px;
-    color: ${(props) => (props.hc ? "#ffd700" : "#88a")};
-    margin-top: 6px;
-`;
-
-const QuickActionsContainer = styled.div`
-    display: flex;
-    gap: 6px;
-    padding: 8px 10px 0;
-    flex-wrap: wrap;
-`;
-
-const QuickActionButton = styled.button<{
-    chipBg: string;
-    chipBorder: string;
-    chipText: string;
-    busy: boolean;
-}>`
-    padding: 4px 10px;
-    border-radius: 12px;
-    border: ${(props) => props.chipBorder};
-    background: ${(props) => props.chipBg};
-    color: ${(props) => props.chipText};
-    cursor: ${(props) => (props.busy ? "default" : "pointer")};
-    opacity: ${(props) => (props.busy ? 0.5 : 1)};
-`;
-
-const InputContainer = styled.div`
-    display: flex;
-    gap: 8px;
-    padding: 10px;
-    border-top: 1px solid #333;
-`;
-
-const VoiceButton = styled.button<{
-    listening: boolean;
-    inputBg: string;
-    text: string;
-}>`
-    padding: 8px 10px;
-    border-radius: 8px;
-    border: none;
-    background: ${(props) => (props.listening ? "#e33" : props.inputBg)};
-    color: ${(props) => props.text};
-    cursor: pointer;
-`;
-
-const ChatInput = styled.input<{
-    inputBg: string;
-    inputBorder: string;
-    text: string;
-}>`
-    flex: 1;
-    padding: 8px 12px;
-    border-radius: 8px;
-    border: ${(props) => props.inputBorder};
-    background: ${(props) => props.inputBg};
-    color: ${(props) => props.text};
-    font-size: inherit;
-    outline: none;
-`;
-
-const SendButton = styled.button<{ accent: string; hc: boolean }>`
-    padding: 8px 14px;
-    border-radius: 8px;
-    border: none;
-    background: ${(props) => props.accent};
-    color: ${(props) => (props.hc ? "#000" : "#08182e")};
-    font-weight: 700;
-    cursor: pointer;
-`;
-
-const LoadingText = styled.div`
-    color: #889;
-    padding: 8px;
-`;
-
-const CaptureMetaText = styled.div`
-    white-space: pre-wrap;
-`;
+/** a chip's HTML with the active one marked (and its underlined words, when the answer
+ *  associates them), so each style can show which is current */
+const markActive = (html: string, id: string | undefined) =>
+    id
+        ? html.replaceAll(
+              `data-cite="${id}"`,
+              `data-cite="${id}" aria-current="true"`,
+          )
+        : html;
 
 export default function ChatPopover({
     x,
@@ -258,15 +310,40 @@ export default function ChatPopover({
     backend,
     sessionId,
     onClose,
+    onNewConversation,
     initialPos,
     pinned,
     onTogglePin,
     onMove,
+    refreshCapture,
+    capturing,
+    hidden = false,
+    startedOver = false,
+    reloaded,
 }: Props) {
-    const [messages, setMessages] = useState<Msg[]>([]);
+    ensureChatStyles();
+    // the log opens with the click that opened the chat
+    const [messages, setMessages] = useState<Msg[]>(() =>
+        placeEntry(captureId),
+    );
+    /** the last action, shown on the status line: every action is seen as well as heard */
+    const [status, setStatus] = useState("");
+    /** read by callbacks that outlive a render (a stream, a timer): hidden, the chat is
+     *  silent */
+    const hiddenRef = useRef(hidden);
+    hiddenRef.current = hidden;
+    /** every action: its sound, the visible status line, and the one live region */
+    const act = (kind: Earcon, text?: string) => {
+        // hidden, it makes no sound: the user closed it
+        if (hiddenRef.current) return;
+        earcon(kind);
+        if (text !== undefined) {
+            setStatus(text);
+            announce(text);
+        }
+    };
     const [input, setInput] = useState("");
     const [busy, setBusy] = useState(false);
-    const [stored, setStored] = useState("");
     const scrollRef = useRef<HTMLDivElement>(null);
 
     // store subscription: re-renders when settings change, so text size / contrast apply live
@@ -274,140 +351,956 @@ export default function ChatPopover({
 
     const fs = settings.chatFontSize;
     const hc = settings.highContrast;
-    // high contrast: pure black surfaces, white text, yellow accents (WCAG-friendly)
-    const C = hc
-        ? {
-              panelBg: "#000",
-              headerBg: "#000",
-              headerBorder: "2px solid #ffd700",
-              accent: "#ffd700",
-              text: "#fff",
-              dim: "#fff",
-              userBubble: "#1a1a1a",
-              aiBubble: "#1a1a1a",
-              bubbleBorder: "1px solid #ffd700",
-              inputBg: "#000",
-              inputBorder: "2px solid #ffd700",
-              chipBg: "#000",
-              chipBorder: "1px solid #ffd700",
-              chipText: "#ffd700",
-          }
-        : {
-              panelBg: "#1a1a2e",
-              headerBg: "#0f3460",
-              headerBorder: "none",
-              accent: "#00c8ff",
-              text: "#eee",
-              dim: "#889",
-              userBubble: "#0f3460",
-              aiBubble: "#26263e",
-              bubbleBorder: "none",
-              inputBg: "#26263e",
-              inputBorder: "1px solid #444",
-              chipBg: "#22224a",
-              chipBorder: "1px solid #345",
-              chipText: "#9cf",
-          };
+    const style = settings.chatStyle;
+    const T = chatText();
+    // on a phone-width screen the chat docks as a bottom sheet over half the height,
+    // so what it points at above stays visible. A short screen (a laptop at 200-300%
+    // browser zoom) gets a smaller chat, but never so small that the input is lost
+    const narrow = window.innerWidth <= 480;
+    const short = window.innerHeight <= 560;
+    const panelW = narrow
+        ? window.innerWidth - 16
+        : Math.min(PANEL_W_EM * fs, window.innerWidth - 16);
+    const room =
+        narrow || short
+            ? Math.max(
+                  MIN_H_EM * fs,
+                  window.innerHeight * (narrow ? 0.5 : 0.66),
+              )
+            : Number.POSITIVE_INFINITY;
+    const panelH = Math.min(PANEL_H_EM * fs, room, window.innerHeight - 16);
+    /** folded to its header and status line, out of the page's way */
+    const [mini, setMini] = useState(false);
+    /** "Start a new conversation?" is on screen, waiting for yes or no */
+    const [confirmNew, setConfirmNew] = useState(false);
+    const confirmYesRef = useRef<HTMLButtonElement>(null);
+    const newConvRef = useRef<HTMLButtonElement>(null);
+    const confirmAskId = useId();
+    useEffect(() => {
+        if (confirmNew) confirmYesRef.current?.focus({ preventScroll: true });
+    }, [confirmNew]);
+    /** "keep this one": the question goes, and the keyboard goes back to its button */
+    const cancelNew = () => {
+        setConfirmNew(false);
+        requestAnimationFrame(() =>
+            newConvRef.current?.focus({ preventScroll: true }),
+        );
+    };
 
-    const [sessionCaptures, setSessionCaptures] = useState(1);
-    const [listening, setListening] = useState(false);
-    const stopListenRef = useRef<(() => void) | null>(null);
+    // ── Live: a spoken conversation, its turns as messages (live.ts) ────────────
+    const [live, setLive] = useState<LiveState | null>(null);
+    const liveRef = useRef<LiveHandle | null>(null);
+    /** the talk looks at the page again (a new place was captured) */
+    const livePage = useRef<(() => void) | null>(null);
+    /** bumped by every start and stop: a start still connecting when it changes is
+     *  dropped, its microphone and connection closed */
+    const liveGen = useRef(0);
+    /** the start under way: aborted by a stop, so its mic and requests close at once */
+    const liveAbort = useRef<AbortController | null>(null);
+    /** each live reply's words so far, and the sources it pointed at (its chips) */
+    const liveWords = useRef(new Map<string, string>());
+    /** each Live reply's sources in the order it pointed, with where in its words */
+    const livePointed = useRef(new Map<string, LivePoint[]>());
+    /** each Live reply's words so far, captions on or off (where it pointed) */
+    const liveHeard = useRef(new Map<string, string>());
+    /** what the user last said or typed in the talk: a zoom only when it asks for one */
+    const liveAsked = useRef("");
+    /** sources pointed at before the reply's words began: its bubble takes them */
+    const livePending = useRef<LivePoint[]>([]);
+    /** the mic: recording, or (server speech recognition) turning the recording into
+     *  text, when the field says so and the button cancels rather than stops */
+    const [listening, setListening] = useState<
+        false | "voice" | "transcribing"
+    >(false);
+    const stopListenRef = useRef<((cancel?: boolean) => void) | null>(null);
     /** which message is being spoken and its phase */
     const [speaking, setSpeaking] = useState<{
         idx: number;
         phase: SpeechState;
     } | null>(null);
 
-    function speakMessage(idx: number, text: string) {
-        if (speaking?.idx === idx) {
-            stopSpeaking();
-            return;
-        }
+    function readMessage(idx: number, text: string) {
+        act("press", T.sReading);
         speak(text, (s) =>
             setSpeaking(s === "idle" ? null : { idx, phase: s }),
         );
     }
 
-    // stop any speech/mic when the popover unmounts
-    useEffect(
-        () => () => {
-            stopSpeaking();
-            stopListenRef.current?.();
-        },
-        [],
-    );
+    /** a message's reading controls: play, then pause / resume, and stop while it reads */
+    const readControls = (
+        idx: number,
+        text: string,
+        cls: string,
+        playLabel = T.readAloud,
+    ) => {
+        const phase = speaking?.idx === idx ? speaking.phase : null;
+        const main =
+            phase === "playing"
+                ? {
+                      label: T.pauseReading,
+                      icon: <PauseIcon />,
+                      run: () => {
+                          pauseSpeaking();
+                          act("press", T.sPausedReading);
+                      },
+                  }
+                : phase === "paused"
+                  ? {
+                        label: T.resumeReading,
+                        icon: <PlayIcon />,
+                        run: () => {
+                            resumeSpeaking();
+                            act("press", T.sReading);
+                        },
+                    }
+                  : phase === "loading"
+                    ? {
+                          label: T.preparingAudio,
+                          icon: <WaitIcon />,
+                          run: () => {},
+                      }
+                    : {
+                          label: playLabel,
+                          icon: <PlayIcon />,
+                          run: () => readMessage(idx, text),
+                      };
+        return (
+            <>
+                <button
+                    type="button"
+                    className={cls}
+                    aria-label={main.label}
+                    title={main.label}
+                    onClick={main.run}
+                >
+                    {main.icon}
+                </button>
+                {phase && (
+                    <button
+                        type="button"
+                        className={cls}
+                        aria-label={T.stopReading}
+                        title={T.stopReading}
+                        onClick={() => {
+                            stopSpeaking();
+                            act("press", T.sStoppedReading);
+                        }}
+                    >
+                        <StopIcon />
+                    </button>
+                )}
+            </>
+        );
+    };
 
-    function toggleMic() {
+    // Focus moves into the chat when it opens and back to where it was when it
+    // closes, so keyboard and screen-reader users are never left on the page behind.
+    // Speech, the mic and the audio context stop with it.
+    const inputRef = useRef<HTMLInputElement>(null);
+    const aboutId = useId();
+    const rootRef = useRef<HTMLDivElement>(null);
+    /** the header's fold button, where the keyboard goes when the chat folds itself */
+    const foldRef = useRef<HTMLButtonElement>(null);
+    /** a question asked while a new place is captured: it waits for that place */
+    const waiting = useRef<{ text: string; msgId: string } | null>(null);
+    /** where the keyboard was before the chat opened (or was last shown) */
+    const openedFrom = useRef<HTMLElement | null>(null);
+    /** what closing does, whether the chat is hidden or gone */
+    const quiet = () => {
+        liveRef.current?.stop();
+        liveAbort.current?.abort();
+        liveGen.current++;
+        setLive(null);
+        stopSpeaking();
+        // cancel, not stop: a stop delivers what was heard and sends it
+        stopListenRef.current?.(true);
+        releaseAudio();
+        const back = openedFrom.current;
+        if (back?.isConnected) back.focus({ preventScroll: true });
+    };
+    /** every request this chat makes: a chat that goes (a new chat replaces it with
+     *  continuity off) stops its answers streaming, so no provider keeps writing one
+     *  nobody will see. A hidden chat keeps them: they land in its history */
+    const aborter = useRef(new AbortController());
+    // biome-ignore lint/correctness/useExhaustiveDependencies: on mount and unmount only
+    useEffect(() => {
+        if (startedOver) act("press", T.sNewConversation);
+        // the Live button asks it on its click: fetched now, the click starts at once
+        void aiCatalogue();
+        openedFrom.current = document.activeElement as HTMLElement | null;
+        // reopened by itself after a reload: the page keeps the keyboard
+        if (reloaded !== "restored")
+            inputRef.current?.focus({ preventScroll: true });
+        return () => {
+            aborter.current.abort();
+            quiet();
+        };
+    }, []);
+    // Hidden with ✕, the chat keeps its conversation. Shown again by the next click, it
+    // marks the gap with a divider and the time. Declared before the new-capture
+    // effect, so the divider comes before the new place's entry
+    const wasHidden = useRef(hidden);
+    // biome-ignore lint/correctness/useExhaustiveDependencies: on the hidden edge only
+    useEffect(() => {
+        const was = wasHidden.current;
+        wasHidden.current = hidden;
+        if (hidden) {
+            quiet();
+            // a cancelled mic never reports its end: clear what it would have
+            stopListenRef.current = null;
+            heard.current = "";
+            setListening(false);
+            // a question waiting for the capture this hide dropped goes back to the
+            // field, unsent, rather than to the place before it (ahead of anything
+            // typed since, which stays)
+            const w = waiting.current;
+            if (w) {
+                waiting.current = null;
+                setMessages((ms) => ms.filter((m) => m.id !== w.msgId));
+                setInput((typed) =>
+                    typed.trim() ? `${w.text} ${typed}` : w.text,
+                );
+            }
+            return;
+        }
+        if (!was) return;
+        openedFrom.current = document.activeElement as HTMLElement | null;
+        const time = new Date().toLocaleTimeString(chatLang(), {
+            hour: "numeric",
+            minute: "2-digit",
+        });
+        setMessages((ms) => [
+            ...ms,
+            {
+                id: `shown-${Date.now()}`,
+                role: "divider",
+                text: T.shownAgain(time),
+            },
+        ]);
+    }, [hidden]);
+
+    /** voice buttons show in every browser; without speech recognition they say why */
+    function noVoice() {
+        act("error", T.sNoVoice);
+        setMessages((m) => [
+            ...m,
+            {
+                id: `novoice-${Date.now()}`,
+                role: "assistant",
+                text: T.sNoVoice,
+                quiet: true,
+            },
+        ]);
+    }
+
+    /** the mic: speak, and the words fill the field as they are heard. With "send
+     *  what I say when I pause" on (voiceAutoSend) they then go to the assistant, on a
+     *  pause or a second press; off, they stay in the field to check and send. (A
+     *  first step toward live voice conversation; see the Live button.) */
+    const heard = useRef("");
+    function toggleVoice() {
+        const s = getSettings();
+        if (!voiceEngine(s.sttEngine)) return noVoice();
         if (listening) {
             stopListenRef.current?.();
             return;
         }
-        const stop = listen(
-            (transcript) => setInput(transcript),
-            () => setListening(false),
+        const auto = s.voiceAutoSend;
+        heard.current = "";
+        /** the server could not turn the recording into text: already said, once */
+        let failed = false;
+        const stop = listenVoice(
+            (transcript) => {
+                heard.current = transcript;
+                setInput(transcript);
+                // the folded chat has no field: what is heard shows on its status line
+                setStatus(transcript);
+            },
+            (stopped) => {
+                setListening(false);
+                const text = heard.current.trim();
+                heard.current = "";
+                if (stopped) return act("micOff", T.sStoppedListening);
+                if (!text) {
+                    if (!failed) act("error", T.sNothingHeard);
+                    return;
+                }
+                if (auto) {
+                    setInput("");
+                    submitRef.current(text);
+                    return;
+                }
+                // kept to check: the field shows it (a folded chat opens) and has the keyboard
+                setMini(false);
+                act("micOff", T.sHeardCheck);
+                requestAnimationFrame(() =>
+                    inputRef.current?.focus({ preventScroll: true }),
+                );
+            },
+            speechLang(),
+            {
+                engine: s.sttEngine,
+                model: s.sttModel,
+                endOnPause: auto,
+                // recorded for the server (Firefox): the words come once it is text
+                onTranscribing: () => {
+                    setListening("transcribing");
+                    act("press", T.sTranscribing);
+                },
+                onError: () => {
+                    failed = true;
+                    act("error", T.sNotTranscribed);
+                },
+            },
         );
         if (stop) {
             stopListenRef.current = stop;
-            setListening(true);
+            setListening("voice");
+            act("micOn", auto ? T.sRecording : T.sListening);
         }
     }
 
-    // Continuity: seed the running conversation from the session history
-    useEffect(() => {
-        if (!sessionId || captureId === "local") return;
-        fetch(`${backend}/api/session/${encodeURIComponent(sessionId)}`)
-            .then((r) => r.json())
-            .then((d) => {
-                if (Array.isArray(d.history))
-                    setMessages(
-                        d.history.map(
-                            (
-                                h: { role: string; text: string },
-                                idx: number,
-                            ) => ({
-                                id: `hist-${idx}-${Date.now()}`,
-                                role: h.role as Msg["role"],
-                                text: h.text,
-                            }),
-                        ),
-                    );
-                if (d.captures) setSessionCaptures(d.captures);
-            })
-            .catch(() => {});
-    }, [backend, sessionId, captureId]);
+    /** a note in the log and on the status line, apart from an answer */
+    function sayNote(text: string) {
+        act("error", text);
+        setMessages((m) => [
+            ...m,
+            { id: `note-${Date.now()}`, role: "assistant", text, quiet: true },
+        ]);
+    }
 
-    // Ask the backend what it actually received for this capture
-    useEffect(() => {
-        if (captureId === "local") {
-            setStored("backend unreachable — nothing uploaded");
+    const liveLabel = (st: LiveState) =>
+        ({
+            connecting: T.sLiveStarting,
+            listening: T.sLiveListening,
+            hearing: T.sLiveHearing,
+            thinking: T.sLiveThinking,
+            speaking: T.sLiveSpeaking,
+        })[st];
+
+    /** Live: talk with the assistant about the page; each turn's words come in as
+     *  messages, and what it talks about lights up. Pressed again, it ends */
+    async function toggleLive() {
+        if (live) {
+            if (liveRef.current) liveRef.current.stop();
+            else {
+                // still connecting: that start is dropped, now (and said once, here)
+                liveGen.current++;
+                liveAbort.current?.abort();
+                setLive(null);
+                act("micOff", T.sLiveEnded);
+            }
             return;
         }
-        fetch(`${backend}/api/capture/${encodeURIComponent(captureId)}`)
+        const gen = ++liveGen.current;
+        const abort = new AbortController();
+        liveAbort.current = abort;
+        /** this start is still the one wanted (not stopped, hidden or gone since) */
+        const mine = () =>
+            gen === liveGen.current && !aborter.current.signal.aborted;
+        setLive("connecting");
+        const provider = liveProvider(await aiCatalogue());
+        if (!mine()) return;
+        if (!provider) {
+            setLive(null);
+            return sayNote(T.sNoLive);
+        }
+        act("micOn", T.sLiveStarting);
+        stopSpeaking();
+        // the page as it is now: a chat back from a reload, or a moved view, captures
+        // it first (the talk points at its elements)
+        let on = cur.current;
+        if (refreshCapture && on.id !== "local") {
+            const fresh = await refreshCapture(on.cap, on.id, () =>
+                setStatus(T.sUpdatingView),
+            );
+            if (fresh) {
+                on = fresh;
+                cur.current = fresh;
+            }
+        }
+        if (!mine()) return;
+        if (on.id === "local") {
+            setLive(null);
+            return sayNote(T.sLiveFailed);
+        }
+        const s = getSettings();
+        /** the capture the talk points with: the one it starts on, then each page the
+         *  model was sent again (a new place, or the page changed) */
+        let talkSrc = citeSource(on);
+        /** each reply keeps the capture it began on: its ids are that page's */
+        const cites = new Map<string, CiteSource | undefined>();
+        const srcOf = (id: string) => {
+            if (!cites.has(id)) cites.set(id, talkSrc);
+            return cites.get(id);
+        };
+        const bubble = (key: string) => `live-${key}`;
+        /** a reply's words, each source's number where it was said (after the words
+         *  while there are none yet) */
+        const withChips = (id: string) => {
+            const w = liveWords.current.get(id) ?? "";
+            const pts = livePointed.current.get(id) ?? [];
+            return !w || w === "…"
+                ? [w, ...pts.map((p) => `[[${p.id}]]`)].join(" ").trim()
+                : placeLiveMarkers(w, pts, (i) => {
+                      const c = srcOf(id);
+                      return c ? labelOfWire(i, c.inventory) : "";
+                  });
+        };
+        const setBubble = (m: Msg) =>
+            setMessages((ms) => {
+                const i = ms.findIndex((x) => x.id === m.id);
+                if (i < 0) return [...ms, m];
+                const next = ms.slice();
+                next[i] = { ...ms[i], ...m };
+                return next;
+            });
+        /** what a Live tool call does: light, go to, or zoom (its words already
+         *  checked), and what the model is told back */
+        const pointFor = (key: string | null, call: ToolCall): PointResult => {
+            const none = { shown: [], sources: [] };
+            // the ids of the page its reply began on: a page sent again since
+            // does not change them
+            const src = key ? srcOf(bubble(key)) : talkSrc;
+            if (!src) return none;
+            const zooms = call.act === "zoom";
+            // a zoom a step in or out, or back to 100%: no element; the reply that
+            // asked shows Back under it
+            if (call.change) {
+                const z = Math.round(assistantZoom(call.change) * 100);
+                act("move", T.sZoomed(z));
+                setReturnable(canReturn());
+                if (key)
+                    setMessages((ms) =>
+                        ms.map((x) =>
+                            x.id === bubble(key) ? { ...x, zoomed: true } : x,
+                        ),
+                    );
+                else zoomedNext = true;
+                return { ...none, zoom: `${z}%` };
+            }
+            const valid = call.ids
+                .slice(0, call.act === "light" ? undefined : 1)
+                .filter((i) => src.registry.has(i));
+            const id = key ? bubble(key) : null;
+            const list = id
+                ? (livePointed.current.get(id) ?? [])
+                : livePending.current;
+            // where the reply was when it pointed: its number goes there
+            const at = id ? (liveHeard.current.get(id) ?? "").length : 0;
+            for (const v of valid)
+                if (!list.some((p) => p.id === v)) list.push({ id: v, at });
+            if (id) livePointed.current.set(id, list);
+            // the reply's sources in the chat's numbering: "the second
+            // one" is number 2 (A5 of the 2026-09-27 report)
+            const sources = list.map((p) => p.id);
+            if (!valid.length) return { shown: [], sources };
+            // zoomed into: the zoom first, so the chat's step aside
+            // measures where the element lands
+            const zoom = zooms
+                ? Math.round(
+                      assistantZoom(src.registry.get(valid[0]) as Element) *
+                          100,
+                  )
+                : null;
+            // lit where they are; only go_to moves the page, to the one
+            // the user asked for (bug 3 of the 2026-09-27 report)
+            point(
+                {
+                    id: id ?? "live-pending",
+                    role: "assistant",
+                    text: sources.map((i) => `[[${i}]]`).join(" "),
+                    cite: src,
+                },
+                valid.length === 1 ? sources.indexOf(valid[0]) : "all",
+                call.act === "go",
+                false,
+                false,
+                call.act === "light",
+            );
+            if (zoom !== null) {
+                act("move", T.sZoomed(zoom));
+                setReturnable(canReturn());
+            }
+            if (id)
+                setMessages((ms) =>
+                    ms.map((x) =>
+                        x.id === id ? { ...x, text: withChips(id) } : x,
+                    ),
+                );
+            // no "moved": one already on screen stays put, which the
+            // model took for a failure ("I tried to bring it up")
+            return zoom === null
+                ? { shown: valid, sources }
+                : { shown: valid, sources, zoom: `${zoom}%` };
+        };
+        /** a zoom called before the turn's words were in: done if they ask for it */
+        let zoomWaiting: {
+            key: string | null;
+            call: ToolCall;
+            at: number;
+        } | null = null;
+        /** a zoom done before its reply's words began: its bubble shows Back */
+        let zoomedNext = false;
+        /** the view the talk last saw (the capture it starts with, then each new
+         *  picture), and a picture being taken */
+        let seen: ViewState = on.cap.meta;
+        let taking: Promise<LiveView | null> | null = null;
+        /** the chat's capture when the one being taken began, and the clicks by then */
+        let takingFrom = on;
+        let takingClicks = 0;
+        /** clicks on the page during the talk */
+        let clicks = 0;
+        // each finished turn joins the session's history, once: the text chat goes on
+        // from it
+        const logged = new Set<string>();
+        const log = (id: string, role: "user" | "assistant", text: string) => {
+            if (!sessionId || logged.has(id)) return;
+            logged.add(id);
+            void fetch(`${backend}/api/live/log`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    session_id: sessionId,
+                    capture_id: on.id,
+                    role,
+                    text,
+                }),
+            }).catch(() => {});
+        };
+        /** the page again, if the model's is out of date: its elements when they
+         *  changed or the user clicked a new place, else (unless `pageOnly`) a picture
+         *  of a moved view; null when it is up to date */
+        const take = (pageOnly: boolean): Promise<LiveView | null> | null => {
+            // one at a time: a turn begun meanwhile shares it, unless a newer place
+            // came since: that one is taken after it
+            if (taking)
+                return takingFrom === cur.current
+                    ? taking
+                    : taking.then(() => take(pageOnly) ?? null);
+            const shots = getSettings().liveScreenshot;
+            const from = cur.current;
+            takingFrom = from;
+            takingClicks = clicks;
+            // a click changed the page's elements, or the user clicked a
+            // new place: the model gets the page again (the live talk's
+            // bug of the 2026-09-27 report)
+            const changed = pageChangedSince(from.cap);
+            if (
+                from === on &&
+                !changed &&
+                !(!pageOnly && shots && viewMovedSince(seen))
+            )
+                return null;
+            taking = (async (): Promise<LiveView | null> => {
+                let to = from;
+                if (changed && refreshCapture) {
+                    const fresh = await refreshCapture(from.cap, from.id);
+                    if (fresh) {
+                        // the chat goes on from it; a turn now shares this take
+                        if (cur.current === from) {
+                            cur.current = fresh;
+                            takingFrom = fresh;
+                        }
+                        to = fresh;
+                    }
+                }
+                if (to !== on) {
+                    const [page, jpeg] = await Promise.all([
+                        fetch(`${backend}/api/live/page`, {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json",
+                            },
+                            body: JSON.stringify({
+                                capture_id: to.id,
+                            }),
+                        }).then((r) => (r.ok ? r.json() : null)),
+                        shots ? closeUp(backend, to.id) : null,
+                    ]);
+                    if (typeof page?.context !== "string") return null;
+                    return {
+                        // its ids are the ones the model has once it
+                        // is sent: the talk points with them from then
+                        sent: () => {
+                            on = to;
+                            talkSrc = citeSource(to);
+                            seen = to.cap.meta;
+                        },
+                        jpeg: jpeg ?? undefined,
+                        note: page.context,
+                    };
+                }
+                if (pageOnly || !shots || !viewMovedSince(seen)) return null;
+                const now = viewNow();
+                const { jpeg, view, zoom } = await viewPicture(1024, {
+                    x: on.cap.meta.clickX,
+                    y: on.cap.meta.clickY,
+                });
+                return {
+                    // seen once sent: one that came too late for its
+                    // turn is taken again for the next
+                    sent: () => {
+                        seen = now;
+                    },
+                    jpeg,
+                    note: `The user's view now: x ${view.x} to ${view.x + view.w}, y ${view.y} to ${view.y + view.h} on the page (the coordinates of the inventory's boxes), at ${Math.round(zoom * 100)}% zoom. The picture shows it.`,
+                };
+            })()
+                .catch(() => null)
+                .finally(() => {
+                    taking = null;
+                });
+            return taking;
+        };
+        /** the talk is waiting for the user: nothing is being said */
+        let idle = false;
+        let seeLater = false;
+        let clickTimer: number | undefined;
+        /** a changed page goes to the model as soon as no one is speaking, not with
+         *  the next question: Gemini garbles a question a page lands in the middle of */
+        const seePage = () => {
+            if (!mine()) return;
+            seeLater = !idle;
+            if (!idle) return;
+            const taken = take(true);
+            const began = takingClicks;
+            void taken?.then((view) => {
+                if (!mine()) return;
+                // finished while someone speaks: the next quiet moment, unless the
+                // turn took it (a view is sent once)
+                if (view && idle) liveRef.current?.see(view);
+                else if (view) seeLater = true;
+                // clicked again while that page was taken: look once more
+                if (began !== clicks) seePage();
+            });
+        };
+        const onPageClick = () => {
+            clicks++;
+            window.clearTimeout(clickTimer);
+            // what a click opens may take a moment to appear
+            clickTimer = window.setTimeout(seePage, 500);
+        };
+        const watch = () => {
+            document.addEventListener("click", onPageClick, true);
+            livePage.current = seePage;
+        };
+        const unwatch = () => {
+            document.removeEventListener("click", onPageClick, true);
+            window.clearTimeout(clickTimer);
+            if (livePage.current === seePage) livePage.current = null;
+        };
+        try {
+            const handle = await startLive(
+                backend,
+                provider,
+                {
+                    captureId: on.id,
+                    sessionId,
+                    screenshot: s.liveScreenshot,
+                    signal: abort.signal,
+                    options: {
+                        model: s.liveModel || undefined,
+                        voice: s.liveVoice || undefined,
+                        turnEnd: s.liveTurnEnd,
+                        bargeIn: s.liveBargeIn,
+                        point: s.livePoint,
+                        zoom: s.assistantZoom,
+                        speed: s.liveSpeed / 100,
+                        lang: chatLang(),
+                    },
+                },
+                {
+                    onWords: (role, key, words, final) => {
+                        if (!mine()) return;
+                        const id = bubble(key);
+                        // nothing was heard or said: no bubble
+                        if (final && !words.trim()) {
+                            setMessages((ms) => ms.filter((x) => x.id !== id));
+                            return;
+                        }
+                        // captions off: the words show once the turn is complete
+                        const shown =
+                            final || getSettings().liveCaptions ? words : "";
+                        stick.current = true;
+                        if (role === "user") {
+                            if (!words.trim() && !final) {
+                                // a new turn: what it asks is not known yet
+                                liveAsked.current = "";
+                                zoomWaiting = null;
+                            } else if (words.trim()) {
+                                liveAsked.current = words;
+                                const w = zoomWaiting;
+                                zoomWaiting = null;
+                                if (
+                                    w &&
+                                    Date.now() - w.at < 3000 &&
+                                    asksToZoom(words)
+                                )
+                                    pointFor(w.key, w.call);
+                            }
+                            setBubble({
+                                id,
+                                role,
+                                text: shown || "…",
+                                streaming: !final,
+                                captureId: on.id,
+                            });
+                            if (final) log(id, role, words);
+                            return;
+                        }
+                        if (
+                            !livePointed.current.has(id) &&
+                            livePending.current.length
+                        ) {
+                            livePointed.current.set(id, livePending.current);
+                            livePending.current = [];
+                        }
+                        liveWords.current.set(id, shown || "…");
+                        liveHeard.current.set(id, words);
+                        // a zoom done before its words began: Back shows under it
+                        const zoomed = zoomedNext || undefined;
+                        zoomedNext = false;
+                        setBubble({
+                            id,
+                            role,
+                            ...(zoomed ? { zoomed } : {}),
+                            text: withChips(id),
+                            streaming: !final,
+                            cite: srcOf(id),
+                        });
+                        if (final) {
+                            liveWords.current.set(id, words);
+                            log(id, role, withChips(id));
+                        }
+                    },
+                    onState: (st) => {
+                        if (!mine()) return;
+                        idle = st === "listening";
+                        if (idle && seeLater) seePage();
+                        setLive(st);
+                        setStatus(liveLabel(st));
+                        // the user's turn again: said, not only shown above the field
+                        if (st === "listening") announce(liveLabel(st));
+                    },
+                    onPoint: (key, call) => {
+                        const none = { shown: [], sources: [] };
+                        if (!mine() || !talkSrc) return none;
+                        const set = getSettings();
+                        const zooms = call.act === "zoom";
+                        if (zooms ? !set.assistantZoom : !set.livePoint)
+                            return none;
+                        if (!zooms) return pointFor(key, call);
+                        // a zoom only when this turn's words ask for one; called
+                        // before they are transcribed, it waits for them (3 s)
+                        if (asksToZoom(liveAsked.current))
+                            return pointFor(key, call);
+                        if (liveAsked.current) return none;
+                        zoomWaiting = { key, call, at: Date.now() };
+                        return {
+                            ...none,
+                            zoom: "once the user's words are in",
+                        };
+                    },
+                    onTurn: () => (mine() ? take(false) : null),
+                    onEnd: (error) => {
+                        unwatch();
+                        if (!mine()) return;
+                        liveGen.current++;
+                        liveRef.current = null;
+                        setLive(null);
+                        // captions still open are what was said so far
+                        setMessages((ms) =>
+                            ms
+                                .filter((x) => !(x.streaming && x.text === "…"))
+                                .map((x) =>
+                                    x.id.startsWith("live-") && x.streaming
+                                        ? { ...x, streaming: false }
+                                        : x,
+                                ),
+                        );
+                        if (error) sayNote(T.sLiveLost);
+                        else act("micOff", T.sLiveEnded);
+                    },
+                },
+            );
+            // stopped, hidden or gone while it connected
+            if (!mine()) return handle.stop();
+            liveRef.current = handle;
+            // what the user clicks on the page while they talk
+            watch();
+        } catch (err) {
+            if (!mine()) return;
+            console.warn("[UniLens] live talk failed to start:", err);
+            setLive(null);
+            sayNote(T.sLiveFailed);
+        }
+    }
+
+    // Continuity: seed the running conversation from the session history, once: later
+    // captures join the chat that is already open
+    // biome-ignore lint/correctness/useExhaustiveDependencies: seeds once, on mount
+    useEffect(() => {
+        if (!sessionId || captureId === "local") return;
+        fetch(`${backend}/api/session/${encodeURIComponent(sessionId)}`, {
+            signal: aborter.current.signal,
+        })
             .then((r) => r.json())
             .then((d) => {
-                const f = d.files ?? {};
-                const kb = (n: string) =>
-                    f[n] != null ? `✓ ${Math.round(f[n] / 1024)}KB` : "✗";
-                setStored(
-                    `backend stored: page ${kb("capture.png")} · close-up ${kb("viewport.png")}`,
+                if (!Array.isArray(d.history)) return;
+                // earlier questions, each place entered before the first one asked there
+                const seeded: Msg[] = [];
+                let last: Place | undefined;
+                d.history.forEach(
+                    (
+                        h: { role: string; text: string; capture_id?: string },
+                        idx: number,
+                    ) => {
+                        const p =
+                            h.role === "user"
+                                ? placeOf(h.capture_id)
+                                : undefined;
+                        if (p && p !== last && h.capture_id)
+                            seeded.push(...placeEntry(h.capture_id));
+                        if (p) last = p;
+                        seeded.push({
+                            id: `hist-${idx}-${Date.now()}`,
+                            role: h.role as Msg["role"],
+                            text: h.text,
+                            captureId: h.capture_id,
+                        });
+                    },
                 );
+                // the page reloaded here
+                if (reloaded && seeded.length)
+                    seeded.push({
+                        id: `reloaded-${Date.now()}`,
+                        role: "divider",
+                        text: T.reloadedAt(
+                            new Date().toLocaleTimeString(chatLang(), {
+                                hour: "numeric",
+                                minute: "2-digit",
+                            }),
+                        ),
+                    });
+                // then what this chat has added since it opened (its own click), once:
+                // a place the history already entered (under any of its captures) is
+                // not entered again
+                const have = new Set(seeded.map((m) => m.id));
+                const places = new Set(
+                    seeded
+                        .filter((m) => m.role === "place")
+                        .map((m) => placeOf(m.captureId)),
+                );
+                setMessages((ms) => [
+                    ...seeded,
+                    ...ms.filter(
+                        (m) =>
+                            !have.has(m.id) &&
+                            !(
+                                m.role === "place" &&
+                                places.has(placeOf(m.captureId))
+                            ),
+                    ),
+                ]);
             })
-            .catch(() => setStored("backend stored: (check failed)"));
-    }, [backend, captureId]);
+            .catch(() => {});
+    }, []);
 
     // Clamp popover inside viewport, near the cursor (or restore pinned position)
-    const clamp = (p: { left: number; top: number }) => ({
-        left: Math.min(Math.max(p.left, 8), window.innerWidth - PANEL_W - 8),
-        top: Math.min(Math.max(p.top, 8), window.innerHeight - PANEL_H - 8),
-    });
+    const clamp = (p: { left: number; top: number }) => {
+        // folded, the chat is only its header and status line: it may go as low as
+        // that fits, not as low as the whole chat would
+        const h = mini ? (rootRef.current?.offsetHeight ?? panelH) : panelH;
+        return {
+            left: Math.min(Math.max(p.left, 8), window.innerWidth - panelW - 8),
+            top: Math.min(Math.max(p.top, 8), window.innerHeight - h - 8),
+        };
+    };
+    /** where the chat sits when placed for the user (not dragged): on screen, and
+     *  off the page's own floating controls */
+    const settle = (p: { left: number; top: number }) =>
+        clearOfHostControls(clamp(p), panelW, panelH);
     const [pos, setPos] = useState(() =>
-        clamp(initialPos ?? { left: x + 12, top: y + 12 }),
+        settle(
+            narrow
+                ? { left: 8, top: window.innerHeight }
+                : (initialPos ?? { left: x + 12, top: y + 12 }),
+        ),
     );
     const dragRef = useRef<{ dx: number; dy: number } | null>(null);
+    /** the side step waiting for a source move to settle; a pin, a drag or a newer
+     *  choice cancels it */
+    const stepAside = useRef<number | undefined>(undefined);
+    /** the pin as it is now, for callbacks that outlive the render that set them */
+    const pinnedNow = useRef(pinned);
+    pinnedNow.current = pinned;
+    // a new click while the chat is open: it glides there (setting "motion") and the
+    // log gains the new place; the capture it answers against becomes the new one
+    const firstCapture = useRef(true);
+    // biome-ignore lint/correctness/useExhaustiveDependencies: runs per new capture only
+    useEffect(() => {
+        if (firstCapture.current) {
+            firstCapture.current = false;
+            return;
+        }
+        cur.current = { id: captureId, cap: capture };
+        setActive(null);
+        setReturnable(canReturn());
+        setMini(false);
+        if (!pinned)
+            setPos(
+                settle(
+                    narrow
+                        ? { left: 8, top: window.innerHeight }
+                        : { left: x + 12, top: y + 12 },
+                ),
+            );
+        const p = placeOf(captureId);
+        act("chip", p ? T.sNewPlace(placeNumber(p), p.label) : "");
+        // every click stays in the log, in order, asked about or not
+        setMessages((ms) => [...ms, ...placeEntry(captureId)]);
+        // a talk under way hears about the new place now, not with the next question
+        livePage.current?.();
+        // the new place is the latest entry: follow it
+        stick.current = true;
+        requestAnimationFrame(() => {
+            logScroll({ top: scrollRef.current?.scrollHeight ?? 0 });
+            // the next thing typed is about the new place: the field takes the
+            // keyboard back, unless the user is already working in the chat
+            if (!rootRef.current?.contains(document.activeElement))
+                inputRef.current?.focus({ preventScroll: true });
+        });
+    }, [captureId]);
+    // biome-ignore lint/correctness/useExhaustiveDependencies: on the capturing edge only
+    useEffect(() => {
+        if (capturing) act("send", T.sCapturing);
+        else if (waiting.current) {
+            // declared after the new-capture effect, so cur.current is already the new
+            // place (or, if the capture failed, the one the chat still has)
+            const w = waiting.current;
+            waiting.current = null;
+            sendText(w.text, w.msgId);
+        }
+    }, [capturing]);
+    // unfolded after being dragged low while folded: up just enough to show it whole
+    // biome-ignore lint/correctness/useExhaustiveDependencies: on unfolding only
+    useEffect(() => {
+        if (!mini) setPos((p) => clamp(p));
+    }, [mini]);
+    // a bigger text size or a narrower window must not push the chat off screen
+    // biome-ignore lint/correctness/useExhaustiveDependencies: re-clamp on size changes only
+    useEffect(() => {
+        const refit = () => setPos((p) => settle(p));
+        refit();
+        window.addEventListener("resize", refit);
+        return () => window.removeEventListener("resize", refit);
+    }, [fs, style]);
 
     function onHeaderPointerDown(e: React.PointerEvent) {
         if (!settings.dragPopover) return;
-        if ((e.target as HTMLElement).tagName === "BUTTON") return;
+        window.clearTimeout(stepAside.current);
+        if ((e.target as HTMLElement).closest("button")) return;
         dragRef.current = { dx: e.clientX - pos.left, dy: e.clientY - pos.top };
         (e.target as HTMLElement).setPointerCapture(e.pointerId);
     }
@@ -424,43 +1317,500 @@ export default function ChatPopover({
         dragRef.current = null;
     }
 
+    // The log follows the conversation (new bubbles, streaming text, the evidence
+    // controls that appear when an answer ends) while the user is at the bottom; once
+    // they scroll up to read, it stays put until they send again.
+    const stick = useRef(true);
+    /** until when the log's scroll events are our own eased scroll, not the user's */
+    const ownScroll = useRef(0);
+    const logScroll = (opts: ScrollToOptions, by = false) => {
+        const log = scrollRef.current;
+        if (!log) return;
+        const ms = motionMs();
+        ownScroll.current = performance.now() + ms + 120;
+        const o = { ...opts, behavior: ms ? "smooth" : "auto" } as const;
+        if (by) log.scrollBy(o);
+        else log.scrollTo(o);
+    };
+    /** keep a reply's controls in view inside the log, scrolling only the log (never
+     *  the host page, which scrollIntoView would also move) */
+    const revealTurn = (id: string) =>
+        requestAnimationFrame(() => {
+            const log = scrollRef.current;
+            const turn = log?.querySelector(`[data-turn="${CSS.escape(id)}"]`);
+            if (!log || !turn) return;
+            const lr = log.getBoundingClientRect();
+            const tr = turn.getBoundingClientRect();
+            // keep from the turn's top when it fits, else from the answer's last two
+            // lines: controls with no answer above them read as an empty reply
+            const text = turn.querySelector(".ulc-text");
+            const line =
+                Number.parseFloat(getComputedStyle(turn).lineHeight) || 24;
+            const top =
+                tr.height + 16 <= lr.height || !text
+                    ? tr.top
+                    : Math.max(
+                          tr.top,
+                          text.getBoundingClientRect().bottom - 2 * line,
+                      );
+            let d = Math.max(0, tr.bottom - lr.bottom + 8);
+            // the kept top wins when both ends cannot show
+            if (top - d < lr.top + 8) d = top - lr.top - 8;
+            if (d) logScroll({ top: d }, true);
+        });
+    // while following, the log stays at its end when it changes size (the status line
+    // growing a line, the quick actions hiding), not only when a message changes
+    // biome-ignore lint/correctness/useExhaustiveDependencies: a fold unmounts the log; unfolding makes a new one
     useEffect(() => {
-        scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight });
-    }, []);
-
+        const log = scrollRef.current;
+        if (!log || typeof ResizeObserver === "undefined") return;
+        const ro = new ResizeObserver(() => {
+            if (stick.current) log.scrollTop = log.scrollHeight;
+        });
+        ro.observe(log);
+        return () => ro.disconnect();
+    }, [mini]);
+    /** a finished answer taller than the log opens at its first line, not its last:
+     *  the log followed the stream down, but reading starts at the top */
+    const showAnswerStart = (id: string) =>
+        // two frames: after the render that ends the stream and its follow-the-bottom scroll
+        requestAnimationFrame(() =>
+            requestAnimationFrame(() => {
+                const log = scrollRef.current;
+                const turn = log?.querySelector(
+                    `[data-turn="${CSS.escape(id)}"]`,
+                );
+                if (!log || !turn) return;
+                const lr = log.getBoundingClientRect();
+                const tr = turn.getBoundingClientRect();
+                if (tr.height <= lr.height - 16) return;
+                stick.current = false;
+                logScroll({ top: log.scrollTop + tr.top - lr.top - 8 });
+            }),
+        );
+    // biome-ignore lint/correctness/useExhaustiveDependencies: follows every message change
     useEffect(() => {
-        const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
-        window.addEventListener("keydown", onKey);
-        return () => window.removeEventListener("keydown", onKey);
-    }, [onClose]);
+        if (stick.current)
+            logScroll({ top: scrollRef.current?.scrollHeight ?? 0 });
+    }, [messages]);
 
-    const fmtInfo = (d: {
-        provider: string;
-        model: string;
-        imagesSent: number;
-        latencyMs: number;
-    }) =>
-        `${d.provider} · ${d.model} · ${d.imagesSent} image${d.imagesSent === 1 ? "" : "s"} · ${(d.latencyMs / 1000).toFixed(1)}s`;
+    // Escape is owned by highlight.ts (one listener decides per keypress, honouring the
+    // escapeOrder setting); the popover only lends it a close callback
+    // hidden, Escape is the page's again (it clears highlights, closes nothing)
+    useEffect(
+        () => (hidden ? undefined : registerPopoverClose(onClose)),
+        [onClose, hidden],
+    );
+    // while "start a new conversation?" is asked, Escape answers no, before anything
+    // else it would do (clear an outline, close the chat), wherever the keyboard is
+    // biome-ignore lint/correctness/useExhaustiveDependencies: cancelNew only sets state and focuses
+    useEffect(
+        () => (confirmNew && !hidden ? claimEscape(cancelNew) : undefined),
+        [confirmNew, hidden],
+    );
 
-    /** replace the text/info of the last (streaming) assistant message */
-    const patchLast = (patch: Partial<Msg>) =>
+    // The capture the next message goes against: the one this popover opened on, until
+    // a follow-up after a scroll/pan/zoom re-captures the new view into the session
+    const cur = useRef<Current>({ id: captureId, cap: capture });
+
+    // ── evidence: [[id]] citations in replies become chips and an action row ────
+    const citeSource = (on = cur.current): CiteSource | undefined => {
+        const { id, cap } = on;
+        return id !== "local" && cap.inventory?.length && cap.registry
+            ? { id, inventory: cap.inventory, registry: cap.registry }
+            : undefined;
+    };
+
+    const [active, setActive] = useState<Active>(null);
+    /** a move to evidence can be undone: the Back button shows */
+    const [returnable, setReturnable] = useState(false);
+    /** the place whose clicked element is outlined, so its entry shows pressed */
+    const [placeOn, setPlaceOn] = useState<Place | null>(null);
+    /**
+     * What "this" means right now: the sources outlined from an answer, or the
+     * element of an outlined place. It goes with the question, so the model answers
+     * about it rather than about the click or the whole view.
+     */
+    function selectionNow(): Selection | null {
+        if (active) {
+            const m = messages.find((x) => x.id === active.msgId);
+            const c = m && cited(m);
+            const src = m?.cite;
+            if (src && c?.ids.length) {
+                const ids =
+                    active.index === "all"
+                        ? c.ids.slice(0, SELECTION_MAX)
+                        : [c.ids[active.index]];
+                return {
+                    kind: active.index === "all" ? "all" : "source",
+                    n: active.index === "all" ? c.ids.length : active.index + 1,
+                    items: ids.filter(Boolean).map((id) => ({
+                        id,
+                        label: labelOfWire(id, src.inventory),
+                        el: src.registry.get(id),
+                    })),
+                };
+            }
+        }
+        if (placeOn)
+            return {
+                kind: "place",
+                n: placeNumber(placeOn),
+                items: [{ label: placeOn.label }],
+            };
+        return null;
+    }
+    /**
+     * The selection as the question sends it: each source by its id in the capture
+     * the question goes with. Choosing a source moves the page, so the question often
+     * goes with a fresh capture, whose ids are not the answer's: its n39 can be the
+     * row that holds both sources (A4 of the 2026-09-27 report). A source that capture
+     * does not hold goes by its label alone.
+     */
+    const selectionIn = (sel: Selection, on: Current) =>
+        sourcesIn(sel.items, citeSource(on)?.registry);
+    // Escape (or a new capture) clears the outline: the pressed buttons must follow
+    useEffect(
+        () =>
+            onHighlightsCleared(() => {
+                setActive(null);
+                setPlaceOn(null);
+                // nothing outlined: nothing for the chat to step aside for
+                window.clearTimeout(stepAside.current);
+            }),
+        [],
+    );
+
+    /** outline a reply's evidence (all, or item `index`), on the user's click or command */
+    function point(
+        m: Msg,
+        index: number | "all",
+        reveal: boolean,
+        toggle = false,
+        /** pressed in the answer's text: the reader is there, so the log stays put */
+        fromText = false,
+        /** Live pointing as it speaks: outlines only, and neither the page nor the chat
+         *  moves (bug 3 of the 2026-09-27 report: the user is looking at something) */
+        still = false,
+    ): boolean {
+        const c = cited(m);
+        const src = m.cite;
+        if (!c?.ids.length || !src) return false;
+        // a newer choice (or the same one pressed off) replaces a pending side step
+        window.clearTimeout(stepAside.current);
+        // the lit source pressed again: its outline goes (every outline can be turned off
+        // from the chat, not only with Escape)
+        if (
+            toggle &&
+            typeof index === "number" &&
+            active?.msgId === m.id &&
+            active.index === index &&
+            hasHighlight()
+        ) {
+            clearHighlights();
+            act("clear", T.sCleared);
+            return false;
+        }
+        const n = c.ids.length;
+        const picks =
+            index === "all"
+                ? c.ids.map((id, i) => ({ id, i }))
+                : [{ id: c.ids[index], i: index }];
+        const label = (id: string) => labelOfWire(id, src.inventory);
+        // status is announced here, after any move, so it can say where the item is
+        showHighlights(
+            picks.map(({ id, i }) => ({
+                id,
+                role: "target" as const,
+                badge: String(i + 1),
+            })),
+            src.registry,
+            src.id,
+            nextToken(),
+            { userInitiated: true },
+        );
+        const el = src.registry.get(picks[0].id);
+        const where = el ? directionOf(el) : "";
+        // the moveToEvidence setting decides whether choosing an item moves the page;
+        // "never" leaves finding it to the off-screen cues and the minimap
+        const move = getSettings().moveToEvidence;
+        const moved =
+            reveal && move !== "never" && el
+                ? revealElement(el, undefined, {
+                      always: move === "always",
+                  }) === "moved"
+                : false;
+        setReturnable(canReturn());
+        // once the move settles, a chat covering the source steps aside to the nearer
+        // side (a setting; a pinned chat stays), and at high zoom with no room either
+        // side it folds to its header
+        const shown = picks
+            .map(({ id }) => src.registry.get(id))
+            .filter((e): e is Element => e != null);
+        if (shown.length && !mini && !still)
+            stepAside.current = window.setTimeout(() => {
+                const boxes = shown.map((e) => e.getBoundingClientRect());
+                const a = {
+                    left: Math.min(...boxes.map((r) => r.left)),
+                    top: Math.min(...boxes.map((r) => r.top)),
+                    right: Math.max(...boxes.map((r) => r.right)),
+                    bottom: Math.max(...boxes.map((r) => r.bottom)),
+                };
+                const b = rootRef.current?.getBoundingClientRect();
+                if (!b || dragRef.current) return;
+                const w = Math.min(a.right, b.right) - Math.max(a.left, b.left);
+                const h = Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top);
+                if (w <= 0 || h <= 0) return;
+                const aside =
+                    getSettings().chatMovesAside && !pinnedNow.current;
+                if (aside) {
+                    const left = besideTarget(a, b, window.innerWidth);
+                    if (left != null) {
+                        setPos((p) => ({ ...p, left }));
+                        return;
+                    }
+                }
+                const area = Math.max(
+                    1,
+                    (a.right - a.left) * (a.bottom - a.top),
+                );
+                // no room beside it (high zoom, or a phone's bottom sheet): a chat still
+                // covering the source folds to its header, if it may move at all
+                if ((short || aside) && (w * h) / area > 0.2) {
+                    // folding removes the control that has focus: the keyboard moves
+                    // to the unfold button, not to the page
+                    const hadFocus = rootRef.current?.contains(
+                        document.activeElement,
+                    );
+                    setMini(true);
+                    if (hadFocus)
+                        requestAnimationFrame(() =>
+                            foldRef.current?.focus({ preventScroll: true }),
+                        );
+                    act("press", T.sCovered);
+                }
+            }, motionMs() + 80);
+        if (hasHighlight()) {
+            const said =
+                index === "all"
+                    ? T.sAll(n, c.ids.map(label).join(", "))
+                    : T.sItem(picks[0].i + 1, n, label(picks[0].id)) +
+                      (moved
+                          ? T.sMoved
+                          : where && where !== "on screen"
+                            ? T.sWhere(T.dir[where] ?? where)
+                            : T.sEnd);
+            act(index === "all" ? "all" : moved ? "move" : "chip", said);
+        }
+        // nothing placeable (collapsed, box-less): showHighlights announced it; no button
+        // may look pressed over an empty page
+        setActive(hasHighlight() ? { msgId: m.id, index } : null);
+        // the controls row sits at the answer's end: keep it in view for a press there,
+        // but a source pressed in the text is where the reader is reading
+        // Live pointing as it speaks leaves the log where the reader is
+        if (!fromText && !still) revealTurn(m.id);
+        return moved;
+    }
+
+    /** a finished reply: debug readout, then outline it if the auto-highlight knob says so */
+    function onReplyDone(
+        m: Msg,
+        question: string,
+        token: number,
+        ask: SentAsk,
+    ) {
+        const c = cited(m);
+        const src = m.cite;
+        // one status for the answer and what it found: two writes in a row would
+        // cut the first off before a screen reader says it
+        let said = chatText().sAnswer(c?.ids.length ?? 0);
+        // the zoom the answer asks for (R1 of the 2026-09-27 report), once it is
+        // complete and after its sources are lit: into an element (lit, and the chat
+        // steps aside), or a step, or back to 100%
+        const asked =
+            getSettings().assistantZoom && asksToZoom(question)
+                ? zoomAsked(m.text)
+                : null;
+        const zoomNow = () => {
+            if (!asked) return;
+            let z: number | null = null;
+            if ("change" in asked) z = assistantZoom(asked.change);
+            else {
+                const el = src?.registry.get(asked.id);
+                if (el?.isConnected) {
+                    z = assistantZoom(el);
+                    const k = c?.ids.indexOf(asked.id) ?? -1;
+                    if (k >= 0) point(m, k, false);
+                }
+            }
+            if (z === null) return;
+            said += ` ${chatText().sZoomed(Math.round(z * 100))}`;
+            setReturnable(canReturn());
+            setMessages((ms) =>
+                ms.map((x) => (x.id === m.id ? { ...x, zoomed: true } : x)),
+            );
+        };
+        const done = () => {
+            zoomNow();
+            act("done", said);
+        };
+        showAnswerStart(m.id);
+        // asked where, pointed nowhere: "nothing found", styled apart from an answer
+        if (c && !c.ids.length && asksToLocate(question))
+            setMessages((ms) =>
+                ms.map((x) => (x.id === m.id ? { ...x, quiet: true } : x)),
+            );
+        if (!c || !src) return done();
+        ask.cited = c.ids;
+        recordEvidence(m.text, c.ids, (id) => labelOfWire(id, src.inventory));
+        const mode = getSettings().autoHighlight;
+        if (!c.ids.length || mode === "never") return done();
+        if (mode === "where" && !asksToLocate(question)) return done();
+        // guarded: a newer question or capture since this one was asked wins
+        const drawn = showHighlights(
+            c.ids.map((id, i) => ({
+                id,
+                role: "target" as const,
+                badge: String(i + 1),
+            })),
+            src.registry,
+            src.id,
+            token,
+        );
+        if (drawn && hasHighlight()) {
+            setActive({ msgId: m.id, index: "all" });
+            said += ` ${chatText().hFound(
+                c.ids.map((id) => labelOfWire(id, src.inventory)).join(", "),
+            )}`;
+        }
+        done();
+    }
+
+    /** "next", "show all", "the second one": steer the last cited reply without a model call */
+    /** take the user back to where they clicked, and outline what they clicked on */
+    function goPlace(p: Place, toggle = false): string {
+        const T = chatText();
+        // its entry is a toggle: pressed again, the outline goes and the page stays
+        if (toggle && placeOn === p && hasHighlight()) {
+            clearHighlights();
+            act("clear", T.sCleared);
+            return T.sCleared;
+        }
+        const r = goToPlace(p);
+        // outline what was clicked only when it is a thing, not a whole section
+        const box = p.el?.isConnected ? p.el.getBoundingClientRect() : null;
+        const drawn =
+            p.el &&
+            box &&
+            box.width <= window.innerWidth &&
+            box.height <= window.innerHeight / 2 &&
+            showHighlights(
+                [{ id: "click", role: "anchor" }],
+                new Map([["click", p.el]]),
+                cur.current.id,
+                nextToken(),
+                { userInitiated: true },
+            );
+        setPlaceOn(drawn && hasHighlight() ? p : null);
+        setReturnable(canReturn());
+        const note = T.sPlace(p.label, r === "moved");
+        act(r === "moved" ? "move" : "chip", note);
+        return note;
+    }
+
+    function runNav(cmd: NavCommand, text: string): boolean {
+        if (cmd.kind === "return" || cmd.kind === "place") {
+            let note: string;
+            if (cmd.kind === "return") {
+                const ok = returnToPreviousView();
+                note = ok ? T.sBack : T.sNoBack;
+                setReturnable(canReturn());
+                act(ok ? "back" : "error", note);
+            } else {
+                const p = latestPlace();
+                note = p ? goPlace(p) : T.sNoPlace;
+            }
+            setMessages((m) => [
+                ...m,
+                { id: `user-${Date.now()}`, role: "user", text },
+                { id: `nav-${Date.now()}`, role: "assistant", text: note },
+            ]);
+            return true;
+        }
+        const last = [...messages]
+            .reverse()
+            .find((m) => (cited(m)?.ids.length ?? 0) > 0);
+        const n = last ? (cited(last)?.ids.length ?? 0) : 0;
+        if (!last || !n) return false;
+        const cur =
+            active?.msgId === last.id && typeof active.index === "number"
+                ? active.index
+                : -1;
+        let note: string;
+        if (cmd.kind === "clear") {
+            clearHighlights();
+            note = T.sCleared;
+            act("clear", note);
+        } else if (cmd.kind === "all") {
+            point(last, "all", false);
+            note = T.sAllNote(n);
+        } else {
+            const i =
+                cmd.kind === "next"
+                    ? (cur + 1) % n
+                    : cmd.kind === "prev"
+                      ? (cur - 1 + n) % n
+                      : cmd.n - 1;
+            if (i < 0 || i >= n) {
+                note = T.sOnly(n);
+                act("error", note);
+            } else {
+                point(last, i, true);
+                note = T.sItemNote(i + 1, n);
+            }
+        }
         setMessages((m) => [
-            ...m.slice(0, -1),
-            { ...m[m.length - 1], ...patch },
+            ...m,
+            { id: `user-${Date.now()}`, role: "user", text },
+            { id: `nav-${Date.now()}`, role: "assistant", text: note },
         ]);
+        return true;
+    }
 
-    async function sendStreaming(text: string) {
+    /** replace fields of one message: a streaming reply patches itself by id, since a
+     *  click during the stream appends its place entry after it */
+    const patchMsg = (id: string, patch: Partial<Msg>) =>
+        setMessages((m) =>
+            m.map((x) => (x.id === id ? { ...x, ...patch } : x)),
+        );
+
+    async function sendStreaming(
+        text: string,
+        token: number,
+        ask: SentAsk,
+        on: Current,
+        sel: Selection | null,
+    ) {
+        const cite = citeSource(on);
         const res = await fetch(`${backend}/api/chat/stream`, {
+            signal: aborter.current.signal,
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-                capture_id: captureId,
+                capture_id: on.id,
                 message: text,
                 session_id: sessionId,
+                cite: getSettings().citeEvidence,
+                selection: sel ? { items: selectionIn(sel, on) } : undefined,
+                mark_phrases: getSettings().associateText,
+                assistant_zoom: getSettings().assistantZoom,
+                ai: aiChoice(),
             }),
         });
         if (!res.ok || !res.body) {
             const data = await res.json().catch(() => ({}));
+            ask.error = data.error ?? `HTTP ${res.status}`;
+            act("error", chatText().sError);
             setMessages((m) => [
                 ...m,
                 {
@@ -471,14 +1821,16 @@ export default function ChatPopover({
             ]);
             return;
         }
+        const msgId = `stream-${Date.now()}`;
         setMessages((m) => [
             ...m,
-            { id: `stream-${Date.now()}`, role: "assistant", text: "" },
+            { id: msgId, role: "assistant", text: "", cite, streaming: true },
         ]);
         const reader = res.body.getReader();
         const decoder = new TextDecoder();
         let buffer = "";
         let full = "";
+        let ended = false;
         for (;;) {
             const { done, value } = await reader.read();
             if (done) break;
@@ -490,15 +1842,31 @@ export default function ChatPopover({
                 const data = JSON.parse(ev.slice(6));
                 if (data.delta) {
                     full += data.delta;
-                    patchLast({ text: full });
+                    patchMsg(msgId, { text: full });
                 } else if (data.error) {
-                    patchLast({ text: `${full}\n[error: ${data.error}]` });
+                    // the backend ends the stream after an error, with no "done"
+                    ended = true;
+                    ask.error = data.error;
+                    act("error", chatText().sError);
+                    patchMsg(msgId, {
+                        text: `${full}\n[error: ${data.error}]`,
+                        streaming: false,
+                        error: true,
+                    });
                 } else if (data.done) {
-                    patchLast({ info: fmtInfo(data) });
+                    ended = true;
+                    ask.reply = data;
+                    patchMsg(msgId, { streaming: false });
+                    onReplyDone(
+                        { id: msgId, role: "assistant", text: full, cite },
+                        text,
+                        token,
+                        ask,
+                    );
                     // live read: the user may toggle auto-read while the reply streams
-                    if (getSettings().autoRead && full) {
+                    if (getSettings().autoRead && full && !hiddenRef.current) {
                         const idx = messages.length + 1; // the assistant bubble just added
-                        speak(full, (s) =>
+                        speak(speakable(full), (s) =>
                             setSpeaking(
                                 s === "idle" ? null : { idx, phase: s },
                             ),
@@ -507,50 +1875,168 @@ export default function ChatPopover({
                 }
             }
         }
+        // connection dropped with neither "done" nor "error": stop hiding the tail
+        if (!ended) {
+            ask.error = "stream ended without a reply";
+            patchMsg(msgId, { streaming: false });
+        }
     }
 
-    async function sendPlain(text: string) {
+    async function sendPlain(
+        text: string,
+        token: number,
+        ask: SentAsk,
+        on: Current,
+        sel: Selection | null,
+    ) {
+        const cite = citeSource(on);
         const res = await fetch(`${backend}/api/chat`, {
+            signal: aborter.current.signal,
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-                capture_id: captureId,
+                capture_id: on.id,
                 message: text,
                 session_id: sessionId,
+                cite: getSettings().citeEvidence,
+                selection: sel ? { items: selectionIn(sel, on) } : undefined,
+                mark_phrases: getSettings().associateText,
+                assistant_zoom: getSettings().assistantZoom,
+                ai: aiChoice(),
             }),
         });
         const data = await res.json();
-        const info = data.provider != null ? fmtInfo(data) : undefined;
-        setMessages((m) => [
-            ...m,
-            {
-                id: `plain-${Date.now()}`,
-                role: "assistant",
-                text: data.reply ?? data.error ?? "No reply.",
-                info,
-            },
-        ]);
+        if (data.provider != null) ask.reply = data;
+        if (data.reply == null) {
+            ask.error = data.error ?? `HTTP ${res.status}`;
+            act("error", chatText().sError);
+        }
+        const reply: Msg = {
+            id: `plain-${Date.now()}`,
+            role: "assistant",
+            text: data.reply ?? data.error ?? chatText().sError,
+            error: data.reply == null,
+            cite: data.reply == null ? undefined : cite,
+        };
+        setMessages((m) => [...m, reply]);
+        if (data.reply != null) onReplyDone(reply, text, token, ask);
         // live read: the user may toggle auto-read while the request is in flight
-        if (getSettings().autoRead && data.reply) speak(data.reply);
+        if (getSettings().autoRead && data.reply && !hiddenRef.current)
+            speak(speakable(data.reply));
     }
 
-    async function sendText(text: string) {
+    /** queuedId: a question that waited for a new place's capture, already in the log */
+    async function sendText(text: string, queuedId?: string) {
         if (!text || busy) return;
-        setMessages((m) => [
-            ...m,
-            { id: `user-${Date.now()}`, role: "user", text },
-        ]);
+        // during a live talk, typing is part of it
+        if (liveRef.current) {
+            if (queuedId)
+                setMessages((m) =>
+                    m.map((x) =>
+                        x.id === queuedId
+                            ? { ...x, captureId: cur.current.id }
+                            : x,
+                    ),
+                );
+            else {
+                if (capturing && waiting.current) return;
+                const id = `live-typed-${Date.now()}`;
+                setMessages((m) => [
+                    ...m,
+                    { id, role: "user", text, captureId: cur.current.id },
+                ]);
+                stick.current = true;
+                // about the new place being captured: it waits for it, as a typed
+                // question does
+                if (capturing) {
+                    waiting.current = { text, msgId: id };
+                    act("send", T.sAskQueued);
+                    return;
+                }
+            }
+            liveAsked.current = text;
+            liveRef.current.say(text);
+            if (sessionId)
+                void fetch(`${backend}/api/live/log`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        session_id: sessionId,
+                        capture_id: cur.current.id,
+                        role: "user",
+                        text,
+                    }),
+                }).catch(() => {});
+            return;
+        }
+        // what "this" meant as the user sent it: a view refresh or a new click later
+        // must not change it
+        const sel = selectionNow();
+        if (queuedId)
+            // it waited for the new place: it belongs to the place it now goes to
+            setMessages((m) =>
+                m.map((x) =>
+                    x.id === queuedId ? { ...x, captureId: cur.current.id } : x,
+                ),
+            );
+        else {
+            // one question waits at a time; the capture takes a second or two
+            if (capturing && waiting.current) return;
+            const msgId = `user-${Date.now()}`;
+            setMessages((m) => [
+                ...m,
+                { id: msgId, role: "user", text, captureId: cur.current.id },
+            ]);
+            // a new place is being captured: the question is about it, so it waits
+            // for it (the capturing edge sends it) instead of going to the old one
+            if (capturing) {
+                waiting.current = { text, msgId };
+                stick.current = true;
+                act("send", T.sAskQueued);
+                return;
+            }
+        }
         setBusy(true);
+        stick.current = true;
+        act("send", T.sAsking);
+        // minted at ask time: an auto-highlight for this reply loses to anything newer
+        const token = nextToken();
+        let ask: SentAsk | undefined;
+        // the capture this question goes against, bound now: a new click that lands
+        // while it refreshes neither takes the question nor is replaced by it
+        let on = cur.current;
         try {
-            if (settings.streamReplies) await sendStreaming(text);
-            else await sendPlain(text);
+            // the user moved since the last capture: send what they see now
+            if (refreshCapture && on.id !== "local") {
+                const from = on;
+                const fresh = await refreshCapture(from.cap, from.id, () =>
+                    setStatus(T.sUpdatingView),
+                );
+                if (fresh) {
+                    on = fresh;
+                    if (cur.current === from) cur.current = fresh;
+                }
+            }
+            // developer-facing record of what went out; the debug panel shows it
+            ask = recordAsk(on.id, {
+                question: text,
+                cite: getSettings().citeEvidence,
+            });
+            if (settings.streamReplies)
+                await sendStreaming(text, token, ask, on, sel);
+            else await sendPlain(text, token, ask, on, sel);
         } catch (err) {
+            // the chat is going: its question was abandoned, not failed
+            if (aborter.current.signal.aborted) return;
+            if (ask) ask.error = String(err);
+            act("error", T.sError);
             setMessages((m) => [
                 ...m,
                 {
                     id: `err-${Date.now()}`,
                     role: "assistant",
-                    text: `Backend error: ${err}`,
+                    text: T.sBackendError,
+                    error: true,
                 },
             ]);
         } finally {
@@ -558,230 +2044,582 @@ export default function ChatPopover({
         }
     }
 
+    /** a typed or spoken message: a navigation command, or a question for the model */
+    function submit(text: string) {
+        const nav = navCommand(text);
+        if (nav && !busy && runNav(nav, text)) return;
+        sendText(text);
+    }
+    // a voice message ends in a callback set up renders ago: it sends with the latest
+    const submitRef = useRef(submit);
+    submitRef.current = submit;
+
     function send() {
         const text = input.trim();
         if (!text) return;
+        // one question waits for a new place at a time: this one stays in the field
+        if (capturing && waiting.current) return;
         setInput("");
-        sendText(text);
+        submit(text);
     }
 
-    const QUICK_ACTIONS: [string, string][] = [
-        ["Explain this", "Explain what I am looking at, simply."],
-        ["Summarize", "Summarize this page briefly."],
-        ["→ English", "Translate the content I am looking at into English."],
+    const QUICK: [string, string][] = [
+        [T.quickExplain, T.promptExplain],
+        [T.quickSummary, T.promptSummary],
+        [T.quickTranslate, T.promptTranslate],
     ];
 
-    return (
-        <PopoverContainer
-            panelBg={C.panelBg}
-            text={C.text}
-            hc={hc}
-            style={{
-                left: pos.left,
-                top: pos.top,
-                fontSize: fs,
-            }}
+    const toggleAll = (m: Msg, pressed: boolean) => {
+        if (pressed) {
+            clearHighlights();
+            act("clear", T.sCleared);
+        } else point(m, "all", false);
+    };
+    const goBack = () => {
+        const ok = returnToPreviousView();
+        setReturnable(canReturn());
+        const said = ok ? T.sBack : T.sNoBack;
+        act(ok ? "back" : "error", said);
+    };
+
+    const backButton = (
+        <button
+            type="button"
+            className="ulc-c ulc-back"
+            aria-label={T.back}
+            title={T.backTitle}
+            onClick={goBack}
         >
-            <HeaderContainer
-                headerBg={C.headerBg}
-                headerBorder={C.headerBorder}
+            <BackIcon />
+        </button>
+    );
+
+    /** a click, as its own entry in the log: a pin with its number, which goes there */
+    const placeRow = (p: Place, key: string) => (
+        <button
+            key={key}
+            type="button"
+            className="ulc-where"
+            onClick={() => goPlace(p, true)}
+            aria-pressed={placeOn === p}
+            aria-label={T.placeEntry(placeNumber(p), p.label)}
+            title={T.placeEntry(placeNumber(p), p.label)}
+        >
+            <PlaceIcon />
+            <b>P{placeNumber(p)}</b>
+            <span>{p.label}</span>
+        </button>
+    );
+
+    /** a reply's source controls, one row: ‹ position › · highlight all · back */
+    function controlsFor(m: Msg, c: Cited, at: number, allOn: boolean) {
+        const n = c.ids.length;
+        const src = m.cite;
+        const label = (id: string) =>
+            src ? labelOfWire(id, src.inventory) : id;
+        const nav = n > 1;
+        // three number keys at most: a window round the current one
+        const from = Math.max(0, Math.min(at - 1, n - 3));
+        const keys = c.ids.map((id, k) => ({ id, k })).slice(from, from + 3);
+        const showLabel = style === "assistant" || !nav;
+        return (
+            <div className="ulc-ctl">
+                {nav && (
+                    <button
+                        type="button"
+                        className="ulc-c ulc-arrow"
+                        aria-label={T.prevEvidence}
+                        title={T.prevEvidence}
+                        onClick={() =>
+                            point(m, at < 0 ? n - 1 : (at - 1 + n) % n, true)
+                        }
+                    >
+                        <PrevIcon />
+                    </button>
+                )}
+                {nav &&
+                    (style === "assistant" ? (
+                        // the status line announces the position; this is its visible copy
+                        <span className="ulc-of" aria-hidden="true">
+                            {at >= 0 ? at + 1 : "–"}/{n}
+                        </span>
+                    ) : (
+                        keys.map(({ id, k }) => (
+                            <button
+                                key={id}
+                                type="button"
+                                className="ulc-c ulc-num"
+                                aria-pressed={at === k}
+                                aria-label={`${chipText(k + 1)}, ${T.evidenceLabel(k + 1, label(id))}`}
+                                onClick={() => point(m, k, true, true)}
+                            >
+                                {chipText(k + 1)}
+                            </button>
+                        ))
+                    ))}
+                {nav && (
+                    <button
+                        type="button"
+                        className="ulc-c ulc-arrow"
+                        aria-label={T.nextEvidence}
+                        title={T.nextEvidence}
+                        onClick={() =>
+                            point(m, at < 0 ? 0 : (at + 1) % n, true)
+                        }
+                    >
+                        <NextIcon />
+                    </button>
+                )}
+                <button
+                    type="button"
+                    className={`ulc-c ulc-all${showLabel ? " has-label" : ""}`}
+                    aria-pressed={allOn}
+                    aria-label={T.highlightAll(n)}
+                    title={T.highlightAll(n)}
+                    onClick={() => toggleAll(m, allOn)}
+                >
+                    <HighlightIcon />
+                    {showLabel && (
+                        <span>{nav ? T.allShort : T.highlightAll(n)}</span>
+                    )}
+                </button>
+                {returnable && backButton}
+            </div>
+        );
+    }
+
+    // the log: every click as its own entry, questions and answers, in order
+    const rows: React.ReactNode[] = [];
+    messages.forEach((m, i) => {
+        if (m.role === "place") {
+            const p = placeOf(m.captureId);
+            if (p) rows.push(placeRow(p, m.id));
+            return;
+        }
+        if (m.role === "divider") {
+            rows.push(
+                <div key={m.id} className="ulc-divider">
+                    <span>{m.text}</span>
+                </div>,
+            );
+            return;
+        }
+        if (m.role === "user") {
+            rows.push(
+                <div key={m.id} className="ulc-msg ulc-me">
+                    {m.text}
+                </div>,
+            );
+            return;
+        }
+        const c = cited(m);
+        const mine = active?.msgId === m.id ? active : null;
+        const at = typeof mine?.index === "number" ? mine.index : -1;
+        const allOn = mine?.index === "all";
+        const controls =
+            c && c.ids.length > 0 && !m.streaming ? (
+                controlsFor(m, c, at, allOn)
+            ) : m.zoomed && returnable ? (
+                <div key="back" className="ulc-ctl">
+                    {backButton}
+                </div>
+            ) : null;
+        rows.push(
+            <div key={m.id} className="ulc-turn" data-turn={m.id}>
+                <div
+                    className={`ulc-msg ulc-bot${m.error ? " is-err" : ""}${m.quiet ? " is-quiet" : ""}`}
+                >
+                    {/* Chips are <button data-cite> inside escaped HTML; one delegated
+                        click handler serves them (keyboard Enter/Space clicks too) */}
+                    {/* biome-ignore lint/a11y/noStaticElementInteractions lint/a11y/useKeyWithClickEvents: delegation only; the targets are real <button> chips, which click on Enter and Space */}
+                    <span
+                        className="ulc-text"
+                        onClick={(e) => {
+                            const id = (e.target as HTMLElement)
+                                .closest("[data-cite]")
+                                ?.getAttribute("data-cite");
+                            const k = id ? (c?.ids.indexOf(id) ?? -1) : -1;
+                            if (k >= 0) point(m, k, true, true, true);
+                        }}
+                        // biome-ignore lint/security/noDangerouslySetInnerHtml: HTML is escaped in mdLite before formatting tags and chips are added
+                        dangerouslySetInnerHTML={{
+                            __html: c
+                                ? markActive(
+                                      c.html,
+                                      at >= 0 ? c.ids[at] : undefined,
+                                  )
+                                : mdLite(speakable(m.text)),
+                        }}
+                    />
+                    {m.streaming && (
+                        <span className="ulc-caret" aria-hidden="true" />
+                    )}
+                    {/* read aloud sits at the end of the answer, not on a row of its own */}
+                    {m.text && !m.streaming && (
+                        <span className="ulc-read">
+                            {readControls(i, speakable(m.text), "ulc-speak")}
+                        </span>
+                    )}
+                    {style === "assistant" && controls}
+                </div>
+                {style !== "assistant" && controls}
+            </div>,
+        );
+    });
+    // an answer is on its way: dots where it will appear, until its first words do
+    const lastTalk = messages.findLast(
+        (m) => m.role === "user" || m.role === "assistant",
+    );
+    if (busy && lastTalk?.role === "user")
+        rows.push(
+            <div
+                key="typing"
+                className="ulc-msg ulc-bot ulc-typing"
+                aria-hidden="true"
+            >
+                <i />
+                <i />
+                <i />
+            </div>,
+        );
+    // a new click is being captured: it shows where its entry will appear
+    if (capturing)
+        rows.push(
+            <div key="capturing" className="ulc-where is-pending">
+                <WaitIcon />
+                <span>{T.sCapturing}</span>
+            </div>,
+        );
+
+    const ms = motionMs();
+    /** anything asked or answered yet (place entries alone are not a conversation) */
+    const talked = messages.some(
+        (m) => m.role === "user" || m.role === "assistant",
+    );
+    const voiceOK = settings.voiceInput;
+    /** record a voice message: next to send, and in the folded chat's header */
+    // one voice button, the mic: its words say whether it sends on a pause
+    const voiceLabel =
+        listening === "transcribing"
+            ? T.micCancel
+            : settings.voiceAutoSend
+              ? listening
+                  ? T.voiceStop
+                  : T.voiceStart
+              : listening
+                ? T.micStop
+                : T.micStart;
+    const voiceButton = (cls: string) => (
+        <button
+            type="button"
+            className={`${cls} ulc-voice`}
+            aria-pressed={listening === "voice"}
+            aria-disabled={!voiceEngine(settings.sttEngine)}
+            aria-label={voiceLabel}
+            title={voiceLabel}
+            onClick={toggleVoice}
+            disabled={(busy && !listening) || live != null}
+        >
+            {listening === "transcribing" ? (
+                <WaitIcon />
+            ) : listening ? (
+                <StopIcon />
+            ) : (
+                <MicIcon />
+            )}
+        </button>
+    );
+    const liveButton = (
+        <button
+            type="button"
+            className="ulc-ib ulc-live"
+            aria-pressed={live != null}
+            aria-label={live ? T.liveStop : T.liveStart}
+            title={live ? T.liveStop : T.liveStart}
+            onClick={() => void toggleLive()}
+            disabled={(busy || Boolean(listening)) && !live}
+        >
+            {live ? <StopIcon /> : <LiveIcon />}
+        </button>
+    );
+    let lastAnswer = -1;
+    for (let k = messages.length - 1; k >= 0; k--) {
+        const m = messages[k];
+        if (m.role === "assistant" && m.text && !m.streaming && !m.error) {
+            lastAnswer = k;
+            break;
+        }
+    }
+    // the status line only on the folded chat: open, the chat shows each action on the
+    // control itself, and the live region speaks it
+    const statusShown = mini && (Boolean(status) || speaking || listening);
+    /** what the next question is about, shown above the field (and read with it) */
+    const about = selectionNow();
+
+    return (
+        <div
+            ref={rootRef}
+            className="ul-chat"
+            data-style={style}
+            data-hc={hc ? "true" : "false"}
+            data-mini={mini ? "true" : "false"}
+            data-short={short ? "true" : "false"}
+            role="dialog"
+            aria-label={T.title}
+            lang={chatLang()}
+            style={
+                {
+                    left: pos.left,
+                    top: pos.top,
+                    width: panelW,
+                    height: mini ? "auto" : panelH,
+                    display: hidden ? "none" : undefined,
+                    // glides to a new click; never while dragged
+                    transition:
+                        ms && !dragRef.current
+                            ? `left ${ms}ms cubic-bezier(.22,1,.36,1), top ${ms}ms cubic-bezier(.22,1,.36,1)`
+                            : "none",
+                    "--ul-fs": `${fs}px`,
+                    "--ul-text": settings.chatTextScale / 100,
+                    // the page outline's color, for the selected source's words
+                    "--ul-hl": settings.hlColor,
+                } as React.CSSProperties
+            }
+        >
+            {/* the header is the drag handle; its buttons are excluded from the drag */}
+            <div
+                className="ulc-hd"
                 onPointerDown={onHeaderPointerDown}
                 onPointerMove={onHeaderPointerMove}
                 onPointerUp={onHeaderPointerUp}
-                style={{ cursor: settings.dragPopover ? "grab" : "default" }}
+                style={settings.dragPopover ? undefined : { cursor: "default" }}
             >
-                <HeaderTitle accent={C.accent}>UniLens</HeaderTitle>
-                <HeaderButtonsContainer>
-                    <PinButton
+                {style === "station" && (
+                    <span className="ulc-roundel" aria-hidden="true">
+                        U
+                    </span>
+                )}
+                <div className="ulc-title">
+                    <b>{style === "station" ? T.stationName : T.title}</b>
+                    {style === "station" && <small>{T.otherName}</small>}
+                </div>
+                {!mini && onNewConversation && (
+                    <button
                         type="button"
-                        onClick={() => onTogglePin(pinned ? null : pos)}
-                        pinned={pinned}
-                        accent={C.accent}
-                        title={
-                            pinned
-                                ? "Pinned — click to unpin (reopen at cursor)"
-                                : "Pin position for next captures"
-                        }
+                        ref={newConvRef}
+                        className="ulc-ib"
+                        aria-label={T.newConversation}
+                        title={T.newConversation}
+                        aria-expanded={confirmNew}
+                        onClick={() => setConfirmNew(!confirmNew)}
                     >
-                        📌{pinned ? " pinned" : ""}
-                    </PinButton>
-                    <CloseButton type="button" onClick={onClose}>
-                        ✕
-                    </CloseButton>
-                </HeaderButtonsContainer>
-            </HeaderContainer>
-
-            {/* contain: at the top or bottom of the messages, keep the wheel here instead of
-          handing it to the page behind — the list auto-scrolls to the end, so without
-          this every further scroll moves the page instead of the chat */}
-            <ScrollContainer ref={scrollRef}>
-                <CaptureImage src={capture.image} alt="page capture" />
-                {capture.viewportImage && (
-                    <ViewportImage
-                        src={capture.viewportImage}
-                        alt="close-up of current view"
-                    />
+                        <NewChatIcon />
+                    </button>
                 )}
-                <CaptureMetaText
-                    style={{
-                        fontSize: Math.max(11, fs - 3),
-                        color: C.dim,
-                        margin: "6px 0 2px",
+                {/* folded, the chat keeps its voice: record a message, hear the last answer */}
+                {mini && voiceOK && voiceButton("ulc-ib")}
+                {/* a live talk goes on while folded: it can be ended from here too */}
+                {mini && live && liveButton}
+                {mini &&
+                    lastAnswer >= 0 &&
+                    readControls(
+                        lastAnswer,
+                        speakable(messages[lastAnswer].text),
+                        "ulc-ib",
+                        T.readLast,
+                    )}
+                <button
+                    ref={foldRef}
+                    type="button"
+                    className="ulc-ib"
+                    aria-expanded={!mini}
+                    aria-label={mini ? T.expand : T.minimize}
+                    title={mini ? T.expand : T.minimize}
+                    onClick={() => {
+                        setMini(!mini);
+                        act("press", mini ? T.sExpanded : T.sMinimized);
                     }}
                 >
-                    click ({capture.meta.clickX}, {capture.meta.clickY}) ·
-                    scroll {capture.meta.scrollDepth}% ·{" "}
-                    {capture.meta.trace.length} trace pts
-                    {capture.meta.zoom !== 1 && (
-                        <> · zoom {Math.round(capture.meta.zoom * 100)}%</>
-                    )}
-                    {capture.meta.region && (
-                        <>
-                            {" "}
-                            · region {capture.meta.region.w}×
-                            {capture.meta.region.h}
-                        </>
-                    )}
-                </CaptureMetaText>
-                <CaptureMetaText
-                    style={{
-                        fontSize: Math.max(11, fs - 3),
-                        color: hc ? "#fff" : "#7a9",
-                        margin: 0,
+                    {mini ? <ExpandIcon /> : <MinimizeIcon />}
+                </button>
+                <button
+                    type="button"
+                    className="ulc-ib"
+                    aria-pressed={pinned}
+                    aria-label={pinned ? T.unpin : T.pin}
+                    title={pinned ? T.unpin : T.pin}
+                    onClick={() => {
+                        window.clearTimeout(stepAside.current);
+                        onTogglePin(pinned ? null : pos);
+                        act("press", pinned ? T.unpin : T.pin);
                     }}
                 >
-                    {stored}
-                    {sessionId &&
-                        sessionCaptures > 1 &&
-                        ` · session: ${sessionCaptures} captures`}
-                </CaptureMetaText>
-                {capture.meta.element && (
-                    <CaptureMetaText
-                        style={{
-                            fontSize: Math.max(11, fs - 3),
-                            color: hc ? "#fff" : "#a9c",
-                            margin: "2px 0 0",
-                        }}
-                    >
-                        clicked: &lt;{capture.meta.element.tag}&gt;
-                        {capture.meta.element.text &&
-                            ` "${capture.meta.element.text.slice(0, 60)}${capture.meta.element.text.length > 60 ? "…" : ""}"`}
-                        {capture.meta.element.nearestHeading &&
-                            ` · under "${capture.meta.element.nearestHeading}"`}
-                    </CaptureMetaText>
-                )}
-                <div style={{ margin: "0 0 12px" }} />
-                {messages.map((m, i) => (
-                    <MessageBubble
-                        key={m.id}
-                        isUser={m.role === "user"}
-                        userBg={C.userBubble}
-                        aiBg={C.aiBubble}
-                        bubbleBorder={C.bubbleBorder}
-                    >
-                        {m.role === "assistant" ? (
-                            // biome-ignore lint/security/noDangerouslySetInnerHtml: HTML is escaped in mdLite before formatting tags are added
-                            <span dangerouslySetInnerHTML={mdLite(m.text)} />
-                        ) : (
-                            m.text
-                        )}
-                        {m.role === "assistant" && m.text && (
-                            <SpeakButton
-                                type="button"
-                                onClick={() => speakMessage(i, m.text)}
-                                speaking={speaking?.idx === i}
-                                style={{ fontSize: Math.max(12, fs - 2) }}
-                                title={
-                                    speaking?.idx === i
-                                        ? speaking.phase === "loading"
-                                            ? "Preparing audio…"
-                                            : "Stop"
-                                        : "Read aloud"
-                                }
-                            >
-                                {speaking?.idx === i
-                                    ? speaking.phase === "loading"
-                                        ? "⏳"
-                                        : "⏹"
-                                    : "🔊"}
-                            </SpeakButton>
-                        )}
-                        {m.info && (
-                            <MessageInfo
-                                hc={hc}
-                                style={{ fontSize: Math.max(10, fs - 4) }}
-                            >
-                                {m.info}
-                            </MessageInfo>
-                        )}
-                    </MessageBubble>
-                ))}
-                {busy && <LoadingText>…</LoadingText>}
-            </ScrollContainer>
+                    <PinIcon />
+                </button>
+                <button
+                    type="button"
+                    className="ulc-ib"
+                    aria-label={T.close}
+                    title={T.close}
+                    onClick={onClose}
+                >
+                    <CloseIcon />
+                </button>
+            </div>
 
-            {settings.quickActions && (
-                <QuickActionsContainer>
-                    {QUICK_ACTIONS.map(([label, prompt]) => (
-                        <QuickActionButton
+            {!mini && (
+                <div
+                    className="ulc-log"
+                    ref={scrollRef}
+                    onScroll={(e) => {
+                        // our own eased scroll passes through positions the user never chose
+                        if (performance.now() < ownScroll.current) return;
+                        const el = e.currentTarget;
+                        stick.current =
+                            el.scrollHeight - el.scrollTop - el.clientHeight <
+                            48;
+                    }}
+                >
+                    {rows}
+                    {!talked && <p className="ulc-empty">{T.emptyHint}</p>}
+                </div>
+            )}
+
+            {!mini && settings.quickActions && !(short && talked) && (
+                <div className="ulc-quick">
+                    {QUICK.map(([label, prompt]) => (
+                        <button
                             type="button"
                             key={label}
                             onClick={() => sendText(prompt)}
                             disabled={busy}
-                            chipBg={C.chipBg}
-                            chipBorder={C.chipBorder}
-                            chipText={C.chipText}
-                            busy={busy}
-                            style={{ fontSize: Math.max(12, fs - 2) }}
                         >
                             {label}
-                        </QuickActionButton>
+                        </button>
                     ))}
-                </QuickActionsContainer>
+                </div>
             )}
-            <InputContainer>
-                {settings.voiceInput && sttSupported && (
-                    <VoiceButton
-                        type="button"
-                        onClick={toggleMic}
-                        listening={listening}
-                        inputBg={C.inputBg}
-                        text={C.text}
-                        title={
-                            listening ? "Stop listening" : "Speak your question"
-                        }
-                        style={{ fontSize: fs }}
-                    >
-                        🎤
-                    </VoiceButton>
-                )}
-                <ChatInput
-                    value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                    // Enter that confirms an IME composition (Japanese, Chinese, Korean)
-                    // must not submit the half-typed text. keyCode 229 covers browsers
-                    // that report the confirming Enter with isComposing already false.
-                    onKeyDown={(e) =>
-                        e.key === "Enter" &&
-                        !e.nativeEvent.isComposing &&
-                        e.nativeEvent.keyCode !== 229 &&
-                        send()
-                    }
-                    placeholder="Ask about this page…"
-                    inputBg={C.inputBg}
-                    inputBorder={C.inputBorder}
-                    text={C.text}
-                    style={{ fontSize: fs }}
-                />
-                <SendButton
-                    type="button"
-                    onClick={send}
-                    disabled={busy}
-                    accent={C.accent}
-                    hc={hc}
+            {!mini && confirmNew && (
+                <fieldset
+                    className="ulc-confirm"
+                    aria-labelledby={confirmAskId}
                 >
-                    ➤
-                </SendButton>
-            </InputContainer>
-        </PopoverContainer>
+                    <span id={confirmAskId}>{T.newConvAsk}</span>
+                    <button
+                        ref={confirmYesRef}
+                        type="button"
+                        className="ulc-c"
+                        onClick={async () => {
+                            setConfirmNew(false);
+                            if (await onNewConversation?.(cur.current)) return;
+                            act("error", T.sNewConvFailed);
+                            setMessages((m) => [
+                                ...m,
+                                {
+                                    id: `newconv-${Date.now()}`,
+                                    role: "assistant",
+                                    text: T.sNewConvFailed,
+                                    quiet: true,
+                                },
+                            ]);
+                            newConvRef.current?.focus({ preventScroll: true });
+                        }}
+                    >
+                        {T.newConvYes}
+                    </button>
+                    <button type="button" className="ulc-c" onClick={cancelNew}>
+                        {T.newConvNo}
+                    </button>
+                </fieldset>
+            )}
+            {!mini && about && (
+                <div className="ulc-about" id={aboutId}>
+                    <span>
+                        {about.kind === "place"
+                            ? T.aboutPlace(about.n, about.items[0].label)
+                            : about.kind === "all"
+                              ? about.n > about.items.length
+                                  ? T.aboutFirst(about.items.length, about.n)
+                                  : T.aboutAll(about.n)
+                              : T.aboutSource(
+                                    chipText(about.n),
+                                    about.items[0]?.label ?? "",
+                                )}
+                    </span>
+                    <button
+                        type="button"
+                        className="ulc-c"
+                        aria-label={T.aboutDrop}
+                        title={T.aboutDrop}
+                        onClick={() => {
+                            clearHighlights();
+                            act("clear", T.sCleared);
+                        }}
+                    >
+                        <CloseIcon />
+                    </button>
+                </div>
+            )}
+            {!mini && live && (
+                // the talk's state, in words, while the chat is open
+                <div className="ulc-about ulc-livestate">
+                    <span>{liveLabel(live)}</span>
+                </div>
+            )}
+            {!mini && (
+                <div className="ulc-in">
+                    {voiceOK && voiceButton("ulc-ib")}
+                    {liveButton}
+                    <input
+                        ref={inputRef}
+                        aria-describedby={about ? aboutId : undefined}
+                        value={input}
+                        onChange={(e) => setInput(e.target.value)}
+                        // Enter that confirms an IME composition (Japanese, Chinese, Korean)
+                        // must not submit the half-typed text. keyCode 229 covers browsers
+                        // that report the confirming Enter with isComposing already false.
+                        onKeyDown={(e) =>
+                            e.key === "Enter" &&
+                            !e.nativeEvent.isComposing &&
+                            e.nativeEvent.keyCode !== 229 &&
+                            send()
+                        }
+                        placeholder={
+                            listening === "transcribing"
+                                ? T.placeholderTranscribing
+                                : listening
+                                  ? T.placeholderListening
+                                  : T.placeholder
+                        }
+                        aria-label={T.placeholder}
+                        readOnly={Boolean(listening)}
+                    />
+                    <button
+                        type="button"
+                        className="ulc-ib ulc-go"
+                        aria-label={T.send}
+                        title={T.send}
+                        onClick={send}
+                        disabled={busy || !input.trim()}
+                    >
+                        {busy ? <WaitIcon /> : <SendIcon />}
+                    </button>
+                </div>
+            )}
+            {/* one home for what just happened: the audio guide shows it on its amber
+                display, the station on its information strip */}
+            {statusShown && (
+                <div className="ulc-status" title={status}>
+                    {(speaking || listening) && (
+                        <span className="ulc-lvl" aria-hidden="true">
+                            <i />
+                            <i />
+                            <i />
+                        </span>
+                    )}
+                    <span>{status}</span>
+                </div>
+            )}
+        </div>
     );
 }

@@ -1,0 +1,625 @@
+/**
+ * @file Contains UnilensRoot implementation, a react component that is rendered
+ * into the container and contains the entire Unilens app state: the one chat, and
+ * the captures that open it or move it to a new place.
+ */
+
+import { useEffect, useMemo, useState } from "react";
+import ChatPopover from "./ChatPopover";
+import {
+    type CaptureResult,
+    capture,
+    pageChangedSince,
+    tagLastCapture,
+    viewMovedSince,
+} from "./capture";
+import { chatText } from "./chatI18n";
+import { clickFeedback } from "./clickFx";
+import {
+    type ClickOrDragBoxEvent,
+    type ClickOrDragTriggers,
+    useClickOrDragBox,
+} from "./clickHandlers";
+import { initDebug } from "./DebugPanel";
+import { earcon } from "./earcons";
+import { announce, clearHighlights, setCurrentCapture } from "./highlight";
+import { initHint } from "./hint";
+import { aliasPlace, clearPlaces, placeOf, recordPlace } from "./places";
+import {
+    forgetSnapshot,
+    loadSnapshot,
+    pageKey,
+    type Snapshot,
+    savedPlaces,
+    saveSoon,
+} from "./restore";
+import { recordCapture } from "./sentLog";
+import { getSettings, onSettingsChange, updateSetting } from "./settings";
+import type { UnilensClient } from "./UnilensClient";
+import {
+    clientToContent,
+    getTargetView,
+    getZoom,
+    isOwnUI,
+    onViewChange,
+    restoreZoom,
+} from "./zoom";
+
+//------------------------------------------------------------------------------
+// Types
+//------------------------------------------------------------------------------
+
+type ChatProps = Parameters<typeof ChatPopover>[0];
+
+/** the chat as last rendered; a new key means a new chat, not the open one updated */
+type Chat = { key: number; props: ChatProps };
+
+type Region = { x: number; y: number; w: number; h: number };
+
+//------------------------------------------------------------------------------
+// Helpers
+//------------------------------------------------------------------------------
+
+/**
+ * Popover pinned position, persisted in the settings store. Guarded on read:
+ * hydrated storage is not trusted to hold finite coordinates.
+ */
+function pinnedPos(): { left: number; top: number } | null {
+    const p = getSettings().pinnedPos;
+    return p && Number.isFinite(p.left) && Number.isFinite(p.top) ? p : null;
+}
+
+function setPinnedPos(pos: { left: number; top: number } | null) {
+    updateSetting("pinnedPos", pos);
+}
+
+/** a short name for where the user clicked, for "where I clicked" buttons and speech */
+function placeLabel(cap: CaptureResult): string {
+    const T = chatText();
+    const e = cap.meta.element;
+    if (cap.meta.region) return T.placeRegion;
+    if (!e) return T.placeClick;
+    const text = (e.text ?? e.alt ?? "").trim();
+    // a short text names the thing itself; a long one is a whole section, whose
+    // heading names it better
+    if (text && text.length <= 40) return text;
+    if (e.nearestHeading) return T.placeNear(e.nearestHeading);
+    return text ? `${text.slice(0, 40)}…` : T.placeTag(e.tag);
+}
+
+//------------------------------------------------------------------------------
+// UnilensRoot implementation
+//------------------------------------------------------------------------------
+
+export function UnilensRoot({
+    unilens,
+    container,
+}: {
+    unilens: UnilensClient;
+    container: HTMLDivElement;
+}) {
+    const [chat, setChat] = useState<Chat | null>(null);
+
+    // Alt+click and Alt+drag on the page; never on UniLens's own chrome
+    const triggers = useMemo<ClickOrDragTriggers>(() => {
+        const trigger = unilens.getOption("trigger");
+        return {
+            click: (e) => !isOwnUI(e.target) && trigger(e),
+            drag: (e) =>
+                getSettings().regionSelect && trigger(e) && !isOwnUI(e.target),
+        };
+    }, [unilens]);
+    const clickActionEmitter = useClickOrDragBox(document, triggers);
+
+    // Runs once: `unilens` and the emitter never change, and the init calls below
+    // must not run twice
+    useEffect(() => {
+        const backend = unilens.getBackend();
+
+        /** what the open chat was last rendered with, so a new click can update it in place */
+        let current: Chat | null = null;
+        /** bumped for each new chat, so React makes a fresh one instead of updating */
+        let chats = 0;
+        /** the element the open chat's question was asked about, for view refreshes */
+        let askedAbout: Element | undefined;
+        /** the capture the open chat is on, and what it was asked about: where a failed
+         *  capture goes back to (nothing, once the chat is closed) */
+        let committed: { capture: string | null; asked: Element | undefined } =
+            {
+                capture: null,
+                asked: undefined,
+            };
+        /** bumped by every new capture: one still running when a newer one starts is
+         *  dropped */
+        let latestCapture = 0;
+        /** bumped whenever the chat's capture is retired (new capture, close): a refresh
+         *  that finishes after that belongs to a conversation that is gone */
+        let generation = 0;
+
+        /** the session the chat's latest upload joined or started, while continuity
+         *  keeps one */
+        const joinSession = (sessionId: string | null) =>
+            unilens.setSessionId(getSettings().continuity ? sessionId : null);
+
+        const paint = (next: Chat | null) => {
+            current = next;
+            setChat(next);
+            save();
+        };
+
+        // ── Restore after a reload (restore.ts) ──────────────────────────────
+        /** the conversation as it is now, to come back after a reload; null when there
+         *  is none to keep (nothing asked yet, continuity off) */
+        const snapshot = (): Snapshot | null => {
+            const s = getSettings();
+            const sessionId = unilens.getSessionId();
+            const on = committed.capture ?? current?.props.captureId;
+            if (!s.restoreAfterReload || !s.continuity) return null;
+            if (!sessionId || !on || on === "local") return null;
+            const v = getTargetView();
+            return {
+                v: 1,
+                savedAt: Date.now(),
+                page: pageKey(),
+                sessionId,
+                captureId: on,
+                open: current != null && !current.props.hidden,
+                ...savedPlaces(),
+                view: { scale: getZoom().scale, x: v.x, y: v.y },
+            };
+        };
+        /** the chat changed: kept at once (a reload may come any moment); the view
+         *  moving, once it settles */
+        const save = () => saveSoon(backend, snapshot, true);
+        const saveView = () => saveSoon(backend, snapshot);
+        /** the first chat a click opens after a reload marks where the page reloaded */
+        let reloadMark = false;
+
+        const keeping = () =>
+            getSettings().restoreAfterReload && getSettings().continuity;
+        async function restore() {
+            if (!keeping()) return;
+            // a click from here on starts its own conversation: that one stands
+            const mine = latestCapture;
+            // places and the view are measured on the laid-out page
+            if (document.readyState !== "complete")
+                await new Promise((r) =>
+                    window.addEventListener("load", r, { once: true }),
+                );
+            const snap = await loadSnapshot(backend);
+            if (!snap) return;
+            // the session's history brings the messages back; the capture's meta lets
+            // the chat re-capture the view on the next question
+            let meta: CaptureResult["meta"] | undefined;
+            try {
+                const [ses, cap] = await Promise.all([
+                    fetch(
+                        `${backend}/api/session/${encodeURIComponent(snap.sessionId)}`,
+                    ),
+                    fetch(
+                        `${backend}/api/capture/${encodeURIComponent(snap.captureId)}/detail`,
+                    ),
+                ]);
+                if (!ses.ok || !cap.ok) return;
+                meta = (await cap.json()).meta;
+            } catch {
+                return;
+            }
+            // a click since the page loaded, or the setting turned off meanwhile
+            if (!meta || mine !== latestCapture || current || !keeping())
+                return;
+            unilens.setSessionId(snap.sessionId);
+            if (snap.page === pageKey()) {
+                for (const p of snap.places) recordPlace(p);
+                for (const [id, of] of snap.aliases) aliasPlace(id, of);
+                // unless the user has zoomed already
+                if (
+                    getSettings().zoom &&
+                    snap.view.scale > 1.01 &&
+                    getZoom().scale === 1
+                )
+                    restoreZoom(snap.view.scale, snap.view.x, snap.view.y);
+            }
+            const T = chatText();
+            if (!snap.open) {
+                reloadMark = true;
+                announce(T.sRestoredHidden);
+                return;
+            }
+            setCurrentCapture(snap.captureId);
+            committed = { capture: snap.captureId, asked: undefined };
+            openChat(window.innerWidth, window.innerHeight, snap.captureId, {
+                image: "",
+                meta,
+                restored: true,
+            });
+            repaint({ reloaded: "restored" });
+            announce(T.sRestored);
+        }
+        /** re-render the open chat with some props changed */
+        const repaint = (patch: Partial<ChatProps>) => {
+            if (current)
+                paint({ ...current, props: { ...current.props, ...patch } });
+        };
+
+        function closeChat() {
+            generation++;
+            paint(null);
+        }
+
+        /**
+         * ✕ pressed: the chat hides and keeps its conversation, session included; the
+         * next click shows it again there. (With continuity off, that click opens a
+         * fresh chat instead, as every click does.)
+         */
+        function hideChat() {
+            // a late answer from the hidden chat must not draw on the page. Here, not in
+            // closeChat: a new chat opening calls that too, after its capture's id is set
+            setCurrentCapture(null);
+            committed = { capture: null, asked: undefined };
+            // a capture still running was for this chat: it must not show it again
+            latestCapture++;
+            // a view refresh still running belongs to what was on screen before
+            generation++;
+            repaint({ hidden: true, capturing: false });
+        }
+
+        /**
+         * "New conversation": the old one ends (its session stays in the backend's
+         * history), a new session starts on the capture the chat is on now, places count
+         * from P1 again, and a fresh, empty chat opens where this one is. False when the
+         * session could not be made: the chat stays as it was, to try again.
+         */
+        async function newConversation(on: {
+            id: string;
+            cap: CaptureResult;
+        }): Promise<boolean> {
+            if (!current) return false;
+            const key = current.key;
+            // a capture on its way, a view refresh, what was outlined: all the old one's.
+            // Its late answers must not draw while the new session is made
+            const mine = ++latestCapture;
+            generation++;
+            setCurrentCapture(null);
+            clearHighlights();
+            // always a session, continuity or not: without one the backend would answer
+            // from the capture's own history, the old conversation. A capture that never
+            // reached the backend (offline) has none to start from: the chat stays
+            let session: string | null = null;
+            try {
+                if (on.id === "local") throw new Error("capture not uploaded");
+                session = await unilens.api().newSession(on.id);
+            } catch (err) {
+                console.warn("[UniLens] new conversation failed:", err);
+                // superseded (below): that newer chat is not told of this one's failure
+                if (mine !== latestCapture || current?.key !== key) return true;
+                setCurrentCapture(committed.capture);
+                return false;
+            }
+            // a click since then opened or moved the chat: that one stands
+            if (mine !== latestCapture || current?.key !== key) return true;
+            joinSession(session);
+            setCurrentCapture(on.id);
+            committed = { ...committed, capture: on.id };
+            const here = placeOf(on.id);
+            clearPlaces();
+            if (here) recordPlace({ ...here, at: Date.now() });
+            chats++;
+            paint({
+                key: chats,
+                props: {
+                    ...current.props,
+                    captureId: on.id,
+                    capture: on.cap,
+                    sessionId: session,
+                    capturing: false,
+                    hidden: false,
+                    startedOver: true,
+                },
+            });
+            return true;
+        }
+
+        /**
+         * Before a follow-up: if the user scrolled, panned or zoomed since `prev`, or the
+         * page's elements changed (a click opened or replaced something), capture the
+         * page again (same question point) into the session so the model sees what they
+         * see now. Null when nothing changed, the knob is off, or the upload fails (the
+         * chat then carries on with the capture it has).
+         */
+        async function refreshCapture(
+            prev: CaptureResult,
+            prevId: string,
+            onStart?: () => void,
+        ): Promise<{ id: string; cap: CaptureResult } | null> {
+            // the conversation lives in the session; without one (continuity off) a new
+            // capture would start with an empty history, so the chat stays on the capture
+            // it has
+            // a chat restored after a reload has no live page data: it always re-captures
+            if (
+                !unilens.getSessionId() ||
+                !getSettings().refreshView ||
+                !(
+                    prev.restored ||
+                    viewMovedSince(prev.meta) ||
+                    pageChangedSince(prev)
+                )
+            )
+                return null;
+            onStart?.();
+            const gen = generation;
+            try {
+                const cap = await capture(
+                    prev.meta.clickX,
+                    prev.meta.clickY,
+                    askedAbout?.isConnected ? askedAbout : undefined,
+                    undefined,
+                    { viewRefresh: true },
+                );
+                if (gen !== generation) return null;
+                const up = await unilens.api().uploadCapture(cap);
+                // never let a slow refresh take the guard (or the session) from a capture
+                // opened since, or bring back a closed chat's session
+                if (gen !== generation) return null;
+                joinSession(up.sessionId);
+                const id = up.id;
+                tagLastCapture(id);
+                recordCapture(id, cap, true);
+                setCurrentCapture(id);
+                committed = { ...committed, capture: id };
+                // same question point as the capture it refreshes: the same place, not a
+                // new one
+                aliasPlace(id, prevId);
+                save();
+                return { id, cap };
+            } catch (err) {
+                console.warn(
+                    "[UniLens] view refresh failed, using the last capture:",
+                    err,
+                );
+                return null;
+            }
+        }
+
+        function openChat(
+            clientX: number,
+            clientY: number,
+            captureId: string,
+            cap: CaptureResult,
+        ) {
+            // one conversation, one chat: with continuity on, a new click updates the open
+            // chat (it glides to the click and keeps its history and chips) instead of
+            // replacing it
+            const keep = current != null && getSettings().continuity;
+            const reloaded = !keep && reloadMark ? "clicked" : undefined;
+            reloadMark = false;
+            if (!keep) {
+                closeChat();
+                chats++;
+                // last in the document, as a newly made chat was: on a z-index tie with
+                // UniLens's other panels, the chat is on top
+                document.documentElement.appendChild(container);
+            }
+            paint({
+                key: chats,
+                props: {
+                    x: clientX,
+                    y: clientY,
+                    captureId,
+                    capture: cap,
+                    backend,
+                    sessionId: getSettings().continuity
+                        ? unilens.getSessionId()
+                        : null,
+                    onClose: hideChat,
+                    onNewConversation: newConversation,
+                    reloaded,
+                    refreshCapture,
+                    initialPos: pinnedPos(),
+                    pinned: pinnedPos() != null,
+                    onTogglePin: (pos) => {
+                        setPinnedPos(pos);
+                        // re-render so the pin button reflects state
+                        repaint({ pinned: pos != null, initialPos: pos });
+                    },
+                    onMove: (pos) => {
+                        if (pinnedPos()) setPinnedPos(pos);
+                    },
+                },
+            });
+        }
+
+        async function doCapture(
+            clientX: number,
+            clientY: number,
+            pointX: number,
+            pointY: number,
+            el?: Element,
+            region?: Region,
+            /** the dragged region on screen, for feedback that frames it */
+            regionBox?: DOMRectReadOnly,
+        ) {
+            // (pointX, pointY) is the client point being asked about — the click, or the
+            // centre of a drag. clientToContent handles both pan engines.
+            const p = clientToContent(pointX, pointY);
+            // a new capture retires the previous outline and its ids. Retire the id first:
+            // while this capture renders and uploads, a late answer for the old one must
+            // already be stale, or it could redraw after the clear (Codex review, P1)
+            generation++;
+            const mine = ++latestCapture;
+            setCurrentCapture(null);
+            clearHighlights();
+            askedAbout = el;
+            // seen at once: a ripple where the click landed, then a breathing orb there
+            // until the chat has the capture
+            const endFx = clickFeedback(
+                pointX,
+                pointY,
+                regionBox ?? el?.getBoundingClientRect(),
+            );
+            // the capture takes a moment: say so now, in the open chat or out loud
+            // (a hidden chat says nothing until the capture shows it)
+            if (current && !current.props.hidden && getSettings().continuity) {
+                repaint({ capturing: true });
+            } else {
+                earcon("send");
+                announce(chatText().sCapturing);
+            }
+            let cap: CaptureResult;
+            try {
+                // let the ripple and ring paint first: the capture holds the main thread,
+                // and their animations then run on the compositor while it works
+                await new Promise((r) =>
+                    requestAnimationFrame(() => requestAnimationFrame(r)),
+                );
+                cap = await capture(
+                    Math.round(p.x),
+                    Math.round(p.y),
+                    el,
+                    region,
+                );
+            } catch (err) {
+                // html2canvas fails on some pages (unsupported CSS): say so, and let the
+                // open chat drop its "Capturing…" row (a waiting question then goes to the
+                // place it has)
+                endFx();
+                console.warn("[UniLens] capture failed:", err);
+                // a newer click is being captured: the chat and the guard are its to set
+                if (mine !== latestCapture) return;
+                // the open chat carries on with its capture: its answers may draw again,
+                // and a view refresh re-captures what it was asked about
+                setCurrentCapture(committed.capture);
+                askedAbout = committed.asked;
+                if (current?.props.capturing) repaint({ capturing: false });
+                earcon("error");
+                announce(chatText().sCaptureFailed);
+                return;
+            }
+            // a newer click is being captured: this one is dropped, and the chat waits
+            // for it
+            if (mine !== latestCapture) return endFx();
+            let up: { id: string; sessionId: string | null } | null = null;
+            try {
+                up = await unilens.api().uploadCapture(cap);
+            } catch (err) {
+                console.warn(
+                    "[UniLens] backend unreachable, chat will fail:",
+                    err,
+                );
+            }
+            // dropped here too when a newer click, or a close, came during the upload
+            if (mine !== latestCapture) return endFx();
+            const id = up?.id ?? "local";
+            if (up) {
+                joinSession(up.sessionId);
+                tagLastCapture(id);
+            }
+            // the id exists only now, after upload: this is where the guard learns it
+            setCurrentCapture(id);
+            committed = { capture: id, asked: el };
+            recordPlace({
+                captureId: id,
+                at: Date.now(),
+                x: cap.meta.clickX,
+                y: cap.meta.clickY,
+                el,
+                label: placeLabel(cap),
+            });
+            recordCapture(id, cap);
+            // a view refresh that started while this capture ran belongs to the place
+            // before it: retire it, or it would pull the chat back there
+            generation++;
+            openChat(clientX, clientY, id, cap);
+            // the ending may fly into the chat, to the new place entry: where it will be
+            // once the chat has glided to the click and its log has scrolled to the entry
+            endFx(() => {
+                const chat = container.querySelector<HTMLElement>(".ul-chat");
+                const log = chat?.querySelector(".ulc-log");
+                const entry = [
+                    ...(log?.querySelectorAll(".ulc-where") ?? []),
+                ].pop();
+                if (!chat || !log || !entry) return null;
+                const r = entry.getBoundingClientRect();
+                const c = chat.getBoundingClientRect();
+                const glideX = Number.parseFloat(chat.style.left) - c.left || 0;
+                const glideY = Number.parseFloat(chat.style.top) - c.top || 0;
+                const scroll =
+                    Math.max(0, log.scrollHeight - log.clientHeight) -
+                    log.scrollTop;
+                return new DOMRect(
+                    r.left + glideX,
+                    r.top + glideY - scroll,
+                    r.width,
+                    r.height,
+                );
+            });
+        }
+
+        // Subscribe capture to the click-or-drag-box emitter
+        const sub = clickActionEmitter.subscribe((ev: ClickOrDragBoxEvent) => {
+            if (ev.type === "click") {
+                void doCapture(ev.x, ev.y, ev.x, ev.y, ev.target);
+                return;
+            }
+            // a drag asks about its centre, and the chat opens where it was released
+            const a = clientToContent(ev.x, ev.y);
+            const b = clientToContent(ev.x + ev.width, ev.y + ev.height);
+            const region = {
+                x: Math.min(a.x, b.x),
+                y: Math.min(a.y, b.y),
+                w: Math.abs(b.x - a.x),
+                h: Math.abs(b.y - a.y),
+            };
+            const centerX = ev.x + ev.width / 2;
+            const centerY = ev.y + ev.height / 2;
+            void doCapture(
+                ev.endX,
+                ev.endY,
+                centerX,
+                centerY,
+                document.elementFromPoint(centerX, centerY) ?? undefined,
+                region,
+                new DOMRect(ev.x, ev.y, ev.width, ev.height),
+            );
+        });
+
+        initDebug({
+            sessionId: () => unilens.getSessionId(),
+            popoverOpen: () => current != null && !current.props.hidden,
+            backend: () => backend,
+        });
+
+        // Proactive dwell hint — clicking the chip is the zero-shortcut capture path
+        initHint((clientX, clientY) => {
+            const el = document.elementFromPoint(clientX, clientY) ?? undefined;
+            void doCapture(clientX, clientY, clientX, clientY, el);
+        });
+
+        // zoomed views move by UniLens (a scrolled page, the browser restores itself);
+        // a tab going away is the last chance before a reload or a navigation
+        const offView = onViewChange(saveView);
+        // best effort as the page goes: the frame may be torn down before it writes
+        const onHide = () => {
+            if (document.visibilityState === "hidden") save();
+        };
+        document.addEventListener("visibilitychange", onHide);
+        window.addEventListener("pagehide", save);
+        // turned off: what was kept is forgotten
+        let kept = keeping();
+        const offSettings = onSettingsChange(() => {
+            if (kept && !keeping()) forgetSnapshot(backend);
+            kept = keeping();
+        });
+        void restore();
+
+        return () => {
+            sub.unsubscribe();
+            offView();
+            offSettings();
+            document.removeEventListener("visibilitychange", onHide);
+            window.removeEventListener("pagehide", save);
+        };
+    }, [unilens, container, clickActionEmitter]);
+
+    return chat && <ChatPopover key={chat.key} {...chat.props} />;
+}
