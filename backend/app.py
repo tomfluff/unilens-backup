@@ -246,6 +246,7 @@ LIVE_TURN_END = {
     "normal": ("auto", "END_SENSITIVITY_HIGH", 800),
     "quick": ("high", "END_SENSITIVITY_HIGH", 500),
 }
+LIVE_THINKING_LEVEL = "low"  # Gemini Extended Thinking: low, medium or high
 LIVE_SPEED = (0.5, 1.5)  # OpenAI's output speed range; 1.0 is natural
 LIVE_TRANSCRIBE = os.getenv("LIVE_OPENAI_TRANSCRIBE", "gpt-live-transcribe")
 LIVE_SDP_MAX = 64_000
@@ -1657,6 +1658,10 @@ def _live_gemini(choice: dict) -> tuple[str, str]:
             ),
         },
     }
+    # Extended Thinking refuses a session without its thinking level ("Thinking level
+    # must be specified for this model", close 1007); low keeps the talk quick
+    if choice["model"].endswith("-extended-thinking"):
+        config["thinking_config"] = {"thinking_level": LIVE_THINKING_LEVEL}
     if choice["point"] or choice["zoom"]:
         config["tools"] = [
             {

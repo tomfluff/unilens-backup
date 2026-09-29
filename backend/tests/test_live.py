@@ -185,3 +185,27 @@ def test_the_page_goes_again_after_it_changed_or_a_new_click(client, cap):
     assert "use only the ids of the newest inventory" in app_module._live_instructions(
         app_module._live_choice("openai", {})
     )
+
+
+def test_extended_thinking_sessions_carry_a_thinking_level(monkeypatch):
+    """Gemini closes an Extended Thinking session without one (1007); the other
+    model takes none."""
+    from google import genai
+
+    sent = []
+
+    class Tokens:
+        def create(self, config):
+            sent.append(config["live_connect_constraints"])
+            return type("T", (), {"name": "auth_tokens/x"})()
+
+    class Client:
+        def __init__(self, **kw):
+            self.auth_tokens = Tokens()
+
+    monkeypatch.setattr(genai, "Client", Client)
+    for model in ("gemini-3.8-live-extended-thinking", "gemini-3.8-live"):
+        app_module._live_gemini(app_module._live_choice("gemini", {"model": model}))
+    thinking, plain = (c["config"] for c in sent)
+    assert thinking["thinking_config"] == {"thinking_level": "low"}
+    assert "thinking_config" not in plain

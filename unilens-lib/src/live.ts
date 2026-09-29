@@ -512,6 +512,46 @@ const viewParts = (view: LiveView) => [
         : []),
 ];
 
+/** Gemini 3.8 Live Extended Thinking: it takes no scheduling on a tool's result, and
+ *  its turnComplete ends an utterance (a filler while it reasons), not the reply */
+export const thinksAside = (model: string) => /extended-thinking/.test(model);
+
+/** a tool's result as Gemini takes it. highlight: SILENT, the model takes the result
+ *  without a new turn (else it says its answer again). go_to and zoom: WHEN_IDLE, so a
+ *  turn that was only the call still says something. A field of the response, not of
+ *  its payload; none for a model that takes none */
+export function functionResponse(
+    fc: { id: string; name: string },
+    call: ToolCall,
+    result: PointResult,
+    model: string,
+) {
+    return {
+        id: fc.id,
+        name: fc.name,
+        response: result,
+        ...(thinksAside(model)
+            ? {}
+            : { scheduling: call.act === "light" ? "SILENT" : "WHEN_IDLE" }),
+    };
+}
+
+/** Extended Thinking's lifecycle: IN_PROGRESS while it works, IDLE once the reply is
+ *  done; it comes on the message or in its serverContent */
+// biome-ignore lint/suspicious/noExplicitAny: the provider's own message shape
+export const interaction = (msg: any): string | undefined =>
+    msg.interactionStatus ?? msg.serverContent?.interactionStatus;
+
+/** whether a server message ends the model's reply: its turnComplete; for Extended
+ *  Thinking, whose turnComplete ends an utterance, only going IDLE (with the turn's
+ *  end, or on its own while a reply is pending) */
+// biome-ignore lint/suspicious/noExplicitAny: the provider's own message shape
+export function replyEnds(msg: any, open: boolean, thinking: boolean): boolean {
+    const complete = msg.serverContent?.turnComplete === true;
+    if (!thinking) return complete;
+    return interaction(msg) === "IDLE" && (complete || open);
+}
+
 export function to16k(rate: number): (x: Float32Array) => Int16Array {
     const step = rate / 16000;
     let t = 0;
@@ -564,6 +604,16 @@ async function startGemini(
     let ended = false;
     let handle: string | undefined;
     let micOn = false;
+    const thinking = thinksAside(start.model);
+    /** Extended Thinking is still working on the reply (between its utterances) */
+    let working = false;
+    /** the user is speaking (the server's voice activity) */
+    let hearing = false;
+    /** a reply was cut by the user's speech and has not reported its end yet */
+    let cut = false;
+    /** the user turns spoken and not answered yet, oldest first: a reply's end
+     *  belongs to the oldest (Gemini's messages carry no turn id) */
+    const awaiting: number[] = [];
     // ponytail: ScriptProcessorNode (deprecated, main thread) needs no module file,
     // so a host page's CSP cannot block it; an AudioWorklet if audio drops under load
     const src = ctx.createMediaStreamSource(mic);
@@ -619,7 +669,10 @@ async function startGemini(
         ev.onState("speaking");
         window.clearTimeout(quietTimer);
         quietTimer = window.setTimeout(
-            () => ev.onState("listening"),
+            () => {
+                // the user speaking over it (barge-in off) keeps "hearing"
+                if (!hearing) ev.onState(working ? "thinking" : "listening");
+            },
             (playAt - ctx.currentTime) * 1000 + 100,
         );
     };
@@ -627,13 +680,16 @@ async function startGemini(
         for (const node of playing) node.stop();
         playing.clear();
         playAt = 0;
+        // the cut reply's drain must not say "listening" over the user's words
+        window.clearTimeout(quietTimer);
     };
 
     const onAbort = () => end();
     const end = (error?: string) => {
         if (ended) return;
-        // what was said so far stays
-        finish();
+        // what was said so far stays: the latest user turn too, answered or not
+        closeUserTurn();
+        finishReply();
         ended = true;
         req.signal.removeEventListener("abort", onAbort);
         micOn = false;
@@ -672,15 +728,25 @@ async function startGemini(
         userClosed = false;
         ev.onWords("user", userKey(), "", false);
     };
-    const finish = () => {
-        // an empty turn keeps its place: its words may still come
-        if (!userClosed && userText)
-            ev.onWords("user", userKey(), userText, true);
-        userClosed = true;
+    /** the model's reply is over: its bubble completes */
+    const finishReply = () => {
         if (modelText)
             ev.onWords("assistant", modelKey(), said(modelText), true);
         modelText = "";
         modelTurn++;
+    };
+    const closeUserTurn = () => {
+        // an empty turn keeps its place: its words may still come
+        if (!userClosed && userText)
+            ev.onWords("user", userKey(), userText, true);
+        userClosed = true;
+    };
+    const finish = () => {
+        // the reply's own user turn: not one the user began while it was still
+        // being answered (barge-in off), which its own reply will close
+        const answered = awaiting.shift() ?? userTurn;
+        if (!sawActivity || answered === userTurn) closeUserTurn();
+        finishReply();
     };
     /** a picture as part of the user's turn, which it does not end */
     const sendView = (view: LiveView) => {
@@ -745,10 +811,14 @@ async function startGemini(
             }
             // "type" on the wire (seen); "voiceActivityType" in the SDKs' schema
             const activity = msg.voiceActivity;
-            if (
-                (activity?.type ?? activity?.voiceActivityType) ===
-                "ACTIVITY_START"
-            ) {
+            const act = activity?.type ?? activity?.voiceActivityType;
+            if (act === "ACTIVITY_END") {
+                hearing = false;
+                awaiting.push(userTurn);
+                ev.onState(playing.size ? "speaking" : "thinking");
+            }
+            if (act === "ACTIVITY_START") {
+                hearing = true;
                 sawActivity = true;
                 openUserTurn();
                 ev.onState("hearing");
@@ -772,6 +842,18 @@ async function startGemini(
             }
             const sc = msg.serverContent;
             if (sc) {
+                const output =
+                    sc.outputTranscription?.text ||
+                    sc.modelTurn?.parts?.some(
+                        (p: { inlineData?: { data?: string } }) =>
+                            p.inlineData?.data,
+                    );
+                // the new reply has begun: what completes now is its own (a cut reply
+                // that never reports its end cannot swallow it, nor its turn stay due)
+                if (output && cut) {
+                    cut = false;
+                    awaiting.shift();
+                }
                 for (const p of sc.modelTurn?.parts ?? [])
                     if (p.inlineData?.data) play(p.inlineData.data);
                 if (sc.inputTranscription?.text) {
@@ -779,7 +861,9 @@ async function startGemini(
                     userText += sc.inputTranscription.text;
                     // late words, after the turn closed, still complete it
                     ev.onWords("user", userKey(), userText, userClosed);
-                    ev.onState("hearing");
+                    // words come in no set order: the voice activity says when the
+                    // user speaks, when the server reports it
+                    if (!sawActivity) ev.onState("hearing");
                 }
                 if (sc.outputTranscription?.text) {
                     modelText += sc.outputTranscription.text;
@@ -791,8 +875,40 @@ async function startGemini(
                             false,
                         );
                 }
-                if (sc.interrupted) flush();
-                if (sc.turnComplete) finish();
+                if (sc.interrupted) {
+                    flush();
+                    // the cut reply is over (its last words came before this),
+                    // though Extended Thinking may still say IN_PROGRESS or IDLE
+                    // for it; the user's new turn stays open
+                    finishReply();
+                    working = false;
+                    cut = true;
+                }
+                // an utterance of a reply that goes on: its words join the next one's
+                if (sc.turnComplete && thinking && !replyEnds(msg, true, true))
+                    if (modelText) modelText += " ";
+            }
+            if (thinking && interaction(msg) && !sc?.interrupted) {
+                working = interaction(msg) === "IN_PROGRESS";
+                // nothing playing, and the user not speaking: working, or done
+                // (else the playback timer says which when it drains)
+                if (!playing.size && !hearing)
+                    ev.onState(working ? "thinking" : "listening");
+            }
+            // a reply is pending while its words or the user's turn are open: a
+            // second IDLE finds none
+            if (replyEnds(msg, modelText !== "" || !userClosed, thinking)) {
+                // the cut reply's own end (interrupted, then turnComplete): its
+                // bubble is done, and the user's new turn goes on
+                if (cut) {
+                    cut = false;
+                    awaiting.shift();
+                } else {
+                    finish();
+                    // a reply with nothing to play (a silent tool result): the
+                    // user's turn now, else the playback timer says so
+                    if (!playing.size && !hearing) ev.onState("listening");
+                }
             }
             if (msg.toolCall) {
                 const functionResponses = (
@@ -803,18 +919,7 @@ async function startGemini(
                         said(modelText) ? modelKey() : null,
                         call,
                     );
-                    // highlight: SILENT, the model takes the result without a new
-                    // turn (else it says its answer again). go_to and zoom:
-                    // WHEN_IDLE, so a turn that was only the call still says
-                    // something ("Here it is"). A field of the response, not of its
-                    // payload
-                    return {
-                        id: fc.id,
-                        name: fc.name,
-                        response: result,
-                        scheduling:
-                            call.act === "light" ? "SILENT" : "WHEN_IDLE",
-                    };
+                    return functionResponse(fc, call, result, start.model);
                 });
                 sock.send(
                     JSON.stringify({ toolResponse: { functionResponses } }),
