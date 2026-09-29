@@ -9,6 +9,8 @@
 import { t } from "./accessibilityI18n";
 import type { IconName } from "./accessibilityPanelUI";
 import type {
+    DisplayContrast,
+    DisplaySaturation,
     DisplayTheme,
     PanelTab,
     TextAdjustLevel,
@@ -51,6 +53,33 @@ export function tabLabel(id: PanelTab): string {
     return t().tabs[id];
 }
 
+/** Saturation choice order (labels come from t().saturation). */
+export const DISPLAY_SATURATIONS: DisplaySaturation[] = [
+    "standard",
+    "soft",
+    "low",
+    "mono",
+    "high",
+];
+
+/** Contrast choice order (labels come from t().contrast). */
+export const DISPLAY_CONTRASTS: DisplayContrast[] = ["standard", "strong", "max"];
+
+/** Standard → … → last → standard. Lab tab cycles with one button per axis. */
+export function nextDisplaySaturation(
+    current: DisplaySaturation,
+): DisplaySaturation {
+    const i = DISPLAY_SATURATIONS.indexOf(current);
+    const next = DISPLAY_SATURATIONS[(i + 1) % DISPLAY_SATURATIONS.length];
+    return next ?? "standard";
+}
+
+export function nextDisplayContrast(current: DisplayContrast): DisplayContrast {
+    const i = DISPLAY_CONTRASTS.indexOf(current);
+    const next = DISPLAY_CONTRASTS[(i + 1) % DISPLAY_CONTRASTS.length];
+    return next ?? "standard";
+}
+
 /** Color-mode choice order (swatches / labels come from THEME_SWATCH and t().theme). */
 export const DISPLAY_THEMES: DisplayTheme[] = [
     "standard",
@@ -60,6 +89,13 @@ export const DISPLAY_THEMES: DisplayTheme[] = [
     "high-contrast",
     "invert",
 ];
+
+/** Standard → … → last → standard. Lab tab cycles with one button. */
+export function nextDisplayTheme(current: DisplayTheme): DisplayTheme {
+    const i = DISPLAY_THEMES.indexOf(current);
+    const next = DISPLAY_THEMES[(i + 1) % DISPLAY_THEMES.length];
+    return next ?? "standard";
+}
 
 /** Color swatches (background / text) shown on the color-mode choice buttons. */
 export const THEME_SWATCH: Record<DisplayTheme, [string, string]> = {

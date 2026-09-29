@@ -25,8 +25,13 @@ import {
     bodyExpandLevelLabels,
     focusEnhanceLevelLabels,
     CONTRAST_FILTER,
+    DISPLAY_CONTRASTS,
+    DISPLAY_SATURATIONS,
     DISPLAY_THEMES,
     fontScaleLabel,
+    nextDisplayContrast,
+    nextDisplaySaturation,
+    nextDisplayTheme,
     fontScalePercent,
     PREVIEW_FONT_PX,
     SATURATION_FILTER,
@@ -590,12 +595,10 @@ function PointerHaloOptions({
                 current={typeof px === "number" ? String(px) : ""}
                 options={POINTER_HALO_FIXED_PX.map((value) => {
                     const label = pointerHaloSizeName(value);
-                    const hint = `${value}px`;
                     return {
                         value: String(value),
                         label,
-                        hint,
-                        ariaLabel: t().pointerHaloSizeAria(`${label} ${hint}`),
+                        ariaLabel: t().pointerHaloSizeAria(label),
                         preview: () => (
                             <HaloPreview
                                 diameter={pointerHaloPreviewDiameter(value)}
@@ -816,9 +819,7 @@ function ToneCard() {
                 columns={3}
                 focusPrefix="saturation"
                 current={s.saturation}
-                options={(
-                    Object.keys(SATURATION_FILTER) as DisplaySaturation[]
-                ).map((value) => ({
+                options={DISPLAY_SATURATIONS.map((value) => ({
                     value,
                     label: t().saturation[value],
                     hint: `${Math.round(SATURATION_FILTER[value] * 100)}%`,
@@ -839,9 +840,7 @@ function ToneCard() {
                 columns={3}
                 focusPrefix="contrast"
                 current={s.contrast}
-                options={(
-                    Object.keys(CONTRAST_FILTER) as DisplayContrast[]
-                ).map((value) => ({
+                options={DISPLAY_CONTRASTS.map((value) => ({
                     value,
                     label: t().contrast[value],
                     hint: `${Math.round(CONTRAST_FILTER[value] * 100)}%`,
@@ -856,6 +855,89 @@ function ToneCard() {
                     patchA11ySettings({ contrast: value });
                     announce(t().contrastAnnounce(t().contrast[value]));
                 }}
+            />
+        </Card>
+    );
+}
+
+/** Lab tab: one cycle button for color mode. */
+function LabColorModeCard() {
+    const s = useSettings();
+    const themeName = t().theme[s.theme];
+    const cycleTheme = () => {
+        const next = nextDisplayTheme(s.theme);
+        patchA11ySettings({ theme: next });
+        announce(t().themeAnnounce(t().theme[next]));
+    };
+
+    return (
+        <Card title={t().colorModeTitle} iconName="palette">
+            <ToggleGroup
+                label={t().colorModeGroup}
+                columns={1}
+                options={[
+                    {
+                        value: "theme",
+                        label: themeName,
+                        ariaLabel: t().themeAria(themeName),
+                        checked: s.theme !== "standard",
+                        focusKey: "theme-cycle",
+                        onActivate: cycleTheme,
+                    },
+                ]}
+                onToggle={() => {}}
+            />
+        </Card>
+    );
+}
+
+/** Lab tab: one cycle button each for saturation and contrast. */
+function LabToneCard() {
+    const s = useSettings();
+    const saturationName = t().saturation[s.saturation];
+    const contrastName = t().contrast[s.contrast];
+    const cycleSaturation = () => {
+        const next = nextDisplaySaturation(s.saturation);
+        patchA11ySettings({ saturation: next });
+        announce(t().saturationAnnounce(t().saturation[next]));
+    };
+    const cycleContrast = () => {
+        const next = nextDisplayContrast(s.contrast);
+        patchA11ySettings({ contrast: next });
+        announce(t().contrastAnnounce(t().contrast[next]));
+    };
+
+    return (
+        <Card title={t().toneTitle} iconName="contrast">
+            <ToggleGroup
+                label={t().saturationGroup}
+                columns={1}
+                options={[
+                    {
+                        value: "saturation",
+                        label: saturationName,
+                        ariaLabel: t().saturationAria(saturationName),
+                        checked: s.saturation !== "standard",
+                        focusKey: "saturation-cycle",
+                        onActivate: cycleSaturation,
+                    },
+                ]}
+                onToggle={() => {}}
+            />
+            <ToggleGroup
+                label={t().contrastGroup}
+                columns={1}
+                options={[
+                    {
+                        value: "contrast",
+                        label: contrastName,
+                        ariaLabel: t().contrastAria(contrastName),
+                        checked: s.contrast !== "standard",
+                        focusKey: "contrast-cycle",
+                        onActivate: cycleContrast,
+                    },
+                ]}
+                onToggle={() => {}}
             />
         </Card>
     );
@@ -1636,6 +1718,8 @@ export function ToolsTab({
         <>
             <PresetsCard />
             <LanguageCard />
+            <LabColorModeCard />
+            <LabToneCard />
             <FocusEnhanceCard />
             <TextPlateCard />
             <TextStrokeCard />

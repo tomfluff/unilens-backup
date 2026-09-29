@@ -262,7 +262,7 @@ const FEATURES = {
     },
     cues: {
         id: "cues",
-        title: "Extra visual cues (link underlines, cursor color, focus cursor, reading guide)",
+        title: "Extra visual cues (link underlines, pointer highlight, focus guide, reading guide)",
         keys: [
             "linkUnderline",
             "pointerHaloPx",
