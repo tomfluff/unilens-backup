@@ -32,15 +32,15 @@ def test_transcribes_with_the_default_model(client, heard):
     assert res.status_code == 200
     body = res.get_json()
     assert body["text"] == "how do I apply"
-    assert (body["provider"], body["model"]) == ("openai", "whisper-1")
-    assert heard == [("openai", "whisper-1", 7, "audio/webm", "ja")]
+    assert (body["provider"], body["model"]) == ("openai", "gpt-transcribe")
+    assert heard == [("openai", "gpt-transcribe", 7, "audio/webm", "ja")]
 
 
 def test_a_listed_choice_is_kept_and_anything_else_falls_back(client, heard):
     post(client, query="?provider=gemini&model=gemini-3.8-flash&lang=xx")
     post(client, query="?provider=openai&model=gpt-6-voice")
     assert heard[0][:2] == ("gemini", "gemini-3.8-flash") and heard[0][4] == ""
-    assert heard[1][:2] == ("openai", "whisper-1")
+    assert heard[1][:2] == ("openai", "gpt-transcribe")
 
 
 @pytest.mark.parametrize(
@@ -62,7 +62,7 @@ def test_without_a_key_it_says_so(client):
 
 def test_catalogue_lists_the_speech_models(client, heard):
     body = client.get("/api/ai").get_json()
-    assert body["stt"]["openai"][0] == "whisper-1"
+    assert body["stt"]["openai"] == ["gpt-transcribe"]
     assert "gemini-3.5-transcribe" in body["stt"]["gemini"]
 
 

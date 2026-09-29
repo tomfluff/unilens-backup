@@ -189,14 +189,10 @@ TTS_VOICES = (
 )
 PROVIDER_KEYS = {"openai": "OPENAI_API_KEY", "gemini": "GOOGLE_API_KEY"}
 # speech to text for browsers without their own (R1 of the 2026-09-26 report): the
-# recorded message goes here; the first of each list is the default
+# recorded message goes here; the first of each list is the default. OpenAI shuts
+# whisper-1 and gpt-4o(-mini)-transcribe down on 2027-02-26
 STT_MODELS = {
-    "openai": [
-        "whisper-1",
-        "gpt-transcribe",
-        "gpt-4o-mini-transcribe",
-        "gpt-4o-transcribe",
-    ],
+    "openai": ["gpt-transcribe"],
     "gemini": ["gemini-3.5-transcribe", "gemini-3.8-flash"],
 }
 STT_MAX_BYTES = 10 * 1024 * 1024  # about ten minutes of Opus; a message is seconds
