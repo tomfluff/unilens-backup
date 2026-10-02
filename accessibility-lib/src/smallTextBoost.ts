@@ -12,14 +12,18 @@ import {
     SMALL_BOOST_TARGET_VAR,
 } from "./domIds";
 import { restoreHostInlineStyle, setHostInlineStyle } from "./hostSurface";
+import { getEffectivePageFontScale } from "./pageFontScale";
 import {
     computeSmallTextTargetPx,
     SMALL_TEXT_THRESHOLD_PX,
     smallTextBoostConfig,
     type TextAdjustLevel,
 } from "./textAdjustLevels";
-
-const STYLE_ID = "unilens-small-text-boost-style";
+import {
+    acquireTextSizeStyles,
+    readOriginalFontPx,
+    releaseTextSizeStyles,
+} from "./textSizeLayers";
 
 const SKIP_TAGS = new Set([
     "SCRIPT",
@@ -43,18 +47,8 @@ let rescanTimer: number | undefined;
 let smallTextActive = false;
 let a11yUnsub: (() => void) | null = null;
 
-const BOOST_CSS = `
-[${SMALL_BOOST_ATTR}="true"].${SMALL_BOOST_CLASS} {
-  font-size: var(${SMALL_BOOST_TARGET_VAR}, 16px) !important;
-}
-`;
-
 function ensureStylesheet() {
-    if (document.getElementById(STYLE_ID)) return;
-    const style = document.createElement("style");
-    style.id = STYLE_ID;
-    style.textContent = BOOST_CSS;
-    document.head.appendChild(style);
+    acquireTextSizeStyles("smallBoost");
 }
 
 function shouldSkip(el: Element): boolean {
@@ -72,12 +66,7 @@ export function computeTargetFontPx(
 }
 
 function readOriginalPx(el: HTMLElement): number {
-    const stored = el.getAttribute(SMALL_BOOST_ORIGINAL_ATTR);
-    if (stored) {
-        const parsed = parseFloat(stored);
-        if (Number.isFinite(parsed) && parsed > 0) return parsed;
-    }
-    return parseFloat(getComputedStyle(el).fontSize);
+    return readOriginalFontPx(el, getEffectivePageFontScale());
 }
 
 function applyBoost(
@@ -111,13 +100,17 @@ export function scanSmallText(
 
     const nodes: Element[] = [root, ...Array.from(root.querySelectorAll("*"))];
 
+    // Read every original size before writing any, so a child that inherits
+    // a boosted parent's size is still measured at its own host size.
+    const reads: { el: HTMLElement; px: number }[] = [];
     for (const el of nodes) {
         if (shouldSkip(el)) continue;
         if (!(el instanceof HTMLElement)) continue;
-
         result.scanned++;
+        reads.push({ el, px: readOriginalPx(el) });
+    }
 
-        const px = readOriginalPx(el);
+    for (const { el, px } of reads) {
         if (!Number.isFinite(px) || px <= 0) continue;
         if (px >= SMALL_TEXT_THRESHOLD_PX) {
             if (el.getAttribute(SMALL_BOOST_ATTR) === "true")
@@ -207,5 +200,5 @@ export function destroySmallTextBoost() {
     a11yUnsub?.();
     a11yUnsub = null;
     clearSmallTextBoost();
-    document.getElementById(STYLE_ID)?.remove();
+    releaseTextSizeStyles("smallBoost");
 }

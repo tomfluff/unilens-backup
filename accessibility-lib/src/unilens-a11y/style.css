@@ -95,11 +95,20 @@ html[data-unilens-a11y-theme='high-contrast'][data-unilens-a11y-display-active] 
   color-scheme: dark;
 }
 
-/* Saturation / contrast apply to the whole page root (not the overlay).
- * Independent of color remapping — theme = standard still uses this when
- * the visitor changes saturation or contrast. */
-#unilens-a11y-page-root[data-unilens-a11y-page-filter] {
-  filter: saturate(var(--unilens-a11y-display-saturate)) contrast(var(--unilens-a11y-display-contrast));
+/* Saturation / contrast apply to everything under the tone layer (not the
+ * overlay UI above it). Independent of color remapping — theme = standard
+ * still uses this when the visitor changes saturation or contrast.
+ * backdrop-filter on a separate fixed layer, not filter on the page root: a
+ * filtered ancestor becomes the containing block of position:fixed host
+ * chrome, which made fixed headers scroll away with the page. */
+#unilens-a11y-tone-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483640;
+  pointer-events: none;
+  background: transparent;
+  -webkit-backdrop-filter: saturate(var(--unilens-a11y-display-saturate)) contrast(var(--unilens-a11y-display-contrast));
+  backdrop-filter: saturate(var(--unilens-a11y-display-saturate)) contrast(var(--unilens-a11y-display-contrast));
 }
 
 /* Invert uses <html> filter so fixed headers stay viewport-anchored; overlay counter-inverts. */

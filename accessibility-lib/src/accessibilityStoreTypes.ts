@@ -9,6 +9,21 @@ export const PANEL_TABS = ["visual", "tools"] as const;
 export type PanelTab = (typeof PANEL_TABS)[number];
 
 export const A11Y_LANG_CODES = ["ja", "en"] as const;
+
+/** One-tap presets, in panel order. Values live in accessibilityPresets.ts. */
+export const A11Y_PRESET_ID_LIST = [
+    "lowVision",
+    "colorVision",
+    "mild",
+    "senior",
+    "highContrast",
+    "focus",
+] as const;
+export type A11yPresetId = (typeof A11Y_PRESET_ID_LIST)[number];
+
+export function isA11yPresetId(n: unknown): n is A11yPresetId {
+    return (A11Y_PRESET_ID_LIST as readonly unknown[]).includes(n);
+}
 export type A11yLang = (typeof A11Y_LANG_CODES)[number];
 
 export type A11yFontSize = "standard" | "large" | "xlarge";

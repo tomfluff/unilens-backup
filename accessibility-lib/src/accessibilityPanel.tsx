@@ -331,14 +331,11 @@ function activeAdjustments(s: Settings): Adjustment[] {
 function Header({ onClose }: { onClose: () => void }) {
     return (
         <div className="unilens-a11y-header">
-            <span className="unilens-a11y-header-icon" aria-hidden="true">
-                <Icon name="access" size={20} />
-            </span>
+            {/* the name only, as the UniLens chat's header (DESIGN.md: Assistant has no subtitle) */}
             <div className="unilens-a11y-header-text">
                 <h2 id="unilens-a11y-title" className="unilens-a11y-title">
                     {t().panelTitle}
                 </h2>
-                <p className="unilens-a11y-subtitle">{t().panelSubtitle}</p>
             </div>
             <button
                 type="button"

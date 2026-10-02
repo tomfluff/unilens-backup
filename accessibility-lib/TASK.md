@@ -37,6 +37,6 @@ NewDev の未コミット作業は stash に残っている。
 
 ## 手動変更の反映（進行中）
 読み上げガイド既定色 `whiteBlue` → `blackYellow`（ソースとテストは手動済み）。
-- [ ] vitest（readingGuide）
-- [ ] `make build` で dist を各 frontend にコピー
-- [ ] ホストページで既定色を確認
+- [x] vitest（readingGuide）7 passed
+- [x] `npm run build` で dist を各 frontend にコピー（この環境に make が無いため）
+- [x] ホストページで既定色を確認（採用ミラー: 棒の色「黒と黄」が選択、棒は黒地・黄枠）

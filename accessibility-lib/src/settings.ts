@@ -9,11 +9,13 @@ import {
     A11Y_LANG_CODES,
     A11Y_SETTING_KEYS,
     type A11yLang,
+    type A11yPresetId,
     type A11ySettings,
     type AutoTextMode,
     CONTRAST_FILTER,
     FOCUS_CURSOR_DEFAULT_BAND_PX,
     type DisplayTheme,
+    isA11yPresetId,
     normalizePointerHaloColor,
     normalizePointerHaloOpacity,
     normalizeFocusCursorBandPx,
@@ -51,6 +53,14 @@ export interface Settings extends A11ySettings {
     /** Visitor-chosen panel language; null = auto-detect until they pick one. */
     panelLang: A11yLang | null;
     panelTab: PanelTab;
+    /**
+     * The preset the visitor turned on last, or null when none is on.
+     * `undefined` = stored before presets were tracked; the preset module then
+     * falls back to matching the settings against each preset.
+     */
+    activePreset: A11yPresetId | null | undefined;
+    /** Values the active preset replaced, put back when it is turned off. */
+    presetRestore: Partial<A11ySettings> | null;
 }
 
 const AUX_DEFAULTS = {
@@ -64,6 +74,8 @@ const AUX_DEFAULTS = {
     speechHighlight: true,
     panelLang: null as A11yLang | null,
     panelTab: "visual" as PanelTab,
+    activePreset: undefined as A11yPresetId | null | undefined,
+    presetRestore: null as Partial<A11ySettings> | null,
 };
 
 export const SETTINGS_DEFAULTS: Settings = {
@@ -137,6 +149,14 @@ function normalizeSettings(s: Settings): void {
     const panelTab = s.panelTab as string;
     if (panelTab === "text" || !(PANEL_TABS as readonly string[]).includes(panelTab))
         s.panelTab = "visual";
+    if (s.activePreset !== undefined && s.activePreset !== null) {
+        if (!isA11yPresetId(s.activePreset)) s.activePreset = null;
+    }
+    if (
+        s.presetRestore != null &&
+        (typeof s.presetRestore !== "object" || Array.isArray(s.presetRestore))
+    )
+        s.presetRestore = null;
     if (
         s.panelLang != null &&
         !(A11Y_LANG_CODES as readonly string[]).includes(s.panelLang)
@@ -198,7 +218,11 @@ export function patchA11ySettings(patch: Partial<A11ySettings>) {
 }
 
 export function resetA11ySettings() {
-    useSettings.setState({ ...A11Y_DEFAULTS });
+    useSettings.setState({
+        ...A11Y_DEFAULTS,
+        activePreset: null,
+        presetRestore: null,
+    });
     applyA11yToDocument();
 }
 

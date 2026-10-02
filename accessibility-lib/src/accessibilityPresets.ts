@@ -2,30 +2,33 @@
  * One-tap presets (low vision / color vision / mild / senior / high contrast / focus).
  *
  * Pressing the same button again turns it off (toggle). Never more than one
- * active at once — applying a preset first resets the fields any preset
- * touches back to the defaults, then overwrites them. This keeps the data-* /
- * CSS variables and each button's state in the panel always in sync.
+ * active at once: the store remembers which preset is on (`activePreset`) and
+ * the values it replaced (`presetRestore`). Turning a preset on only changes
+ * the fields that preset defines — the visitor's other choices (stop
+ * animations, color mode, …) stay. Turning it off, or switching to another
+ * preset, puts the replaced values back, except fields the visitor changed
+ * by hand after turning the preset on.
  */
 import {
     A11Y_DEFAULTS,
     type A11ySettings,
     getA11ySettings,
+    getSettings,
     patchA11ySettings,
+    patchSettings,
 } from "./accessibilityStore";
+import {
+    A11Y_PRESET_ID_LIST,
+    type A11yPresetId,
+} from "./accessibilityStoreTypes";
 import { runAutoTextAction } from "./autoTextSize";
 
-export type A11yPresetId =
-    | "lowVision"
-    | "colorVision"
-    | "mild"
-    | "senior"
-    | "highContrast"
-    | "focus";
+export type { A11yPresetId } from "./accessibilityStoreTypes";
 
 /**
- * The keys checked to decide whether a preset counts as "active".
- * If the user later changes only some of them, it's still considered active
- * as long as the remaining keys still match.
+ * The keys checked to decide whether the preset that is on is still in
+ * effect. Once the visitor changes one of them by hand, the preset button
+ * shows as off and those fields are left as the visitor set them.
  */
 export const PRESET_KEYS: Record<
     A11yPresetId,
@@ -97,70 +100,99 @@ export const A11Y_PRESETS: Record<A11yPresetId, Partial<A11ySettings>> = {
     },
 };
 
-export const A11Y_PRESET_IDS: A11yPresetId[] = [
-    "lowVision",
-    "colorVision",
-    "mild",
-    "senior",
-    "highContrast",
-    "focus",
-];
+export const A11Y_PRESET_IDS: A11yPresetId[] = [...A11Y_PRESET_ID_LIST];
 
-/** Collects every key touched by any preset (groundwork for exclusive application). */
-function allPresetKeys(): (keyof A11ySettings)[] {
-    const keys = new Set<keyof A11ySettings>();
-    for (const id of A11Y_PRESET_IDS) {
-        for (const key of PRESET_KEYS[id]) keys.add(key);
-    }
-    return [...keys];
+/** Whether every key a preset is judged by matches the current settings. */
+function presetMatches(id: A11yPresetId): boolean {
+    const preset = A11Y_PRESETS[id];
+    const current = getA11ySettings();
+    return PRESET_KEYS[id].every((key) => current[key] === preset[key]);
 }
 
-/** Whether every key a preset specifies matches the current settings. */
-export function isPresetActive(id: A11yPresetId): boolean {
-    const preset = A11Y_PRESETS[id];
-    return PRESET_KEYS[id].every(
-        (key) => getA11ySettings()[key] === preset[key],
-    );
+/** The fields a preset writes (its definition, not just its judged keys). */
+function presetFieldKeys(id: A11yPresetId): (keyof A11ySettings)[] {
+    return Object.keys(A11Y_PRESETS[id]) as (keyof A11ySettings)[];
 }
 
 /**
- * Applies a preset. Fields touched by other presets are first reset to the
- * defaults, then overwritten, so the result never conflicts with the panel's
- * theme / saturation / contrast selection state.
+ * Settings saved before presets were tracked have no `activePreset`. Treat the
+ * first preset whose fields all match as the one that is on, as before.
+ */
+function legacyMatchingPreset(): A11yPresetId | null {
+    return A11Y_PRESET_IDS.find((id) => presetMatches(id)) ?? null;
+}
+
+function activePresetId(): A11yPresetId | null {
+    const tracked = getSettings().activePreset;
+    if (tracked === undefined) return legacyMatchingPreset();
+    return tracked;
+}
+
+/** Whether this preset is the one that is on and still in effect. */
+export function isPresetActive(id: A11yPresetId): boolean {
+    return activePresetId() === id && presetMatches(id);
+}
+
+/**
+ * Turns the active preset off: fields it still controls go back to the values
+ * it replaced. A field the visitor changed after turning it on is theirs and
+ * stays. Untracked (legacy) presets go back to the defaults, as before.
+ */
+function undoActivePreset() {
+    const s = getSettings();
+    const id = activePresetId();
+    const saved = s.activePreset === undefined ? null : s.presetRestore;
+    patchSettings({ activePreset: null, presetRestore: null });
+    if (!id) return;
+
+    const current = getA11ySettings();
+    const preset = A11Y_PRESETS[id];
+    const patch: Partial<A11ySettings> = {};
+    for (const key of presetFieldKeys(id)) {
+        if (current[key] !== preset[key]) continue;
+        const back =
+            saved && key in saved ? saved[key] : A11Y_DEFAULTS[key];
+        (patch as Record<string, unknown>)[key] = back;
+    }
+    patchA11ySettings(patch);
+}
+
+/**
+ * Applies a preset. Another preset that is still in effect is turned off
+ * first (its replaced values come back), so two presets never stack. Fields
+ * the preset does not define are left as the visitor set them.
  */
 export function applyA11yPreset(id: A11yPresetId) {
-    const patch: Partial<A11ySettings> = {};
-    for (const key of allPresetKeys()) {
-        (patch as Record<string, unknown>)[key] = A11Y_DEFAULTS[key];
+    const current = activePresetId();
+    if (getSettings().activePreset === undefined && current === id) {
+        // Legacy settings already showing this preset: track it, and turning
+        // it off goes back to the defaults as it did before.
+        patchSettings({ activePreset: id, presetRestore: null });
+    } else if (current && current !== id && presetMatches(current)) {
+        undoActivePreset();
+    } else if (current !== id || !presetMatches(id)) {
+        // A preset the visitor has since changed by hand: its fields are
+        // theirs now, so drop the saved values instead of restoring them.
+        patchSettings({ activePreset: null, presetRestore: null });
     }
-    Object.assign(patch, A11Y_PRESETS[id]);
-    patchA11ySettings(patch);
+
+    if (getSettings().activePreset !== id) {
+        const before = getA11ySettings();
+        const saved: Partial<A11ySettings> = {};
+        for (const key of presetFieldKeys(id)) {
+            (saved as Record<string, unknown>)[key] = before[key];
+        }
+        patchSettings({ activePreset: id, presetRestore: saved });
+    }
+    patchA11ySettings({ ...A11Y_PRESETS[id] });
     // Low-vision and senior tend to break when stacked with auto-adjustment, so turn it off.
     if (id === "lowVision" || id === "senior") runAutoTextAction("reset");
 }
 
-/**
- * Resets the fields a preset touched back to the defaults.
- * If another preset is currently active and needs the same field, that
- * preset's value is kept instead.
- */
+/** Turns a preset off if it is the one in effect; otherwise does nothing. */
 export function clearA11yPreset(id: A11yPresetId) {
-    const patch: Partial<A11ySettings> = {};
-    for (const key of PRESET_KEYS[id]) {
-        const keptByOther = A11Y_PRESET_IDS.some(
-            (other) =>
-                other !== id &&
-                isPresetActive(other) &&
-                (
-                    PRESET_KEYS[other] as readonly (keyof A11ySettings)[]
-                ).includes(key) &&
-                A11Y_PRESETS[other][key] === getA11ySettings()[key],
-        );
-        if (!keptByOther) {
-            (patch as Record<string, unknown>)[key] = A11Y_DEFAULTS[key];
-        }
-    }
-    patchA11ySettings(patch);
+    if (activePresetId() !== id) return;
+    undoActivePreset();
 }
 
 /** Off if currently active, on otherwise. Returns the state after the operation. */

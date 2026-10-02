@@ -25,6 +25,12 @@ export const A11Y_WIDGET_STYLE_ID = "unilens-a11y-widget-styles";
 export const A11Y_UD_FONT_LINK_ID = "unilens-a11y-ud-font";
 
 export const PAGE_CONTENT_ROOT_ID = "unilens-a11y-page-root";
+/**
+ * Full-viewport, click-through layer that paints saturation / contrast with
+ * `backdrop-filter`. A `filter` on the page root would make it the containing
+ * block of the host's `position: fixed` chrome, so fixed headers scrolled away.
+ */
+export const TONE_LAYER_ID = "unilens-a11y-tone-layer";
 
 export const UI_ATTR = "data-unilens-ui";
 export const PAGE_CONTENT_ATTR = "data-unilens-page-content";
@@ -172,6 +178,7 @@ export const SELECTION_FONT_SIZE_VAR = "--unilens-a11y-selection-font-size";
 export const UNILENS_OVERLAY_ROOT_IDS = [
     A11Y_ROOT_ID,
     CURSOR_HALO_ID,
+    TONE_LAYER_ID,
     "unilens-root",
     "unilens-settings-root",
     "unilens-debug-root",

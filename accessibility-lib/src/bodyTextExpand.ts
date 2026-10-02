@@ -10,16 +10,19 @@ import {
     BODY_EXPAND_ORIGINAL_ATTR,
     BODY_EXPAND_TARGET_VAR,
     isUniLensOverlayNode,
-    SMALL_BOOST_ORIGINAL_ATTR,
 } from "./domIds";
 import { restoreHostInlineStyle, setHostInlineStyle } from "./hostSurface";
+import { getEffectivePageFontScale } from "./pageFontScale";
 import {
     bodyTextExpandConfig,
     computeBodyTextTargetPx,
     type TextAdjustLevel,
 } from "./textAdjustLevels";
-
-const STYLE_ID = "unilens-body-text-expand-style";
+import {
+    acquireTextSizeStyles,
+    readOriginalFontPx,
+    releaseTextSizeStyles,
+} from "./textSizeLayers";
 
 /** Text at or above this computed size is left unchanged. */
 export const LARGE_TEXT_PX = 18;
@@ -76,18 +79,8 @@ let rescanTimer: number | undefined;
 let bodyTextActive = false;
 let a11yUnsub: (() => void) | null = null;
 
-const EXPAND_CSS = `
-[${BODY_EXPAND_ATTR}="true"].${BODY_EXPAND_CLASS} {
-  font-size: var(${BODY_EXPAND_TARGET_VAR}, 16px) !important;
-}
-`;
-
 function ensureStylesheet() {
-    if (document.getElementById(STYLE_ID)) return;
-    const style = document.createElement("style");
-    style.id = STYLE_ID;
-    style.textContent = EXPAND_CSS;
-    document.head.appendChild(style);
+    acquireTextSizeStyles("bodyExpand");
 }
 
 function isInsideHeading(el: Element): boolean {
@@ -112,17 +105,7 @@ export function computeExpandedFontPx(
 }
 
 function readOriginalPx(el: HTMLElement): number {
-    const stored = el.getAttribute(BODY_EXPAND_ORIGINAL_ATTR);
-    if (stored) {
-        const parsed = parseFloat(stored);
-        if (Number.isFinite(parsed) && parsed > 0) return parsed;
-    }
-    const fromSmallBoost = el.getAttribute(SMALL_BOOST_ORIGINAL_ATTR);
-    if (fromSmallBoost) {
-        const parsed = parseFloat(fromSmallBoost);
-        if (Number.isFinite(parsed) && parsed > 0) return parsed;
-    }
-    return parseFloat(getComputedStyle(el).fontSize);
+    return readOriginalFontPx(el, getEffectivePageFontScale());
 }
 
 function applyExpand(
@@ -156,13 +139,18 @@ export function scanBodyText(
 
     const nodes: Element[] = [root, ...Array.from(root.querySelectorAll("*"))];
 
+    // Read every original size before writing any: expanding a parent first
+    // would make an inheriting child read the parent's enlarged size and get
+    // expanded twice.
+    const reads: { el: HTMLElement; px: number }[] = [];
     for (const el of nodes) {
         if (shouldSkip(el)) continue;
         if (!(el instanceof HTMLElement)) continue;
-
         result.scanned++;
+        reads.push({ el, px: readOriginalPx(el) });
+    }
 
-        const px = readOriginalPx(el);
+    for (const { el, px } of reads) {
         if (!Number.isFinite(px) || px <= 0) continue;
         if (px >= LARGE_TEXT_PX) {
             if (el.getAttribute(BODY_EXPAND_ATTR) === "true")
@@ -251,5 +239,5 @@ export function destroyBodyTextExpand() {
     a11yUnsub?.();
     a11yUnsub = null;
     clearBodyTextExpand();
-    document.getElementById(STYLE_ID)?.remove();
+    releaseTextSizeStyles("bodyExpand");
 }

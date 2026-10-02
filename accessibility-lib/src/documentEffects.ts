@@ -67,6 +67,8 @@ import {
     POSITIONED_OVERLAY_ATTR,
     PSEUDO_OVERLAY_AFTER_ATTR,
     PSEUDO_OVERLAY_BEFORE_ATTR,
+    TONE_LAYER_ID,
+    UI_ATTR,
 } from "./domIds";
 import { a11yFontSizeToScale } from "./fontScales";
 import {
@@ -220,6 +222,25 @@ export function toneFilterCss(
     return `saturate(${SATURATION_FILTER[s.saturation]}) contrast(${CONTRAST_FILTER[s.contrast]})`;
 }
 
+function ensureToneLayer(): HTMLElement | null {
+    const body = document.body;
+    if (!body) return null;
+    let layer = document.getElementById(TONE_LAYER_ID);
+    if (!layer) {
+        layer = document.createElement("div");
+        layer.id = TONE_LAYER_ID;
+        layer.setAttribute(UI_ATTR, "1");
+        layer.setAttribute("aria-hidden", "true");
+    }
+    // Keep it outside the page root so it never filters itself or the panel.
+    if (layer.parentNode !== body) body.appendChild(layer);
+    return layer;
+}
+
+function removeToneLayer() {
+    document.getElementById(TONE_LAYER_ID)?.remove();
+}
+
 function syncPageDisplayFilters(pageRoot: HTMLElement | null, s: A11ySettings) {
     const html = document.documentElement;
     const target = toneFilterTarget(s);
@@ -230,12 +251,20 @@ function syncPageDisplayFilters(pageRoot: HTMLElement | null, s: A11ySettings) {
         // Previous builds painted standard-theme tone on media only; always
         // clear so a leftover marker cannot keep filtering just images.
         setFlag(pageRoot, HTML_ATTR_IMAGE_FILTER, false);
-        // Inline filter so the whole page tints even if the stylesheet is stale.
-        if (target === "page") {
-            pageRoot.style.setProperty("filter", toneFilterCss(s));
-        } else {
-            pageRoot.style.removeProperty("filter");
-        }
+        // Previous builds put the tone filter inline on the page root. A
+        // filtered ancestor re-anchors the host's position:fixed chrome to
+        // itself, so always clear it; the tone layer paints the tone instead.
+        pageRoot.style.removeProperty("filter");
+    }
+
+    if (target === "page") {
+        const layer = ensureToneLayer();
+        // Inline as well so the tone still shows if the stylesheet is stale.
+        const css = toneFilterCss(s);
+        layer?.style.setProperty("backdrop-filter", css);
+        layer?.style.setProperty("-webkit-backdrop-filter", css);
+    } else {
+        removeToneLayer();
     }
 }
 
@@ -589,6 +618,7 @@ export function clearAppliedA11yDocument() {
         pageRoot.removeAttribute(HTML_ATTR_IMAGE_FILTER);
         pageRoot.style.removeProperty("filter");
     }
+    removeToneLayer();
     html.removeAttribute(BODY_EXPAND_LEVEL_ATTR);
     restorePageContentRoot();
     removeUdFontLink();

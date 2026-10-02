@@ -57,6 +57,7 @@ import {
     isPresetActive,
     toggleA11yPreset,
 } from "./accessibilityPresets";
+import { patchSettings } from "./settings";
 import {
     A11Y_DEFAULTS,
     applyA11yToDocument,
@@ -221,5 +222,87 @@ describe("accessibility presets", () => {
         );
         patchA11ySettings({ theme: "standard" });
         expect(stub.html.getAttribute(HTML_ATTR_TEXT_PLATE)).toBeNull();
+    });
+});
+
+describe("accessibility presets keep the visitor's own choices", () => {
+    beforeEach(() => {
+        installDomStub();
+        resetA11ySettings();
+    });
+
+    it("leaves fields the preset does not define alone", () => {
+        patchA11ySettings({ reduceMotion: true, theme: "dark" });
+        applyA11yPreset("lowVision");
+        expect(getA11ySettings().reduceMotion).toBe(true);
+        expect(getA11ySettings().theme).toBe("dark");
+        expect(isPresetActive("lowVision")).toBe(true);
+    });
+
+    it("turning a preset off puts back the values it replaced", () => {
+        patchA11ySettings({ contrast: "max", fontSize: "large" });
+        toggleA11yPreset("senior");
+        expect(getA11ySettings().contrast).toBe("strong");
+        expect(getA11ySettings().fontSize).toBe("large");
+        toggleA11yPreset("senior");
+        expect(getA11ySettings().contrast).toBe("max");
+        expect(getA11ySettings().bodyTextExpandLevel).toBe(0);
+        expect(isPresetActive("senior")).toBe(false);
+    });
+
+    it("switching presets undoes the first one before applying the second", () => {
+        patchA11ySettings({ reduceMotion: true });
+        applyA11yPreset("mild");
+        applyA11yPreset("highContrast");
+        expect(getA11ySettings().saturation).toBe("standard");
+        expect(getA11ySettings().reduceMotion).toBe(true);
+        expect(getA11ySettings().theme).toBe("high-contrast");
+        expect(isPresetActive("mild")).toBe(false);
+        expect(isPresetActive("highContrast")).toBe(true);
+        toggleA11yPreset("highContrast");
+        expect(getA11ySettings().theme).toBe("standard");
+        expect(getA11ySettings().contrast).toBe("standard");
+    });
+
+    it("never shows two presets as on, even when fields overlap", () => {
+        applyA11yPreset("lowVision");
+        patchA11ySettings({ saturation: "mono" });
+        const on = A11Y_PRESET_IDS.filter((id) => isPresetActive(id));
+        expect(on).toEqual(["lowVision"]);
+
+        resetA11ySettings();
+        applyA11yPreset("colorVision");
+        patchA11ySettings({ lineHeight: "wide", bodyTextExpandLevel: 2 });
+        expect(A11Y_PRESET_IDS.filter((id) => isPresetActive(id))).toEqual([
+            "colorVision",
+        ]);
+    });
+
+    it("a field changed by hand after the preset stays when it is turned off", () => {
+        applyA11yPreset("lowVision");
+        patchA11ySettings({ fontSize: "large" });
+        expect(isPresetActive("lowVision")).toBe(false);
+        applyA11yPreset("lowVision");
+        patchA11ySettings({ contrast: "max" });
+        // still not matching: contrast was changed by hand
+        expect(isPresetActive("lowVision")).toBe(false);
+        expect(getA11ySettings().contrast).toBe("max");
+    });
+
+    it("settings saved before presets were tracked still show and clear", () => {
+        patchA11ySettings({ theme: "high-contrast", contrast: "max" });
+        patchSettings({ activePreset: undefined, presetRestore: null });
+        expect(isPresetActive("highContrast")).toBe(true);
+        toggleA11yPreset("highContrast");
+        expect(getA11ySettings().theme).toBe("standard");
+        expect(getA11ySettings().contrast).toBe("standard");
+    });
+
+    it("reset clears the tracked preset", () => {
+        applyA11yPreset("focus");
+        resetA11ySettings();
+        expect(isPresetActive("focus")).toBe(false);
+        patchA11ySettings({ lineHeight: "wide", saturation: "mono" });
+        expect(isPresetActive("focus")).toBe(false);
     });
 });

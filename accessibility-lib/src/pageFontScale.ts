@@ -8,7 +8,6 @@
  */
 
 import {
-    BODY_EXPAND_ORIGINAL_ATTR,
     HTML_STYLE_FONT_SCALE,
     isUniLensOverlayNode,
     PAGE_CONTENT_ROOT_ID,
@@ -17,10 +16,8 @@ import {
     PAGE_FONT_CAP_VAR,
     PAGE_FONT_CLASS,
     PAGE_FONT_ORIGINAL_ATTR,
-    PAGE_FONT_STYLE_ID,
     PAGE_FONT_TARGET_VAR,
     SELECTION_RESIZE_ATTR,
-    SMALL_BOOST_ORIGINAL_ATTR,
 } from "./domIds";
 import { scaledFontPx } from "./fontScales";
 import { restoreHostInlineStyle, setHostInlineStyle } from "./hostSurface";
@@ -29,6 +26,11 @@ import {
     isOutOfFlowPositioned,
     resolvePageFontCap,
 } from "./overlapSafeScale";
+import {
+    acquireTextSizeStyles,
+    readOriginalFontPx,
+    releaseTextSizeStyles,
+} from "./textSizeLayers";
 
 /** Replaced / non-text nodes — changing font-size here cannot help reading. */
 export const PAGE_FONT_SKIP_TAGS = new Set([
@@ -75,12 +77,6 @@ export function computeScaledFontPx(originalPx: number, scale: number): number {
     return scaledFontPx(originalPx, scale);
 }
 
-const PAGE_FONT_CSS = `
-[${PAGE_FONT_ATTR}="true"].${PAGE_FONT_CLASS} {
-  font-size: calc(var(${PAGE_FONT_TARGET_VAR}) * min(var(${HTML_STYLE_FONT_SCALE}, 1), var(${PAGE_FONT_CAP_VAR}, 999))) !important;
-}
-`;
-
 export interface PageFontScanResult {
     scanned: number;
     scaled: number;
@@ -100,15 +96,7 @@ export function getEffectivePageFontScale(): number {
 }
 
 function ensureStylesheet() {
-    if (
-        typeof document === "undefined" ||
-        document.getElementById(PAGE_FONT_STYLE_ID)
-    )
-        return;
-    const style = document.createElement("style");
-    style.id = PAGE_FONT_STYLE_ID;
-    style.textContent = PAGE_FONT_CSS;
-    document.head?.appendChild(style);
+    acquireTextSizeStyles("pageFont");
 }
 
 export function shouldSkipPageFontElement(el: Element): boolean {
@@ -123,26 +111,7 @@ export function shouldSkipPageFontElement(el: Element): boolean {
 }
 
 function readOriginalPx(el: HTMLElement, scale: number): number {
-    for (const attr of [
-        PAGE_FONT_ORIGINAL_ATTR,
-        BODY_EXPAND_ORIGINAL_ATTR,
-        SMALL_BOOST_ORIGINAL_ATTR,
-    ]) {
-        const stored = el.getAttribute(attr);
-        if (!stored) continue;
-        const parsed = parseFloat(stored);
-        if (Number.isFinite(parsed) && parsed > 0) return parsed;
-    }
-    const computed = parseFloat(getComputedStyle(el).fontSize);
-    if (!Number.isFinite(computed) || computed <= 0) return computed;
-    // New nodes under an already-scaled ancestor inherit a scaled computed size.
-    if (
-        scale !== 1 &&
-        el.parentElement?.closest(`[${PAGE_FONT_ATTR}="true"]`)
-    ) {
-        return Math.round((computed / scale) * 100) / 100;
-    }
-    return computed;
+    return readOriginalFontPx(el, scale);
 }
 
 /** Host font-size before page-wide scale — same baseline selection resize uses. */
@@ -331,6 +300,5 @@ export function destroyPageFontScale() {
     ) {
         restoreHostInlineStyle(document.documentElement, HTML_STYLE_FONT_SCALE);
     }
-    if (typeof document !== "undefined")
-        document.getElementById(PAGE_FONT_STYLE_ID)?.remove();
+    releaseTextSizeStyles("pageFont");
 }

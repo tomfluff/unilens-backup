@@ -95,7 +95,8 @@ const ICON_PATHS: Record<IconName, string> = {
     access: '<circle cx="12" cy="4" r="1.8"/><path d="M4.5 8.4 12 9.8l7.5-1.4"/><path d="m9.2 21 1.5-7.2M14.8 21l-1.5-7.2"/><path d="M9.6 13.8h4.8"/>',
     selection:
         '<path d="M9 4h6M9 20h6M12 4v16"/><path d="M4 8V6a2 2 0 0 1 2-2h1M20 8V6a2 2 0 0 0-2-2h-1M4 16v2a2 2 0 0 0 2 2h1M20 16v2a2 2 0 0 1-2 2h-1"/>',
-    auto: '<path d="m12 3 1.8 4.4L18 9.2l-4.2 1.8L12 15.4l-1.8-4.4L6 9.2l4.2-1.8z"/><path d="m18 15.4.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8z"/>',
+    // the letter A inside a turning arrow: adjusts itself (no sparkle: DESIGN.md)
+    auto: '<path d="M19.4 9A8 8 0 1 0 20 12"/><path d="M20 4.5V9h-4.5"/><path d="m9.2 15.5 2.8-7 2.8 7"/><path d="M10.2 13h3.6"/>',
     expand: '<path d="M3 19 8 6l5 13"/><path d="M4.8 14.6h6.4"/><path d="M18 20V9"/><path d="m14.8 12.2 3.2-3.2 3.2 3.2"/>',
     boost: '<path d="M4 19 8 9l4 10"/><path d="M5.6 15.4h4.8"/><path d="M17.5 20v-6.5"/><path d="m14.8 16.2 2.7-2.7 2.7 2.7"/>',
     chevron: '<path d="m6 9 6 6 6-6"/>',
@@ -103,7 +104,8 @@ const ICON_PATHS: Record<IconName, string> = {
         '<path d="M12 3a9 9 0 1 0 0 18 2 2 0 0 0 1.6-3.2 2 2 0 0 1 1.6-3.2H18a3 3 0 0 0 3-3A9 9 0 0 0 12 3Z"/><circle cx="7.5" cy="12" r="1"/><circle cx="9.8" cy="7.9" r="1"/><circle cx="14.4" cy="7.5" r="1"/>',
     type: '<path d="M4 7V5h16v2"/><path d="M12 5v14"/><path d="M9 19h6"/>',
     globe: '<circle cx="12" cy="12" r="9"/><path d="M3.2 9h17.6M3.2 15h17.6"/><path d="M12 3c2.3 2.5 3.5 5.6 3.5 9s-1.2 6.5-3.5 9c-2.3-2.5-3.5-5.6-3.5-9s1.2-6.5 3.5-9Z"/>',
-    preset: '<path d="m12 3 1.6 4.8L18.5 9.5l-4.9 1.7L12 16l-1.6-4.8L5.5 9.5l4.9-1.7z"/><path d="M18.5 15.5 19.3 18l2.5.8-2.5.8-.8 2.5-.8-2.5-2.5-.8 2.5-.8z"/>',
+    // a bookmark: settings kept to reuse (no sparkle: DESIGN.md)
+    preset: '<path d="M7 3.5h10a1 1 0 0 1 1 1V21l-6-4.2L6 21V4.5a1 1 0 0 1 1-1Z"/>',
     link: '<path d="M10 13a5 5 0 0 0 7.07 0l2.12-2.12a5 5 0 0 0-7.07-7.07L11 5"/><path d="M14 11a5 5 0 0 0-7.07 0L4.8 13.12a5 5 0 0 0 7.07 7.07L13 19"/>',
     cursor: '<path d="M5 3v16l5.2-5 3.2 7.5 2.8-1.2-3.3-7.6L19 11.5Z"/>',
     pointerHalo:
