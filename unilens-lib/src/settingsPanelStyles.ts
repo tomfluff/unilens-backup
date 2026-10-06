@@ -73,6 +73,7 @@ ${P}${P} {
 
 ${P} .s-hd { display: flex; align-items: center; gap: .55em; padding: .75em .75em .5em 1em; flex: none; }
 ${P} .s-hd h2 { flex: 1; font-size: 1.05em; font-weight: 700; line-height: 1.2; }
+${P} .s-preset { margin: 0 1em .6em; padding: .45em .7em; border-radius: 8px; background: var(--acc-wash); color: var(--ink); font-size: .9em; flex: none; }
 ${P} .s-pvt { color: var(--slate); font-weight: 600; cursor: pointer; }
 ${P}${P} .s-key { display: grid; place-items: center; width: 2.4em; height: 2.4em; padding: 0; border: 0; border-radius: 10px; background: var(--mist); }
 

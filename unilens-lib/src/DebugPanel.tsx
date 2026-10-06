@@ -27,6 +27,7 @@ import { getLastEvidenceDebug } from "./evidence";
 import { getDwellDebug } from "./hint";
 import { getSentLog, type SentCapture } from "./sentLog";
 import { getSettings, updateSetting, useSettings } from "./settings";
+import { studyUrl } from "./studyLog";
 import { resetHostStyles } from "./uiReset";
 import { getTargetZoom, getView, getZoom, getZoomTrace } from "./zoom";
 
@@ -248,7 +249,7 @@ function useStored(backend: string, id: string): string {
             setText(storedCache.get(id) ?? "");
             return;
         }
-        fetch(`${backend}/api/capture/${encodeURIComponent(id)}`)
+        fetch(studyUrl(`${backend}/api/capture/${encodeURIComponent(id)}`))
             .then((r) => r.json())
             .then((d) => {
                 const f = d.files ?? {};
@@ -384,7 +385,9 @@ function DebugPanel({ sources }: { sources: DebugSources }) {
         let alive = true;
         const poll = async () => {
             try {
-                const res = await fetch(`${sources.backend()}/health`);
+                const res = await fetch(
+                    studyUrl(`${sources.backend()}/health`),
+                );
                 const d = await res.json();
                 if (alive) setHealth(`${d.status} · provider ${d.provider}`);
             } catch {
@@ -579,7 +582,12 @@ function DebugGate({ sources }: { sources: DebugSources }) {
 
 export function initDebug(sources: DebugSources) {
     document.addEventListener("keydown", (e) => {
-        if (e.ctrlKey && e.shiftKey && (e.key === "D" || e.key === "d")) {
+        if (
+            e.ctrlKey &&
+            e.shiftKey &&
+            (e.key === "D" || e.key === "d") &&
+            getSettings().debugShortcut
+        ) {
             e.preventDefault();
             updateSetting("debugView", !getSettings().debugView);
         }

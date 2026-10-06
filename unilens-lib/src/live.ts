@@ -8,6 +8,7 @@
  * at page elements with a `highlight(ids)` tool the chat runs.
  * Research: .local/research/2026-09-27-realtime-apis.md.
  */
+import { studyUrl } from "./studyLog";
 
 export type LiveProvider = "openai" | "gemini";
 export type LiveState =
@@ -163,7 +164,7 @@ async function begin(
     req: LiveRequest,
     sdp?: string,
 ): Promise<Start> {
-    const res = await fetch(`${backend}/api/live/${provider}`, {
+    const res = await fetch(studyUrl(`${backend}/api/live/${provider}`), {
         method: "POST",
         signal: req.signal,
         headers: { "Content-Type": "application/json" },
@@ -187,7 +188,9 @@ export async function closeUp(
 ): Promise<string | null> {
     try {
         const res = await fetch(
-            `${backend}/api/capture/${encodeURIComponent(captureId)}/viewport`,
+            studyUrl(
+                `${backend}/api/capture/${encodeURIComponent(captureId)}/viewport`,
+            ),
         );
         if (!res.ok) return null;
         const bmp = await createImageBitmap(await res.blob());

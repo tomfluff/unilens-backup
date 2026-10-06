@@ -100,6 +100,9 @@ export function renderCited(
     chipText: (n: number) => string = String,
     /** underline the words each citation supports ("Associate response text") */
     phrases = false,
+    /** where the numbers go: where the model put them, at the end of each sentence,
+     *  or all after the answer. Underlines need them where the model put them */
+    placement: CitePlacement = "inline",
 ): Cited {
     let t = unjoin(unzoom(text.replace(/[\uE0FC-\uE0FF]/g, "")));
     if (streaming)
@@ -114,6 +117,11 @@ export function renderCited(
         if (!n) n = ids.push(id);
         return `${m.startsWith("[") ? "" : " "}\uE0FF${n}\uE0FF`;
     });
+    // the numbers elsewhere than the model put them: no words are joined to them
+    if (placement !== "inline") {
+        phrases = false;
+        t = placeSlots(t.replace(/\{\{|\}\}/g, ""), placement);
+    }
     // the model marks the fewest words a citation supports as {{...}} before its marker
     t = t.replace(PHRASE, phrases ? `${OPEN}$1${CLOSE}` : "$1");
     // braces not before a citation, and a half-written `{{` while it streams, never show
@@ -146,6 +154,80 @@ export function renderCited(
             },
         );
     return { html, ids };
+}
+
+export type CitePlacement = "inline" | "sentence" | "end";
+
+/** a citation's slot with the spaces (not line breaks) around it */
+const SPACED_SLOT = /[^\S\n]*\uE0FF(\d+)\uE0FF[^\S\n]*/g;
+/** Japanese (and Chinese) text and its punctuation: no space between words */
+const CJK = /[\u3000-\u30ff\u3400-\u9fff\uf900-\ufaff\uff00-\uffef]/;
+
+/** what stays between the words on either side of a slot taken out: a space only
+ *  where the model had one, and never in Japanese, before punctuation, or at a line's
+ *  ends (「4,378円 [[n1]] なので」 becomes 「4,378円なので」) */
+function gap(left: string, right: string, spaced: boolean): string {
+    if (!spaced || !left || !right || left === "\n" || right === "\n")
+        return "";
+    if (right === "\uE0FF" || CJK.test(left) || CJK.test(right)) return "";
+    return /[.,;:!?)\]}"'’”]/.test(right) ? "" : " ";
+}
+/** a sentence's end in an answer: its closing punctuation (a full stop before a
+ *  space, the end, a closing quote or bracket or the end of bold, so not 3.5), with
+ *  the quotes, brackets and bold marks that close after it; or a line break (a
+ *  bullet, a heading, a paragraph) */
+const SENTENCE_STOP =
+    /(?:[.!?](?=\s|$|["'”’」』）)\]*])|[。！？])["'”’」』）)\]*]*|\n/g;
+
+/**
+ * Move the citation slots out of the sentences (Yotam, 2026-10-06: sources not in the
+ * text, "at the end of the sentence or the end of the text"). "sentence": each
+ * sentence's numbers, once each and in order, right after its closing punctuation (or
+ * at the end of its line). A number the model gathered after a sentence stays with
+ * that sentence, and one before any words goes with the sentence that follows.
+ * "end": every number once, in order, on a line of its own after the answer.
+ */
+export function placeSlots(t: string, placement: "sentence" | "end"): string {
+    const slots: { at: number; n: number }[] = [];
+    let plain = "";
+    let from = 0;
+    for (const m of t.matchAll(SPACED_SLOT)) {
+        plain += t.slice(from, m.index);
+        slots.push({ at: plain.length, n: Number(m[1]) });
+        from = (m.index ?? 0) + m[0].length;
+        plain += gap(plain.slice(-1), t.charAt(from), /\s/.test(m[0]));
+    }
+    plain += t.slice(from);
+    if (!slots.length) return t;
+    const run = (ns: number[]) =>
+        [...new Set(ns)]
+            .sort((a, b) => a - b)
+            .map((n) => `\uE0FF${n}\uE0FF`)
+            .join(" ");
+    if (placement === "end")
+        return `${plain.trimEnd()}\n\n${run(slots.map((x) => x.n))}`;
+    // each sentence's end: after its punctuation, or before its line break
+    const ends = [...plain.matchAll(SENTENCE_STOP)].map((m) =>
+        m[0] === "\n" ? (m.index ?? 0) : (m.index ?? 0) + m[0].length,
+    );
+    const textEnd = plain.trimEnd().length;
+    const at = new Map<number, number[]>();
+    for (const { at: i, n } of slots) {
+        // gathered after a sentence (only spaces since its end): that sentence's
+        const before = ends.findLast((e) => e <= i);
+        const end =
+            before !== undefined && !plain.slice(before, i).trim()
+                ? before
+                : Math.min(ends.find((e) => e >= i) ?? textEnd, textEnd);
+        at.set(end, [...(at.get(end) ?? []), n]);
+    }
+    let out = "";
+    let pos = 0;
+    for (const end of [...at.keys()].sort((a, b) => a - b)) {
+        out += plain.slice(pos, end) + run(at.get(end) ?? []);
+        pos = end;
+    }
+    return out + plain.slice(pos);
 }
 
 /**
@@ -317,17 +399,58 @@ const ORDINALS: Record<string, number> = {
     "5th": 5,
 };
 
+/** Japanese numbers a participant may say or type for "the second one" */
+const KANJI: Record<string, number> = {
+    一: 1,
+    二: 2,
+    三: 3,
+    四: 4,
+    五: 5,
+    六: 6,
+    七: 7,
+    八: 8,
+    九: 9,
+    十: 10,
+};
+/** what may follow a Japanese "the second one", "next" or "all": to it, take me, go,
+ *  show, highlight, please (spoken forms included: 連れてって) */
+const JA_GO =
+    "(?:の(?:もの|やつ|根拠|場所|ところ)?)?(?:に|へ|を|まで)?(?:連れて(?:行|い)?って|移動して|移動|行って|飛んで|見せて|表示して|ハイライトして)?(?:ください|下さい|お願いします)?";
+
+/** the Japanese forms (co-design study 1: participants are likely Japanese) */
+function navCommandJa(message: string): NavCommand | null {
+    const m = message
+        .normalize("NFKC")
+        .replace(/\s+/g, "")
+        .replace(/[.!?。！？]+$/, "");
+    if (new RegExp(`^次${JA_GO}$`).test(m)) return { kind: "next" };
+    if (new RegExp(`^前${JA_GO}$`).test(m)) return { kind: "prev" };
+    if (new RegExp(`^(?:全部|すべて|全て)${JA_GO}$`).test(m))
+        return { kind: "all" };
+    if (/^(?:ハイライト|枠)を?(?:消して|消す)(?:ください|下さい)?$/.test(m))
+        return { kind: "clear" };
+    const nth = new RegExp(
+        `^(?:その)?(\\d{1,2}|[一二三四五六七八九十])(?:番目|つ目|個目|番)${JA_GO}$`,
+    ).exec(m);
+    if (nth) return { kind: "nth", n: KANJI[nth[1]] ?? Number(nth[1]) };
+    return null;
+}
+
 /**
  * A whole message that only steers the evidence of the last answer. Handled locally:
  * instant, free, and no model can mis-hear "next". Anything longer goes to the model.
- * ponytail: English phrases only; extend the table when participants use others.
+ * ponytail: English and some Japanese phrases; extend the tables when participants
+ * use others.
  */
 export function navCommand(message: string): NavCommand | null {
+    const ja = navCommandJa(message);
+    if (ja) return ja;
     const m = message
         .trim()
         .toLowerCase()
         .replace(/[.!?。]+$/, "");
-    const show = "(?:show |highlight |go to )?(?:me )?(?:the )?";
+    const show =
+        "(?:show |highlight |go to |take me to |bring me to |jump to |scroll to )?(?:me )?(?:the )?";
     if (new RegExp(`^${show}next(?: one)?$`).test(m)) return { kind: "next" };
     if (
         /^(?:go |take me )?(?:back )?to (?:where i (?:clicked|asked)|my click)$|^where i (?:clicked|asked)$|^my click$|^クリックした(?:場所|所|ところ)(?:へ|に)?(?:戻る|行く)?$/.test(

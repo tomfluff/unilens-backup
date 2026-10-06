@@ -57,6 +57,7 @@ import {
 } from "./icons";
 import { boxStyles, lensStyles, MAP_INK, paintMapTargets } from "./minimap";
 import {
+    activePreset,
     type BoolSettingKey,
     CATALOGUE_KEYS,
     clampSetting,
@@ -138,6 +139,7 @@ function relevant(key: Key, s: Settings): boolean {
     if (s.mmFollowHighlight && MM_OWN_LOOK.has(key)) return false;
     if (key === "fxRippleLook" && !s.fxRipple) return false;
     if (key === "voiceAutoSend" && !s.voiceInput) return false;
+    if (key === "associateText" && s.citePlacement !== "inline") return false;
     if (MM_ALL.has(key) && s.minimap === "off") return false;
     const own = FX_OWN[key];
     return !own || own.includes(s.clickFx);
@@ -1077,7 +1079,8 @@ function ChatSpecimen({ s, T }: { s: Settings; T: Text }) {
         false,
         C.evidenceLabel,
         (n) => (station ? `U${n}` : String(n)),
-        s.associateText,
+        s.associateText && s.citePlacement === "inline",
+        s.citePlacement,
     );
     const controls = (
         <div className="ulc-ctl">
@@ -1640,6 +1643,7 @@ function Panel({ onClose }: { onClose: () => void }) {
         );
     };
     const groups = PANEL_TABS.find((t) => t.id === tab)?.groups ?? [];
+    const preset = activePreset();
     /** the preview beside the settings: on tabs with something to show */
     const shown = preview && !NO_PREVIEW.has(tab);
     return (
@@ -1692,6 +1696,9 @@ function Panel({ onClose }: { onClose: () => void }) {
                         <CloseIcon />
                     </button>
                 </div>
+                {preset && (
+                    <p className="s-preset">{T.presetOn(preset.name)}</p>
+                )}
                 <div
                     ref={tabs}
                     className="s-tabs"
@@ -1769,34 +1776,59 @@ function Panel({ onClose }: { onClose: () => void }) {
     );
 }
 
+/** the facilitator's key (presets.ts) opens and closes the panel, gear or not */
+let togglePanel: (() => void) | null = null;
+export const toggleSettingsPanel = () => togglePanel?.();
+
 function SettingsLauncher() {
     const s = useSettings();
     const [open, setOpen] = useState(false);
     const launcher = useRef<HTMLButtonElement>(null);
+    /** what had focus when the facilitator's key opened the panel: focus goes back
+     *  there, as it goes back to the gear when the gear opened it */
+    const before = useRef<HTMLElement | null>(null);
     const T = PANEL_TEXT[chatLang()];
     const close = () => {
         setOpen(false);
         // once the dialog is gone: while it is open the page, the gear too, is inert
-        requestAnimationFrame(() => launcher.current?.focus());
+        requestAnimationFrame(() => {
+            const back = before.current?.isConnected ? before.current : null;
+            (back ?? launcher.current)?.focus();
+        });
+    };
+    togglePanel = () => {
+        if (open) return close();
+        const had = document.activeElement;
+        before.current =
+            had instanceof HTMLElement && had !== document.body ? had : null;
+        setOpen(true);
     };
     return (
         <>
-            <button
-                ref={launcher}
-                type="button"
-                className="ul-set-launch"
-                data-hc={s.highContrast ? "true" : "false"}
-                style={
-                    { "--ul-fs": `${s.chatFontSize}px` } as React.CSSProperties
-                }
-                aria-label={T.open}
-                title={T.open}
-                aria-expanded={open}
-                aria-controls="unilens-settings-panel"
-                onClick={() => (open ? close() : setOpen(true))}
-            >
-                <SettingsIcon />
-            </button>
+            {s.settingsButton && (
+                <button
+                    ref={launcher}
+                    type="button"
+                    className="ul-set-launch"
+                    data-hc={s.highContrast ? "true" : "false"}
+                    style={
+                        {
+                            "--ul-fs": `${s.chatFontSize}px`,
+                        } as React.CSSProperties
+                    }
+                    aria-label={T.open}
+                    title={T.open}
+                    aria-expanded={open}
+                    aria-controls="unilens-settings-panel"
+                    onClick={() => {
+                        if (open) return close();
+                        before.current = null;
+                        setOpen(true);
+                    }}
+                >
+                    <SettingsIcon />
+                </button>
+            )}
             {open && <Panel onClose={close} />}
         </>
     );

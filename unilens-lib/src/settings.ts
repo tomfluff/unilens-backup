@@ -4,7 +4,11 @@
  * UI lives in SettingsPanel.tsx.
  */
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import {
+    createJSONStorage,
+    persist,
+    type StateStorage,
+} from "zustand/middleware";
 import {
     BACKDROPS,
     type Backdrop,
@@ -146,12 +150,23 @@ export interface Settings {
     sounds: boolean;
     /** answers cite the page elements they used, as numbered chips that highlight */
     citeEvidence: boolean;
-    /** a chat covering a source steps aside, to the nearer side (a pinned chat stays) */
+    /** a chat covering a chosen source steps aside, to the nearer side, or folds to
+     *  its header when there is no room (a pinned chat only folds); off, it stays */
     chatMovesAside: boolean;
+    /** the line above the field saying what the next question is about (the outlined
+     *  sources or place); hidden, they still go with the question */
+    aboutLine: boolean;
+    /** Ctrl+Shift+D shows and hides the debug view (it lists research settings) */
+    debugShortcut: boolean;
     /** the assistant zooms the page when the user asks (the chat and Live) */
     assistantZoom: boolean;
     /** underline the fewest words each source supports, joined to its number */
     associateText: boolean;
+    /** where an answer's source numbers go: where the model put them, at the end of
+     *  each sentence, or all after the answer (underlines need them in the sentence) */
+    citePlacement: "inline" | "sentence" | "end";
+    /** the settings gear on the page; hidden, Ctrl+Alt+Shift+S still opens settings */
+    settingsButton: boolean;
     /** AI settings (research): the backend checks each choice against its catalogue */
     aiProvider: "auto" | "openai" | "gemini";
     /** a model id from the backend's catalogue; "" = the provider's default */
@@ -276,8 +291,12 @@ const DEFAULTS: Settings = {
     sounds: true,
     citeEvidence: true,
     chatMovesAside: true,
+    aboutLine: true,
+    debugShortcut: true,
     assistantZoom: true,
     associateText: false,
+    citePlacement: "inline",
+    settingsButton: true,
     aiProvider: "auto",
     aiModel: "",
     aiReasoning: "default",
@@ -339,9 +358,12 @@ export const TOGGLE_LABELS: Record<BoolSettingKey, string> = {
     mmNumbers: "Numbers on targets",
     citeEvidence: "Answers cite page elements",
     chatMovesAside: "Move the chat out of the way of sources",
+    aboutLine: "Show what the next question is about, above the field",
+    debugShortcut: "Ctrl+Shift+D opens the debug view",
     assistantZoom: "The assistant can zoom the page when asked",
     associateText:
         "Associate response text (underline what each source supports)",
+    settingsButton: "Settings button (hidden: Ctrl+Alt+Shift+S opens settings)",
     sounds: "A sound for every action",
     refreshView: "Send my new view with follow-ups",
     fxCore: "Orb: glossy core",
@@ -550,6 +572,14 @@ export const ENUM_CHOICES = {
         },
     },
     autoHighlight: { label: "Auto-highlight", choices: AUTO_HIGHLIGHTS },
+    citePlacement: {
+        label: "Where the source numbers go",
+        choices: {
+            inline: "In the sentence, after the words",
+            sentence: "At the end of each sentence",
+            end: "After the whole answer",
+        },
+    },
     aiProvider: {
         label: "Provider",
         choices: {
@@ -661,7 +691,7 @@ export const PANEL_TABS: { id: PanelTabId; groups: PanelGroup[] }[] = [
                     "chatTextScale",
                     "highContrast",
                 ],
-                more: ["dragPopover", "hints", "escapeOrder"],
+                more: ["dragPopover", "hints", "escapeOrder", "settingsButton"],
             },
         ],
     },
@@ -727,8 +757,10 @@ export const PANEL_TABS: { id: PanelTabId; groups: PanelGroup[] }[] = [
                 more: [
                     "streamReplies",
                     "citeEvidence",
+                    "citePlacement",
                     "associateText",
                     "chatMovesAside",
+                    "aboutLine",
                     "regionSelect",
                     "elementContext",
                     "refreshView",
@@ -826,14 +858,21 @@ export const PANEL_TABS: { id: PanelTabId; groups: PanelGroup[] }[] = [
                     "inventoryMaxNodes",
                 ],
             },
-            { id: "diagnostics", first: ["debugView"], more: [] },
+            {
+                id: "diagnostics",
+                first: ["debugView", "debugShortcut"],
+                more: [],
+            },
         ],
     },
 ];
 
-/** a setting's shipped value: what "Reset this tab" restores, and what "changed" means */
+/** a setting's starting value: the preset's while one is on (presets.ts), else the
+ *  shipped one. What "Reset this tab" restores, and what "changed" means */
 export function defaultOf<K extends keyof Settings>(key: K): Settings[K] {
-    return DEFAULTS[key];
+    return preset && Object.hasOwn(preset.values, key)
+        ? (preset.values[key] as Settings[K])
+        : DEFAULTS[key];
 }
 
 /** settings whose choices come from the backend's catalogue (/api/ai), not a table here */
@@ -851,13 +890,14 @@ export const CATALOGUE_KEYS = [
  * hand-edited localStorage). Dispatch is by key: numeric knobs coerce with Number()
  * and clamp into their NUMBER_KNOBS bounds (or must be one of their SELECT_CHOICES),
  * enums must be a table key, booleans must be booleans; anything else falls back to
- * the default. pinnedPos and debugPanel pass through: their consumers validate them.
+ * the default (the preset's, while one is on). pinnedPos and debugPanel pass through: their consumers validate them.
  */
 export function clampSetting<K extends keyof Settings>(
     key: K,
     value: unknown,
 ): Settings[K] {
-    const fallback = DEFAULTS[key];
+    // the preset's value while one is on: a bad value never undoes the preset
+    const fallback = defaultOf(key);
     if (Object.hasOwn(NUMBER_KNOBS, key)) {
         const n = Number(value);
         if (!Number.isFinite(n)) return fallback;
@@ -912,12 +952,98 @@ function mergePersisted(persisted: unknown, current: Settings): Settings {
     return next;
 }
 
+/** the preset in effect (presets.ts), or null: set once, at init, before anything
+ *  reads the settings */
+let preset: { id: string; name: string; values: Partial<Settings> } | null =
+    null;
+export const activePreset = (): { id: string; name: string } | null =>
+    preset && { id: preset.id, name: preset.name };
+
+const STORE_NAME = "unilens-settings";
+/**
+ * Where the settings are kept. Normally the site's localStorage. While a preset is
+ * on, this tab's sessionStorage under the preset's own key, and only the values that
+ * differ from the preset: every page load starts from the preset whatever
+ * localStorage holds, a change made in the panel lasts until the tab closes, and the
+ * user's own settings in localStorage are left as they were.
+ */
+const settingsStorage: StateStorage = {
+    getItem: (name) => {
+        try {
+            return preset
+                ? sessionStorage.getItem(`${name}:${preset.id}`)
+                : localStorage.getItem(name);
+        } catch {
+            return null;
+        }
+    },
+    setItem: (name, value) => {
+        try {
+            if (preset) sessionStorage.setItem(`${name}:${preset.id}`, value);
+            else localStorage.setItem(name, value);
+        } catch {
+            // storage blocked or full: the settings still apply for this page
+        }
+    },
+    removeItem: (name) => {
+        try {
+            if (preset) sessionStorage.removeItem(`${name}:${preset.id}`);
+            else localStorage.removeItem(name);
+        } catch {
+            // as above
+        }
+    },
+};
+
+/** what is written: everything, or under a preset only what differs from it */
+function partialize(s: Settings): Partial<Settings> {
+    if (!preset) return s;
+    const base = { ...DEFAULTS, ...preset.values };
+    return Object.fromEntries(
+        (Object.keys(DEFAULTS) as (keyof Settings)[])
+            .filter((k) => JSON.stringify(s[k]) !== JSON.stringify(base[k]))
+            .map((k) => [k, s[k]]),
+    );
+}
+
 export const useSettings = create<Settings>()(
     persist(() => ({ ...DEFAULTS }), {
-        name: "unilens-settings",
+        name: STORE_NAME,
+        storage: createJSONStorage(() => settingsStorage),
         merge: mergePersisted,
+        partialize,
     }),
 );
+
+/**
+ * Put a preset in effect for this page (presets.ts decides which): the settings
+ * become the defaults plus its values, plus what was changed in this tab while it
+ * was on. Called once, at init.
+ */
+export function startPreset(
+    id: string,
+    name: string,
+    values: Partial<Settings>,
+) {
+    preset = { id, name, values };
+    let stored: unknown;
+    try {
+        stored = JSON.parse(
+            settingsStorage.getItem(STORE_NAME) as string,
+        )?.state;
+    } catch {
+        stored = undefined;
+    }
+    useSettings.setState(
+        mergePersisted(stored, { ...DEFAULTS, ...values } as Settings),
+    );
+}
+
+/** back to the preset's own values: what was changed in this tab while it is on is
+ *  forgotten (the next participant) */
+export function clearPresetChanges() {
+    if (preset) useSettings.setState({ ...DEFAULTS, ...preset.values });
+}
 
 /** live snapshot for non-React modules (React components use the useSettings hook) */
 export const getSettings = () => useSettings.getState();

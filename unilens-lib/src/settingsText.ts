@@ -10,6 +10,10 @@ export type PanelLang = "en" | "ja";
 const EN = {
     title: "UniLens settings",
     open: "UniLens settings",
+    /** a study preset is on (presets.ts): for the facilitator, who opened the panel
+     *  with its hidden key */
+    presetOn: (name: string) =>
+        `Preset on: ${name}. Changes made here last until this tab is closed. Ctrl+Alt+Shift+B switches the preset.`,
     close: "Close settings",
     preview: "Preview",
     tabs: {
@@ -82,6 +86,8 @@ const EN = {
 const JA: typeof EN = {
     title: "UniLens 設定",
     open: "UniLens 設定",
+    presetOn: (name: string) =>
+        `プリセット使用中：${name}。ここでの変更はこのタブを閉じるまで有効です。Ctrl＋Alt＋Shift＋B でプリセットを切り替えます。`,
     close: "設定を閉じる",
     preview: "プレビュー",
     tabs: {
@@ -301,8 +307,12 @@ export const NAMES_JA: Partial<Record<keyof Settings, string>> = {
     mmNumbers: "対象に番号を表示",
     citeEvidence: "回答にページ上の根拠を示す",
     chatMovesAside: "根拠に重ならないようチャットをずらす",
+    aboutLine: "次の質問の対象を入力欄の上に表示",
+    debugShortcut: "Ctrl＋Shift＋D でデバッグ表示を開く",
     assistantZoom: "頼まれたらアシスタントがページを拡大する",
     associateText: "回答と根拠を結ぶ（根拠が支える語句に下線）",
+    settingsButton: "設定ボタン（隠しても Ctrl＋Alt＋Shift＋S で設定を開く）",
+    citePlacement: "根拠の番号の位置",
     refreshView: "続けて質問するとき今の画面を送る",
     fxCore: "オーブ：光沢のある芯",
     fxSwirl: "オーブ：2色の渦",
@@ -420,6 +430,11 @@ export const CHOICES_JA: Partial<
         offscreen: "画面の外にあるときだけ",
         always: "いつも中央に",
         never: "動かさない（矢印だけ）",
+    },
+    citePlacement: {
+        inline: "文の中（語句のすぐ後）",
+        sentence: "各文の終わり",
+        end: "回答の最後にまとめて",
     },
     autoHighlight: {
         where: "「どこ」「見せて」と聞いたときに根拠を囲む",

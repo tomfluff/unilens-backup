@@ -5,6 +5,7 @@
  * checks every choice against it, so the chat only sends what the user picked.
  */
 import { getSettings } from "./settings";
+import { studyUrl } from "./studyLog";
 
 export interface AiChoice {
     provider?: "openai" | "gemini";
@@ -49,7 +50,7 @@ export function setAiBackend(url: string) {
 
 /** the backend's catalogue, fetched once (null when the backend cannot be reached) */
 export function aiCatalogue(): Promise<AiCatalogue | null> {
-    catalogue ??= fetch(`${backend}/api/ai`)
+    catalogue ??= fetch(studyUrl(`${backend}/api/ai`))
         .then((r) => (r.ok ? (r.json() as Promise<AiCatalogue>) : null))
         .catch(() => null)
         .then((c) => {

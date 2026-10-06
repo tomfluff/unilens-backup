@@ -9,14 +9,19 @@
  *   trigger      MouseEvent → bool. Default: alt+click.
  *   mouseWindow  Seconds of trace history. Default: 2.5.
  *   backend      Flask base URL. Default: '' (same origin).
+ *   preset       A study preset (presets.ts), e.g. 'initial'. The page address
+ *                (?unilens-preset=…) and the facilitator's keys override it.
  */
 import { flushSync } from "react-dom";
 import { createRoot } from "react-dom/client";
 import { startTrace } from "./capture";
 import { init as initHighlight } from "./highlight";
 import { initMinimap } from "./minimap";
+import { initFacilitator, startChosenPreset } from "./presets";
+import { forgetForReset } from "./restore";
 import { initSettings } from "./SettingsPanel";
 import { setSpeechBackend } from "./speech";
+import { initStudyLog, logEvent, pageAddress } from "./studyLog";
 import { UnilensClient } from "./UnilensClient";
 import { UnilensRoot } from "./UnilensRoot";
 import { initZoom } from "./zoom";
@@ -31,6 +36,8 @@ export interface InitOptions {
     backend?: string;
     /** ctrl+wheel pinch-style page zoom. Default: true. */
     zoom?: boolean;
+    /** a study preset by id (presets.ts); the address and the facilitator override it */
+    preset?: string;
 }
 
 //------------------------------------------------------------------------------
@@ -50,6 +57,18 @@ export const kUnilensRootId = "unilens-root";
 export function init(options: InitOptions = {}) {
     // Create unilens client
     const unilens: UnilensClient = new UnilensClient(options);
+    // the preset first: everything below reads the settings
+    const preset = startChosenPreset(options.preset);
+    // the study's log, when the address or the browser names a participant
+    if (initStudyLog(unilens.getBackend()))
+        logEvent("page_load", {
+            url: pageAddress(),
+            title: document.title,
+            lang: document.documentElement.lang,
+            viewport: [window.innerWidth, window.innerHeight],
+            dpr: window.devicePixelRatio,
+            preset,
+        });
 
     startTrace(unilens.getOption("mouseWindow"));
     if (unilens.getOption("zoom")) initZoom();
@@ -57,6 +76,13 @@ export function init(options: InitOptions = {}) {
     initHighlight();
     initSettings(unilens.getBackend());
     setSpeechBackend(unilens.getBackend());
+    initFacilitator({
+        // nothing is saved from now on, and the kept conversation is deleted
+        forgetConversation: () => {
+            unilens.setSessionId(null);
+            return forgetForReset(unilens.getBackend());
+        },
+    });
 
     // Create container element
     const container = document.createElement("div");
