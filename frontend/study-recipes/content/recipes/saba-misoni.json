@@ -1,0 +1,199 @@
+{
+  "slug": "saba-misoni",
+  "categories": ["japanese"],
+  "cuisine": "japanese",
+  "diet": ["dairy-free", "pescatarian"],
+  "difficulty": "easy",
+  "course": "main",
+  "times": { "prep": 10, "cook": 20 },
+  "servings": 2,
+  "image": "saba-misoni",
+  "rating": 4.7,
+  "ratings": 268,
+  "published": "2020-11-05",
+  "updated": "2026-09-18",
+  "related": ["nikujaga", "minato-nabe", "yuzu-miso-salmon", "kinoko-takikomi-gohan"],
+  "en": {
+    "title": "Saba no Misoni (Mackerel Simmered in Miso)",
+    "teaser": "Fatty autumn mackerel simmered with ginger in a glossy, sweet-salty miso sauce. One pan, 30 minutes, and even better the next day.",
+    "intro": [
+      "Saturday mornings in autumn start early in our house. By 6:30 Daisuke and I are on the first Bayside Line train to Minori Port, and by 7 we're weaving between the crates at the morning market with a cool-box on wheels. In October the mackerel are at their best. Locals call it <em>aki saba</em>, autumn mackerel, and it's so fatty that the fishmongers' knives shine. My favourite stall, Uomasa, is run by Mrs. Takeda, who has been telling me which fish to buy for fifteen years and always throws in a knob of ginger.",
+      "Saba no misoni was one of the dishes my grandmother Fumi cooked most at her inn in Tsukimi Onsen. Her guests were mostly older couples who came for the hot springs, and she said a plate of this with rice and miso soup made them look like they'd come home. It's rich, glossy, sweet and salty, and the ginger keeps it fresh.",
+      { "h": "Why you'll love it" },
+      { "ul": [
+        "Ready in 30 minutes in a single pan.",
+        "Mackerel is inexpensive, full of omega-3s, and tastes even better the next day.",
+        "The sauce is so good you'll want a second bowl of rice."
+      ] },
+      { "h": "Choosing the mackerel" },
+      "Look for fillets with shiny, taut skin and firm, pinkish flesh, not dull or dry at the edges. If you're buying a whole fish, the eyes should be clear and the belly firm. Frozen and thawed Norwegian mackerel, sold in most supermarkets, is very fatty and works beautifully here. The one thing to avoid is salted mackerel (<em>shio saba</em>): it's already salty and will make the dish inedible.",
+      { "h": "The boiling-water trick" },
+      "The step people skip, and shouldn't, is <em>shimofuri</em>: pouring boiling water over the fish until the surface turns white, then rinsing it in cold water. It takes two minutes and washes away the blood and slime that cause the fishy smell. Mrs. Takeda says it's the difference between a home cook and a good home cook.",
+      { "h": "Tips for success" },
+      "Bring the simmering liquid to the boil <strong>before</strong> the fish goes in, so the surface sets straight away and the flesh doesn't fall apart or cloud the sauce. Use a <strong>drop lid</strong> so the fish is basted without being turned. And add the miso <strong>in two stages</strong>: half at the start to season the fish and mask any smell, and half at the end for aroma and that glossy coating, because miso loses its fragrance if it boils too long. Taste before adding the second half; brands vary a lot in saltiness.",
+      "Serve it with plain rice, miso soup and something green, or with <a href=\"{{recipe:kinoko-takikomi-gohan}}\">mushroom rice</a> for a proper autumn dinner. If you like this, my <a href=\"{{recipe:nikujaga}}\">nikujaga</a> uses the same drop-lid method."
+    ],
+    "equipment": [
+      "Frying pan or shallow pan (20–24 cm), wide enough to hold the fish in one layer",
+      "Otoshibuta (drop lid) or a circle of baking paper with a small hole in the centre",
+      "Kettle for boiling water",
+      "Colander and a bowl of cold water",
+      "Small ladle and a spoon"
+    ],
+    "notes": [
+      "The fish is done when the flesh at the thickest part is opaque all the way through and flakes when pressed with chopsticks.",
+      "If the sauce gets too thick or starts to catch, add 1–2 tbsp water; if it's too thin, simmer for another 1–2 minutes. It thickens further as it cools.",
+      "Miso varies a lot. Red miso and Hatcho miso are saltier, so taste before adding the second half; white miso is sweeter and milder (see substitutions).",
+      "Mackerel fillets sometimes have a row of pin bones along the centre. Run a fingertip along the flesh and pull any out with tweezers before cooking.",
+      "Frozen fillets: thaw them overnight in the fridge, pat dry, then do the boiling-water step as usual."
+    ],
+    "subs": [
+      ["Mackerel", "Sardines (iwashi), Spanish mackerel (sawara) or yellowtail (buri) fillets; same method and timing"],
+      ["Sake", "Dry white wine, or water for no alcohol"],
+      ["Mirin", "1 tbsp sake + 1 tsp sugar (alcohol-free: 1 tbsp water + 1 tsp sugar)"],
+      ["Awase or red miso", "White miso: use 3 tbsp in total and reduce the sugar to 2 tsp"]
+    ],
+    "makeAhead": "This is better made ahead. Cook it completely the day before, let it cool in its sauce and refrigerate it so the flavour soaks right through. Reheat gently in a pan with 1–2 tbsp water, or covered in the microwave at 600 W for about 1½ minutes.",
+    "storage": "Keeps for 3 days in the fridge in its sauce. It freezes well for up to a month: put each piece in a freezer bag with its sauce, squeeze out the air and freeze flat. Thaw overnight in the fridge and reheat as above; it's also good cold in a bento."
+  },
+  "ja": {
+    "title": "サバの味噌煮",
+    "teaser": "脂ののった秋サバを、しょうがと一緒に甘辛いみそだれでつやつやに煮ました。フライパンひとつで30分。翌日はさらにおいしくなります。",
+    "intro": [
+      "秋の土曜日、わが家の朝は早いです。6時半には夫の大輔と春川鉄道ベイサイド線の始発に乗ってみのり港へ。7時にはキャリー付きのクーラーボックスを引いて、朝市の木箱の間を歩き回っています。10月のサバは一年でいちばんおいしい時期。「秋サバ」と呼ばれ、さばく包丁が脂で光るほどです。行きつけの「魚政」の竹田さんには、15年間ずっとおすすめの魚を教えてもらっています。毎回しょうがをひとかけおまけしてくれるのもうれしいところ。",
+      "サバの味噌煮は、月見温泉で宿を営んでいた祖母ふみが、いちばんよく作っていた料理のひとつです。お客さんは湯治に来る年配のご夫婦が多く、祖母いわく「これとご飯とお味噌汁があれば、みんな家に帰ってきたような顔をする」のだとか。こってり甘辛くてつやつや、しょうがの香りで後味はさっぱりです。",
+      { "h": "このレシピのおすすめポイント" },
+      { "ul": [
+        "フライパンひとつで30分。",
+        "サバは手頃で栄養たっぷり。翌日はさらにおいしくなります。",
+        "ご飯がすすみすぎる、濃厚な煮汁。"
+      ] },
+      { "h": "サバの選び方" },
+      "切り身なら、皮にハリとつやがあり、身がピンクがかって締まっているものを。縁が乾いたりくすんだりしているものは避けます。一尾なら、目が澄んでいておなかがかたいものを選びましょう。スーパーでよく見かける解凍のノルウェー産サバは脂がのっていて、この料理にぴったりです。ただし塩サバは使わないでください。すでに塩味がついているので、しょっぱくて食べられなくなります。",
+      { "h": "霜降りのひと手間" },
+      "つい省きたくなるけれど、省いてはいけないのが「霜降り」。サバに熱湯をかけて表面が白くなったら冷水に取り、汚れを落とす下処理です。たった2分で、生臭さのもとになる血やぬめりが取れます。竹田さんいわく「料理好きと料理上手の差はここ」だそうです。",
+      { "h": "おいしく作るコツ" },
+      "煮汁は必ず<strong>煮立ててから</strong>サバを入れます。表面がすぐに固まるので、身が崩れたり煮汁が濁ったりしません。<strong>落としぶた</strong>をすれば、裏返さなくても全体に味が回ります。そしてみそは<strong>2回に分けて</strong>加えること。最初の半量で下味をつけて臭みを消し、残りは仕上げに入れて香りとつやを出します。みそは長く煮ると香りが飛んでしまうからです。銘柄によって塩分がかなり違うので、残りのみそを入れる前に味見をしてください。",
+      "白いご飯とお味噌汁、青菜のおひたしを添えて。秋らしく<a href=\"{{recipe:kinoko-takikomi-gohan}}\">きのこの炊き込みご飯</a>と合わせるのもおすすめです。落としぶたで煮る<a href=\"{{recipe:nikujaga}}\">肉じゃが</a>も同じ要領で作れますよ。"
+    ],
+    "equipment": [
+      "フライパンまたは浅鍋（直径20〜24cm、サバが重ならずに並ぶ大きさ）",
+      "落としぶた（または中央に穴をあけたクッキングシート）",
+      "やかん（熱湯用）",
+      "ざると冷水を入れたボウル",
+      "小さめのおたま、スプーン"
+    ],
+    "notes": [
+      "いちばん厚い部分まで身が白く不透明になり、箸で押してほぐれれば煮上がりです。",
+      "煮汁が煮詰まりすぎたり焦げつきそうなときは水大さじ1〜2を足し、ゆるいときはさらに1〜2分煮詰めます。冷めるとさらにとろみがつきます。",
+      "みそは種類によって塩分がかなり違います。赤みそや八丁みそは塩分が強いので、残りを入れる前に味見を。白みそは甘くまろやかです（「代用」参照）。",
+      "切り身の中央に小骨が並んでいることがあります。指先でなぞって確かめ、骨抜きで抜いてから調理してください。",
+      "冷凍の切り身は前の晩から冷蔵庫で解凍し、水けをふいてから同様に霜降りします。"
+    ],
+    "subs": [
+      ["サバ", "イワシ、サワラ、ブリの切り身でも。作り方も時間も同じです"],
+      ["酒", "辛口の白ワイン。アルコールを避けたいときは水"],
+      ["みりん", "酒大さじ1＋砂糖小さじ1（アルコールなしなら水大さじ1＋砂糖小さじ1）"],
+      ["合わせみそ・赤みそ", "白みそなら合計大さじ3にして、砂糖を小さじ2に減らします"]
+    ],
+    "makeAhead": "作り置きのほうがおいしい料理です。前日に最後まで作り、煮汁ごと冷まして冷蔵庫へ。中まで味が染み込みます。温め直すときはフライパンに水大さじ1〜2を加えて弱火で、または電子レンジ（600W）でラップをして1分30秒ほど。",
+    "storage": "煮汁ごと冷蔵で3日。冷凍にも向いていて、1か月保存できます。1切れずつ煮汁と一緒に冷凍用保存袋に入れ、空気を抜いて平らにして冷凍。前の晩から冷蔵庫で解凍し、上記と同様に温め直します。冷めたままお弁当に入れてもおいしいです。"
+  },
+  "ingredients": [
+    { "items": [
+      { "q": 2, "u": "fillet", "en": "mackerel fillets, skin on (about 100 g each)", "ja": "サバ（切り身）" },
+      { "q": 15, "u": "g", "en": "ginger (a thumb-sized piece), half thinly sliced, half cut into fine needles", "ja": "しょうが（親指大）" },
+      { "q": 0.5, "u": "pc", "jaU": "本", "en": "green onion (naganegi), white part, cut into 4 cm lengths", "ja": "長ねぎ（白い部分）" }
+    ] },
+    { "group": { "en": "For simmering", "ja": "煮汁" }, "items": [
+      { "q": 150, "u": "ml", "en": "water", "ja": "水" },
+      { "q": 50, "u": "ml", "en": "sake", "ja": "酒" },
+      { "q": 1, "u": "tbsp", "en": "sugar", "ja": "砂糖" },
+      { "q": 1, "u": "tbsp", "en": "mirin", "ja": "みりん" },
+      { "q": 2, "u": "tbsp", "en": "miso (awase or red), divided", "ja": "みそ（合わせみそまたは赤みそ）" },
+      { "q": 1, "u": "tsp", "en": "soy sauce", "ja": "しょうゆ" }
+    ] }
+  ],
+  "steps": [
+    {
+      "en": "If you have a half-side fillet, cut it in half crosswise. Score a shallow cross (or one diagonal slit) in the skin of each piece, so the skin doesn't curl and the sauce soaks in. Thinly slice half the ginger; cut the other half into very fine needles and soak them in cold water.",
+      "ja": "半身の場合は半分に切ります。皮目に浅く十字（または斜めに1本）の切り込みを入れると、皮が縮まず味も染みやすくなります。しょうがは半量を薄切りに、残りはごく細いせん切り（針しょうが）にして水にさらします。"
+    },
+    {
+      "en": "Put the fish skin side up in a colander in the sink and pour boiling water from the kettle over it until the surface turns white, about 5 seconds per spot. Immediately transfer it to a bowl of cold water and gently rub off any blood, scales and slime with your fingers. Pat dry with paper towels.",
+      "ja": "霜降りをします。サバを皮目を上にしてざるにのせ、やかんの熱湯を回しかけて表面を白くします（1か所5秒ほど）。すぐに冷水に取り、指で血合いやうろこ、ぬめりをやさしく落とし、キッチンペーパーで水けをふきます。"
+    },
+    {
+      "en": "In the frying pan, combine the water, sake, sugar, mirin and sliced ginger and bring to the boil over medium heat.",
+      "ja": "フライパンに水、酒、砂糖、みりん、薄切りのしょうがを入れ、中火で煮立てます。"
+    },
+    {
+      "en": "Add the fish skin side up in a single layer, with the green onion alongside, and spoon the liquid over it. When it returns to the boil, skim off any scum. Dissolve 1 tbsp of the miso in a ladle of the hot liquid and pour it in around the fish.",
+      "ja": "サバを皮目を上にして重ならないように入れ、長ねぎも加えて煮汁を回しかけます。再び煮立ったらアクを取り、みその半量（大さじ1）をおたまの煮汁で溶いて、サバのまわりに回し入れます。"
+    },
+    {
+      "en": "Lay the drop lid on the fish and simmer over medium-low heat for 8 minutes. The liquid should bubble gently up around the edge of the lid.",
+      "ja": "落としぶたをして弱めの中火で8分煮ます。落としぶたのまわりで煮汁がふつふつと泡立つくらいが目安です。",
+      "timer": 8
+    },
+    {
+      "en": "Remove the drop lid. Dissolve the remaining miso with the soy sauce in a little of the liquid and stir it into the sauce. Simmer uncovered over medium heat for 3–5 minutes, tilting the pan and spooning the sauce over the fish constantly, until it has reduced to a glossy glaze that coats the back of a spoon. Don't turn the fish.",
+      "ja": "落としぶたを外します。残りのみそとしょうゆを煮汁少々で溶いて加え、中火で3〜5分、フライパンを傾けて煮汁をすくってはサバにかけながら煮詰めます。スプーンの背にからむくらいのとろみとつやが出たら完成。サバは裏返さないでください。",
+      "timer": 4
+    },
+    {
+      "en": "Serve the fish skin side up with the green onion, pour the sauce over and top with the drained ginger needles.",
+      "ja": "器にサバを皮目を上にして盛り、長ねぎを添えて煮汁をかけ、水けをきった針しょうがをのせます。"
+    }
+  ],
+  "nutrition": { "calories": 340, "carbs": 15, "protein": 22, "fat": 18, "satFat": 5, "cholesterol": 70, "sodium": 1050, "fiber": 1, "sugar": 11 },
+  "comments": [
+    {
+      "name": { "en": "Minori Port regular", "ja": "みのり港の常連" }, "date": "2026-10-03", "stars": 5,
+      "en": "Bought two fillets of aki saba at the morning market today and made this for dinner. The shimofuri step really does make a difference; no fishy smell at all.",
+      "ja": "今朝の朝市で秋サバを2切れ買って、夕飯に作りました。霜降り、本当に違いますね。生臭さがまったくありませんでした。"
+    },
+    {
+      "name": { "en": "Anna (Oslo)", "ja": "Anna（オスロ）" }, "date": "2026-09-19", "stars": 5,
+      "en": "We have so much mackerel here and I usually just fry it. This was a revelation. I used Japanese miso from the Asian shop and dry white wine instead of sake.",
+      "ja": "ノルウェーはサバが豊富で、いつもはただ焼くだけでした。これは衝撃的なおいしさ。アジア食材店で買った日本のみそを使い、酒の代わりに辛口の白ワインで作りました。"
+    },
+    {
+      "name": { "en": "James P. (Vancouver)", "ja": "James P.（バンクーバー）" }, "date": "2026-09-05", "stars": null,
+      "en": "All I have is white miso. Will that work?",
+      "ja": "家に白みそしかないのですが、大丈夫ですか？",
+      "reply": {
+        "en": "Yes! White miso is sweeter and less salty, so use 3 tbsp in total (1½ tbsp at each stage) and cut the sugar to 2 tsp. The sauce will be paler and milder, but still lovely.",
+        "ja": "大丈夫です！白みそは甘くて塩分が控えめなので、合計大さじ3（1回につき大さじ1と1/2）にして、砂糖を小さじ2に減らしてください。色は淡く、味もまろやかになりますが、おいしく作れます。"
+      }
+    },
+    {
+      "name": { "en": "Chibimaru", "ja": "ちびまる" }, "date": "2026-08-11", "stars": 4,
+      "en": "Delicious sauce, but my fish broke apart when I turned it over to cook the other side.",
+      "ja": "煮汁は最高でしたが、裏側も煮ようとひっくり返したら身が崩れてしまいました。",
+      "reply": {
+        "en": "No need to turn it at all! The drop lid and the spooning in step 6 cook and season the top. Mackerel is very soft once it's simmered, so leave it skin side up from start to finish and lift it out with a wide spatula.",
+        "ja": "裏返す必要はありません！落としぶたと、手順6で煮汁をかけることで上側にも火と味が入ります。煮たサバはとてもやわらかいので、最初から最後まで皮目を上にしたまま、幅の広いフライ返しで取り出してください。"
+      }
+    },
+    {
+      "name": { "en": "Hannah (Sydney)", "ja": "Hannah（シドニー）" }, "date": "2026-06-28", "stars": 3,
+      "en": "Still a bit fishy for my taste, though my husband loved it.",
+      "ja": "私には少し生臭く感じました。夫は大絶賛でしたが。",
+      "reply": {
+        "en": "Two things help: rinse the fish well in cold water after the boiling water and rub off all the dark blood along the centre, and make sure the liquid is boiling when the fish goes in. Very fresh fish matters most of all, so buy it on the day if you can. You can also double the ginger.",
+        "ja": "ポイントは2つ。熱湯をかけたあと冷水でよく洗い、中央の黒っぽい血合いをしっかり落とすこと。そして煮汁が煮立ってからサバを入れることです。何より鮮度が大切なので、できれば当日買ったものを。しょうがを倍にしてもいいですよ。"
+      }
+    },
+    {
+      "name": { "en": "Yoshie", "ja": "よしえ" }, "date": "2026-03-15", "stars": 5,
+      "en": "I make four fillets at once and freeze two in their sauce. Perfect for busy weekday lunches.",
+      "ja": "いつも4切れまとめて作って、2切れは煮汁ごと冷凍しています。忙しい平日のお昼に重宝します。"
+    },
+    {
+      "name": { "en": "Carlos (Madrid)", "ja": "Carlos（マドリード）" }, "date": "2025-11-30", "stars": 5,
+      "en": "Made it with fresh sardines from the market, as suggested. Same timing, and it was wonderful with rice.",
+      "ja": "おすすめどおり、市場で買った新鮮なイワシで作りました。時間も同じで、ご飯にとてもよく合いました。"
+    }
+  ]
+}

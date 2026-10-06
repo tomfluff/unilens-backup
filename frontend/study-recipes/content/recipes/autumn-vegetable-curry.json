@@ -1,0 +1,178 @@
+{
+  "slug": "autumn-vegetable-curry",
+  "categories": ["vegetarian"],
+  "cuisine": "japanese",
+  "diet": ["vegetarian", "vegan", "dairy-free"],
+  "difficulty": "medium",
+  "course": "main",
+  "times": { "prep": 25, "cook": 45 },
+  "servings": 4,
+  "image": "autumn-vegetable-curry",
+  "rating": 4.6,
+  "ratings": 241,
+  "published": "2023-10-06",
+  "updated": "2026-09-30",
+  "related": ["kinoko-takikomi-gohan", "kabocha-soup", "beef-stew", "agedashi-tofu"],
+  "en": {
+    "title": "Autumn Vegetable Curry (Japanese Curry from Scratch)",
+    "teaser": "Thick, glossy Japanese-style curry made from scratch with a homemade roux, no boxed curry blocks, and full of autumn vegetables: kabocha, sweet potato, eggplant, lotus root and shimeji. Vegan as written.",
+    "intro": [
+      "Hana's best friend Rina has been coming over for dinner since they were both in kindergarten, and her family is vegetarian. The first time she stayed, I proudly made curry, and only afterwards read the box of curry roux: beef fat and pork extract. I was mortified. Since then I make the roux from scratch with oil, flour and curry powder, and to be honest, all of us prefer it. It tastes brighter, and it's less salty than the boxed kind.",
+      "Japanese curry was also the most popular school lunch in my nine years as a school nutritionist. Our version at the elementary school used whatever the farms in the Kagami valley sent that week, and in October that meant kabocha, sweet potatoes and the first lotus root from the fields near Minori Bay. This curry is built on those autumn vegetables.",
+      { "h": "Why you'll love it" },
+      { "ul": [
+        "Real Japanese curry flavour without boxed roux: vegan, and you control the salt and the heat.",
+        "Five autumn vegetables, each cooked so it keeps its own texture.",
+        "Even better the next day, and the sauce freezes well."
+      ] },
+      { "h": "Choosing the vegetables" },
+      "Pick firm, glossy eggplants and a heavy kabocha. For lotus root, look for plump sections with pale, unbruised skin and closed ends; open ends let dirt inside. Cut everything to the sizes in the steps (my <a href=\"{{guide:knife-cuts}}\">knife cuts guide</a> shows half-moons and chunks). The order of cooking matters more than the cutting: lotus root and sweet potato go in first, kabocha later so it doesn't collapse, and the eggplant and shimeji are fried separately and added at the end.",
+      { "h": "Making the roux" },
+      "A curry roux is just oil and flour cooked slowly until it's the colour of milky tea, then curry powder stirred in off the heat. Keep the heat low and keep stirring: it takes 8–10 minutes, and if it scorches, the whole pot tastes bitter. Add the curry powder only after you turn the heat off; the spices toast in the residual heat but burn on a direct flame. To add it to the curry, always mix a ladle of hot broth into the roux first, never the other way round, and you won't get lumps.",
+      { "h": "Tips for success" },
+      "The flavour comes from the onions. Cook them for a full 15 minutes until they're deep golden and jammy, adding a spoonful of water if they catch. If you're in a hurry, microwave the sliced onions at 600 W for 5 minutes first and they caramelise in about half the time. Grated apple adds the gentle sweetness Japanese curry is known for, and garam masala at the very end brings back the fragrance that long simmering takes away.",
+      "For the stock I use a vegetable stock cube, or the kombu and shiitake dashi from my <a href=\"{{guide:dashi}}\">dashi guide</a>. Serve it over plain rice (see the <a href=\"{{guide:rice-water-ratios}}\">rice water ratios guide</a>; 3 gō of rice feeds four curry-lovers), or with my <a href=\"{{recipe:kinoko-takikomi-gohan}}\">autumn mushroom rice</a> if you want to go all in on the season."
+    ],
+    "equipment": ["Heavy-bottomed pot, about 22 cm, with a lid", "Small frying pan (for the roux and the eggplant)", "Wooden spatula", "Whisk", "Grater"],
+    "notes": [
+      "The onions need a full 15 minutes; that's where the depth comes from. Short on time, microwave the sliced onions loosely covered at 600 W for 5 minutes before frying, and they'll take about 8 minutes in the pot.",
+      "If the roux smells burnt or has black specks, start again; burnt roux makes the whole pot bitter.",
+      "Japanese curry powder is medium-hot. For children, use 1½ tbsp and put chilli flakes on the table for the adults. My son Sota (9) eats it that way.",
+      "The curry thickens as it cools and even more overnight. Loosen it with a little water when you reheat it.",
+      "Food safety: don't leave a pot of curry out overnight. Thick stews cool slowly, and spore-forming bacteria (Clostridium perfringens) multiply in them. Divide it into shallow containers, refrigerate within 2 hours, and reheat until bubbling, stirring to the bottom.",
+      "The nutrition panel is for the curry only, without rice."
+    ],
+    "subs": [
+      ["Lotus root", "Burdock root (gobō), or carrot in thick slices"],
+      ["Sweet potato", "Potato (May Queen holds its shape); or leave it out if you plan to freeze the curry"],
+      ["Grated apple", "1 tbsp mango chutney, or 1 tbsp honey (then it's no longer vegan)"],
+      ["All-purpose flour", "Rice flour (komeko) for a gluten-free roux; also use gluten-free tamari instead of soy sauce"],
+      ["Vegetable stock", "Kombu and dried shiitake dashi, or water with a little more salt at the end"]
+    ],
+    "makeAhead": "Curry is better the next day: make it completely, cool it quickly and refrigerate it. You can also make the roux (with the curry powder) up to a week ahead and keep it in a jar in the fridge; it will be stiff, so mix it with hot broth as in step 7.",
+    "storage": "Keeps 3 days in the fridge. To freeze, take out the sweet potato (it turns mushy and watery when frozen) and freeze the rest for up to a month. Thaw overnight in the fridge and reheat in a pan until bubbling, stirring often and adding a splash of water."
+  },
+  "ja": {
+    "title": "秋野菜のカレー（手作りルウ）",
+    "teaser": "市販のルウを使わず、小麦粉と油とカレー粉でルウから手作りする、とろりとした日本のカレー。かぼちゃ、さつまいも、なす、れんこん、しめじと秋野菜たっぷりで、このままでヴィーガン対応です。",
+    "intro": [
+      "花の親友のりなちゃんは、幼稚園のころからよくわが家に晩ごはんを食べに来ます。りなちゃんのおうちはベジタリアン。初めて泊まりに来た日、張り切ってカレーを作ったあとで市販のルウの箱を見たら、原材料に牛脂と豚肉エキス……。本当に申し訳なくて、それ以来、ルウは油と小麦粉とカレー粉で手作りしています。正直に言うと、今では家族みんなこちらのほうが好き。香りが立って、市販のルウより塩分も控えめです。",
+      "カレーは、私が管理栄養士として働いた9年間、いちばん人気の給食メニューでもありました。小学校のカレーは、その週に鏡川の谷の農家さんから届いた野菜で作るのが決まり。10月なら、かぼちゃ、さつまいも、そしてみのり湾近くの田んぼで採れる走りのれんこんです。このカレーは、そんな秋野菜が主役です。",
+      { "h": "このレシピのおすすめポイント" },
+      { "ul": [
+        "市販のルウなしで、ちゃんと日本のカレーの味。ヴィーガン対応で、塩分も辛さも自分で調整できます。",
+        "5種類の秋野菜を、それぞれの食感が残るように火を通します。",
+        "翌日はさらにおいしく、ソースは冷凍もできます。"
+      ] },
+      { "h": "野菜の選び方" },
+      "なすはハリとつやのあるもの、かぼちゃはずっしり重いものを。れんこんはふっくらとして皮に傷がなく、両端の穴がふさがっているものを選びます。端が開いていると中に泥が入っています。切り方は工程に書いた大きさで（半月切りや乱切りは<a href=\"{{guide:knife-cuts}}\">切り方ガイド</a>を参考に）。大事なのは切り方より入れる順番です。れんこんとさつまいもは最初に、かぼちゃは煮崩れないようにあとから、なすとしめじは別に焼いて最後に加えます。",
+      { "h": "ルウの作り方" },
+      "カレールウは、油と小麦粉をミルクティーのような色になるまでじっくり炒め、火を止めてからカレー粉を混ぜたもの。弱火で絶えず混ぜながら8〜10分。焦がすと鍋全体が苦くなってしまいます。カレー粉は必ず火を止めてから。余熱でちょうどよく香りが立ちますが、直火だとすぐに焦げます。カレーに加えるときは、ルウに熱い煮汁をお玉1杯ずつ加えてのばしてから鍋に戻します。逆にルウを直接鍋に入れると、ダマになりやすいです。",
+      { "h": "上手に作るコツ" },
+      "おいしさの決め手は玉ねぎ。焦げつきそうなら水を大さじ1ずつ足しながら、しっかり15分、濃いあめ色でとろりとするまで炒めます。急ぐときは、薄切りにした玉ねぎを先に電子レンジ（600W）で5分加熱すると、炒め時間が約半分になります。すりおろしたりんごで日本のカレーらしいやさしい甘みを、仕上げのガラムマサラで煮込むうちに飛んでしまう香りをプラスします。",
+      "スープは野菜ブイヨンのキューブか、<a href=\"{{guide:dashi}}\">だしガイド</a>の昆布と干ししいたけの精進だしで。ごはんは白いごはんで（炊き方は<a href=\"{{guide:rice-water-ratios}}\">お米と水の割合ガイド</a>を参考に。カレー好き4人なら3合）。秋を満喫したいなら、<a href=\"{{recipe:kinoko-takikomi-gohan}}\">きのこの炊き込みご飯</a>に合わせるのもおすすめです。"
+    ],
+    "equipment": ["厚手の鍋（直径約22cm、ふたつき）", "小さめのフライパン（ルウとなす用）", "木べら", "泡立て器", "おろし金"],
+    "notes": [
+      "玉ねぎはしっかり15分炒めてください。ここでコクが決まります。急ぐときは、薄切りの玉ねぎにふんわりラップをして電子レンジ（600W）で5分加熱してから炒めると、鍋で8分ほどで仕上がります。",
+      "ルウが焦げくさくなったり黒い点が出たりしたら作り直しを。焦げたルウは鍋全体を苦くしてしまいます。",
+      "カレー粉は中辛くらいの辛さです。子ども向けには大さじ1と1/2にして、大人は食卓で一味唐辛子を。9歳の蒼太はこの方法で食べています。",
+      "カレーは冷めるととろみが増し、一晩おくとさらに濃くなります。温め直すときは水を少し足してのばしてください。",
+      "食中毒予防：カレーを鍋のまま一晩常温に置かないでください。とろみのある煮込みは冷めにくく、ウェルシュ菌が増えやすいのです。浅い容器に小分けにして2時間以内に冷蔵庫へ。温め直しは底からよく混ぜながら、ぐつぐつするまで加熱します。",
+      "栄養成分はカレーのみで、ごはんは含みません。"
+    ],
+    "subs": [
+      ["れんこん", "ごぼう、または厚めに切ったにんじん"],
+      ["さつまいも", "じゃがいも（メークインなら煮崩れにくい）。冷凍する予定なら入れなくてもOK"],
+      ["りんごのすりおろし", "マンゴーチャツネ大さじ1、またははちみつ大さじ1（その場合ヴィーガンではなくなります）"],
+      ["薄力粉（ルウ用）", "米粉でグルテンフリーのルウに。しょうゆもグルテンフリーのたまりじょうゆに"],
+      ["野菜ブイヨン", "昆布と干ししいたけの精進だし、または水（仕上げに塩を少し多めに）"]
+    ],
+    "makeAhead": "カレーは翌日のほうがおいしいので、前日に仕上げて手早く冷まし、冷蔵庫へ。ルウ（カレー粉を混ぜたもの）だけなら1週間前から作っておけます。瓶に入れて冷蔵保存すると固くなるので、工程7と同じように熱い煮汁でのばしてから使ってください。",
+    "storage": "冷蔵で3日。冷凍する場合は、さつまいもを取り除いて（冷凍するとぐずぐずになり水っぽくなります）、残りを1か月保存できます。前の晩に冷蔵庫に移して解凍し、水を少し足して、よく混ぜながら鍋でぐつぐつするまで温め直します。"
+  },
+  "ingredients": [
+    { "group": { "en": "Vegetables", "ja": "野菜" }, "items": [
+      { "q": 2, "u": "pc", "en": "onions (about 400 g), thinly sliced", "ja": "玉ねぎ（約400g、薄切り）" },
+      { "q": 2, "u": "clove", "en": "garlic, grated", "ja": "にんにく（すりおろし）" },
+      { "q": 1, "u": "tbsp", "en": "ginger, grated", "ja": "しょうが（すりおろし）" },
+      { "q": 0.5, "u": "pc", "en": "apple (about 120 g), peeled and grated", "ja": "りんご（約120g、皮をむいてすりおろす）" },
+      { "q": 200, "u": "g", "en": "kabocha, seeds removed, in 3 cm chunks", "ja": "かぼちゃ（種とわたを除き、3cm角）" },
+      { "q": 200, "u": "g", "en": "sweet potato (1 medium), in 1.5 cm half-moons", "ja": "さつまいも（中1本、1.5cm厚の半月切り）" },
+      { "q": 2, "u": "pc", "jaU": "本", "en": "Japanese eggplants (about 160 g), in 2 cm chunks", "ja": "なす（約160g、2cmの乱切り）" },
+      { "q": 100, "u": "g", "en": "lotus root, peeled, in 7 mm half-moons", "ja": "れんこん（皮をむき、7mm厚の半月切り）" },
+      { "q": 1, "u": "pack", "en": "shimeji mushrooms (about 100 g), separated", "ja": "しめじ（約100g、小房に分ける）" },
+      { "q": 2, "u": "tbsp", "en": "vegetable oil, for the onions and eggplant", "ja": "サラダ油（玉ねぎ・なす用）" }
+    ]},
+    { "group": { "en": "Roux", "ja": "カレールウ" }, "items": [
+      { "q": 3, "u": "tbsp", "en": "vegetable oil", "ja": "サラダ油" },
+      { "q": 40, "u": "g", "us": [5, "tbsp"], "en": "all-purpose flour", "ja": "薄力粉" },
+      { "q": 2, "u": "tbsp", "en": "curry powder (Japanese, such as S&B)", "ja": "カレー粉" }
+    ]},
+    { "group": { "en": "Broth and seasoning", "ja": "スープ・調味料" }, "items": [
+      { "q": 700, "u": "ml", "en": "vegetable stock (or kombu-shiitake dashi)", "ja": "野菜ブイヨン（または精進だし）" },
+      { "q": 1, "u": "leaf", "en": "bay leaf", "ja": "ローリエ" },
+      { "q": 1, "u": "tbsp", "en": "soy sauce", "ja": "しょうゆ" },
+      { "q": 2, "u": "tbsp", "en": "ketchup", "ja": "トマトケチャップ" },
+      { "q": 0.5, "u": "tsp", "en": "salt, to taste", "ja": "塩（味をみて調整）" },
+      { "q": 1, "u": "tsp", "en": "garam masala", "ja": "ガラムマサラ" }
+    ]},
+    { "group": { "en": "To serve", "ja": "盛りつけ" }, "items": [
+      { "q": null, "en": "steamed Japanese rice (3 gō of raw rice for 4)", "ja": "温かいごはん（4人分で米3合）", "free": { "en": "for 4", "ja": "4人分" } },
+      { "q": null, "en": "fukujinzuke pickles (optional)", "ja": "福神漬け（お好みで）", "free": { "en": "to taste", "ja": "適量" } }
+    ]}
+  ],
+  "steps": [
+    { "en": "Prepare the vegetables: soak the sweet potato in water for 5 minutes, and the lotus root in water with a few drops of vinegar for 5 minutes so it stays white, then drain both. Cut the kabocha into 3 cm chunks and separate the shimeji. Cut the eggplant just before frying, as it browns once cut.",
+      "ja": "野菜の下ごしらえをします。さつまいもは水に5分、れんこんは酢を数滴たらした水に5分さらして（白く仕上がります）、それぞれ水けをきります。かぼちゃは3cm角に切り、しめじは小房に分けます。なすは切ると変色するので、焼く直前に切ります。" },
+    { "en": "Heat 1 tbsp of the oil in the pot over medium heat. Add the onions with a pinch of salt and cook, stirring often, for 5 minutes until soft, then turn to medium-low and cook 10 minutes more, until deep golden brown, jammy and reduced to about a third. If they start to catch, add 1 tbsp water and scrape the bottom. Add the garlic and ginger for the last minute.",
+      "ja": "鍋にサラダ油大さじ1を中火で熱し、玉ねぎと塩ひとつまみを入れて、よく混ぜながら5分、しんなりするまで炒めます。中弱火にしてさらに10分、濃いあめ色でとろりとし、かさが1/3ほどになるまで炒めます。焦げつきそうなら水大さじ1を加えて鍋底をこそげます。最後の1分でにんにくとしょうがを加えます。", "timer": 15 },
+    { "en": "Meanwhile, make the roux: put the 3 tbsp oil and the flour in a small frying pan over low heat and cook, stirring constantly, for 8–10 minutes, until it's the colour of milky tea and smells nutty. Turn off the heat, stir in the curry powder for 30 seconds, and scrape the roux into a bowl.",
+      "ja": "その間にルウを作ります。小さめのフライパンにサラダ油大さじ3と薄力粉を入れて弱火にかけ、絶えず混ぜながら8〜10分、ミルクティーのような色になって香ばしい香りがするまで炒めます。火を止めてカレー粉を加え、30秒ほど混ぜたら、ボウルに移します。", "timer": 10 },
+    { "en": "Wipe out the frying pan. Cut the eggplant and toss it with the remaining 1 tbsp oil before it goes in the pan (so it doesn't soak it all up). Fry over medium-high heat, skin side down first, for 3 minutes until glossy and golden, add the shimeji and cook 2 minutes more, then set aside.",
+      "ja": "フライパンをさっとふきます。なすを切り、焼く前に残りのサラダ油大さじ1をからめておきます（油を吸いすぎるのを防ぎます）。中強火で皮目から3分、つやが出て焼き色がつくまで焼き、しめじを加えてさらに2分炒めたら取り出しておきます。", "timer": 5 },
+    { "en": "Add the stock, grated apple, bay leaf, sweet potato and lotus root to the onion pot. Bring to the boil, skim off any foam, then cover and simmer over medium-low heat for 10 minutes.",
+      "ja": "玉ねぎの鍋に、野菜ブイヨン、すりおろしたりんご、ローリエ、さつまいも、れんこんを加えます。煮立ったらアクを取り、ふたをして中弱火で10分煮ます。", "timer": 10 },
+    { "en": "Add the kabocha, cover again and simmer for 8 minutes, until a skewer goes in easily but the pieces still hold their shape.",
+      "ja": "かぼちゃを加えて再びふたをし、8分煮ます。竹串がすっと通り、まだ形が崩れていない状態が目安です。", "timer": 8 },
+    { "en": "Ladle about 200 ml of the hot broth into the bowl of roux and whisk until it's a smooth paste with no lumps, then pour it back into the pot, stirring. Add the eggplant and shimeji, soy sauce and ketchup. Simmer uncovered over low heat for 10 minutes, gently stirring the bottom every couple of minutes (it catches easily), until the curry coats the back of a spoon.",
+      "ja": "ルウのボウルに熱い煮汁をお玉で約200ml加え、泡立て器でダマのないなめらかなペースト状にのばしてから、混ぜながら鍋に戻します。なすとしめじ、しょうゆ、ケチャップを加え、ふたをせずに弱火で10分煮込みます。焦げつきやすいので、2分おきくらいに鍋底からやさしく混ぜてください。スプーンの背にとろりとからむくらいになればOKです。", "timer": 10 },
+    { "en": "Taste and add salt, up to ½ tsp. Stir in the garam masala, turn off the heat and remove the bay leaf. If it's too thick, add water 50 ml at a time; if too thin, simmer a few minutes more uncovered. Serve over rice, with fukujinzuke on the side.",
+      "ja": "味をみて塩（小さじ1/2まで）でととのえます。ガラムマサラを加えて混ぜ、火を止めてローリエを取り出します。とろみが強すぎるときは水を50mlずつ、ゆるいときはふたをせずに数分煮詰めて調整します。ごはんにかけて、お好みで福神漬けを添えます。" }
+  ],
+  "nutrition": { "calories": 380, "carbs": 58, "protein": 6, "fat": 16, "satFat": 1.5, "cholesterol": 0, "sodium": 1020, "fiber": 9, "sugar": 18 },
+  "comments": [
+    { "name": { "en": "Aiko (Kyoto)", "ja": "あいこ（京都）" }, "date": "2026-10-01", "stars": 5,
+      "en": "I was nervous about making roux from scratch, but it was easy. My kids said it was better than the boxed kind, and it was so much less greasy.",
+      "ja": "ルウから手作りなんてと緊張しましたが、簡単でした。子どもたちは市販のルウよりおいしいと言っていて、脂っこさも全然違いました。" },
+    { "name": { "en": "Tom & Lisa (Portland)", "ja": "Tom & Lisa（ポートランド）" }, "date": "2026-09-22", "stars": null,
+      "en": "Is this really vegan? We'd like to bring it to a potluck with vegan friends.",
+      "ja": "これは本当にヴィーガンですか？ヴィーガンの友人が来る持ち寄りパーティーに持って行きたいのです。",
+      "reply": { "en": "Yes, as written! Just check the label on your stock cube, as some contain milk powder or chicken fat. And if you like to add a splash of Worcestershire sauce, note that Lea & Perrins contains anchovies (Japanese Worcestershire sauces like Bull-Dog generally don't).",
+        "ja": "はい、レシピ通りならヴィーガンです！ただ、ブイヨンキューブには乳成分や鶏脂が入っているものもあるので、原材料表示を確認してください。ウスターソースを加える場合、Lea & Perrinsにはアンチョビが入っています（ブルドックなど日本のウスターソースには、一般的に入っていません）。" } },
+    { "name": { "en": "Takkun", "ja": "たっくん" }, "date": "2026-09-14", "stars": 4,
+      "en": "Great taste, but my roux turned into lumps when it went into the pot.",
+      "ja": "味は最高ですが、鍋に入れたらルウがダマになってしまいました。",
+      "reply": { "en": "That happens when the roux goes straight into the pot. Do it the other way round: ladle the hot broth into the roux bowl, whisk it smooth, then pour it back. If you already have lumps, press them through a sieve with a spoon, or give the sauce a few pulses with a hand blender.",
+        "ja": "ルウを直接鍋に入れるとダマになりやすいんです。逆に、ルウのボウルに熱い煮汁を入れて泡立て器でなめらかにしてから鍋に戻してください。もうダマになってしまったら、こし器に入れてスプーンで押しつぶすか、ハンドブレンダーで数回攪拌すると直ります。" } },
+    { "name": { "en": "Sunita (Leicester)", "ja": "Sunita（レスター）" }, "date": "2026-09-03", "stars": 5,
+      "en": "So different from the curries I grew up with, but delicious in its own way. I added a can of chickpeas with the kabocha for extra protein, and a little more garam masala.",
+      "ja": "私が慣れ親しんだインドのカレーとは全然違いますが、これはこれでとてもおいしいです。たんぱく質を足したくて、かぼちゃと一緒にひよこ豆の缶詰を1缶加え、ガラムマサラも少し増やしました。" },
+    { "name": { "en": "Emi", "ja": "えみ" }, "date": "2026-08-25", "stars": null,
+      "en": "The bottom of the pot burned after I added the roux. Is the curry ruined?",
+      "ja": "ルウを入れたあと、鍋底が焦げてしまいました。もうだめでしょうか？",
+      "reply": { "en": "Usually not! Don't stir or scrape the burnt layer: pour the curry into a clean pot, leaving the bottom behind, and taste it. If it only tastes slightly smoky, it's fine. Next time keep the heat at low once the roux is in and stir along the bottom every couple of minutes; a heavy pot helps a lot.",
+        "ja": "たいていは大丈夫です！焦げた部分はこそげたり混ぜたりせず、上の部分だけを別の鍋に移して味見してみてください。少し香ばしい程度なら問題ありません。次回は、ルウを入れたら弱火にして、2分おきに鍋底から混ぜてください。厚手の鍋を使うとかなり違いますよ。" } },
+    { "name": { "en": "James (Brisbane)", "ja": "James（ブリスベン）" }, "date": "2026-02-10", "stars": 3,
+      "en": "Too sweet for my taste with the apple, kabocha and sweet potato all together.",
+      "ja": "りんご、かぼちゃ、さつまいもが全部入ると、私には甘すぎました。",
+      "reply": { "en": "Fair point, James. Japanese curry is on the sweet side. Try half the apple, add a teaspoon of rice vinegar at the end, and add chilli if you like heat; swapping the sweet potato for potato also helps.",
+        "ja": "ご意見ありがとうございます。日本のカレーは甘めですよね。りんごを半量にして、仕上げに米酢を小さじ1、辛いのがお好きなら唐辛子を足してみてください。さつまいもをじゃがいもに替えるのも効果的です。" } },
+    { "name": { "en": "Harukawa veggie mum", "ja": "春川のベジ母" }, "date": "2025-10-19", "stars": 5,
+      "en": "I make a double batch and freeze half without the sweet potato, as you suggest. Perfect for busy days.",
+      "ja": "倍量で作って、書いてある通りさつまいもを除いて半分を冷凍しています。忙しい日にぴったりです。" },
+    { "name": { "en": "Marco (Milan)", "ja": "Marco（ミラノ）" }, "date": "2024-11-02", "stars": 5,
+      "en": "I found S&B curry powder and frozen lotus root at the Asian shop here. Frozen lotus root works fine; add it straight from frozen.",
+      "ja": "こちらのアジア食材店でS&Bのカレー粉と冷凍れんこんを見つけました。冷凍れんこんでも問題なく、凍ったまま入れればOKでした。" }
+  ]
+}

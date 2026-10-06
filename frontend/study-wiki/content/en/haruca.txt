@@ -1,0 +1,23 @@
+title: HaruCa
+short: Contactless IC card of the Harukawa Railway
+type: stub
+categories: ic-cards; rail
+infobox: HaruCa
+ib-subtitle: ハルカ
+ib: Issuer | [[harukawa-railway|Harukawa Railway]]
+ib: Launched | 1 March 2012
+ib: Valid on | HaruTetsu trains<br>Harukawa City Bus<br>Tsukimi Bus
+ib: Not valid on | Airport limousine bus
+ib: Cards issued | about 410,000 (2024)
+ib: Deposit | ¥500
+ib: Maximum balance | ¥20,000
+ib: Mobile version | Mobile HaruCa (2024)
+---
+'''HaruCa''' (ハルカ, ''Haruka'') is a rechargeable contactless IC card issued by the [[harukawa-railway|Harukawa Railway]] (HaruTetsu) in [[harukawa|Harukawa]], [[minori-prefecture|Minori Prefecture]]. It was launched on 1 March 2012 on both the [[kagami-line|Kagami Line]] and the [[bayside-line|Bayside Line]]. It is also accepted on the municipal Harukawa City Bus and on Tsukimi Bus in the upper valley, but not on the airport limousine bus to [[?Minori Airport]], and it can be used as electronic money in shops in the stations, including Harukawa Central Terrace. About 410,000 cards were in circulation in 2024.<ref name="factbook">Harukawa Railway (2025). ''HaruTetsu Fact Book 2025''. Harukawa Railway Co., p. 22.</ref>
+
+A card costs a refundable deposit of ¥500 and can hold up to ¥20,000. Fares paid with HaruCa are up to ¥18 cheaper than paper tickets: Harukawa Central to Tsukimi Onsen, for example, costs ¥715 instead of ¥730. Child cards are charged half fare, and commuter passes can be loaded onto the card. Cards are sold from ticket machines and at the HaruCa service counter of [[harukawa-central-station|Harukawa Central Station]]. HaruCa pays the ordinary fare only; the limited express [[tsukikage|Tsukikage]] also needs a reserved-seat ticket. A phone version, Mobile HaruCa, was introduced in 2024 and can also hold ticketless Tsukikage reservations.<ref>"HaruCa goes mobile". ''Harukawa Nippō'', 1 April 2024, p. 6.</ref>
+
+The name combines ''Haru'' (from Harukawa) and "Card", and is also read as the word ''haruka'' (遥か, "far away").
+
+== References ==
+{{reflist}}

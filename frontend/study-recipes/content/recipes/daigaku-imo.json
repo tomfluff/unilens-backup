@@ -1,0 +1,230 @@
+{
+  "slug": "daigaku-imo",
+  "categories": ["baking", "vegetarian"],
+  "cuisine": "japanese",
+  "diet": ["vegan", "vegetarian", "dairy-free"],
+  "difficulty": "easy",
+  "course": "snack",
+  "times": { "prep": 10, "cook": 25 },
+  "servings": 4,
+  "image": "daigaku-imo",
+  "rating": 4.7,
+  "ratings": 356,
+  "published": "2020-09-25",
+  "updated": "2026-09-22",
+  "related": ["chochin-dango", "kabocha-pudding", "chicken-karaage", "yuzu-pound-cake"],
+  "en": {
+    "title": "Daigaku-imo (Candied Sweet Potatoes with Black Sesame)",
+    "teaser": "Crisp-fried chunks of Japanese sweet potato tossed in a thin, glossy soy-sugar syrup and black sesame. A Lantern Festival favourite, with an easy cold-oil method if deep-frying makes you nervous.",
+    "intro": [
+      "Autumn in Harukawa smells of three things: the yuzu orchards, the roasted-chestnut carts outside Harukawa Central station, and sweet potatoes. From late September the sandy fields along the edge of Minori Bay are dug up, and the farmers bring their muddy, purple-skinned potatoes to the morning market by the crateful. The Hamada family's stall sells them for 300 yen a bag and always slips in an extra one for Sota, who has never once said no to <strong>daigaku-imo</strong>.",
+      "Daigaku-imo means 'university potatoes'. The most common story is that they were sold near universities in Tokyo in the early twentieth century and were cheap and filling enough for hungry students. Whatever the truth, here they are a festival classic: at the Lantern Festival there is always a stall selling paper cups of them, glistening and sprinkled with black sesame, between the dango and the karaage. My grandmother Fumi served them at her inn as a teatime snack after a soak in the hot spring, and they were the first thing I ever learned to fry.",
+      { "h": "Why you'll love it" },
+      { "ul": [
+        "Crisp outside, fluffy inside, with a thin glossy syrup that crackles.",
+        "A handful of ingredients, and the cold-oil method needs very little attention.",
+        "Vegan, and as good at room temperature as warm."
+      ] },
+      { "h": "Choosing the sweet potatoes" },
+      "Look for Japanese sweet potatoes with purple-red skin and pale yellow flesh. <em>Naruto Kintoki</em> and <em>Beni Azuma</em> are fluffy and hold their shape, which is ideal. <em>Beni Haruka</em> and <em>Silk Sweet</em> are sweeter and moister, almost creamy, and can turn soft, so cut them a little bigger. Choose firm, heavy potatoes without soft spots. The orange-fleshed sweet potatoes sold as 'yams' abroad are too wet for this. Cut them into chunky <em>rangiri</em> wedges (see my <a href=\"{{guide:knife-cuts}}\">knife cuts guide</a>) so every piece has plenty of edges to catch the syrup.",
+      { "h": "Frying without fear" },
+      "If deep-frying makes you nervous, try the cold-oil method: put the potatoes in a frying pan, pour in oil to come halfway up, and only then turn on the heat. Nothing splashes as they go in, you use less oil, and the slow rise in temperature makes the inside especially sweet, because the potato's own enzymes turn starch into sugar most actively between about 60 and 75°C. For the classic method, a thermometer helps: 160–170°C (320–340°F).",
+      { "h": "Tips for success" },
+      "Soak the cut potatoes for 10 minutes and dry them very well. The syrup is the only tricky part: boil it just until the bubbles get bigger and slower, about 2 minutes. Boil it longer and it sets like hard candy as it cools. Having a festival night at home? Serve them with <a href=\"{{recipe:chochin-dango}}\">lantern dango</a>, and for another autumn sweet, try my <a href=\"{{recipe:kabocha-pudding}}\">kabocha pudding</a>."
+    ],
+    "equipment": [
+      "Frying pan, 24–26 cm, for the cold-oil method; or a deep pot and a thermometer for deep-frying",
+      "Long chopsticks or tongs, and a bamboo skewer to test doneness",
+      "Wire rack or a tray lined with kitchen paper",
+      "Baking paper for cooling"
+    ],
+    "notes": [
+      "Doneness test: a bamboo skewer should slide into the thickest piece with no resistance before you crisp them up.",
+      "If the syrup turns hard and glassy, it boiled too long. Return the pan to low heat with 1 tbsp water and stir until it melts, then toss again. If it is runny and won't cling, boil it 30 seconds more.",
+      "A few drops of rice vinegar (about ¼ tsp) in the syrup help stop it crystallising if your kitchen is cold or you are doubling the batch.",
+      "Oil safety: dry the potatoes well so the oil doesn't spit, never leave hot oil unattended, and let it cool completely before straining it for reuse.",
+      "Oven version (no frying): toss the potatoes with 2 tbsp oil and bake on baking paper at 200°C (400°F), or 180°C for a fan oven, for 25–30 minutes, turning once, then toss them in the syrup."
+    ],
+    "subs": [
+      ["Mirin", "1 tbsp sake + 1 tsp sugar (alcohol-free: 1 tbsp water + 1 tsp sugar)"],
+      ["Sugar", "Replace up to half with honey; the syrup stays softer and stickier"],
+      ["Black sesame", "White sesame, or chopped toasted walnuts"],
+      ["Japanese sweet potatoes", "Korean goguma or any purple-skinned, pale-fleshed sweet potato; orange-fleshed 'yams' turn mushy"]
+    ],
+    "makeAhead": "Fry the potatoes up to 4 hours ahead and leave them uncovered on a rack; make the syrup and toss just before serving. Finished daigaku-imo also pack well into a bento the next day.",
+    "storage": "Keeps for 2 days in an airtight container in the fridge. The syrup goes firm and slightly crunchy when cold, which plenty of people (Sota included) love; to soften, microwave at 600 W for 20–30 seconds. Freezes for a month, spread out so the pieces don't stick; thaw at room temperature."
+  },
+  "ja": {
+    "title": "大学いも",
+    "teaser": "カリッと揚げたさつまいもに、しょうゆ風味の甘い蜜と黒ごまをからめて。灯籠まつりでも人気のおやつです。揚げ物が苦手な方には、冷たい油から揚げ焼きにする方法もどうぞ。",
+    "intro": [
+      "秋の春川は、3つの香りでいっぱいになります。鏡川の谷のゆず畑、春川中央駅前の焼き栗の屋台、そしてさつまいも。9月の終わりになると、みのり湾沿いの砂地の畑でいも掘りが始まり、泥のついた赤紫色のさつまいもが、朝市に箱ごと運ばれてきます。浜田さんちの屋台ではひと袋300円。いつも蒼太のためにおまけを1本入れてくれます。大学いもと聞いて、蒼太が「いらない」と言ったことは一度もありません。",
+      "「大学いも」という名前の由来は諸説ありますが、よく聞くのは、大正から昭和のはじめにかけて東京の大学のそばで売られていて、安くておなかがふくれるので学生に人気だった、という話。真偽はともかく、春川ではおまつりの定番です。灯籠まつりでも、だんごや唐揚げの屋台に並んで、黒ごまをまぶしてつやつや光る大学いもを紙カップで売るお店が必ずあります。祖母のふみは、温泉上がりのお客さんにお茶うけとして出していました。私が生まれて初めて揚げた料理も、この大学いもです。",
+      { "h": "このレシピのいいところ" },
+      { "ul": [
+        "外はカリッ、中はほっくり。薄い蜜がパリッと固まります。",
+        "材料は少しだけ。冷たい油から揚げる方法なら、ほとんど手がかかりません。",
+        "動物性の材料は不使用。冷めても温かくてもおいしいです。"
+      ] },
+      { "h": "さつまいもの選び方" },
+      "皮が赤紫色で、中が淡い黄色の日本のさつまいもを選びましょう。「鳴門金時」や「紅あずま」はほくほくで煮崩れしにくく、大学いもにぴったり。「紅はるか」や「シルクスイート」は甘みが強くしっとりなめらかで、やわらかくなりやすいので、少し大きめに切ってください。かたくて重みがあり、やわらかい部分のないものを。海外で「ヤム」として売られている中がオレンジ色のものは、水分が多すぎて向きません。切り方は大きめの乱切りに（<a href=\"{{guide:knife-cuts}}\">切り方ガイド</a>参照）。角が多いほど蜜がよくからみます。",
+      { "h": "揚げ物がこわい方へ" },
+      "たっぷりの油で揚げるのが不安なら、冷たい油から揚げる方法がおすすめです。フライパンにさつまいもを並べ、半分の高さまで油を注いでから火をつけるだけ。入れるときに油がはねず、油の量も少なく済みます。しかも、ゆっくり温度が上がるので中が特に甘くなります。さつまいもの酵素がでんぷんを糖に変える働きは、60〜75℃くらいでいちばん活発になるからです。昔ながらの揚げ方なら、160〜170℃を温度計で確かめると安心です。",
+      { "h": "おいしく作るコツ" },
+      "切ったさつまいもは10分水にさらし、水けをしっかりふき取ります。唯一のポイントは蜜。泡が大きくなって、ゆっくりはじけるようになるまで、約2分煮詰めたら止めます。それ以上煮ると、冷めたときにべっこうあめのようにかたくなってしまいます。おうちでおまつり気分を楽しむなら、<a href=\"{{recipe:chochin-dango}}\">提灯だんご</a>と一緒に。秋のおやつなら<a href=\"{{recipe:kabocha-pudding}}\">かぼちゃプリン</a>もおすすめです。"
+    ],
+    "equipment": [
+      "フライパン（24〜26cm、冷たい油から揚げる場合）、または深めの鍋と温度計（揚げる場合）",
+      "菜箸またはトング、火の通りを確かめる竹串",
+      "網、またはキッチンペーパーを敷いたバット",
+      "冷ますためのクッキングシート"
+    ],
+    "notes": [
+      "火の通りの確認：仕上げにカリッとさせる前に、いちばん大きいものに竹串がすっと通ればOKです。",
+      "蜜がかたくガラスのように固まったら、煮詰めすぎです。フライパンを弱火に戻して水大さじ1を加え、混ぜて溶かしてから、もう一度からめます。ゆるくてからまないときは、あと30秒煮詰めてください。",
+      "台所が寒い日や倍量で作るときは、蜜に米酢を数滴（小さじ1/4ほど）加えると、砂糖が結晶化しにくくなります。",
+      "油の扱い：油がはねないよう水けはしっかりふき、熱した油のそばを離れないこと。再利用するときは、完全に冷めてからこしてください。",
+      "オーブンで作るなら（揚げない方法）：さつまいもに油大さじ2をからめ、クッキングシートを敷いた天板に並べて200℃（コンベクションなら180℃）で25〜30分、途中で一度返して焼き、蜜をからめます。"
+    ],
+    "subs": [
+      ["みりん", "みりん大さじ1につき、酒大さじ1＋砂糖小さじ1（アルコールなしなら水大さじ1＋砂糖小さじ1）"],
+      ["砂糖", "半量まではちみつに替えられます。蜜がやわらかく、ねっとりした仕上がりに"],
+      ["黒ごま", "白ごま、または刻んだローストくるみ"],
+      ["日本のさつまいも", "韓国のコグマなど、皮が紫で中が淡い色のさつまいも。中がオレンジ色の「ヤム」は崩れやすいです"]
+    ],
+    "makeAhead": "さつまいもは4時間前まで揚げておけます。ラップをせずに網の上においておき、食べる直前に蜜を作ってからめてください。完成した大学いもは、翌日のお弁当にもぴったりです。",
+    "storage": "密閉容器に入れて冷蔵で2日。冷えると蜜がかたまってカリカリになり、それが好きという人も多いです（蒼太もそのひとり）。やわらかくしたいときは、600Wの電子レンジで20〜30秒。くっつかないように広げて冷凍すれば1か月もち、室温で自然解凍できます。"
+  },
+  "ingredients": [
+    { "items": [
+      { "q": 500, "u": "g", "en": "sweet potatoes, Japanese (about 2 medium)", "ja": "さつまいも（中2本）" },
+      { "q": 400, "u": "ml", "en": "vegetable oil, for frying (about 700 ml if deep-frying)", "ja": "サラダ油（揚げ油）" }
+    ] },
+    { "group": { "en": "For the syrup", "ja": "蜜" }, "items": [
+      { "q": 4, "u": "tbsp", "en": "sugar", "ja": "砂糖" },
+      { "q": 2, "u": "tbsp", "en": "water", "ja": "水" },
+      { "q": 1, "u": "tbsp", "en": "mirin", "ja": "みりん" },
+      { "q": 1, "u": "tsp", "en": "soy sauce", "ja": "しょうゆ" },
+      { "q": 1, "u": "tbsp", "en": "black sesame seeds, toasted", "ja": "黒いりごま" }
+    ] }
+  ],
+  "steps": [
+    {
+      "en": "Scrub the sweet potatoes and leave the skin on; it adds colour and helps the pieces hold together. Trim both ends and cut into rolling wedges (rangiri) about 3–4 cm long.",
+      "ja": "さつまいもはよく洗い、皮つきのまま使います（彩りがよく、崩れにくくなります）。両端を切り落とし、3〜4cm大の乱切りにします。"
+    },
+    {
+      "en": "Soak the pieces in cold water for 10 minutes, changing the water once if it turns cloudy. This washes off surface starch so they don't stick together or darken. Drain and pat them completely dry with a clean towel.",
+      "ja": "切ったさつまいもを水に10分さらします。水がにごったら一度替えて。表面のでんぷんが落ち、くっつきや変色を防げます。ざるに上げ、清潔なふきんで水けを完全にふき取ります。",
+      "timer": 10
+    },
+    {
+      "en": "Cold-oil method: lay the potatoes in a single layer in the frying pan and pour in oil to come halfway up them (about 1.5 cm). Turn the heat to medium. Once the oil is bubbling steadily, after about 5 minutes, cook for 10 minutes more, turning now and then, until a skewer slides through the biggest piece.",
+      "ja": "冷たい油から揚げる場合：フライパンにさつまいもを重ならないように並べ、半分の高さ（約1.5cm）まで油を注いでから中火にかけます。5分ほどでふつふつと泡が出てきたら、ときどき返しながらさらに10分、いちばん大きいものに竹串がすっと通るまで揚げ焼きにします。",
+      "timer": 15
+    },
+    {
+      "en": "Deep-fry method (instead of step 3): heat about 700 ml oil in a deep pot to 160–170°C (320–340°F); a dry chopstick dipped in should give off a steady stream of small bubbles. Fry the potatoes for 7–8 minutes, turning, until a skewer slides through.",
+      "ja": "たっぷりの油で揚げる場合（手順3の代わりに）：深めの鍋に油約700mlを入れて160〜170℃に熱します。乾いた菜箸を入れて、細かい泡がシュワシュワと続けて上がるくらいが目安。さつまいもを返しながら7〜8分、竹串がすっと通るまで揚げます。",
+      "timer": 8
+    },
+    {
+      "en": "For either method, turn the heat up to high (about 180°C/350°F) for the last minute, until the surface is golden and crisp. Lift the potatoes onto a rack or kitchen paper to drain.",
+      "ja": "どちらの方法でも、最後の1分は強火（約180℃）にして、表面をきつね色にカリッと仕上げます。網かキッチンペーパーに上げて油をきります。",
+      "timer": 1
+    },
+    {
+      "en": "Pour the oil out of the frying pan (or use a clean one) and wipe it out. Add the sugar, water, mirin and soy sauce and set over medium heat. Don't stir; swirl the pan instead. Once it boils, cook for about 2 minutes, until the bubbles become bigger and pop more slowly and the syrup is as thick as warm honey. Don't let it brown.",
+      "ja": "フライパンの油をあけて（または別のきれいなフライパンで）ふき取り、砂糖、水、みりん、しょうゆを入れて中火にかけます。へらで混ぜず、フライパンを揺すって。煮立ってから約2分、泡が大きくなってゆっくりはじけるようになり、温めたはちみつくらいのとろみがついたら止めます。色づかせないように注意してください。",
+      "timer": 2
+    },
+    {
+      "en": "Turn off the heat, add the potatoes and toss quickly to coat every piece. Sprinkle in the black sesame and toss again.",
+      "ja": "火を止めてさつまいもを戻し入れ、手早く全体に蜜をからめます。黒ごまをふって、さっと混ぜます。"
+    },
+    {
+      "en": "Spread the pieces out on baking paper, not touching, and leave for 5 minutes. The syrup sets into a glossy, slightly crisp coating. Serve warm or at room temperature.",
+      "ja": "クッキングシートの上に、くっつかないように間隔をあけて並べ、5分おきます。蜜が固まって、つやのあるパリッとした衣になります。温かいうちでも、冷めてからでもどうぞ。",
+      "timer": 5
+    }
+  ],
+  "nutrition": { "calories": 290, "carbs": 52, "protein": 2, "fat": 8, "satFat": 0.7, "cholesterol": 0, "sodium": 120, "fiber": 3.5, "sugar": 22 },
+  "comments": [
+    {
+      "name": { "en": "Naoko (Harukawa)", "ja": "なおこ（春川市）" },
+      "date": "2026-09-29",
+      "stars": 5,
+      "en": "Bought Naruto Kintoki from the Hamada stall on Saturday. The cold-oil method is so easy, and they stayed perfectly fluffy inside. Gone in ten minutes.",
+      "ja": "土曜に浜田さんの屋台で鳴門金時を買いました。冷たい油から揚げる方法、本当に楽ですね。中はほっくりのまま。10分でなくなりました。"
+    },
+    {
+      "name": { "en": "Chris (Chicago)", "ja": "Chris（アメリカ・シカゴ）" },
+      "date": "2026-09-19",
+      "stars": 3,
+      "en": "Flavour was great but the syrup turned rock hard and I had to chip it out of the pan.",
+      "ja": "味はよかったのですが、蜜がカチカチに固まって、フライパンから削り取るはめになりました。",
+      "reply": {
+        "en": "That happens when the syrup boils too long and gets too hot; once it starts to colour it is on its way to candy. Stop at about 2 minutes, when the bubbles get big and slow. To clean the pan, just fill it with hot water and let it sit; the sugar dissolves on its own.",
+        "ja": "蜜を煮詰めすぎて温度が上がりすぎると、そうなります。色づき始めたら、あめになりかけているサインです。泡が大きくゆっくりになる約2分で止めてください。フライパンはお湯を張っておいておけば、砂糖は自然に溶けますよ。"
+      }
+    },
+    {
+      "name": { "en": "Momo-chan", "ja": "ももちゃん" },
+      "date": "2026-09-05",
+      "stars": 5,
+      "en": "I was always scared of frying, but starting in cold oil meant no splatter at all. My daughter helped turn them with tongs.",
+      "ja": "揚げ物はずっとこわかったのですが、冷たい油から始めたら全然はねませんでした。娘がトングで返すのを手伝ってくれました。"
+    },
+    {
+      "name": { "en": "Ana (São Paulo)", "ja": "Ana（ブラジル・サンパウロ）" },
+      "date": "2026-04-11",
+      "stars": null,
+      "en": "Could I use an air fryer for the potatoes?",
+      "ja": "さつまいもはエアフライヤーで作れますか？",
+      "reply": {
+        "en": "Yes! Toss the dried wedges with 1 tbsp oil and air-fry at 190°C for 15–18 minutes, shaking the basket halfway, until a skewer slides through. Then make the syrup in a frying pan as usual and toss. They are a little less crisp but very good.",
+        "ja": "できます！水けをふいたさつまいもに油大さじ1をからめ、190℃で15〜18分、途中でバスケットを揺すって、竹串がすっと通るまで加熱します。あとはいつもどおりフライパンで蜜を作ってからめてください。カリッと感は少し控えめですが、とてもおいしいですよ。"
+      }
+    },
+    {
+      "name": { "en": "Takeshi (Tsukimi Onsen)", "ja": "たけし（月見温泉）" },
+      "date": "2025-10-14",
+      "stars": 4,
+      "en": "A bit sweet for me, so the second time I used 3 tbsp sugar. Still glossy and nice.",
+      "ja": "私には少し甘かったので、2回目は砂糖を大さじ3にしました。それでもつやが出ておいしかったです。",
+      "reply": {
+        "en": "3 tbsp works well. I wouldn't go much lower, though: below that there isn't enough sugar for the syrup to set into a shiny coating, and it just stays sticky.",
+        "ja": "大さじ3ならちょうどいいと思います。ただ、それ以上減らすと、蜜がつやのある衣に固まるだけの砂糖が足りず、べたついたままになってしまいます。"
+      }
+    },
+    {
+      "name": { "en": "Lena (Hamburg)", "ja": "Lena（ドイツ・ハンブルク）" },
+      "date": "2025-01-22",
+      "stars": 4,
+      "en": "I only had orange sweet potatoes and they went soft and broke when I tossed them. Still delicious, just messy.",
+      "ja": "オレンジ色のさつまいもしかなくて、からめるときにやわらかく崩れてしまいました。味はおいしかったけれど、見た目がぐちゃぐちゃに。",
+      "reply": {
+        "en": "Orange ones are much wetter. If that's all you can find, cut them bigger (about 5 cm), use the oven version from the notes so they dry out a little, and toss them very gently with a spatula.",
+        "ja": "オレンジ色のものは水分がずっと多いんです。それしか手に入らないときは、大きめ（5cmくらい）に切って、メモにあるオーブンの方法で少し水分を飛ばし、へらでそっとからめてみてください。"
+      }
+    },
+    {
+      "name": { "en": "Yumi (Osaka)", "ja": "ゆみ（大阪）" },
+      "date": "2024-10-02",
+      "stars": null,
+      "en": "All my pieces stuck together in one big lump after I tossed them. What did I do wrong?",
+      "ja": "からめたあと、全部くっついて大きなかたまりになってしまいました。何がいけなかったのでしょう？",
+      "reply": {
+        "en": "Nothing wrong with the syrup; it's the cooling. Spread them out on baking paper straight away with chopsticks, leaving a little space around each piece, before the syrup sets. If they do stick, a few seconds in the microwave loosens them.",
+        "ja": "蜜は問題ありません。冷まし方の問題です。蜜が固まる前に、すぐ菜箸でクッキングシートに広げ、1つずつ少し間をあけて並べてください。くっついてしまったら、電子レンジで数秒温めるとはがれます。"
+      }
+    },
+    {
+      "name": { "en": "Mei", "ja": "めい" },
+      "date": "2021-10-18",
+      "stars": 5,
+      "en": "We couldn't go to the Lantern Festival this year, so we had our own at home with these and the lantern dango. The kids made paper lanterns too.",
+      "ja": "今年は灯籠まつりに行けなかったので、これと提灯だんごでおうちまつりをしました。子どもたちは紙の灯籠も作りましたよ。"
+    }
+  ]
+}

@@ -1,0 +1,66 @@
+title: Kenzō Hattori
+short: Japanese railway engineer (1873–1941), builder of the Kagami Line
+type: article
+categories: people; engineers; rail
+infobox: Kenzō Hattori
+ib-subtitle: 服部健三
+ib-section: Personal details
+ib: Born | 2 February 1873<br>Uomachi, [[harukawa|Harukawa]], [[minori-prefecture|Minori Prefecture]]
+ib: Died | 9 June 1941 (aged 68)<br>Harukawa
+ib: Education | Tokyo Imperial University (civil engineering, 1897)
+ib: Occupation | Railway engineer, company president
+ib-section: Career
+ib: Employers | Government Railway Operations Bureau (1897–1922)<br>[[harukawa-railway|Kagami Valley Railway]] (1923–1938)
+ib: Positions | Chief engineer (1923–1931)<br>President (1931–1938)
+ib: Projects | [[kagami-line|Kagami Line]], Futamata Bridge, [[tsukimi-tunnel|Tsukimi Tunnel]]
+ib: Memorials | Statue at Tsukimi-guchi Station (1952)
+---
+'''Kenzō Hattori''' (服部健三, ''Hattori Kenzō'';{{efn|His given name is also romanized Kenzo or Kenzou.}} 2 February 1873 – 9 June 1941) was a Japanese railway engineer from [[harukawa|Harukawa]] who planned and built the [[kagami-line|Kagami Line]] of the [[harukawa-railway|Harukawa Railway]]. As chief engineer of the Kagami Valley Railway, the company now called the Harukawa Railway, from 1923 he laid out the 38.6 km route up the valley of the [[kagami-river|Kagami River]] to [[tsukimi-onsen|Tsukimi Onsen]] and designed the Futamata Bridge (1929) and the 2,184 m [[tsukimi-tunnel|Tsukimi Tunnel]] (1931). He was president of the company from 1931 to 1938. He is remembered for insisting on a ruling gradient of 25 ‰ even though it required the long tunnel.<ref name="kuroda">Kuroda, Shin'ichi (2016). "Kenzō Hattori and the 25-per-mille rule". ''Railway History Review'' 42: 15–31.</ref>
+
+== Early life and education ==
+Hattori was born on 2 February 1873 in Uomachi, the fishing quarter of Harukawa, the second son of Hattori Seibei (服部清兵衛), a fish wholesaler.<ref name="shishi">Harukawa City History Compilation Committee (1989). ''Harukawa City History'', vol. 8: ''People of Harukawa''. Harukawa City, pp. 212–219.</ref> After middle school in Harukawa he went to Tokyo in 1890 and studied civil engineering at Tokyo Imperial University, graduating in 1897.{{cn}}
+
+== Government railways (1897–1922) ==
+On graduating, Hattori joined the government railways. For twenty-five years he worked on mountain lines in central Honshū, surveying routes and supervising the construction of tunnels and bridges. The experience shaped his later views: he saw at first hand how steep gradients limited the loads of steam locomotives and how smoke made long, steeply graded tunnels dangerous for crews.<ref name="kuroda"/>
+
+== Kagami Valley Railway (1923–1931) ==
+{{main|kagami-line}}
+In 1923, aged 50, Hattori returned home as chief engineer of the newly founded Kagami Valley Railway (鏡谷鉄道). He surveyed the valley in 1923–1924, chose a route that kept close to the Kagami River rather than crossing the hills, and built the line to 1,067 mm gauge from the start.<ref name="hr100">Harukawa Railway (2023). ''One Hundred Years of HaruTetsu''. Harukawa Railway Co., pp. 15–71.</ref> The first 13.5 km, from Harukawa to Kamano, opened on 15 July 1926, and the line reached Yuzuhara on 20 May 1928.
+
+[[Map:kagami-river|The Kagami River, whose valley the Kagami Line follows]]
+=== Futamata Bridge ===
+For the extension beyond Yuzuhara, Hattori designed the '''Futamata Bridge''', a 218 m steel truss bridge with three truss spans on masonry piers, which crosses the Kagami River just above its confluence with the Hosoya River, below Kagami-kyō Station. He set the piers on bedrock and shaped them to shed flood debris after studying the river's flood marks.{{cn}} The bridge opened with the section to Hotarudani on 3 November 1929 and is still in use.
+
+=== Tsukimi Tunnel and the 25 ‰ rule ===
+The last section, from Hotarudani to Tsukimi Onsen, caused a long dispute. Several directors favored a cheaper route over the ridge with gradients of 33 ‰ and a short summit tunnel of about 600 m. Hattori held that 25 ‰ (1 in 40){{efn|A gradient of 25 per mille (‰) is a rise of 25 m for every 1,000 m of track.}} was the steepest gradient on which a steam locomotive could reliably haul a full train, and proposed instead a 2,184 m tunnel under a spur of [[mount-tsukimi|Mount Tsukimi]]. The board accepted his plan in 1926.<ref name="kuroda"/>
+
+The tunnel was bored from both ends from 1927; the headings met on 12 December 1930, and the line opened to Tsukimi Onsen on 4 October 1931. Fourteen workers died during the work. Hattori wrote the inscription of their memorial stone, erected at Tsukimi-guchi in 1932, and described the construction in a paper for the ''Journal of the Japan Society of Civil Engineers'' the same year.<ref name="hattori1932">Hattori, Kenzō (1932). "The construction of the Tsukimi Tunnel". ''Journal of the Japan Society of Civil Engineers'' 18 (4): 512–538.</ref> The tunnel remained the longest in [[minori-prefecture|Minori Prefecture]] until 1979.
+
+== President (1931–1938) ==
+When the line reached Tsukimi Onsen in 1931, Hattori became president of the Kagami Valley Railway. He guided it through the depression of the early 1930s and promoted Tsukimi Onsen as a resort for city visitors. He retired in 1938, aged 65; the company took its present name, Harukawa Railway, in 1951, ten years after his death.<ref name="hr100"/>
+
+== Death and legacy ==
+Hattori died in Harukawa on 9 June 1941, aged 68. In 1952, the year the Kagami Line was electrified, railway employees and residents of Tsukimi erected a bronze statue of him in front of Tsukimi-guchi Station, facing the eastern portal of the tunnel.<ref name="tsukimi">Tsukimi Town History Committee (1994). ''Tsukimi Town History''. Tsukimi Town, pp. 286–291.</ref><ref name="nippo1952">"Statue of Hattori unveiled at Tsukimi-guchi". ''Harukawa Nippō'', 5 October 1952, p. 3.</ref> The ruling gradient of 25 ‰ that he fixed still applies on the line, and the limited express [[tsukikage|Tsukikage]] climbs it into the tunnel he designed. The Futamata Bridge was selected as civil engineering heritage in 2008.
+
+== Works ==
+{| Principal works of Kenzō Hattori
+! Year !! Work !! Notes
+| 1923–1924 || Survey of the Kagami Line route || Harukawa to Tsukimi Onsen along the Kagami River
+| 1926 || Harukawa – Kamano section || 13.5 km, 1,067 mm gauge; opened 15 July 1926
+| 1928 || Kamano – Yuzuhara section || 6.3 km; opened 20 May 1928
+| 1929 || Futamata Bridge || 218 m steel truss; opened 3 November 1929 with the line to Hotarudani
+| 1931 || [[tsukimi-tunnel|Tsukimi Tunnel]] || 2,184 m; built 1927–1931; opened 4 October 1931
+| 1932 || Report on the Tsukimi Tunnel || ''Journal of the Japan Society of Civil Engineers''
+|}
+
+== See also ==
+* [[kagami-line|Kagami Line]]
+* [[tsukimi-tunnel|Tsukimi Tunnel]]
+* [[harukawa-railway|Harukawa Railway]]
+* [[harukawa|Harukawa]]
+
+== Notes ==
+{{notelist}}
+
+== References ==
+{{reflist}}

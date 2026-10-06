@@ -1,0 +1,224 @@
+{
+  "slug": "kinoko-takikomi-gohan",
+  "categories": ["japanese", "vegetarian"],
+  "cuisine": "japanese",
+  "diet": ["vegetarian", "vegan", "dairy-free"],
+  "difficulty": "easy",
+  "course": "rice",
+  "times": { "prep": 15, "cook": 45, "extra": 30, "extraLabel": { "en": "Soaking", "ja": "浸水" } },
+  "servings": 4,
+  "image": "kinoko-takikomi-gohan",
+  "rating": 4.8,
+  "ratings": 357,
+  "published": "2019-10-03",
+  "updated": "2026-09-29",
+  "related": ["nikujaga", "saba-misoni", "agedashi-tofu", "autumn-vegetable-curry"],
+  "en": {
+    "title": "Kinoko Takikomi Gohan (Autumn Mushroom Rice)",
+    "teaser": "Japanese rice cooked with shiitake, maitake, shimeji and aburaage in a vegan kombu-shiitake dashi. Rice cooker or clay pot, and the best onigiri of the year.",
+    "intro": [
+      "Every October, the road up to Tsukimi Onsen fills with cars on Sunday mornings. Half are heading for the hot springs; the other half, including us, are heading for the little farm stall outside Tsukimi Onsen station, where the Nishida family sells mushrooms they grow on logs in the cedar woods of Mount Tsukimi: fat shiitake, frilly maitake as big as a cabbage, and shimeji in tight little bunches. Hana chooses, Sota carries, and I try not to buy everything.",
+      "Kinoko takikomi gohan, rice cooked with mushrooms, is what I make that evening. My grandmother Fumi served it at her inn every autumn, cooked in a big clay pot, and the smell of soy sauce and shiitake drifting down the corridor told the guests dinner was ready. This year Hana is in charge of the onigiri for our Lantern Festival picnic on 10 October, and she has already decided they'll be made with this.",
+      { "h": "Why you'll love it" },
+      { "ul": [
+        "Deep, savoury flavour from rice, mushrooms and a few pantry seasonings.",
+        "It's vegan, thanks to a dashi made from kombu and dried shiitake.",
+        "The rice cooker does the work, and leftovers make perfect onigiri."
+      ] },
+      { "h": "Choosing the mushrooms" },
+      "Use at least two kinds, one for aroma and one for texture. Shiitake gives depth, maitake a wonderful perfume (it colours the rice a little, too), and shimeji stay pleasantly bouncy. You need about 300 g in total for 2 gō of rice. Don't wash mushrooms; they soak up water and the rice turns soggy. Just wipe off any dirt with damp paper towel.",
+      { "h": "A dashi without fish" },
+      "Most takikomi gohan uses bonito dashi, but kombu and dried shiitake give all the savoury depth you need and keep it vegan. Soak them in water for at least 30 minutes, or overnight in the fridge if you're organised. Thin dried shiitake (<em>kōshin</em>) soften in 30 minutes; thick, cracked <em>donko</em> need the whole night. My <a href=\"{{guide:dashi}}\">dashi guide</a> has more on both.",
+      { "h": "Rice cooker or donabe?" },
+      "Both work, and the liquid is exactly the same: 330 ml of dashi plus the seasonings, about 390 ml in all for 2 gō of rice. In a rice cooker, add the seasonings first and then the dashi up to the 2-gō line. A donabe (clay pot) gives you <em>okoge</em>, the crisp golden crust on the bottom that everyone fights over. For other quantities, see my <a href=\"{{guide:rice-water-ratios}}\">rice and water ratios</a>.",
+      { "h": "Tips for success" },
+      "<strong>Soak the rice in plain water before adding the seasonings</strong>, because salt and soy sauce slow down how fast rice absorbs water. <strong>Don't stir the mushrooms in</strong> before cooking: lay them on top so the water can circulate around the rice. And <strong>let it rest for 10 minutes</strong> before you open the lid, so the moisture evens out."
+    ],
+    "equipment": [
+      "Rice cooker (for at least 3 gō) or a donabe clay pot for 2–3 gō (a heavy pot with a tight lid also works)",
+      "Bowl or jug for soaking the kombu and shiitake",
+      "Fine sieve for draining the rice",
+      "Rice paddle (shamoji)",
+      "Measuring jug"
+    ],
+    "notes": [
+      "Don't add extra liquid if you add more mushrooms; they release water as they cook. This liquid works for up to about 400 g of mushrooms.",
+      "Hard rice usually means it wasn't soaked before the seasonings went in, or the toppings were mixed into the rice. Mushy rice means too much liquid or stirring before cooking.",
+      "To make 3 gō, multiply everything by 1.5 and fill the dashi to the 3-gō line. The line, not the scaled number, is what counts in a rice cooker.",
+      "This liquid is for white rice. Brown rice and mixed grains need more water and a longer soak; see the rice and water ratios guide.",
+      "In a heavy pot instead of a donabe, use the same timing but check for scorching: pots heat faster, so 12 minutes on the lowest heat may be enough."
+    ],
+    "subs": [
+      ["Shimeji and maitake", "Any mushrooms: enoki, king oyster (eringi), chestnut or button mushrooms, about 200 g in total"],
+      ["Kombu-shiitake dashi", "1 tsp kombu dashi granules in 330 ml water (check the label: many dashi granules contain bonito), or regular bonito dashi if it doesn't need to be vegan"],
+      ["Aburaage", "Leave it out and add 1 tsp toasted sesame oil with the seasonings for richness"],
+      ["Mirin", "1 tbsp sake + 1 tsp sugar for each tbsp (alcohol-free: 1 tbsp water + 1 tsp sugar)"],
+      ["Sake", "Water"]
+    ],
+    "makeAhead": "Soak the kombu and shiitake overnight in the fridge and prep the mushrooms in the morning (keep them in a bag in the fridge). Don't use the rice cooker's delay timer for this recipe: the rice would sit in soy sauce for hours, which leaves it hard and, in warm weather, isn't safe.",
+    "storage": "Don't leave it on keep-warm for more than 2–3 hours; it dries out and the soy smell gets strong. It keeps for 2 days in the fridge (reheat in the microwave with a sprinkle of water). To freeze, wrap 150 g portions flat in cling film while still warm, cool, and freeze for up to a month; microwave from frozen at 600 W for about 3 minutes. Onigiri freeze the same way."
+  },
+  "ja": {
+    "title": "きのこの炊き込みご飯",
+    "teaser": "しいたけ、まいたけ、しめじ、油揚げを、昆布と干ししいたけのだしで炊き込んだヴィーガン対応のご飯。炊飯器でも土鍋でも。秋いちばんのおにぎりになります。",
+    "intro": [
+      "10月の日曜の朝、月見温泉へ向かう道は車でいっぱいになります。半分は温泉へ、残りの半分は（わが家も含めて）月見温泉駅前の小さな直売所へ向かう車です。直売所では西田さん一家が、月見山の杉林で原木栽培したきのこを売っています。肉厚のしいたけ、キャベツほどもある大きなまいたけ、ぎゅっと詰まったしめじ。花が選んで、蒼太が運んで、私は全部買ってしまわないように我慢する、というのがいつもの流れです。",
+      "その日の夕飯は決まって、きのこの炊き込みご飯。祖母ふみは月見温泉の宿で、秋になると毎年大きな土鍋でこれを炊いていました。しょうゆとしいたけの香りが廊下に漂ってくると、お客さんは夕飯の時間だとわかったそうです。今年は10月10日の灯籠まつりに持っていくおにぎりを花が担当することになり、具はこれに決まりました。",
+      { "h": "このレシピのおすすめポイント" },
+      { "ul": [
+        "お米ときのこ、いつもの調味料だけで、しみじみおいしい一品に。",
+        "昆布と干ししいたけのだしで作るので、ヴィーガンの方にも。",
+        "炊飯器におまかせで、残ったらおにぎりに。"
+      ] },
+      { "h": "きのこの選び方" },
+      "香り担当と食感担当で、2種類以上を使うのがおすすめです。しいたけはうまみ、まいたけは豊かな香り（ご飯がほんのり色づきます）、しめじはぷりっとした歯ごたえ。米2合に対して、合計300gほどが目安です。きのこは洗わないでください。水を吸って、ご飯がべちゃっとします。汚れは湿らせたキッチンペーパーでふくだけでOKです。",
+      { "h": "魚を使わないだし" },
+      "炊き込みご飯はかつおだしで作ることが多いですが、昆布と干ししいたけだけでも十分なうまみが出て、ヴィーガン対応にもなります。水に30分以上、余裕があれば冷蔵庫でひと晩浸けておきましょう。薄い香信なら30分で戻りますが、肉厚の冬菇はひと晩かかります。詳しくは<a href=\"{{guide:dashi}}\">だしの取り方ガイド</a>をどうぞ。",
+      { "h": "炊飯器？土鍋？" },
+      "どちらでも作れて、水分量はまったく同じです。だし汁330mlに調味料を加えて、2合で合計約390ml。炊飯器なら、先に調味料を入れてから2合の目盛りまでだしを注ぎます。土鍋で炊くと、みんなが取り合う香ばしい「おこげ」ができます。ほかの分量で炊くときは<a href=\"{{guide:rice-water-ratios}}\">お米と水の割合ガイド</a>を参考にしてください。",
+      { "h": "おいしく作るコツ" },
+      "<strong>調味料を入れる前に、お米を真水に浸水させる</strong>こと。塩分があると、お米が水を吸いにくくなります。<strong>きのこは混ぜ込まない</strong>こと。上にのせて炊くと、お米のまわりで水がしっかり対流します。そして炊き上がったら、<strong>10分蒸らす</strong>までふたは開けずに我慢です。"
+    ],
+    "equipment": [
+      "炊飯器（3合以上炊けるもの）または2〜3合用の土鍋（ふたがぴったり閉まる厚手の鍋でも可）",
+      "昆布と干ししいたけを浸けるボウルか計量カップ",
+      "米の水きり用のざる",
+      "しゃもじ",
+      "計量カップ"
+    ],
+    "notes": [
+      "きのこを増やしても、水分は増やさないでください。炊いている間にきのこから水分が出ます。この水分量で、きのこ400gくらいまで大丈夫です。",
+      "ご飯がかたいのは、浸水前に調味料を入れたか、具をお米に混ぜ込んだのが主な原因です。べちゃっとするのは、水分が多すぎるか炊く前に混ぜたためです。",
+      "3合で炊くときは、材料をすべて1.5倍にし、だしは3合の目盛りまで。炊飯器では計算した量より目盛りが基準です。",
+      "この水分量は白米用です。玄米や雑穀米は水を多めに、浸水も長めに。お米と水の割合ガイドを参考にしてください。",
+      "土鍋の代わりに厚手の鍋で炊く場合も同じ手順ですが、鍋のほうが熱が伝わりやすいので、弱火は12分で足りることもあります。焦げに注意してください。"
+    ],
+    "subs": [
+      ["しめじ・まいたけ", "えのき、エリンギ、マッシュルームなど好みのきのこを合計200gほど"],
+      ["昆布と干ししいたけのだし", "昆布だしの素小さじ1を水330mlで溶いたもの（顆粒だしはかつお入りが多いので表示を確認）。ヴィーガンにこだわらなければ、かつおだしでも"],
+      ["油揚げ", "なしでもOK。調味料と一緒にごま油小さじ1を加えるとコクが出ます"],
+      ["みりん", "みりん大さじ1につき、酒大さじ1＋砂糖小さじ1（アルコールなしなら水大さじ1＋砂糖小さじ1）"],
+      ["酒", "水"]
+    ],
+    "makeAhead": "昆布と干ししいたけは前の晩から冷蔵庫で浸けておき、きのこは朝のうちに切って袋に入れ、冷蔵庫へ。炊飯器の予約炊飯は使わないでください。お米が何時間もしょうゆに浸かったままになり、かたく炊き上がるうえ、暖かい時期は傷みやすくなります。",
+    "storage": "保温は2〜3時間まで。それ以上はご飯が乾き、しょうゆのにおいが強くなります。冷蔵は2日（電子レンジで温めるときは水を少しふって）。冷凍するなら、温かいうちに150gずつラップで平らに包み、冷ましてから冷凍庫へ。1か月保存でき、凍ったまま電子レンジ（600W）で3分ほど温めます。おにぎりも同じように冷凍できます。"
+  },
+  "ingredients": [
+    { "items": [
+      { "q": 300, "u": "g", "us": [1.5, "cup"], "en": "Japanese short-grain rice (2 gō, i.e. 2 rice-cooker cups)", "ja": "米" }
+    ] },
+    { "group": { "en": "For the kombu-shiitake dashi", "ja": "昆布と干ししいたけのだし" }, "items": [
+      { "q": 400, "u": "ml", "en": "water", "ja": "水" },
+      { "q": 5, "u": "g", "en": "kombu (a piece about 5 × 10 cm)", "ja": "昆布（5×10cmほど）" },
+      { "q": 2, "u": "pc", "jaU": "枚", "en": "dried shiitake mushrooms (the thin kōshin type)", "ja": "干ししいたけ（薄めの香信）" }
+    ] },
+    { "group": { "en": "Mushrooms and vegetables", "ja": "具" }, "items": [
+      { "q": 1, "u": "pack", "en": "shimeji mushrooms (about 100 g)", "ja": "しめじ（約100g）" },
+      { "q": 1, "u": "pack", "en": "maitake mushrooms (about 100 g)", "ja": "まいたけ（約100g）" },
+      { "q": 3, "u": "pc", "jaU": "枚", "en": "fresh shiitake mushrooms", "ja": "生しいたけ" },
+      { "q": 1, "u": "sheet", "en": "aburaage (thin deep-fried tofu)", "ja": "油揚げ" },
+      { "q": 0.33, "u": "pc", "jaU": "本", "en": "carrot (about 50 g), cut into 3 cm matchsticks", "ja": "にんじん（約50g）" }
+    ] },
+    { "group": { "en": "Seasoning", "ja": "調味料" }, "items": [
+      { "q": 1.5, "u": "tbsp", "en": "soy sauce", "ja": "しょうゆ" },
+      { "q": 1.5, "u": "tbsp", "en": "mirin", "ja": "みりん" },
+      { "q": 1, "u": "tbsp", "en": "sake", "ja": "酒" },
+      { "q": 0.25, "u": "tsp", "en": "salt", "ja": "塩" }
+    ] },
+    { "group": { "en": "To serve", "ja": "仕上げ" }, "items": [
+      { "q": null, "en": "mitsuba or green onion, chopped", "ja": "三つ葉または小ねぎ（刻む）", "free": { "en": "a handful", "ja": "適量" } },
+      { "q": null, "en": "white sesame seeds, toasted", "ja": "白いりごま", "free": { "en": "to taste", "ja": "適量" } }
+    ] }
+  ],
+  "steps": [
+    {
+      "en": "Put the kombu and dried shiitake in a bowl or jug with the 400 ml of room-temperature water and leave them to soak for at least 30 minutes (or overnight in the fridge). If the shiitake float, weigh them down with a small plate.",
+      "ja": "ボウルか計量カップに昆布と干ししいたけを入れ、常温の水400mlを注いで30分以上（または冷蔵庫でひと晩）浸けます。しいたけが浮くときは小皿をのせて沈めます。"
+    },
+    {
+      "en": "Meanwhile, wash the rice: cover it with water, swirl briefly and pour the water off straight away, because the rice absorbs the first water. Then rub it gently with your fingertips about 20 times, rinse, and repeat 3–4 times until the water is only slightly cloudy. Soak the rice in plenty of fresh water for 30 minutes, then drain it in a sieve.",
+      "ja": "その間にお米を研ぎます。水を注いでさっと混ぜ、最初の水はお米が吸ってしまうのですぐに捨てます。指先でやさしく20回ほど研いではすすぎ、水がうっすら濁る程度になるまで3〜4回繰り返します。たっぷりの水に30分浸水させ、ざるに上げて水けをきります。",
+      "timer": 30
+    },
+    {
+      "en": "Gently squeeze the soaked shiitake over the bowl (the liquid is your dashi), cut off the stems and slice thinly. Slice the fresh shiitake 5 mm thick, cut the base off the shimeji and separate them into small clusters, and tear the maitake into bite-size pieces. Cut the carrot into 3 cm matchsticks (see my <a href=\"{{guide:knife-cuts}}\">knife cuts guide</a>). Pour boiling water over both sides of the aburaage to remove excess oil, pat dry, halve lengthwise and slice into 5 mm strips. Lift out the kombu and keep it, then measure 330 ml of the dashi, topping up with water if needed.",
+      "ja": "戻した干ししいたけはボウルの上で軽く絞り（戻し汁がだしになります）、軸を切って薄切りにします。生しいたけは5mm幅に切り、しめじは石づきを切って小房に分け、まいたけは食べやすく手でさきます。にんじんは3cm長さのせん切りに（<a href=\"{{guide:knife-cuts}}\">切り方ガイド</a>参照）。油揚げは両面に熱湯をかけて油抜きし、水けをふいて縦半分に切ってから5mm幅に切ります。昆布は取り出しておき、だし汁を330ml計ります（足りなければ水を足します）。"
+    },
+    {
+      "en": "Rice cooker: put the drained rice in the inner bowl and add the soy sauce, mirin, sake and salt. Then add dashi up to the 2-gō line for white rice (about 330 ml). Stir once, gently, just to mix the seasonings into the liquid, and level the surface.",
+      "ja": "炊飯器の場合：水けをきったお米を内釜に入れ、しょうゆ、みりん、酒、塩を加えます。それから白米2合の目盛りまでだし汁（約330ml）を注ぎ、調味料がなじむようにさっとひと混ぜして表面を平らにします。"
+    },
+    {
+      "en": "Spread the mushrooms, carrot and aburaage evenly over the rice and lay the kombu on top. Don't stir them in. Close the lid and cook on the regular white rice setting, or the takikomi setting if your cooker has one (not quick-cook).",
+      "ja": "きのこ、にんじん、油揚げを全体に広げてのせ、昆布をいちばん上に置きます。混ぜ込まないでください。ふたをして、普通炊き（炊き込みモードがあればそれで）で炊きます。早炊きは避けましょう。"
+    },
+    {
+      "en": "Donabe (instead of steps 4–5): put the drained rice in the clay pot with the 330 ml dashi and all the seasonings, level it, and top with the mushrooms, carrot, aburaage and kombu. Cover and cook over medium-high heat until it boils hard and steam puffs from the hole in the lid, about 10–12 minutes. Turn the heat to the lowest setting and cook for 13 minutes. For okoge, turn the heat to high for the last 10–15 seconds, until you hear crackling, then turn it off.",
+      "ja": "土鍋の場合（手順4〜5の代わりに）：水けをきったお米、だし汁330ml、調味料をすべて土鍋に入れて表面を平らにし、きのこ、にんじん、油揚げ、昆布をのせます。ふたをして中強火にかけ、沸騰してふたの穴から勢いよく蒸気が出るまで10〜12分。ごく弱火にして13分炊きます。おこげを作るなら、最後に10〜15秒強火にしてパチパチと音がしたら火を止めます。",
+      "timer": 13
+    },
+    {
+      "en": "Leave the rice to rest for 10 minutes without opening the lid: in the donabe after turning off the heat, in the rice cooker after it beeps.",
+      "ja": "ふたを開けずに10分蒸らします。土鍋は火を止めてから、炊飯器は炊き上がりの合図が鳴ってから10分です。",
+      "timer": 10
+    },
+    {
+      "en": "Remove the kombu (slice it into thin strips and mix it back in, if you like). With a damp rice paddle, cut through the rice in a cross, then fold it gently from the bottom up so the mushrooms are evenly mixed without squashing the rice.",
+      "ja": "昆布を取り出します（細切りにして混ぜ込んでも）。水でぬらしたしゃもじで十字に切り込みを入れ、底から返すようにやさしく混ぜて、お米をつぶさずにきのこを全体に行き渡らせます。"
+    },
+    {
+      "en": "Serve topped with mitsuba or green onion and a sprinkle of sesame. For onigiri, wet your hands, rub them with a little salt and shape about 100 g of rice into each triangle.",
+      "ja": "器に盛り、三つ葉か小ねぎ、白ごまを散らします。おにぎりにするときは、手を水でぬらして塩を少しつけ、1個100gほどを三角ににぎります。"
+    }
+  ],
+  "nutrition": { "calories": 320, "carbs": 66, "protein": 9, "fat": 3.5, "satFat": 0.5, "cholesterol": 0, "sodium": 640, "fiber": 4, "sugar": 4 },
+  "comments": [
+    {
+      "name": { "en": "Tsukimi mushroom fan", "ja": "月見のきのこ好き" }, "date": "2026-10-01", "stars": 5,
+      "en": "Made it with a huge maitake from the stall at Tsukimi Onsen station. The whole house smelled amazing. I used my donabe and got the best okoge ever.",
+      "ja": "月見温泉駅前の直売所で買った大きなまいたけで作りました。家じゅういい香り。土鍋で炊いたら、過去最高のおこげができました。"
+    },
+    {
+      "name": { "en": "Olivia (Portland)", "ja": "Olivia（ポートランド）" }, "date": "2026-09-26", "stars": 5,
+      "en": "Finally a takikomi gohan I can eat as a vegan! I couldn't get maitake, so I used chestnut mushrooms and extra shiitake. Delicious.",
+      "ja": "ヴィーガンの私でも食べられる炊き込みご飯がやっと見つかりました！まいたけが手に入らなかったので、ブラウンマッシュルームとしいたけを多めに。とてもおいしかったです。"
+    },
+    {
+      "name": { "en": "Tomo", "ja": "とも" }, "date": "2026-09-20", "stars": null,
+      "en": "Can I make 3 gō in a 5.5-gō rice cooker?",
+      "ja": "5.5合炊きの炊飯器で3合炊いても大丈夫ですか？",
+      "reply": {
+        "en": "Yes, that's what I do for guests. Multiply everything by 1.5 and fill the dashi to the 3-gō line. You'll have about 450 g of mushrooms, which looks like a lot, but don't add any extra liquid, because they shrink and release water as they cook.",
+        "ja": "大丈夫です。お客さんが来るときは私も3合で炊きます。材料をすべて1.5倍にして、だしは3合の目盛りまで。きのこが450gほどになって多く見えますが、炊くと縮んで水分が出るので、水分は足さないでください。"
+      }
+    },
+    {
+      "name": { "en": "Daniel (Berlin)", "ja": "Daniel（ベルリン）" }, "date": "2026-09-02", "stars": 3,
+      "en": "Great flavour, but the rice was hard in the middle. I followed the rice cooker method.",
+      "ja": "味はとてもよかったのですが、お米の芯が残ってしまいました。炊飯器の方法で作りました。",
+      "reply": {
+        "en": "Did the rice soak in plain water for 30 minutes first, and did the mushrooms stay on top? Those two cause most hard rice. To rescue a batch, sprinkle 2–3 tbsp water over the rice, close the lid and leave it on keep-warm for 15 minutes.",
+        "ja": "最初に真水で30分浸水させましたか？きのこは上にのせたままでしたか？芯が残る原因はほとんどこの2つです。炊き上がってしまったら、水大さじ2〜3を全体にふり、ふたをして保温で15分おくと、ふっくら戻ります。"
+      }
+    },
+    {
+      "name": { "en": "Lucy (Glasgow)", "ja": "Lucy（グラスゴー）" }, "date": "2026-04-10", "stars": null,
+      "en": "I don't have a rice cooker or a donabe. Can I use an ordinary saucepan?",
+      "ja": "炊飯器も土鍋もありません。普通の鍋でも炊けますか？",
+      "reply": {
+        "en": "Yes. Use a heavy-based pot with a tight-fitting lid and the donabe timings, but check after 12 minutes on low: tilt the pot slightly, and if no liquid moves at the bottom, it's done. A thin pan will scorch, so put a heat diffuser underneath if that's all you have.",
+        "ja": "炊けます。底の厚い、ふたがぴったり閉まる鍋を使い、土鍋と同じ手順で。ただし弱火12分で一度確認してください。鍋を少し傾けて底に水分が動かなければ炊き上がりです。薄い鍋だと焦げやすいので、その場合は焼き網などを下に敷いてください。"
+      }
+    },
+    {
+      "name": { "en": "Donabe lover", "ja": "土鍋好き" }, "date": "2025-11-08", "stars": 4,
+      "en": "Lovely, but my okoge was a little too dark. Next time I'll do only 10 seconds on high at the end.",
+      "ja": "おいしかったのですが、おこげが少し焦げすぎました。次は最後の強火を10秒だけにします。"
+    },
+    {
+      "name": { "en": "Mei's mum", "ja": "めいママ" }, "date": "2025-10-28", "stars": 5,
+      "en": "I froze the leftovers as onigiri and they were perfect after 3 minutes in the microwave. My daughter asks for them every week now.",
+      "ja": "残りをおにぎりにして冷凍したら、レンジで3分温めるだけで完璧でした。娘に毎週リクエストされています。"
+    }
+  ]
+}

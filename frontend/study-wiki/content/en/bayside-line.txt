@@ -1,0 +1,62 @@
+title: Bayside Line
+short: Railway line along Minori Bay from Harukawa Central to Minori Port
+type: article
+categories: rail; rail-lines; harukawa
+infobox: Bayside Line
+ib-subtitle: 湾岸線
+ib-image: bay-01.jpg | Oyster rafts on Minori Bay, whose north shore the line follows
+ib-section: Overview
+ib: Native name | 湾岸線 (''Wangan-sen'')
+ib: Owner | [[harukawa-railway|Harukawa Railway]]
+ib: Termini | [[harukawa-central-station|Harukawa Central]]<br>Minori Port
+ib: Stations | 9
+ib: Opened | 1 October 1962
+ib: Daily boardings | 30,420 (FY2025, excluding Harukawa Central)
+ib-section: Technical
+ib: Length | 16.2 km
+ib: Track | Double track, elevated, Harukawa Central–Shinkō-dōri (5.0 km); single track beyond
+ib: Gauge | 1,067 mm
+ib: Electrification | 1,500 V DC overhead
+ib: Maximum speed | 85 km/h
+ib: Rolling stock | 5000 series
+---
+The '''Bayside Line''' (湾岸線, ''Wangan-sen'') is a 16.2 km railway line of the [[harukawa-railway|Harukawa Railway]] in [[harukawa|Harukawa]], [[minori-prefecture|Minori Prefecture]], Japan. It runs from [[harukawa-central-station|Harukawa Central Station]] along the north shore of [[minori-bay|Minori Bay]] to Minori Port, the terminal for ferries to [[?Kasumi Island]], and serves nine stations, all within the city. It opened on 1 October 1962, carrying both passengers and freight for the port and the shipyard; freight traffic ended in 1987. All trains are locals, which run every 15 minutes at peak times and take 28 minutes from end to end. In FY2025 the eight stations beyond Harukawa Central had 30,420 boardings a day.<ref name="factbook">Harukawa Railway (2026). ''HaruTetsu Fact Book 2026''. Harukawa Railway Co., pp. 10–12.</ref>
+
+== History ==
+The line was planned to serve the port and the [[?Harukawa Shipyard]], which had opened in 1937, and the housing that spread along the bay after the 1954 merger of the coastal villages of Uchiura and Sakurahama into Harukawa. The mayor [[tetsuo-saeki|Tetsuo Saeki]] pressed for a line that would carry commuters as well as freight.<ref name="shishi">Harukawa City History Compilation Committee (1989). ''Harukawa City History'', vol. 6: ''Contemporary''. Harukawa City, pp. 455–462.</ref> It opened on 1 October 1962 from Harukawa to Minori Port, with all nine stations opening that day, and Harukawa Station was renamed Harukawa Central at the same time.<ref name="hr100">Harukawa Railway (2023). ''One Hundred Years of HaruTetsu''. Harukawa Railway Co., pp. 97–112.</ref>
+
+From the start the line carried freight as well as passengers: steel plate, coal and machinery to the shipyard, and the products of the [[kagami-line|Kagami Line]] valley, chiefly timber and [[harukawa-ware|Harukawa ware]], to the quays. The section from Harukawa Central to Shinkō-dōri was doubled in 1981. Freight traffic ended in 1987, when the shipyard switched to road transport.<ref name="nippo1987">"Last freight train leaves the shipyard". ''Harukawa Nippō'', 31 March 1987, p. 1.</ref> In 1998 the double-track section between Harukawa Central and Shinkō-dōri was rebuilt on an elevated structure, and the 5000 series replaced the older 1000 series between 2004 and 2006.{{cn}}
+
+== Stations ==
+All stations are in the city of Harukawa. Distances are measured from Harukawa Central; boarding figures are daily averages for FY2025.
+
+{{Data:bayside-stations}}
+
+== Services ==
+All trains are three-car 5000 series sets in white with a sea-green stripe; the line has seven sets, based at Kaigan Depot. There are no rapid or limited express trains: every train is a local that stops at every station and takes 28 minutes from end to end. Trains run every 15 minutes in the weekday peaks and every 20 minutes on weekday middays (10:00–16:40) and at weekends, and some terminate at Minori-kōen. Beyond Shinkō-dōri the line is single track, with passing loops at Kaigan, Minori-kōen and Shiohama. At Minori Port the timetable is coordinated with the ferries to Kasumi Island, which take 35 minutes.<ref name="factbook"/>
+
+In the timetable revision of Saturday 14 November 2026, weekday midday trains between 10:00 and 16:40 will run every 15 minutes instead of every 20, and the last eastbound train on Saturdays, Sundays and holidays, leaving Harukawa Central at 23:35, will run through to Minori Port (arriving 0:03) instead of terminating at Minori-kōen.<ref name="revision2026">Harukawa Railway (2026). "Timetable revision on Saturday 14 November 2026". Notice, October 2026.</ref>
+
+The fare from Harukawa Central to Minori Port is ¥410 (¥402 with a [[haruca|HaruCa]] card), and to Honmachi (1.5 km) the minimum fare of ¥170. Passengers can change to the Kagami Line at Harukawa Central, where Bayside trains leave from track 5 and arrive at track 6, beside the South Exit.
+
+== Ridership ==
+In FY2025 the eight Bayside Line stations beyond Harukawa Central had 30,420 boardings a day, compared with 43,590 at the Kagami Line stations other than Harukawa Central; the company's two lines together carried about 41 million passengers in the year.{{efn|Harukawa Central, shared by both lines, had 38,420 boardings a day and is not counted in either line's figure.}} The Bayside Line is mainly a commuter line: the busiest intermediate stations are Honmachi (7,640 boardings a day), Ichiba (5,920), for the central fish market in Uomachi and the Shiomi district, and Shinkō-dōri (4,380), for the shipyard and its 3,100 workers; the terminus, Minori Port, had 4,050. Traffic rises on summer weekends, when Hamanaka serves Sakurahama beach, and Minori-kōen is the station for the [[?Minori Bay Aquarium]] (opened 1997) and the seaside park.<ref name="prefstats">Minori Prefecture (2026). ''Minori Prefecture Transport Statistics, FY2025''. Minori Prefecture Planning Department, p. 38.</ref>
+
+== Lantern Festival ==
+During the [[harukawa-lantern-festival|Harukawa Lantern Festival]], held on the second weekend of October, the busiest station is not on the Bayside Line but Shiromachi on the [[kagami-line|Kagami Line]], the nearest to the lanterns and the castle. On the Saturday evening about 12,000 lanterns are released below [[kagami-bridge|Kagami Bridge]] and drift 1.4 km down the [[kagami-river|Kagami River]] to Shiomi Bridge, where nets collect them, and much of the crowd leaves through Shiromachi after the release ends at 20:30. On the Sunday, spectators of the 4,000 fireworks fired over the bay off Uomachi at 19:30 use the Bayside Line stations of Ichiba and Minori-kōen.<ref name="nippo2025">"Festival crowds: 41,000 pass through Shiromachi Station". ''Harukawa Nippō'', 13 October 2025, p. 3.</ref>
+
+Shiromachi, which normally has about 9,860 boardings a day, handled about 41,000 passengers on the festival Saturday in 2025. After its platforms were dangerously overcrowded in the record festival year of 2019, when 405,000 people attended, the company introduced one-way routes through the station, a temporary ticket office on the riverside and entry restrictions that hold passengers outside when the platforms are full; on the festival evenings entry may be restricted from 18:00 to 21:30.{{efn|Passengers are asked to buy their return tickets or charge their [[haruca|HaruCa]] cards before the festival, because the queues at the ticket machines are long afterwards.}} The railway advises visitors to walk instead to Harukawa Central, about 20 minutes along the river, where Bayside trains leave from track 5.
+
+For the 2026 festival on 10 and 11 October, extra late local trains run on the Bayside Line from Harukawa Central to Minori Port at 21:15, 21:45, 22:15, 22:45 and 23:30, in addition to the weekend service of a train every 20 minutes; extra locals also run on the Kagami Line.<ref name="festivaltrains">Harukawa Railway (2026). "Extra trains for the Harukawa Lantern Festival (10–11 October)". Notice, 2026.</ref>
+
+== See also ==
+* [[kagami-line|Kagami Line]]
+* [[minori-bay|Minori Bay]]
+* [[harukawa-lantern-festival|Harukawa Lantern Festival]]
+* [[tetsuo-saeki|Tetsuo Saeki]]
+
+== Notes ==
+{{notelist}}
+
+== References ==
+{{reflist}}

@@ -1,0 +1,235 @@
+{
+  "slug": "yuzu-miso-salmon",
+  "categories": ["harukawa", "weeknight"],
+  "cuisine": "harukawa",
+  "diet": ["pescatarian", "dairy-free"],
+  "difficulty": "easy",
+  "course": "main",
+  "times": { "prep": 10, "cook": 12, "extra": 15, "extraLabel": { "en": "Marinating (up to overnight)", "ja": "漬け込み（ひと晩まで可）" } },
+  "servings": 2,
+  "image": "yuzu-miso-salmon",
+  "rating": 4.7,
+  "ratings": 298,
+  "published": "2020-10-09",
+  "updated": "2026-09-18",
+  "related": ["yuzu-kosho", "minato-nabe", "kinoko-takikomi-gohan", "yuzu-pound-cake"],
+  "en": {
+    "title": "Yuzu Miso Salmon",
+    "teaser": "Salmon marinated in sweet white miso with Kagami valley yuzu juice and zest, then grilled until the edges caramelise. Ten minutes of work, and it waits happily in the fridge overnight.",
+    "intro": [
+      "If you take the Kagami Line inland from Harukawa Central, about forty minutes in the valley opens up and the hillsides turn into terraces of dark, glossy yuzu trees. That's where I grew up, and in early October the whole valley smells faintly of citrus. The fruit is still mostly green now; it turns golden in November, just in time for the winter yuzu baths at Tsukimi Onsen. My grandmother Fumi used to say the green ones are for the nose and the yellow ones for the tongue, and she was right: early-season yuzu has a sharper, more floral zest and a little less juice.",
+      "This salmon is what I make on evenings when swimming lessons, homework and a late train all collide. It takes ten minutes of hands-on work, you can marinate it in the morning (or the night before), and Hana packs the leftovers in her bento the next day. The marinade is a simple Harukawa-style yuzu miso: sweet white miso, a little mirin and sugar, and plenty of yuzu juice and zest. I buy my yuzu from the Tamura family's farm stand outside Tsukimi Onsen station whenever I visit my mother, and freeze the juice in ice cube trays so I have it all year.",
+      { "h": "Why you'll love it" },
+      { "ul": [
+        "Ten minutes of work, and it cooks while the rice steams.",
+        "Sweet, salty and fragrant, with caramelised edges.",
+        "Three ways to cook it: fish grill, oven or frying pan."
+      ] },
+      { "h": "Choosing the salmon" },
+      "Use raw, unsalted salmon (<em>nama-zake</em>), not the salted <em>shio-zake</em> sold right next to it in Japanese supermarkets, or the result will be far too salty. In autumn our fishmongers have <em>akizake</em>, wild chum salmon caught as it returns to the rivers: it is leaner, so take care not to overcook it. Farmed Atlantic salmon is richer and more forgiving. Fillets about 2 cm thick cook most evenly.",
+      { "h": "The one rule: wipe it off" },
+      "Miso and sugar burn quickly, so scrape the marinade off before cooking, leaving only a thin film. It feels like throwing the flavour away, but the fish has already soaked it up, and a thick coat turns black long before the salmon is cooked. If your fish grill browns fast, lay a piece of foil loosely over the top for the last few minutes.",
+      { "h": "No yuzu?" },
+      "Mix equal parts lemon and lime juice, with lemon zest. Sudachi or kabosu are lovely too. Be careful with bottled yuzu juice: some brands (often labelled <em>yuzu-su</em>) contain salt, so taste it first and use a little less miso if it is salty. If you have green yuzu left over, make a jar of <a href=\"{{recipe:yuzu-kosho}}\">yuzu kosho</a> or bake my <a href=\"{{recipe:yuzu-pound-cake}}\">yuzu pound cake</a>. Serve the salmon with rice, miso soup and something green; in autumn I love it with <a href=\"{{recipe:kinoko-takikomi-gohan}}\">mushroom rice</a>."
+    ],
+    "equipment": [
+      "Fine grater or zester (a Microplane or a Japanese oroshigane)",
+      "Plastic wrap or a zip-top bag",
+      "Fish grill, or an oven and a baking tray, or a 26 cm frying pan with a lid",
+      "Baking paper (for the oven and frying-pan methods)"
+    ],
+    "notes": [
+      "Marinating time changes the result: 15 minutes gives a light, fresh yuzu flavour; overnight gives a deeper, sweeter and firmer fish, close to saikyō-yaki.",
+      "Grate only the yellow-green outer skin of the yuzu. The white pith underneath is bitter.",
+      "Caramelised brown edges are normal and delicious. Black, bitter patches mean too much marinade was left on or the heat was too high.",
+      "If you only have regular white miso (not the sweet saikyō kind), add an extra ½ tsp sugar. With red miso, use 1½ tbsp miso and 2 tsp sugar.",
+      "For a bento, let the salmon cool completely before packing. It tastes good cold."
+    ],
+    "subs": [
+      ["Yuzu juice", "Equal parts lemon and lime juice, or sudachi or kabosu juice"],
+      ["Yuzu zest", "Lemon zest, or half lemon and half lime zest"],
+      ["Mirin", "1 tbsp sake + 1 tsp sugar (alcohol-free: 1 tbsp water + 1 tsp sugar)"],
+      ["Salmon", "Spanish mackerel (sawara), cod or yellowtail; or chicken thighs, baked at 200°C (400°F) for 18–20 minutes to 75°C in the centre"],
+      ["Sweet white miso", "Regular white miso + an extra ½ tsp sugar"]
+    ],
+    "makeAhead": "Marinate the salmon the night before (or in the morning) and keep it wrapped in the fridge, ready to cook when you get home. The marinade itself keeps for a week in a clean jar in the fridge.",
+    "storage": "Cooked salmon keeps for 2 days in the fridge; eat it cold in a bento or warm it covered in the microwave at 600 W for about 40 seconds. Raw salmon in its marinade freezes for up to 3 weeks; thaw it overnight in the fridge."
+  },
+  "ja": {
+    "title": "鮭のゆず味噌焼き",
+    "teaser": "鏡川流域のゆずの果汁と皮を白みそに合わせて生鮭を漬け、縁がこんがりするまで焼きます。手を動かすのは10分だけ。ひと晩漬けておいても大丈夫です。",
+    "intro": [
+      "春川中央駅から春川鉄道の鏡線で内陸へ40分ほど行くと、谷が開け、山の斜面につやつやと濃い緑のゆず畑が段々に広がります。私が育ったのはこのあたり。10月のはじめは、谷じゅうがほんのり柑橘の香りに包まれます。今の時期の実はまだ青く、11月になると黄色く色づいて、ちょうど月見温泉のゆず湯の季節を迎えます。祖母のふみは「青いゆずは香りを、黄色いゆずは味を楽しむもの」とよく言っていましたが、本当にそのとおり。走りの青ゆずは、皮の香りが鋭く華やかで、果汁は少し控えめです。",
+      "この鮭は、習いごとと宿題と電車の遅れが重なるような日の夕飯の定番です。手を動かすのは10分だけ。朝（または前の晩）に漬けておけて、残りは翌日、花がお弁当に詰めていきます。漬けだれは春川風のシンプルなゆずみそ。甘い白みそに、みりんと砂糖を少し、そしてゆずの果汁と皮をたっぷり。ゆずは実家に帰るたびに、月見温泉駅の近くにある田村さんちの直売所で買い、果汁を製氷皿で冷凍して一年中使っています。",
+      { "h": "このレシピのいいところ" },
+      { "ul": [
+        "作業は10分。ご飯を炊いている間に焼き上がります。",
+        "甘じょっぱくて香りがよく、縁は香ばしく焼けます。",
+        "魚焼きグリル、オーブン、フライパンの3通りで作れます。"
+      ] },
+      { "h": "鮭の選び方" },
+      "必ず塩をしていない「生鮭」を使ってください。スーパーで隣に並んでいる塩鮭を使うと、かなりしょっぱくなってしまいます。秋の魚屋さんには、川へ戻ってくるところをとった「秋鮭」が並びます。脂が少なめなので、焼きすぎに注意。養殖のアトランティックサーモンは脂がのっていて、失敗しにくいです。厚さ2cmくらいの切り身が、いちばんムラなく焼けます。",
+      { "h": "大事なのは「たれをぬぐう」こと" },
+      "みそと砂糖は焦げやすいので、焼く前にたれをこそげ落とし、薄く残る程度にします。もったいない気がしますが、味はもう魚にしみ込んでいます。たれが厚く残っていると、中に火が通る前に表面が真っ黒に。グリルで焼き色が早くつくときは、最後の数分だけアルミホイルをふんわりかぶせてください。",
+      { "h": "ゆずがないときは" },
+      "レモン汁とライム汁を同量ずつ合わせ、皮はレモンで代用できます。すだちやかぼすもおすすめです。市販のゆず果汁を使う場合は注意。「ゆず酢」として売られているものには塩が入っていることがあるので、なめてみて塩辛ければみそを少し減らしてください。青ゆずが余ったら、<a href=\"{{recipe:yuzu-kosho}}\">ゆずこしょう</a>を仕込んだり、<a href=\"{{recipe:yuzu-pound-cake}}\">ゆずのパウンドケーキ</a>を焼いたりするのも楽しいですよ。ご飯とみそ汁、青菜を添えて。秋なら<a href=\"{{recipe:kinoko-takikomi-gohan}}\">きのこの炊き込みご飯</a>と合わせるのが好きです。"
+    ],
+    "equipment": [
+      "おろし金またはゼスター（皮をすりおろす用）",
+      "ラップまたは保存袋",
+      "魚焼きグリル、またはオーブンと天板、またはふたつきのフライパン（26cm）",
+      "クッキングシート（オーブン・フライパンで焼く場合）"
+    ],
+    "notes": [
+      "漬ける時間で仕上がりが変わります。15分ならゆずが軽やかに香るさっぱり味、ひと晩漬けると西京焼きのように甘みが深く、身も締まります。",
+      "ゆずの皮は、表面の黄緑色の部分だけをすりおろします。下の白いわたは苦みがあります。",
+      "縁がこんがり茶色になるのは正解でおいしいところ。黒く苦い焦げは、たれの残しすぎか火が強すぎるサインです。",
+      "甘口の西京みそがなく、ふつうの白みそを使うときは、砂糖を小さじ1/2増やします。赤みそなら、みそ大さじ1と1/2、砂糖小さじ2にしてください。",
+      "お弁当に入れるときは、完全に冷ましてから詰めましょう。冷めてもおいしいです。"
+    ],
+    "subs": [
+      ["ゆず果汁", "レモン汁とライム汁を同量ずつ、またはすだち・かぼすの果汁"],
+      ["ゆずの皮", "レモンの皮（レモンとライムを半々でも）"],
+      ["みりん", "みりん大さじ1につき、酒大さじ1＋砂糖小さじ1（アルコールなしなら水大さじ1＋砂糖小さじ1）"],
+      ["鮭", "サワラ、タラ、ぶり。鶏もも肉なら200℃のオーブンで18〜20分、中心温度75℃まで焼く"],
+      ["甘口の白みそ", "ふつうの白みそ＋砂糖小さじ1/2"]
+    ],
+    "makeAhead": "前の晩（または朝）に漬けてラップのまま冷蔵庫へ。帰ったらすぐ焼けます。漬けだれだけなら、清潔な瓶に入れて冷蔵で1週間もちます。",
+    "storage": "焼いた鮭は冷蔵で2日。お弁当なら冷たいままで、温めるならラップをして600Wの電子レンジで約40秒。たれに漬けた生の状態なら冷凍で3週間もちます。解凍は冷蔵庫でひと晩かけて。"
+  },
+  "ingredients": [
+    { "items": [
+      { "q": 2, "u": "fillet", "en": "salmon fillets (about 100 g each), raw and unsalted", "ja": "生鮭（切り身、約100g）" },
+      { "q": 1, "u": "tsp", "en": "sake, for the fish", "ja": "酒（下処理用）" }
+    ] },
+    { "group": { "en": "For the yuzu miso marinade", "ja": "ゆずみそだれ" }, "items": [
+      { "q": 2, "u": "tbsp", "en": "white miso (sweet saikyō-style if possible)", "ja": "白みそ（あれば西京みそ）" },
+      { "q": 1, "u": "tbsp", "en": "mirin", "ja": "みりん" },
+      { "q": 1, "u": "tsp", "en": "sugar", "ja": "砂糖" },
+      { "q": 1, "u": "tbsp", "en": "yuzu juice (about ½ yuzu)", "ja": "ゆず果汁" },
+      { "q": 1, "u": "tsp", "en": "yuzu zest, finely grated (about ½ yuzu)", "ja": "ゆずの皮（すりおろし）" }
+    ] },
+    { "group": { "en": "To serve", "ja": "仕上げ" }, "items": [
+      { "q": null, "en": "yuzu peel, cut into thin strips", "ja": "ゆずの皮（せん切り）", "free": { "en": "to garnish", "ja": "少々" } },
+      { "q": 6, "u": "pc", "jaU": "本", "en": "shishito peppers (optional), cooked alongside the fish", "ja": "ししとう（お好みで）" }
+    ] }
+  ],
+  "steps": [
+    {
+      "en": "Pat the salmon dry with kitchen paper and run your fingertips over it to check for pin bones (pull any out with tweezers). Sprinkle the sake over both sides, leave for 5 minutes, then pat dry again; this takes away any fishy smell.",
+      "ja": "鮭はキッチンペーパーで水けをふき、指先でなでて小骨がないか確かめます（あれば骨抜きで抜く）。両面に酒をふって5分おき、もう一度水けをふき取ります。これで臭みが取れます。",
+      "timer": 5
+    },
+    {
+      "en": "In a small bowl, mix the miso, mirin, sugar, yuzu juice and zest until smooth.",
+      "ja": "小さなボウルに白みそ、みりん、砂糖、ゆず果汁、ゆずの皮を入れ、なめらかになるまで混ぜます。"
+    },
+    {
+      "en": "Spread half the marinade on a sheet of plastic wrap, lay the salmon on it and spread the rest over the top. Wrap snugly (or use a zip-top bag and press out the air) and refrigerate for at least 15 minutes, or up to overnight. After 24 hours the fish becomes too salty and firm.",
+      "ja": "ラップにたれの半量を広げて鮭をのせ、残りのたれを上に塗ります。ぴったり包んで（または保存袋に入れて空気を抜き）、冷蔵庫で15分以上、ひと晩まで漬けます。24時間を過ぎると塩辛く、身がかたくなります。",
+      "timer": 15
+    },
+    {
+      "en": "Scrape the marinade off with a spatula, then wipe gently with kitchen paper so only a thin film remains, especially on the skin. Throw the used marinade away; it has had raw fish in it.",
+      "ja": "ゴムべらでたれをこそげ落とし、キッチンペーパーでやさしくぬぐって薄く残る程度にします。皮の部分は特にしっかりと。生魚を漬けたたれは使わずに捨ててください。"
+    },
+    {
+      "en": "Fish grill: preheat for 1 minute. In a double-sided grill, cook skin side up over medium-low heat for 7–8 minutes without turning. In a single-sided grill, cook skin side up for 5 minutes, turn and cook 3 minutes more. If the top browns too fast, lay foil loosely over it. Add the shishito peppers for the last 3 minutes.",
+      "ja": "魚焼きグリルの場合：1分予熱します。両面焼きなら皮目を上にして中弱火で7〜8分、返さずに焼きます。片面焼きなら皮目を上にして5分、返して3分。焼き色が早くつくときはアルミホイルをふんわりかぶせます。ししとうは最後の3分で一緒に焼きます。",
+      "timer": 8
+    },
+    {
+      "en": "Oven: heat to 200°C (400°F), or 180°C for a fan oven. Lay the salmon skin side up on a baking tray lined with baking paper, with the shishito peppers around it, and bake for 12–14 minutes.",
+      "ja": "オーブンの場合：200℃に予熱します（コンベクションなら180℃）。クッキングシートを敷いた天板に鮭を皮目を上にしてのせ、ししとうを周りに並べて12〜14分焼きます。",
+      "timer": 12
+    },
+    {
+      "en": "Frying pan: line the pan with baking paper and put the salmon in skin side down. Cover and cook over medium-low heat for 4 minutes, then turn, add the shishito peppers, cover again and cook for 3–4 minutes more. The paper stops the miso from sticking and burning, so you need no oil.",
+      "ja": "フライパンの場合：フライパンにクッキングシートを敷き、鮭を皮目を下にして並べます。ふたをして中弱火で4分、返してししとうを加え、再びふたをして3〜4分焼きます。シートのおかげでみそがこびりつかず焦げにくいので、油はいりません。",
+      "timer": 4
+    },
+    {
+      "en": "The salmon is done when the flesh has turned from translucent to opaque pale pink and flakes at the thickest part. Top with thin strips of yuzu peel and serve right away.",
+      "ja": "身が半透明から不透明な淡いピンク色に変わり、いちばん厚いところがほぐれれば焼き上がりです。ゆずの皮のせん切りをのせ、熱いうちにどうぞ。"
+    }
+  ],
+  "nutrition": { "calories": 250, "carbs": 9, "protein": 23, "fat": 13, "satFat": 3, "cholesterol": 60, "sodium": 640, "fiber": 1, "sugar": 6 },
+  "comments": [
+    {
+      "name": { "en": "Mariko (Harukawa)", "ja": "まりこ（春川市）" },
+      "date": "2026-10-01",
+      "stars": 5,
+      "en": "Green yuzu from the Kagami valley are at the morning market now, three for 200 yen. I marinated the salmon before work and dinner was on the table fifteen minutes after I got home.",
+      "ja": "朝市に鏡川の谷の青ゆずが並び始めましたね。3個で200円でした。出勤前に漬けておいたら、帰宅して15分で夕飯ができました。"
+    },
+    {
+      "name": { "en": "Sarah (Brighton)", "ja": "Sarah（イギリス・ブライトン）" },
+      "date": "2026-09-21",
+      "stars": 4,
+      "en": "Tasty, but quite salty. I used a bottle of yuzu juice from the Asian supermarket.",
+      "ja": "おいしかったのですが、かなりしょっぱかったです。アジア系スーパーで買った瓶入りのゆず果汁を使いました。",
+      "reply": {
+        "en": "That bottle is probably the reason. Many bottled yuzu juices contain salt, sometimes more than 10%, so check the label. With a salted one, use 1½ tbsp miso instead of 2, or switch to fresh lemon and lime.",
+        "ja": "たぶん原因はその瓶です。市販のゆず果汁には塩入りのものが多く、10%以上のこともあるので表示を確認してみてください。塩入りなら、みそを大さじ2から大さじ1と1/2に減らすか、生のレモンとライムに替えてみてくださいね。"
+      }
+    },
+    {
+      "name": { "en": "Takkun's dad", "ja": "たっくんパパ" },
+      "date": "2026-08-30",
+      "stars": 5,
+      "en": "Fish grill version. The first time it burned because I left too much miso on. The second time I wiped it properly and it was perfect, with nice brown edges.",
+      "ja": "魚焼きグリルで作りました。1回目はみそを残しすぎて焦がしましたが、2回目はしっかりぬぐって大成功。縁がいい感じに焼けました。",
+      "reply": {
+        "en": "That's the classic first-time mistake, well done for trying again! Wash the grill tray the same evening, too: dried miso drips smoke and smell the next time you use it.",
+        "ja": "最初にやりがちな失敗です。リベンジ成功おめでとうございます！グリルの受け皿はその日のうちに洗うのがおすすめ。みそのたれが残っていると、次に使うときに煙と臭いが出てしまいます。"
+      }
+    },
+    {
+      "name": { "en": "Priya (Singapore)", "ja": "Priya（シンガポール）" },
+      "date": "2026-07-14",
+      "stars": null,
+      "en": "Can I freeze the salmon in the marinade for meal prep?",
+      "ja": "作り置き用に、たれに漬けた状態で冷凍できますか？",
+      "reply": {
+        "en": "Yes, for up to 3 weeks. Freeze each fillet flat in a zip-top bag so it thaws evenly, and thaw overnight in the fridge (not in the microwave, which cooks the miso in patches). It keeps marinating as it thaws, so cook it straight away.",
+        "ja": "はい、3週間ほど大丈夫です。1切れずつ保存袋に入れて平らにして冷凍すると、ムラなく解凍できます。解凍は冷蔵庫でひと晩（電子レンジだとみそが部分的に煮えてしまいます）。解凍中も漬かり続けるので、解けたらすぐ焼いてください。"
+      }
+    },
+    {
+      "name": { "en": "Kenji M.", "ja": "けんじ" },
+      "date": "2026-05-02",
+      "stars": 5,
+      "en": "Made it with chicken thighs as suggested, 200°C for 20 minutes. I scored the skin and it came out crisp. My kids asked for it again the next week.",
+      "ja": "おすすめどおり鶏もも肉で、200℃で20分焼きました。皮に切り込みを入れたらパリッと仕上がりました。子どもたちに翌週もリクエストされました。"
+    },
+    {
+      "name": { "en": "Emily (Seattle)", "ja": "Emily（アメリカ・シアトル）" },
+      "date": "2025-11-10",
+      "stars": 4,
+      "en": "I left it overnight and the fish was firmer than I like. Great flavour though.",
+      "ja": "ひと晩漬けたら、身が好みよりかたくなりました。味はとてもよかったです。",
+      "reply": {
+        "en": "Miso draws moisture out of the fish, so the longer it sits, the firmer it gets. For a softer, flakier texture, try 1–2 hours.",
+        "ja": "みそは魚の水分を引き出すので、長く漬けるほど身が締まります。ふっくらやわらかく仕上げたいなら、1〜2時間を目安にしてみてください。"
+      }
+    },
+    {
+      "name": { "en": "Noriko", "ja": "のりこ" },
+      "date": "2025-02-14",
+      "stars": 5,
+      "en": "The frying pan with baking paper is genius, almost nothing to wash. I added a pack of shimeji around the fish and they soaked up the yuzu miso.",
+      "ja": "クッキングシートを敷いたフライパン、天才的です。洗い物がほとんどありません。しめじを1パック周りに入れたら、ゆずみその味を吸っておいしかったです。"
+    },
+    {
+      "name": { "en": "Ben (Melbourne)", "ja": "Ben（オーストラリア・メルボルン）" },
+      "date": "2024-10-20",
+      "stars": null,
+      "en": "Do you eat the skin? Mine came out a bit soft.",
+      "ja": "皮も食べますか？私のは少しやわらかい仕上がりでした。",
+      "reply": {
+        "en": "We do, it's my favourite part! For crisper skin, use the frying-pan method and give the skin side an extra minute uncovered at the end, or finish under the grill for a minute.",
+        "ja": "食べます、私はいちばん好きなところです！パリッとさせたいときは、フライパンで焼いて、最後にふたを取って皮目をもう1分焼くか、グリルで1分仕上げてみてください。"
+      }
+    }
+  ]
+}

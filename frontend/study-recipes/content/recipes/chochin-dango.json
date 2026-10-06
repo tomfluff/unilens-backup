@@ -1,0 +1,225 @@
+{
+  "slug": "chochin-dango",
+  "categories": ["harukawa"],
+  "cuisine": "harukawa",
+  "diet": ["vegan", "vegetarian", "dairy-free"],
+  "difficulty": "medium",
+  "course": "snack",
+  "times": { "prep": 20, "cook": 20 },
+  "servings": 8,
+  "servingsUnit": { "en": "skewers", "ja": "本" },
+  "image": "chochin-dango",
+  "rating": 4.8,
+  "ratings": 241,
+  "published": "2021-10-01",
+  "updated": "2026-09-29",
+  "related": ["daigaku-imo", "chicken-karaage", "yuzu-kosho", "yuzu-pound-cake"],
+  "en": {
+    "title": "Chōchin Dango (Lantern Festival Dango with Mitarashi Glaze)",
+    "teaser": "The Harukawa Lantern Festival snack: chewy rice dumplings, four to a skewer, toasted and coated in a glossy sweet-salty mitarashi glaze until they glow like little lanterns.",
+    "intro": [
+      "On the second weekend of October, the banks of the Kagami River turn into a river of light. Thousands of paper lanterns hang between the willows from Harukawa Castle down to the bay, and food stalls line both sides of the path. This year the Harukawa Lantern Festival falls on Saturday 10 and Sunday 11 October, and if you go, follow the smell of soy sauce caramelising over charcoal. That is <strong>chōchin dango</strong>, lantern dango: four chewy rice dumplings on a skewer, toasted and glazed with mitarashi sauce until they glow amber, exactly like the lanterns above them.",
+      "The most famous stall belongs to Kagamiya, a sweet shop by the castle moat that has been grilling them at the festival since 1958. When I was Hana's age, my grandmother Fumi took the train down from Tsukimi Onsen just to buy a box for the inn. My kids would happily queue for half an hour, but I have been making them at home for years, and shaping them has become a family job: Sota rolls the balls, Hana does the skewers, and Daisuke eats the ones that come out lopsided.",
+      { "h": "Why you'll love it" },
+      { "ul": [
+        "A handful of pantry ingredients and no oven.",
+        "Children love rolling the dough.",
+        "The glossy glaze is ready in three minutes."
+      ] },
+      { "h": "Shiratamako, joshinko or tofu?" },
+      "<em>Shiratamako</em> (glutinous rice flour) makes the dumplings soft and stretchy; <em>joshinko</em> (non-glutinous rice flour) makes them firmer, with a clean bite, and helps them keep their round shape on the skewer. Half and half gives you the texture of the festival stalls. Fumi made hers with shiratamako alone and silken tofu instead of water: tofu dango stay soft for longer, which helps if you are making them a few hours ahead. The details are in the substitutions.",
+      { "h": "Getting the dough right" },
+      "Rice flours absorb water differently from bag to bag, so the water is a range. Aim for 'as soft as an earlobe' (<em>mimitabu</em>, the classic Japanese description): smooth, springy and not sticky. Cracks mean the dough is too dry; sticky fingers mean too wet. Both are easy to fix, see step 2.",
+      { "h": "Tips for success" },
+      "Make the balls the same size so they cook evenly, and don't skip the ice bath: it is what gives them their shine. Dango harden as they cool because the starch firms up, so eat them on the day, ideally within a couple of hours. For small children and older family members, cut each dumpling into halves or quarters: like mochi, they are chewy and can be a choking risk. Having a festival night at home? Add <a href=\"{{recipe:daigaku-imo}}\">daigaku-imo</a> and <a href=\"{{recipe:chicken-karaage}}\">karaage</a> to the table."
+    ],
+    "equipment": [
+      "Large pot (at least 2 litres of water) and a slotted spoon",
+      "Large bowl of iced water",
+      "8 bamboo skewers, about 15 cm",
+      "Small saucepan and a heatproof spatula",
+      "Non-stick frying pan, or a wire rack for toasting over a gas flame (optional)",
+      "Kitchen scale"
+    ],
+    "notes": [
+      "Yuzu variation: stir 1 tsp yuzu juice and ½ tsp finely grated yuzu zest into the sauce off the heat. This is Kagamiya's autumn special.",
+      "If the sauce stays thin, the starch hasn't cooked yet: put it back on the heat and stir until it bubbles and turns clear. If it is too thick or sets like jelly as it cools, loosen it with 1–2 tsp hot water.",
+      "Choking risk: cut dango into small pieces for small children and older people, and have them eat sitting down.",
+      "Rice flours are gluten-free, but ordinary soy sauce contains wheat. Use tamari for a gluten-free glaze.",
+      "Dango that have gone hard soften again in the microwave: 10–20 seconds per skewer at 600 W, loosely covered."
+    ],
+    "subs": [
+      ["Joshinko", "All shiratamako (softer, stretchier dango), or Thai white rice flour"],
+      ["Shiratamako", "Mochiko (glutinous rice flour); it absorbs water faster, so add the water gradually"],
+      ["Water in the dough (tofu version)", "200 g shiratamako (no joshinko) + about 200 g silken tofu and no water; add the tofu a little at a time. These stay soft for several hours."],
+      ["Mirin", "1 tbsp sake + 1 tsp sugar (alcohol-free: 1 tbsp water + 1 tsp sugar)"],
+      ["Potato starch", "Cornflour (cornstarch), same amount"]
+    ],
+    "makeAhead": "Boiled, unsauced dango freeze well: freeze them spread out on a tray, then bag them for up to a month. Drop them frozen into boiling water for 1–2 minutes until soft, cool them in iced water and carry on from step 6. The sauce keeps for 3 days in the fridge; rewarm it with a splash of water.",
+    "storage": "Dango are best on the day. In the fridge they turn hard within hours, so keep them covered at cool room temperature and finish them the same day. Revive hard ones in the microwave (600 W, 10–20 seconds per skewer, loosely covered) or by toasting them again in a frying pan."
+  },
+  "ja": {
+    "title": "提灯だんご（みたらしだんご）",
+    "teaser": "春川灯籠まつりの名物。もちもちのだんごを4つずつ串に刺して焼き、つやつやの甘辛いみたらしあんをからめれば、小さな提灯のように輝きます。",
+    "intro": [
+      "10月の第2週末、鏡川の河原は光の川になります。春川城からみのり湾のほうまで、柳の木のあいだに何千もの紙の灯籠がつるされ、道の両側に屋台がずらりと並びます。今年の春川灯籠まつりは10月10日（土）と11日（日）。会場に行ったら、炭火でしょうゆが焦げる香ばしい匂いをたどってみてください。そこにあるのが「提灯だんご」。もちもちのだんごを4つ串に刺して焼き、みたらしあんをからめた姿は、頭上の灯籠そっくりの琥珀色に輝いています。",
+      "いちばん有名なのは、お堀端の和菓子屋「かがみ屋」さんの屋台で、昭和33年からまつりでだんごを焼き続けています。私が今の花くらいの年のころ、祖母のふみはこれを宿用にひと箱買うためだけに、月見温泉から電車で下りてきたものです。子どもたちは30分並ぶのも平気ですが、わが家ではもう何年も前から家で作っていて、だんご作りは家族の仕事になりました。蒼太が丸めて、花が串に刺し、形がいびつになったものは大輔のおなかへ。",
+      { "h": "このレシピのいいところ" },
+      { "ul": [
+        "家にある材料で作れて、オーブンも不要です。",
+        "生地を丸めるのは子どもたちも大好き。",
+        "つやつやのたれは3分でできます。"
+      ] },
+      { "h": "白玉粉、上新粉、それとも豆腐？" },
+      "白玉粉（もち米の粉）だけだと、やわらかくてよくのびるだんごに。上新粉（うるち米の粉）はかために仕上がって歯切れがよく、串に刺しても丸い形を保ってくれます。半々にすると、屋台のような食感になります。ふみは白玉粉だけを使い、水の代わりに絹ごし豆腐でこねていました。豆腐だんごはやわらかさが長もちするので、数時間前に作っておきたいときに便利です。分量は「代用」の欄をご覧ください。",
+      { "h": "生地のこね方のコツ" },
+      "米粉は袋によって吸水量が違うので、水の量には幅を持たせています。目安は「耳たぶくらいのやわらかさ」。なめらかで弾力があり、手にくっつかない状態です。ひびが入るなら水分不足、手にべたつくなら水分が多すぎ。どちらも簡単に直せます（手順2を参照）。",
+      { "h": "おいしく作るコツ" },
+      "だんごの大きさをそろえるとムラなくゆで上がります。氷水にとる工程は省かないで。あのつやはここで生まれます。でんぷんが固まるため、だんごは冷めるとかたくなります。その日のうち、できれば2時間以内に食べてください。小さなお子さんやご高齢の方には、半分か4等分に切って。おもちと同じで、のどに詰まりやすいので注意が必要です。おうちでまつり気分を味わうなら、<a href=\"{{recipe:daigaku-imo}}\">大学いも</a>や<a href=\"{{recipe:chicken-karaage}}\">唐揚げ</a>もぜひ一緒に。"
+    ],
+    "equipment": [
+      "大きめの鍋（水2L以上）と穴あきおたま",
+      "氷水を張った大きなボウル",
+      "竹串（約15cm）8本",
+      "小鍋と耐熱ゴムべら",
+      "フッ素樹脂加工のフライパン、または直火用の焼き網（お好みで）",
+      "キッチンスケール"
+    ],
+    "notes": [
+      "ゆず風味にするなら：火を止めてから、たれにゆず果汁小さじ1とすりおろしたゆずの皮小さじ1/2を混ぜます。かがみ屋さんの秋限定の味です。",
+      "たれがゆるいままなのは、でんぷんにまだ火が通っていないから。もう一度火にかけ、ふつふつと煮立って透明になるまで混ぜてください。かたすぎたり、冷めてゼリー状になったりしたら、お湯小さじ1〜2でのばします。",
+      "のどに詰まらせないよう、小さなお子さんやご高齢の方には小さく切り、座って食べてもらいましょう。",
+      "米粉はグルテンフリーですが、一般的なしょうゆには小麦が含まれます。グルテンフリーにするなら、たまりじょうゆを使ってください。",
+      "かたくなっただんごは、ふんわりラップをして600Wの電子レンジで1本あたり10〜20秒温めるとやわらかくなります。"
+    ],
+    "subs": [
+      ["上新粉", "すべて白玉粉に（よりやわらかく、よくのびる食感に）、またはタイ産の米粉"],
+      ["白玉粉", "もち粉。吸水が早いので、水は少しずつ加えて"],
+      ["生地の水（豆腐だんご）", "白玉粉200g（上新粉なし）＋絹ごし豆腐約200g、水は入れない。豆腐は少しずつ加えて。数時間たってもやわらかいままです"],
+      ["みりん", "みりん大さじ1につき、酒大さじ1＋砂糖小さじ1（アルコールなしなら水大さじ1＋砂糖小さじ1）"],
+      ["片栗粉", "コーンスターチ（同量）"]
+    ],
+    "makeAhead": "ゆでてたれをからめる前のだんごは、冷凍に向いています。バットに並べて凍らせてから保存袋に移せば1か月もちます。凍ったまま熱湯で1〜2分、やわらかくなるまでゆでて氷水にとり、手順6から続けてください。たれは冷蔵で3日もつので、少量の水を加えて温め直します。",
+    "storage": "だんごはその日のうちがいちばんおいしいです。冷蔵庫に入れると数時間でかたくなるので、乾かないように覆って涼しい室温におき、当日中に食べきってください。かたくなったら電子レンジ（600Wで1本10〜20秒、ふんわりラップ）か、フライパンで焼き直すとやわらかさが戻ります。"
+  },
+  "ingredients": [
+    { "group": { "en": "For the dango", "ja": "だんご" }, "items": [
+      { "q": 100, "u": "g", "us": [0.75, "cup"], "en": "shiratamako (glutinous rice flour)", "ja": "白玉粉" },
+      { "q": 100, "u": "g", "us": [0.75, "cup"], "en": "joshinko (non-glutinous rice flour)", "ja": "上新粉" },
+      { "q": 160, "q2": 180, "u": "ml", "en": "water, lukewarm", "ja": "ぬるま湯" }
+    ] },
+    { "group": { "en": "For the mitarashi sauce", "ja": "みたらしあん" }, "items": [
+      { "q": 100, "u": "ml", "en": "water", "ja": "水" },
+      { "q": 4, "u": "tbsp", "en": "sugar", "ja": "砂糖" },
+      { "q": 2, "u": "tbsp", "en": "soy sauce", "ja": "しょうゆ" },
+      { "q": 1, "u": "tbsp", "en": "mirin", "ja": "みりん" },
+      { "q": 1, "u": "tbsp", "en": "potato starch", "ja": "片栗粉" }
+    ] }
+  ],
+  "steps": [
+    {
+      "en": "Put the shiratamako and joshinko in a bowl and crush any lumps of shiratamako with your fingers. Add about three-quarters of the lukewarm water and mix with your hand, squeezing the dough through your fingers until it comes together.",
+      "ja": "ボウルに白玉粉と上新粉を入れ、白玉粉の粒を指でつぶします。ぬるま湯の4分の3ほどを加え、指のあいだから押し出すように手で混ぜて、ひとまとめにします。"
+    },
+    {
+      "en": "Keep kneading for 2–3 minutes, adding the rest of the water a tablespoon at a time, until the dough is as soft as an earlobe: smooth, springy and not sticking to your hand. If a ball cracks at the edges when you press it flat, it is too dry: add water 1 tsp at a time. If it sticks to your fingers or slumps, it is too wet: knead in shiratamako 1 tsp at a time.",
+      "ja": "残りのぬるま湯を大さじ1ずつ加えながら2〜3分こね、耳たぶくらいのやわらかさにします。なめらかで弾力があり、手にくっつかなければOK。丸めて押しつぶしたときに縁にひびが入るなら水分不足なので、水を小さじ1ずつ足します。指にべたつく、だれるなら水分が多すぎなので、白玉粉を小さじ1ずつこね込みます。"
+    },
+    {
+      "en": "Roll the dough into a log and cut it into 32 equal pieces, about 11 g each (weigh the first one). Roll each piece between your palms into a smooth ball about 2.5 cm across and line them up on a tray. Cover with a damp cloth so they don't dry out.",
+      "ja": "生地を棒状にのばし、32等分に切ります（1個約11g。最初の1個ははかってみて）。手のひらで転がして直径2.5cmほどのなめらかな玉にし、バットに並べます。乾かないように、ぬれぶきんをかけておきます。",
+      "img": "chochin-dango-shaping"
+    },
+    {
+      "en": "Bring a large pot of water (about 2 litres) to the boil and set the bowl of iced water next to it. Drop in half the dango and stir gently once so they don't stick to the bottom. When they float, after about 2 minutes, cook for 3 minutes more.",
+      "ja": "大きめの鍋にたっぷりの湯（約2L）を沸かし、横に氷水のボウルを用意します。だんごの半量を入れ、鍋底にくっつかないように一度やさしく混ぜます。2分ほどで浮き上がってきたら、さらに3分ゆでます。",
+      "timer": 5
+    },
+    {
+      "en": "Lift them straight into the iced water with the slotted spoon and leave for 1–2 minutes; this firms them up and makes them glossy. Cook the second batch the same way, then drain all the dango well on kitchen paper.",
+      "ja": "穴あきおたまですくってすぐに氷水にとり、1〜2分冷やします。こうすると身が締まり、つやが出ます。残りも同様にゆでて冷やし、キッチンペーパーの上でしっかり水けをきります。",
+      "timer": 2
+    },
+    {
+      "en": "Thread 4 dango onto each skewer, pushing them close together. For the festival look, toast them: heat a non-stick frying pan over medium heat (no oil) and cook for 1–2 minutes per side until browned in spots, or scorch them lightly on a wire rack over a gas flame (soak the skewers in water for 10 minutes first so they don't burn).",
+      "ja": "だんごを4つずつ、すき間なく竹串に刺します。屋台風にするなら焼き目をつけましょう。フッ素樹脂加工のフライパンを中火で熱し（油なし）、片面1〜2分ずつ、ところどころ焼き色がつくまで焼きます。焼き網で直火であぶってもOK（串が焦げないよう、先に10分水につけておきます）。"
+    },
+    {
+      "en": "For the sauce, put the water, sugar, soy sauce, mirin and potato starch in a small saucepan and stir until dissolved; stir again just before heating, as the starch settles. Cook over medium heat, stirring constantly. When it bubbles and turns from cloudy to clear and glossy, keep stirring for 30 seconds more, then take it off the heat. It should coat the back of a spoon.",
+      "ja": "たれを作ります。小鍋に水、砂糖、しょうゆ、みりん、片栗粉を入れてよく溶かします。片栗粉は沈むので、火にかける直前にもう一度混ぜてください。中火にかけ、絶えず混ぜながら加熱します。ふつふつと煮立ち、白っぽいにごりが透明なつやに変わったら、さらに30秒混ぜて火を止めます。スプーンの背にとろりと絡むくらいが目安です。",
+      "timer": 3
+    },
+    {
+      "en": "Spoon the warm sauce over the skewers, or roll them through it in the pan, and serve straight away. Dango are softest within an hour or two; they firm up as they cool.",
+      "ja": "温かいたれを串にかけるか、小鍋の中で転がしてからめ、すぐにいただきます。だんごがいちばんやわらかいのは1〜2時間以内。冷めるとだんだんかたくなります。"
+    }
+  ],
+  "nutrition": { "calories": 120, "carbs": 27, "protein": 2, "fat": 0.3, "satFat": 0.1, "cholesterol": 0, "sodium": 260, "fiber": 0.3, "sugar": 6 },
+  "comments": [
+    {
+      "name": { "en": "Aiko (Harukawa)", "ja": "あいこ（春川市）" },
+      "date": "2026-10-02",
+      "stars": 5,
+      "en": "Practising for our neighbourhood stall at the Lantern Festival next weekend. The kids rolled all 32 balls themselves and only a few were lopsided!",
+      "ja": "来週の灯籠まつりで町内会の屋台を出すので、練習中です。32個ぜんぶ子どもたちが丸めて、いびつなのはほんの数個でした！"
+    },
+    {
+      "name": { "en": "Olivia (London)", "ja": "Olivia（イギリス・ロンドン）" },
+      "date": "2026-09-25",
+      "stars": null,
+      "en": "Can I make these the day before for a party?",
+      "ja": "パーティー用に前日に作っておけますか？",
+      "reply": {
+        "en": "Not completely, as they go hard overnight. Either freeze the boiled dango (see make-ahead) and reheat them in boiling water on the day, or make Fumi's tofu version the morning of the party: they stay soft until the evening. Make the sauce the day before and glaze just before serving.",
+        "ja": "ひと晩おくとかたくなるので、完成品の作り置きは難しいです。ゆでただんごを冷凍しておき（「作り置き」参照）当日熱湯で温め直すか、パーティー当日の朝に、ふみ流の豆腐だんごを作るのがおすすめ。夜までやわらかいままです。たれは前日に作っておき、出す直前にからめてください。"
+      }
+    },
+    {
+      "name": { "en": "Yukinko", "ja": "ゆきんこ" },
+      "date": "2026-09-14",
+      "stars": 4,
+      "en": "The dango were perfect, but my sauce was runny at first and then turned into jelly in the fridge.",
+      "ja": "だんごは完璧でしたが、たれが最初はゆるくて、冷蔵庫に入れたらゼリーみたいになってしまいました。",
+      "reply": {
+        "en": "Both are the starch! Runny means it needed another 30 seconds at a bubble, and starch sauces always set when cold. Just warm it with 1–2 tsp hot water and stir; it turns glossy again.",
+        "ja": "どちらも片栗粉のしわざです！ゆるいのは煮立ててからの加熱があと30秒足りなかったため。片栗粉のたれは冷えると必ず固まります。お湯小さじ1〜2を加えて温めながら混ぜれば、またつやつやに戻りますよ。"
+      }
+    },
+    {
+      "name": { "en": "Marco (Milan)", "ja": "Marco（イタリア・ミラノ）" },
+      "date": "2026-08-08",
+      "stars": 3,
+      "en": "My dough kept cracking and the dango came out quite hard. I used exactly 160 ml.",
+      "ja": "生地がひび割れてばかりで、だんごもかなりかたくなりました。水はきっちり160ml入れました。",
+      "reply": {
+        "en": "Your flour probably needed more water. Rice flours vary a lot, especially imported ones, so go by feel rather than the number: keep adding water a teaspoon at a time until the dough stops cracking when you flatten a ball. It can take 190 ml or more.",
+        "ja": "お使いの粉は、もっと水が必要だったのだと思います。米粉、特に輸入品は吸水量の差が大きいので、数字より手ざわりで判断してください。丸めて押しつぶしてもひびが入らなくなるまで、小さじ1ずつ水を足します。190ml以上必要なこともあります。"
+      }
+    },
+    {
+      "name": { "en": "Hiromi (Tsukimi Onsen)", "ja": "ひろみ（月見温泉）" },
+      "date": "2025-10-13",
+      "stars": 5,
+      "en": "The queue at Kagamiya was 40 minutes on Saturday, so we made these at home on Sunday instead. The yuzu version is dangerously good.",
+      "ja": "土曜のかがみ屋さんは40分待ちだったので、日曜に家で作りました。ゆず風味、危険なおいしさです。"
+    },
+    {
+      "name": { "en": "Jenny (Sydney)", "ja": "Jenny（オーストラリア・シドニー）" },
+      "date": "2025-03-02",
+      "stars": null,
+      "en": "I can't find joshinko here. Will the rice flour from the Thai section of my Asian grocer work?",
+      "ja": "こちらでは上新粉が見つかりません。アジア系スーパーのタイ食品コーナーにある米粉でも大丈夫ですか？",
+      "reply": {
+        "en": "Yes, Thai white rice flour works well; just make sure it isn't the glutinous kind (that's the shiratamako side) or brown rice flour. It's usually a little finer than joshinko, so start with slightly less water.",
+        "ja": "はい、タイの白い米粉で大丈夫です。もち米の粉（それは白玉粉の代わりになります）や玄米粉ではないことだけ確認してください。上新粉より粒子が細かいことが多いので、水は少し控えめから始めてくださいね。"
+      }
+    },
+    {
+      "name": { "en": "Rin", "ja": "りん" },
+      "date": "2022-10-10",
+      "stars": 5,
+      "en": "Made the tofu version for a picnic by the river during the festival. Still soft at 7 pm after making them at noon!",
+      "ja": "まつりの日に河原でピクニックをするので、豆腐だんごで作りました。お昼に作って、夜7時でもまだやわらかかったです！"
+    }
+  ]
+}

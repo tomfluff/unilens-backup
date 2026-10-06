@@ -1,0 +1,146 @@
+{
+  "slug": "kabocha-soup",
+  "categories": ["western", "vegetarian"],
+  "cuisine": "western",
+  "diet": ["vegetarian", "gluten-free"],
+  "difficulty": "easy",
+  "course": "soup",
+  "times": { "prep": 10, "cook": 25 },
+  "servings": 4,
+  "image": "kabocha-soup",
+  "rating": 4.7,
+  "ratings": 244,
+  "published": "2020-10-08",
+  "updated": "2026-09-30",
+  "related": ["kabocha-pudding", "sheet-pan-miso-chicken", "milk-bread", "autumn-vegetable-curry"],
+  "en": {
+    "title": "Creamy Kabocha Soup",
+    "teaser": "A velvety, naturally sweet Japanese pumpkin soup with just kabocha, onion, butter and milk. Ready in 35 minutes, with an easy vegan version.",
+    "intro": [
+      "Sota will tell anyone who listens that he does not like vegetables. And yet every October he drinks two bowls of this soup and asks for a third. I learned that trick at school: in my nine years as a school-lunch nutritionist, kabocha potage was the one vegetable dish that came back to the kitchen with every bowl empty.",
+      "The kabocha I use comes from the Tsuchiya family's stall at the Saturday farmers' market by Harukawa Central. They grow it in the Kagami valley, below the yuzu orchards, and they harvest it in late summer. My grandmother Fumi used to line the kabocha up on the veranda of her inn in Tsukimi Onsen and leave them there for weeks, and she was right: kabocha gets sweeter after a month or two of storage, as its starch turns to sugar. So October and November are the sweetest months of all.",
+      { "h": "Why you'll love it" },
+      { "ul": [
+        "Six ingredients, no stock cube, and naturally gluten-free.",
+        "The microwave trick makes a hard kabocha easy and safe to cut.",
+        "You can freeze the purée and add the milk on the day."
+      ] },
+      { "h": "Choosing a kabocha" },
+      "Pick one that feels heavy for its size, with a dry, corky stem and dull, dark green skin. If you buy a cut wedge, look for deep orange flesh and plump, packed seeds. A whole kabocha keeps for a month or more somewhere cool and dry, but once cut, scoop out the seeds (that is where it starts to spoil), wrap it and use it within a week. Find out what else is in season in my <a href=\"{{guide:seasonal-produce}}\">seasonal produce guide</a>.",
+      { "h": "Cutting it safely" },
+      "A raw kabocha is hard enough to trap a knife. Microwave the wedge at 600 W for 2 to 3 minutes first, until the skin gives a little when pressed. Put it flat side down on the board and cut with steady pressure from the top, keeping your other hand flat on the back of the blade, never in front of it. My <a href=\"{{guide:knife-cuts}}\">knife cuts guide</a> shows the grip.",
+      { "h": "Tips for success" },
+      "I peel the kabocha completely for a bright golden soup; if you leave some skin on, the soup turns khaki green, still delicious but less pretty. Sweat the onion gently without browning it. Cook the kabocha in water first and add the milk only after blending, then heat it gently without boiling, because boiled milk can separate and form a skin.",
+      "<strong>Hot soup in a blender needs care.</strong> Steam builds up and can blow the lid off. Let the soup cool for 5 minutes, fill the jug no more than halfway, take out the centre cap, cover the hole with a folded tea towel and start on the lowest speed. A stick blender used off the heat is even easier.",
+      "Kabocha varies a lot in sweetness. If yours tastes flat, add a teaspoon of sugar or honey; if it is watery, simmer the soup a few minutes longer before the milk goes in. I serve it with warm <a href=\"{{recipe:milk-bread}}\">milk bread</a> for an easy Sunday lunch."
+    ],
+    "equipment": ["Medium pot (about 20 cm) with a lid", "Blender or stick blender", "Sharp, heavy knife and a large board", "Microwave-safe plate"],
+    "notes": [
+      "The kabocha is cooked when a piece crumbles easily against the side of the pot with a spatula.",
+      "For an extra-silky soup, push it through a fine sieve after blending.",
+      "Thickness: add milk or water 50 ml at a time until it coats a spoon but still pours easily.",
+      "The salt starts light on purpose. Taste at the end; most kabocha needs about another ¼ tsp, and a cold soup needs a little more than a hot one.",
+      "Toasted pumpkin seeds make a nice topping: rinse the seeds, dry them and toast them in a dry frying pan over medium-low heat for 5–6 minutes until they pop."
+    ],
+    "subs": [
+      ["Butter (vegan)", "1 tbsp olive oil or vegetable oil"],
+      ["Milk (vegan)", "Unsweetened soy milk or oat milk; heat it gently, as soy milk curdles if it boils. Add ½ tsp white miso for depth."],
+      ["Kabocha", "Butternut squash; it is less sweet and more watery, so use 600 g and simmer uncovered for the last 5 minutes"],
+      ["Onion", "1 leek, white part, sliced"]
+    ],
+    "makeAhead": "Make the soup up to the end of step 4 (blended, before the milk) up to 2 days ahead and refrigerate. On the day, reheat the purée, then add the milk and warm it through.",
+    "storage": "With milk, keep it in the fridge for 2 days. To freeze, freeze the purée before adding the milk, for up to a month; thaw overnight in the fridge, reheat and stir in the milk. Soup frozen with milk can turn grainy."
+  },
+  "ja": {
+    "title": "かぼちゃのポタージュ",
+    "teaser": "かぼちゃ、玉ねぎ、バター、牛乳だけで作る、なめらかでやさしい甘さのポタージュ。35分で完成し、ヴィーガン版にもアレンジできます。",
+    "intro": [
+      "「野菜は嫌い」と誰にでも言う蒼太ですが、10月になるとこのスープだけは2杯飲んで、3杯目をおかわりします。このコツは給食の現場で覚えました。管理栄養士として働いていた9年間、どの学年からも食缶が空っぽで戻ってくる野菜料理は、かぼちゃのポタージュだけだったのです。",
+      "わが家のかぼちゃは、春川中央駅そばの土曜の朝市に出ている土屋さんのお店で買っています。月見山のふもと、ゆず畑の下の鏡川沿いで育てたかぼちゃで、収穫は夏の終わり。月見温泉で宿をやっていた祖母のふみは、かぼちゃを縁側に並べて何週間も置いていました。実はこれが正解で、かぼちゃは収穫後1〜2か月寝かせるとでんぷんが糖に変わって甘くなります。つまり10〜11月がいちばん甘い季節なのです。",
+      { "h": "かぼちゃの選び方" },
+      "ずっしりと重く、へたが乾いてコルクのようになっているもの、皮の緑が濃くてつやが控えめなものが完熟のサイン。カットされたものなら、果肉の色が濃いオレンジで、種がふっくら詰まっているものを選びます。丸ごとなら風通しのよい涼しい場所で1か月以上持ちますが、切ったら傷みやすい種とわたをスプーンで取り除き、ラップをして冷蔵庫で1週間以内に使い切りましょう。旬の食材は<a href=\"{{guide:seasonal-produce}}\">旬の食材ガイド</a>にまとめています。",
+      { "h": "かたいかぼちゃを安全に切るには" },
+      "生のかぼちゃは包丁が抜けなくなるほどかたいもの。先に電子レンジ600Wで2〜3分加熱し、皮を押すと少しへこむくらいにしておくと、ぐっと切りやすくなります。切り口を下にしてまな板に置き、上から体重をかけて切ります。もう片方の手は刃の背に平らに添え、刃の前には決して置かないでください。持ち方は<a href=\"{{guide:knife-cuts}}\">切り方ガイド</a>でも紹介しています。",
+      { "h": "おいしく作るコツ" },
+      "皮をすべてむくと、鮮やかな黄金色のスープになります。皮を残すと緑がかった色になり、味はおいしいのですが見た目は少し地味に。玉ねぎは焦がさないよう、弱めの中火でじっくり炒めます。かぼちゃは水で煮て、牛乳はミキサーにかけたあとに加えること。牛乳を入れたら沸騰させないのがポイントで、煮立てると分離したり膜が張ったりします。",
+      "<strong>熱いスープをミキサーにかけるときは要注意。</strong>蒸気でふたが飛ぶことがあります。5分ほど粗熱を取り、容器の半分以下の量で、ふたの中央のキャップを外して折りたたんだふきんをかぶせ、いちばん低速から回してください。火から下ろした鍋でハンドブレンダーを使えば、さらに手軽です。",
+      "かぼちゃは個体によって甘さがかなり違います。味がぼんやりしていたら砂糖かはちみつを小さじ1、水っぽいときは牛乳を加える前に数分長めに煮詰めて調整を。日曜のお昼は、温めた<a href=\"{{recipe:milk-bread}}\">湯種ミルク食パン</a>を添えるのが定番です。"
+    ],
+    "equipment": ["ふた付きの鍋（直径20cm程度）", "ミキサーまたはハンドブレンダー", "よく切れる重めの包丁と大きめのまな板", "耐熱皿"],
+    "notes": [
+      "かぼちゃはへらで鍋肌に押し当てて、簡単につぶれれば煮えています。",
+      "さらになめらかにしたいときは、ミキサーにかけたあと目の細かいざるでこします。",
+      "濃度は、牛乳か水を50mlずつ加えて調整します。スプーンにからみつつ、するっと流れるくらいが目安です。",
+      "塩はあえて控えめにしています。最後に必ず味見を。たいていは小さじ1/4ほど足すとちょうどよく、冷たいスープにする場合は温かいときより少し多めにします。",
+      "かぼちゃの種はトッピングに。洗って水気を拭き、油をひかないフライパンで弱めの中火で5〜6分、パチパチとはじけるまで炒ります。"
+    ],
+    "subs": [
+      ["バター（ヴィーガンの場合）", "オリーブ油またはサラダ油大さじ1"],
+      ["牛乳（ヴィーガンの場合）", "無調整豆乳またはオーツミルク。豆乳は沸騰させると分離するので弱火で温めます。白みそ小さじ1/2を加えるとコクが出ます"],
+      ["かぼちゃ", "バターナッツかぼちゃ。甘みが控えめで水分が多いので600gに増やし、最後の5分はふたを取って煮ます"],
+      ["玉ねぎ", "長ねぎ1本（白い部分・薄切り）"]
+    ],
+    "makeAhead": "手順4（ミキサーにかけて牛乳を加える前）まで作り、冷蔵庫で2日まで保存できます。食べる日にピューレを温め直し、牛乳を加えて温めてください。",
+    "storage": "牛乳を加えたものは冷蔵で2日。冷凍する場合は牛乳を加える前のピューレの状態で冷凍し、1か月以内に。前の晩に冷蔵庫で解凍して温め、牛乳を加えます。牛乳入りで冷凍すると、ざらついた食感になることがあります。"
+  },
+  "ingredients": [
+    { "items": [
+      { "q": 500, "u": "g", "en": "kabocha (about ⅓ of a medium squash), seeds removed", "ja": "かぼちゃ（種とわたを除く・中1/3個程度）" },
+      { "q": 0.5, "u": "pc", "en": "onion (about 100 g), thinly sliced", "ja": "玉ねぎ（約100g・薄切り）" },
+      { "q": 20, "u": "g", "us": [1.5, "tbsp"], "en": "butter", "ja": "バター" },
+      { "q": 300, "u": "ml", "en": "water", "ja": "水" },
+      { "q": 300, "u": "ml", "en": "milk", "ja": "牛乳" },
+      { "q": 0.5, "u": "tsp", "en": "salt, plus more to taste", "ja": "塩" },
+      { "q": null, "en": "heavy cream, black pepper and toasted pumpkin seeds, to serve (optional)", "ja": "生クリーム・黒こしょう・かぼちゃの種（お好みで）", "free": { "en": "to serve", "ja": "適量" } }
+    ] }
+  ],
+  "steps": [
+    { "en": "Put the kabocha on a microwave-safe plate and microwave at 600 W for 2–3 minutes, until the skin gives slightly when pressed. Scoop out any remaining seeds, peel it, and cut the flesh into 1 cm thick slices.",
+      "ja": "かぼちゃを耐熱皿にのせ、電子レンジ600Wで2〜3分加熱して、皮を押すと少しへこむくらいにします。残った種とわたを取り、皮をむいて1cm厚さに切ります。",
+      "timer": 3 },
+    { "en": "Melt the butter in the pot over medium-low heat. Add the onion and a pinch of the salt and cook gently, stirring, for about 5 minutes until soft and translucent but not browned.",
+      "ja": "鍋にバターを弱めの中火で溶かし、玉ねぎと塩ひとつまみ（分量内）を入れて、焦がさないように5分ほど、しんなりと透き通るまで炒めます。",
+      "timer": 5 },
+    { "en": "Add the kabocha and stir for 1 minute to coat it in butter. Pour in the water, add the rest of the salt and bring to the boil. Cover and simmer on low heat for 12–15 minutes, until the kabocha crumbles easily when pressed against the side of the pot.",
+      "ja": "かぼちゃを加えて1分ほど炒め、バターをなじませます。水と残りの塩を加えて煮立て、ふたをして弱火で12〜15分、へらで押すと簡単につぶれるまで煮ます。",
+      "timer": 15 },
+    { "en": "Take the pot off the heat and let it cool for 5 minutes. Blend until completely smooth: with a stick blender in the pot, or in a jug blender filled no more than halfway, centre cap removed and the hole covered with a folded tea towel, starting on the lowest speed.",
+      "ja": "火から下ろして5分ほど粗熱を取ります。ハンドブレンダーで鍋のまま、またはミキサーに容器の半分以下ずつ入れ、ふたの中央のキャップを外して折りたたんだふきんをかぶせ、低速から回して、完全になめらかになるまで攪拌します。",
+      "timer": 5 },
+    { "en": "Return the purée to the pot, stir in the milk and warm it over low heat, stirring, until steaming hot but not boiling (about 3 minutes). Thin it with a little more milk or water if you like, then taste and add salt.",
+      "ja": "鍋に戻して牛乳を加え、弱火で混ぜながら3分ほど、湯気が立つくらいまで温めます（沸騰させないこと）。濃ければ牛乳か水でのばし、味を見て塩で調えます。",
+      "timer": 3 },
+    { "en": "Ladle into warm bowls and finish with a swirl of cream, a grind of black pepper and a few toasted pumpkin seeds.",
+      "ja": "温めた器に盛り、お好みで生クリームを回しかけ、黒こしょうとかぼちゃの種をのせます。" }
+  ],
+  "nutrition": { "calories": 180, "carbs": 23, "protein": 5, "fat": 8, "satFat": 5, "cholesterol": 22, "sodium": 340, "fiber": 3, "sugar": 12 },
+  "comments": [
+    { "name": { "en": "Aiko (Vancouver)", "ja": "Aiko（バンクーバー）" }, "date": "2026-10-01", "stars": 5,
+      "en": "The microwave trick is genius. I've cut my thumb on kabocha before, and this time the knife went through like butter. I added a pinch of nutmeg at the end.",
+      "ja": "レンジで加熱する方法、天才的です！以前かぼちゃを切っていて親指を切ったことがあるのですが、今回はすっと包丁が入りました。仕上げにナツメグをひとつまみ加えました。" },
+    { "name": { "en": "Haru-chan's mum", "ja": "はるちゃんママ" }, "date": "2026-09-18", "stars": null,
+      "en": "Can I give this to my 10-month-old baby?",
+      "ja": "10か月の赤ちゃんにもあげられますか？",
+      "reply": { "en": "Yes, it's a lovely baby food. Take the baby's portion out before you add salt, and use the plain purée thinned with a little of their usual milk. Let it cool to lukewarm and check the temperature on your wrist first. And if your kabocha needs sweetening, skip the honey: no honey before the first birthday.",
+        "ja": "はい、離乳食にもぴったりです。塩を加える前に赤ちゃんの分を取り分け、ピューレをいつものミルクで少しのばしてあげてください。人肌程度に冷まし、手首の内側で温度を確かめてからどうぞ。甘みを足したいときも、1歳未満の赤ちゃんにははちみつは使わないでくださいね。" } },
+    { "name": { "en": "Ben (Brighton)", "ja": "Ben（ブライトン）" }, "date": "2026-09-02", "stars": 4,
+      "en": "Made the vegan version with oat milk and olive oil plus the half teaspoon of white miso. Really good, though a bit less rich. A spoonful of coconut milk on top fixed that.",
+      "ja": "オーツミルクとオリーブ油に白みそ小さじ1/2を加えたヴィーガン版で作りました。とてもおいしいけれど、少しコクが足りない感じ。上にココナッツミルクを少しかけたら解決しました。" },
+    { "name": { "en": "Mari K.", "ja": "まり" }, "date": "2026-08-25", "stars": 2,
+      "en": "My soup separated and looked curdled. I'm not sure what went wrong.",
+      "ja": "スープが分離して、ぽろぽろした見た目になってしまいました。どこがいけなかったのでしょう。",
+      "reply": { "en": "I'm sorry, Mari! The most likely reason is that it boiled after the milk went in. Keep the heat low and take it off as soon as it steams. If it happens again, a quick blend with the stick blender usually brings it back together.",
+        "ja": "残念でしたね。いちばん考えられるのは、牛乳を入れたあとに沸騰してしまったことです。弱火で温め、湯気が立ったらすぐ火を止めてください。分離してしまったら、ハンドブレンダーでさっと攪拌すると、たいていなめらかに戻ります。" } },
+    { "name": { "en": "Yoshiko", "ja": "よしこ" }, "date": "2026-02-11", "stars": 5,
+      "en": "I serve it chilled in summer, in little glasses. I add a pinch more salt, as you say in the notes, and a few drops of olive oil on top.",
+      "ja": "夏は冷やして小さなグラスで出しています。メモにある通り塩をひとつまみ足して、仕上げにオリーブ油を数滴たらすのがお気に入りです。" },
+    { "name": { "en": "Greg (Denver)", "ja": "Greg（デンバー）" }, "date": "2025-11-14", "stars": 5,
+      "en": "Couldn't find kabocha, so I used butternut squash as suggested: 600 g, with the lid off at the end. Thick and sweet. My kids asked for it again the next day.",
+      "ja": "かぼちゃが手に入らなかったので、おすすめ通りバターナッツかぼちゃ600gで、最後はふたを取って煮ました。とろっと甘くて、子どもたちに翌日もリクエストされました。" },
+    { "name": { "en": "Emi (Harukawa)", "ja": "えみ（春川市）" }, "date": "2024-10-27", "stars": 5,
+      "en": "I froze the purée in ice-cube trays and add a couple of cubes to my daughter's lunch soup. Is that okay for longer than a month?",
+      "ja": "ピューレを製氷皿で冷凍して、娘のお昼のスープに数個ずつ使っています。1か月以上保存しても大丈夫ですか？",
+      "reply": { "en": "Great idea! It's safe for longer, but the flavour fades and it can pick up freezer smells after about a month, so I'd use it within 4–6 weeks. Once frozen, move the cubes to a freezer bag and squeeze out the air.",
+        "ja": "いいアイデアですね！それ以上でも安全ですが、1か月を過ぎると風味が落ち、冷凍庫のにおいが移りやすくなるので、4〜6週間以内に使い切るのがおすすめです。凍ったら冷凍用保存袋に移し、空気を抜いておいてください。" } }
+  ]
+}
