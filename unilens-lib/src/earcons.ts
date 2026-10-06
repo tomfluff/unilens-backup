@@ -1,8 +1,10 @@
 /**
  * Earcons: a short sound for every chat action, so each one is heard as well as
  * seen (PRODUCT.md principle 2). Synthesized with WebAudio, no files; each under
- * 150ms and quiet. The palette follows the chat style: a soft pop for the
- * assistant, a keypad two-tone for the audio guide, a chime for station signs.
+ * 150ms and quiet, but a Live talk starting or ending, a little longer, like a call
+ * connecting. The palette follows the chat style: a soft pop for the assistant, a
+ * keypad two-tone for the audio guide, a chime for station signs. The Live and
+ * reading sounds were picked by ear (Yotam, 2026-10-06 audition).
  */
 import { getSettings, type Settings } from "./settings";
 
@@ -17,7 +19,13 @@ export type Earcon =
     | "error"
     | "micOn"
     | "micOff"
-    | "clear";
+    | "clear"
+    /** a Live talk starts, and ends */
+    | "liveOn"
+    | "liveOff"
+    /** reading aloud starts or resumes, and stops or pauses */
+    | "readOn"
+    | "readOff";
 
 /** one tone: start and end frequency, start offset and length in seconds */
 type Tone = {
@@ -31,6 +39,7 @@ type Tone = {
 const C6 = 1047;
 const E6 = 1319;
 const G6 = 1568;
+const C7 = 2093;
 
 export const PALETTES: Record<Settings["chatStyle"], Record<Earcon, Tone[]>> = {
     assistant: {
@@ -54,6 +63,26 @@ export const PALETTES: Record<Settings["chatStyle"], Record<Earcon, Tone[]>> = {
         ],
         micOff: [{ f: 440, t: 0, d: 0.06 }],
         clear: [{ f: 500, f2: 400, t: 0, d: 0.07 }],
+        // a rising call-connected figure, and the same falling
+        liveOn: [
+            { f: 523, t: 0, d: 0.06 },
+            { f: 659, t: 0.06, d: 0.06 },
+            { f: 784, t: 0.12, d: 0.09 },
+        ],
+        liveOff: [
+            { f: 784, t: 0, d: 0.06 },
+            { f: 659, t: 0.06, d: 0.06 },
+            { f: 523, t: 0.12, d: 0.09 },
+        ],
+        // low and soft, apart from the microphone's
+        readOn: [
+            { f: 494, t: 0, d: 0.07 },
+            { f: 587, t: 0.05, d: 0.09 },
+        ],
+        readOff: [
+            { f: 587, t: 0, d: 0.07 },
+            { f: 494, t: 0.05, d: 0.09 },
+        ],
     },
     audioGuide: {
         press: [
@@ -85,6 +114,17 @@ export const PALETTES: Record<Settings["chatStyle"], Record<Earcon, Tone[]>> = {
         micOn: [{ f: 1209, t: 0, d: 0.05 }],
         micOff: [{ f: 697, t: 0, d: 0.06 }],
         clear: [{ f: 770, f2: 600, t: 0, d: 0.07 }],
+        // Live keeps the microphone's keys here (picked by ear)
+        liveOn: [{ f: 1209, t: 0, d: 0.05 }],
+        liveOff: [{ f: 697, t: 0, d: 0.06 }],
+        readOn: [
+            { f: 770, t: 0, d: 0.06, wave: "triangle" },
+            { f: 852, t: 0.07, d: 0.07, wave: "triangle" },
+        ],
+        readOff: [
+            { f: 852, t: 0, d: 0.06, wave: "triangle" },
+            { f: 770, t: 0.07, d: 0.07, wave: "triangle" },
+        ],
     },
     station: {
         press: [{ f: C6, t: 0, d: 0.05, wave: "triangle" }],
@@ -115,6 +155,22 @@ export const PALETTES: Record<Settings["chatStyle"], Record<Earcon, Tone[]>> = {
         micOn: [{ f: G6, t: 0, d: 0.05, wave: "triangle" }],
         micOff: [{ f: 523, t: 0, d: 0.06, wave: "triangle" }],
         clear: [{ f: 880, f2: 700, t: 0, d: 0.07, wave: "triangle" }],
+        liveOn: [
+            { f: G6, t: 0, d: 0.07, wave: "triangle" },
+            { f: C7, t: 0.08, d: 0.1, wave: "triangle" },
+        ],
+        liveOff: [
+            { f: C7, t: 0, d: 0.07, wave: "triangle" },
+            { f: G6, t: 0.08, d: 0.1, wave: "triangle" },
+        ],
+        readOn: [
+            { f: 784, t: 0, d: 0.06, wave: "triangle" },
+            { f: 988, t: 0.06, d: 0.08, wave: "triangle" },
+        ],
+        readOff: [
+            { f: 988, t: 0, d: 0.06, wave: "triangle" },
+            { f: 784, t: 0.06, d: 0.08, wave: "triangle" },
+        ],
     },
 };
 

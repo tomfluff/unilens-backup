@@ -550,10 +550,10 @@ What just happened, e.g. "Source 2 of 3, …. Moved there; Back returns you." It
 Anything the chat outlines on the page has a visible off switch: "Highlight all" is a toggle, a lit source (chip, key or code) pressed again clears its outline, and a place entry is pressed while its clicked element is outlined and clears it on a second press. Escape is a shortcut, never the only way.
 
 ### Sound
-Each of the eleven actions has an earcon: press, chip, all, move, back, send, done, error, micOn, micOff and clear. Earcons are synthesized with WebAudio at gain 0.05 and last under 150ms each. They play in the style's own palette:
-- **Assistant:** soft sine pops and short glides (520–900Hz).
-- **Audio guide:** keypad DTMF pairs (e.g. 1336+941Hz) and a square-wave click.
-- **Station:** triangle-wave chimes on C6, E6 and G6. "Move" is a rising arpeggio and "back" a falling one.
+Each of the fifteen actions has an earcon: press, chip, all, move, back, send, done, error, micOn, micOff, clear, liveOn and liveOff (a Live talk starting and ending), and readOn and readOff (reading aloud starting or resuming, and stopping or pausing). Earcons are synthesized with WebAudio at gain 0.05 and last under 150ms each, except Live's start and end (up to about 210ms, like a call connecting). The Live and reading sounds were picked by ear in an audition (2026-10-06). They play in the style's own palette:
+- **Assistant:** soft sine pops and short glides (520–900Hz); Live is a rising (and falling) three-note call figure, reading a low two-note step.
+- **Audio guide:** keypad DTMF pairs (e.g. 1336+941Hz) and a square-wave click; Live keeps the microphone's keys, reading is a soft triangle step.
+- **Station:** triangle-wave chimes on C6, E6 and G6. "Move" is a rising arpeggio and "back" a falling one; Live is G6 to C7 (and back), reading a lower G5 to B5 step.
 The `sounds` setting silences earcons; the controls' own states and the live region still carry every action.
 
 ### Motion
