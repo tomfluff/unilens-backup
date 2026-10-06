@@ -131,3 +131,48 @@ export const ExpandIcon = () => (
         <path d="M6 15l6-6 6 6" />
     </Icon>
 );
+
+/* the settings panel's icons, same family */
+export const SettingsIcon = () => (
+    <Icon>
+        {/* after Feather's settings icon (MIT) */}
+        <circle cx="12" cy="12" r="3" />
+        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+    </Icon>
+);
+export const ResetIcon = () => (
+    <Icon>
+        <path d="M3 12a9 9 0 1 0 3-6.7" />
+        <path d="M3 4v5h5" />
+    </Icon>
+);
+export const SearchIcon = () => (
+    <Icon>
+        <circle cx="11" cy="11" r="7" />
+        <path d="M20 20l-3.5-3.5" />
+    </Icon>
+);
+export const CheckIcon = () => (
+    <Icon>
+        <path d="M5 12l5 5 9-10" />
+    </Icon>
+);
+export const ChevronIcon = () => (
+    <Icon>
+        <path d="M9 6l6 6-6 6" />
+    </Icon>
+);
+export const SaveIcon = () => (
+    <Icon>
+        <path d="M12 4v11" />
+        <path d="M7 10l5 5 5-5" />
+        <path d="M5 20h14" />
+    </Icon>
+);
+export const LoadIcon = () => (
+    <Icon>
+        <path d="M12 20V9" />
+        <path d="M7 14l5-5 5 5" />
+        <path d="M5 4h14" />
+    </Icon>
+);

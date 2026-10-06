@@ -1,5 +1,6 @@
 /**
- * UniLens minimap — page overview with a lens rect, shown while magnified.
+ * UniLens minimap — page overview with a lens rect, shown while magnified, or always
+ * (the minimap setting).
  *
  * Zoom is magnifier-style: the page becomes one big surface and scrolling moves a
  * lens over it. Two scrollbars are a poor control for that (at 4x the thumbs are
@@ -15,6 +16,7 @@ import {
     colorWithAlpha,
     drawnOutline,
     EDGE,
+    type HighlightLook,
     minimapLook,
     RING,
 } from "./highlightStyles";
@@ -42,8 +44,14 @@ const MAX_RECTS = 1200;
 const MEDIA = /^(IMG|VIDEO|CANVAS|SVG|PICTURE|IFRAME)$/;
 const REDRAW_DEBOUNCE_MS = 300;
 
-// Box (container) styles
-const boxStyles: Record<string, string> = {
+/** the page skeleton's blocks on the map: text, and media */
+export const MAP_INK = {
+    text: "rgba(0,0,0,0.30)",
+    media: "rgba(0,120,200,0.30)",
+};
+
+// Box (container) styles; the settings preview draws its map in the same box and lens
+export const boxStyles: Record<string, string> = {
     position: "fixed",
     top: "16px",
     right: "16px",
@@ -58,7 +66,7 @@ const boxStyles: Record<string, string> = {
 };
 
 // Lens styles
-const lensStyles: Record<string, string> = {
+export const lensStyles: Record<string, string> = {
     position: "absolute",
     border: "2px solid #d23",
     background: "rgba(221,51,51,0.12)",
@@ -97,7 +105,7 @@ const MAP_FILL_ALPHA = 0.45;
  *  canvas itself would erase the page skeleton under the targets */
 let shade: HTMLCanvasElement | null = null;
 
-type MapRect = { x: number; y: number; w: number; h: number; n: string };
+export type MapRect = { x: number; y: number; w: number; h: number; n: string };
 
 /** the outline, drawn in the highlight's style at map scale, always with a dark edge
  *  so a light colour still reads on the map */
@@ -167,10 +175,7 @@ function strokeOutline(
  */
 function drawTargets(g: CanvasRenderingContext2D, scale: number) {
     const s = getSettings();
-    const look = minimapLook(s);
-    const outline = drawnOutline(look);
     const min = s.minimapMarkerSize;
-    const color = look.color;
     const v = getView();
     const rects: MapRect[] = [];
     targets.forEach((el, i) => {
@@ -190,7 +195,19 @@ function drawTargets(g: CanvasRenderingContext2D, scale: number) {
             n: labels[i] ?? "",
         });
     });
+    paintMapTargets(g, rects, minimapLook(s));
+}
+
+/** targets (map px) drawn on a map canvas in `look`: the minimap's own drawing, which
+ *  the settings preview borrows */
+export function paintMapTargets(
+    g: CanvasRenderingContext2D,
+    rects: MapRect[],
+    look: HighlightLook,
+) {
     if (!rects.length) return;
+    const outline = drawnOutline(look);
+    const color = look.color;
     if (look.backdrop !== "none") {
         const W = g.canvas.width;
         const H = g.canvas.height;
@@ -318,7 +335,7 @@ function drawSkeleton() {
         if (w * h < MIN_AREA) continue;
         const v = getView();
         const p = toContent(r.left + v.x, r.top + v.y);
-        g.fillStyle = media ? "rgba(0,120,200,0.30)" : "rgba(0,0,0,0.30)";
+        g.fillStyle = media ? MAP_INK.media : MAP_INK.text;
         g.fillRect(
             p.x * mapScale,
             p.y * mapScale,
@@ -393,19 +410,35 @@ function hide() {
     watcher = null;
 }
 
+/** shown always, or while zoomed, as the setting says */
+function sync() {
+    const m = getSettings().minimap;
+    if (m === "always" || (m === "zoomed" && getZoom().scale > 1)) {
+        if (!box || box.style.display === "none") show();
+        else updateLens();
+    } else hide();
+}
+
 export function initMinimap() {
-    onZoomChange((scale) => {
-        if (scale > 1 && getSettings().minimap) {
-            if (!box || box.style.display === "none") show();
-            else updateLens();
-        } else hide();
-    });
+    onZoomChange(sync);
+    // the page has to exist before it can be mapped
+    if (document.readyState === "loading")
+        document.addEventListener("DOMContentLoaded", sync, { once: true });
+    else sync();
     window.addEventListener("scroll", scheduleLens, { passive: true });
     onViewChange(scheduleLens); // lens-pan engine: the document never scrolls
     window.addEventListener("resize", redraw);
+    // a map drawn before the images arrived (always on, from the start) is redrawn
+    // once they have, when the page has its full height
+    window.addEventListener("load", redraw);
     // marker shape, dim, glow, numbers and the highlight colour apply to an open map
     // at once; debounced, since a redraw repaints the whole page skeleton
+    let shown = getSettings().minimap;
     onSettingsChange(() => {
+        if (getSettings().minimap !== shown) {
+            shown = getSettings().minimap;
+            sync();
+        }
         if (!box || box.style.display === "none" || !targets.length) return;
         clearTimeout(redrawTimer);
         redrawTimer = window.setTimeout(redraw, 60);

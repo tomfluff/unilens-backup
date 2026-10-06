@@ -2569,7 +2569,8 @@ export default function ChatPopover({
             {!mini && (
                 <div className="ulc-in">
                     {voiceOK && voiceButton("ulc-ib")}
-                    {liveButton}
+                    {/* a talk already going keeps its stop, whatever the setting */}
+                    {(settings.liveTalk || live) && liveButton}
                     <input
                         ref={inputRef}
                         aria-describedby={about ? aboutId : undefined}

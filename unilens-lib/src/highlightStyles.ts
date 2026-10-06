@@ -43,6 +43,10 @@ export const BACKDROP_ALPHA: Record<Exclude<Backdrop, "none">, number> = {
 };
 /** spotlight hole feather, px of blur */
 export const SPOTLIGHT_FEATHER = 14;
+/** room round each spotlit element, in feathers: the blur darkens the hole's edge, so
+ *  the hole is larger than the element and a single line of text stays fully lit
+ *  (1.5 feathers: under 5% of the shade reaches the element's edge) */
+export const SPOTLIGHT_ROOM = 1.5;
 export const FILL_ALPHA = 0.3;
 export const RING = { inner: "#000", outer: "#fff" };
 /** dark edge drawn around coloured strokes so a yellow band still reads on white */

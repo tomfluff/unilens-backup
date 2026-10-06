@@ -22,6 +22,7 @@ import {
     OUTLINE_OFFSET,
     RING,
     SPOTLIGHT_FEATHER,
+    SPOTLIGHT_ROOM,
 } from "./highlightStyles";
 import { roleOf } from "./inventory";
 import { setTargets } from "./minimap";
@@ -187,11 +188,13 @@ export function registerPopoverClose(fn: () => void): () => void {
 
 /** a question on screen ("start a new conversation?") takes Escape first, whatever
  *  the order: it answers no, and nothing else happens */
-let escapeClaim: (() => void) | null = null;
+/** Escape's owners, newest last: a claim released hands Escape back to the one beneath */
+const escapeClaims: (() => void)[] = [];
 export function claimEscape(fn: () => void): () => void {
-    escapeClaim = fn;
+    escapeClaims.push(fn);
     return () => {
-        if (escapeClaim === fn) escapeClaim = null;
+        const i = escapeClaims.lastIndexOf(fn);
+        if (i >= 0) escapeClaims.splice(i, 1);
     };
 }
 
@@ -210,7 +213,8 @@ export function escapeAction(): "clear" | "close" | "both" | "none" {
 
 function onKey(e: KeyboardEvent) {
     if (e.key !== "Escape") return;
-    if (escapeClaim) return escapeClaim();
+    const claim = escapeClaims.at(-1);
+    if (claim) return claim();
     const a = escapeAction();
     if (a === "clear" || a === "both") clearHighlights();
     if (a === "close" || a === "both") popoverClose?.();
@@ -448,21 +452,27 @@ function paintBox(
 }
 
 /**
- * Draw `box` around `r` (client px) exactly as a highlight in the current look would
- * be drawn, without a badge (the click feedback's frame, before the answer exists).
- * With no backdrop drawn here, an outline-less look shows its fill or glow; with
- * neither, the two-band ring, as a highlight on its own would.
+ * Draw `box` around `r` (client px) exactly as a highlight in the current look (or
+ * `look`) would be drawn: the click feedback's frame, before the answer exists, and
+ * the settings panel's previews. A badge only when given one. Unless a backdrop is
+ * drawn beside it, an outline-less look shows its fill or glow; with neither, the
+ * two-band ring, as a highlight on its own would.
  */
 export function paintOutline(
     box: HTMLDivElement,
     r: { left: number; top: number; width: number; height: number },
+    {
+        look = currentLook(),
+        badge,
+        withBackdrop = false,
+    }: { look?: HighlightLook; badge?: string; withBackdrop?: boolean } = {},
 ) {
-    const look = currentLook();
     let outline = drawnOutline(look);
-    if (outline === "none" && !look.fill && !look.glow) outline = "ring";
+    if (outline === "none" && !look.fill && !look.glow && !withBackdrop)
+        outline = "ring";
     box.style.boxSizing = "border-box";
     box.style.borderRadius = "4px";
-    paintBox({ box }, r, look, outline, bandWidth());
+    paintBox({ box, badge }, r, look, outline, bandWidth());
 }
 
 function render() {
@@ -531,45 +541,100 @@ function renderBackdrop(look: HighlightLook) {
             height: "100vh",
             pointerEvents: "none",
         });
-        const shade = document.createElement("div");
-        Object.assign(shade.style, { position: "absolute", inset: "0" });
-        dimBox.appendChild(shade);
         ensureLayer().insertBefore(dimBox, layer?.firstChild ?? null); // under the boxes
     }
-    const spot = look.backdrop === "spotlight";
-    const o = spot ? 3 * SPOTLIGHT_FEATHER : 0;
-    const W = window.innerWidth;
-    const H = window.innerHeight;
-    dimBox.style.filter = spot ? `blur(${SPOTLIGHT_FEATHER}px)` : "";
-    const shade = dimBox.firstElementChild as HTMLDivElement;
+    paintBackdrop(
+        dimBox,
+        look.backdrop,
+        rects,
+        window.innerWidth,
+        window.innerHeight,
+    );
+}
+
+/**
+ * The union of rectangles as disjoint ones: horizontal bands, each run carried down
+ * while the next band has the same run. An even-odd path of them lights everywhere
+ * any rectangle does, with no overlap darkened twice.
+ */
+export function unionRects(rs: ClientRect[]): ClientRect[] {
+    const ys = [...new Set(rs.flatMap((r) => [r.top, r.top + r.height]))].sort(
+        (a, b) => a - b,
+    );
+    const out: ClientRect[] = [];
+    let open = new Map<string, ClientRect>();
+    for (let i = 0; i + 1 < ys.length; i++) {
+        const [y0, y1] = [ys[i], ys[i + 1]];
+        const runs: [number, number][] = [];
+        for (const r of rs
+            .filter((r) => r.top <= y0 && r.top + r.height >= y1)
+            .sort((a, b) => a.left - b.left)) {
+            const last = runs.at(-1);
+            if (last && r.left <= last[1])
+                last[1] = Math.max(last[1], r.left + r.width);
+            else runs.push([r.left, r.left + r.width]);
+        }
+        const next = new Map<string, ClientRect>();
+        for (const [a, b] of runs) {
+            const key = `${a},${b}`;
+            const r = open.get(key) ?? {
+                left: a,
+                top: y0,
+                width: b - a,
+                height: 0,
+            };
+            if (!open.has(key)) out.push(r);
+            r.height = y1 - r.top;
+            next.set(key, r);
+        }
+        open = next;
+    }
+    return out;
+}
+
+/**
+ * The backdrop's drawing in `host` (W×H px; where it sits is the caller's): the page's,
+ * and the settings panel's previews, with a feather to their scale.
+ */
+export function paintBackdrop(
+    host: HTMLElement,
+    backdrop: "dim" | "spotlight",
+    rects: ClientRect[],
+    W: number,
+    H: number,
+    feather = SPOTLIGHT_FEATHER,
+) {
+    if (!host.firstElementChild) {
+        const shade = document.createElement("div");
+        Object.assign(shade.style, { position: "absolute", inset: "0" });
+        host.appendChild(shade);
+    }
+    const spot = backdrop === "spotlight";
+    const o = spot ? 3 * feather : 0;
+    // the spotlight's holes are larger than their elements: the blur darkens their edge
+    const room = spot ? SPOTLIGHT_ROOM * feather : 0;
+    host.style.filter = spot ? `blur(${feather}px)` : "";
+    const shade = host.firstElementChild as HTMLDivElement;
     Object.assign(shade.style, {
         left: `${-o}px`,
         top: `${-o}px`,
         width: `${W + 2 * o}px`,
         height: `${H + 2 * o}px`,
-        background: `rgba(0,0,0,${BACKDROP_ALPHA[look.backdrop]})`,
+        background: `rgba(0,0,0,${BACKDROP_ALPHA[backdrop]})`,
     });
-    // under even-odd a hole inside another is dark again (a link inside its lit
-    // sentence), so a box inside another cuts none: the outer one lights both (Yotam,
-    // 2026-09-28). The same box twice cuts one. ponytail: two boxes that only partly
-    // overlap still darken their overlap; a mask of the union if that shows up
-    const within = (a: ClientRect, b: ClientRect) =>
-        a.left >= b.left - 1 &&
-        a.top >= b.top - 1 &&
-        a.left + a.width <= b.left + b.width + 1 &&
-        a.top + a.height <= b.top + b.height + 1;
-    const holes = rects
-        .filter(
-            (r, i) =>
-                !rects.some(
-                    (o, j) =>
-                        j !== i && within(r, o) && (j < i || !within(o, r)),
-                ),
-        )
-        .map(
-            (r) =>
-                `M${r.left + o} ${r.top + o}h${r.width}v${r.height}h${-r.width}Z`,
-        )
+    // under even-odd an overlap of two holes is dark again (a link inside its lit
+    // sentence, two lines of a wrapped link once the spotlight's room is added), so
+    // the holes are cut as their union: a box inside another adds nothing, the same
+    // box twice cuts one, and overlapping boxes light their overlap
+    const holes = unionRects(
+        rects.map((r) => ({
+            left: r.left + o - room,
+            top: r.top + o - room,
+            width: r.width + 2 * room,
+            height: r.height + 2 * room,
+        })),
+    )
+        .map((r) => `M${r.left} ${r.top}h${r.width}v${r.height}h${-r.width}Z`)
         .join("");
     shade.style.clipPath = `path(evenodd, "M0 0H${W + 2 * o}V${H + 2 * o}H0Z${holes}")`;
 }
@@ -811,7 +876,7 @@ function visibleBounds() {
  */
 const CUE_BOX = 48;
 const CUE_TAIL = 11; // the number disc's centre, units behind the box centre
-function cueSvg(color: string, num: string): string {
+export function cueSvg(color: string, num: string): string {
     const c = CUE_BOX / 2;
     return (
         `<svg width="100%" height="100%" viewBox="0 0 ${CUE_BOX} ${CUE_BOX}" aria-hidden="true" style="display:block">` +
@@ -822,7 +887,7 @@ function cueSvg(color: string, num: string): string {
 }
 
 /** turn a cue's arrow to `angle` (radians) and keep its number upright on the tail disc */
-function aimCue(el: HTMLElement, angle: number) {
+export function aimCue(el: HTMLElement, angle: number) {
     const c = CUE_BOX / 2;
     el.querySelector("g")?.setAttribute(
         "transform",
