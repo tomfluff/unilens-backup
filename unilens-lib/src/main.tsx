@@ -9,7 +9,7 @@
  *   trigger      MouseEvent → bool. Default: alt+click.
  *   mouseWindow  Seconds of trace history. Default: 2.5.
  *   backend      Flask base URL. Default: '' (same origin).
- *   preset       A study preset (presets.ts), e.g. 'baseline'. The page address
+ *   preset       A study preset (presets.ts), e.g. 'initial'. The page address
  *                (?unilens-preset=…) and the facilitator's keys override it.
  */
 import { flushSync } from "react-dom";
@@ -21,6 +21,7 @@ import { initFacilitator, startChosenPreset } from "./presets";
 import { forgetForReset } from "./restore";
 import { initSettings } from "./SettingsPanel";
 import { setSpeechBackend } from "./speech";
+import { initStudyLog, logEvent, pageAddress } from "./studyLog";
 import { UnilensClient } from "./UnilensClient";
 import { UnilensRoot } from "./UnilensRoot";
 import { initZoom } from "./zoom";
@@ -57,7 +58,17 @@ export function init(options: InitOptions = {}) {
     // Create unilens client
     const unilens: UnilensClient = new UnilensClient(options);
     // the preset first: everything below reads the settings
-    startChosenPreset(options.preset);
+    const preset = startChosenPreset(options.preset);
+    // the study's log, when the address or the browser names a participant
+    if (initStudyLog(unilens.getBackend()))
+        logEvent("page_load", {
+            url: pageAddress(),
+            title: document.title,
+            lang: document.documentElement.lang,
+            viewport: [window.innerWidth, window.innerHeight],
+            dpr: window.devicePixelRatio,
+            preset,
+        });
 
     startTrace(unilens.getOption("mouseWindow"));
     if (unilens.getOption("zoom")) initZoom();

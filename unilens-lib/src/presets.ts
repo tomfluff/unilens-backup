@@ -1,7 +1,7 @@
 /**
  * Presets: named sets of setting values for the studies (co-design study 1, from
  * 2026-10-07). A preset is on when:
- *   1. the page address asks for it: ?unilens-preset=baseline (or =off), which is
+ *   1. the page address asks for it: ?unilens-preset=initial (or =off), which is
  *      also remembered for the site;
  *   2. else the facilitator's last choice on this site (the address, or the keys);
  *   3. else the page's own UniLens.init({ preset }).
@@ -10,7 +10,8 @@
  * for this tab only).
  *
  * Hidden facilitator keys (nothing on screen shows them):
- *   Ctrl+Alt+Shift+B  next preset: off → baseline → … → off (the page reloads)
+ *   Ctrl+Alt+Shift+B  switch the initial prototype on or off (the page reloads; with
+ *                     more presets it steps through them: off → initial → … → off)
  *   Ctrl+Alt+Shift+S  open or close the full settings, gear or not
  *   Ctrl+Alt+Shift+R  reset for the next participant: forget the conversation and
  *                     the changes made in this tab, then reload
@@ -22,6 +23,7 @@ import {
     type Settings,
     startPreset,
 } from "./settings";
+import { forgetStudyIds, logEvent } from "./studyLog";
 
 export interface Preset {
     /** what the facilitator sees: the confirmation toast, the settings panel */
@@ -40,8 +42,8 @@ export const PRESETS = {
      *  typing or the mic, in English; answers highlight their sources in one fixed
      *  look; nothing moves or zooms the page except choosing a source, and the chat
      *  never moves to uncover a source; no settings on screen */
-    baseline: {
-        name: "Baseline (co-design session 1)",
+    initial: {
+        name: "Initial prototype (co-design session 1)",
         values: {
             // asking: Alt+click only, and the question typed or spoken
             regionSelect: false,
@@ -242,6 +244,7 @@ export function initFacilitator(opts: {
             e.preventDefault();
             e.stopPropagation();
             if (e.repeat) return;
+            logEvent("facilitator_key", { key });
             if (key === "s") {
                 toggleSettingsPanel();
                 return;
@@ -250,7 +253,7 @@ export function initFacilitator(opts: {
                 const next = nextChoice();
                 reloadWith(
                     next,
-                    `UniLens: ${next === "off" ? "no preset (everything on, settings gear shown)" : PRESETS[next].name}`,
+                    `UniLens: ${next === "off" ? "preset off (the full UniLens, settings gear shown)" : `${PRESETS[next].name}: on`}`,
                 );
                 return;
             }
@@ -260,20 +263,27 @@ export function initFacilitator(opts: {
             resetting = true;
             showToast("UniLens: resetting…", 10000);
             clearPresetChanges();
+            // the participant id goes too: the next one gets their own link
+            forgetStudyIds();
             const now = activePreset()?.id ?? "off";
             void Promise.race([
                 opts.forgetConversation().catch(() => false),
                 new Promise<boolean>((r) =>
                     window.setTimeout(() => r(false), 9000),
                 ),
-            ]).then((forgotten) =>
+            ]).then((forgotten) => {
+                // the address must not name the participant again on the reload
+                const url = new URL(location.href);
+                url.searchParams.delete("pid");
+                url.searchParams.delete("session");
+                history.replaceState(history.state, "", url);
                 reloadWith(
                     now as PresetId | "off",
                     forgotten
                         ? "UniLens: reset for the next participant"
                         : "UniLens: settings reset, but the conversation could not be deleted. Use a new incognito window.",
-                ),
-            );
+                );
+            });
         },
         true,
     );

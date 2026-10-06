@@ -5,6 +5,7 @@
  */
 
 import { getSettings } from "./settings";
+import { studyUrl } from "./studyLog";
 
 /** ja if the text contains kana/kanji, else the browser locale */
 function guessLang(text: string): string {
@@ -63,7 +64,7 @@ export async function speak(text: string, onState?: (s: SpeechState) => void) {
     setStateSafe("loading");
     const plain = toSpeakable(text);
     try {
-        const res = await fetch(`${backendUrl}/api/tts`, {
+        const res = await fetch(studyUrl(`${backendUrl}/api/tts`), {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             // the provider, model and voice chosen in the AI settings; the backend
@@ -82,7 +83,7 @@ export async function speak(text: string, onState?: (s: SpeechState) => void) {
         const { id } = await res.json();
         if (mine !== reading) return;
         const el = new Audio(
-            `${backendUrl}/api/tts/${encodeURIComponent(id)}.mp3`,
+            studyUrl(`${backendUrl}/api/tts/${encodeURIComponent(id)}.mp3`),
         );
         audioEl = el;
         // media events arrive late: one from a stopped reading must not touch the next,
@@ -350,12 +351,17 @@ function record(
                     if (opts.engine === "openai" || opts.engine === "gemini")
                         q.set("provider", opts.engine);
                     if (opts.model) q.set("model", opts.model);
-                    const res = await fetch(`${backendUrl}/api/stt?${q}`, {
-                        method: "POST",
-                        headers: { "Content-Type": blob.type.split(";")[0] },
-                        body: blob,
-                        signal: aborter.signal,
-                    });
+                    const res = await fetch(
+                        studyUrl(`${backendUrl}/api/stt?${q}`),
+                        {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": blob.type.split(";")[0],
+                            },
+                            body: blob,
+                            signal: aborter.signal,
+                        },
+                    );
                     const data = await res.json().catch(() => ({}));
                     if (!res.ok)
                         throw new Error(data.error ?? `HTTP ${res.status}`);

@@ -512,7 +512,7 @@ describe("asksToZoom: the assistant zooms only when asked", () => {
     });
 });
 
-describe("citation placement (co-design baseline: numbers out of the sentences)", () => {
+describe("citation placement (co-design initial prototype: numbers out of the sentences)", () => {
     const S = (n: number) => `\uE0FF${n}\uE0FF`;
     it("sentence: each sentence's numbers after its full stop, once each, in order", () => {
         expect(

@@ -27,6 +27,7 @@ import {
 import { roleOf } from "./inventory";
 import { setTargets } from "./minimap";
 import { getSettings, onSettingsChange } from "./settings";
+import { logEvent } from "./studyLog";
 import {
     boxOf,
     type ClientRect,
@@ -1230,6 +1231,19 @@ export function showHighlights(
     render();
     setupSubscriptions();
     syncMinimap();
+    logEvent("highlights_shown", {
+        badges: boxes.map((b) => b.badge ?? b.role),
+        onScreen: boxes.filter((b) => {
+            const r = b.el.getBoundingClientRect();
+            return (
+                r.bottom > 0 &&
+                r.right > 0 &&
+                r.top < window.innerHeight &&
+                r.left < window.innerWidth
+            );
+        }).length,
+        byUser: Boolean(opts.userInitiated),
+    });
     if (opts.label) announce(chatText().hFound(opts.label));
     return true;
 }
@@ -1294,6 +1308,7 @@ export function foldNested<T extends { el: Element; badge?: string }>(
 
 export function clearHighlights() {
     const had = boxes.length > 0;
+    if (had) logEvent("highlights_cleared", { count: boxes.length });
     for (const b of boxes) {
         b.box.remove();
         for (const l of b.lines) l.box.remove();

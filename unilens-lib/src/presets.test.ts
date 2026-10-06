@@ -20,21 +20,21 @@ describe("choosePreset: the address, then the facilitator's choice, then init", 
     });
 
     it("takes the page's init option", () => {
-        expect(choosePreset("baseline", page)).toBe("baseline");
+        expect(choosePreset("initial", page)).toBe("initial");
     });
 
     it("takes the address, and remembers it for the site's other pages", () => {
-        expect(choosePreset(undefined, `${page}?unilens-preset=baseline`)).toBe(
-            "baseline",
+        expect(choosePreset(undefined, `${page}?unilens-preset=initial`)).toBe(
+            "initial",
         );
-        expect(choosePreset(undefined, page)).toBe("baseline");
+        expect(choosePreset(undefined, page)).toBe("initial");
     });
 
     it("=off in the address wins over the init option, and is remembered", () => {
         expect(
-            choosePreset("baseline", `${page}?unilens-preset=off`),
+            choosePreset("initial", `${page}?unilens-preset=off`),
         ).toBeNull();
-        expect(choosePreset("baseline", page)).toBeNull();
+        expect(choosePreset("initial", page)).toBeNull();
     });
 
     it("ignores an unknown preset", () => {
@@ -47,8 +47,8 @@ describe("choosePreset: the address, then the facilitator's choice, then init", 
 
     it("works with storage blocked", () => {
         expect(
-            choosePreset(undefined, `${page}?unilens-preset=baseline`, null),
-        ).toBe("baseline");
+            choosePreset(undefined, `${page}?unilens-preset=initial`, null),
+        ).toBe("initial");
     });
 });
 
@@ -62,8 +62,8 @@ describe("every preset", () => {
                 ).toEqual(v);
     });
 
-    it("baseline is Yotam's (2026-10-06): click and chat, voice, highlights, nothing else", () => {
-        const b: Partial<Settings> = PRESETS.baseline.values;
+    it("the initial prototype is Yotam's (2026-10-06 and 07): click and chat, voice, highlights, nothing else", () => {
+        const b: Partial<Settings> = PRESETS.initial.values;
         expect(b).toMatchObject({
             voiceInput: true,
             liveTalk: false,
@@ -82,7 +82,7 @@ describe("every preset", () => {
             // 2026-10-07: English, the chat never moves, no about line, no debug key
             chatLanguage: "en",
             // one fixed highlight look, every part named (a later default change
-            // must not change the baseline)
+            // must not change the initial prototype)
             hlOutline: "ring",
             hlBackdrop: "none",
             hlFill: false,
@@ -107,9 +107,9 @@ describe("a preset in effect", () => {
             version: 0,
         });
         localStorage.setItem("unilens-settings", left);
-        history.replaceState(null, "", "/ja/?unilens-preset=baseline");
-        expect(startChosenPreset()).toBe("baseline");
-        expect(activePreset()?.id).toBe("baseline");
+        history.replaceState(null, "", "/ja/?unilens-preset=initial");
+        expect(startChosenPreset()).toBe("initial");
+        expect(activePreset()?.id).toBe("initial");
         const s = getSettings();
         expect(s.liveTalk).toBe(false);
         expect(s.minimap).toBe("off");
@@ -121,7 +121,7 @@ describe("a preset in effect", () => {
         updateSetting("chatTextScale", 150);
         expect(localStorage.getItem("unilens-settings")).toBe(left);
         const kept = JSON.parse(
-            sessionStorage.getItem("unilens-settings:baseline") as string,
+            sessionStorage.getItem("unilens-settings:initial") as string,
         );
         expect(kept.state).toEqual({ chatTextScale: 150 });
 
@@ -139,7 +139,7 @@ describe("a preset in effect", () => {
         expect(getSettings().chatTextScale).toBe(120);
         expect(
             JSON.parse(
-                sessionStorage.getItem("unilens-settings:baseline") as string,
+                sessionStorage.getItem("unilens-settings:initial") as string,
             ).state,
         ).toEqual({});
     });

@@ -12,6 +12,7 @@
  * and the zoom and view. The page is kept as a hash, not its address.
  */
 import { allPlaces, type Place } from "./places";
+import { studyUrl } from "./studyLog";
 
 export interface Snapshot {
     v: 1;
@@ -76,7 +77,7 @@ function openStore(backend: string): Promise<boolean> {
             return resolve(false);
         }
         const f = document.createElement("iframe");
-        f.src = `${backend}/store`;
+        f.src = studyUrl(`${backend}/store`);
         f.title = "UniLens store";
         f.tabIndex = -1;
         f.setAttribute("aria-hidden", "true");

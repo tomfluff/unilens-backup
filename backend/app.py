@@ -22,6 +22,7 @@ import secrets
 import threading
 import time
 import uuid
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Literal
 
@@ -385,6 +386,72 @@ def _rate_limited(bucket: str) -> bool:
     hits.append(now)
     _rate[key] = hits
     return False
+
+
+# ── Study logs (co-design study 1, 2026-10-07) ────────────────────────────
+# With ?pid=&session= on a request (the widget adds them to every request when the
+# page address named a participant), events go to one append-only JSONL file per
+# participant and session: study-logs/<pid>/session-<n>.jsonl. The widget posts its
+# own events to /api/study/log; the routes add what only the server knows (the
+# capture saved, the model and its latency, a transcript). Nothing else about the
+# participant is written: no address, no browser.
+STUDY_LOGS_DIR = Path(__file__).parent / "study-logs"
+_STUDY_PID = re.compile(r"^[A-Za-z0-9_-]{1,24}$")
+_STUDY_SESSION = re.compile(r"^\d{1,3}$")
+STUDY_MAX_EVENTS = 200
+STUDY_MAX_EVENT_CHARS = 16_000
+_study_lock = threading.Lock()
+
+
+def _study_ids() -> tuple[str, str] | None:
+    """The participant and session a request carries, or None."""
+    pid = request.args.get("pid", "")
+    session = request.args.get("session", "")
+    if _STUDY_PID.fullmatch(pid) and _STUDY_SESSION.fullmatch(session):
+        return pid, str(int(session))
+    return None
+
+
+def _page_address(url: object) -> str:
+    """A page as the log keeps it (as the widget does): its path, a site search's
+    words (q) and a section anchor; any other query or fragment is dropped, since an
+    address can carry an email or a token."""
+    from urllib.parse import parse_qs, quote, urlsplit
+
+    try:
+        u = urlsplit(str(url or ""))
+    except ValueError:
+        return ""
+    q = parse_qs(u.query).get("q")
+    anchor = u.fragment if re.fullmatch(r"[\w-]{1,60}", u.fragment or "") else ""
+    return (
+        u.path + (f"?q={quote(q[0])}" if q else "") + (f"#{anchor}" if anchor else "")
+    )
+
+
+def _now_iso() -> str:
+    return datetime.now(timezone.utc).isoformat(timespec="milliseconds")
+
+
+def _study_log(ids: tuple[str, str] | None, events: list[dict], src: str) -> None:
+    """Append events to the participant's log for the session (one line each)."""
+    if not ids or not events:
+        return
+    pid, session = ids
+    rx = _now_iso()
+    lines = "".join(
+        json.dumps({**ev, "src": src, "rx": rx}, ensure_ascii=False) + "\n"
+        for ev in events
+    )
+    with _study_lock:
+        folder = STUDY_LOGS_DIR / pid
+        folder.mkdir(parents=True, exist_ok=True)
+        with open(folder / f"session-{session}.jsonl", "a", encoding="utf-8") as f:
+            f.write(lines)
+
+
+def _server_event(ids: tuple[str, str] | None, kind: str, **fields) -> None:
+    _study_log(ids, [{"t": _now_iso(), "type": kind, **fields}], "server")
 
 
 def _prune_storage() -> None:
@@ -1747,6 +1814,31 @@ def create_app():
             },
         )
 
+    @app.post("/api/study/log")
+    def study_log():
+        """The widget's events for the study's log, as {"events": [...]}. Sent as
+        plain text (no CORS preflight; it also goes as the page closes)."""
+        ids = _study_ids()
+        if ids is None:
+            return jsonify({"error": "pid and session required"}), 400
+        try:
+            data = json.loads(request.get_data(as_text=True) or "{}")
+        except ValueError:
+            return jsonify({"error": "not JSON"}), 400
+        events = data.get("events") if isinstance(data, dict) else None
+        if not isinstance(events, list) or not 1 <= len(events) <= STUDY_MAX_EVENTS:
+            return jsonify({"error": f"events: a list of 1-{STUDY_MAX_EVENTS}"}), 400
+        kept = [
+            ev
+            for ev in events
+            if isinstance(ev, dict)
+            and isinstance(ev.get("type"), str)
+            and 0 < len(ev["type"]) <= 40
+            and len(json.dumps(ev, ensure_ascii=False)) <= STUDY_MAX_EVENT_CHARS
+        ]
+        _study_log(ids, kept, "client")
+        return jsonify({"logged": len(kept), "dropped": len(events) - len(kept)})
+
     @app.get("/health")
     def health():
         return jsonify({"status": "ok", "provider": _provider()})
@@ -1852,6 +1944,16 @@ def create_app():
         session["captures"].append(cap_id)
         _save_session(sid, session)
         _prune_storage()
+        _server_event(
+            _study_ids(),
+            "capture_saved",
+            capture=cap_id,
+            sessionId=sid,
+            url=_page_address(meta.get("url")),
+            click=[meta.get("clickX"), meta.get("clickY")],
+            zoom=meta.get("zoom"),
+            viewport=[meta.get("viewportW"), meta.get("viewportH")],
+        )
         return jsonify({"id": cap_id, "session_id": sid})
 
     @app.get("/history")
@@ -1960,6 +2062,9 @@ def create_app():
             return jsonify({"error": "empty text"}), 400
         tid = uuid.uuid4().hex[:12]
         tts_texts[tid] = (text, *choice)
+        _server_event(
+            _study_ids(), "read_aloud_prepared", chars=len(text), provider=choice[0]
+        )
         if len(tts_texts) > 50:  # drop oldest one-shots that were never fetched
             tts_texts.pop(next(iter(tts_texts)))
         return jsonify({"id": tid})
@@ -2027,7 +2132,17 @@ def create_app():
         try:
             text = _transcribe(provider, model, audio, mime, lang)
         except Exception as e:  # the chat says it could not hear; the detail is here
+            _server_event(_study_ids(), "error", where="speech-to-text", message=str(e))
             return jsonify({"error": f"{type(e).__name__}: {e}"}), 502
+        _server_event(
+            _study_ids(),
+            "transcript",
+            text=text,
+            provider=provider,
+            model=model,
+            latencyMs=round((time.perf_counter() - t0) * 1000),
+            audioBytes=len(audio),
+        )
         return jsonify(
             {
                 "text": text,
@@ -2213,6 +2328,7 @@ def create_app():
         choice = _ai_choice(data)
         provider, model = choice["provider"], choice["model"]
         images_sent = _images_sent(provider, viewport_b64)
+        study = _study_ids()
 
         def sse(obj):
             return f"data: {json.dumps(obj)}\n\n"
@@ -2239,6 +2355,7 @@ def create_app():
                     parts.append(delta)
                     yield sse({"delta": delta})
             except Exception as e:
+                _server_event(study, "error", where="answer", message=str(e))
                 yield sse({"error": f"{type(e).__name__}: {e}"})
                 return
             # deltas went out as the model wrote them; history keeps only real ids,
@@ -2249,13 +2366,25 @@ def create_app():
                 {"role": "assistant", "text": reply},
             ]
             _save_history(cap_dir, sid, session, new_history)
+            latency = round((time.perf_counter() - t0) * 1000)
+            _server_event(
+                study,
+                "answer_server",
+                capture=cap_id,
+                sessionId=sid,
+                question=message,
+                reply=reply,
+                provider=provider,
+                model=model,
+                latencyMs=latency,
+            )
             yield sse(
                 {
                     "done": True,
                     "provider": provider,
                     "model": model,
                     "imagesSent": images_sent,
-                    "latencyMs": round((time.perf_counter() - t0) * 1000),
+                    "latencyMs": latency,
                 }
             )
 
@@ -2312,8 +2441,20 @@ def create_app():
             saved = _strip_unknown_cites(_unzoom(reply), ids)
             reply = _strip_unknown_cites(reply, ids)
         except Exception as e:  # surface provider errors to the popover
+            _server_event(_study_ids(), "error", where="answer", message=str(e))
             return jsonify({"error": f"{type(e).__name__}: {e}"}), 502
         latency_ms = round((time.perf_counter() - t0) * 1000)
+        _server_event(
+            _study_ids(),
+            "answer_server",
+            capture=cap_id,
+            sessionId=sid,
+            question=message,
+            reply=saved,
+            provider=provider,
+            model=choice["model"],
+            latencyMs=latency_ms,
+        )
 
         history += [
             {"role": "user", "text": message, "capture_id": cap_id},

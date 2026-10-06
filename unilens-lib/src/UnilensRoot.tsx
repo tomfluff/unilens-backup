@@ -35,6 +35,7 @@ import {
 } from "./restore";
 import { recordCapture } from "./sentLog";
 import { getSettings, onSettingsChange, updateSetting } from "./settings";
+import { describeElement, logEvent, studyUrl } from "./studyLog";
 import type { UnilensClient } from "./UnilensClient";
 import {
     clientToContent,
@@ -194,10 +195,14 @@ export function UnilensRoot({
             try {
                 const [ses, cap] = await Promise.all([
                     fetch(
-                        `${backend}/api/session/${encodeURIComponent(snap.sessionId)}`,
+                        studyUrl(
+                            `${backend}/api/session/${encodeURIComponent(snap.sessionId)}`,
+                        ),
                     ),
                     fetch(
-                        `${backend}/api/capture/${encodeURIComponent(snap.captureId)}/detail`,
+                        studyUrl(
+                            `${backend}/api/capture/${encodeURIComponent(snap.captureId)}/detail`,
+                        ),
                     ),
                 ]);
                 if (!ses.ok || !cap.ok) return;
@@ -429,6 +434,8 @@ export function UnilensRoot({
             });
         }
 
+        /** Alt+clicks so far on this page, for the study's log */
+        let clicks = 0;
         async function doCapture(
             clientX: number,
             clientY: number,
@@ -442,6 +449,17 @@ export function UnilensRoot({
             // (pointX, pointY) is the client point being asked about — the click, or the
             // centre of a drag. clientToContent handles both pan engines.
             const p = clientToContent(pointX, pointY);
+            const t0 = performance.now();
+            // pairs the click with its capture in the study's log, whatever overlaps
+            const click = ++clicks;
+            logEvent(region ? "region_select" : "alt_click", {
+                click,
+                x: Math.round(pointX),
+                y: Math.round(pointY),
+                pageX: Math.round(p.x),
+                pageY: Math.round(p.y),
+                element: describeElement(el),
+            });
             // a new capture retires the previous outline and its ids. Retire the id first:
             // while this capture renders and uploads, a late answer for the old one must
             // already be stale, or it could redraw after the clear (Codex review, P1)
@@ -484,6 +502,11 @@ export function UnilensRoot({
                 // place it has)
                 endFx();
                 console.warn("[UniLens] capture failed:", err);
+                logEvent("error", {
+                    where: "capture",
+                    click,
+                    message: String(err),
+                });
                 // a newer click is being captured: the chat and the guard are its to set
                 if (mine !== latestCapture) return;
                 // the open chat carries on with its capture: its answers may draw again,
@@ -506,10 +529,22 @@ export function UnilensRoot({
                     "[UniLens] backend unreachable, chat will fail:",
                     err,
                 );
+                logEvent("error", {
+                    where: "upload",
+                    click,
+                    message: String(err),
+                });
             }
             // dropped here too when a newer click, or a close, came during the upload
             if (mine !== latestCapture) return endFx();
             const id = up?.id ?? "local";
+            logEvent("capture", {
+                click,
+                capture: id,
+                sessionId: up?.sessionId ?? null,
+                ms: Math.round(performance.now() - t0),
+                uploaded: Boolean(up),
+            });
             if (up) {
                 joinSession(up.sessionId);
                 tagLastCapture(id);

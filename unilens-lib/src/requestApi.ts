@@ -1,4 +1,5 @@
 import type { CaptureResult } from "./capture";
+import { studyUrl } from "./studyLog";
 import type { UnilensClient } from "./UnilensClient";
 
 export class RequestApi {
@@ -9,11 +10,14 @@ export class RequestApi {
 
     /** a new conversation on a capture: a fresh session holding it */
     async newSession(captureId: string): Promise<string> {
-        const res = await fetch(`${this.unilens.getBackend()}/api/session`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ capture_id: captureId }),
-        });
+        const res = await fetch(
+            studyUrl(`${this.unilens.getBackend()}/api/session`),
+            {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ capture_id: captureId }),
+            },
+        );
         if (!res.ok) throw new Error(`new session failed: HTTP ${res.status}`);
         return (await res.json()).session_id;
     }
@@ -27,7 +31,7 @@ export class RequestApi {
         cap: CaptureResult,
     ): Promise<{ id: string; sessionId: string | null }> {
         const backend = this.unilens.getBackend();
-        const res = await fetch(`${backend}/api/capture`, {
+        const res = await fetch(studyUrl(`${backend}/api/capture`), {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
