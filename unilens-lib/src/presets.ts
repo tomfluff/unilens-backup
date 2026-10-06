@@ -51,9 +51,13 @@ export const PRESETS = {
             hints: false,
             voiceInput: true,
             voiceAutoSend: true,
+            // speech is heard by the server, with OpenAI, for everyone: one recognizer
+            // whatever the browser, and one provider (Yotam, 2026-10-07)
+            sttEngine: "openai",
             liveTalk: false,
             // hearing: read aloud on request (the button on each answer), action sounds
             autoRead: false,
+            ttsProvider: "openai",
             sounds: true,
             // answers point at the page: every answer outlines its sources, numbered
             // as the chips are; a chip, "next" or "the second one" goes to its source

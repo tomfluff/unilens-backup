@@ -81,6 +81,9 @@ describe("every preset", () => {
             settingsButton: false,
             // 2026-10-07: English, the chat never moves, no about line, no debug key
             chatLanguage: "en",
+            // speech and read-aloud through the server, OpenAI (2026-10-07)
+            sttEngine: "openai",
+            ttsProvider: "openai",
             // one fixed highlight look, every part named (a later default change
             // must not change the initial prototype)
             hlOutline: "ring",
