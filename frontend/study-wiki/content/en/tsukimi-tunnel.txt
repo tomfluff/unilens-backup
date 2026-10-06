@@ -1,0 +1,24 @@
+title: Tsukimi Tunnel
+short: Railway tunnel on the Kagami Line, Minori Prefecture
+type: stub
+categories: rail-infra; rail; mountains
+infobox: Tsukimi Tunnel
+ib-subtitle: 月見トンネル
+ib-map: mount-tsukimi | Mount Tsukimi in Minori Prefecture
+ib: Line | [[kagami-line|Kagami Line]]
+ib: Location | Between Hotarudani and Tsukimi-guchi, Tsukimi
+ib: Length | 2,184 m
+ib: Track | Single
+ib: Built | 1927–1931
+ib: Breakthrough | 12 December 1930
+ib: Opened | 4 October 1931
+ib: Engineer | [[kenzo-hattori|Kenzō Hattori]]
+---
+The '''Tsukimi Tunnel''' (月見トンネル, ''Tsukimi tonneru'') is a 2,184-metre single-track railway tunnel on the [[kagami-line|Kagami Line]] of the [[harukawa-railway|Harukawa Railway]], between Hotarudani and Tsukimi-guchi stations in the town of [[?Tsukimi (town)|Tsukimi]], [[minori-prefecture|Minori Prefecture]]. It carries the line under a spur of [[mount-tsukimi|Mount Tsukimi]] on the climb to [[tsukimi-onsen|Tsukimi Onsen]], the section with the line's ruling gradient of 25 ‰.<ref name="hr100">Harukawa Railway (2023). ''One Hundred Years of HaruTetsu''. Harukawa Railway Co., pp. 58–64.</ref>
+
+The tunnel was built from 1927 to 1931 for the Kagami Valley Railway under its chief engineer [[kenzo-hattori|Kenzō Hattori]], who preferred it to a cheaper route over the ridge with gradients of 33 ‰. It was bored from both ends, the headings met on 12 December 1930, and it opened with the last section of the line on 4 October 1931. Fourteen workers died during construction; a memorial stone with an inscription by Hattori was erected at Tsukimi-guchi in 1932.<ref>Hattori, Kenzō (1932). "The construction of the Tsukimi Tunnel". ''Journal of the Japan Society of Civil Engineers'' 18 (4): 512–538.</ref>
+
+It was built for the 1,067 mm gauge and electrified in 1952. It was the longest tunnel in Minori Prefecture until the Hiwada Road Tunnel opened in 1979. The limited express [[tsukikage|Tsukikage]] passes through it in about two minutes.
+
+== References ==
+{{reflist}}

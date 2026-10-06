@@ -1,0 +1,95 @@
+title: Harukawa University
+short: National university in Harukawa, Minori Prefecture
+type: article
+categories: education; harukawa
+hatnote: Not to be confused with Harukawa Gakuin University, a private university in the same city.
+infobox: Harukawa University
+ib-subtitle: 春川大学
+ib-image: university-01.jpg | The Old Main Building (1931) and its ginkgo trees
+ib-map: harukawa | Location in Minori Prefecture
+ib-section: Overview
+ib: Type | National university
+ib: Established | 31 May 1949
+ib: Predecessors | Minori Normal School (1874)<br>Minori Higher Commercial School (1923)<br>Harukawa Medical College (1943)
+ib: Location | [[harukawa|Harukawa]], [[minori-prefecture|Minori Prefecture]]
+ib: Campuses | Sagimai (main), Medical, Yuzuhara Field Station
+ib-section: Size (May 2025)
+ib: Faculties | 7
+ib: Undergraduates | 8,940
+ib: Graduate students | 1,620
+ib: Academic staff | about 1,030
+ib: Library | 1.62 million volumes
+ib: Hospital | 720 beds (Medical Campus)
+---
+'''Harukawa University''' (春川大学, ''Harukawa daigaku''), often shortened to '''Harudai''' (春大), is a national university in [[harukawa|Harukawa]], the capital of [[minori-prefecture|Minori Prefecture]]. It was founded on 31 May 1949 by merging three older schools, the oldest of which dates from 1874, and has been a national university corporation since 2004. It has seven faculties, with 8,940 undergraduates and 1,620 graduate students (May 2025) and about 1,030 academic staff, on three sites: the main Sagimai Campus, the neighboring Medical Campus with the medical school and university hospital, and the Yuzuhara Field Station for agriculture.<ref name="factbook">Harukawa University (2025). ''Harukawa University Fact Book 2025''. Harukawa University, pp. 2–9.</ref> Its red-brick Old Main Building of 1931 is a Registered Tangible Cultural Property and one of the city's landmarks.
+
+== History ==
+=== Predecessor schools ===
+The university brought together three schools:
+* '''Minori Normal School''' (実野師範学校), founded in 1874 in Shiromachi to train elementary school teachers. Its buildings burned in the air raid of 29 July 1945.
+* '''Minori Higher Commercial School''' (実野高等商業学校), founded in 1923 on a site north of the castle. Its main building, now the Old Main Building, was completed in 1931.
+* '''Harukawa Medical College''' (春川医学専門学校), founded in 1943 with an attached hospital on the site of today's Medical Campus.<ref name="fifty">Harukawa University (1999). ''Fifty Years of Harukawa University''. Harukawa University, pp. 11–48.</ref>
+
+=== Founding and campus moves ===
+Harukawa University was established on 31 May 1949 under the postwar reform of higher education, with four faculties: Arts and Sciences, Education, Economics and Medicine. At first it used the scattered sites of its predecessors. In 1951 the city, under Mayor [[tetsuo-saeki|Tetsuo Saeki]], obtained the site of former army barracks next to the Higher Commercial School and gave it to the university, which made this enlarged Sagimai Campus its main campus. Harukawa Daigaku-mae Station on the [[kagami-line|Kagami Line]] opened on 1 April 1951 to serve it.<ref name="cityhist6">Harukawa City History Compilation Committee (1989). ''Harukawa City History'', vol. 6: ''Contemporary''. Harukawa City, pp. 512–519.</ref> The Faculty of Education moved from Shiromachi to the Sagimai Campus in 1951, and the remaining departments followed by 1957.
+
+The Faculty of Agriculture was added in 1955 and the Yuzuhara Field Station in 1956. The Faculty of Engineering opened in 1959, with support from the city's shipbuilding and machine-tool industries. In 1968 the Faculty of Arts and Sciences was divided into the Faculties of Humanities and Science. The Center for Ceramic Studies followed in 1981. The university became a national university corporation in 2004.
+
+== Organization ==
+The university has seven undergraduate faculties and graduate schools in each field. Undergraduate numbers by faculty were as follows in May 2025.<ref name="factbook"/>
+
+{| Faculties of Harukawa University
+! Faculty !! Japanese !! Founded !! Campus !! Undergraduates (May 2025)
+| Humanities || 人文学部 || 1968{{efn|The Faculties of Humanities and Science were formed in 1968 by dividing the Faculty of Arts and Sciences, one of the four original faculties of 1949.}} || Sagimai || 1,080
+| Education || 教育学部 || 1949 || Sagimai || 1,240
+| Economics || 経済学部 || 1949 || Sagimai || 1,560
+| Science || 理学部 || 1968 || Sagimai || 1,020
+| Engineering || 工学部 || 1959 || Sagimai || 2,060
+| Medicine || 医学部 || 1949 || Medical || 1,180
+| Agriculture || 農学部 || 1955 || Sagimai and Yuzuhara || 800
+| Total || || || || 8,940
+|}
+
+The Faculty of Medicine includes a school of health sciences for nurses and medical technicians. The university library, with its main building on the Sagimai Campus and a medical branch on the Medical Campus, holds 1.62 million volumes.
+
+== Campuses ==
+{| Campuses
+! Campus !! Use !! Area !! Nearest station
+| Sagimai Campus || Main campus; six faculties, administration, main library || about 38 ha || Harukawa Daigaku-mae ([[kagami-line|Kagami Line]]), 3 min walk
+| Medical Campus || Faculty of Medicine and University Hospital (720 beds) || about 14 ha || Harukawa Daigaku-mae (Kagami Line), 7 min walk
+| Yuzuhara Field Station || Farms and orchards of the Faculty of Agriculture; yuzu research || 46 ha || Yuzuhara (Kagami Line)
+|}
+
+The '''Sagimai Campus''' lies 3.6 km from [[harukawa-central-station|Harukawa Central Station]] by rail; its main gate is 3 minutes' walk from Harukawa Daigaku-mae Station. The '''Medical Campus''' adjoins it, 7 minutes' walk from the station; the University Hospital is the largest hospital in the prefecture, and the university and its hospital together employ about 4,200 people.<ref name="econ">Harukawa City (2024). ''Harukawa City Statistical Yearbook 2024''. Harukawa City, p. 118.</ref> The '''Yuzuhara Field Station''', opened in 1956, is in Kagami Town, 19.8 km up the Kagami Line.
+
+== Old Main Building ==
+[[File:university-01.jpg|The Old Main Building with its clock tower]]
+The Old Main Building (旧本館) was built in 1931 for the Minori Higher Commercial School. It is a three-story red-brick building with a central clock tower about 24 m high, approached by an avenue of ginkgo trees, the city tree of Harukawa. It survived the air raid of 1945 and served as the university's administration building until 1998.{{cn}} It was registered as a Tangible Cultural Property in 2001 and, after restoration, opened in 2005 as the university museum, with displays on the history of the university and its predecessors and on the excavated shards of the [[harukawa-ware|Harukawa ware]] domain kiln.<ref name="nippo2005">"Old Main Building reborn as museum". ''Harukawa Nippō'', 2 April 2005, p. 18.</ref> The ginkgo avenue turns yellow in late November and is one of the most photographed places in the city.
+
+== Research ==
+The '''Center for Ceramic Studies''' (1981) works with the kilns of Suyama, the center of the Harukawa ware industry. It analyzes local clays and glaze materials, keeps the shards from the 1958 excavation of the domain kiln at [[harukawa-castle|Harukawa Castle]], and publishes the ''Bulletin of the Center for Ceramic Studies''. The potter [[hanae-ishizuka|Hanae Ishizuka]] was a visiting professor there from 1981 to 1991.<ref name="ccs2006">Harukawa University Center for Ceramic Studies (2006). "Raw materials of Suyama: a 25-year survey". ''Bulletin of the Center for Ceramic Studies'' 25: 1–34.</ref>
+
+At the Yuzuhara Field Station the Faculty of Agriculture studies yuzu growing. With the prefectural fruit tree experiment station it bred "Minori Kogane" (みのり黄金), a less thorny, early-bearing yuzu variety registered in 2011 (see [[yuzu-cultivation-in-minori|Yuzu cultivation in Minori]]).<ref name="kogane">Minori Prefectural Fruit Tree Experiment Station (2012). "Breeding of the yuzu cultivar 'Minori Kogane'". ''Bulletin of the Minori Prefectural Fruit Tree Experiment Station'' 41: 1–12.</ref> The Faculty of Engineering has a long-standing program in naval architecture with the Harukawa Shipyard, and the Faculty of Science runs a marine station on [[minori-bay|Minori Bay]] that monitors red tides and oyster farming.{{cn}}
+
+== Notable people ==
+* [[michiyo-tono|Michiyo Tōno]], novelist, a graduate of Minori Normal School (1933), lectured on modern Japanese literature at the university from 1965 to 1972.
+* [[hanae-ishizuka|Hanae Ishizuka]], potter and Living National Treasure, was a visiting professor at the Center for Ceramic Studies from 1981 to 1991.
+* Takuya Hirose, Mayor of Harukawa since 2018, graduated from the Faculty of Economics in 1986.
+* Mio Takano, potter of Harukawa ware, graduated from the Faculty of Education in 2010.
+
+== Access ==
+* '''Sagimai Campus''': Harukawa Daigaku-mae Station on the Kagami Line of the [[harukawa-railway|Harukawa Railway]], 3.6 km and about 6 minutes from Harukawa Central, then 3 minutes' walk to the main gate. On weekdays in the daytime locals run every 30 minutes and rapid trains, which also stop there, hourly.
+* '''Medical Campus''' and University Hospital: Harukawa Daigaku-mae Station, then 7 minutes' walk.
+* '''Yuzuhara Field Station''': Yuzuhara Station on the Kagami Line.
+
+== See also ==
+* [[harukawa]]
+* [[harukawa-ware]]
+* [[yuzu-cultivation-in-minori]]
+* [[kagami-line]]
+
+== Notes ==
+{{notelist}}
+
+== References ==
+{{reflist}}

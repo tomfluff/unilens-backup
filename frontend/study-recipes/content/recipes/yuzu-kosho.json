@@ -1,0 +1,218 @@
+{
+  "slug": "yuzu-kosho",
+  "categories": ["harukawa"],
+  "cuisine": "harukawa",
+  "diet": ["vegan", "vegetarian", "gluten-free", "dairy-free"],
+  "difficulty": "medium",
+  "course": "condiment",
+  "times": { "prep": 30, "cook": 0, "extra": 10080, "extraLabel": { "en": "Maturing in the fridge", "ja": "冷蔵庫で熟成" } },
+  "servings": 1,
+  "servingsUnit": { "en": "jar (about 100 g)", "ja": "瓶分（約100g）" },
+  "image": "yuzu-kosho",
+  "rating": 4.9,
+  "ratings": 147,
+  "published": "2018-09-21",
+  "updated": "2026-09-15",
+  "related": ["minato-nabe", "yuzu-miso-salmon", "wafu-mushroom-pasta", "chicken-karaage"],
+  "en": {
+    "title": "Homemade Yuzu Kosho (Green Yuzu and Chilli Paste)",
+    "teaser": "A salty, fiery, wonderfully fragrant paste of green yuzu zest, green chillies and salt. Thirty minutes of grinding, one week in the fridge, and it keeps for six months.",
+    "intro": [
+      "When I was small, the last week of September at my grandmother Fumi's inn in Tsukimi Onsen meant one thing: green fingers. Fumi would send my cousins and me down to the orchards in the Kagami valley with a basket, and we came back with green yuzu the size of golf balls and a bag of fiery little green chillies from her neighbour's field. Then we sat on the engawa (the wooden veranda) grating zest while she ground it with salt in a huge Harukawa-ware suribachi, the grooved mortar that had been at the inn since before the war. The whole house smelled of citrus and chilli, and our eyes watered for an hour.",
+      "<strong>Yuzu kosho</strong> is a salty, spicy, intensely fragrant paste of yuzu zest, chillies and salt. Despite the name, there is no pepper in it: <em>kosho</em> means chilli in the dialects of Kyushu, where the paste comes from. It travelled here decades ago and stayed, because the Kagami valley grows some of the best yuzu in the country. Every September and October, Harukawa kitchens make a jar, and the yakitori stalls at the Lantern Festival put a dab on everything.",
+      { "h": "Why you'll love it" },
+      { "ul": [
+        "A tiny jar goes a long way: a quarter teaspoon lifts a whole bowl of soup.",
+        "It keeps for six months in the fridge and a year in the freezer.",
+        "Homemade is brighter and greener than any tube from the shop."
+      ] },
+      { "h": "Green or red?" },
+      "This is the classic green version, made in September and October with unripe green yuzu and green chillies; it is sharp and grassy. In November, when the yuzu turn yellow, make the red version the same way with yellow yuzu and fresh red chillies. It is rounder and a little sweeter. For both, use roughly equal weights of zest and chillies, and salt at 15–20% of their combined weight. Below 15% the paste can spoil; I use 20% for a jar I want to keep all year.",
+      { "h": "Before you start" },
+      "<strong>Wear gloves.</strong> Chilli oil soaks into your skin, and it will find your eyes hours later (I learned this the hard way at nine). Wash and dry the yuzu and chillies thoroughly, because any water left on them shortens the shelf life. A kitchen scale is essential, since the salt is calculated from the weight of the zest and chillies. I buy green yuzu at the vegetable stalls of the Minori Port morning market, about 70 yen each in early October, and the chillies from the same stall. Seven small green yuzu give about 40 g of zest.",
+      { "h": "How to use it" },
+      "Stir a little into miso soup, dab it on grilled chicken or steak, mix it into mayonnaise for a dip, or put it on the table with <a href=\"{{recipe:minato-nabe}}\">minato-nabe</a> or any hot pot. It is also wonderful in my <a href=\"{{recipe:wafu-mushroom-pasta}}\">butter-soy mushroom pasta</a> and on <a href=\"{{recipe:chicken-karaage}}\">karaage</a>. Keep the juice of the zested yuzu for <a href=\"{{recipe:yuzu-miso-salmon}}\">yuzu miso salmon</a>."
+    ],
+    "equipment": [
+      "Disposable gloves (nitrile)",
+      "Fine grater or zester",
+      "Kitchen scale (accurate to 1 g)",
+      "Suribachi and surikogi (Japanese grooved mortar and wooden pestle), or a small food processor",
+      "Glass jar of about 120 ml with a lid, sterilised"
+    ],
+    "notes": [
+      "The salt is what keeps the paste safe. Never go below 15% of the combined weight of zest and chillies.",
+      "Chillies vary hugely in heat. Taste a sliver of one before you start; if they are very hot, remove all the seeds and ribs, or use fewer chillies (down to 30 g) and recalculate the salt on the new total.",
+      "If your hands burn after handling chillies, rub them with a little vegetable oil and then wash with dish soap. Capsaicin dissolves in fat, not water.",
+      "A slightly darker layer on top is just oxidation and is fine. White or fuzzy spots are mould: throw the whole jar away.",
+      "Over the months the colour fades from bright to olive green; the flavour stays."
+    ],
+    "subs": [
+      ["Green yuzu", "Sudachi, kabosu or lime zest (lime makes a sharper 'lime kosho')"],
+      ["Green chillies (ao-tōgarashi)", "Green serrano or jalapeño (milder and juicier); with Thai bird's eye chillies, use about 30 g, as they are much hotter"],
+      ["Fine salt", "Fine sea salt; grind coarse salt first, or it won't dissolve into the paste"],
+      ["Suribachi", "A small food processor, or a stone mortar and pestle"]
+    ],
+    "makeAhead": "You can zest the yuzu up to a month ahead: freeze the zest flat in a zip-top bag and thaw it in the fridge before grinding. Chop and weigh everything before you start grinding, so you only take your gloves off once.",
+    "storage": "Keeps for 6 months in the fridge in a clean jar with plastic wrap pressed onto the surface; always use a clean, dry spoon. For longer, freeze teaspoon-sized portions wrapped in plastic wrap (or in an ice cube tray) for up to a year. The salt stops it freezing hard, so you can scoop it straight from the freezer."
+  },
+  "ja": {
+    "title": "自家製ゆずこしょう",
+    "teaser": "青ゆずの皮と青唐辛子、塩だけで作る、塩けと辛み、香りのきいた万能薬味。すり鉢で30分、冷蔵庫で1週間ねかせれば、半年楽しめます。",
+    "intro": [
+      "子どものころ、9月の最後の週に月見温泉の祖母ふみの宿へ行くと、決まって指先が緑色になりました。ふみは私といとこたちにかごを持たせて鏡川の谷のゆず畑へ行かせ、私たちはゴルフボールくらいの青ゆずと、お隣の畑の小さくて辛い青唐辛子をひと袋もらって帰ります。それから縁側に座って皮をすりおろし、ふみは戦前から宿にあるという大きな春川焼のすり鉢で、それを塩と一緒にすっていきました。家じゅうが柑橘と唐辛子の香りでいっぱいになり、私たちはしばらく涙が止まりませんでした。",
+      "ゆずこしょうは、ゆずの皮と唐辛子、塩をすり合わせた、塩辛くてピリッと辛く、香りの強い薬味です。名前に「こしょう」とありますが、胡椒は入っていません。発祥の地・九州の方言で、唐辛子のことを「こしょう」と呼ぶからです。何十年も前にこの土地へ伝わって根づいたのは、鏡川の谷で全国でも指折りのゆずがとれるから。春川では毎年9〜10月になると、各家庭で一瓶仕込みます。灯籠まつりの焼き鳥の屋台でも、何にでもちょこんとのせてくれますよ。",
+      { "h": "このレシピのいいところ" },
+      { "ul": [
+        "小さな一瓶で長く使えます。小さじ1/4でお椀一杯の味が変わります。",
+        "冷蔵で半年、冷凍なら1年もちます。",
+        "手作りは、市販のチューブより色も香りもずっと鮮やかです。"
+      ] },
+      { "h": "青と赤、どちらを作る？" },
+      "このレシピは、9〜10月に青ゆずと青唐辛子で作る定番の「青ゆずこしょう」。きりっと鋭く、青々とした香りです。11月にゆずが黄色くなったら、黄ゆずと生の赤唐辛子で同じように「赤ゆずこしょう」が作れます。こちらは角が取れて、ほんのり甘い味わいです。どちらも、ゆずの皮と唐辛子はほぼ同じ重さ、塩は両方を合わせた重さの15〜20%が目安。15%を下回ると傷みやすくなるので、一年もたせたい瓶には20%にしています。",
+      { "h": "作る前に" },
+      "<strong>必ず手袋をしてください。</strong>唐辛子の辛み成分は肌にしみ込み、何時間もたってから目をこすったときに大変なことになります（9歳の私が身をもって学びました）。ゆずと唐辛子は洗ったあと、水けを完全にふき取ること。水分が残っていると日もちが悪くなります。塩の量は皮と唐辛子の重さから計算するので、はかりは必須です。私は10月はじめに、みのり港朝市の八百屋さんの屋台で青ゆずを1個70円ほどで買い、唐辛子も同じお店で。小ぶりの青ゆず7個で、皮が約40gとれます。",
+      { "h": "使い方" },
+      "みそ汁に少し溶いたり、焼き鳥やステーキにちょんとのせたり、マヨネーズに混ぜてディップにしたり。<a href=\"{{recipe:minato-nabe}}\">みなと鍋</a>などのお鍋には欠かせません。<a href=\"{{recipe:wafu-mushroom-pasta}}\">きのこの和風パスタ</a>や<a href=\"{{recipe:chicken-karaage}}\">唐揚げ</a>にもよく合います。皮をすりおろしたあとのゆずの果汁は、<a href=\"{{recipe:yuzu-miso-salmon}}\">鮭のゆず味噌焼き</a>にどうぞ。"
+    ],
+    "equipment": [
+      "使い捨て手袋（ニトリル製）",
+      "おろし金またはゼスター",
+      "キッチンスケール（1g単位）",
+      "すり鉢とすりこぎ、または小型のフードプロセッサー",
+      "煮沸消毒した保存瓶（約120ml、ふたつき）"
+    ],
+    "notes": [
+      "日もちを支えているのは塩です。皮と唐辛子を合わせた重さの15%を下回らないようにしてください。",
+      "唐辛子の辛さは個体差がとても大きいです。作る前に端を少しかじって確かめ、とても辛ければ種とわたをすべて除くか、唐辛子を減らして（30gまで）、その合計で塩を計算し直してください。",
+      "唐辛子を触って手がヒリヒリするときは、サラダ油を少し手にすり込んでから食器用洗剤で洗います。辛み成分のカプサイシンは水ではなく油に溶けます。",
+      "表面が少し濃い色になるのは酸化なので問題ありません。白いものやふわふわしたものはカビなので、瓶ごと処分してください。",
+      "月日がたつと鮮やかな緑からオリーブ色に変わりますが、風味はそのままです。"
+    ],
+    "subs": [
+      ["青ゆず", "すだち、かぼす、ライムの皮（ライムだとよりシャープな「ライムこしょう」に）"],
+      ["青唐辛子", "青いセラーノやハラペーニョ（辛さ控えめで水分多め）。タイの青唐辛子なら、かなり辛いので約30gに"],
+      ["粒子の細かい塩", "細かい海塩。粗塩はなじみにくいので先にすっておく"],
+      ["すり鉢", "小型フードプロセッサー、または石の乳鉢"]
+    ],
+    "makeAhead": "ゆずの皮は1か月前からすりおろしておけます。保存袋に平らに入れて冷凍し、使う前に冷蔵庫で解凍してください。すり始める前に刻む・はかるをすべて済ませておくと、手袋を外すのが一度で済みます。",
+    "storage": "清潔な瓶に入れ、表面にラップをぴったり密着させれば冷蔵で6か月。取り出すときは必ず乾いた清潔なスプーンで。長く保存するなら、小さじ1ずつラップに包むか製氷皿に入れて冷凍すれば1年もちます。塩分でカチカチには凍らないので、凍ったまますくって使えます。"
+  },
+  "ingredients": [
+    { "items": [
+      { "q": 7, "u": "pc", "en": "green yuzu, unripe (enough for about 40 g zest)", "ja": "青ゆず" },
+      { "q": 40, "u": "g", "en": "green chillies (ao-tōgarashi), about 15, stems removed", "ja": "青唐辛子" },
+      { "q": 12, "q2": 16, "u": "g", "us": [2, "tsp"], "en": "salt, fine (15–20% of the zest and chilli weight)", "ja": "塩（粒子の細かいもの）" },
+      { "q": 1, "q2": 2, "u": "tsp", "en": "yuzu juice (optional, for a softer paste)", "ja": "ゆず果汁（お好みで）" }
+    ] }
+  ],
+  "steps": [
+    {
+      "en": "Put on disposable gloves and keep them on until the jar is closed. Wash the yuzu and chillies, dry them with a clean towel, then leave them on a tray for 10 minutes so every last drop of water evaporates.",
+      "ja": "使い捨て手袋をはめ、瓶のふたを閉めるまで外さないようにします。ゆずと唐辛子を洗って清潔なふきんで水けをふき、バットに広げて10分おき、水分を完全に飛ばします。",
+      "timer": 10
+    },
+    {
+      "en": "Grate the green outer skin of the yuzu on a fine grater, turning the fruit as you go so you take only the thin coloured layer; stop as soon as you see white pith, which is bitter. Weigh the zest (aim for about 40 g). Squeeze the zested fruit and keep the juice.",
+      "ja": "ゆずを回しながら、おろし金で表面の緑色の皮だけを薄くすりおろします。白いわたが見えたらそこでストップ（わたは苦みのもと）。皮の重さをはかります（約40gが目安）。皮をむいたゆずはしぼって果汁をとっておきます。"
+    },
+    {
+      "en": "Cut the stems off the chillies, halve them lengthwise and scrape out the seeds and white ribs with a teaspoon for a milder paste (leave some in if you like it hot). Chop finely and weigh: aim for the same weight as the zest.",
+      "ja": "唐辛子はへたを切り落として縦半分に切り、マイルドにしたいときはスプーンで種と白いわたをかき出します（辛いのが好きなら少し残して）。細かく刻んで重さをはかり、ゆずの皮と同じくらいの重さにそろえます。"
+    },
+    {
+      "en": "Add the two weights together and work out the salt at 15–20% of the total. For 40 g zest and 40 g chillies (80 g), that is 12–16 g salt. Use the higher amount if you want to keep the jar for more than three months.",
+      "ja": "皮と唐辛子の重さを合計し、その15〜20%の塩を用意します。皮40g＋唐辛子40g（計80g）なら、塩は12〜16g。3か月以上保存したいときは多いほうの量にしてください。"
+    },
+    {
+      "en": "Suribachi: grind the chillies with the salt for about 5 minutes until they break down into a rough paste, then add the zest and grind for another 5–10 minutes, scraping the grooves with a spoon, until smooth and evenly green. Food processor: process everything in 20-second bursts for 2–3 minutes, scraping down the sides; a small batch can stay coarse, so finish it in a suribachi if you want it smooth.",
+      "ja": "すり鉢の場合：唐辛子と塩を入れて5分ほどすり、粗いペースト状にします。ゆずの皮を加え、すり鉢の溝についた分をスプーンでかき落としながら、さらに5〜10分、なめらかで均一な緑色になるまですります。フードプロセッサーの場合：すべてを入れ、側面をこそげながら20秒ずつ2〜3分かけます。少量だと粗く残りやすいので、なめらかにしたいときは最後にすり鉢で仕上げてください。",
+      "img": "yuzu-kosho-grinding",
+      "timer": 10
+    },
+    {
+      "en": "Taste a tiny bit on the tip of a spoon. If the paste is very stiff, loosen it with 1–2 tsp yuzu juice. More juice makes it softer but shortens its life a little.",
+      "ja": "スプーンの先でほんの少し味見します。かたすぎるときは、ゆず果汁小さじ1〜2でのばします。果汁を増やすとやわらかくなりますが、そのぶん日もちは少し短くなります。"
+    },
+    {
+      "en": "Pack the paste into a sterilised jar (boil the jar and lid for 5 minutes, or wipe them with 70% alcohol, and let them dry). Press it down with a spoon to push out any air pockets, smooth the top and press plastic wrap onto the surface before closing the lid.",
+      "ja": "煮沸消毒した瓶（瓶とふたを5分煮沸するか、70%のアルコールでふいて乾かしたもの）に詰めます。スプーンで押して空気を抜き、表面を平らにならしてラップをぴったり密着させ、ふたを閉めます。"
+    },
+    {
+      "en": "Leave it in the fridge for at least 1 week before using. The salt pulls the flavours together, the raw heat of the chilli mellows, and the colour deepens from bright to darker green. Always take it out with a clean, dry spoon.",
+      "ja": "冷蔵庫で1週間以上ねかせてから使います。塩で味がなじみ、唐辛子の角のある辛みがまろやかになって、色も鮮やかな緑から深い緑に変わります。取り出すときは、いつも乾いた清潔なスプーンで。"
+    }
+  ],
+  "nutrition": { "calories": 40, "carbs": 9, "protein": 1.5, "fat": 0.3, "satFat": 0, "cholesterol": 0, "sodium": 5500, "fiber": 5, "sugar": 2 },
+  "comments": [
+    {
+      "name": { "en": "Satomi (Harukawa)", "ja": "さとみ（春川市）" },
+      "date": "2026-09-27",
+      "stars": 5,
+      "en": "Made my first ever batch with my daughter this weekend, with yuzu and chillies from the Minori Port market. We both wore gloves this time, after last year's disaster with chilli eyes!",
+      "ja": "この週末、娘と初めて仕込みました。ゆずも唐辛子もみのり港の朝市で。去年、唐辛子を触った手で目をこすって大変だったので、今年は二人とも手袋をしました！"
+    },
+    {
+      "name": { "en": "James (Vancouver)", "ja": "James（カナダ・バンクーバー）" },
+      "date": "2026-09-10",
+      "stars": 5,
+      "en": "No fresh yuzu here, so I made it with limes and green serranos. Different, but completely addictive on grilled chicken.",
+      "ja": "こちらでは生のゆずが手に入らないので、ライムと青いセラーノで作りました。別物ですが、焼いた鶏肉にのせると止まらないおいしさです。",
+      "reply": {
+        "en": "Lime kosho is delicious! To get a little closer to yuzu's floral side, try replacing about a quarter of the lime zest with grapefruit or mandarin zest.",
+        "ja": "ライムこしょう、おいしいですよね！ゆずの華やかな香りに少し近づけたいなら、ライムの皮の4分の1ほどをグレープフルーツかみかんの皮に替えてみてください。"
+      }
+    },
+    {
+      "name": { "en": "Haru's mum", "ja": "はるくん母" },
+      "date": "2026-09-02",
+      "stars": null,
+      "en": "I still have yellow yuzu peel in the freezer from last winter. Can I use it with green chillies?",
+      "ja": "去年の冬の黄ゆずの皮がまだ冷凍庫にあります。青唐辛子と合わせて使えますか？",
+      "reply": {
+        "en": "Yes, it works and tastes good, but the colour comes out a murky brownish green. Thaw the peel in the fridge and pat it very dry first. If you can wait until November, pair it with red chillies instead for a proper red yuzu kosho.",
+        "ja": "使えますし、味もおいしいですが、色はくすんだ茶緑色になります。皮は冷蔵庫で解凍し、水けをしっかりふいてから使ってください。11月まで待てるなら、赤唐辛子と合わせてきれいな赤ゆずこしょうにするのもおすすめです。"
+      }
+    },
+    {
+      "name": { "en": "Lukas (Berlin)", "ja": "Lukas（ドイツ・ベルリン）" },
+      "date": "2026-06-18",
+      "stars": 3,
+      "en": "My food processor just threw the small amount around the bowl. It came out chunky and a bit watery.",
+      "ja": "フードプロセッサーだと少量すぎて、中で飛び散るだけでした。粗くて少し水っぽい仕上がりに。",
+      "reply": {
+        "en": "Most processors struggle with under 100 g. Make a double batch, or finish it in a mortar. Watery usually means the chillies or zest were still damp, so give them the full 10 minutes to dry on the tray next time.",
+        "ja": "100g未満だと、たいていのフードプロセッサーは苦戦します。倍量で作るか、最後に乳鉢ですってください。水っぽいのは、唐辛子や皮に水分が残っていたことが多いので、次は手順1でしっかり10分乾かしてみてくださいね。"
+      }
+    },
+    {
+      "name": { "en": "Mio", "ja": "みお" },
+      "date": "2025-12-03",
+      "stars": null,
+      "en": "There are white fuzzy spots on mine after two months. Can I scrape them off?",
+      "ja": "2か月たったら、白いふわふわしたものが出てきました。取り除けば大丈夫ですか？",
+      "reply": {
+        "en": "I'm sorry, but please throw the whole jar away; mould spreads below what you can see. Usually the salt was under 15%, the ingredients weren't fully dry, or a damp spoon went in. Pressing plastic wrap onto the surface helps a lot too.",
+        "ja": "残念ですが、瓶ごと処分してください。カビは目に見えない部分にも広がっています。原因は、塩が15%未満だった、材料が乾ききっていなかった、ぬれたスプーンを入れた、のどれかが多いです。表面にラップを密着させるのもかなり効果がありますよ。"
+      }
+    },
+    {
+      "name": { "en": "Grace (Auckland)", "ja": "Grace（ニュージーランド・オークランド）" },
+      "date": "2025-10-12",
+      "stars": 5,
+      "en": "Wonderful flavour, but I didn't wear gloves and my hands burned for hours even after scrubbing. Lesson learned.",
+      "ja": "風味は最高でしたが、手袋をしなかったので、洗っても何時間も手がヒリヒリしました。いい勉強になりました。",
+      "reply": {
+        "en": "Oh no, I've been there! Soaking your hands in a bowl of cold milk for 10 minutes also helps, because the fat dissolves the capsaicin. And keep your hands away from your eyes and contact lenses for the rest of the day.",
+        "ja": "わかります、私も経験済みです！冷たい牛乳に10分ほど手をひたすのも効果的です。乳脂肪がカプサイシンを溶かしてくれます。その日は目やコンタクトレンズに触らないように気をつけてくださいね。"
+      }
+    },
+    {
+      "name": { "en": "Tsukimi Onsen innkeeper", "ja": "月見温泉の宿の女将" },
+      "date": "2024-10-05",
+      "stars": 5,
+      "en": "We serve homemade yuzu kosho with dinner at our inn, and our recipe is almost the same, with 18% salt. Lovely to see Fumi-san's way written down.",
+      "ja": "うちの宿でも夕食に自家製ゆずこしょうをお出ししていますが、塩18%でほとんど同じ作り方です。ふみさんの作り方がこうして残っているのがうれしいです。"
+    }
+  ]
+}

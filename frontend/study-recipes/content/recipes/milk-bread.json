@@ -1,0 +1,170 @@
+{
+  "slug": "milk-bread",
+  "categories": ["baking"],
+  "cuisine": "japanese",
+  "diet": ["vegetarian"],
+  "difficulty": "medium",
+  "course": "bread",
+  "times": { "prep": 30, "cook": 30, "extra": 120, "extraLabel": { "en": "Rising", "ja": "発酵" } },
+  "servings": 1,
+  "servingsUnit": { "en": "loaf (1.5-kin pan)", "ja": "本（1.5斤型）" },
+  "image": "milk-bread",
+  "rating": 4.8,
+  "ratings": 534,
+  "published": "2020-02-08",
+  "updated": "2026-09-26",
+  "related": ["yuzu-pound-cake", "kabocha-soup", "beef-stew", "hamburg-steak"],
+  "en": {
+    "title": "Milk Bread with Tangzhong (Japanese Shokupan)",
+    "teaser": "A tall, cloud-soft Japanese milk loaf made with a cooked flour paste (tangzhong) that keeps it moist for days. Exact weights, photos of the dough, and what to do when the dough is sticky.",
+    "intro": [
+      "On Sunday mornings when I was little, my grandmother Fumi would clear away the breakfast trays at her inn in Tsukimi Onsen, sit down with a cup of tea, and toast a thick slice of shokupan from the bakery by the station, with butter and a spoonful of her own yuzu marmalade. That bakery closed years ago, and I spent a long time trying to bake a loaf that soft at home. The answer, it turned out, was a few spoonfuls of cooked flour paste.",
+      "Our recipe tester Kenta Mori, who baked bread professionally for years before he started checking my recipes, helped me get this one right, and it's now the loaf Hana and Sota want for school-morning toast. This week I'm baking two: one for us and one for my parents, who come down from Tsukimi Onsen every year for the Lantern Festival weekend.",
+      { "h": "Why you'll love it" },
+      { "ul": [
+        "Soft, fluffy and lightly sweet, and it stays soft for three days.",
+        "Exact weights, plus photos of how the dough should look after kneading and after the first rise.",
+        "Made entirely by hand; no mixer needed."
+      ] },
+      { "h": "What is tangzhong?" },
+      "Tangzhong (in Japanese, yudane) is a little of the flour cooked with milk until it reaches 65°C (149°F). At that temperature the starch swells and holds far more water than raw flour can, and that water stays in the bread, so the crumb is moist and springy and goes stale more slowly. You don't need a thermometer: when the whisk leaves clear trails and the paste looks like thick custard, it's ready. Always let it cool to room temperature before mixing; hot paste can kill the yeast.",
+      { "h": "Choosing the flour" },
+      "Use bread flour (kyōrikiko) with about 12% protein; it makes the strong, stretchy gluten that holds a tall loaf. Weigh it if you possibly can. In US cups, the 300 g in the dough is about 2⅓ cups (130 g per cup, spooned in and levelled), but scooped cups can be 20% heavier, which is enough to make a dry loaf. My <a href=\"{{guide:measurement-conversions}}\">measurement conversions guide</a> has the details.",
+      { "h": "Tips for success" },
+      "<strong>The dough will be sticky.</strong> Very sticky for the first five minutes. Please don't keep adding flour: a tablespoon at most, or the bread turns dense. If it's sticking everywhere, cover it and walk away for 10 minutes, then knead by slapping and folding with a scraper in your other hand. The butter goes in once the dough starts to hold together, and you knead until it passes the windowpane test (step 4).",
+      "For rising, the dough likes 28–30°C (82–86°F); the proofing setting on an oven-microwave is perfect. Use the finger test rather than the clock. One thing that catches people out with combination ovens: you can't proof and preheat at the same time, so take the pan out a little early for the second rise and let it finish on the counter while the oven heats. My <a href=\"{{guide:oven-temperatures}}\">oven temperatures guide</a> explains fan and non-fan settings.",
+      "And the hardest part: let the loaf cool for a full hour before you slice it. Warm bread squashes under the knife and the crumb turns gummy. If you want a sweet slice with it, my <a href=\"{{recipe:yuzu-pound-cake}}\">yuzu pound cake</a> uses the same Kagami valley yuzu."
+    ],
+    "equipment": ["1.5-kin loaf pan (about 21 × 10 cm and 11 cm deep)", "Digital kitchen scale", "Small saucepan and whisk", "Bench scraper (dough scraper)", "Rolling pin", "Cooling rack", "Thermometer (optional, for the tangzhong and the dough)"],
+    "notes": [
+      "Sticky dough is normal with tangzhong and gets smoother as the gluten develops. Lots of extra flour makes a dry, dense loaf; rest the dough for 10 minutes and use a scraper instead. Oiled hands also help.",
+      "Aim for a dough temperature of 26–28°C after kneading. In summer use milk straight from the fridge; in winter warm it to about 35°C.",
+      "If the sides cave in after baking (koshi-ore), the loaf was underbaked or the steam wasn't released. Bake 2–3 minutes longer, until the sides are golden, and drop the pan on the counter as soon as it comes out.",
+      "Stand mixer: knead 4 minutes on low, add the butter, then 6–8 minutes on medium. Bread machine: use the dough course, then shape and bake in the oven from step 7.",
+      "The nutrition panel is for the whole loaf. It cuts into 8 slices about 2 cm thick, each about 210 kcal."
+    ],
+    "subs": [
+      ["Bread flour", "All-purpose flour: use 10 ml less milk; the loaf is softer and rises a little less"],
+      ["Instant dry yeast", "5 g active dry yeast, dissolved in the lukewarm milk for 10 minutes first"],
+      ["Milk", "Unsweetened soy milk, or water plus 10 g skim milk powder"],
+      ["Unsalted butter", "Salted butter (cut the salt to 5 g), or 25 g vegetable oil added with the liquids"],
+      ["Egg", "50 ml milk, and brush the top with milk instead"]
+    ],
+    "makeAhead": "Make the tangzhong the day before and keep it covered in the fridge; bring it back to room temperature before mixing. For fresh bread in the morning, do the first rise in the fridge overnight (8–12 hours) instead of at 30°C, then let the dough warm up for 30–60 minutes before dividing it.",
+    "storage": "Keep the loaf in a bag at room temperature for 2–3 days; the fridge makes bread go stale faster. To freeze, slice it, wrap each slice in cling film and freeze in a bag for up to a month. Toast straight from frozen."
+  },
+  "ja": {
+    "title": "湯種ミルク食パン",
+    "teaser": "加熱した湯種でしっとり、ふわふわ。数日たってもかたくなりにくい山型のミルク食パンです。正確な分量、生地の状態がわかる写真、べたつく生地の対処法つき。",
+    "intro": [
+      "子どものころの日曜の朝、祖母のふみは月見温泉の宿の朝食の片づけを終えると、お茶をいれて、駅前のパン屋さんの食パンを厚切りにして焼いていました。バターと、祖母手作りのゆずマーマレードをのせて。そのパン屋さんはずいぶん前に閉店してしまい、あのふわふわの食パンを家で焼きたくて、私は長いこと試行錯誤を続けてきました。たどり着いた答えが「湯種」です。",
+      "当サイトのレシピを試作してくれている森健太さんは、元パン職人。このレシピも森さんと一緒に仕上げました。いまでは花と蒼太が「朝のトーストはこれがいい」とリクエストする食パンです。今週は2本焼く予定。1本はわが家用、もう1本は、毎年灯籠まつりの週末に月見温泉から出てくる両親へのおみやげです。",
+      { "h": "このレシピのおすすめポイント" },
+      { "ul": [
+        "ふわふわ、しっとり、ほんのり甘い。3日たってもやわらかいまま。",
+        "分量はすべてグラム表記。こね上がりと一次発酵後の生地の写真つき。",
+        "手ごねで作れます。ミキサーは不要です。"
+      ] },
+      { "h": "湯種とは？" },
+      "湯種は、粉の一部を牛乳と一緒に65℃まで加熱したもの。この温度になるとでんぷんが糊化して、生の粉よりずっと多くの水分を抱え込みます。その水分がパンに残るので、しっとりもちもちに焼き上がり、かたくなりにくいのです。温度計がなくても大丈夫。泡立て器ですじが残り、カスタードのようにもったりすれば完成です。必ず室温まで冷ましてから使ってください。熱いまま加えると、イーストが弱ってしまいます。",
+      { "h": "粉の選び方" },
+      "粉はたんぱく質12%前後の強力粉を使います。しっかりした弾力のあるグルテンができ、高く膨らみます。できれば必ずはかりで量ってください。生地の強力粉300gはUSカップで約2と1/3カップ（1カップ130g、すくってすり切った場合）ですが、カップを粉に直接突っ込んで量ると2割ほど重くなり、それだけでパサついたパンになります。詳しくは<a href=\"{{guide:measurement-conversions}}\">計量換算ガイド</a>をどうぞ。",
+      { "h": "上手に作るコツ" },
+      "<strong>生地はべたつきます。</strong>こね始めの5分は、とにかくべたべたです。それでも粉を足しすぎないでください。足すとしても大さじ1まで。足しすぎると目の詰まった重いパンになります。台にくっついて手に負えないときは、ボウルをかぶせて10分休ませましょう。そのあと、片手にスケッパーを持って「たたきごね」をします。グルテンがつながってきたらバターを加え、薄い膜ができる（工程4）までこねます。",
+      "発酵は28〜30℃が目安で、オーブンレンジの発酵機能がちょうどいいです。時間ではなく、フィンガーテストで判断してください。オーブンレンジで気をつけたいのは、発酵と予熱を同時にできないこと。二次発酵は少し早めに庫内から出して、予熱している間に室温で仕上げます。ファンありとなしの温度の違いは<a href=\"{{guide:oven-temperatures}}\">オーブン温度ガイド</a>で説明しています。",
+      "そして一番むずかしいのが、焼き上がってから1時間しっかり冷ますこと。温かいうちに切ると、パンがつぶれて断面がねちゃっとしてしまいます。甘いものを一緒にという方は、同じ鏡川の谷のゆずを使った<a href=\"{{recipe:yuzu-pound-cake}}\">ゆずのパウンドケーキ</a>もどうぞ。"
+    ],
+    "equipment": ["1.5斤の食パン型（約21×10cm、深さ11cm）", "デジタルスケール", "小鍋、泡立て器", "スケッパー（カード）", "めん棒", "ケーキクーラー（網）", "温度計（あれば。湯種とこね上げ温度の確認に）"],
+    "notes": [
+      "湯種入りの生地はべたつくのが普通で、グルテンができるにつれてなめらかになります。粉を足しすぎると重くパサついたパンになるので、10分休ませてスケッパーを使いましょう。手に薄く油をつけるのも効果的です。",
+      "こね上げ温度は26〜28℃が目安。夏は冷蔵庫から出したての冷たい牛乳を、冬は35℃くらいに温めた牛乳を使ってください。",
+      "焼き上がり後に側面がへこむ（腰折れ）のは、焼き不足か蒸気が抜けていないため。側面がきつね色になるまで2〜3分長く焼き、オーブンから出したらすぐ型ごと台に落としてください。",
+      "スタンドミキサーなら低速で4分、バターを加えて中速で6〜8分。ホームベーカリーなら「生地コース」でこね、工程7から成形してオーブンで焼きます。",
+      "栄養成分は1本分です。約2cm厚さで8枚に切ると、1枚あたり約210kcalです。"
+    ],
+    "subs": [
+      ["強力粉", "中力粉・オールパーパス粉（牛乳を10ml減らす。少しやわらかく、膨らみはやや控えめに）"],
+      ["インスタントドライイースト", "ドライイースト5g（ぬるめの牛乳に溶かして10分おいてから使う）"],
+      ["牛乳", "無調整豆乳、または水＋スキムミルク10g"],
+      ["食塩不使用バター", "有塩バター（塩を5gに減らす）、またはサラダ油25g（水分と一緒に加える）"],
+      ["卵", "牛乳50ml（つや出しも牛乳で）"]
+    ],
+    "makeAhead": "湯種は前日に作り、ラップをして冷蔵庫へ。使う前に室温に戻してください。朝に焼きたてを食べたいなら、こね上げた生地を冷蔵庫で一晩（8〜12時間）かけて一次発酵させ、室温に30〜60分おいてから分割します。",
+    "storage": "袋に入れて常温で2〜3日。冷蔵庫に入れるとかえってかたくなりやすいので避けてください。冷凍する場合はスライスして1枚ずつラップで包み、保存袋に入れて1か月。凍ったままトーストできます。"
+  },
+  "ingredients": [
+    { "group": { "en": "Tangzhong", "ja": "湯種" }, "items": [
+      { "q": 20, "u": "g", "us": [2.5, "tbsp"], "en": "bread flour", "ja": "強力粉" },
+      { "q": 100, "u": "ml", "en": "milk", "ja": "牛乳" }
+    ]},
+    { "group": { "en": "Dough", "ja": "パン生地" }, "items": [
+      { "q": 300, "u": "g", "us": [2.33, "cup"], "en": "bread flour", "ja": "強力粉" },
+      { "q": 25, "u": "g", "us": [2, "tbsp"], "en": "sugar", "ja": "砂糖" },
+      { "q": 6, "u": "g", "us": [1, "tsp"], "en": "salt (fine)", "ja": "塩" },
+      { "q": 4, "u": "g", "us": [1.25, "tsp"], "en": "instant dry yeast", "ja": "インスタントドライイースト" },
+      { "q": 1, "u": "pc", "en": "eggs, beaten (keep 1 tbsp aside for brushing)", "ja": "卵（溶きほぐす。つや出し用に大さじ1を取り分ける）" },
+      { "q": 110, "u": "ml", "en": "milk, lukewarm (cold in summer; see the notes)", "ja": "牛乳（夏は冷たいまま。メモ参照）" },
+      { "q": 30, "u": "g", "us": [2.1, "tbsp"], "en": "butter, unsalted, softened", "ja": "バター（食塩不使用、室温に戻す）" },
+      { "q": null, "en": "butter or oil, for the pan and the bowl", "ja": "バターまたはサラダ油（型・ボウル用）", "free": { "en": "a little", "ja": "少々" } }
+    ]}
+  ],
+  "steps": [
+    { "en": "Make the tangzhong: whisk the 20 g bread flour into the 100 ml milk in a small pan until there are no lumps. Cook over low heat, stirring constantly, for 2–3 minutes, until it thickens to a custard-like paste and the whisk leaves clear trails (65°C/149°F). Press cling film onto the surface and cool to room temperature, about 30 minutes. (Microwave option: 600 W for 30 seconds, stir, then 15–20 seconds more.)",
+      "ja": "湯種を作ります。小鍋に強力粉20gと牛乳100mlを入れ、ダマがなくなるまで泡立て器で混ぜます。弱火にかけて絶えず混ぜながら2〜3分、カスタードのようにもったりして、泡立て器のすじが残るまで加熱します（65℃）。表面にぴったりラップをして、室温まで約30分冷まします。（電子レンジなら600Wで30秒、混ぜてさらに15〜20秒。）", "timer": 3 },
+    { "en": "Put the 300 g bread flour, sugar and yeast in a large bowl, with the salt on the other side so it doesn't sit on the yeast. Add the cooled tangzhong, the beaten egg (minus the tablespoon for brushing) and the milk, and mix with a spatula for about 1 minute, until no dry flour remains.",
+      "ja": "大きめのボウルに強力粉300g、砂糖、イーストを入れ、塩はイーストに直接触れないよう反対側に入れます。冷ました湯種、溶き卵（つや出し用の大さじ1を除く）、牛乳を加え、粉っぽさがなくなるまでゴムべらで1分ほど混ぜます。" },
+    { "en": "Turn the dough onto a clean counter and knead for 5 minutes, pushing it away with the heel of your hand and gathering it back with a scraper. It will be very sticky; that's normal, so add no more than 1 tbsp of flour. If it's unmanageable, cover it with the upturned bowl and rest 10 minutes, then slap and fold: lift the dough, slap it down onto the counter, fold it over itself, turn it 90° and repeat.",
+      "ja": "生地を台に出し、手のひらのつけ根で向こうへ押し出しては、スケッパーで集めるようにして5分こねます。とてもべたつきますが、それで正常です。粉を足すとしても大さじ1まで。手に負えないときはボウルをかぶせて10分休ませ、たたきごねをします。生地を持ち上げて台にたたきつけ、手前から折りたたみ、90度向きを変えて繰り返します。" },
+    { "en": "Flatten the dough, put the softened butter in the middle, fold the dough over it and squeeze it in. The dough will turn slippery and fall apart; keep slapping and folding for 8–10 minutes until it is smooth, glossy and no longer sticks to the counter. Windowpane test: stretch a walnut-sized piece slowly between your fingers. It's ready when it forms a thin film you can see light through; if it tears with ragged edges, knead 2–3 minutes more and test again.",
+      "ja": "生地を平らに広げ、やわらかくしたバターを中央にのせて包み、握りつぶすようにしてなじませます。生地がぬるぬるとちぎれますが、そのまま8〜10分たたきごねを続け、表面がなめらかでつやが出て、台にくっつかなくなるまでこねます。グルテン膜チェック：くるみ大の生地をゆっくり指で広げ、向こうが透けるほど薄い膜になればこね上がり。破れ目がギザギザなら、さらに2〜3分こねて再確認します。", "img": "milk-bread-dough-before" },
+    { "en": "Round the dough into a smooth ball by tucking the edges underneath, and put it seam side down in a lightly oiled bowl. Cover with cling film and leave at 28–30°C (82–86°F) for 50–60 minutes, until doubled in size. The proofing setting of an oven-microwave at 30°C is ideal.",
+      "ja": "生地の端を下に入れ込むようにして表面を張らせて丸め、薄く油を塗ったボウルにとじ目を下にして入れます。ラップをして28〜30℃で50〜60分、2倍の大きさになるまで一次発酵させます。オーブンレンジの発酵機能（30℃）がおすすめです。", "timer": 60 },
+    { "en": "Finger test: dust a finger with flour and push it 2 cm into the centre of the dough. If the hole stays, it's ready. If it springs back and closes, wait another 10 minutes. If the dough sighs and collapses, it is over-proofed: carry on straight away and keep the second rise short.",
+      "ja": "フィンガーテスト：指に強力粉をつけ、生地の中央に2cmほど差し込みます。穴がそのまま残れば発酵完了。穴がすぐに戻って閉じるなら、あと10分待ちます。生地がしぼんでしまったら過発酵なので、すぐに次の工程へ進み、二次発酵は短めにします。", "img": "milk-bread-dough-after" },
+    { "en": "Press the dough gently to release the gas and divide it into 3 equal pieces by weight (about 210 g each). Round each into a ball, cover with a damp cloth or cling film and rest for 15 minutes. Meanwhile, grease the loaf pan with butter.",
+      "ja": "生地を軽く押してガスを抜き、はかりで3等分します（1個約210g）。それぞれ丸め直し、固く絞ったぬれぶきんかラップをかけて15分ベンチタイムをとります。その間に型にバターを塗っておきます。", "timer": 15 },
+    { "en": "Roll one piece into an oval about 12 × 18 cm. Fold the long sides in to the middle to make a strip about 8 cm wide, roll it out again to about 20 cm long, then roll it up tightly from the short end and pinch the seam closed. Repeat with the other two and set the rolls side by side in the pan, seams down.",
+      "ja": "生地1個をめん棒で約12×18cmの楕円形にのばします。長い辺を両側から中央に折って幅8cmほどの帯状にし、さらに長さ20cmほどにのばしたら、短い辺からきつめに巻いて、巻き終わりをつまんでとじます。残りの2個も同様にし、とじ目を下にして型に並べ入れます。" },
+    { "en": "Cover and leave at 30–35°C for 40–50 minutes, until the tops of the rolls are 1 cm below the rim of the pan. If your oven does the proofing, take the pan out when the dough is about 2 cm below the rim and let it finish on the counter, covered, while the oven preheats to 180°C (350°F), or 160°C (320°F) for a fan oven.",
+      "ja": "ラップをかけ、30〜35℃で40〜50分、生地の頂点が型の縁から1cm下にくるまで二次発酵させます。オーブンで発酵させる場合は、縁から2cm下まで膨らんだところで取り出し、ラップをかけたまま室温で仕上げながら、オーブンを180℃（ファン付きなら160℃）に予熱します。", "timer": 45 },
+    { "en": "Brush the tops gently with the reserved egg, without letting it drip down the sides (it glues the loaf to the pan). Bake on the lower shelf for 28–30 minutes; after 15 minutes, once the tops are golden, lay a sheet of foil loosely over them. It's done when the top is deep golden brown, the sides are golden and the loaf sounds hollow when tapped, or 93°C (200°F) inside.",
+      "ja": "取り分けておいた溶き卵を表面にやさしく塗ります。側面に垂れると型にくっつくので注意。下段で28〜30分焼き、15分たって表面にきれいな焼き色がついたら、アルミホイルをふんわりかぶせます。表面が濃いきつね色、側面もきつね色になり、たたくと軽い音がすれば焼き上がり（中心温度93℃）。", "timer": 30 },
+    { "en": "As soon as it comes out, drop the pan onto the counter from about 10 cm to release the steam (this stops the sides caving in). Turn the loaf straight out onto a rack and cool for at least 1 hour before slicing.",
+      "ja": "焼き上がったらすぐ、型ごと10cmほどの高さから台に落として蒸気を抜きます（腰折れ防止）。すぐに型から出して網にのせ、1時間以上冷ましてから切ります。", "timer": 60 }
+  ],
+  "nutrition": { "calories": 1690, "carbs": 266, "protein": 51, "fat": 43, "satFat": 23, "cholesterol": 270, "sodium": 2540, "fiber": 9, "sugar": 36 },
+  "comments": [
+    { "name": { "en": "Sarah (Toronto)", "ja": "Sarah（トロント）" }, "date": "2026-10-01", "stars": 5,
+      "en": "I don't own a scale, so I spooned and levelled 2⅓ cups like you said and it worked beautifully. The softest bread I have ever made. My 1.5-kin pan is actually a 9 × 4 inch Pullman pan and the size was fine.",
+      "ja": "はかりを持っていないので、書いてあった通りスプーンで入れてすり切り2と1/3カップで作りました。大成功です。今まで作った中で一番やわらかいパン！1.5斤型の代わりに9×4インチのパウンド型（プルマン型）を使いましたが、大きさもちょうどよかったです。" },
+    { "name": { "en": "Aya, bread beginner", "ja": "パン初心者のあや" }, "date": "2026-09-24", "stars": null,
+      "en": "The dough was so sticky I couldn't knead it at all, so I kept adding flour, maybe 50 g. The bread came out dense and dry. What should I have done?",
+      "ja": "生地がべたべたで全然こねられず、粉をどんどん足してしまいました（たぶん50gくらい）。焼き上がりは重くてパサパサ。どうすればよかったのでしょうか？",
+      "reply": { "en": "Oh, I know that feeling! The extra 50 g of flour is what made it dense. Next time, when it's at its stickiest, cover it and rest 10 minutes; the flour soaks up the liquid and it really does get easier. Then slap and fold with a scraper in one hand, and oil your hands instead of flouring them. About 10 minutes after the butter goes in, it turns smooth and stops sticking.",
+        "ja": "その気持ち、よくわかります！重くなった原因は、足した50gの粉です。次回は、一番べたつくところでボウルをかぶせて10分休ませてみてください。粉が水分を吸って、本当に扱いやすくなります。そのあと片手にスケッパーを持ってたたきごね。手には粉ではなく油を薄くつけます。バターを入れてから10分ほどで、なめらかになって手につかなくなりますよ。" } },
+    { "name": { "en": "Tom (Leeds)", "ja": "Tom（リーズ）" }, "date": "2026-09-10", "stars": 4,
+      "en": "Lovely flavour and crumb, but the sides of my loaf caved in as it cooled. Any idea why?",
+      "ja": "味もきめもとてもいいのですが、冷ましている間に側面がへこんでしまいました。原因がわかりますか？",
+      "reply": { "en": "Kenta here (I test the recipes). That's koshi-ore: the sides were still soft when the loaf came out. Bake 2–3 minutes longer until the sides are golden, not pale, then drop the pan on the counter right away and turn the loaf out at once. Leaving it in the pan traps the steam.",
+        "ja": "レシピ試作担当の森です。それは「腰折れ」ですね。焼き上がった時点で側面がまだやわらかかったのが原因です。側面が白っぽくなく、きつね色になるまで2〜3分長く焼き、出したらすぐ型ごと台に落として、すぐに型から出してください。型に入れたままにすると蒸気がこもってしまいます。" } },
+    { "name": { "en": "Sakura", "ja": "さくら" }, "date": "2026-08-30", "stars": 5,
+      "en": "I made the dough in my bread machine on the dough course, then shaped it and baked it in the oven. So easy, and the kids fought over the end slices.",
+      "ja": "ホームベーカリーの生地コースでこねて、成形してオーブンで焼きました。とても簡単で、子どもたちが耳の取り合いをしていました。",
+      "reply": { "en": "That's how I make it on busy weeks too! In a bread machine you can put the butter in at the start with everything else.",
+        "ja": "忙しい週は私もその方法です！ホームベーカリーなら、バターは最初からほかの材料と一緒に入れて大丈夫ですよ。" } },
+    { "name": { "en": "Miguel (Mexico City)", "ja": "Miguel（メキシコシティ）" }, "date": "2026-07-19", "stars": null,
+      "en": "It's warm here. My first rise doubled in 30 minutes and the dough smelled a bit like beer. Was that a problem?",
+      "ja": "こちらは暖かいです。一次発酵が30分で2倍になり、生地が少しビールのようなにおいがしました。問題ありますか？",
+      "reply": { "en": "That sounds slightly over-proofed; the beery smell is the yeast running ahead. In warm weather use milk straight from the fridge, let it rise at room temperature, and start the finger test at 30 minutes. The second rise will be quicker too.",
+        "ja": "少し過発酵気味ですね。ビールのようなにおいは、イーストが働きすぎているサインです。暑い時期は冷蔵庫から出したての牛乳を使い、発酵は室温で。30分からフィンガーテストを始めてください。二次発酵も早く進みますよ。" } },
+    { "name": { "en": "Kentarō", "ja": "けんたろう" }, "date": "2025-12-14", "stars": 5,
+      "en": "The microwave tangzhong works perfectly: 30 seconds, stir, 20 seconds. Saves a pan to wash.",
+      "ja": "湯種は電子レンジで完璧にできました。30秒、混ぜて20秒。鍋を洗わなくていいのがうれしい。" },
+    { "name": { "en": "Grace (Sydney)", "ja": "Grace（シドニー）" }, "date": "2025-05-03", "stars": 5,
+      "en": "I swapped 100 g of the bread flour for wholemeal. It rose a bit less but still very soft, with a nice nutty taste.",
+      "ja": "強力粉のうち100gを全粒粉にしてみました。膨らみは少し控えめでしたが、それでもとてもやわらかく、香ばしくておいしかったです。" },
+    { "name": { "en": "Harukawa bread lover", "ja": "春川のパン好き" }, "date": "2024-02-11", "stars": 5,
+      "en": "I remember that bakery by Tsukimi Onsen station! This is just as good. Toasted with butter and yuzu jam, of course.",
+      "ja": "月見温泉駅前のあのパン屋さん、覚えています！これは負けないくらいおいしいです。もちろんバターとゆずジャムでトーストして。" }
+  ]
+}

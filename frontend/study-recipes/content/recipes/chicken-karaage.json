@@ -1,0 +1,221 @@
+{
+  "slug": "chicken-karaage",
+  "categories": ["japanese"],
+  "cuisine": "japanese",
+  "diet": ["dairy-free"],
+  "difficulty": "medium",
+  "course": "main",
+  "times": { "prep": 15, "cook": 20, "extra": 30, "extraLabel": { "en": "Marinating", "ja": "漬け込み" } },
+  "servings": 4,
+  "image": "chicken-karaage",
+  "rating": 4.9,
+  "ratings": 1036,
+  "published": "2020-10-08",
+  "updated": "2026-09-25",
+  "related": ["daigaku-imo", "chochin-dango", "agedashi-tofu", "tamagoyaki"],
+  "en": {
+    "title": "Chicken Karaage (Japanese Fried Chicken)",
+    "teaser": "Juicy ginger-soy chicken thighs with a crackly potato-starch crust, double-fried like the karaage stalls at the Harukawa Lantern Festival.",
+    "intro": [
+      "If you walk along the Kagami River during the Harukawa Lantern Festival, you smell the karaage stalls before you see them. This year the festival is on Saturday 10 and Sunday 11 October, and I can already tell you where my family will be standing: in the queue at the stall run by the Hirose family from the old fish-market district, who have fried chicken in the same blackened wok for as long as I can remember. Sota calls it “lantern chicken” and eats it from a paper cone while the lanterns float down the river.",
+      "I spent years chasing that shatteringly crisp coating at home. Then one festival night Mr. Hirose took pity on me and shared his secret over the hiss of the oil: <em>fry it twice, and let it rest in between</em>. This is my home version, tested many times by Kenta, my recipe tester, and approved by a very strict nine-year-old.",
+      { "h": "Why you'll love it" },
+      { "ul": [
+        "Juicy inside and crackly outside, even an hour later, so it's a bento favourite.",
+        "Only six ingredients for the chicken itself, most of them already in your pantry.",
+        "The double fry takes out the guesswork: no more pale coating or pink middles."
+      ] },
+      { "h": "Thighs, not breast" },
+      "Use boneless chicken thighs with the skin on. Thigh meat has more fat, so it stays juicy through two rounds of frying, and the skin becomes the crispiest part. Cut each thigh into pieces of about 40 g (roughly 4 cm), as even as you can, so everything cooks at the same speed. If you only have breast, see the substitutions.",
+      { "h": "Potato starch and a little flour" },
+      "Potato starch (katakuriko) gives that light, glassy, craggy crust, and a couple of spoons of flour help the coating stick and brown evenly. Coat the chicken just before frying, then squeeze each piece gently in your hand so the coating grips. If you can see wet patches, add a pinch more starch.",
+      { "h": "The double fry, explained" },
+      "The first fry at 160°C (320°F) for 3 minutes cooks the chicken gently without burning the outside. The pieces then rest on a rack for 4 minutes while the heat carried inside keeps cooking the centre and the surface dries. The second, short fry at 180°C (350°F) for 1 minute drives off the last moisture and makes the coating crunchy. The centre should reach 75°C (167°F); a cheap probe thermometer takes away all the worry.",
+      { "h": "Tips for success" },
+      "Pat the chicken dry before marinating, and take it out of the fridge 10 minutes before frying. Fry in two batches: crowding the pot drops the oil temperature and gives you greasy, pale chicken. And listen: the loud, wet bubbling turns into a lighter, crackling hiss when the pieces are ready. Leftovers reheat beautifully in a toaster oven, so make the full amount. For a festival-style feast at home, serve it with <a href=\"{{recipe:daigaku-imo}}\">candied sweet potatoes</a> and <a href=\"{{recipe:chochin-dango}}\">lantern dango</a>."
+    ],
+    "equipment": [
+      "Heavy pot (20–22 cm) or wok for deep-frying",
+      "Deep-fry thermometer (or a probe thermometer)",
+      "Wire rack set over a tray",
+      "Long chopsticks or tongs, and a slotted spoon",
+      "Mixing bowl or zip-top bag for marinating"
+    ],
+    "notes": [
+      "The chicken is done when the centre of the thickest piece reads 75°C (167°F), or the juices run clear with no pink. If one is under, fry it for another 30–60 seconds at 170°C (340°F).",
+      "No thermometer? Dip dry wooden chopsticks in the oil: at 160°C small bubbles rise slowly from the tips; at 180°C lots of bubbles rush up straight away.",
+      "Don't marinate longer than 12 hours. The soy sauce draws out moisture and the chicken turns salty and firm, almost like ham.",
+      "If the coating falls off in the oil, the chicken was too wet or coated too early. Tip off the extra marinade, coat just before frying, and don't move the pieces for the first minute.",
+      "Strain the cooled oil through a paper filter and reuse it 2–3 times. When it darkens or smells, solidify it with an oil hardener and put it out with burnable rubbish (that's the rule in Harukawa)."
+    ],
+    "subs": [
+      ["Sake", "Dry sherry or dry white wine, or water for no alcohol"],
+      ["Potato starch", "Cornstarch; the coating is a little harder and crunchier"],
+      ["All-purpose flour", "More potato starch, or rice flour (with gluten-free tamari instead of soy sauce, the dish becomes gluten-free)"],
+      ["Chicken thighs", "Boneless breast cut into 30 g pieces; shorten the first fry to 2½ minutes"],
+      ["Fresh ginger and garlic", "2 tsp tube ginger and 1 tsp tube garlic"]
+    ],
+    "makeAhead": "Marinate the chicken the night before (up to 12 hours), but coat it only just before frying. For bento, fry the night before, cool on a rack uncovered, refrigerate, and reheat in the toaster oven in the morning until piping hot; let it cool before packing.",
+    "storage": "Keeps for 2 days in the fridge in a container lined with paper towel, or 3 weeks frozen in a freezer bag. Reheat in a toaster oven (about 1000 W) for 4–5 minutes, loosely covered with foil for the first 3 minutes; from frozen, microwave first at 600 W for 1 minute per 4 pieces. The microwave alone makes the coating soggy."
+  },
+  "ja": {
+    "title": "鶏の唐揚げ",
+    "teaser": "しょうがじょうゆで下味をつけた鶏もも肉を、片栗粉の衣でカリッと二度揚げ。春川灯籠まつりの屋台に負けない、ジューシーな唐揚げです。",
+    "intro": [
+      "春川灯籠まつりの日に鏡川沿いを歩くと、屋台が見えるより先に唐揚げのにおいがしてきます。今年のまつりは10月10日（土）と11日（日）。わが家がどこに並ぶかは、もう決まっています。旧魚市場のあたりで昔から屋台を出している広瀬さんのお店です。使い込んで真っ黒になった中華鍋で揚げる唐揚げを、蒼太は「灯籠チキン」と呼び、川を流れる灯籠を眺めながら紙コップから頬張ります。",
+      "あのカリッとした衣を家で再現したくて、何年も試行錯誤しました。ある年のまつりの夜、見かねた広瀬さんが油の音にまぎれて教えてくれたのが「二度揚げして、間に休ませること」。このレシピは、そのコツを家庭向けにしたものです。テスターの森健太さんに何度も試作してもらい、厳しい9歳の審査員にも合格をもらいました。",
+      { "h": "このレシピのおすすめポイント" },
+      { "ul": [
+        "中はジューシー、外はカリッ。時間がたってもおいしいので、お弁当にも。",
+        "鶏肉の下味の材料は6つだけ。ほとんど家にあるものです。",
+        "二度揚げなら、衣が白っぽい・中が生っぽいという失敗がなくなります。"
+      ] },
+      { "h": "鶏肉はもも肉で" },
+      "皮付きの鶏もも肉を使います。脂が多いので二度揚げしてもパサつかず、皮はいちばんカリカリになるところ。1切れ40gくらい（4cm角ほど）に、できるだけ大きさをそろえて切ると、火の通りが均一になります。むね肉で作る場合は「代用」を見てください。",
+      { "h": "片栗粉に少しだけ小麦粉を" },
+      "片栗粉は、軽くてガリッとした衣になります。小麦粉を少し混ぜると衣がはがれにくく、色づきも均一に。粉は揚げる直前にまぶし、手で軽くにぎって密着させます。しっとりした部分が見えたら、片栗粉を少し足してください。",
+      { "h": "二度揚げのしくみ" },
+      "1回目は160℃で3分。外側を焦がさずに、じっくり火を通します。網にのせて4分休ませる間に、余熱で中心まで火が入り、表面の水分も飛びます。2回目は180℃で1分だけ。残った水分を飛ばして、衣をカリッとさせます。中心温度は75℃が目安。安い温度計がひとつあると安心です。",
+      { "h": "おいしく作るコツ" },
+      "漬ける前に鶏肉の水けをしっかりふき、揚げる10分前に冷蔵庫から出しておきます。揚げるのは2回に分けて。一度にたくさん入れると油の温度が下がり、白っぽくべたっとした仕上がりになります。音にも耳をすませてみてください。揚げ上がりが近づくと、ボコボコという重い音が、パチパチという軽い音に変わります。残ってもトースターで温め直せばおいしいので、ぜひ全量作ってください。屋台気分で楽しむなら、<a href=\"{{recipe:daigaku-imo}}\">大学いも</a>や<a href=\"{{recipe:chochin-dango}}\">提灯だんご</a>と一緒にどうぞ。"
+    ],
+    "equipment": [
+      "揚げ物用の厚手の鍋（直径20〜22cm）または中華鍋",
+      "揚げ油用の温度計（または芯温計）",
+      "網とバット",
+      "菜箸またはトング、網じゃくし",
+      "ボウルまたはジッパー付き保存袋（漬け込み用）"
+    ],
+    "notes": [
+      "いちばん大きい1切れの中心が75℃になっていれば揚げ上がり。温度計がなければ、切って肉汁が透明で赤みがないか確認します。足りなければ170℃で30秒〜1分追加で揚げてください。",
+      "温度計がないときは、乾いた菜箸を油に入れてみます。先から細かい泡がゆっくり上がれば160℃、すぐに勢いよく泡が出れば180℃です。",
+      "漬け込みは12時間まで。しょうゆが水分を引き出し、塩辛くハムのようなかたい食感になってしまいます。",
+      "揚げている間に衣がはがれるのは、鶏肉の水けが多いか、粉を早くつけすぎたのが原因です。余分な漬け汁をきって揚げる直前に粉をまぶし、入れてから1分は触らないでください。",
+      "使った油は冷めてからこし紙でこせば、2〜3回使えます。色が濃くなったりにおいが出たら、凝固剤で固めて燃えるごみへ（春川市のルールです）。"
+    ],
+    "subs": [
+      ["酒", "辛口のシェリーや白ワイン。アルコールを避けたいときは水"],
+      ["片栗粉", "コーンスターチ。衣が少しかためで、ザクザクした食感になります"],
+      ["薄力粉", "片栗粉を増やすか米粉で。しょうゆをグルテンフリーのたまりじょうゆにすれば、グルテンフリーになります"],
+      ["鶏もも肉", "鶏むね肉を30g大に切って。1回目の揚げ時間を2分30秒に"],
+      ["しょうが・にんにく", "チューブのしょうが小さじ2、にんにく小さじ1"]
+    ],
+    "makeAhead": "下味は前日の夜から漬けてOK（12時間まで）。粉は揚げる直前につけます。お弁当用なら前夜に揚げて網の上で冷まし、冷蔵庫へ。朝トースターで中までしっかり温め直し、冷ましてから詰めてください。",
+    "storage": "キッチンペーパーを敷いた保存容器で冷蔵2日、冷凍用保存袋で冷凍3週間。温め直しはトースター（1000Wくらい）で4〜5分。最初の3分はアルミホイルをふんわりかぶせると焦げません。冷凍したものは先に電子レンジ（600W）で4個につき1分温めてからトースターへ。レンジだけだと衣がべちゃっとします。"
+  },
+  "ingredients": [
+    { "items": [
+      { "q": 600, "u": "g", "en": "chicken thighs, boneless and skin-on (about 2 large)", "ja": "鶏もも肉（皮付き、大2枚）" }
+    ] },
+    { "group": { "en": "For the marinade", "ja": "下味" }, "items": [
+      { "q": 2, "u": "tbsp", "en": "soy sauce", "ja": "しょうゆ" },
+      { "q": 1, "u": "tbsp", "en": "sake", "ja": "酒" },
+      { "q": 1, "u": "tsp", "en": "sugar", "ja": "砂糖" },
+      { "q": 1, "u": "tbsp", "en": "ginger, freshly grated (about a 3 cm piece)", "ja": "しょうが（すりおろし）" },
+      { "q": 1, "u": "clove", "en": "garlic, grated", "ja": "にんにく（すりおろし）" }
+    ] },
+    { "group": { "en": "For the coating and frying", "ja": "衣・揚げ油" }, "items": [
+      { "q": 4, "u": "tbsp", "en": "potato starch", "ja": "片栗粉" },
+      { "q": 2, "u": "tbsp", "en": "all-purpose flour", "ja": "薄力粉" },
+      { "q": null, "en": "vegetable oil, for deep-frying", "ja": "サラダ油（揚げ油）", "free": { "en": "about 800 ml (3 cm deep)", "ja": "適量（深さ3cmほど）" } }
+    ] },
+    { "group": { "en": "To serve", "ja": "付け合わせ" }, "items": [
+      { "q": null, "en": "lemon wedges", "ja": "レモン（くし形切り）", "free": { "en": "to serve", "ja": "適宜" } },
+      { "q": null, "en": "cabbage, finely shredded", "ja": "キャベツ（せん切り）", "free": { "en": "to serve", "ja": "適宜" } }
+    ] }
+  ],
+  "steps": [
+    {
+      "en": "Pat the chicken dry with paper towels and trim off any excess yellow fat and bits of cartilage. Cut it into pieces of about 40 g (roughly 4 cm), 14–16 pieces in total, keeping the skin on.",
+      "ja": "鶏肉はキッチンペーパーで水けをふき、余分な黄色い脂や軟骨を取り除きます。皮付きのまま1切れ40g（4cm角）ほど、14〜16切れに切ります。"
+    },
+    {
+      "en": "Mix the soy sauce, sake, sugar, ginger and garlic in a bowl or zip-top bag. Add the chicken and massage it for 1 minute, until most of the liquid has been absorbed. Refrigerate for 30 minutes (up to 12 hours).",
+      "ja": "ボウルか保存袋にしょうゆ、酒、砂糖、しょうが、にんにくを混ぜ、鶏肉を加えて1分ほどもみ込みます。漬け汁がほぼ吸い込まれたら、冷蔵庫で30分（12時間まで）漬けます。",
+      "timer": 30
+    },
+    {
+      "en": "Take the chicken out 10 minutes before frying. Heat the oil, about 3 cm deep, to 160°C (320°F). Meanwhile, mix the potato starch and flour on a tray, tip off any marinade pooled around the chicken, and coat each piece, squeezing it gently in your hand and shaking off the excess.",
+      "ja": "揚げる10分前に鶏肉を冷蔵庫から出します。鍋に深さ3cmほどの油を入れて160℃に熱します。その間に、バットで片栗粉と薄力粉を混ぜ、漬け汁を軽くきった鶏肉にまぶします。手で軽くにぎって衣を密着させ、余分な粉をはたきます。"
+    },
+    {
+      "en": "First fry: lower half the pieces into the oil one by one, skin side down. Leave them alone for the first minute so the coating sets, then turn them and fry for 3 minutes in total, until pale golden and firm and the bubbling has calmed down.",
+      "ja": "1回目：鶏肉の半量を皮を下にして1切れずつ入れます。衣が固まるまで1分は触らず、その後返しながら合計3分揚げます。うすいきつね色になり、泡が落ち着いてきたらOKです。",
+      "timer": 3,
+      "img": "karaage-first-fry"
+    },
+    {
+      "en": "Lift the pieces onto the wire rack and let them rest for 4 minutes; the heat inside keeps cooking the centre. Fry the second batch the same way while the first rests, keeping the oil at 160°C (320°F).",
+      "ja": "網に取り出して4分休ませます。余熱で中心まで火が通ります。その間に、油を160℃に保って残りの半量を同様に揚げます。",
+      "timer": 4
+    },
+    {
+      "en": "Second fry: raise the heat and bring the oil to 180°C (350°F). Return the first batch and fry for 1 minute, turning, until deep golden brown and crisp, with small bubbles and a light, crackling sound. Repeat with the second batch.",
+      "ja": "2回目：火を強めて油を180℃にします。1回目の鶏肉を戻し入れ、返しながら1分揚げます。濃いきつね色でカリッとし、泡が細かく、パチパチと軽い音になれば揚げ上がり。残りも同様に揚げます。",
+      "timer": 1
+    },
+    {
+      "en": "Drain on the rack, standing the pieces on their sides so the steam escapes. Check the thickest piece: 75°C (167°F) in the centre, or clear juices with no pink. Serve hot with lemon wedges and shredded cabbage.",
+      "ja": "網の上に立てるようにして油をきり、蒸気を逃がします。いちばん大きい1切れの中心が75℃（または肉汁が透明で赤みがない）ことを確認し、熱いうちにレモンとせん切りキャベツを添えてどうぞ。"
+    }
+  ],
+  "nutrition": { "calories": 430, "carbs": 14, "protein": 28, "fat": 28, "satFat": 7, "cholesterol": 140, "sodium": 720, "fiber": 0, "sugar": 2 },
+  "comments": [
+    {
+      "name": { "en": "Akira (Harukawa)", "ja": "あきら（春川市）" }, "date": "2026-10-02", "stars": 5,
+      "en": "Made it as a warm-up for the festival next weekend. Honestly as good as the stall by the river. The double fry is magic.",
+      "ja": "来週末のまつりの予習で作りました。正直、川沿いの屋台と同じくらいおいしいです。二度揚げ、すごい。",
+      "reply": {
+        "en": "Don't tell Mr. Hirose! We'll be in his queue on Saturday evening as usual, right after the lanterns go out onto the river.",
+        "ja": "広瀬さんには内緒にしてくださいね！わが家も例年どおり土曜の夕方、灯籠流しが始まったら並ぶ予定です。"
+      }
+    },
+    {
+      "name": { "en": "Emma (Bristol)", "ja": "Emma（ブリストル）" }, "date": "2026-09-24", "stars": null,
+      "en": "The coating went patchy and some of it came off in the oil. What did I do wrong?",
+      "ja": "衣がまだらになって、一部が油の中ではがれてしまいました。何がいけなかったのでしょう？",
+      "reply": {
+        "en": "Usually the chicken is too wet. Tip off the pooled marinade before coating, coat right before frying (not while the oil heats for 15 minutes), squeeze each piece, and don't touch them for the first minute in the oil. If the oil is below 160°C (320°F), the coating also slides off.",
+        "ja": "多くの場合、鶏肉の水分が多すぎます。粉をつける前に漬け汁をきり、揚げる直前にまぶして（油を温める15分前などは早すぎます）、手でにぎって密着させてください。入れてから1分は触らないこと。油が160℃より低いときも衣がはがれやすくなります。"
+      }
+    },
+    {
+      "name": { "en": "Hiro's dad", "ja": "ひろパパ" }, "date": "2026-09-10", "stars": 5,
+      "en": "Bought a thermometer because of this recipe. First time ever my karaage was cooked through without being dry. I added 1 tsp sesame oil to the marinade.",
+      "ja": "このレシピのために温度計を買いました。パサつかずに中までちゃんと火が通ったのは初めてです。下味にごま油を小さじ1足しました。"
+    },
+    {
+      "name": { "en": "Priya (Singapore)", "ja": "Priya（シンガポール）" }, "date": "2026-08-18", "stars": 4,
+      "en": "I used chicken breast and cornstarch because that's what I had. Crunchy and tasty, but a little dry. Will use thighs next time.",
+      "ja": "家にあった鶏むね肉とコーンスターチで作りました。カリッとしておいしいけれど、少しパサつきました。次はもも肉にします。"
+    },
+    {
+      "name": { "en": "Hana-chan's mum", "ja": "はなちゃんママ" }, "date": "2026-07-05", "stars": 5,
+      "en": "I fried a double batch on Sunday and froze half for bento. Toaster oven in the morning and they were still crunchy at lunch, according to my daughter.",
+      "ja": "日曜に倍量揚げて、半分をお弁当用に冷凍。朝トースターで温めたら、お昼もまだカリッとしていたと娘が言っていました。"
+    },
+    {
+      "name": { "en": "Tom R. (Denver)", "ja": "Tom R.（デンバー）" }, "date": "2026-05-12", "stars": null,
+      "en": "Can I make these in an air fryer?",
+      "ja": "エアフライヤーでも作れますか？",
+      "reply": {
+        "en": "Yes, though it's less crunchy. Coat with potato starch only (the flour stays powdery), spray the pieces generously with oil, and air-fry at 200°C (400°F) for about 12 minutes, turning halfway, until the centre reaches 75°C (167°F).",
+        "ja": "作れますが、カリカリ感は少し控えめです。衣は片栗粉だけにして（小麦粉は粉っぽく残ります）、油をたっぷりスプレーし、200℃で12分ほど、途中で返して中心が75℃になるまで加熱してください。"
+      }
+    },
+    {
+      "name": { "en": "Masako", "ja": "まさこ" }, "date": "2025-10-14", "stars": 3,
+      "en": "Too salty for us. I marinated it overnight from 7 pm until dinner the next day.",
+      "ja": "わが家には塩辛すぎました。前の晩7時から翌日の夕食まで漬けていました。",
+      "reply": {
+        "en": "That's nearly 24 hours, which is the problem: keep it under 12. If you want to start the night before for the next evening, cut the soy sauce to 1½ tbsp.",
+        "ja": "24時間近く漬けたのが原因だと思います。12時間以内にしてください。前の晩から翌日の夕食まで漬けたいときは、しょうゆを大さじ1と1/2に減らすとちょうどよくなります。"
+      }
+    },
+    {
+      "name": { "en": "Julien (Montréal)", "ja": "Julien（モントリオール）" }, "date": "2024-10-20", "stars": 5,
+      "en": "We lived in Harukawa for two years and miss the Lantern Festival terribly. This tastes exactly like it. Thank you!",
+      "ja": "春川に2年住んでいて、灯籠まつりが本当に恋しいです。この唐揚げはあの味そのもの。ありがとうございます！"
+    }
+  ]
+}

@@ -1,0 +1,72 @@
+title: Asagiri clan
+short: Samurai clan, lords of the Harukawa Domain 1601–1871
+type: article
+categories: asagiri; clans; history; edo; harukawa
+infobox: Asagiri clan
+ib-subtitle: 朝霧氏
+ib-image: castle-01.jpg | [[harukawa-castle|Harukawa Castle]], seat of the clan from 1603 to 1871
+ib-section: Clan
+ib: Home province | Minori (Kagami District)
+ib: Founder | Asagiri Tadamasa (1562–1629)
+ib: Domain | Harukawa Domain, 186,000 ''koku'' (176,000 from 1651)
+ib: Seat | [[harukawa-castle|Harukawa Castle]]
+ib: Lords | 11 generations, 1601–1871
+ib: Final ruler | Asagiri Tadanori (1848–1919)
+ib: Titles | ''Daimyō''; viscount (from 1884)
+ib: Crest | Crossed heron feathers (違い鷺羽)
+ib: Family temple | [[?Kōun-ji]], Harukawa
+ib: Branches | Uchiura Asagiri (1651)
+ib: Present head | 18th generation (Tokyo)
+---
+The '''Asagiri clan''' (朝霧氏, ''Asagiri-shi'') was a Japanese samurai family that ruled the Harukawa Domain (春川藩) in Minori Province, the present [[minori-prefecture|Minori Prefecture]], for eleven generations, from 1601 until the abolition of the domains in 1871. Its founder, Asagiri Tadamasa, built [[harukawa-castle|Harukawa Castle]] and laid out the castle town that became the city of [[harukawa|Harukawa]]. Later lords built the river embankment that protects the city, introduced yuzu cultivation and began the lantern memorial that became the [[harukawa-lantern-festival|Harukawa Lantern Festival]]. After 1884 the heads of the family were viscounts.<ref name="hirota">Hirota Masaki (2009). ''The Asagiri Lords of Harukawa, 1601–1871''. Sōrinsha, pp. 9–21.</ref>
+
+== Origins ==
+The Asagiri were a minor family of Kagami District in the middle valley of the [[kagami-river|Kagami River]]; the name, "morning mist", is traditionally explained by the river mists of their home valley. In the 16th century they served the Uchiura clan, who ruled the region from Kurayama Castle. Asagiri Tadamasa (1562–1629) left the province as a young man and entered the service of Tokugawa Ieyasu.{{cn}} He fought on the Tokugawa side in the Sekigahara campaign of 1600, while the Uchiura joined the Western Army, and after the battle he received his home province with an assessed yield of 186,000 ''koku''. He arrived in 1601.<ref name="hirota"/>
+
+== Harukawa Domain ==
+{{main|history-of-harukawa}}
+Tadamasa began Harukawa Castle in 1603, named the town Harukawa ("spring river") and laid out the castle town between 1603 and 1610; the keep was completed in 1611. In 1624 he founded the domain kiln in the castle, the beginning of [[harukawa-ware|Harukawa ware]]. His son Masatsugu built the 3.2 km Masatsugu Embankment along the river (1641–1648). In 1651 the 3rd lord, Tadakiyo, gave 10,000 ''koku'' to his younger brother, reducing the main domain to 176,000 ''koku''; in 1660 he also built the lords' bathhouse, the Goten-yu, at [[tsukimi-onsen|Tsukimi Onsen]].
+
+After the Tenna famine of 1681–82, the 4th lord, Tadanobu, ordered in 1688 that every farming household plant three yuzu trees, the origin of [[yuzu-cultivation-in-minori|yuzu cultivation in Minori]]. The 5th lord, Masayoshi, ruled during the Great Genbun Flood of 4 October 1739, which killed about 1,140 people. His son Tadatoki ordered the first lantern memorial on the river in 1740 and rebuilt the castle keep (1752–1755) after it burned on 15 June 1749. The 8th lord, Masahiro, founded the domain school Shūkōkan in 1803. In 1868, under the last lord, Tadanori, the domain sided with the new government in the Boshin War.<ref name="cityhist2">Harukawa City History Compilation Committee (1989). ''Harukawa City History'' (春川市史), vol. 2: ''Early Modern I''. Harukawa City, pp. 41–212.</ref>
+
+=== Lords ===
+{| Lords of the Harukawa Domain
+! No. !! Name !! Japanese !! Lived !! Reigned !! Notes
+| 1 || Asagiri Tadamasa || 朝霧忠正 || 1562–1629 || 1601–1629 || Founded the castle (1603) and the castle town; domain kiln (1624)
+| 2 || Asagiri Masatsugu || 朝霧正次 || 1590–1651 || 1629–1651 || Masatsugu Embankment (1641–1648)
+| 3 || Asagiri Tadakiyo || 朝霧忠清 || 1618–1680 || 1651–1680 || Created the Uchiura branch family (1651); Goten-yu at Tsukimi Onsen (1660)
+| 4 || Asagiri Tadanobu || 朝霧忠信 || 1647–1712 || 1680–1712 || Ordered yuzu planting (1688)
+| 5 || Asagiri Masayoshi || 朝霧正良 || 1679–1740 || 1712–1740 || Ruled during the Great Genbun Flood (1739)
+| 6 || Asagiri Tadatoki || 朝霧忠時 || 1711–1768 || 1740–1768 || First lantern memorial (1740); keep fire (1749) and rebuilding (1752–1755)
+| 7 || Asagiri Tadaaki || 朝霧忠明 || 1745–1801 || 1768–1798 || Retired 1798
+| 8 || Asagiri Masahiro || 朝霧正寛 || 1772–1830 || 1798–1827 || Founded the Shūkōkan school (1803)
+| 9 || Asagiri Tadayoshi || 朝霧忠良 || 1801–1856 || 1827–1853 || Retired 1853
+| 10 || Asagiri Masakata || 朝霧正方 || 1830–1885 || 1853–1866 || Adopted from the Uchiura branch;{{efn|Tadayoshi had no surviving son, and Masakata, the second son of the Uchiura Asagiri lord, was adopted as his heir in 1849.}} repairs after the Ansei earthquake (1854); retired because of illness
+| 11 || Asagiri Tadanori || 朝霧忠典 || 1848–1919 || 1866–1871 || Last lord; sided with the new government (1868); viscount 1884
+|}
+
+== Branch family ==
+The Uchiura Asagiri (内浦朝霧家) were founded in 1651, when Tadakiyo gave 10,000 ''koku'' on the Uchiura Peninsula to his younger brother Asagiri Masanao (1622–1687). With 10,000 ''koku'' the branch ranked as a separate small domain, the Uchiura Domain, governed from a fortified residence (''jin'ya'') at Uchiura on the south side of [[minori-bay|Minori Bay]].{{efn|The Uchiura Asagiri should not be confused with the Uchiura clan, the Sengoku-period rulers of the region, with whom they had no family connection; the branch took its name from its seat.}} In 1871 the Uchiura Domain briefly became Uchiura Prefecture before it was merged into Minori Prefecture on 14 November 1871. Its heads also became viscounts in 1884.<ref name="ota">Ōta Ryōichi (1990). ''Daimyō Families of the Western Provinces''. Sōrinsha, pp. 318–322.</ref>
+
+== Crest and temple ==
+The clan's crest is a pair of crossed heron feathers (違い鷺羽, ''chigai sagi-ba''). Family tradition links it to the herons said to have danced over Sagimai Hill when the castle's ground was broken in 1603, but the crest is already found on armor attributed to Tadamasa at Sekigahara, three years earlier. Pieces from the domain kiln were impressed with a small seal of the crossed feathers. The family temple is Kōun-ji (光雲寺), a Zen temple in Harukawa founded by Tadamasa in 1606,{{cn}} where the tombs of the lords stand in the family cemetery behind the main hall.<ref name="hirota"/>
+
+== After 1871 ==
+After the abolition of the domains in 1871, Tadanori, like other former lords, moved to Tokyo. Under the Peerage Act of 1884 he was made a viscount (''shishaku''), and he lived in Tokyo until his death in 1919. In 1874 the family's former castle was sold and its keep demolished. The family remained in Tokyo; the present head, of the 18th generation counted from Tadamasa, lives there.
+
+In 1966, when the castle keep was rebuilt, the family donated its archive of about 2,300 documents, the '''Asagiri family papers''' (朝霧家文書), to the new keep museum. They include domain journals, letters of the lords, records of the 1739 flood and the carpenters' plans of the 1752–1755 keep, which had been lent to the city for the reconstruction.<ref name="papers">Harukawa Castle Keep Museum (1972). ''Catalogue of the Asagiri Family Papers''. Harukawa City, pp. iii–xii.</ref>
+
+== Legacy ==
+Much of modern Harukawa traces back to the Asagiri: the castle and the street plan of the old town, the Masatsugu Embankment, Harukawa ware, the yuzu orchards and the Lantern Festival, at which monks of Kōun-ji still chant sutras for the flood victims as they did in 1740. The armor and documents of the clan are displayed in the castle keep museum. The 6th lord, Tadatoki, is the hero of [[michiyo-tono|Michiyo Tōno]]'s historical novel ''Heron Castle'' (1971).
+
+== See also ==
+* [[harukawa-castle|Harukawa Castle]]
+* [[history-of-harukawa|History of Harukawa]]
+* [[harukawa-lantern-festival|Harukawa Lantern Festival]]
+* [[harukawa-ware|Harukawa ware]]
+
+== Notes ==
+{{notelist}}
+
+== References ==
+{{reflist}}
