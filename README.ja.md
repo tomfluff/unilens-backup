@@ -124,7 +124,9 @@ cd unilens-lib && make build         # -> dist/unilens.js
 ```
 
 オプション: `trigger`（MouseEvent 述語、既定は alt+クリック）、`mouseWindow`（マウス軌跡の秒数）、
-`backend`（Flask のベース URL）。
+`backend`（Flask のベース URL）、`preset`（`'baseline'` などの調査用プリセット。`unilens-lib/src/presets.ts`
+を参照）。ページのアドレスに `?unilens-preset=baseline` または `?unilens-preset=off` を付けると、
+オプションより優先され、そのサイトで記憶されます。
 
 SoftBank ミラーに対してテストする場合: `unilens-lib/dist/unilens.js` を `softbank-mirror/` に
 コピーし、上記 2 つの script タグをその `index.html` に追加して、フォルダを配信します

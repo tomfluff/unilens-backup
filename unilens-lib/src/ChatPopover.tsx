@@ -161,9 +161,15 @@ function cited(m: Msg): Cited | null {
         m.streaming,
         chatText().evidenceLabel,
         chipText,
-        getSettings().associateText,
+        phrasesOn(),
+        getSettings().citePlacement,
     );
 }
+
+/** underlined words need the numbers where the model put them: only then are they
+ *  asked for and drawn */
+const phrasesOn = () =>
+    getSettings().associateText && getSettings().citePlacement === "inline";
 
 /** station signs number their sources like station codes */
 const chipText = (n: number) =>
@@ -1809,7 +1815,7 @@ export default function ChatPopover({
                 session_id: sessionId,
                 cite: getSettings().citeEvidence,
                 selection: sel ? { items: selectionIn(sel, on) } : undefined,
-                mark_phrases: getSettings().associateText,
+                mark_phrases: phrasesOn(),
                 assistant_zoom: getSettings().assistantZoom,
                 ai: aiChoice(),
             }),
@@ -1908,7 +1914,7 @@ export default function ChatPopover({
                 session_id: sessionId,
                 cite: getSettings().citeEvidence,
                 selection: sel ? { items: selectionIn(sel, on) } : undefined,
-                mark_phrases: getSettings().associateText,
+                mark_phrases: phrasesOn(),
                 assistant_zoom: getSettings().assistantZoom,
                 ai: aiChoice(),
             }),
@@ -2491,7 +2497,13 @@ export default function ChatPopover({
                     }}
                 >
                     {rows}
-                    {!talked && <p className="ulc-empty">{T.emptyHint}</p>}
+                    {!talked && (
+                        <p className="ulc-empty">
+                            {settings.quickActions
+                                ? T.emptyHint
+                                : T.emptyHintAsk}
+                        </p>
+                    )}
                 </div>
             )}
 
