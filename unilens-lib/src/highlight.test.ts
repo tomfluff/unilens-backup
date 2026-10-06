@@ -15,6 +15,7 @@ import {
     setCurrentCapture,
     settleCues,
     showHighlights,
+    unionRects,
 } from "./highlight";
 import { updateSetting, useSettings } from "./settings";
 
@@ -338,6 +339,25 @@ describe("claimEscape", () => {
         expect(hasHighlight()).toBe(false);
         off();
     });
+
+    it("hands Escape back to an older claim when a newer one lets go", () => {
+        init();
+        const esc = () =>
+            window.dispatchEvent(
+                new KeyboardEvent("keydown", { key: "Escape" }),
+            );
+        const confirm = vi.fn(); // the chat's "Start a new conversation?"
+        const settings = vi.fn(); // the settings panel, opened on top
+        const releaseConfirm = claimEscape(confirm);
+        const releaseSettings = claimEscape(settings);
+        esc();
+        expect(settings).toHaveBeenCalledTimes(1);
+        expect(confirm).not.toHaveBeenCalled();
+        releaseSettings();
+        esc();
+        expect(confirm).toHaveBeenCalledTimes(1);
+        releaseConfirm();
+    });
 });
 
 describe("escapeAction", () => {
@@ -479,8 +499,9 @@ describe("layered look", () => {
         expect(wrap.style.filter).toBe("blur(14px)");
         expect(shade.style.left).toBe("-42px");
         expect(shade.style.background).toBe("rgba(0, 0, 0, 0.72)");
-        // hole shifted by the overshoot so it still lands on the element
-        expect(shade.style.clipPath).toContain("M142 242h50v20h-50Z");
+        // hole shifted by the overshoot so it still lands on the element, and 21px
+        // (1.5 feathers) larger all round, so the blur leaves the element itself lit
+        expect(shade.style.clipPath).toContain("M121 221h92v62h-92Z");
     });
 
     it("lights a source inside another through the outer hole alone (dim, spotlight)", () => {
@@ -524,14 +545,18 @@ describe("layered look", () => {
         for (const backdrop of ["dim", "spotlight"] as const) {
             updateSetting("hlBackdrop", backdrop);
             const o = backdrop === "spotlight" ? 42 : 0;
+            // the spotlight's room round each hole
+            const m = backdrop === "spotlight" ? 21 : 0;
+            const hole = (x: number, y: number, w: number, h: number) =>
+                `M${x + o - m} ${y + o - m}h${w + 2 * m}v${h + 2 * m}h${-w - 2 * m}Z`;
             draw(rect(60, 110, 100, 20));
             // the link keeps its own outline, and cuts no hole of its own
             expect(layerBoxes()).toHaveLength(2);
-            expect(shades()).toContain(`M${40 + o} ${100 + o}h400v48h-400Z`);
-            expect(shades()).not.toContain(`M${60 + o} ${110 + o}`);
+            expect(shades()).toContain(hole(40, 100, 400, 48));
+            expect(shades()).not.toContain(hole(60, 110, 100, 20));
             // the same box twice cuts one hole
             draw(rect(40, 100, 400, 48));
-            expect(shades().match(/h400v48/g)).toHaveLength(1);
+            expect(shades().split(hole(40, 100, 400, 48)).length - 1).toBe(1);
             // alone, the inner one is lit
             boxes.set(a, rect(60, 110, 100, 20));
             clearHighlights();
@@ -546,8 +571,49 @@ describe("layered look", () => {
                     lines: () => null,
                 },
             );
-            expect(shades()).toContain(`M${60 + o} ${110 + o}h100v20h-100Z`);
+            expect(shades()).toContain(hole(60, 110, 100, 20));
         }
+    });
+});
+
+describe("unionRects", () => {
+    const area = (rs: { width: number; height: number }[]) =>
+        rs.reduce((a, r) => a + r.width * r.height, 0);
+    const overlap = (
+        a: { left: number; top: number; width: number; height: number },
+        b: { left: number; top: number; width: number; height: number },
+    ) =>
+        Math.max(
+            0,
+            Math.min(a.left + a.width, b.left + b.width) -
+                Math.max(a.left, b.left),
+        ) *
+        Math.max(
+            0,
+            Math.min(a.top + a.height, b.top + b.height) -
+                Math.max(a.top, b.top),
+        );
+    it("cuts two wrapped lines, overlapping once the spotlight's room is added, as one lit area", () => {
+        // two 20 px lines 24 px apart, each grown by 21 px: their holes overlap
+        const grow = (l: number, t: number, w: number) => ({
+            left: l - 21,
+            top: t - 21,
+            width: w + 42,
+            height: 62,
+        });
+        const u = unionRects([grow(300, 100, 200), grow(40, 124, 160)]);
+        for (let i = 0; i < u.length; i++)
+            for (let j = i + 1; j < u.length; j++)
+                expect(overlap(u[i], u[j])).toBe(0);
+        const a = grow(300, 100, 200);
+        const b = grow(40, 124, 160);
+        expect(area(u)).toBe(area([a, b]) - overlap(a, b));
+    });
+    it("keeps a box inside another as the outer one alone", () => {
+        const outer = { left: 40, top: 100, width: 400, height: 48 };
+        expect(
+            unionRects([outer, { left: 60, top: 110, width: 100, height: 20 }]),
+        ).toEqual([outer]);
     });
 });
 

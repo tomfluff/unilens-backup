@@ -9,11 +9,18 @@ import {
     importSettings,
     NUMBER_KNOBS,
     type NumSettingKey,
-    PANEL_SECTIONS,
+    PANEL_TABS,
+    SELECT_CHOICES,
     type Settings,
     TOGGLE_LABELS,
     useSettings,
 } from "./settings";
+import {
+    CHOICES_JA,
+    NAMES_JA,
+    OWN_CHOICES,
+    OWN_SETTINGS,
+} from "./settingsText";
 
 // Fresh jsdom, empty localStorage: the store holds DEFAULTS. Copied, because the
 // hydration test replaces the state object.
@@ -56,9 +63,40 @@ describe("settings tables", () => {
             ...CATALOGUE_KEYS,
             "hlColor",
         ];
-        const placed = PANEL_SECTIONS.flatMap((g) => g.keys as string[]);
+        const placed = PANEL_TABS.flatMap((t) =>
+            t.groups.flatMap((g) => [...g.first, ...g.more] as string[]),
+        );
         expect(new Set(placed).size, "a key in two groups").toBe(placed.length);
         expect([...placed].sort()).toEqual([...new Set(controls)].sort());
+    });
+});
+
+describe("the panel in Japanese", () => {
+    const placed = PANEL_TABS.flatMap((t) =>
+        t.groups.flatMap((g) => [...g.first, ...g.more]),
+    );
+    it("names every setting", () => {
+        const unnamed = placed.filter(
+            (k) => !OWN_SETTINGS[k]?.label.ja && !NAMES_JA[k],
+        );
+        expect(unnamed).toEqual([]);
+    });
+    it("names every choice", () => {
+        const values = (k: keyof Settings): string[] =>
+            Object.hasOwn(SELECT_CHOICES, k)
+                ? SELECT_CHOICES[k as keyof typeof SELECT_CHOICES].map((c) =>
+                      String(c.value),
+                  )
+                : Object.keys(
+                      ENUM_CHOICES[k as keyof typeof ENUM_CHOICES]?.choices ??
+                          {},
+                  );
+        const missing = placed.flatMap((k) =>
+            values(k)
+                .filter((v) => !OWN_CHOICES[k]?.[v]?.ja && !CHOICES_JA[k]?.[v])
+                .map((v) => `${k}.${v}`),
+        );
+        expect(missing).toEqual([]);
     });
 });
 
@@ -233,6 +271,17 @@ describe("settings files", () => {
         expect(s.motion).toBe("instant");
         expect(applied).toBe(3);
         expect(ignored).toEqual(["somethingNew"]);
+        reset();
+    });
+
+    it("reads the minimap of older files, a switch, as off or while zoomed", () => {
+        reset();
+        importSettings('{"minimap": false}');
+        expect(getSettings().minimap).toBe("off");
+        importSettings('{"minimap": true}');
+        expect(getSettings().minimap).toBe("zoomed");
+        importSettings('{"minimap": "always"}');
+        expect(getSettings().minimap).toBe("always");
         reset();
     });
 
