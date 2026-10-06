@@ -579,7 +579,12 @@ function DebugGate({ sources }: { sources: DebugSources }) {
 
 export function initDebug(sources: DebugSources) {
     document.addEventListener("keydown", (e) => {
-        if (e.ctrlKey && e.shiftKey && (e.key === "D" || e.key === "d")) {
+        if (
+            e.ctrlKey &&
+            e.shiftKey &&
+            (e.key === "D" || e.key === "d") &&
+            getSettings().debugShortcut
+        ) {
             e.preventDefault();
             updateSetting("debugView", !getSettings().debugView);
         }

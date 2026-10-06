@@ -307,6 +307,8 @@ export const NAMES_JA: Partial<Record<keyof Settings, string>> = {
     mmNumbers: "対象に番号を表示",
     citeEvidence: "回答にページ上の根拠を示す",
     chatMovesAside: "根拠に重ならないようチャットをずらす",
+    aboutLine: "次の質問の対象を入力欄の上に表示",
+    debugShortcut: "Ctrl＋Shift＋D でデバッグ表示を開く",
     assistantZoom: "頼まれたらアシスタントがページを拡大する",
     associateText: "回答と根拠を結ぶ（根拠が支える語句に下線）",
     settingsButton: "設定ボタン（隠しても Ctrl＋Alt＋Shift＋S で設定を開く）",

@@ -1560,7 +1560,9 @@ export default function ChatPopover({
         const shown = picks
             .map(({ id }) => src.registry.get(id))
             .filter((e): e is Element => e != null);
-        if (shown.length && !mini && !still)
+        // chatMovesAside off: the chat stays where it is, unfolded (co-design
+        // baseline, Yotam 2026-10-07: stepping aside is an advanced feature)
+        if (shown.length && !mini && !still && getSettings().chatMovesAside)
             stepAside.current = window.setTimeout(() => {
                 const boxes = shown.map((e) => e.getBoundingClientRect());
                 const a = {
@@ -1574,8 +1576,9 @@ export default function ChatPopover({
                 const w = Math.min(a.right, b.right) - Math.max(a.left, b.left);
                 const h = Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top);
                 if (w <= 0 || h <= 0) return;
-                const aside =
-                    getSettings().chatMovesAside && !pinnedNow.current;
+                // turned off while this waited: the chat stays
+                if (!getSettings().chatMovesAside) return;
+                const aside = !pinnedNow.current;
                 if (aside) {
                     const left = besideTarget(a, b, window.innerWidth);
                     if (left != null) {
@@ -2369,8 +2372,9 @@ export default function ChatPopover({
     // the status line only on the folded chat: open, the chat shows each action on the
     // control itself, and the live region speaks it
     const statusShown = mini && (Boolean(status) || speaking || listening);
-    /** what the next question is about, shown above the field (and read with it) */
-    const about = selectionNow();
+    /** what the next question is about, shown above the field (and read with it);
+     *  the aboutLine setting can hide the line, the outlines still say it */
+    const about = settings.aboutLine ? selectionNow() : null;
 
     return (
         <div

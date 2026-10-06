@@ -150,8 +150,14 @@ export interface Settings {
     sounds: boolean;
     /** answers cite the page elements they used, as numbered chips that highlight */
     citeEvidence: boolean;
-    /** a chat covering a source steps aside, to the nearer side (a pinned chat stays) */
+    /** a chat covering a chosen source steps aside, to the nearer side, or folds to
+     *  its header when there is no room (a pinned chat only folds); off, it stays */
     chatMovesAside: boolean;
+    /** the line above the field saying what the next question is about (the outlined
+     *  sources or place); hidden, they still go with the question */
+    aboutLine: boolean;
+    /** Ctrl+Shift+D shows and hides the debug view (it lists research settings) */
+    debugShortcut: boolean;
     /** the assistant zooms the page when the user asks (the chat and Live) */
     assistantZoom: boolean;
     /** underline the fewest words each source supports, joined to its number */
@@ -285,6 +291,8 @@ const DEFAULTS: Settings = {
     sounds: true,
     citeEvidence: true,
     chatMovesAside: true,
+    aboutLine: true,
+    debugShortcut: true,
     assistantZoom: true,
     associateText: false,
     citePlacement: "inline",
@@ -350,6 +358,8 @@ export const TOGGLE_LABELS: Record<BoolSettingKey, string> = {
     mmNumbers: "Numbers on targets",
     citeEvidence: "Answers cite page elements",
     chatMovesAside: "Move the chat out of the way of sources",
+    aboutLine: "Show what the next question is about, above the field",
+    debugShortcut: "Ctrl+Shift+D opens the debug view",
     assistantZoom: "The assistant can zoom the page when asked",
     associateText:
         "Associate response text (underline what each source supports)",
@@ -750,6 +760,7 @@ export const PANEL_TABS: { id: PanelTabId; groups: PanelGroup[] }[] = [
                     "citePlacement",
                     "associateText",
                     "chatMovesAside",
+                    "aboutLine",
                     "regionSelect",
                     "elementContext",
                     "refreshView",
@@ -847,7 +858,11 @@ export const PANEL_TABS: { id: PanelTabId; groups: PanelGroup[] }[] = [
                     "inventoryMaxNodes",
                 ],
             },
-            { id: "diagnostics", first: ["debugView"], more: [] },
+            {
+                id: "diagnostics",
+                first: ["debugView", "debugShortcut"],
+                more: [],
+            },
         ],
     },
 ];

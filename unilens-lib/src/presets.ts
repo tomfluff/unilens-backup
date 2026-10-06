@@ -36,9 +36,10 @@ export interface Preset {
  * change of a default does not change a preset.
  */
 export const PRESETS = {
-    /** Session 1's first look (Yotam, 2026-10-06): Alt+click and chat, by typing or
-     *  the mic; answers highlight their sources; nothing moves or zooms the page
-     *  except choosing a source; no settings on screen */
+    /** Session 1's first look (Yotam, 2026-10-06 and 07): Alt+click and chat, by
+     *  typing or the mic, in English; answers highlight their sources in one fixed
+     *  look; nothing moves or zooms the page except choosing a source, and the chat
+     *  never moves to uncover a source; no settings on screen */
     baseline: {
         name: "Baseline (co-design session 1)",
         values: {
@@ -59,11 +60,20 @@ export const PRESETS = {
             moveToEvidence: "offscreen",
             associateText: false,
             citePlacement: "end",
+            // one fixed look, every part of it named here
             hlOutline: "ring",
             hlBackdrop: "none",
             hlFill: false,
+            hlGlow: true,
             hlBadges: true,
-            chatMovesAside: true,
+            hlColor: "#ffef26",
+            ringWidth: 2,
+            ringScale: false,
+            // the chat stays where it opened: stepping aside (or folding) to uncover
+            // a source is a later feature (Yotam, 2026-10-07)
+            chatMovesAside: false,
+            // no "About all 3 sources" line above the field (not decided for good)
+            aboutLine: false,
             // nothing else moves or zooms the page
             offscreenCue: "none",
             minimap: "off",
@@ -72,15 +82,17 @@ export const PRESETS = {
             smartZoom: false,
             lensPan: false,
             assistantZoom: false,
-            // the chat: the standard look, in the page's language, no settings gear
+            // the chat: the standard look, in English (the study runs in English),
+            // no settings gear and no debug view or its shortcut
             chatStyle: "assistant",
-            chatLanguage: "auto",
+            chatLanguage: "en",
             clickFx: "orb",
             motion: "smooth",
             continuity: true,
             restoreAfterReload: true,
             settingsButton: false,
             debugView: false,
+            debugShortcut: false,
         },
     },
 } as const satisfies Record<string, Preset>;

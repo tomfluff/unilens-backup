@@ -79,6 +79,21 @@ describe("every preset", () => {
             smartZoom: false,
             assistantZoom: false,
             settingsButton: false,
+            // 2026-10-07: English, the chat never moves, no about line, no debug key
+            chatLanguage: "en",
+            // one fixed highlight look, every part named (a later default change
+            // must not change the baseline)
+            hlOutline: "ring",
+            hlBackdrop: "none",
+            hlFill: false,
+            hlGlow: true,
+            hlBadges: true,
+            hlColor: "#ffef26",
+            ringWidth: 2,
+            ringScale: false,
+            chatMovesAside: false,
+            aboutLine: false,
+            debugShortcut: false,
         });
         expect(b.moveToEvidence).not.toBe("never");
     });
