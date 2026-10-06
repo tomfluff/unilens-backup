@@ -419,8 +419,15 @@ export default function ChatPopover({
         phase: SpeechState;
     } | null>(null);
 
+    /** reading starts on its own (auto-read): its sound, after the answer's own, and no
+     *  status line, which still tells the answer */
+    const readCue = () =>
+        window.setTimeout(() => {
+            if (!hiddenRef.current) earcon("readOn");
+        }, 220);
+
     function readMessage(idx: number, text: string) {
-        act("press", T.sReading);
+        act("readOn", T.sReading);
         speak(text, (s) =>
             setSpeaking(s === "idle" ? null : { idx, phase: s }),
         );
@@ -441,7 +448,7 @@ export default function ChatPopover({
                       icon: <PauseIcon />,
                       run: () => {
                           pauseSpeaking();
-                          act("press", T.sPausedReading);
+                          act("readOff", T.sPausedReading);
                       },
                   }
                 : phase === "paused"
@@ -450,7 +457,7 @@ export default function ChatPopover({
                         icon: <PlayIcon />,
                         run: () => {
                             resumeSpeaking();
-                            act("press", T.sReading);
+                            act("readOn", T.sReading);
                         },
                     }
                   : phase === "loading"
@@ -483,7 +490,7 @@ export default function ChatPopover({
                         title={T.stopReading}
                         onClick={() => {
                             stopSpeaking();
-                            act("press", T.sStoppedReading);
+                            act("readOff", T.sStoppedReading);
                         }}
                     >
                         <StopIcon />
@@ -688,7 +695,7 @@ export default function ChatPopover({
                 liveGen.current++;
                 liveAbort.current?.abort();
                 setLive(null);
-                act("micOff", T.sLiveEnded);
+                act("liveOff", T.sLiveEnded);
             }
             return;
         }
@@ -705,7 +712,7 @@ export default function ChatPopover({
             setLive(null);
             return sayNote(T.sNoLive);
         }
-        act("micOn", T.sLiveStarting);
+        act("liveOn", T.sLiveStarting);
         stopSpeaking();
         // the page as it is now: a chat back from a reload, or a moved view, captures
         // it first (the talk points at its elements)
@@ -1120,7 +1127,7 @@ export default function ChatPopover({
                                 ),
                         );
                         if (error) sayNote(T.sLiveLost);
-                        else act("micOff", T.sLiveEnded);
+                        else act("liveOff", T.sLiveEnded);
                     },
                 },
             );
@@ -1866,6 +1873,7 @@ export default function ChatPopover({
                     // live read: the user may toggle auto-read while the reply streams
                     if (getSettings().autoRead && full && !hiddenRef.current) {
                         const idx = messages.length + 1; // the assistant bubble just added
+                        readCue();
                         speak(speakable(full), (s) =>
                             setSpeaking(
                                 s === "idle" ? null : { idx, phase: s },
@@ -1921,8 +1929,10 @@ export default function ChatPopover({
         setMessages((m) => [...m, reply]);
         if (data.reply != null) onReplyDone(reply, text, token, ask);
         // live read: the user may toggle auto-read while the request is in flight
-        if (getSettings().autoRead && data.reply && !hiddenRef.current)
+        if (getSettings().autoRead && data.reply && !hiddenRef.current) {
+            readCue();
             speak(speakable(data.reply));
+        }
     }
 
     /** queuedId: a question that waited for a new place's capture, already in the log */
