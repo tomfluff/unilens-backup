@@ -1,0 +1,167 @@
+{
+  "slug": "kabocha-pudding",
+  "categories": ["baking", "vegetarian"],
+  "cuisine": "japanese",
+  "diet": ["vegetarian", "gluten-free"],
+  "difficulty": "medium",
+  "course": "dessert",
+  "times": { "prep": 25, "cook": 40, "extra": 240, "extraLabel": { "en": "Chilling", "ja": "冷やす" } },
+  "servings": 6,
+  "servingsUnit": { "en": "ramekins", "ja": "個" },
+  "image": "kabocha-pudding",
+  "rating": 4.8,
+  "ratings": 367,
+  "published": "2021-10-02",
+  "updated": "2026-09-25",
+  "related": ["kabocha-soup", "yuzu-pound-cake", "daigaku-imo", "sheet-pan-miso-chicken"],
+  "en": {
+    "title": "Kabocha Pudding with Caramel",
+    "teaser": "Silky Japanese kabocha purin baked in a water bath under a layer of bittersweet caramel. With an oven method, a frying-pan method, and how to avoid the little holes.",
+    "intro": [
+      "For nine years I planned school lunches at an elementary school here in Harukawa, and there was exactly one day each year when not a single child left anything on the tray: kabocha pudding day, at the end of October. The kitchen staff steamed hundreds of little cups of it, and the whole corridor smelled of caramel. When I left the job, the first recipe I asked the head cook for was that one, and this is my home version, a little richer, with cream.",
+      "It also reminds me of my grandmother Fumi, who made plain custard purin for the guests at her inn in Tsukimi Onsen in a big wooden steamer, because she never owned an oven. That's why there's a frying-pan method below. These days Hana makes the caramel with me (under close supervision), and Sota is in charge of turning the puddings out onto plates, which he does with a lot of ceremony.",
+      { "h": "Why you'll love it" },
+      { "ul": [
+        "Smooth and dense, with a real kabocha flavour, not just a hint.",
+        "Naturally gluten-free, and you can make it two days ahead.",
+        "Works in the oven or in a frying pan with a lid."
+      ] },
+      { "h": "Making the caramel" },
+      "Caramel is just sugar and a spoonful of water cooked until it turns deep amber, about the colour of strong black tea. Don't stir it, just swirl the pan; stirring makes it crystallise. Too pale and it tastes only sweet; too dark, with black smoke, and it's bitter. Then comes the one moment to be careful: <strong>adding the hot water makes the caramel spit and steam violently.</strong> Wear an oven glove, hold the pan away from you, and keep children back. Hot water spatters much less than cold.",
+      { "h": "Avoiding holes (su)" },
+      "If your pudding comes out with little holes and a spongy texture, it got too hot. In Japanese we call this <em>su</em>, the same word as for the holes in an overcooked daikon. Custard sets smoothly at around 80°C and turns holey above about 90°C. So bake it gently at 160°C (320°F), or 140°C (285°F) in a fan oven, in a water bath, with foil over each ramekin. Holey pudding still tastes good, but it's worth getting right.",
+      { "h": "Tips for success" },
+      "Choose a heavy, dense kabocha; the drier and sweeter it is, the better the pudding. Microwaving it takes 5–6 minutes at 600 W (for 500 W, multiply by 1.2), and the skin cuts away easily while it's hot. For a bright yellow pudding remove all the skin; a little left on gives green flecks and a deeper flavour. <strong>Strain the mixture</strong>, twice if you have the patience; it's what makes it silky.",
+      "Give the puddings at least 4 hours in the fridge, and overnight is even better, because the caramel softens into a runny sauce. If you have kabocha left over, make my <a href=\"{{recipe:kabocha-soup}}\">kabocha soup</a>; for the oven settings, see my <a href=\"{{guide:oven-temperatures}}\">oven temperatures guide</a>."
+    ],
+    "equipment": ["6 heatproof ramekins or pudding cups, about 130 ml each (7–8 cm across)", "Small saucepan for the caramel", "Fine-mesh sieve", "Deep oven tray or roasting tin (at least 3 cm deep) for the water bath", "Aluminium foil", "Oven glove", "Or, for the stovetop method: a deep frying pan (26 cm) with a lid"],
+    "notes": [
+      "Holes (su) mean the custard got hotter than about 90°C: the oven was too hot, the water bath boiled, or there was no foil. Next time lower the oven by 10°C and make sure the bath water is hot but not boiling.",
+      "Hot caramel is around 170°C and sticks to skin. Add the hot water at arm's length, never lean over the pan, and keep children away. If the caramel goes black and acrid, start again; it's only 50 g of sugar.",
+      "To clean the caramel pan, fill it with water and bring it to a boil; the hardened caramel dissolves.",
+      "Kabocha sweetness varies a lot. Taste the mashed kabocha with the sugar before adding the eggs, and add up to 10 g more sugar if it tastes bland.",
+      "The pudding is done when it wobbles as one piece, like jelly, with no liquid ripples in the centre."
+    ],
+    "subs": [
+      ["Heavy cream", "More milk (300 ml milk in total); lighter, with a softer set"],
+      ["Kabocha", "Canned pumpkin purée (not pie filling), 200 g, plus 10 g extra sugar; or steamed sweet potato"],
+      ["Milk and cream", "Unsweetened soy milk and soy or oat cream, for a dairy-free version"],
+      ["Sugar in the custard", "Light brown sugar or kibi sugar, for a deeper, toffee-like flavour"]
+    ],
+    "makeAhead": "This is a perfect make-ahead dessert: make it up to 2 days before, keep it covered in the fridge in the ramekins, and turn it out just before serving. Overnight, the caramel turns into a runny sauce.",
+    "storage": "Keeps 3 days covered in the fridge. It doesn't freeze well as a pudding (it turns watery and grainy when thawed), although my kids like it eaten half-frozen, like ice cream."
+  },
+  "ja": {
+    "title": "かぼちゃプリン（カラメルソース）",
+    "teaser": "なめらかで濃厚なかぼちゃプリンを、ほろ苦いカラメルと一緒に湯せん焼きに。オーブンでもフライパンでも作れます。「す」が立たないコツも。",
+    "intro": [
+      "私は9年間、春川市内の小学校で管理栄養士として給食の献立を立てていました。1年に1日だけ、給食を残す子がひとりもいない日があったのですが、それが10月末の「かぼちゃプリンの日」。調理員さんたちが何百個もの小さなカップを蒸して、廊下じゅうにカラメルの香りが漂っていました。仕事を辞めるとき、真っ先に調理長さんにお願いして教わったのがこのレシピ。これは生クリームを加えて少し濃厚にした、わが家版です。",
+      "このプリンを作ると、祖母のふみのことも思い出します。祖母はオーブンを持っていなかったので、月見温泉の宿で出すプリンを大きな木の蒸し器で蒸していました。下でフライパンでの作り方も紹介しているのはそのためです。最近は花がカラメル作りを手伝ってくれて（しっかり見守りつきで）、蒼太はプリンをお皿にひっくり返す係。毎回ちょっとした儀式のようです。",
+      { "h": "このレシピのおすすめポイント" },
+      { "ul": [
+        "なめらかで濃厚。かぼちゃの味がしっかりします。",
+        "小麦粉不使用でグルテンフリー。2日前から作りおきできます。",
+        "オーブンでも、ふたつきのフライパンでも作れます。"
+      ] },
+      { "h": "カラメルの作り方" },
+      "カラメルは、砂糖と少量の水を、濃くいれた紅茶くらいの濃い琥珀色になるまで煮詰めるだけ。混ぜずに、鍋をゆすって色を均一にします。混ぜると結晶化してしまいます。色が薄いとただ甘いだけ、黒くなって煙が上がると苦くなります。そして気をつけてほしいのが次の瞬間。<strong>お湯を加えると、カラメルが激しくはねて蒸気が上がります。</strong>ミトンをして、鍋を体から離し、子どもは近づけないようにしてください。水よりお湯のほうがはねにくいです。",
+      { "h": "「す」を立たせないために" },
+      "焼き上がったプリンに小さな穴があいて、スポンジのような食感になっていたら、それは加熱しすぎ。これを「すが立つ」と言います。卵液は80℃前後でなめらかに固まり、90℃を超えると「す」が立ちやすくなります。なので、160℃（ファン付きなら140℃）の低めの温度で、湯せんにして、一つずつアルミホイルをかぶせて、ゆっくり火を通します。すが立っても味はおいしいのですが、やっぱりなめらかに仕上げたいですよね。",
+      { "h": "上手に作るコツ" },
+      "かぼちゃは、ずっしり重く身の詰まったものを。ほくほくして甘いほど、おいしいプリンになります。電子レンジ（600W）で5〜6分（500Wなら1.2倍）加熱すれば、熱いうちに皮が簡単に取れます。きれいな黄色にしたいなら皮は全部取って。少し残すと緑の粒が入り、味に深みが出ます。そして<strong>プリン液は必ずこしましょう</strong>。余裕があれば2回。これがなめらかさの秘訣です。",
+      "冷蔵庫で最低4時間、できれば一晩冷やしてください。一晩おくとカラメルがとろりとしたソースになります。かぼちゃが余ったら<a href=\"{{recipe:kabocha-soup}}\">かぼちゃのポタージュ</a>に。オーブンの温度設定については<a href=\"{{guide:oven-temperatures}}\">オーブン温度ガイド</a>をどうぞ。"
+    ],
+    "equipment": ["耐熱のココット型またはプリンカップ6個（容量約130ml、直径7〜8cm）", "カラメル用の小鍋", "目の細かいこし器", "湯せん用の深めの天板またはバット（深さ3cm以上）", "アルミホイル", "ミトン", "フライパンで作る場合：ふたつきの深めのフライパン（26cm）"],
+    "notes": [
+      "「す」が立つのは、卵液が90℃くらいを超えたため。オーブンの温度が高すぎた、湯せんのお湯が沸騰した、ホイルをかぶせなかった、などが原因です。次回はオーブンを10℃下げ、湯せんのお湯は熱湯ではなく熱めのお湯にしてみてください。",
+      "熱いカラメルは170℃ほどあり、肌につくとはがれません。お湯は腕をのばして加え、鍋の上に顔を出さないこと。子どもは近づけないでください。黒く焦げて刺激臭がしたら作り直しを。砂糖50gだけなので気軽にやり直せます。",
+      "カラメルがこびりついた鍋は、水を張って火にかけ、沸騰させると溶けてきれいになります。",
+      "かぼちゃの甘さはかなり個体差があります。卵を入れる前に、砂糖と混ぜたかぼちゃを味見して、物足りなければ砂糖を10gまで足してください。",
+      "器をゆすったとき、表面が液体のように波打たず、ゼリーのように全体がふるふると揺れれば焼き上がりです。"
+    ],
+    "subs": [
+      ["生クリーム", "牛乳（牛乳を合計300mlに）。あっさりして、やわらかめの仕上がりに"],
+      ["かぼちゃ", "かぼちゃピューレ缶（パイフィリングではないもの）200g＋砂糖10g、または蒸したさつまいも"],
+      ["牛乳・生クリーム", "無調整豆乳と豆乳クリーム（またはオーツクリーム）で乳製品不使用に"],
+      ["プリン液の砂糖", "きび砂糖、または三温糖。コクのある味わいに"]
+    ],
+    "makeAhead": "作りおきにぴったりのデザートです。2日前まで作れます。容器ごとラップをして冷蔵庫に入れ、食べる直前に型から出してください。一晩おくとカラメルがとろりとしたソースになります。",
+    "storage": "ラップをして冷蔵で3日。プリンとしての冷凍は向きません（解凍すると水っぽく、ざらついた食感になります）。ただ、うちの子どもたちは半解凍をアイスのようにして食べるのが好きです。"
+  },
+  "ingredients": [
+    { "group": { "en": "Caramel", "ja": "カラメルソース" }, "items": [
+      { "q": 50, "u": "g", "us": [0.25, "cup"], "en": "sugar", "ja": "砂糖（グラニュー糖）" },
+      { "q": 1, "u": "tbsp", "en": "water", "ja": "水" },
+      { "q": 2, "u": "tbsp", "en": "water, hot, to finish the caramel", "ja": "湯（仕上げ用）" }
+    ]},
+    { "group": { "en": "Pudding", "ja": "プリン液" }, "items": [
+      { "q": 250, "u": "g", "en": "kabocha, seeds removed (about 200 g once the skin is cut off)", "ja": "かぼちゃ（種とわたを除いたもの、皮を除くと約200g）" },
+      { "q": 50, "u": "g", "us": [0.25, "cup"], "en": "sugar", "ja": "砂糖" },
+      { "q": 3, "u": "pc", "en": "eggs, at room temperature", "ja": "卵（室温に戻す）" },
+      { "q": 200, "u": "ml", "en": "milk", "ja": "牛乳" },
+      { "q": 100, "u": "ml", "en": "heavy cream (35% fat or more)", "ja": "生クリーム（乳脂肪分35%以上）" },
+      { "q": null, "en": "vanilla extract (optional)", "ja": "バニラエッセンス（あれば）", "free": { "en": "a few drops", "ja": "少々" } }
+    ]}
+  ],
+  "steps": [
+    { "en": "Cut the kabocha into 3–4 cm chunks and put them in a heatproof bowl with 1 tbsp water. Cover loosely with cling film and microwave at 600 W for 5–6 minutes, until a skewer slides through easily. While it's hot, hold each piece with a cloth and cut off the skin; you need 200 g of flesh.",
+      "ja": "かぼちゃを3〜4cm角に切って耐熱ボウルに入れ、水大さじ1をふります。ふんわりラップをして電子レンジ（600W）で5〜6分、竹串がすっと通るまで加熱します。熱いうちにふきんで押さえながら皮を切り落とし、果肉を200g用意します。", "timer": 6 },
+    { "en": "Make the caramel: put the 50 g sugar and 1 tbsp water in a small pan over medium heat. Don't stir. When it starts to colour at the edges, swirl the pan gently, and cook until it is a deep amber, like strong black tea, with a wisp of smoke. Take it off the heat, put on an oven glove, and at arm's length add the 2 tbsp hot water; it will spit and steam hard. Swirl to combine, then quickly pour into the 6 ramekins (about 2 tsp each) and tilt to cover the bottoms. It sets as it cools.",
+      "ja": "カラメルを作ります。小鍋に砂糖50gと水大さじ1を入れて中火にかけます。混ぜずに加熱し、縁から色づいてきたら鍋をゆすって色を均一にし、濃くいれた紅茶くらいの濃い琥珀色になってうっすら煙が出るまで煮詰めます。火から下ろし、ミトンをして腕をのばし、湯大さじ2を加えます。激しくはねて蒸気が上がるので注意。鍋をゆすってなじませたら、すぐにココット6個に小さじ2ずつ流し入れ、傾けて底全体に広げます。冷めると固まります。", "img": "kabocha-pudding-caramel" },
+    { "en": "Preheat the oven to 160°C (320°F), or 140°C (285°F) for a fan oven, and boil the kettle. Line a deep oven tray or roasting tin with a folded kitchen towel or two sheets of kitchen paper (it stops the ramekins sliding and softens the heat from below) and set the ramekins on it.",
+      "ja": "オーブンを160℃（ファン付きなら140℃）に予熱し、湯を沸かしておきます。深めの天板またはバットに、たたんだふきんかキッチンペーパー2枚を敷き（器がすべらず、下からの熱もやわらぎます）、ココットを並べます。" },
+    { "en": "Mash the hot kabocha with the 50 g sugar until completely smooth, using a fork or masher, or a hand blender for the smoothest result. Taste it, and add a little more sugar if it's bland. Stir in the eggs one at a time, gently, so you don't beat in air.",
+      "ja": "熱いかぼちゃに砂糖50gを加え、フォークやマッシャー（いちばんなめらかにするならハンドブレンダー）でなめらかになるまでつぶします。味見をして、甘さが足りなければ砂糖を少し足します。卵を1個ずつ加え、泡立てないように静かに混ぜます。" },
+    { "en": "Warm the milk and cream together until steaming, about 60°C, with small bubbles at the edge but not boiling (or microwave at 600 W for about 2 minutes). Pour it into the kabocha mixture a little at a time, stirring, and add the vanilla.",
+      "ja": "牛乳と生クリームを合わせ、縁に小さな泡が出て湯気が立つくらい（約60℃）まで温めます。沸騰させないように（電子レンジなら600Wで約2分）。かぼちゃ液に少しずつ加えながら混ぜ、バニラエッセンスを加えます。" },
+    { "en": "Strain the mixture through a fine sieve, pressing it through with a spatula; strain it a second time for the silkiest texture. Skim off any foam with a spoon, or lay a sheet of kitchen paper on the surface and lift it away.",
+      "ja": "プリン液を目の細かいこし器でこし、ゴムべらで押しながら通します。よりなめらかにしたいなら2回こしてください。表面の泡はスプーンですくうか、キッチンペーパーをかぶせてはがし取ります。" },
+    { "en": "Pour the mixture gently over the set caramel and cover each ramekin with a square of foil. Put the tray in the oven and pour in hot water (about 70°C; half boiling, half cold works) to 2 cm deep. Bake for 35–40 minutes.",
+      "ja": "固まったカラメルの上に、プリン液を静かに流し入れ、一つずつアルミホイルでふたをします。天板をオーブンに入れ、70℃くらいのお湯（熱湯と水を半々に混ぜたもの）を深さ2cmまで注ぎます。35〜40分焼きます。", "timer": 40 },
+    { "en": "Check one: give the ramekin a gentle shake. It's done when the surface wobbles as one piece, like jelly, with no liquid ripples in the centre. If the middle is still runny, bake 5 minutes more. Little holes on the sides mean it got too hot; lower the oven by 10°C next time.",
+      "ja": "1個取り出してやさしくゆすってみます。表面が液体のように波打たず、ゼリーのように全体がふるふる揺れれば焼き上がり。中央がまだゆるければ5分追加します。側面に小さな穴があいていたら加熱しすぎのサイン。次回はオーブンを10℃下げてください。" },
+    { "en": "No oven? Use a deep frying pan with a lid instead of steps 3 and 7: lay a cloth or kitchen paper in the pan, set the foil-covered ramekins on it and add hot water to 2 cm deep. Bring to a simmer over medium heat, cover, and cook on the lowest heat for 15 minutes; the water should only shiver with tiny bubbles. Turn off the heat and leave covered for 10 minutes more.",
+      "ja": "オーブンがない場合は、工程3と7の代わりにふたつきの深めのフライパンを使います。フライパンにふきんかキッチンペーパーを敷き、ホイルでふたをしたココットを並べ、お湯を深さ2cmまで注ぎます。中火にかけてふつふつしてきたらふたをし、ごく弱火で15分。お湯が小さな泡でかすかに揺れる程度を保ちます。火を止め、ふたをしたままさらに10分おきます。", "timer": 15 },
+    { "en": "Lift the ramekins out of the water and let them cool to room temperature, about 30 minutes. Cover and chill for at least 4 hours, ideally overnight.",
+      "ja": "ココットを湯から取り出し、室温で30分ほどおいて粗熱を取ります。ラップをして冷蔵庫で最低4時間、できれば一晩冷やします。", "timer": 240 },
+    { "en": "To unmould, press around the edge of the pudding with a fingertip (or run a thin knife around it) to let air in. Put a plate upside down on top, turn the ramekin over and give it one or two firm shakes; the pudding drops out with the caramel flowing over it. If it sticks, dip the bottom of the ramekin in hot water for 10 seconds.",
+      "ja": "型から出すときは、プリンの縁を指先で押して（または細いナイフを一周させて）空気を入れます。お皿を逆さにかぶせてひっくり返し、1〜2回しっかりふると、カラメルと一緒にプリンがつるんと出てきます。出にくいときは、器の底を10秒ほどお湯につけてください。" }
+  ],
+  "nutrition": { "calories": 205, "carbs": 26, "protein": 5, "fat": 10, "satFat": 6, "cholesterol": 115, "sodium": 56, "fiber": 1.2, "sugar": 22 },
+  "comments": [
+    { "name": { "en": "Chloe (Auckland)", "ja": "Chloe（オークランド）" }, "date": "2026-10-02", "stars": 5,
+      "en": "We call kabocha \"buttercup squash\" here, and it worked perfectly. My caramel was a bit pale the first time; the second batch I let it go darker and it was so much better.",
+      "ja": "こちらではかぼちゃを「バターカップスクワッシュ」と呼びますが、ばっちりできました。1回目はカラメルの色が薄かったので、2回目はもっと濃くしたら格段においしくなりました。" },
+    { "name": { "en": "Pudding fanatic", "ja": "プリン命" }, "date": "2026-09-27", "stars": 4,
+      "en": "Tasty, but there were little holes all around the sides and the texture was a bit rough. I poured boiling water into the tray.",
+      "ja": "おいしかったのですが、側面にぐるっと小さな穴があいて、口当たりが少しざらつきました。天板には熱湯を注ぎました。",
+      "reply": { "en": "That's su, and the boiling water is the likely culprit: it keeps the bath very hot in the first minutes. Use water around 70°C, put a folded cloth under the ramekins, and don't forget the foil. If your oven runs hot, try 150°C for 40–45 minutes.",
+        "ja": "それは「す」ですね。原因はおそらく熱湯で、最初の数分で湯せんが熱くなりすぎてしまいます。70℃くらいのお湯にして、器の下にたたんだふきんを敷き、ホイルも忘れずに。オーブンが高温気味なら、150℃で40〜45分も試してみてください。" } },
+    { "name": { "en": "Ben (Chicago)", "ja": "Ben（シカゴ）" }, "date": "2026-09-15", "stars": null,
+      "en": "Is Japanese fresh cream the same as American heavy cream? And could I use half-and-half instead?",
+      "ja": "日本の生クリームはアメリカのヘビークリームと同じですか？ハーフ＆ハーフでも作れますか？",
+      "reply": { "en": "Yes, heavy cream (36% fat) is the same thing. Half-and-half works too: use 300 ml of half-and-half in place of both the milk and the cream. It sets a little softer, so bake it for the full 40 minutes and check the wobble.",
+        "ja": "はい、ヘビークリーム（乳脂肪36%）は日本の生クリームと同じです。ハーフ＆ハーフでも作れます。牛乳と生クリームの代わりにハーフ＆ハーフ300mlを使ってください。少しやわらかめに固まるので、しっかり40分焼いて、揺れ具合を確認してくださいね。" } },
+    { "name": { "en": "Koharu", "ja": "こはる" }, "date": "2026-09-08", "stars": 5,
+      "en": "I don't have an oven, so I used the frying-pan method. Perfectly smooth, no holes at all! I wrapped the lid in a tea towel so drips wouldn't fall on the foil.",
+      "ja": "オーブンがないのでフライパンで作りました。すがまったく立たず、なめらか！ふたから水滴が落ちないように、ふきんで包みました。" },
+    { "name": { "en": "Natalie (Paris)", "ja": "Natalie（パリ）" }, "date": "2026-08-20", "stars": 3,
+      "en": "The pudding was delicious, but the caramel spat when I added the water and I burned my hand. I used cold water from the tap.",
+      "ja": "プリンはおいしかったのですが、水を加えたときにカラメルがはねて手をやけどしました。水道の冷たい水を使いました。",
+      "reply": { "en": "I'm so sorry, Natalie, I hope your hand is better. Cold water hitting 170°C caramel is the worst for spitting; hot water is calmer. Wear an oven glove, stand back and pour from arm's length. And for a caramel burn, hold it under cool running water for a good 20 minutes straight away. I've made the warning in the recipe bigger.",
+        "ja": "Natalieさん、大変でしたね。手は大丈夫でしょうか。170℃のカラメルに冷たい水を入れると、いちばんはねやすいんです。お湯のほうがずっと穏やかです。ミトンをして、体を離し、腕をのばして注いでください。万一やけどをしたら、すぐに流水で20分ほどしっかり冷やしてください。レシピの注意書きも目立つように直しました。" } },
+    { "name": { "en": "Maimai", "ja": "まいまい" }, "date": "2025-11-03", "stars": null,
+      "en": "Mine wouldn't come out of the cups, so we ended up eating them with spoons from the ramekin. Any tricks?",
+      "ja": "カップから出てこなくて、結局スプーンでそのまま食べました。コツはありますか？",
+      "reply": { "en": "Eating them from the ramekin is perfectly fine too! To turn them out, press around the edge with a fingertip so air gets underneath, then give a firm shake upside down. If it still sticks, dip the bottom in hot water for 10 seconds to loosen the caramel.",
+        "ja": "そのまま食べるのも全然ありです！型から出すときは、指先で縁をぐるっと押して下に空気を入れ、逆さにしてしっかりふってみてください。それでも出なければ、底を10秒ほどお湯につけるとカラメルがゆるんで出やすくなります。" } },
+    { "name": { "en": "Ravi (Mumbai)", "ja": "Ravi（ムンバイ）" }, "date": "2025-10-26", "stars": 5,
+      "en": "I added a pinch each of cinnamon and nutmeg to the custard. Like a pumpkin pie without the crust. Lovely.",
+      "ja": "プリン液にシナモンとナツメグをひとつまみずつ加えました。タルト生地のないパンプキンパイのようで、とてもおいしかったです。" },
+    { "name": { "en": "Harukawa Elementary graduate", "ja": "春川小の卒業生" }, "date": "2024-10-31", "stars": 5,
+      "en": "I remember kabocha pudding day at school! I made these for my own kids and it tasted exactly the same.",
+      "ja": "給食の「かぼちゃプリンの日」、覚えています！自分の子どもたちに作ったら、あのときとまったく同じ味でした。",
+      "reply": { "en": "This made my day! Please say hello to the kitchen staff if you're ever back at the school.",
+        "ja": "うれしいコメントをありがとうございます！学校に行く機会があったら、ぜひ調理員さんたちによろしく伝えてくださいね。" } }
+  ]
+}

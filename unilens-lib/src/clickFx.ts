@@ -140,6 +140,13 @@ const CSS = `
 .ul-fx-found { width: 150px; height: 150px; border-radius: 50%; background: radial-gradient(closest-side, transparent 60%, var(--ul-fx) 80%, transparent); animation: ul-fx-found .7s cubic-bezier(.22, 1, .36, 1) forwards; }
 @keyframes ul-fx-found { 0% { transform: scale(.3); opacity: 1; } 100% { transform: scale(2.4); opacity: 0; } }
 
+/* a still for the settings panel's thumbnails: in its box, paused partway in */
+.ul-fx-still { position: relative; overflow: hidden; }
+.ul-fx-still .ul-fx { position: absolute; z-index: auto; }
+.ul-fx-still .ul-fx, .ul-fx-still .ul-fx *, .ul-fx-still .ul-fx *::before { animation-play-state: paused !important; animation-delay: -.5s !important; }
+.ul-fx-still .ul-fx-sonar i:nth-child(2) { animation-delay: -1s !important; }
+.ul-fx-still .ul-fx-sonar i:nth-child(3) { animation-delay: -1.4s !important; }
+
 @media (prefers-reduced-motion: reduce) {
   .ul-fx, .ul-fx *, .ul-fx *::before { animation: none !important; transition: none !important; }
   .ul-fx-ripple { opacity: .9; }
@@ -156,6 +163,8 @@ const ACCENT: Record<Settings["chatStyle"], string> = {
 const CORAL = "#ff7a59";
 
 let style: HTMLStyleElement | null = null;
+/** where effects are put: the page (<html>), or a still's box */
+let host: HTMLElement | null = null;
 
 function make(className: string, html = ""): HTMLDivElement {
     if (!style?.isConnected) {
@@ -175,7 +184,7 @@ function make(className: string, html = ""): HTMLDivElement {
     el.style.setProperty("--k", String(s.fxSize / 100));
     el.style.setProperty("--t", String(TEMPO[s.fxSpeed] ?? 1));
     el.setAttribute("aria-hidden", "true");
-    document.documentElement.appendChild(el);
+    (host ?? document.documentElement).appendChild(el);
     return el;
 }
 
@@ -271,6 +280,26 @@ function working(
 }
 
 /**
+ * The working state of `kind`, as the click would draw it, still, in `box` (its own
+ * px; `at` is the click, `on` what was clicked): the settings panel's thumbnails.
+ */
+export function fxStill(
+    box: HTMLElement,
+    kind: Settings["clickFx"],
+    at: { x: number; y: number },
+    on?: Box,
+) {
+    box.replaceChildren();
+    box.classList.add("ul-fx-still");
+    host = box;
+    try {
+        working(kind, getSettings(), at.x, at.y, on);
+    } finally {
+        host = null;
+    }
+}
+
+/**
  * Show the feedback for a click at (x, y), on `box` when there is one (what was
  * clicked, or the dragged region, in client px). Returns `finish`: call it when the
  * chat has the capture, with a way to find its new place entry (so a flying ending
@@ -280,9 +309,12 @@ export function clickFeedback(
     x: number,
     y: number,
     box?: Box,
+    /** where every part of it goes, the ending too (the settings dialog's top layer); the page by default */
+    into?: HTMLElement,
 ): (dest?: () => DOMRect | null | undefined) => void {
     const s = getSettings();
     const kind = s.clickFx;
+    host = into ?? null;
     if (s.fxRipple) {
         const taper = s.fxRippleLook === "taper";
         const ripple = at(
@@ -298,6 +330,7 @@ export function clickFeedback(
         setTimeout(() => ripple.remove(), 700);
     }
     const parts = working(kind, s, x, y, box);
+    host = null;
     const ending: Ending =
         s.fxEnding === "auto" ? OWN_ENDING[kind] : s.fxEnding;
 
@@ -314,7 +347,9 @@ export function clickFeedback(
             requestAnimationFrame(() => {
                 const d = ending === "fly" ? dest?.() : null;
                 if (ending === "found") {
+                    host = into ?? null;
                     const f = at(make("ul-fx-found ul-fx-at"), x, y);
+                    host = null;
                     setTimeout(() => f.remove(), 800);
                 }
                 for (const el of parts) {

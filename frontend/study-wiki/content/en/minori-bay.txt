@@ -1,0 +1,62 @@
+title: Minori Bay
+short: Bay in Minori Prefecture, Japan, known for oysters and sea bream
+type: article
+categories: bays; geography; minori; harukawa
+infobox: Minori Bay
+ib-subtitle: みのり湾
+ib-image: bay-01.jpg | Oyster rafts on Minori Bay in the morning
+ib-map: minori-bay | Minori Bay in Minori Prefecture
+ib-section: Geography
+ib: Location | [[minori-prefecture|Minori Prefecture]], Japan
+ib: Main inflow | [[kagami-river|Kagami River]]
+ib: Area | 286 km²
+ib: Maximum depth | 38 m
+ib: Average depth | 17 m
+ib: Mouth | 7.2 km wide, between Cape Okitsu and the Uchiura Peninsula
+ib: Islands | Kasumi Island, Sagi Island
+ib: Settlements | [[harukawa|Harukawa]], Okitsu
+ib-section: Use
+ib: Oyster rafts | about 1,920
+ib: Oyster harvest | 6,300 t shucked (2023)
+ib: Ports | Minori Port, Uomachi fishing port
+---
+'''Minori Bay''' (みのり湾, ''Minori-wan'') is a bay on the coast of [[minori-prefecture|Minori Prefecture]], Japan. The prefectural capital, [[harukawa|Harukawa]], stands at its head, where the [[kagami-river|Kagami River]] enters the bay. The bay covers 286 km², with an average depth of 17 m and a maximum depth of 38 m, and opens to the sea through a 7.2 km wide mouth between Cape Okitsu and the Uchiura Peninsula.<ref name="coast">Minori Prefecture Fisheries Division (2022). ''Minori Bay: Environment and Fisheries''. Minori Prefecture, pp. 3–6.</ref> Sheltered and fed with nutrients by the river, it is one of the prefecture's main fishing grounds, known for farmed oysters and sea bream.
+
+== Geography ==
+[[File:yuzu-01.jpg|Terraced yuzu orchards on the Uchiura Peninsula above the bay]]
+
+The bay is a drowned valley, shallow near its head and deepening toward the mouth. The Kagami River, which drains 1,620 km², is by far the largest of the streams that flow into it. The north shore, from central Harukawa to Minori Port, is largely built up, with the fishing port of Uomachi, the shipyard on reclaimed land, the seaside park and aquarium at Minori-kōen and the beach of Sakurahama. The hilly Uchiura Peninsula closes off the inner bay off central Harukawa; its terraced slopes grow yuzu, and the Jōmon-period [[?Uchiura Shell Mound]] shows that people have gathered shellfish on its shore for about 5,000 years. The opposite side of the mouth is Cape Okitsu, in the city of Okitsu.
+
+== Islands ==
+{| Islands of Minori Bay
+! Island !! Area !! Population !! Notes
+| [[?Kasumi Island]] (霞島) || 5.8 km² || 1,240 || Part of Harukawa; ferry 35 minutes from Minori Port
+| Sagi Island (鷺島) || 0.4 km² || 0 || Grey heron colony; wildlife reserve
+|}
+
+Kasumi Island, the larger island, belongs to the city of Harukawa and lives from fishing, sea bream farming and citrus; its name, "mist island", refers to the morning haze that often hides it from the city. Ferries from Minori Port take 35 minutes. The small, wooded Sagi Island is uninhabited and is a prefectural wildlife reserve because of its colony of grey herons, the prefectural bird; landing is not allowed during the nesting season from March to July.{{cn}}
+
+== Fisheries ==
+[[File:dish-03.jpg|Minori ''kaki-nabe'', a hot pot of oysters from the bay]]
+
+Oyster farming in the bay began in 1878. Today about 1,920 rafts are moored in the inner bay and off the Uchiura Peninsula, and the harvest in 2023 was 6,300 tonnes of shucked oysters.{{efn|Oyster harvests in Japan are usually given as the weight of shucked meat, which is roughly a fifth of the weight in the shell.}} The season runs from November to March, when the oysters are used in Minori ''kaki-nabe'' and other dishes of the [[cuisine-of-harukawa|local cuisine]].<ref name="coast"/> Red sea bream (''madai'') are raised in net pens, mainly around Kasumi Island, and are the main ingredient of ''tai-yuzu meshi'', Harukawa's signature dish. The catch is landed at Uomachi, whose central fish market opened in 1956.
+
+In the summer of 2017 a red tide of plankton spread through the inner bay, killing farmed sea bream and oysters and costing the fisheries about ¥1.2 billion; it was the worst such event on record in the bay.<ref name="nippo2017">"Red tide damage reaches ¥1.2 billion". ''Harukawa Nippō'', 6 September 2017, p. 1.</ref> The prefecture has since monitored the water weekly from June to September.
+
+== Reclamation ==
+Parts of Uomachi and Shiomi were reclaimed from the bay during the Edo period. The largest project came in 1961–1966, when 2.4 km² of the north shore was reclaimed for the [[?Harukawa Shipyard]] of Minori Heavy Industries. Oyster fishermen opposed the work, which destroyed some of their best grounds, and a lawsuit filed in 1965 was settled in 1968 with ¥380 million in compensation. The project was promoted by the mayor of Harukawa, [[tetsuo-saeki|Tetsuo Saeki]], and remains the most disputed part of his record.<ref name="saeki">Hirano, Takeshi (1999). ''Rebuilding Harukawa: Tetsuo Saeki and the Postwar City''. Minori Shuppan, pp. 142–158.</ref>
+
+== Transport and recreation ==
+The [[bayside-line|Bayside Line]] of the [[harukawa-railway|Harukawa Railway]] runs 16.2 km along the north shore from [[harukawa-central-station|Harukawa Central Station]] to Minori Port, from where ferries sail to Kasumi Island. The [[?Minori Bay Aquarium]], opened in 1997 in the seaside park beside Minori-kōen Station, had 466,000 visitors in FY2024. During the [[harukawa-lantern-festival|Harukawa Lantern Festival]], 4,000 fireworks are launched over the bay on the Sunday evening.
+
+== See also ==
+* [[kagami-river]]
+* [[harukawa]]
+* [[bayside-line]]
+* [[cuisine-of-harukawa]]
+
+== Notes ==
+{{notelist}}
+
+== References ==
+{{reflist}}

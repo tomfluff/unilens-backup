@@ -12,6 +12,7 @@
  * and the zoom and view. The page is kept as a hash, not its address.
  */
 import { allPlaces, type Place } from "./places";
+import { studyUrl } from "./studyLog";
 
 export interface Snapshot {
     v: 1;
@@ -76,7 +77,7 @@ function openStore(backend: string): Promise<boolean> {
             return resolve(false);
         }
         const f = document.createElement("iframe");
-        f.src = `${backend}/store`;
+        f.src = studyUrl(`${backend}/store`);
         f.title = "UniLens store";
         f.tabIndex = -1;
         f.setAttribute("aria-hidden", "true");
@@ -115,12 +116,14 @@ function openStore(backend: string): Promise<boolean> {
     return ready;
 }
 
-async function call(
+/** the store's answer: ok and its value, or not ok (no store, no answer, failed) */
+async function request(
     backend: string,
     op: "get" | "set" | "del",
     value?: unknown,
-): Promise<unknown> {
-    if (!(await openStore(backend)) || !frame?.contentWindow) return undefined;
+): Promise<{ ok: boolean; value?: unknown }> {
+    if (!(await openStore(backend)) || !frame?.contentWindow)
+        return { ok: false };
     const id = ++seq;
     const win = frame.contentWindow;
     return new Promise((resolve) => {
@@ -128,12 +131,12 @@ async function call(
         const timer = window.setTimeout(() => {
             replies.delete(id);
             dropStore();
-            resolve(undefined);
+            resolve({ ok: false });
         }, 3000);
         replies.set(id, (m) => {
             window.clearTimeout(timer);
             if (!m.ok) dropStore();
-            resolve(m.ok ? m.value : undefined);
+            resolve(m);
         });
         win.postMessage(
             { unilensStore: 1, id, op, key: KEY, value },
@@ -142,12 +145,35 @@ async function call(
     });
 }
 
+async function call(
+    backend: string,
+    op: "get" | "set" | "del",
+    value?: unknown,
+): Promise<unknown> {
+    const m = await request(backend, op, value);
+    return m.ok ? m.value : undefined;
+}
+
+/** a reset for the next participant is under way (presets.ts): from then until the
+ *  reload, nothing is saved and nothing comes back, whatever is still in flight */
+let resetting = false;
+
+/** forget the kept conversation before a reset's reload; true once the store
+ *  confirms it is gone (at most about 8 s: opening the store, then its answer) */
+export async function forgetForReset(backend: string): Promise<boolean> {
+    resetting = true;
+    window.clearTimeout(pending);
+    return (await request(backend, "del")).ok;
+}
+
 // ── The snapshot ─────────────────────────────────────────────────────────────
 
 /** the saved conversation, if there is one young enough to come back */
 export async function loadSnapshot(backend: string): Promise<Snapshot | null> {
+    if (resetting) return null;
     const s = (await call(backend, "get")) as Snapshot | undefined;
     if (
+        resetting ||
         s?.v !== 1 ||
         typeof s.sessionId !== "string" ||
         typeof s.captureId !== "string" ||
@@ -170,6 +196,7 @@ export function saveSoon(
 ) {
     window.clearTimeout(pending);
     const write = () => {
+        if (resetting) return;
         const s = take();
         if (s) void call(backend, "set", s);
     };

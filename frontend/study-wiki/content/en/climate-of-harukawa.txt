@@ -1,0 +1,91 @@
+title: Climate of Harukawa
+short: Climate of the city of Harukawa, Minori Prefecture
+type: article
+categories: climate; harukawa; geography
+infobox: Climate of Harukawa
+ib-subtitle: 春川市の気候
+ib-map: harukawa | Harukawa in Minori Prefecture
+ib-section: Overview
+ib: Köppen classification | ''Cfa'' (humid subtropical)
+ib: Station | Harukawa Local Meteorological Observatory, Shiromachi (6 m)
+ib: Normals | 1991–2020
+ib-section: Annual normals
+ib: Mean temperature | 16.5 °C
+ib: Mean high / low | 20.9 °C / 12.7 °C
+ib: Precipitation | 1,878.2 mm
+ib: Rain days (≥1 mm) | 110.7
+ib: Sunshine | 2,082.9 hours
+ib-section: Records
+ib: Highest | 38.4 °C (7 August 2018)
+ib: Lowest | −6.2 °C (28 January 1981)
+ib: Daily rainfall | 287.0 mm (19 September 2004)
+---
+The '''climate of Harukawa''', the capital of [[minori-prefecture|Minori Prefecture]], Japan, is humid subtropical (Köppen ''Cfa''), with hot, humid summers, mild winters and rain concentrated in the early-summer rainy season and the typhoon season. On the 1991–2020 normals of the Harukawa Local Meteorological Observatory, the annual mean temperature of [[harukawa|Harukawa]] is 16.5 °C and annual precipitation is 1,878.2 mm.<ref name="normals">Harukawa Local Meteorological Observatory (2021). ''Climatological Normals for Harukawa, 1991–2020''. Harukawa Local Meteorological Observatory, pp. 6–9.</ref> The observatory stands in Shiromachi, near [[harukawa-castle|Harukawa Castle]], at an elevation of 6 m, and its records go back to 1891.
+
+== Overview ==
+Harukawa lies on the delta of the [[kagami-river|Kagami River]] at the head of [[minori-bay|Minori Bay]]. The bay moderates the temperature, keeping winter nights mild and summer days humid, while the mountains to the north, including [[mount-tsukimi|Mount Tsukimi]], shelter the city from the cold north-westerly winds of winter. The mean high temperature is 20.9 °C and the mean low 12.7 °C. Rain falls on 110.7 days a year, and the city receives 2,082.9 hours of sunshine, a high total for Japan.<ref name="normals"/>
+
+== Seasons ==
+=== Spring ===
+Spring is mild and fairly dry. The mean temperature rises from 9.6 °C in March to 19.2 °C in May. The cherry trees of Castle Park usually begin to flower around 26 March, and the season of "cherry sea bream", when the fish of Minori Bay are at their best, runs from March to May.
+
+=== Rainy season and summer ===
+The ''tsuyu'' rainy season usually lasts from about 6 June to 19 July. June is the wettest month of the year, with 312.5 mm of rain, and also the least sunny (148.9 hours). After the rainy season ends, summer is hot and humid: August is both the hottest month, with a mean of 28.1 °C and a mean high of 32.3 °C, and the sunniest, with 216.0 hours. Humidity peaks at 79% in July. On average the temperature reaches 30 °C on about 68 days a year and 35 °C on about 5 days.<ref name="normals"/>
+
+=== Typhoon season and autumn ===
+September, with 289.7 mm, is the second-wettest month, as typhoons and autumn rain fronts bring heavy rain. About 2.6 typhoons approach the city each year, most in August and September.{{efn|On the older 1961–1990 normals September was the wettest month, with about 301 mm against about 287 mm in June, and many older guidebooks still say that September is the wettest month in Harukawa. On the current 1991–2020 normals June receives 22.8 mm more rain than September.}} The highest daily rainfall on record, 287.0 mm, fell on 19 September 2004, when the Kagami River overflowed in the Shiomi district. October and November are dry, clear and mild; the [[harukawa-lantern-festival|Harukawa Lantern Festival]] on the second weekend of October usually has a mean temperature of about 19 °C.
+
+=== Winter ===
+Winters are mild and sunny. January is the coldest month, with a mean of 5.6 °C and a mean low of 1.8 °C, and the driest, with 52.4 mm of rain, so June brings about six times as much rain as January. Frost occurs on about 12 nights a year. Snow falls on about two days a year and rarely settles, although the summit of Mount Tsukimi, visible from the city, is usually white from December to March.
+
+== Climate data ==
+[[Chart:climate|Monthly mean temperature and precipitation in Harukawa (1991–2020 normals)]]
+
+{{Data:climate}}
+
+== Extremes ==
+Records at the Harukawa observatory go back to 1891.
+
+{| Weather records in Harukawa
+! Record !! Value !! Date
+| Highest temperature || 38.4 °C || 7 August 2018
+| Lowest temperature || −6.2 °C || 28 January 1981
+| Highest daily minimum temperature || 29.1 °C || 8 August 2018
+| Highest daily precipitation || 287.0 mm || 19 September 2004
+| Highest hourly precipitation || 84.5 mm || 7 July 2018
+| Highest wind gust || 49.2 m/s || 16 September 1961
+| Deepest snow cover || 9 cm || 28 January 1981
+|}
+
+The hourly rainfall record fell during the heavy rains of July 2018, which also damaged the yuzu harvest, and the wind record during the Second Muroto Typhoon of 1961.<ref name="extremes">Harukawa Local Meteorological Observatory (2024). ''Weather Extremes at Harukawa, 1891–2023''. Harukawa Local Meteorological Observatory, pp. 3–12.</ref>
+
+== Comparison with the interior ==
+[[File:mountain-01.jpg|[[mount-tsukimi|Mount Tsukimi]] seen across rice terraces from the town of Kagami; the summit is about 7.5 °C colder than Harukawa]]
+
+The climate cools quickly inland. [[tsukimi-onsen|Tsukimi Onsen]], 38.6 km up the [[kagami-line|Kagami Line]] at 310 m, has an annual mean of 13.8 °C, about 2.7 °C cooler than Harukawa, with colder winters and more snow. The summit of Mount Tsukimi (1,214 m) is about 7.5 °C colder than the city on average and is snow-covered from December to March. The summit has no official weather station; its figures are estimates based on an automatic station run by the Faculty of Science of [[harukawa-university|Harukawa University]] near the Meigetsu Hut since 1994.<ref name="ueno">Ueno, Satoshi (2018). "Temperature and precipitation on Mount Tsukimi, 1994–2017". ''Bulletin of the Faculty of Science, Harukawa University'' 51: 33–47, p. 38.</ref>
+
+{| Harukawa, Tsukimi Onsen and the summit of Mount Tsukimi
+! !! Harukawa !! Tsukimi Onsen !! Mount Tsukimi summit
+| Elevation || 6 m || 310 m || 1,214 m
+| Annual mean temperature || 16.5 °C || 13.8 °C || about 9.0 °C
+| January mean || 5.6 °C || 2.0 °C || about −2.6 °C
+| August mean || 28.1 °C || 25.0 °C || about 20.4 °C
+| Annual precipitation || 1,878.2 mm || 2,246 mm || about 2,900 mm
+| Days with snowfall || about 2 || about 18 || snow cover December–March
+| Lowest recorded || −6.2 °C || −11.4 °C || no official record
+|}
+
+== Climate change ==
+As elsewhere in Japan, Harukawa has become warmer. The annual mean temperature has risen at a rate of about 1.4 °C per century since records began in 1891, partly because of the growth of the city.<ref name="trend">Harukawa Local Meteorological Observatory (2025). ''Climate Change in Minori Prefecture, 2025 Edition''. Harukawa Local Meteorological Observatory, pp. 4–11.</ref> The number of days reaching 35 °C has grown from fewer than one a year in the 1960s to an average of about 9 a year in 2016–2025, and frost nights have fallen from about 30 a year in the 1960s to about 12. Hourly rainfall of 50 mm or more, once rare, has occurred about twice as often since 2000 as in 1976–1999.{{cn}} The cherry trees in Castle Park now flower about six days earlier than in the 1960s.
+
+== See also ==
+* [[harukawa]]
+* [[mount-tsukimi]]
+* [[tsukimi-onsen]]
+* [[kagami-river]]
+
+== Notes ==
+{{notelist}}
+
+== References ==
+{{reflist}}

@@ -6,6 +6,7 @@ import {
     mdLite,
     navCommand,
     placeLiveMarkers,
+    placeSlots,
     recordEvidence,
     renderCited,
     sourcesIn,
@@ -157,6 +158,22 @@ describe("navCommand", () => {
         ["the 3rd", { kind: "nth", n: 3 }],
         ["number 4", { kind: "nth", n: 4 }],
         ["#2", { kind: "nth", n: 2 }],
+        ["take me to the second one", { kind: "nth", n: 2 }],
+        ["Take me to the next one.", { kind: "next" }],
+        ["go to number 3", { kind: "nth", n: 3 }],
+        ["scroll to the first one", { kind: "nth", n: 1 }],
+        // Japanese, typed or as speech recognition writes it
+        ["2番目に連れて行って", { kind: "nth", n: 2 }],
+        ["２番目に連れてって", { kind: "nth", n: 2 }],
+        ["二つ目を見せてください。", { kind: "nth", n: 2 }],
+        ["3つ目", { kind: "nth", n: 3 }],
+        ["1番目の場所に移動して", { kind: "nth", n: 1 }],
+        ["次", { kind: "next" }],
+        ["次へ", { kind: "next" }],
+        ["次のに行って", { kind: "next" }],
+        ["前の", { kind: "prev" }],
+        ["全部見せて", { kind: "all" }],
+        ["ハイライトを消して", { kind: "clear" }],
     ])("reads %s", (msg, cmd) => {
         expect(navCommand(msg)).toEqual(cmd);
     });
@@ -167,6 +184,11 @@ describe("navCommand", () => {
             "show me the image",
             "where is the second price?",
             "all prices please",
+            "take me to the shop",
+            "2番目の料金はいくら？",
+            "次の電車は何時？",
+            "全部でいくら？",
+            "前払いとは？",
         ])
             expect(navCommand(q)).toBeNull();
     });
@@ -487,5 +509,125 @@ describe("asksToZoom: the assistant zooms only when asked", () => {
             "What does [[zoom:in]] mean?",
         ])
             expect(asksToZoom(q)).toBe(false);
+    });
+});
+
+describe("citation placement (co-design initial prototype: numbers out of the sentences)", () => {
+    const S = (n: number) => `\uE0FF${n}\uE0FF`;
+    it("sentence: each sentence's numbers after its full stop, once each, in order", () => {
+        expect(
+            placeSlots(
+                `Starter is $9 ${S(1)} and Team $29 ${S(2)}. Starter again ${S(1)}.`,
+                "sentence",
+            ),
+        ).toBe(
+            `Starter is $9 and Team $29.${S(1)} ${S(2)} Starter again.${S(1)}`,
+        );
+    });
+
+    it("sentence: Japanese full stops and closing brackets", () => {
+        expect(
+            placeSlots(
+                `料金は月3,300円です${S(1)}。「割引あり${S(2)}。」次へ。`,
+                "sentence",
+            ),
+        ).toBe(`料金は月3,300円です。${S(1)}「割引あり。」${S(2)}次へ。`);
+    });
+
+    it("sentence: numbers gathered after a sentence stay with it; leading ones go forward", () => {
+        expect(
+            placeSlots(`One. ${S(1)} ${S(2)} Two ${S(3)}.`, "sentence"),
+        ).toBe(`One.${S(1)} ${S(2)} Two.${S(3)}`);
+        expect(placeSlots(`${S(1)} First words. Next.`, "sentence")).toBe(
+            `First words.${S(1)} Next.`,
+        );
+    });
+
+    it("leaves no stray space where a number was: Japanese, punctuation, line ends", () => {
+        // a real answer (2026-10-06): the model spaced the marker in Japanese
+        expect(placeSlots(`月額4,378円 ${S(1)} なので不要です。`, "end")).toBe(
+            `月額4,378円なので不要です。\n\n${S(1)}`,
+        );
+        expect(placeSlots(`Starter is $9 ${S(1)} , then`, "end")).toBe(
+            `Starter is $9, then\n\n${S(1)}`,
+        );
+        expect(placeSlots(`Starter is $9${S(1)} and up`, "end")).toBe(
+            `Starter is $9 and up\n\n${S(1)}`,
+        );
+    });
+
+    it("sentence: after closing curly quotes and the end of bold", () => {
+        expect(
+            placeSlots(`It says “open daily ${S(1)}.” Then more.`, "sentence"),
+        ).toBe(`It says “open daily.”${S(1)} Then more.`);
+        expect(
+            placeSlots(`**It costs $9 ${S(1)}.** Then more.`, "sentence"),
+        ).toBe(`**It costs $9.**${S(1)} Then more.`);
+    });
+
+    it("sentence: a decimal point is not a sentence end; a line end is", () => {
+        expect(
+            placeSlots(
+                `• Plan A 3.5 GB ${S(1)}\n• Plan B ${S(2)}\nDone`,
+                "sentence",
+            ),
+        ).toBe(`• Plan A 3.5 GB${S(1)}\n• Plan B${S(2)}\nDone`);
+    });
+
+    it("end: every number once, in order, on a line of its own", () => {
+        expect(
+            placeSlots(`A ${S(1)}, B ${S(2)}.\nC ${S(1)}. ${S(3)}\n`, "end"),
+        ).toBe(`A, B.\nC.\n\n${S(1)} ${S(2)} ${S(3)}`);
+        expect(placeSlots("No sources.", "end")).toBe("No sources.");
+    });
+
+    it("renderCited: chips move, ids and numbers stay; no underline away from the words", () => {
+        const text =
+            "Starter is {{$9}} [[n12]] and Team $29 [[n40]]. Starter again [[n12]].";
+        const inline = renderCited(text, known, label);
+        for (const placement of ["sentence", "end"] as const) {
+            const r = renderCited(
+                text,
+                known,
+                label,
+                false,
+                undefined,
+                undefined,
+                true,
+                placement,
+            );
+            expect(r.ids).toEqual(inline.ids);
+            expect(r.html).not.toContain("unilens-cite-text");
+            expect(r.html).not.toContain("{{");
+            expect(r.html).toMatch(/Starter is \$9 and Team \$29\./);
+        }
+        const end = renderCited(
+            text,
+            known,
+            label,
+            false,
+            undefined,
+            undefined,
+            false,
+            "end",
+        );
+        expect(end.html.match(/class="unilens-cite"/g)).toHaveLength(2);
+        expect(end.html).toMatch(
+            /again\.\n\n<button[^>]*>1<\/button> <button[^>]*>2<\/button>$/,
+        );
+    });
+
+    it("renderCited: a streaming answer keeps its numbers at the end while it grows", () => {
+        const r = renderCited(
+            "Starter is $9 [[n12]] and Team [[n4",
+            known,
+            label,
+            true,
+            undefined,
+            undefined,
+            false,
+            "end",
+        );
+        expect(r.html).toMatch(/and Team\n\n<button[^>]*>1<\/button>$/);
     });
 });

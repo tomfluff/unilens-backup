@@ -1,0 +1,167 @@
+{
+  "slug": "sheet-pan-miso-chicken",
+  "categories": ["weeknight"],
+  "cuisine": "fusion",
+  "diet": ["dairy-free"],
+  "difficulty": "easy",
+  "course": "main",
+  "times": { "prep": 15, "cook": 35 },
+  "servings": 4,
+  "image": "sheet-pan-miso-chicken",
+  "rating": 4.7,
+  "ratings": 286,
+  "published": "2022-09-15",
+  "updated": "2026-09-22",
+  "related": ["yuzu-miso-salmon", "kabocha-soup", "ginger-pork", "chicken-karaage"],
+  "en": {
+    "title": "Sheet-Pan Miso Chicken with Kabocha",
+    "teaser": "Chicken thighs, sweet kabocha wedges, red onion and shiitake roasted on one tray, with a sticky miso-honey glaze brushed on for the last 10 minutes. A 15-minute-prep weeknight dinner that makes the best next-day bento.",
+    "intro": [
+      "There is a particular kind of Tuesday in October in our house. Hana has volleyball until six, Sota has lost one sock and both of his library books, Daisuke messages from the Bayside Line that the train is stuck at Minori Port again, and I am standing in the kitchen at 5:40 with a pack of chicken thighs, a quarter of a kabocha and no plan at all. This sheet-pan miso chicken was born on one of those evenings, and it has rescued me about once a week every autumn since.",
+      "Everything goes onto one tray: chicken thighs, wedges of kabocha, red onion and fat shiitake. Twenty-five minutes in a hot oven, then a sticky miso glaze, then ten minutes more. My grandmother Fumi used to brush sweet miso on grilled eggplant and tofu (dengaku) for the guests at her inn in Tsukimi Onsen, and the smell of miso and mirin catching on a hot surface is, to me, the smell of autumn evenings there. This is the lazy weeknight version of that smell.",
+      { "h": "Why you'll love it" },
+      { "ul": [
+        "One tray, one small bowl and about 15 minutes of hands-on work.",
+        "The kabocha roasts in the chicken fat and comes out caramelised at the edges and creamy inside.",
+        "Leftovers make a wonderful lunchbox the next day, cold or reheated."
+      ] },
+      { "h": "Choosing the kabocha" },
+      "In October the Kagami Valley farmers' market by the river is piled high with kabocha from the farms below Mount Tsukimi. Pick one that feels heavy for its size, with a dry, corky stem and deep orange flesh if it's already cut; plump seeds mean it was fully ripe. A quarter of a medium kabocha (about 400 g) is plenty for four. Leave the skin on: it's edible, and it holds the wedges together in the oven.",
+      "Kabocha is hard to cut, so here is my trick: <strong>microwave the piece at 600 W for 2–3 minutes</strong> and the knife goes through far more easily (mind the steam). Cut wedges about 1.5 cm thick at the widest part so they cook in the same time as the chicken. My <a href=\"{{guide:knife-cuts}}\">knife cuts guide</a> shows how to cut wedges safely, and the <a href=\"{{guide:seasonal-produce}}\">seasonal produce guide</a> lists what else is good right now.",
+      { "h": "Tips for success" },
+      "Pat the chicken dry and sit it skin side up in the gaps between the vegetables, not on top of them, so the skin crisps instead of steaming. My oven-microwave is small and has no fan; if your tray is crowded, use two trays and swap them halfway, because crowded vegetables steam rather than roast. I bake at 220°C (430°F), or 200°C (390°F) in a fan oven.",
+      "The one rule that matters: <strong>the glaze goes on only for the last 10 minutes</strong>. Miso, mirin and honey are full of sugar and burn quickly at this heat; brush them on at the start and you get black, bitter patches. If the edges darken too fast at the end, move the tray down a shelf. The chicken is done at 75°C (167°F) in the thickest part, or when the juices run clear. I use awase (mixed) miso; red miso is saltier, so see the notes before you start.",
+      "Next weekend (Saturday 10 and Sunday 11 October) is the Lantern Festival, and we will be eating our way along the river stalls, so this week is all about easy dinners. If you're after something fried, my <a href=\"{{recipe:chicken-karaage}}\">chicken karaage</a> is the festival favourite; for another miso dish, try the <a href=\"{{recipe:yuzu-miso-salmon}}\">yuzu miso salmon</a>."
+    ],
+    "equipment": ["Large oven tray (about 30 × 40 cm), or two smaller trays", "Baking paper", "Pastry brush or a spoon", "Meat thermometer (optional, but useful)"],
+    "notes": [
+      "The glaze contains miso, mirin and honey, which burn quickly at 220°C. That is why it goes on only for the last 10 minutes. A few dark edges are delicious; black and bitter means move the tray lower next time.",
+      "Salt levels: red miso (aka miso) is saltier than awase miso, so use 2½ tbsp. With sweet white miso (shiro miso), use 4 tbsp and leave out the honey.",
+      "Bone-in thighs need about 10 minutes longer before glazing (35 minutes); check for 75°C right next to the bone.",
+      "The kabocha is done when a skewer slides into the thickest wedge with no resistance.",
+      "Use baking paper rather than foil: the glaze sticks to foil and tears the kabocha skin when you lift it."
+    ],
+    "subs": [
+      ["Kabocha", "Butternut squash or sweet potato, in 1.5 cm wedges; the timing stays the same"],
+      ["Mirin", "1 tbsp sake + 1 tsp sugar for each tbsp of mirin (alcohol-free: 1 tbsp water + 1 tsp sugar)"],
+      ["Honey", "1 tbsp sugar or maple syrup"],
+      ["Chicken thighs", "Bone-in thighs (35 minutes before glazing) or chicken breast in 4 cm chunks, added to the tray after 10 minutes so it doesn't dry out"],
+      ["Shiitake", "Eryngii (king oyster) or maitake mushrooms"]
+    ],
+    "makeAhead": "Mix the glaze up to 3 days ahead and keep it in a jar in the fridge. The night before, you can cut the kabocha and onion and salt the chicken; keep them covered in the fridge, and the next evening everything goes straight onto the tray.",
+    "storage": "Keeps 3 days in the fridge in a covered container. Reheat one portion in the microwave at 600 W for 1½–2 minutes until piping hot, or in a toaster oven to crisp the skin again. The chicken freezes well for a month; the kabocha turns a little watery after freezing but is fine mashed into a lunchbox."
+  },
+  "ja": {
+    "title": "鶏とかぼちゃの味噌焼き（天板焼き）",
+    "teaser": "鶏もも肉、かぼちゃ、紫玉ねぎ、しいたけを天板にのせてオーブンへ。甘辛い味噌だれは最後の10分で塗るのがコツ。下ごしらえ15分の平日ごはんで、翌日のお弁当にも大活躍します。",
+    "intro": [
+      "10月のわが家の火曜日は、だいたいこんな感じです。花はバレーボールの練習で6時まで、蒼太は靴下を片方と図書館の本を2冊なくし、大輔からは「ベイサイド線がまたみなと港で止まってる」とメッセージ。そして私は5時40分の台所で、鶏もも肉のパックと1/4個のかぼちゃを前に、献立がまったく決まっていない……。この天板焼きは、そんな夕方に生まれたレシピです。秋になると、ほぼ毎週わが家を救ってくれています。",
+      "鶏もも肉、かぼちゃ、紫玉ねぎ、肉厚のしいたけを天板に並べて、オーブンで25分。そこへ甘辛い味噌だれを塗って、さらに10分焼くだけです。月見温泉で小さな宿を営んでいた祖母のふみは、お客さんに焼きなすや豆腐の田楽をよく出していました。焼けた味噌とみりんの香ばしい匂いは、私にとって月見温泉の秋の夕暮れの匂い。これはその匂いを、平日の夜に手軽に楽しむための一品です。",
+      { "h": "このレシピのおすすめポイント" },
+      { "ul": [
+        "使うのは天板ひとつと小さなボウルひとつ。手を動かすのは15分ほどです。",
+        "かぼちゃが鶏の脂をまとって焼け、縁はこんがり、中はほっくり。",
+        "翌日のお弁当にもぴったり。冷めてもおいしく、温め直しても◎。"
+      ] },
+      { "h": "かぼちゃの選び方" },
+      "この時期、鏡川沿いの産直市場には、月見山のふもとの畑で採れたかぼちゃがずらりと並びます。選ぶなら、持ったときにずっしり重く、ヘタがよく乾いてコルクのようになっているもの。カットされたものなら果肉の色が濃く、種がふっくらしているものが完熟のしるしです。4人分なら中くらいのかぼちゃ1/4個（約400g）で十分。皮も食べられるので、むかずにそのまま使います。皮があるほうが、焼いてもくし形が崩れません。",
+      "かぼちゃはかたくて切りにくいので、<strong>電子レンジ（600W）で2〜3分加熱してから切る</strong>のがおすすめ。包丁がすっと入ります（蒸気でやけどしないように気をつけてください）。厚みは一番厚いところで1.5cmほどにすると、鶏肉と同じ時間で火が通ります。くし形切りのやり方は<a href=\"{{guide:knife-cuts}}\">切り方ガイド</a>、いま旬の野菜は<a href=\"{{guide:seasonal-produce}}\">旬の食材ガイド</a>で紹介しています。",
+      { "h": "上手に作るコツ" },
+      "鶏肉はキッチンペーパーで水けをしっかりふき、皮目を上にして野菜のすき間に並べます。野菜の上に重ねると皮が蒸されて、パリッと仕上がりません。わが家のオーブンレンジは小さく、ファン機能もありません。天板がぎゅうぎゅうになるなら2枚に分け、途中で上下を入れ替えてください。詰め込みすぎると、野菜は焼けずに蒸し煮になってしまいます。温度は220℃、コンベクション（ファン付き）オーブンなら200℃です。",
+      "いちばん大事なのは、<strong>味噌だれは最後の10分で塗る</strong>こと。味噌もみりんもはちみつも糖分が多く、この温度では最初から塗るとすぐに焦げて苦くなります。最後に焦げそうなら天板を一段下へ。鶏肉は一番厚い部分の中心が75℃になれば焼き上がりです。竹串を刺して透明な肉汁が出ればOK。味噌は合わせみそを使っています。赤みそは塩分が強いので、作る前にメモを確認してくださいね。",
+      "来週末（10月10日・11日）はいよいよ春川灯籠まつり。家族で鏡川沿いの屋台を食べ歩く予定なので、今週は手軽な晩ごはんで乗り切ります。揚げものが食べたい気分なら、おまつりの定番<a href=\"{{recipe:chicken-karaage}}\">鶏の唐揚げ</a>を。味噌味がお好きなら<a href=\"{{recipe:yuzu-miso-salmon}}\">鮭のゆず味噌焼き</a>もおすすめです。"
+    ],
+    "equipment": ["天板（約30×40cm）、または小さめの天板2枚", "オーブンシート", "はけ（またはスプーン）", "肉用の温度計（あれば便利）"],
+    "notes": [
+      "味噌だれには味噌・みりん・はちみつが入っていて、220℃ではすぐに焦げます。最後の10分だけ塗るのはそのためです。縁が少し焦げるくらいは香ばしくておいしいですが、黒く苦くなったら次回は天板を一段下げてください。",
+      "塩分について：赤みそは合わせみそより塩辛いので大さじ2と1/2に。甘口の白みそなら大さじ4にして、はちみつは入れなくて大丈夫です。",
+      "骨付きのもも肉なら、たれを塗る前に35分（約10分長め）焼き、骨のすぐ横で75℃になっているか確認してください。",
+      "かぼちゃは、一番厚いところに竹串がすっと通れば焼き上がりです。",
+      "天板にはアルミホイルではなくオーブンシートを。ホイルだとたれがこびりつき、持ち上げるときにかぼちゃの皮がはがれてしまいます。"
+    ],
+    "subs": [
+      ["かぼちゃ", "バターナッツかぼちゃ、またはさつまいも（1.5cm厚のくし形に。焼き時間は同じ）"],
+      ["みりん", "みりん大さじ1につき、酒大さじ1＋砂糖小さじ1（アルコールなしなら水大さじ1＋砂糖小さじ1）"],
+      ["はちみつ", "砂糖大さじ1、またはメープルシロップ"],
+      ["鶏もも肉", "骨付きもも肉（たれを塗る前に35分焼く）、または4cm角に切った鶏むね肉（パサつかないよう、焼き始めて10分後に天板にのせる）"],
+      ["しいたけ", "エリンギ、まいたけ"]
+    ],
+    "makeAhead": "味噌だれは3日前まで作りおきでき、瓶に入れて冷蔵庫で保存できます。前の晩にかぼちゃと玉ねぎを切り、鶏肉に塩をふって、それぞれラップをして冷蔵庫へ。翌日は天板に並べるだけです。",
+    "storage": "ふたつきの容器に入れて冷蔵で3日。1人分は電子レンジ（600W）で1分30秒〜2分、中まで熱くなるまで温めます。トースターで温め直すと皮がまたパリッとします。鶏肉は冷凍で1か月保存可能。かぼちゃは冷凍すると少し水っぽくなりますが、つぶしてお弁当に入れれば気になりません。"
+  },
+  "ingredients": [
+    { "items": [
+      { "q": 800, "u": "g", "en": "chicken thighs, boneless and skin-on (about 3 large), each cut in half", "ja": "鶏もも肉（皮つき）" },
+      { "q": 0.5, "u": "tsp", "en": "salt, for the chicken", "ja": "塩（鶏肉の下味用）" },
+      { "q": 400, "u": "g", "en": "kabocha (about ¼ of a medium one), seeds removed, skin on", "ja": "かぼちゃ（種とわたを除いたもの、皮つき）" },
+      { "q": 1, "u": "pc", "en": "red onion", "ja": "紫玉ねぎ" },
+      { "q": 8, "u": "pc", "jaU": "枚", "en": "fresh shiitake mushrooms, stems removed, halved", "ja": "生しいたけ（石づきを取る）" },
+      { "q": 1.5, "u": "tbsp", "en": "vegetable oil", "ja": "サラダ油" },
+      { "q": 1, "u": "pinch", "en": "salt, for the vegetables", "ja": "塩（野菜用）" }
+    ]},
+    { "group": { "en": "Miso glaze", "ja": "味噌だれ" }, "items": [
+      { "q": 3, "u": "tbsp", "en": "miso (awase or red; see the notes)", "ja": "みそ（合わせみそ）" },
+      { "q": 2, "u": "tbsp", "en": "mirin", "ja": "みりん" },
+      { "q": 1, "u": "tbsp", "en": "honey", "ja": "はちみつ" },
+      { "q": 1, "u": "tsp", "en": "soy sauce", "ja": "しょうゆ" },
+      { "q": 1, "u": "tsp", "en": "ginger, grated", "ja": "しょうが（すりおろし）" },
+      { "q": 1, "u": "clove", "en": "garlic, grated", "ja": "にんにく（すりおろし）" },
+      { "q": 1, "u": "tsp", "en": "toasted sesame oil", "ja": "ごま油" }
+    ]},
+    { "group": { "en": "To finish", "ja": "仕上げ" }, "items": [
+      { "q": 2, "u": "stalk", "en": "green onion (thin scallions), thinly sliced", "ja": "小ねぎ（小口切り）" },
+      { "q": 1, "u": "tsp", "en": "white sesame seeds, toasted", "ja": "白いりごま" },
+      { "q": null, "en": "shichimi togarashi, to serve (optional)", "ja": "七味唐辛子（お好みで）", "free": { "en": "to taste", "ja": "適量" } }
+    ]}
+  ],
+  "steps": [
+    { "en": "Preheat the oven to 220°C (430°F), or 200°C (390°F) for a fan oven, and line a large oven tray with baking paper. Pat the chicken dry with kitchen paper, prick the skin a few times with a fork, cut each thigh in half and season all over with the ½ tsp salt.",
+      "ja": "オーブンを220℃（ファン付きなら200℃）に予熱し、天板にオーブンシートを敷きます。鶏肉はキッチンペーパーで水けをふき、皮目をフォークで数か所刺して半分に切り、塩小さじ1/2を全体にふります。" },
+    { "en": "If the kabocha is too hard to cut, microwave it at 600 W for 2–3 minutes first. Cut it into wedges about 1.5 cm thick, cut the red onion into 8 wedges through the root so they hold together, and halve the shiitake.",
+      "ja": "かぼちゃがかたくて切りにくければ、電子レンジ（600W）で2〜3分加熱します。1.5cm厚さのくし形に切り、紫玉ねぎは根元をつけたまま8等分のくし形に、しいたけは半分に切ります。" },
+    { "en": "Toss the kabocha and onion with the oil and a pinch of salt right on the tray, then spread them out in one layer. Nestle the chicken skin side up in the gaps, leaving a little space around each piece; if anything overlaps, use a second tray.",
+      "ja": "天板の上でかぼちゃと玉ねぎにサラダ油と塩ひとつまみをからめ、重ならないように広げます。すき間に鶏肉を皮目を上にして置き、それぞれ少し間をあけます。重なってしまう場合は天板を2枚に分けてください。" },
+    { "en": "Roast on the middle shelf for 25 minutes, until the chicken skin is golden and the kabocha is starting to soften. If you are using two trays, swap them over after 12 minutes.",
+      "ja": "オーブンの中段で25分焼きます。鶏の皮がきつね色になり、かぼちゃが少しやわらかくなってくればOK。天板2枚の場合は、12分ほどで上下を入れ替えます。", "timer": 25 },
+    { "en": "Meanwhile, stir all the glaze ingredients together in a small bowl until smooth and glossy, and toss the shiitake in 1 tbsp of it.",
+      "ja": "焼いている間に、味噌だれの材料を小さなボウルでなめらかになるまで混ぜ、しいたけに大さじ1をからめておきます。" },
+    { "en": "Take out the tray and brush the rest of the glaze over the chicken skin and the cut faces of the kabocha. Add the shiitake and roast for another 10 minutes, until the glaze bubbles and browns in spots. If it darkens too fast, move the tray down a shelf.",
+      "ja": "天板を取り出し、残りの味噌だれを鶏の皮目とかぼちゃの切り口に塗ります。しいたけを加え、さらに10分、たれがふつふつとして所々こんがりするまで焼きます。焦げそうなら天板を一段下げてください。", "timer": 10 },
+    { "en": "Check the chicken: it should read 75°C (167°F) in the thickest part, or the juices should run clear when pierced. If not, give it 3–5 minutes more, covered loosely with foil if the glaze is already dark. Let it rest on the tray for 5 minutes.",
+      "ja": "鶏肉の一番厚い部分が75℃になっているか、竹串を刺して透明な肉汁が出るか確認します。まだなら3〜5分追加で焼きます（たれが焦げそうならアルミホイルをふんわりかぶせて）。焼き上がったら天板のまま5分休ませます。", "timer": 5 },
+    { "en": "Scatter over the green onion and sesame seeds. Serve with rice, spooning the juices from the tray over the top, and put the shichimi on the table.",
+      "ja": "小ねぎと白いりごまを散らします。ごはんを添え、天板に残った焼き汁をかけていただきます。七味はお好みでどうぞ。" }
+  ],
+  "nutrition": { "calories": 610, "carbs": 38, "protein": 38, "fat": 34, "satFat": 9, "cholesterol": 180, "sodium": 1080, "fiber": 5, "sugar": 16 },
+  "comments": [
+    { "name": { "en": "Emma (Bristol)", "ja": "Emma（ブリストル）" }, "date": "2026-09-30", "stars": 5,
+      "en": "I can't get kabocha here so I used butternut squash, and my fan oven at 200°C. The timing was spot on. The kids ate the shiitake without even noticing!",
+      "ja": "こちらではかぼちゃが手に入らないので、バターナッツかぼちゃで作りました。ファン付きオーブンで200℃、時間もぴったりでした。子どもたちはしいたけに気づかずに食べていました！" },
+    { "name": { "en": "Yū's mum", "ja": "ゆうママ" }, "date": "2026-09-21", "stars": 5,
+      "en": "A lifesaver on club-activity days, and the leftovers went into my husband's bento. Question: could I marinate the chicken in the glaze overnight to save time in the evening?",
+      "ja": "部活の日の救世主です。残りは夫のお弁当に入れました。質問です。夜の手間を減らしたいので、前の晩から鶏肉をたれに漬けておいてもいいですか？",
+      "reply": { "en": "Yes! Marinate it in half the glaze for up to a day, but wipe most of it off before roasting, or it will burn in the first 25 minutes. Then brush on the other half for the last 10 minutes as usual. The meat comes out even more flavourful.",
+        "ja": "大丈夫です！たれの半量に最長1日漬けておけます。ただし焼く前にたれをしっかりぬぐってください。そのままだと最初の25分で焦げてしまいます。残りの半量はいつも通り最後の10分で塗ればOK。お肉にしっかり味がしみますよ。" } },
+    { "name": { "en": "Mark T. (Ohio)", "ja": "Mark T.（オハイオ）" }, "date": "2026-09-04", "stars": 4,
+      "en": "Great flavour, but the glaze burned in a few spots at the end. My oven runs hot, so that's probably on me.",
+      "ja": "味はとてもいいのですが、最後にたれが何か所か焦げてしまいました。うちのオーブンは温度が高めなので、たぶんそのせいです。",
+      "reply": { "en": "Thanks, Mark! Ovens vary a lot. An oven thermometer is cheap and tells you the truth. Until then, put the tray one shelf lower after glazing and peek at 7 minutes.",
+        "ja": "Markさん、ありがとうございます！オーブンはけっこう個体差があります。オーブン用温度計は安価なので、ひとつあると実際の温度がわかって便利です。それまでは、たれを塗ったあと天板を一段下げて、7分ほどで一度のぞいてみてください。" } },
+    { "name": { "en": "K. in Harukawa", "ja": "春川在住のK" }, "date": "2026-08-17", "stars": null,
+      "en": "Can I use chicken breast instead? My family prefers it.",
+      "ja": "むね肉でも作れますか？家族がむね肉派なので。",
+      "reply": { "en": "You can. Cut it into 4 cm chunks and rub them with ½ tsp sugar along with the salt (it keeps breast meat juicy). Put the vegetables in first and add the chicken after 10 minutes, then glaze as usual. Check for 75°C; breast dries out fast once it's past that.",
+        "ja": "作れますよ。4cm角に切って、塩と一緒に砂糖小さじ1/2をもみこんでおくと、しっとり仕上がります。野菜を先に10分焼いてから鶏肉をのせ、あとはいつも通りたれを塗ってください。中心75℃を確認して、それ以上は焼きすぎないように。むね肉はすぐパサつきます。" } },
+    { "name": { "en": "Priya (Singapore)", "ja": "Priya（シンガポール）" }, "date": "2025-11-02", "stars": 5,
+      "en": "I squeezed calamansi over it at the end since I had no yuzu. So good with the miso. On the rotation now.",
+      "ja": "ゆずがなかったので、仕上げにカラマンシーを搾りました。味噌とよく合います。すっかり定番入りです。" },
+    { "name": { "en": "Minori", "ja": "みのり" }, "date": "2025-10-12", "stars": 3,
+      "en": "Too salty for us. I used the red miso I had at home.",
+      "ja": "わが家には塩辛すぎました。家にあった赤みそを使いました。",
+      "reply": { "en": "Sorry about that! Red miso varies a lot in saltiness. Use 2½ tbsp, or mix half red and half white miso, and skip the extra pinch of salt on the vegetables.",
+        "ja": "ごめんなさい！赤みそは銘柄によって塩分がかなり違います。大さじ2と1/2に減らすか、赤みそと白みそを半々にして、野菜にふる塩ひとつまみは省いてみてください。" } },
+    { "name": { "en": "Daniel (Vancouver)", "ja": "Daniel（バンクーバー）" }, "date": "2023-10-20", "stars": 5,
+      "en": "Tip for others: cut the red onion through the root end like she says. My first time I didn't, and the wedges fell apart into loose rings that burned.",
+      "ja": "皆さんへのアドバイス：紫玉ねぎは書いてある通り根元をつけたまま切ってください。初めて作ったときにそうしなかったら、ばらばらの輪になって焦げてしまいました。" }
+  ]
+}

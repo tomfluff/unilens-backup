@@ -39,6 +39,8 @@ const EN = {
     sMinimized: "Chat minimized to its header.",
     sExpanded: "Chat shown in full.",
     emptyHint: "Ask about what you clicked, or pick a quick action below.",
+    /** the same with the quick-action buttons off: there is nothing below to pick */
+    emptyHintAsk: "Ask about what you clicked.",
     placeholder: "Ask about this page…",
     send: "Send",
     micStart: "Dictate into the field",
@@ -184,6 +186,7 @@ const JA: Strings = {
     sExpanded: "チャット全体を表示しました。",
     emptyHint:
         "クリックしたところについて質問するか、下のボタンを選んでください。",
+    emptyHintAsk: "クリックしたところについて質問してください。",
     placeholder: "このページについて質問…",
     send: "送信",
     micStart: "声で入力する",

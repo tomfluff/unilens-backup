@@ -82,6 +82,7 @@ import {
     stopSpeaking,
     voiceEngine,
 } from "./speech";
+import { logEvent, studyUrl } from "./studyLog";
 import {
     assistantZoom,
     besideTarget,
@@ -161,9 +162,15 @@ function cited(m: Msg): Cited | null {
         m.streaming,
         chatText().evidenceLabel,
         chipText,
-        getSettings().associateText,
+        phrasesOn(),
+        getSettings().citePlacement,
     );
 }
+
+/** underlined words need the numbers where the model put them: only then are they
+ *  asked for and drawn */
+const phrasesOn = () =>
+    getSettings().associateText && getSettings().citePlacement === "inline";
 
 /** station signs number their sources like station codes */
 const chipText = (n: number) =>
@@ -334,6 +341,8 @@ export default function ChatPopover({
     hiddenRef.current = hidden;
     /** every action: its sound, the visible status line, and the one live region */
     const act = (kind: Earcon, text?: string) => {
+        // the study's log: every action, with what the chat said about it
+        logEvent("status", { sound: kind, text: text ?? null });
         // hidden, it makes no sound: the user closed it
         if (hiddenRef.current) return;
         earcon(kind);
@@ -419,11 +428,27 @@ export default function ChatPopover({
         phase: SpeechState;
     } | null>(null);
 
+    /** reading starts on its own (auto-read): its sound, after the answer's own, and no
+     *  status line, which still tells the answer */
+    const readCue = () =>
+        window.setTimeout(() => {
+            if (!hiddenRef.current) earcon("readOn");
+        }, 220);
+
     function readMessage(idx: number, text: string) {
-        act("press", T.sReading);
-        speak(text, (s) =>
-            setSpeaking(s === "idle" ? null : { idx, phase: s }),
-        );
+        act("readOn", T.sReading);
+        logEvent("read_aloud", {
+            action: "play",
+            msg: idx,
+            chars: text.length,
+        });
+        let last = "";
+        speak(text, (s) => {
+            if (s !== last)
+                logEvent("read_aloud", { action: `state:${s}`, msg: idx });
+            last = s;
+            setSpeaking(s === "idle" ? null : { idx, phase: s });
+        });
     }
 
     /** a message's reading controls: play, then pause / resume, and stop while it reads */
@@ -441,7 +466,8 @@ export default function ChatPopover({
                       icon: <PauseIcon />,
                       run: () => {
                           pauseSpeaking();
-                          act("press", T.sPausedReading);
+                          logEvent("read_aloud", { action: "pause", msg: idx });
+                          act("readOff", T.sPausedReading);
                       },
                   }
                 : phase === "paused"
@@ -450,7 +476,11 @@ export default function ChatPopover({
                         icon: <PlayIcon />,
                         run: () => {
                             resumeSpeaking();
-                            act("press", T.sReading);
+                            logEvent("read_aloud", {
+                                action: "resume",
+                                msg: idx,
+                            });
+                            act("readOn", T.sReading);
                         },
                     }
                   : phase === "loading"
@@ -483,7 +513,11 @@ export default function ChatPopover({
                         title={T.stopReading}
                         onClick={() => {
                             stopSpeaking();
-                            act("press", T.sStoppedReading);
+                            logEvent("read_aloud", {
+                                action: "stop",
+                                msg: idx,
+                            });
+                            act("readOff", T.sStoppedReading);
                         }}
                     >
                         <StopIcon />
@@ -598,10 +632,13 @@ export default function ChatPopover({
      *  pause or a second press; off, they stay in the field to check and send. (A
      *  first step toward live voice conversation; see the Live button.) */
     const heard = useRef("");
+    /** what the mic put in the field to check, so its sending counts as voice */
+    const voiceDraft = useRef("");
     function toggleVoice() {
         const s = getSettings();
         if (!voiceEngine(s.sttEngine)) return noVoice();
         if (listening) {
+            logEvent("mic", { action: "stop_pressed" });
             stopListenRef.current?.();
             return;
         }
@@ -620,6 +657,11 @@ export default function ChatPopover({
                 setListening(false);
                 const text = heard.current.trim();
                 heard.current = "";
+                logEvent("mic", {
+                    action: "end",
+                    stopped: Boolean(stopped),
+                    heard: text,
+                });
                 if (stopped) return act("micOff", T.sStoppedListening);
                 if (!text) {
                     if (!failed) act("error", T.sNothingHeard);
@@ -627,10 +669,11 @@ export default function ChatPopover({
                 }
                 if (auto) {
                     setInput("");
-                    submitRef.current(text);
+                    submitRef.current(text, "voice");
                     return;
                 }
                 // kept to check: the field shows it (a folded chat opens) and has the keyboard
+                voiceDraft.current = text;
                 setMini(false);
                 act("micOff", T.sHeardCheck);
                 requestAnimationFrame(() =>
@@ -647,13 +690,22 @@ export default function ChatPopover({
                     setListening("transcribing");
                     act("press", T.sTranscribing);
                 },
-                onError: () => {
+                onError: (detail) => {
                     failed = true;
+                    logEvent("error", {
+                        where: "speech-to-text",
+                        message: detail,
+                    });
                     act("error", T.sNotTranscribed);
                 },
             },
         );
         if (stop) {
+            logEvent("mic", {
+                action: "start",
+                engine: voiceEngine(s.sttEngine),
+                autoSend: auto,
+            });
             stopListenRef.current = stop;
             setListening("voice");
             act("micOn", auto ? T.sRecording : T.sListening);
@@ -688,7 +740,7 @@ export default function ChatPopover({
                 liveGen.current++;
                 liveAbort.current?.abort();
                 setLive(null);
-                act("micOff", T.sLiveEnded);
+                act("liveOff", T.sLiveEnded);
             }
             return;
         }
@@ -705,7 +757,7 @@ export default function ChatPopover({
             setLive(null);
             return sayNote(T.sNoLive);
         }
-        act("micOn", T.sLiveStarting);
+        act("liveOn", T.sLiveStarting);
         stopSpeaking();
         // the page as it is now: a chat back from a reload, or a moved view, captures
         // it first (the talk points at its elements)
@@ -857,7 +909,7 @@ export default function ChatPopover({
         const log = (id: string, role: "user" | "assistant", text: string) => {
             if (!sessionId || logged.has(id)) return;
             logged.add(id);
-            void fetch(`${backend}/api/live/log`, {
+            void fetch(studyUrl(`${backend}/api/live/log`), {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
@@ -907,7 +959,7 @@ export default function ChatPopover({
                 }
                 if (to !== on) {
                     const [page, jpeg] = await Promise.all([
-                        fetch(`${backend}/api/live/page`, {
+                        fetch(studyUrl(`${backend}/api/live/page`), {
                             method: "POST",
                             headers: {
                                 "Content-Type": "application/json",
@@ -1120,7 +1172,7 @@ export default function ChatPopover({
                                 ),
                         );
                         if (error) sayNote(T.sLiveLost);
-                        else act("micOff", T.sLiveEnded);
+                        else act("liveOff", T.sLiveEnded);
                     },
                 },
             );
@@ -1142,9 +1194,12 @@ export default function ChatPopover({
     // biome-ignore lint/correctness/useExhaustiveDependencies: seeds once, on mount
     useEffect(() => {
         if (!sessionId || captureId === "local") return;
-        fetch(`${backend}/api/session/${encodeURIComponent(sessionId)}`, {
-            signal: aborter.current.signal,
-        })
+        fetch(
+            studyUrl(`${backend}/api/session/${encodeURIComponent(sessionId)}`),
+            {
+                signal: aborter.current.signal,
+            },
+        )
             .then((r) => r.json())
             .then((d) => {
                 if (!Array.isArray(d.history)) return;
@@ -1297,6 +1352,8 @@ export default function ChatPopover({
         return () => window.removeEventListener("resize", refit);
     }, [fs, style]);
 
+    /** the header was dragged, not only pressed (the study's log) */
+    const dragMoved = useRef(false);
     function onHeaderPointerDown(e: React.PointerEvent) {
         if (!settings.dragPopover) return;
         window.clearTimeout(stepAside.current);
@@ -1312,9 +1369,16 @@ export default function ChatPopover({
         });
         setPos(p);
         onMove(p);
+        dragMoved.current = true;
     }
     function onHeaderPointerUp() {
+        if (dragRef.current && dragMoved.current)
+            logEvent("chat_dragged", {
+                left: Math.round(pos.left),
+                top: Math.round(pos.top),
+            });
         dragRef.current = null;
+        dragMoved.current = false;
     }
 
     // The log follows the conversation (new bubbles, streaming text, the evidence
@@ -1481,6 +1545,15 @@ export default function ChatPopover({
         [],
     );
 
+    /** how a source was chosen, for the study's log */
+    const sourceVia = (fromText: boolean, still: boolean) =>
+        still
+            ? "live"
+            : byCommand.current
+              ? "command"
+              : fromText
+                ? "number in the answer"
+                : "controls";
     /** outline a reply's evidence (all, or item `index`), on the user's click or command */
     function point(
         m: Msg,
@@ -1507,6 +1580,12 @@ export default function ChatPopover({
             active.index === index &&
             hasHighlight()
         ) {
+            logEvent("source", {
+                msg: m.id,
+                via: sourceVia(fromText, still),
+                n: index + 1,
+                action: "off",
+            });
             clearHighlights();
             act("clear", T.sCleared);
             return false;
@@ -1531,6 +1610,7 @@ export default function ChatPopover({
         );
         const el = src.registry.get(picks[0].id);
         const where = el ? directionOf(el) : "";
+        const scrollBefore = Math.round(window.scrollY);
         // the moveToEvidence setting decides whether choosing an item moves the page;
         // "never" leaves finding it to the off-screen cues and the minimap
         const move = getSettings().moveToEvidence;
@@ -1541,13 +1621,26 @@ export default function ChatPopover({
                   }) === "moved"
                 : false;
         setReturnable(canReturn());
+        logEvent("source", {
+            msg: m.id,
+            via: sourceVia(fromText, still),
+            n: index === "all" ? "all" : index + 1,
+            labels: picks.map(({ id }) => label(id)),
+            where,
+            moved,
+            scrollBefore,
+            inAnswer: fromText,
+            byLive: still,
+        });
         // once the move settles, a chat covering the source steps aside to the nearer
         // side (a setting; a pinned chat stays), and at high zoom with no room either
         // side it folds to its header
         const shown = picks
             .map(({ id }) => src.registry.get(id))
             .filter((e): e is Element => e != null);
-        if (shown.length && !mini && !still)
+        // chatMovesAside off: the chat stays where it is, unfolded (co-design
+        // initial prototype, Yotam 2026-10-07: stepping aside is an advanced feature)
+        if (shown.length && !mini && !still && getSettings().chatMovesAside)
             stepAside.current = window.setTimeout(() => {
                 const boxes = shown.map((e) => e.getBoundingClientRect());
                 const a = {
@@ -1561,8 +1654,9 @@ export default function ChatPopover({
                 const w = Math.min(a.right, b.right) - Math.max(a.left, b.left);
                 const h = Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top);
                 if (w <= 0 || h <= 0) return;
-                const aside =
-                    getSettings().chatMovesAside && !pinnedNow.current;
+                // turned off while this waited: the chat stays
+                if (!getSettings().chatMovesAside) return;
+                const aside = !pinnedNow.current;
                 if (aside) {
                     const left = besideTarget(a, b, window.innerWidth);
                     if (left != null) {
@@ -1621,6 +1715,21 @@ export default function ChatPopover({
     ) {
         const c = cited(m);
         const src = m.cite;
+        logEvent("answer", {
+            msg: m.id,
+            question,
+            text: speakable(m.text),
+            sources: (c?.ids ?? []).map((id, i) => ({
+                n: i + 1,
+                id,
+                label: src ? labelOfWire(id, src.inventory) : id,
+            })),
+            capture: src?.id ?? null,
+            model: ask.reply?.model ?? null,
+            provider: ask.reply?.provider ?? null,
+            serverMs: ask.reply?.latencyMs ?? null,
+            ms: Date.now() - ask.at,
+        });
         // one status for the answer and what it found: two writes in a row would
         // cut the first off before a screen reader says it
         let said = chatText().sAnswer(c?.ids.length ?? 0);
@@ -1718,7 +1827,17 @@ export default function ChatPopover({
         return note;
     }
 
+    /** a command is choosing the source: point() logs it as the command's */
+    const byCommand = useRef(false);
     function runNav(cmd: NavCommand, text: string): boolean {
+        byCommand.current = true;
+        try {
+            return runNavNow(cmd, text);
+        } finally {
+            byCommand.current = false;
+        }
+    }
+    function runNavNow(cmd: NavCommand, text: string): boolean {
         if (cmd.kind === "return" || cmd.kind === "place") {
             let note: string;
             if (cmd.kind === "return") {
@@ -1730,6 +1849,7 @@ export default function ChatPopover({
                 const p = latestPlace();
                 note = p ? goPlace(p) : T.sNoPlace;
             }
+            logEvent("command", { kind: cmd.kind, text, result: note });
             setMessages((m) => [
                 ...m,
                 { id: `user-${Date.now()}`, role: "user", text },
@@ -1769,6 +1889,13 @@ export default function ChatPopover({
                 note = T.sItemNote(i + 1, n);
             }
         }
+        logEvent("command", {
+            kind: cmd.kind,
+            n: cmd.kind === "nth" ? cmd.n : undefined,
+            text,
+            result: note,
+            scrollY: Math.round(window.scrollY),
+        });
         setMessages((m) => [
             ...m,
             { id: `user-${Date.now()}`, role: "user", text },
@@ -1792,7 +1919,7 @@ export default function ChatPopover({
         sel: Selection | null,
     ) {
         const cite = citeSource(on);
-        const res = await fetch(`${backend}/api/chat/stream`, {
+        const res = await fetch(studyUrl(`${backend}/api/chat/stream`), {
             signal: aborter.current.signal,
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -1802,7 +1929,7 @@ export default function ChatPopover({
                 session_id: sessionId,
                 cite: getSettings().citeEvidence,
                 selection: sel ? { items: selectionIn(sel, on) } : undefined,
-                mark_phrases: getSettings().associateText,
+                mark_phrases: phrasesOn(),
                 assistant_zoom: getSettings().assistantZoom,
                 ai: aiChoice(),
             }),
@@ -1810,6 +1937,7 @@ export default function ChatPopover({
         if (!res.ok || !res.body) {
             const data = await res.json().catch(() => ({}));
             ask.error = data.error ?? `HTTP ${res.status}`;
+            logEvent("error", { where: "answer", message: ask.error });
             act("error", chatText().sError);
             setMessages((m) => [
                 ...m,
@@ -1847,6 +1975,7 @@ export default function ChatPopover({
                     // the backend ends the stream after an error, with no "done"
                     ended = true;
                     ask.error = data.error;
+                    logEvent("error", { where: "answer", message: data.error });
                     act("error", chatText().sError);
                     patchMsg(msgId, {
                         text: `${full}\n[error: ${data.error}]`,
@@ -1866,6 +1995,13 @@ export default function ChatPopover({
                     // live read: the user may toggle auto-read while the reply streams
                     if (getSettings().autoRead && full && !hiddenRef.current) {
                         const idx = messages.length + 1; // the assistant bubble just added
+                        logEvent("read_aloud", {
+                            action: "play",
+                            auto: true,
+                            msg: idx,
+                            chars: full.length,
+                        });
+                        readCue();
                         speak(speakable(full), (s) =>
                             setSpeaking(
                                 s === "idle" ? null : { idx, phase: s },
@@ -1878,6 +2014,7 @@ export default function ChatPopover({
         // connection dropped with neither "done" nor "error": stop hiding the tail
         if (!ended) {
             ask.error = "stream ended without a reply";
+            logEvent("error", { where: "answer", message: ask.error });
             patchMsg(msgId, { streaming: false });
         }
     }
@@ -1890,7 +2027,7 @@ export default function ChatPopover({
         sel: Selection | null,
     ) {
         const cite = citeSource(on);
-        const res = await fetch(`${backend}/api/chat`, {
+        const res = await fetch(studyUrl(`${backend}/api/chat`), {
             signal: aborter.current.signal,
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -1900,7 +2037,7 @@ export default function ChatPopover({
                 session_id: sessionId,
                 cite: getSettings().citeEvidence,
                 selection: sel ? { items: selectionIn(sel, on) } : undefined,
-                mark_phrases: getSettings().associateText,
+                mark_phrases: phrasesOn(),
                 assistant_zoom: getSettings().assistantZoom,
                 ai: aiChoice(),
             }),
@@ -1909,6 +2046,7 @@ export default function ChatPopover({
         if (data.provider != null) ask.reply = data;
         if (data.reply == null) {
             ask.error = data.error ?? `HTTP ${res.status}`;
+            logEvent("error", { where: "answer", message: ask.error });
             act("error", chatText().sError);
         }
         const reply: Msg = {
@@ -1921,8 +2059,15 @@ export default function ChatPopover({
         setMessages((m) => [...m, reply]);
         if (data.reply != null) onReplyDone(reply, text, token, ask);
         // live read: the user may toggle auto-read while the request is in flight
-        if (getSettings().autoRead && data.reply && !hiddenRef.current)
+        if (getSettings().autoRead && data.reply && !hiddenRef.current) {
+            logEvent("read_aloud", {
+                action: "play",
+                auto: true,
+                chars: data.reply.length,
+            });
+            readCue();
             speak(speakable(data.reply));
+        }
     }
 
     /** queuedId: a question that waited for a new place's capture, already in the log */
@@ -1957,7 +2102,7 @@ export default function ChatPopover({
             liveAsked.current = text;
             liveRef.current.say(text);
             if (sessionId)
-                void fetch(`${backend}/api/live/log`, {
+                void fetch(studyUrl(`${backend}/api/live/log`), {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
@@ -2029,6 +2174,7 @@ export default function ChatPopover({
             // the chat is going: its question was abandoned, not failed
             if (aborter.current.signal.aborted) return;
             if (ask) ask.error = String(err);
+            logEvent("error", { where: "chat", message: String(err) });
             act("error", T.sError);
             setMessages((m) => [
                 ...m,
@@ -2045,8 +2191,9 @@ export default function ChatPopover({
     }
 
     /** a typed or spoken message: a navigation command, or a question for the model */
-    function submit(text: string) {
+    function submit(text: string, via = "typed") {
         const nav = navCommand(text);
+        logEvent("question", { text, via, command: nav?.kind ?? null });
         if (nav && !busy && runNav(nav, text)) return;
         sendText(text);
     }
@@ -2060,7 +2207,12 @@ export default function ChatPopover({
         // one question waits for a new place at a time: this one stays in the field
         if (capturing && waiting.current) return;
         setInput("");
-        submit(text);
+        const draft = voiceDraft.current;
+        voiceDraft.current = "";
+        submit(
+            text,
+            !draft ? "typed" : draft === text ? "voice" : "voice, edited",
+        );
     }
 
     const QUICK: [string, string][] = [
@@ -2077,6 +2229,7 @@ export default function ChatPopover({
     };
     const goBack = () => {
         const ok = returnToPreviousView();
+        logEvent("back", { ok, scrollY: Math.round(window.scrollY) });
         setReturnable(canReturn());
         const said = ok ? T.sBack : T.sNoBack;
         act(ok ? "back" : "error", said);
@@ -2353,8 +2506,9 @@ export default function ChatPopover({
     // the status line only on the folded chat: open, the chat shows each action on the
     // control itself, and the live region speaks it
     const statusShown = mini && (Boolean(status) || speaking || listening);
-    /** what the next question is about, shown above the field (and read with it) */
-    const about = selectionNow();
+    /** what the next question is about, shown above the field (and read with it);
+     *  the aboutLine setting can hide the line, the outlines still say it */
+    const about = settings.aboutLine ? selectionNow() : null;
 
     return (
         <div
@@ -2461,7 +2615,10 @@ export default function ChatPopover({
                     className="ulc-ib"
                     aria-label={T.close}
                     title={T.close}
-                    onClick={onClose}
+                    onClick={() => {
+                        logEvent("chat_hidden");
+                        onClose();
+                    }}
                 >
                     <CloseIcon />
                 </button>
@@ -2481,7 +2638,13 @@ export default function ChatPopover({
                     }}
                 >
                     {rows}
-                    {!talked && <p className="ulc-empty">{T.emptyHint}</p>}
+                    {!talked && (
+                        <p className="ulc-empty">
+                            {settings.quickActions
+                                ? T.emptyHint
+                                : T.emptyHintAsk}
+                        </p>
+                    )}
                 </div>
             )}
 
@@ -2491,7 +2654,14 @@ export default function ChatPopover({
                         <button
                             type="button"
                             key={label}
-                            onClick={() => sendText(prompt)}
+                            onClick={() => {
+                                logEvent("question", {
+                                    text: prompt,
+                                    via: "quick action",
+                                    command: null,
+                                });
+                                sendText(prompt);
+                            }}
                             disabled={busy}
                         >
                             {label}
@@ -2569,7 +2739,8 @@ export default function ChatPopover({
             {!mini && (
                 <div className="ulc-in">
                     {voiceOK && voiceButton("ulc-ib")}
-                    {liveButton}
+                    {/* a talk already going keeps its stop, whatever the setting */}
+                    {(settings.liveTalk || live) && liveButton}
                     <input
                         ref={inputRef}
                         aria-describedby={about ? aboutId : undefined}

@@ -1,0 +1,26 @@
+title: Kagami Bridge
+short: Road bridge over the Kagami River in central Harukawa
+type: stub
+categories: bridges; harukawa; rivers
+infobox: Kagami Bridge
+ib-subtitle: 鏡橋
+ib-image: river-01.jpg | The Kagami River in central Harukawa, with Kagami Bridge and the castle keep in the distance
+ib: Crosses | [[kagami-river|Kagami River]]
+ib: Locale | [[harukawa|Harukawa]], [[minori-prefecture|Minori Prefecture]]
+ib: Design | Nine-span reinforced concrete arch
+ib: Total length | 386 m
+ib: Width | 22 m (since 1978)
+ib: Opened | 20 March 1932
+---
+'''Kagami Bridge''' (鏡橋, ''Kagami-bashi'') is a road bridge over the [[kagami-river|Kagami River]] in central [[harukawa|Harukawa]], [[minori-prefecture|Minori Prefecture]]. It is a nine-span reinforced concrete arch bridge, 386 m long, and links the Gofukumachi district on the east bank with the districts on the west bank. Of the three bridges in the city center it is the middle one, between the Sagimai Bridge upstream and the Shiomi Bridge downstream.<ref name="bridges">Minori Prefecture Road Division (2012). ''Bridges of Minori Prefecture''. Minori Prefecture, pp. 41–43.</ref>
+
+The bridge opened on 20 March 1932, replacing a wooden bridge of 1879. It survived the air raid of 29 July 1945 with minor damage and was widened from 14 m to 22 m in 1978, when the roadway was given four lanes.<ref name="nippo1978">"Kagami Bridge reopens at full width". ''Harukawa Nippō'', 2 December 1978, p. 3.</ref>
+
+During the [[harukawa-lantern-festival|Harukawa Lantern Festival]] on the second weekend of October, about 12,000 floating lanterns are released on the Saturday evening just downstream of the bridge and drift 1.4 km to the Shiomi Bridge, where nets collect them. The bridge, with the keep of [[harukawa-castle|Harukawa Castle]] behind it, is one of the most photographed views of the city.
+
+== See also ==
+* [[kagami|Kagami (disambiguation)]]
+* [[kagami-river|Kagami River]]
+
+== References ==
+{{reflist}}

@@ -4,7 +4,11 @@
  * UI lives in SettingsPanel.tsx.
  */
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import {
+    createJSONStorage,
+    persist,
+    type StateStorage,
+} from "zustand/middleware";
 import {
     BACKDROPS,
     type Backdrop,
@@ -34,10 +38,13 @@ export interface Settings {
     restoreAfterReload: boolean;
     autoRead: boolean;
     voiceInput: boolean;
+    /** the Live button: a spoken conversation with the assistant */
+    liveTalk: boolean;
     /** the mic sends what was heard when the speaker pauses; off, it stays in the field */
     voiceAutoSend: boolean;
     hints: boolean;
-    minimap: boolean;
+    /** the minimap: never, while the page is zoomed, or always */
+    minimap: "off" | "zoomed" | "always";
     /** freeze the page and pan by transform while zoomed, instead of scrolling it */
     lensPan: boolean;
     debugView: boolean;
@@ -143,12 +150,23 @@ export interface Settings {
     sounds: boolean;
     /** answers cite the page elements they used, as numbered chips that highlight */
     citeEvidence: boolean;
-    /** a chat covering a source steps aside, to the nearer side (a pinned chat stays) */
+    /** a chat covering a chosen source steps aside, to the nearer side, or folds to
+     *  its header when there is no room (a pinned chat only folds); off, it stays */
     chatMovesAside: boolean;
+    /** the line above the field saying what the next question is about (the outlined
+     *  sources or place); hidden, they still go with the question */
+    aboutLine: boolean;
+    /** Ctrl+Shift+D shows and hides the debug view (it lists research settings) */
+    debugShortcut: boolean;
     /** the assistant zooms the page when the user asks (the chat and Live) */
     assistantZoom: boolean;
     /** underline the fewest words each source supports, joined to its number */
     associateText: boolean;
+    /** where an answer's source numbers go: where the model put them, at the end of
+     *  each sentence, or all after the answer (underlines need them in the sentence) */
+    citePlacement: "inline" | "sentence" | "end";
+    /** the settings gear on the page; hidden, Ctrl+Alt+Shift+S still opens settings */
+    settingsButton: boolean;
     /** AI settings (research): the backend checks each choice against its catalogue */
     aiProvider: "auto" | "openai" | "gemini";
     /** a model id from the backend's catalogue; "" = the provider's default */
@@ -210,9 +228,10 @@ const DEFAULTS: Settings = {
     restoreAfterReload: true,
     autoRead: false,
     voiceInput: false,
+    liveTalk: true,
     voiceAutoSend: true,
     hints: false,
-    minimap: true,
+    minimap: "zoomed",
     lensPan: false,
     debugView: false,
     captureRes: 1,
@@ -272,8 +291,12 @@ const DEFAULTS: Settings = {
     sounds: true,
     citeEvidence: true,
     chatMovesAside: true,
+    aboutLine: true,
+    debugShortcut: true,
     assistantZoom: true,
     associateText: false,
+    citePlacement: "inline",
+    settingsButton: true,
     aiProvider: "auto",
     aiModel: "",
     aiReasoning: "default",
@@ -319,9 +342,9 @@ export const TOGGLE_LABELS: Record<BoolSettingKey, string> = {
     restoreAfterReload: "Keep the conversation across reloads",
     autoRead: "Read replies aloud",
     voiceInput: "Voice input (mic)",
+    liveTalk: "Live conversation button",
     voiceAutoSend: "Send what I say when I pause",
     hints: "Proactive help hints",
-    minimap: "Show the minimap while zoomed",
     lensPan: "Lens panning (freeze page while zoomed)",
     debugView: "Debug view (ctrl+shift+D)",
     inventory: "Send page inventory with captures",
@@ -335,9 +358,12 @@ export const TOGGLE_LABELS: Record<BoolSettingKey, string> = {
     mmNumbers: "Numbers on targets",
     citeEvidence: "Answers cite page elements",
     chatMovesAside: "Move the chat out of the way of sources",
+    aboutLine: "Show what the next question is about, above the field",
+    debugShortcut: "Ctrl+Shift+D opens the debug view",
     assistantZoom: "The assistant can zoom the page when asked",
     associateText:
         "Associate response text (underline what each source supports)",
+    settingsButton: "Settings button (hidden: Ctrl+Alt+Shift+S opens settings)",
     sounds: "A sound for every action",
     refreshView: "Send my new view with follow-ups",
     fxCore: "Orb: glossy core",
@@ -531,6 +557,10 @@ export const ENUM_CHOICES = {
             instant: "Instant",
         },
     },
+    minimap: {
+        label: "Minimap",
+        choices: { off: "Off", zoomed: "While zoomed", always: "Always" },
+    },
     mmOutline: { label: "Outline", choices: OUTLINES },
     mmBackdrop: { label: "Backdrop", choices: BACKDROPS },
     moveToEvidence: {
@@ -542,6 +572,14 @@ export const ENUM_CHOICES = {
         },
     },
     autoHighlight: { label: "Auto-highlight", choices: AUTO_HIGHLIGHTS },
+    citePlacement: {
+        label: "Where the source numbers go",
+        choices: {
+            inline: "In the sentence, after the words",
+            sentence: "At the end of each sentence",
+            end: "After the whole answer",
+        },
+    },
     aiProvider: {
         label: "Provider",
         choices: {
@@ -619,11 +657,224 @@ export const SELECT_CHOICES = {
 } satisfies Partial<Record<NumSettingKey, { value: number; label: string }[]>>;
 export type SelectKnobKey = keyof typeof SELECT_CHOICES;
 
+/** one group of a settings tab: the controls shown, then the rarer ones behind a
+ *  disclosure; its title is in settingsText.ts */
+export interface PanelGroup {
+    id: string;
+    first: (keyof Settings)[];
+    more: (keyof Settings)[];
+}
+export type PanelTabId =
+    | "general"
+    | "look"
+    | "conversation"
+    | "zoom"
+    | "voice"
+    | "ai"
+    | "advanced";
+
 /**
- * The settings panel, in groups a person looks for ("where is the glow?"): each
- * group holds everything about one thing, whatever kind of control it is. Every
- * toggle, choice and number appears in exactly one group (settings.test.ts).
+ * The settings panel, by the area a setting belongs to (Yotam, 2026-10-03: no
+ * separate "Study" tab). Each group shows its first controls and folds the rest.
+ * Every toggle, choice and number appears in exactly one group (settings.test.ts).
  */
+export const PANEL_TABS: { id: PanelTabId; groups: PanelGroup[] }[] = [
+    {
+        id: "general",
+        groups: [
+            {
+                id: "chat",
+                first: [
+                    "chatStyle",
+                    "chatLanguage",
+                    "chatFontSize",
+                    "chatTextScale",
+                    "highContrast",
+                ],
+                more: ["dragPopover", "hints", "escapeOrder", "settingsButton"],
+            },
+        ],
+    },
+    {
+        id: "look",
+        groups: [
+            {
+                id: "highlight",
+                first: ["hlColor", "hlOutline", "hlBackdrop"],
+                more: [
+                    "hlFill",
+                    "hlGlow",
+                    "hlBadges",
+                    "ringWidth",
+                    "ringScale",
+                ],
+            },
+            {
+                id: "cues",
+                first: ["offscreenCue"],
+                more: ["cueSize", "cueRadius"],
+            },
+            {
+                id: "clickFeedback",
+                first: ["clickFx"],
+                more: [
+                    "fxEnding",
+                    "fxSize",
+                    "fxSpeed",
+                    "fxRipple",
+                    "fxRippleLook",
+                    "fxHalo",
+                    "fxSwirl",
+                    "fxCore",
+                    "fxDot",
+                    "fxSoftness",
+                    "fxThirdTone",
+                    "fxRings",
+                    "fxRingStyle",
+                    "fxFrameShape",
+                    "fxSheen",
+                    "fxHug",
+                    "fxEdgeWidth",
+                    "fxEdgeGradient",
+                    "fxPin",
+                ],
+            },
+            { id: "movement", first: ["motion"], more: ["motionMs"] },
+        ],
+    },
+    {
+        id: "conversation",
+        groups: [
+            {
+                id: "conversation",
+                first: [
+                    "quickActions",
+                    "continuity",
+                    "restoreAfterReload",
+                    "autoHighlight",
+                    "moveToEvidence",
+                ],
+                more: [
+                    "streamReplies",
+                    "citeEvidence",
+                    "citePlacement",
+                    "associateText",
+                    "chatMovesAside",
+                    "aboutLine",
+                    "regionSelect",
+                    "elementContext",
+                    "refreshView",
+                ],
+            },
+        ],
+    },
+    {
+        id: "zoom",
+        groups: [
+            {
+                id: "zoom",
+                first: ["zoom", "zoomKeys"],
+                more: ["smoothZoom", "smartZoom", "lensPan", "assistantZoom"],
+            },
+            {
+                id: "minimap",
+                first: ["minimap"],
+                more: [
+                    "mmFollowHighlight",
+                    "mmOutline",
+                    "mmBackdrop",
+                    "mmFill",
+                    "mmGlow",
+                    "mmNumbers",
+                    "minimapMarkerSize",
+                ],
+            },
+        ],
+    },
+    {
+        id: "voice",
+        groups: [
+            {
+                id: "voiceSound",
+                first: ["voiceInput", "liveTalk", "autoRead", "sounds"],
+                more: ["voiceAutoSend", "ttsVoice"],
+            },
+            {
+                id: "live",
+                first: [],
+                more: [
+                    "liveTurnEnd",
+                    "liveBargeIn",
+                    "livePoint",
+                    "liveScreenshot",
+                    "liveCaptions",
+                    "liveSpeed",
+                ],
+            },
+        ],
+    },
+    {
+        id: "ai",
+        groups: [
+            {
+                id: "models",
+                first: ["aiProvider", "aiModel", "aiReasoning"],
+                more: [],
+            },
+            {
+                id: "speech",
+                first: ["ttsProvider", "ttsModel", "sttEngine", "sttModel"],
+                more: [],
+            },
+            {
+                id: "liveModels",
+                first: ["liveProvider", "liveModel", "liveVoice"],
+                more: [],
+            },
+        ],
+    },
+    {
+        id: "advanced",
+        groups: [
+            {
+                id: "capture",
+                first: [
+                    "mouseTrace",
+                    "trailColor",
+                    "zoomTrace",
+                    "viewportCrop",
+                    "captureRes",
+                ],
+                more: [],
+            },
+            {
+                id: "inventory",
+                first: ["inventory"],
+                more: [
+                    "inventoryMaxDepth",
+                    "inventorySummaryDepth",
+                    "inventorySummaryCap",
+                    "inventoryMaxBytes",
+                    "inventoryMaxNodes",
+                ],
+            },
+            {
+                id: "diagnostics",
+                first: ["debugView", "debugShortcut"],
+                more: [],
+            },
+        ],
+    },
+];
+
+/** a setting's starting value: the preset's while one is on (presets.ts), else the
+ *  shipped one. What "Reset this tab" restores, and what "changed" means */
+export function defaultOf<K extends keyof Settings>(key: K): Settings[K] {
+    return preset && Object.hasOwn(preset.values, key)
+        ? (preset.values[key] as Settings[K])
+        : DEFAULTS[key];
+}
+
 /** settings whose choices come from the backend's catalogue (/api/ai), not a table here */
 export const CATALOGUE_KEYS = [
     "aiModel",
@@ -634,164 +885,19 @@ export const CATALOGUE_KEYS = [
     "liveVoice",
 ] as const;
 
-export const PANEL_SECTIONS: {
-    title: string;
-    open?: boolean;
-    keys: (keyof Settings)[];
-}[] = [
-    {
-        title: "Chat",
-        open: true,
-        keys: [
-            "chatStyle",
-            "chatLanguage",
-            "chatFontSize",
-            "chatTextScale",
-            "highContrast",
-            "sounds",
-            "quickActions",
-            "voiceInput",
-            "voiceAutoSend",
-            "autoRead",
-            "streamReplies",
-            "dragPopover",
-            "continuity",
-            "restoreAfterReload",
-            "escapeOrder",
-        ],
-    },
-    {
-        title: "Answers and sources",
-        keys: [
-            "citeEvidence",
-            "associateText",
-            "autoHighlight",
-            "moveToEvidence",
-            "chatMovesAside",
-            "assistantZoom",
-            "refreshView",
-        ],
-    },
-    {
-        title: "Highlight look",
-        open: true,
-        keys: [
-            "hlOutline",
-            "hlBackdrop",
-            "hlColor",
-            "hlFill",
-            "hlGlow",
-            "hlBadges",
-            "ringWidth",
-            "ringScale",
-        ],
-    },
-    {
-        title: "Off-screen arrows",
-        keys: ["offscreenCue", "cueSize", "cueRadius"],
-    },
-    { title: "Movement", keys: ["motion", "motionMs"] },
-    {
-        title: "Minimap",
-        keys: [
-            "minimap",
-            "mmFollowHighlight",
-            "mmOutline",
-            "mmBackdrop",
-            "mmFill",
-            "mmGlow",
-            "mmNumbers",
-            "minimapMarkerSize",
-        ],
-    },
-    {
-        title: "Page zoom",
-        keys: ["zoom", "zoomKeys", "smoothZoom", "smartZoom", "lensPan"],
-    },
-    { title: "Asking", keys: ["regionSelect", "elementContext", "hints"] },
-    {
-        title: "Waiting at the click",
-        keys: [
-            "clickFx",
-            "fxEnding",
-            "fxSize",
-            "fxSpeed",
-            "fxRipple",
-            "fxRippleLook",
-            "fxHalo",
-            "fxSwirl",
-            "fxCore",
-            "fxDot",
-            "fxSoftness",
-            "fxThirdTone",
-            "fxRings",
-            "fxRingStyle",
-            "fxFrameShape",
-            "fxSheen",
-            "fxHug",
-            "fxEdgeWidth",
-            "fxEdgeGradient",
-            "fxPin",
-        ],
-    },
-    {
-        title: "AI (research)",
-        keys: [
-            "aiProvider",
-            "aiModel",
-            "aiReasoning",
-            "ttsProvider",
-            "ttsModel",
-            "ttsVoice",
-            "sttEngine",
-            "sttModel",
-        ],
-    },
-    {
-        title: "Live interaction",
-        keys: [
-            "liveProvider",
-            "liveModel",
-            "liveVoice",
-            "liveTurnEnd",
-            "liveBargeIn",
-            "livePoint",
-            "liveScreenshot",
-            "liveCaptions",
-            "liveSpeed",
-        ],
-    },
-    {
-        title: "Capture and research",
-        keys: [
-            "mouseTrace",
-            "trailColor",
-            "zoomTrace",
-            "viewportCrop",
-            "captureRes",
-            "inventory",
-            "inventoryMaxDepth",
-            "inventorySummaryDepth",
-            "inventorySummaryCap",
-            "inventoryMaxBytes",
-            "inventoryMaxNodes",
-            "debugView",
-        ],
-    },
-];
-
 /**
  * Persisted values can be stale, out of range or the wrong type (an old build, a
  * hand-edited localStorage). Dispatch is by key: numeric knobs coerce with Number()
  * and clamp into their NUMBER_KNOBS bounds (or must be one of their SELECT_CHOICES),
  * enums must be a table key, booleans must be booleans; anything else falls back to
- * the default. pinnedPos and debugPanel pass through: their consumers validate them.
+ * the default (the preset's, while one is on). pinnedPos and debugPanel pass through: their consumers validate them.
  */
 export function clampSetting<K extends keyof Settings>(
     key: K,
     value: unknown,
 ): Settings[K] {
-    const fallback = DEFAULTS[key];
+    // the preset's value while one is on: a bad value never undoes the preset
+    const fallback = defaultOf(key);
     if (Object.hasOwn(NUMBER_KNOBS, key)) {
         const n = Number(value);
         if (!Number.isFinite(n)) return fallback;
@@ -840,15 +946,104 @@ function mergePersisted(persisted: unknown, current: Settings): Settings {
     }
     if (!Object.hasOwn(stored, "mmBackdrop") && stored.mmDim === true)
         next.mmBackdrop = "dim";
+    // and the minimap as a switch (on: while zoomed)
+    if (typeof stored.minimap === "boolean")
+        next.minimap = stored.minimap ? "zoomed" : "off";
     return next;
+}
+
+/** the preset in effect (presets.ts), or null: set once, at init, before anything
+ *  reads the settings */
+let preset: { id: string; name: string; values: Partial<Settings> } | null =
+    null;
+export const activePreset = (): { id: string; name: string } | null =>
+    preset && { id: preset.id, name: preset.name };
+
+const STORE_NAME = "unilens-settings";
+/**
+ * Where the settings are kept. Normally the site's localStorage. While a preset is
+ * on, this tab's sessionStorage under the preset's own key, and only the values that
+ * differ from the preset: every page load starts from the preset whatever
+ * localStorage holds, a change made in the panel lasts until the tab closes, and the
+ * user's own settings in localStorage are left as they were.
+ */
+const settingsStorage: StateStorage = {
+    getItem: (name) => {
+        try {
+            return preset
+                ? sessionStorage.getItem(`${name}:${preset.id}`)
+                : localStorage.getItem(name);
+        } catch {
+            return null;
+        }
+    },
+    setItem: (name, value) => {
+        try {
+            if (preset) sessionStorage.setItem(`${name}:${preset.id}`, value);
+            else localStorage.setItem(name, value);
+        } catch {
+            // storage blocked or full: the settings still apply for this page
+        }
+    },
+    removeItem: (name) => {
+        try {
+            if (preset) sessionStorage.removeItem(`${name}:${preset.id}`);
+            else localStorage.removeItem(name);
+        } catch {
+            // as above
+        }
+    },
+};
+
+/** what is written: everything, or under a preset only what differs from it */
+function partialize(s: Settings): Partial<Settings> {
+    if (!preset) return s;
+    const base = { ...DEFAULTS, ...preset.values };
+    return Object.fromEntries(
+        (Object.keys(DEFAULTS) as (keyof Settings)[])
+            .filter((k) => JSON.stringify(s[k]) !== JSON.stringify(base[k]))
+            .map((k) => [k, s[k]]),
+    );
 }
 
 export const useSettings = create<Settings>()(
     persist(() => ({ ...DEFAULTS }), {
-        name: "unilens-settings",
+        name: STORE_NAME,
+        storage: createJSONStorage(() => settingsStorage),
         merge: mergePersisted,
+        partialize,
     }),
 );
+
+/**
+ * Put a preset in effect for this page (presets.ts decides which): the settings
+ * become the defaults plus its values, plus what was changed in this tab while it
+ * was on. Called once, at init.
+ */
+export function startPreset(
+    id: string,
+    name: string,
+    values: Partial<Settings>,
+) {
+    preset = { id, name, values };
+    let stored: unknown;
+    try {
+        stored = JSON.parse(
+            settingsStorage.getItem(STORE_NAME) as string,
+        )?.state;
+    } catch {
+        stored = undefined;
+    }
+    useSettings.setState(
+        mergePersisted(stored, { ...DEFAULTS, ...values } as Settings),
+    );
+}
+
+/** back to the preset's own values: what was changed in this tab while it is on is
+ *  forgotten (the next participant) */
+export function clearPresetChanges() {
+    if (preset) useSettings.setState({ ...DEFAULTS, ...preset.values });
+}
 
 /** live snapshot for non-React modules (React components use the useSettings hook) */
 export const getSettings = () => useSettings.getState();

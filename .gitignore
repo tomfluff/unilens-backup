@@ -5,6 +5,7 @@ frontend/**/unilens.js
 backend/.venv/
 backend/captures/
 backend/sessions/
+backend/study-logs/
 backend/.env
 *.log
 *.bkp

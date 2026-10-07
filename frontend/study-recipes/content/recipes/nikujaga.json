@@ -1,0 +1,220 @@
+{
+  "slug": "nikujaga",
+  "categories": ["japanese"],
+  "cuisine": "japanese",
+  "diet": ["dairy-free"],
+  "difficulty": "easy",
+  "course": "main",
+  "times": { "prep": 15, "cook": 30 },
+  "servings": 4,
+  "image": "nikujaga",
+  "rating": 4.8,
+  "ratings": 412,
+  "published": "2021-10-14",
+  "updated": "2026-09-20",
+  "related": ["saba-misoni", "kinoko-takikomi-gohan", "beef-stew", "ginger-pork"],
+  "en": {
+    "title": "Nikujaga (Japanese Meat and Potato Stew)",
+    "teaser": "My grandmother's sweet-salty beef and potato stew, simmered under a drop lid in dashi. One pot, 45 minutes, and even better the next day.",
+    "intro": [
+      "The first evening in October that I need a cardigan in the kitchen, I make nikujaga. It's practically a law in our house. This year it was last Tuesday: the cicadas have finally gone quiet, the yuzu at the greengrocer by Harukawa Central have started turning from green to yellow, and Sota came home from soccer practice and asked, before he'd even taken his shoes off, “Is it potato stew weather yet?” It was.",
+      "Nikujaga (肉じゃが) simply means “meat and potatoes”, and every Japanese family makes it a little differently. Mine comes from my grandmother Fumi, who ran a small inn in Tsukimi Onsen. She served it to hikers coming down from Mount Tsukimi in a big Harukawa-ware bowl and left the pot on the stove for seconds. I've changed exactly one thing: I add the snow peas at the end instead of simmering them grey. Sorry, Grandma.",
+      { "h": "Why you'll love it" },
+      { "ul": [
+        "One pot, about 45 minutes from cutting board to table, and most of that is gentle simmering.",
+        "Sweet, salty and deeply comforting; Hana has eaten it since she had teeth.",
+        "It is genuinely better the next day, so it's perfect for making ahead."
+      ] },
+      { "h": "Choosing the potatoes" },
+      "This decision changes the dish most. <strong>May Queen</strong> (メークイン) potatoes are long and waxy and hold their shape. <strong>Danshaku</strong> (男爵) are round and floury: their edges crumble into the sauce and thicken it, which is how Fumi liked it. I use Danshaku at home and May Queen when I take nikujaga to a potluck. Outside Japan, Yukon Gold or Charlotte behave like May Queen, and Russets like Danshaku. Cut them large, about 4 cm, and soak them in water for 5 minutes so the surface starch doesn't cloud the sauce.",
+      { "h": "Beef or pork?" },
+      "Western Japan uses beef and eastern Japan uses pork; Harukawa sits in the middle and argues about it at every PTA dinner. I use thinly sliced beef chuck sold as <em>sukiyaki</em> cut, or cheaper offcuts (切り落とし). Thinly sliced pork belly or shoulder is just as good and a little richer.",
+      { "h": "Tips for success" },
+      "<strong>Sugar goes in before the soy sauce.</strong> Sugar soaks in slowly, while salt tightens the surface, so if the soy sauce goes in first the potatoes never get properly sweet. <strong>Use a drop lid</strong> (otoshibuta), or a circle of baking paper with a small hole in the middle: it bastes everything with only 400 ml of liquid and stops the potatoes tumbling and breaking. <strong>Keep the shirataki away from the beef</strong>, because the calcium in konnyaku can toughen the meat. And once the liquid is in, <strong>don't stir</strong>; shake the pot instead.",
+      "The real secret is cooling. The flavour soaks into the potatoes as they cool, not while they bubble, so if you have time, turn off the heat, leave it for 30 minutes and warm it up just before dinner. Homemade <a href=\"{{guide:dashi}}\">dashi</a> makes a difference, but instant granules are fine on a weeknight. If you love simmered dishes, try my <a href=\"{{recipe:saba-misoni}}\">mackerel simmered in miso</a> next, with a bowl of <a href=\"{{recipe:kinoko-takikomi-gohan}}\">autumn mushroom rice</a>."
+    ],
+    "equipment": [
+      "Medium pot (about 22 cm) with a lid",
+      "Otoshibuta (drop lid) or a circle of baking paper with a small hole cut in the centre",
+      "Small saucepan for blanching the shirataki and snow peas",
+      "Bamboo skewer for testing the potatoes",
+      "Ladle or fine skimmer for the scum"
+    ],
+    "notes": [
+      "The potatoes are done when a bamboo skewer slides into the thickest piece with no resistance and the liquid has reduced to about a third of the original depth.",
+      "New-crop potatoes in autumn are extra fluffy and cook faster; start checking 10 minutes after adding the soy sauce.",
+      "For a lighter taste, use 2½ tbsp soy sauce and add the last ½ tbsp only if it needs it after tasting at the end.",
+      "If you prefer more sauce for spooning over rice, add 100 ml extra dashi and leave the drop lid on until the end.",
+      "Snow peas go in at the very end so they stay bright green. Green beans (blanched 2 minutes) work too."
+    ],
+    "subs": [
+      ["Beef", "Thinly sliced pork belly or shoulder, same amount"],
+      ["Mirin", "1 tbsp sake + 1 tsp sugar for each tbsp of mirin (alcohol-free: 1 tbsp water + 1 tsp sugar)"],
+      ["Sake", "Dry sherry or dry white wine, or water for no alcohol"],
+      ["Dashi", "Instant dashi granules: about 1⅓ tsp dissolved in 400 ml hot water"],
+      ["Shirataki", "Leave it out, or add a small handful of dried glass noodles (harusame) for the last 5 minutes"]
+    ],
+    "makeAhead": "Make the whole stew the day before up to the end of step 7, cool it in the pot and refrigerate it. Reheat gently over medium-low heat with the lid on, and blanch the snow peas fresh just before serving.",
+    "storage": "Keeps for 3 days in an airtight container in the fridge. You can freeze it for up to a month, but take the potatoes and shirataki out first: frozen potatoes turn spongy and grainy, and shirataki goes rubbery. Add freshly boiled potatoes when you reheat it."
+  },
+  "ja": {
+    "title": "肉じゃが",
+    "teaser": "祖母から受け継いだ、甘辛い牛肉とじゃがいもの煮物。落としぶたでだしを含ませて、鍋ひとつで約45分。翌日はもっとおいしくなります。",
+    "intro": [
+      "朝晩がひんやりして、台所でカーディガンを羽織りたくなる10月最初の夜。わが家ではその日に肉じゃがを作るのがお約束です。今年は先週の火曜日でした。春川中央駅前の八百屋さんに並ぶゆずが緑から黄色に変わり始め、サッカーの練習から帰ってきた蒼太が、靴も脱がないうちに「もう肉じゃがの季節？」と聞いてきたのです。",
+      "肉じゃがは、どの家庭にも「うちの味」がある料理ですよね。わが家の味は、月見温泉で小さな宿を営んでいた祖母ふみから受け継いだもの。祖母は月見山から下りてきた登山客に、春川焼の大鉢でたっぷりの肉じゃがを出していました。おかわりは鍋から自由に、というのが祖母のやり方です。私が変えたのはひとつだけ。絹さやを一緒に煮込まず、最後に添えるようにしました（色がきれいなので。おばあちゃん、ごめんね）。",
+      { "h": "このレシピのおすすめポイント" },
+      { "ul": [
+        "鍋ひとつで、下ごしらえから約45分。ほとんどはコトコト煮ている時間です。",
+        "甘辛くてほっとする味。花は歯が生えたころから大好物です。",
+        "翌日のほうがおいしいので、作り置きにぴったり。"
+      ] },
+      { "h": "じゃがいもの選び方" },
+      "仕上がりをいちばん左右するのがじゃがいもです。<strong>メークイン</strong>は煮崩れしにくく、形がきれいに残ります。<strong>男爵</strong>はほくほくで、角が少し崩れて煮汁にとろみがつきます。祖母は男爵派でした。私も普段は男爵、持ち寄りの会に持っていくときはメークインを使っています。どちらも4cmくらいの大きめに切り、水に5分さらしてでんぷんを落とすと、煮汁が濁りません。",
+      { "h": "牛肉？豚肉？" },
+      "西日本は牛肉、東日本は豚肉といわれますが、春川はちょうどその間。PTAの懇親会でも毎年意見が分かれます。わが家は牛肩ロースの薄切り（すき焼き用）か、お手頃な切り落とし。豚バラや豚肩ロースの薄切りでも、コクが出ておいしく作れます。",
+      { "h": "おいしく作るコツ" },
+      "<strong>砂糖はしょうゆより先に。</strong>砂糖は染み込むのに時間がかかり、塩分は表面を引き締めてしまうので、先にしょうゆを入れると甘みが入りにくくなります。<strong>落としぶた</strong>も大切です。中央に小さな穴をあけたクッキングシートで十分。400mlの少ない煮汁でも全体に味が回り、じゃがいもが鍋の中で踊って崩れるのを防げます。<strong>しらたきは牛肉から離して</strong>入れましょう。こんにゃくに含まれるカルシウムで、肉がかたくなりやすいのです。煮汁を入れたら<strong>混ぜずに</strong>、鍋をゆするだけにします。",
+      "そして最大のコツは「冷ますこと」。味は煮ている間ではなく、冷めていくときに染み込みます。時間があれば火を止めて30分ほど置き、食べる直前に温め直してください。<a href=\"{{guide:dashi}}\">だし</a>はきちんと取るとやはり違いますが、平日は顆粒だしでも大丈夫。煮物が好きな方は<a href=\"{{recipe:saba-misoni}}\">サバの味噌煮</a>もどうぞ。<a href=\"{{recipe:kinoko-takikomi-gohan}}\">きのこの炊き込みご飯</a>と合わせれば、秋の定食の完成です。"
+    ],
+    "equipment": [
+      "中鍋（直径22cmくらい、ふた付き）",
+      "落としぶた（または中央に穴をあけたクッキングシート）",
+      "しらたきと絹さやの下ゆで用の小鍋",
+      "竹串（じゃがいもの火の通りを確かめる）",
+      "おたま、またはアク取り"
+    ],
+    "notes": [
+      "竹串がいちばん大きいじゃがいもにすっと通り、煮汁が最初の1/3ほどに減ったら煮上がりです。",
+      "秋の新じゃがはほくほくで火が通りやすいので、しょうゆを加えてから10分ほどで一度確認してください。",
+      "あっさりめが好みなら、しょうゆは大さじ2と1/2にして、最後に味見をしてから残りを足してください。",
+      "ご飯にかける煮汁を多めにしたいときは、だし汁を100ml増やし、最後まで落としぶたをしたまま煮ます。",
+      "絹さやは最後に加えると色鮮やかに仕上がります。2分ゆでたいんげんでもOKです。"
+    ],
+    "subs": [
+      ["牛肉", "豚バラ薄切り、または豚肩ロース薄切り（同量）"],
+      ["みりん", "みりん大さじ1につき、酒大さじ1＋砂糖小さじ1（アルコールなしなら水大さじ1＋砂糖小さじ1）"],
+      ["酒", "辛口のシェリーや白ワイン。アルコールを避けたいときは水"],
+      ["だし汁", "顆粒だし小さじ1と1/3を湯400mlで溶いたもの"],
+      ["しらたき", "なしでもOK。乾燥春雨をひとつかみ、最後の5分で加えても"]
+    ],
+    "makeAhead": "前日に手順7まで作り、鍋のまま粗熱を取って冷蔵庫へ。食べるときはふたをして弱めの中火でゆっくり温め直し、絹さやはその場でゆでて添えてください。",
+    "storage": "保存容器に入れて冷蔵で3日ほど。冷凍は1か月可能ですが、じゃがいもとしらたきは取り除いてください。じゃがいもはスカスカに、しらたきはゴムのような食感になります。温め直すときに、ゆでたじゃがいもを加えましょう。"
+  },
+  "ingredients": [
+    { "items": [
+      { "q": 250, "u": "g", "en": "beef, thinly sliced (chuck sukiyaki cut or offcuts), cut into 5 cm pieces", "ja": "牛薄切り肉（肩ロースまたは切り落とし）" },
+      { "q": 4, "u": "pc", "en": "potatoes, medium (about 500 g in total), peeled and cut into 4 cm pieces", "ja": "じゃがいも（中、約500g）" },
+      { "q": 1, "u": "pc", "en": "onion, cut into 8 wedges", "ja": "玉ねぎ" },
+      { "q": 1, "u": "pc", "jaU": "本", "en": "carrot, small, cut into bite-size wedges (rangiri)", "ja": "にんじん（小）" },
+      { "q": 200, "u": "g", "en": "shirataki noodles, drained", "ja": "しらたき" },
+      { "q": 8, "u": "pc", "jaU": "枚", "en": "snow peas, strings removed", "ja": "絹さや" },
+      { "q": 1, "u": "tbsp", "en": "vegetable oil", "ja": "サラダ油" }
+    ] },
+    { "group": { "en": "For simmering", "ja": "煮汁" }, "items": [
+      { "q": 400, "u": "ml", "en": "dashi", "ja": "だし汁" },
+      { "q": 3, "u": "tbsp", "en": "sake", "ja": "酒" },
+      { "q": 2, "u": "tbsp", "en": "sugar", "ja": "砂糖" },
+      { "q": 2, "u": "tbsp", "en": "mirin", "ja": "みりん" },
+      { "q": 3, "u": "tbsp", "en": "soy sauce", "ja": "しょうゆ" }
+    ] }
+  ],
+  "steps": [
+    {
+      "en": "Peel the potatoes, cut them into 4 cm pieces and soak them in a bowl of water for 5 minutes, then drain. Cut the onion into 8 wedges, the carrot into bite-size wedges, and the beef into 5 cm pieces.",
+      "ja": "じゃがいもは皮をむいて4cm大に切り、水に5分さらして水けをきります。玉ねぎはくし形に8等分、にんじんは乱切り、牛肉は5cm幅に切ります。",
+      "timer": 5
+    },
+    {
+      "en": "Bring a small saucepan of water to the boil. Blanch the snow peas for 30 seconds, lift them out and set aside. Cut the shirataki into 2 or 3 lengths with kitchen scissors, boil them in the same water for 2 minutes to remove the smell, and drain.",
+      "ja": "小鍋に湯を沸かし、絹さやを30秒ゆでて取り出します。しらたきはキッチンばさみで食べやすい長さに切り、同じ湯で2分ゆでて臭みを抜き、ざるに上げます。",
+      "timer": 2
+    },
+    {
+      "en": "Heat the oil in the pot over medium heat and fry the beef for about 1 minute, until most of the pink is gone. Add the potatoes, onion and carrot and stir for 2 minutes, until the edges of the potatoes look slightly translucent and everything is coated in oil.",
+      "ja": "鍋にサラダ油を中火で熱し、牛肉を1分ほど炒めます。色がほぼ変わったら、じゃがいも、玉ねぎ、にんじんを加え、じゃがいもの縁が少し透き通って全体に油が回るまで2分ほど炒めます。"
+    },
+    {
+      "en": "Add the shirataki on the opposite side of the pot from the beef, pour in the dashi and bring to the boil over high heat. Skim off the grey scum that rises.",
+      "ja": "しらたきを牛肉から離して加え、だし汁を注いで強火にかけます。煮立ったらアクを取ります。"
+    },
+    {
+      "en": "Add the sake, sugar and mirin, lay the drop lid directly on the food and simmer over medium-low heat for 5 minutes. The liquid should bubble gently up around the lid.",
+      "ja": "酒、砂糖、みりんを加え、落としぶたをして弱めの中火で5分煮ます。落としぶたのまわりで煮汁がふつふつと泡立つくらいの火加減です。",
+      "timer": 5
+    },
+    {
+      "en": "Add the soy sauce, put the drop lid back and simmer for another 12–15 minutes, until a skewer slides easily into the potatoes and the liquid has reduced to about a third. Don't stir; give the pot a gentle shake now and then so nothing sticks.",
+      "ja": "しょうゆを加えて再び落としぶたをし、さらに12〜15分煮ます。竹串がじゃがいもにすっと通り、煮汁が1/3ほどになれば煮上がり。混ぜずに、ときどき鍋をゆすって焦げつきを防ぎます。",
+      "timer": 15
+    },
+    {
+      "en": "Turn off the heat, remove the drop lid, cover the pot with its own lid and leave it for at least 10 minutes (30 is even better) so the potatoes soak up the sauce as they cool.",
+      "ja": "火を止めて落としぶたを外し、鍋のふたをして10分以上（できれば30分）置きます。冷めていく間にじゃがいもに味が染み込みます。",
+      "timer": 10
+    },
+    {
+      "en": "Warm through over medium-low heat if needed, then serve in bowls with some of the sauce and the snow peas on top.",
+      "ja": "必要なら弱めの中火で温め直し、煮汁ごと器に盛って絹さやを散らします。"
+    }
+  ],
+  "nutrition": { "calories": 385, "carbs": 37, "protein": 16, "fat": 17, "satFat": 6, "cholesterol": 45, "sodium": 1080, "fiber": 4, "sugar": 14 },
+  "comments": [
+    {
+      "name": { "en": "Laura (Melbourne)", "ja": "Laura（メルボルン）" }, "date": "2026-09-28", "stars": 5,
+      "en": "Made this with Yukon Golds and pork shoulder because I couldn't find sukiyaki beef. No shirataki at my local shop either, so I added a handful of glass noodles for the last 5 minutes like the notes say. My kids cleaned their bowls!",
+      "ja": "すき焼き用の牛肉が見つからなかったので、ユーコンゴールド（じゃがいも）と豚肩ロースで作りました。近所の店にしらたきもなかったので、メモにあったとおり最後の5分で春雨をひとつかみ。子どもたちが完食しました！"
+    },
+    {
+      "name": { "en": "Yu-mama", "ja": "ゆうママ" }, "date": "2026-09-21", "stars": 4,
+      "en": "Tasty, but my Danshaku potatoes fell apart completely and the whole pot turned into mash. Is that normal?",
+      "ja": "味はとてもおいしかったのですが、男爵いもが完全に崩れて、鍋の中がほぼマッシュポテトに…。こういうものでしょうか？",
+      "reply": {
+        "en": "Crumbly edges are normal with Danshaku, but not mash! Autumn new-crop potatoes are especially fluffy, so cut them a little bigger (4–5 cm), keep the heat at medium-low, shake the pot instead of stirring, and start checking with a skewer 10 minutes after the soy sauce goes in. Or switch to May Queen for this time of year.",
+        "ja": "男爵は角が崩れるのは普通ですが、マッシュまでいくと煮すぎかもしれません。秋の新じゃがは特にほくほくなので、4〜5cmと少し大きめに切り、弱めの中火で、混ぜずに鍋をゆすってください。しょうゆを入れて10分たったら竹串で確認を。この時期はメークインに替えるのもおすすめです。"
+      }
+    },
+    {
+      "name": { "en": "Mark T. (Seattle)", "ja": "Mark T.（シアトル）" }, "date": "2026-08-30", "stars": null,
+      "en": "Can I make this in an Instant Pot?",
+      "ja": "電気圧力鍋（Instant Pot）でも作れますか？",
+      "reply": {
+        "en": "Yes. Use the sauté function for step 3, then add everything except the snow peas, reduce the dashi to 300 ml (nothing evaporates under pressure) and cook on high pressure for 3 minutes with a natural release of 10 minutes. I don't recommend a slow cooker; the potatoes go too soft before the flavour is in.",
+        "ja": "作れます。手順3は炒め機能で炒め、絹さや以外をすべて入れてください。加圧中は水分が蒸発しないので、だし汁は300mlに減らします。高圧で3分、そのまま10分自然減圧。スロークッカーは、味が染みる前にじゃがいもが柔らかくなりすぎるのでおすすめしません。"
+      }
+    },
+    {
+      "name": { "en": "Harukawa Tanuki", "ja": "春川のたぬき" }, "date": "2026-07-14", "stars": 4,
+      "en": "A bit sweet for me, so next time I'll use 1½ tbsp sugar. The tip about adding sugar before the soy sauce was new to me, and the potatoes really did taste different.",
+      "ja": "私には少し甘めだったので、次回は砂糖を大さじ1と1/2にします。砂糖を先に入れるコツは知らなかったのですが、本当にじゃがいもの味が違いました。"
+    },
+    {
+      "name": { "en": "Sophie (Lyon)", "ja": "Sophie（リヨン）" }, "date": "2026-03-02", "stars": 5,
+      "en": "No sake or mirin here, so I used dry white wine for the sake and the wine-plus-sugar trick for the mirin. It still tasted like the nikujaga I had in Kyoto. The baking paper drop lid works perfectly.",
+      "ja": "酒もみりんも手に入らないので、酒は辛口の白ワインで、みりんはワイン＋砂糖で代用しました。それでも京都で食べた肉じゃがの味がしました。クッキングシートの落としぶた、完璧です。"
+    },
+    {
+      "name": { "en": "Keiko", "ja": "けいこ" }, "date": "2025-11-19", "stars": 5,
+      "en": "We always have leftovers, so I turned them into croquettes the next day. Highly recommended!",
+      "ja": "いつも残るので、翌日コロッケにしてみました。おすすめです！",
+      "reply": {
+        "en": "Our favourite second-day dinner too! Drain off the sauce well first, mash, shape into patties, chill for 15 minutes, then coat in flour, egg and panko and fry at 180°C (350°F) for about 2 minutes. If the mash is wet, they burst in the oil.",
+        "ja": "わが家も2日目の定番です！煮汁をしっかりきってからつぶし、丸めて冷蔵庫で15分冷やし、小麦粉・卵・パン粉をつけて180℃で2分ほど揚げてください。水分が多いと油の中で破裂するので注意です。"
+      }
+    },
+    {
+      "name": { "en": "David K. (Toronto)", "ja": "David K.（トロント）" }, "date": "2025-01-10", "stars": 3,
+      "en": "Mine came out a bit bland. I used water instead of dashi because I didn't have any.",
+      "ja": "少し味がぼんやりしてしまいました。だしがなかったので水で作りました。",
+      "reply": {
+        "en": "That's the reason, I'm afraid: the dashi carries most of the savoury depth. If you only have water, dissolve 1⅓ tsp instant dashi granules in it, and always taste at the end; another teaspoon of soy sauce is fine if it needs it.",
+        "ja": "原因はおそらくそこです。うまみの多くはだしから来ています。水しかないときは顆粒だし小さじ1と1/3を溶かしてください。最後に必ず味見をして、足りなければしょうゆを小さじ1足してもOKです。"
+      }
+    },
+    {
+      "name": { "en": "Mikan", "ja": "みかん" }, "date": "2023-10-22", "stars": 5,
+      "en": "I've made this every autumn since I found your blog. Letting it cool for 30 minutes is the step I used to skip, and it makes all the difference.",
+      "ja": "このブログを見つけてから毎年秋に作っています。以前は30分冷ます工程を飛ばしていましたが、そこが一番大事でした。"
+    }
+  ]
+}

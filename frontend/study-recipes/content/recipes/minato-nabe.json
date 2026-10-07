@@ -1,0 +1,263 @@
+{
+  "slug": "minato-nabe",
+  "categories": ["harukawa"],
+  "cuisine": "harukawa",
+  "diet": ["pescatarian", "dairy-free"],
+  "difficulty": "medium",
+  "course": "main",
+  "times": { "prep": 25, "cook": 40 },
+  "servings": 4,
+  "image": "minato-nabe",
+  "rating": 4.8,
+  "ratings": 186,
+  "published": "2019-11-22",
+  "updated": "2026-09-26",
+  "related": ["yuzu-kosho", "saba-misoni", "yuzu-miso-salmon", "kinoko-takikomi-gohan"],
+  "en": {
+    "title": "Minato-nabe (Harukawa Fisherman's Hot Pot with Sake Lees)",
+    "teaser": "The harbour hot pot of Minori Port: yellowtail, daikon and burdock in a creamy sake kasu and white miso broth, finished with udon or rice porridge.",
+    "intro": [
+      "Every Saturday from October to March, I set my alarm for 5:30, take an early Bayside Line train to Minori Port and walk the two minutes from the station to the morning market while the sky over Minori Bay is still pink. The boats come in around four, the auction is over by six, and when the market opens the fishmongers are already calling out prices over crates of squid, flounder and, in autumn, gleaming silver yellowtail. My first stop is always Okabe Fish, where Mr. Okabe keeps a bag of buri <em>ara</em> (the head, collars and bones) under the counter for me. It costs about 400 yen, and it is the secret to this pot.",
+      "<strong>Minato-nabe</strong> means 'harbour pot', and it was born on those piers. After the auction, the fishermen would light a fire in an oil drum, throw the fish nobody had bought into a pot with daikon and whatever vegetables were around, and stir in sake lees from the brewery up the road to keep warm in the wind off the bay. Today every Harukawa family has its own version, and the pot comes out on the first chilly weekend of autumn, usually right after the Lantern Festival. Ours is a little sweeter than the dockside original because Daisuke and the kids like white miso, and Sota insists the best part is the udon at the end.",
+      { "h": "Why you'll love it" },
+      { "ul": [
+        "One pot on the table, and everyone helps themselves.",
+        "Sake lees make the broth creamy and deeply savoury without any dairy.",
+        "The leftover broth becomes a second meal: udon or rice porridge."
+      ] },
+      { "h": "Choosing the fish" },
+      "Bone-in pieces give the richest broth, but fillets work perfectly well and are easier to eat with children. Allow 500 g of fillets or about 700 g of ara for four. In October the yellowtail are still young and lean (the market calls the smaller ones <em>warasa</em>), so I like a mix: a couple of collars for flavour and two fillets for meat. Salmon, cod or Spanish mackerel are good substitutes. Whatever you use, don't skip salting and blanching. It takes fifteen minutes and it is the difference between a clean, sweet broth and a fishy one.",
+      { "h": "About sake kasu" },
+      "Sake kasu (sake lees) is what is left after pressing sake. I buy mine from <strong>Shiomi Shuzō</strong>, a small brewery a few streets back from the port, which sells soft paste-style kasu (<em>neri-kasu</em>) all year and firm, freshly pressed sheets (<em>ita-kasu</em>) from December. Either works; sheets just need a warmer soak. Kasu still contains around 8% alcohol, and simmering removes most but not all of it, so for small children or during pregnancy, make the kasu-free version in the notes.",
+      { "h": "Tips for success" },
+      "Use a good dashi (my <a href=\"{{guide:dashi}}\">dashi guide</a> has the ratios), cut the vegetables so they cook evenly (thin <em>sasagaki</em> shavings for the burdock, see my <a href=\"{{guide:knife-cuts}}\">knife cuts guide</a>), and add the miso last, through a small strainer. Serve with a dab of <a href=\"{{recipe:yuzu-kosho}}\">homemade yuzu kosho</a>, which cuts through the richness like nothing else. If you love fish and miso together, try my <a href=\"{{recipe:saba-misoni}}\">mackerel simmered in miso</a> too."
+    ],
+    "equipment": [
+      "Donabe (clay pot), about 27 cm (size 9, for 3–4 people), or a heavy 24 cm pot",
+      "Tabletop gas burner (cassette stove), optional",
+      "Colander, a bowl of cold water and a kettle of boiling water for blanching the fish",
+      "Miso strainer or a small fine-mesh sieve",
+      "Small bowl and a whisk for the sake kasu"
+    ],
+    "notes": [
+      "The fish is done when it is opaque all the way through and flakes at the thickest part: about 5 minutes for fillet chunks, 7–8 minutes for bone-in pieces.",
+      "Miso brands vary a lot in saltiness. Start with 3 tbsp, taste once the kasu has melted in, and add the fourth only if it needs it. The broth gets saltier as it reduces at the table, so top it up with a splash of dashi.",
+      "Alcohol: sake kasu contains about 8% alcohol and some always remains after simmering. For young children or during pregnancy, leave out the kasu and the sake, and stir in 100 ml unsweetened soy milk plus 1 extra tbsp white miso at step 8 instead. Heat it gently; soy milk separates if it boils hard.",
+      "Once the miso is in, keep the pot at a gentle simmer. A hard boil dulls the miso's aroma, and the kasu can catch on the bottom of a donabe.",
+      "Donabe care: never heat an empty donabe or one with a wet bottom, and let it cool completely before washing."
+    ],
+    "subs": [
+      ["Yellowtail (buri)", "Salmon, cod (tara) or Spanish mackerel (sawara), same weight; cod needs only 4 minutes"],
+      ["Sake kasu", "100 ml unsweetened soy milk + 1 extra tbsp white miso (alcohol-free and milder)"],
+      ["Sake", "Dry white wine or dry sherry, or water for no alcohol"],
+      ["Mirin", "1 tbsp sake + 1 tsp sugar (alcohol-free: 1 tbsp water + 1 tsp sugar)"],
+      ["Burdock (gobo)", "Leave it out, or add 4 fresh shiitake mushrooms with the fish"]
+    ],
+    "makeAhead": "You can cook the broth and vegetables through step 5 the day before; cool, cover and refrigerate. Salt and blanch the fish on the day and carry on from step 6. The sake kasu paste (step 4) also keeps in the fridge for 3 days.",
+    "storage": "Leftovers keep for 2 days in the fridge; reheat gently until the fish is piping hot. Don't freeze the finished nabe: konnyaku turns spongy and daikon goes watery. Strained leftover broth freezes for a month and makes a wonderful miso soup base."
+  },
+  "ja": {
+    "title": "春川みなと鍋（ぶりと酒粕の漁師鍋）",
+    "teaser": "みのり港生まれの漁師鍋。ぶり、大根、ごぼうを酒粕と白みそのまろやかなスープで煮込み、シメはうどんか雑炊で。",
+    "intro": [
+      "10月から3月までの土曜日、私は朝5時半に目覚ましをかけて、春川鉄道ベイサイド線でみのり港へ向かいます。駅から歩いて2分の朝市に着くころ、みのり湾の空はまだうっすらピンク色。漁船は4時ごろに戻り、6時にはセリが終わって、市場が開くとイカやカレイ、そして秋には銀色に光るぶりの箱の前で、威勢のいい声が飛び交っています。最初に寄るのはいつも「岡部鮮魚」さん。ご主人が、ぶりのあら（頭やカマ、中骨）をひと袋、カウンターの下に取っておいてくれるんです。お値段は400円ほど。これがこのお鍋のいちばんの秘密です。",
+      "「みなと鍋」は、その名のとおり港で生まれた鍋です。セリが終わると、漁師さんたちはドラム缶で火をおこし、売れ残った魚と大根、ありあわせの野菜を鍋に放り込み、近くの酒蔵の酒粕を溶かして、湾から吹きつける冷たい風の中で体を温めたのだそうです。今では春川の家庭ごとに味があり、灯籠まつりが終わって最初に冷え込んだ週末に、土鍋を出す家が多いと思います。わが家のものは、夫の大輔と子どもたちが白みそ好きなので、港の味より少しやさしい甘めの仕上がり。蒼太は「いちばんおいしいのはシメのうどん」と言い張っています。",
+      { "h": "このレシピのいいところ" },
+      { "ul": [
+        "食卓に鍋ひとつ。みんなで好きなだけ取り分けられます。",
+        "乳製品なしでも、酒粕でスープがクリーミーでコク深くなります。",
+        "残ったスープで、うどんや雑炊がもう一食楽しめます。"
+      ] },
+      { "h": "魚の選び方" },
+      "骨つきのあらを使うといちばん濃いだしが出ますが、切り身でも十分おいしく、子どもも食べやすくなります。4人分で切り身なら500g、あらなら700gほどが目安です。10月のぶりはまだ若くて脂が控えめ（市場では小ぶりのものを「ワラサ」と呼びます）なので、私はカマを2つほどと切り身2切れを組み合わせるのが好きです。鮭やタラ、サワラでも代用できます。どの魚でも、塩をふって霜降りにする下処理は省かないでください。15分ほどの手間ですが、すっきり甘いスープになるか、生臭くなるかの分かれ目です。",
+      { "h": "酒粕について" },
+      "酒粕はお酒をしぼったあとに残るもの。私は港から少し入ったところにある小さな酒蔵「汐見酒造」さんで買っています。やわらかいペースト状の練り粕は一年中、しぼりたての板粕は12月から並びます。どちらでも作れますが、板粕は少し温めただし汁でふやかしてください。酒粕には8%前後のアルコールが含まれていて、煮てもすべては飛びません。小さなお子さんや妊娠中の方は、メモにある酒粕なしの作り方をどうぞ。",
+      { "h": "おいしく作るコツ" },
+      "だしはきちんととりましょう（分量は<a href=\"{{guide:dashi}}\">だしのとり方ガイド</a>に）。野菜は火の通りがそろうように切り（ごぼうはささがきに。<a href=\"{{guide:knife-cuts}}\">切り方ガイド</a>もどうぞ）、みそは最後にみそこしで溶き入れます。<a href=\"{{recipe:yuzu-kosho}}\">自家製ゆずこしょう</a>を添えると、コクのあるスープがきりっと締まります。魚とみその組み合わせが好きな方は、<a href=\"{{recipe:saba-misoni}}\">サバの味噌煮</a>もぜひ。"
+    ],
+    "equipment": [
+      "土鍋（約27cm・9号、3〜4人用）、または厚手の鍋（24cm）",
+      "カセットコンロ（あれば）",
+      "霜降り用のざる、冷水を張ったボウル、沸騰したお湯",
+      "みそこし（または目の細かい小さなざる）",
+      "酒粕を溶く小さなボウルと泡立て器"
+    ],
+    "notes": [
+      "魚は中まで白っぽく不透明になり、いちばん厚いところがほぐれれば火が通っています。切り身なら約5分、骨つきなら7〜8分が目安です。",
+      "みそは銘柄によって塩分がかなり違います。まず大さじ3を入れ、酒粕が溶けたところで味見をして、足りなければ大さじ1を足してください。食卓で煮詰まると塩辛くなるので、だし汁を少しずつ足しましょう。",
+      "アルコールについて：酒粕には約8%のアルコールが含まれ、煮込んでも一部は残ります。小さなお子さんや妊娠中の方には、酒粕と酒を入れず、手順8で無調整豆乳100mlと白みそ大さじ1を追加してください。豆乳は強く沸騰させると分離するので、弱火で温めます。",
+      "みそを入れたあとは、ふつふつと静かに煮立つ程度に。強く煮立てるとみその香りが飛び、土鍋の底に酒粕が焦げつきやすくなります。",
+      "土鍋の扱い：空焚きや、底がぬれたままの加熱は割れの原因に。洗うのは完全に冷めてからにしてください。"
+    ],
+    "subs": [
+      ["ぶり", "鮭、タラ、サワラ（同量）。タラは煮る時間4分で十分です"],
+      ["酒粕", "無調整豆乳100ml＋白みそ大さじ1（アルコールなしで、やさしい味に）"],
+      ["酒", "辛口の白ワインかドライシェリー。アルコールなしなら水"],
+      ["みりん", "みりん大さじ1につき、酒大さじ1＋砂糖小さじ1（アルコールなしなら水大さじ1＋砂糖小さじ1）"],
+      ["ごぼう", "省くか、生しいたけ4枚を魚と一緒に加える"]
+    ],
+    "makeAhead": "前日に手順5（野菜を煮るところ）まで作り、冷まして冷蔵庫へ。当日に魚の下処理をして、手順6から続けます。溶いた酒粕（手順4）も冷蔵で3日もちます。",
+    "storage": "残りは冷蔵で2日。魚が中まで熱くなるまで、弱めの火で温め直してください。こんにゃくはスカスカに、大根は水っぽくなるので、具ごとの冷凍はおすすめしません。こしたスープだけなら冷凍で1か月もち、みそ汁のベースにぴったりです。"
+  },
+  "ingredients": [
+    { "items": [
+      { "q": 500, "u": "g", "en": "yellowtail (buri) fillets, or about 700 g bone-in pieces (ara)", "ja": "ぶり（切り身、またはあら）" },
+      { "q": 1, "u": "tsp", "en": "salt, for the fish", "ja": "塩（ぶりの下処理用）" },
+      { "q": 300, "u": "g", "en": "daikon radish (about 8 cm)", "ja": "大根" },
+      { "q": 1, "u": "pc", "jaU": "本", "en": "carrot, small", "ja": "にんじん（小）" },
+      { "q": 0.5, "u": "pc", "jaU": "本", "en": "burdock root (gobo), about 80 g", "ja": "ごぼう" },
+      { "q": 0.5, "u": "pc", "jaU": "枚", "en": "konnyaku (about 125 g)", "ja": "こんにゃく" },
+      { "q": 2, "u": "sheet", "en": "aburaage (deep-fried tofu pouches)", "ja": "油揚げ" },
+      { "q": 1, "u": "pc", "jaU": "本", "en": "green onion (naganegi, the thick Japanese leek)", "ja": "長ねぎ" }
+    ] },
+    { "group": { "en": "For the broth", "ja": "スープ" }, "items": [
+      { "q": 1200, "u": "ml", "en": "dashi", "ja": "だし汁" },
+      { "q": 100, "u": "g", "en": "sake kasu (sake lees), paste or sheets", "ja": "酒粕（練り粕または板粕）" },
+      { "q": 3, "q2": 4, "u": "tbsp", "en": "white miso", "ja": "白みそ" },
+      { "q": 2, "u": "tbsp", "en": "sake", "ja": "酒" },
+      { "q": 1, "u": "tbsp", "en": "mirin", "ja": "みりん" },
+      { "q": 1, "u": "tsp", "en": "soy sauce (light-coloured usukuchi if you have it)", "ja": "しょうゆ（あれば薄口）" }
+    ] },
+    { "group": { "en": "For the shime (to finish)", "ja": "シメ" }, "items": [
+      { "q": 2, "u": "pc", "jaU": "玉", "en": "udon noodles, boiled (frozen or vacuum-packed)", "ja": "ゆでうどん（冷凍でも可）" },
+      { "q": 300, "u": "g", "en": "cooked rice, for porridge instead of udon", "ja": "ご飯（雑炊にする場合）" },
+      { "q": 2, "u": "pc", "en": "eggs, beaten, for porridge", "ja": "卵（雑炊にする場合）" }
+    ] },
+    { "group": { "en": "To serve", "ja": "薬味" }, "items": [
+      { "q": null, "en": "yuzu kosho", "ja": "ゆずこしょう", "free": { "en": "to taste", "ja": "適量" } },
+      { "q": null, "en": "shichimi togarashi (seven-spice), optional", "ja": "七味唐辛子", "free": { "en": "to taste", "ja": "お好みで" } }
+    ] }
+  ],
+  "steps": [
+    {
+      "en": "Cut the fish into 4–5 cm chunks (leave bone-in pieces as they are), sprinkle the salt over both sides and leave for 15 minutes. Beads of moisture will appear on the surface; that liquid is what smells fishy.",
+      "ja": "ぶりは4〜5cm大に切り（あらはそのまま）、両面に塩をふって15分おきます。表面に水分がにじみ出てきたらOK。この水分が生臭さのもとです。",
+      "timer": 15
+    },
+    {
+      "en": "Meanwhile, prepare the vegetables. Peel the daikon and cut it into 1 cm half-moons; cut the carrot into 7 mm rounds. Scrub the burdock with the back of a knife, shave it into thin sasagaki and soak in water for 5 minutes. Tear the konnyaku into bite-sized pieces with a spoon and boil for 2 minutes. Pour boiling water over the aburaage, squeeze it and cut into 2 cm strips. Slice the green onion diagonally 1 cm thick.",
+      "ja": "その間に野菜を準備します。大根は皮をむいて1cm厚さの半月切り、にんじんは7mm厚さの輪切りに。ごぼうは包丁の背で皮をこそげてささがきにし、水に5分さらします。こんにゃくはスプーンでひと口大にちぎり、2分ゆでてアクを抜きます。油揚げは熱湯をかけて油抜きし、水けをしぼって2cm幅に。長ねぎは1cm幅の斜め切りにします。"
+    },
+    {
+      "en": "Put the salted fish in a colander in the sink and pour boiling water over it until the surface turns white all over. Drop it straight into a bowl of cold water and gently rub off any scales, blood and slime, checking bone-in pieces carefully. Pat dry with kitchen paper.",
+      "ja": "塩をふったぶりをざるにのせ、表面が全体に白くなるまで熱湯を回しかけます（霜降り）。すぐに冷水にとり、うろこや血合い、ぬめりを指でやさしく洗い落とします。あらは特にていねいに。キッチンペーパーで水けをふきます。"
+    },
+    {
+      "en": "Tear the sake kasu into small pieces, put it in a bowl with 150 ml of the dashi (warm the dashi first if you are using firm sheets) and leave for 10 minutes. Mash and whisk until it is a smooth paste with no lumps.",
+      "ja": "酒粕は小さくちぎってボウルに入れ、だし汁のうち150mlを加えて10分おきます（板粕の場合はだし汁を温めてから）。やわらかくなったら、泡立て器でダマがなくなるまでなめらかに溶きのばします。",
+      "timer": 10
+    },
+    {
+      "en": "Pour the rest of the dashi into the donabe, add the daikon, carrot, drained burdock and konnyaku, and bring to the boil over medium heat. Lower the heat and simmer for 15 minutes, until the daikon looks translucent at the edges and a skewer slides in easily.",
+      "ja": "土鍋に残りのだし汁、大根、にんじん、水けをきったごぼう、こんにゃくを入れて中火にかけます。煮立ったら弱めの中火にして15分、大根の縁が透き通り、竹串がすっと通るまで煮ます。",
+      "timer": 15
+    },
+    {
+      "en": "Add the fish, aburaage, sake and mirin. Simmer gently for 5 minutes, skimming off the grey foam as it rises.",
+      "ja": "ぶり、油揚げ、酒、みりんを加え、浮いてくるアクを取りながら静かに5分煮ます。",
+      "timer": 5
+    },
+    {
+      "en": "Stir in the sake kasu paste and simmer on low heat for 5 minutes, scraping the bottom now and then so it doesn't catch. The broth turns milky white and smells sweet, a little like fresh bread.",
+      "ja": "溶いた酒粕を加え、ときどき鍋底をこそげるように混ぜながら弱火で5分煮ます。スープが白くにごり、ほんのり甘い、パンのような香りがしてきます。",
+      "timer": 5
+    },
+    {
+      "en": "Put 3 tbsp of the miso in a miso strainer (or a ladle), lower it into the broth and dissolve it with chopsticks. Taste and add the last tablespoon only if needed. Add the soy sauce and green onion and simmer for 2–3 minutes without letting it boil hard.",
+      "ja": "みそこし（またはお玉）に白みそ大さじ3を入れてスープに沈め、菜箸で溶き入れます。味見をして、足りなければ残りの大さじ1を。しょうゆと長ねぎを加え、強く煮立てないように2〜3分煮ます。",
+      "timer": 3
+    },
+    {
+      "en": "Bring the pot to the table on a tabletop burner and keep it at a gentle simmer. Serve in small bowls with yuzu kosho and shichimi on the side.",
+      "ja": "カセットコンロで食卓へ運び、ふつふつと静かに煮立つ火加減を保ちます。取り鉢によそい、ゆずこしょうや七味を添えてどうぞ。"
+    },
+    {
+      "en": "For the shime, top the leftover broth up with about 200 ml water or dashi if it has reduced. For udon, add the noodles and simmer for 3 minutes. For porridge, rinse the rice briefly in a sieve, simmer it in the broth for 3–4 minutes, pour in the beaten eggs in a circle, cover, turn off the heat and wait 1 minute.",
+      "ja": "シメは、スープが煮詰まっていれば水かだし汁を200mlほど足します。うどんなら加えて3分煮ます。雑炊なら、ご飯をざるでさっと洗ってスープで3〜4分煮て、溶き卵を回し入れ、ふたをして火を止め、1分蒸らします。",
+      "timer": 3
+    }
+  ],
+  "nutrition": { "calories": 480, "carbs": 24, "protein": 36, "fat": 24, "satFat": 5, "cholesterol": 85, "sodium": 1850, "fiber": 6, "sugar": 8 },
+  "comments": [
+    {
+      "name": { "en": "Keiko (Harukawa)", "ja": "けいこ（春川市）" },
+      "date": "2026-09-30",
+      "stars": 5,
+      "en": "First nabe of the season! I bought ara at the morning market on Saturday, 350 yen for a whole head and both collars. The blanching step really works, there was no smell at all. My husband put yuzu kosho in every single bowl.",
+      "ja": "今季初の鍋です！土曜の朝市であらを買ったら、頭とカマ2つで350円でした。霜降りのひと手間、本当に効きますね。臭みがまったくなかったです。夫は毎回ゆずこしょうをのせていました。",
+      "reply": {
+        "en": "Ara season at last! A tip for next time: the cheek meat just behind the eye is the best bite in the whole pot, so save it for whoever offers to wash up.",
+        "ja": "いよいよあらの季節ですね！次回のために：目の後ろのほほ肉が鍋でいちばんおいしいところなので、洗い物を引き受けてくれた人にとっておいてあげてください。"
+      }
+    },
+    {
+      "name": { "en": "Megan (Portland, Oregon)", "ja": "Megan（アメリカ・ポートランド）" },
+      "date": "2026-09-12",
+      "stars": null,
+      "en": "Where would I find sake kasu in the US? My local Japanese market only seems to have miso.",
+      "ja": "アメリカで酒粕はどこで買えますか？近所の日系スーパーにはみそしか見当たりません。",
+      "reply": {
+        "en": "Check the refrigerated section near the miso and tofu; it is often sold in 500 g tubs labelled 'sake lees'. Some American sake breweries sell theirs too. If you can't find any, the kasu-free version in the notes (soy milk plus an extra spoon of miso) is milder but still lovely.",
+        "ja": "みそや豆腐の近くの冷蔵コーナーを見てみてください。「sake lees」と書かれた500gのパックで売られていることが多いです。アメリカの酒蔵が販売していることもあります。見つからなければ、メモにある酒粕なしの作り方（豆乳＋みそ大さじ1）でも、やさしい味でおいしいですよ。"
+      }
+    },
+    {
+      "name": { "en": "Yū's mum", "ja": "ゆうママ" },
+      "date": "2026-03-08",
+      "stars": 4,
+      "en": "The kids loved it, but it was a bit salty for us. I used the red miso I always have in the fridge.",
+      "ja": "子どもたちには大好評でしたが、うちには少ししょっぱかったです。いつも冷蔵庫にある赤みそを使いました。",
+      "reply": {
+        "en": "That's probably it: red miso is saltier and stronger than white. With red miso, start with 2 tbsp and taste before adding more. The white miso we use in Harukawa is sweet and quite mild.",
+        "ja": "原因はたぶんそこですね。赤みそは白みそより塩分も風味も強いので、赤みそなら大さじ2から始めて、味見をしてから足してください。春川でよく使う白みそは甘めでかなりマイルドなんです。"
+      }
+    },
+    {
+      "name": { "en": "Tom H. (Leeds)", "ja": "Tom H.（イギリス・リーズ）" },
+      "date": "2026-02-01",
+      "stars": 5,
+      "en": "Made this with half salmon, half cod. Couldn't find burdock, so I used shiitake as you suggest. The rice porridge at the end was the highlight of the whole evening.",
+      "ja": "鮭とタラを半分ずつで作りました。ごぼうが見つからなかったので、おすすめどおりしいたけで。シメの雑炊がその夜いちばんのごちそうでした。"
+    },
+    {
+      "name": { "en": "Aya K.", "ja": "あや" },
+      "date": "2025-12-20",
+      "stars": null,
+      "en": "I'm pregnant. Is it safe if I just simmer the kasu for longer?",
+      "ja": "妊娠中です。酒粕を長めに煮込めば大丈夫でしょうか？",
+      "reply": {
+        "en": "Some alcohol stays however long you simmer it, so I'd make the kasu-free version for now: skip the kasu and sake, and add 100 ml unsweetened soy milk and 1 extra tbsp of miso. Congratulations, and take care of yourself!",
+        "ja": "どれだけ煮込んでもアルコールは少し残るので、今は酒粕なしの作り方をおすすめします。酒粕と酒を入れず、無調整豆乳100mlと白みそ大さじ1を加えてください。おめでとうございます。どうぞお大事に！"
+      }
+    },
+    {
+      "name": { "en": "Hiroshi (Tsukimi Onsen)", "ja": "ひろし（月見温泉）" },
+      "date": "2025-11-15",
+      "stars": 5,
+      "en": "My grandfather fished out of Minori Port for forty years, and he finished his pot with a splash of shochu. Yours tastes very close to what we ate as kids. Thank you for writing it down.",
+      "ja": "祖父はみのり港で40年漁師をしていて、仕上げに焼酎をちょっと入れていました。子どものころ食べた味にとても近いです。レシピに残してくださってありがとうございます。"
+    },
+    {
+      "name": { "en": "Clara (Lyon)", "ja": "Clara（フランス・リヨン）" },
+      "date": "2025-01-18",
+      "stars": 3,
+      "en": "The broth tasted quite fishy to me, though I liked the sake lees flavour.",
+      "ja": "酒粕の風味は好きでしたが、スープがかなり生臭く感じました。",
+      "reply": {
+        "en": "Did you salt and blanch the fish? Those two steps remove most of the smell. Also check the fish is really fresh: clear eyes, firm flesh, and a bright red (not brown) blood line along the fillet.",
+        "ja": "塩をふって霜降りにしましたか？この2つで臭みのほとんどが取れます。魚の鮮度も確認してみてください。目が澄んでいて、身に張りがあり、血合いが茶色ではなく鮮やかな赤のものを選びましょう。"
+      }
+    },
+    {
+      "name": { "en": "Daniel (Toronto)", "ja": "Daniel（カナダ・トロント）" },
+      "date": "2024-12-05",
+      "stars": 5,
+      "en": "Even better the next day, the daikon soaks up all that broth. Can I freeze a big batch?",
+      "ja": "翌日はさらにおいしかったです。大根がスープをたっぷり吸っていました。まとめて冷凍してもいいですか？",
+      "reply": {
+        "en": "I wouldn't freeze it with the vegetables: konnyaku turns spongy and daikon goes watery. Strain the broth and freeze that for up to a month, then add fresh fish and vegetables when you reheat it.",
+        "ja": "具ごとの冷凍はおすすめしません。こんにゃくがスカスカに、大根が水っぽくなってしまいます。スープだけこして冷凍すれば1か月もつので、温め直すときに新しい魚と野菜を加えてください。"
+      }
+    }
+  ]
+}

@@ -1,0 +1,152 @@
+{
+  "slug": "ginger-pork",
+  "categories": ["weeknight", "japanese"],
+  "cuisine": "japanese",
+  "diet": ["dairy-free"],
+  "difficulty": "easy",
+  "course": "main",
+  "times": { "prep": 10, "cook": 10 },
+  "servings": 2,
+  "image": "ginger-pork",
+  "rating": 4.8,
+  "ratings": 689,
+  "published": "2018-04-22",
+  "updated": "2026-08-30",
+  "related": ["oyakodon", "tamagoyaki", "nikujaga", "chicken-karaage"],
+  "en": {
+    "title": "Ginger Pork (Shogayaki)",
+    "teaser": "Thin slices of pork loin seared and glazed in a sweet-salty soy and fresh ginger sauce, piled next to crisp shredded cabbage. Dinner in 20 minutes.",
+    "intro": [
+      "Daisuke and I met at Harukawa University, where I was studying nutrition and he was supposed to be studying engineering. Most evenings we ended up at Shokudō Kamome, a tiny diner by the east gate where the ginger pork set meal cost 580 yen and came with all the rice you could eat. Twenty years later, when Daisuke has had a long day, he doesn't ask for anything fancy. He asks for shogayaki, \"like Kamome\".",
+      "<em>Shōgayaki</em> means \"ginger grill\", and it is one of the great Japanese weeknight dinners: thin slices of pork, seared quickly and tossed in a glossy sauce of soy sauce, mirin, sake and plenty of freshly grated ginger. With a mound of shredded cabbage, a bowl of rice and miso soup, it is the classic <em>teishoku</em> set meal, and from fridge to table it takes about twenty minutes.",
+      { "h": "Why you'll love it" },
+      { "ul": [
+        "It's fast: the pork cooks in about 3 minutes.",
+        "The flour trick gives you a sauce that clings instead of pooling.",
+        "Leftovers are wonderful cold, in a bento."
+      ] },
+      { "h": "Choosing the pork" },
+      "Japanese supermarkets sell pork loin sliced especially for this dish, labelled <em>shōgayaki-yō</em>, about 4–5 mm thick. Abroad, ask the butcher to slice it for you, or put a piece of loin in the freezer for 30 to 40 minutes until firm and slice it yourself. Pork shoulder (<em>kata-rōsu</em>) has more fat marbled through it, so it stays juicier and is harder to overcook; it is what Kamome used, I am almost sure.",
+      { "h": "The ginger" },
+      "Use fresh ginger and grate it with the skin on: most of the fragrance sits just under the skin. Keep all the juice, which is where the heat is. In autumn the shops have mature, stored ginger (<em>hine shōga</em>), which is pungent and fibrous. New ginger (<em>shin shōga</em>), sold in early summer with pink tips, is milder, so use about half as much again.",
+      "<strong>Here is the one rule: don't marinate the pork for long.</strong> Fresh ginger contains an enzyme that breaks down meat protein. Ten or fifteen minutes softens the surface nicely, but leave it overnight and the pork turns mealy and mushy. That is why I add the sauce at the end, in the pan, which keeps the meat tender and the ginger bright.",
+      { "h": "Tips for success" },
+      "Make a few small cuts through the white sinew between the fat and the meat, so the slices don't curl up in the pan. Dust the pork lightly with flour just before cooking: it browns better, stays moist and holds the sauce like a glaze. And turn the heat down to medium before the sauce goes in, because the mirin and sugar caramelise in seconds. A fluffy <a href=\"{{recipe:tamagoyaki}}\">tamagoyaki</a> on the side makes it a feast, and my <a href=\"{{guide:pantry-staples}}\">pantry staples guide</a> explains mirin and sake."
+    ],
+    "equipment": ["Large frying pan (about 26 cm)", "Fine grater for the ginger", "Tea strainer or small sieve for dusting flour", "Bowl of cold water for the cabbage"],
+    "notes": [
+      "Never marinate the pork in the ginger sauce for more than 15 minutes; the ginger enzyme makes it mushy.",
+      "The pork is done when no pink remains in the thickest slice. Thin slices reach a safe temperature in a minute or two, so don't keep cooking them in the sauce.",
+      "Shake off the excess flour; a thick coat turns gluey in the sauce.",
+      "If the sauce reduces too far and starts to catch, add 1–2 tbsp water and shake the pan.",
+      "For a sharper ginger kick, stir 1 tsp extra grated ginger in just before serving."
+    ],
+    "subs": [
+      ["Pork loin", "Thinly sliced pork shoulder (juicier) or pork belly slices (richer)"],
+      ["Fresh ginger", "2 tsp ginger paste from a tube; it is milder, so add a little more if you like it hot"],
+      ["Mirin", "1 tbsp sake + 1 tsp sugar for each tbsp of mirin (alcohol-free: 1 tbsp water + 1 tsp sugar)"],
+      ["Sake", "Dry sherry or dry white wine, or water for no alcohol"],
+      ["All-purpose flour (gluten-free)", "Potato starch, with tamari instead of soy sauce"]
+    ],
+    "makeAhead": "Mix the sauce and shred the cabbage in the morning; keep the cabbage in a container lined with damp kitchen paper in the fridge. Dust the pork with flour only just before cooking, and don't let it sit in the sauce.",
+    "storage": "Keeps 2 days in the fridge; eat it cold in a bento or reheat covered in the microwave at 600 W for about 1 minute. It freezes in its sauce for 2 weeks, though the meat gets a little firmer. Keep the cabbage separate."
+  },
+  "ja": {
+    "title": "豚の生姜焼き",
+    "teaser": "薄切りの豚ロースを焼いて、しょうがたっぷりの甘辛だれをからめるだけ。千切りキャベツを添えて、20分で晩ごはんの完成です。",
+    "intro": [
+      "夫の大輔と出会ったのは、春川大学の学生時代。私は栄養学を、彼は工学を学んでいるはずでした。夕方になると二人でよく通ったのが、東門のそばの小さな食堂「かもめ食堂」。生姜焼き定食が580円で、ごはんはおかわり自由でした。あれから20年、仕事で疲れた日の大輔のリクエストは、いつも決まって「かもめみたいな生姜焼き」です。",
+      "生姜焼きは、平日の晩ごはんの大定番。薄切りの豚肉をさっと焼いて、しょうゆ、みりん、酒、そしてすりおろしたしょうがをたっぷり使ったたれをからめます。千切りキャベツとごはん、みそ汁を添えれば立派な定食に。冷蔵庫から食卓まで、20分ほどでできあがります。",
+      { "h": "豚肉の選び方" },
+      "スーパーで「しょうが焼き用」と書かれた、4〜5mm厚さの豚ロースを選んでください。ない場合はお店の方に切ってもらうか、かたまり肉を冷凍庫に30〜40分入れて少しかたくしてから切ると、きれいに薄く切れます。豚肩ロースは脂が網目状に入っているので、焼きすぎてもかたくなりにくく、ジューシーに仕上がります。かもめ食堂もきっと肩ロースだったと思います。",
+      { "h": "しょうがのこと" },
+      "しょうがは生のものを、皮ごとすりおろします。香りは皮のすぐ下にいちばん多いのです。辛みのある搾り汁も捨てずに使いましょう。秋に出回るのは、貯蔵して熟成させた「ひねしょうが」で、辛みが強く繊維もしっかりしています。初夏に出る先がピンク色の「新しょうが」は辛みが穏やかなので、1.5倍ほどに増やしてください。",
+      "<strong>大切なルールはひとつ。豚肉を長く漬けこまないこと。</strong>生のしょうがには、肉のたんぱく質を分解する酵素が含まれています。10〜15分なら表面がほどよくやわらかくなりますが、一晩漬けると肉がぼそぼそ、ぐずぐずになってしまいます。このレシピでは、焼いたあとのフライパンでたれをからめるので、肉はやわらかく、しょうがの香りもしっかり残ります。",
+      { "h": "おいしく作るコツ" },
+      "脂身と赤身の間にある白い筋に、包丁の先で何か所か切り込みを入れておくと、焼いたときに肉が縮んで反り返りません。焼く直前に薄力粉を薄くまぶすと、焼き色がきれいにつき、肉がしっとりして、たれがつやよくからみます。たれを入れる前に火を中火に落とすのも大事なポイント。みりんと砂糖はあっという間に焦げてしまいます。ふんわり焼いた<a href=\"{{recipe:tamagoyaki}}\">卵焼き</a>を添えれば、ちょっとしたごちそうに。みりんや酒のことは<a href=\"{{guide:pantry-staples}}\">基本の調味料ガイド</a>でも解説しています。"
+    ],
+    "equipment": ["フライパン（直径26cm程度）", "おろし金", "茶こし（粉をまぶす用）", "キャベツをさらすボウル"],
+    "notes": [
+      "しょうがのたれに豚肉を15分以上漬けないでください。しょうがの酵素で肉がぐずぐずになります。",
+      "いちばん厚い肉を切ってみて、ピンク色が残っていなければ焼き上がり。薄切り肉は1〜2分で十分に火が通るので、たれの中で煮すぎないように。",
+      "余分な粉ははたき落とします。粉が厚いと、たれと合わさってもったりします。",
+      "たれが煮詰まりすぎて焦げそうなときは、水を大さじ1〜2加えてフライパンをゆすります。",
+      "しょうがをもっと効かせたいときは、仕上げにすりおろしたしょうがを小さじ1加えてください。"
+    ],
+    "subs": [
+      ["豚ロース", "豚肩ロース薄切り（よりジューシー）、または豚バラ薄切り（よりコクが出る）"],
+      ["生のしょうが", "チューブのしょうが小さじ2。辛みが穏やかなので、お好みで増やしてください"],
+      ["みりん", "みりん大さじ1につき、酒大さじ1＋砂糖小さじ1（アルコールなしなら水大さじ1＋砂糖小さじ1）"],
+      ["酒", "辛口のシェリーまたは白ワイン。アルコールなしなら水"],
+      ["薄力粉（グルテンフリーにする場合）", "片栗粉。しょうゆもグルテンフリーのたまりじょうゆに"]
+    ],
+    "makeAhead": "たれを合わせ、キャベツを千切りにするところまでは朝のうちに。キャベツは湿らせたペーパータオルを敷いた保存容器に入れて冷蔵庫へ。豚肉に粉をまぶすのは焼く直前にし、たれに漬けておかないでください。",
+    "storage": "冷蔵で2日。お弁当に冷たいまま入れるか、ラップをして電子レンジ600Wで約1分温めます。たれごと冷凍すれば2週間持ちますが、肉は少しかたくなります。キャベツは別に保存してください。"
+  },
+  "ingredients": [
+    { "items": [
+      { "q": 250, "u": "g", "en": "pork loin, thinly sliced (4–5 mm, shogayaki cut)", "ja": "豚ロース薄切り（しょうが焼き用）" },
+      { "q": 1, "u": "tbsp", "en": "all-purpose flour, for dusting", "ja": "薄力粉" },
+      { "q": 0.5, "u": "pc", "en": "onion (about 100 g), sliced 5 mm thick", "ja": "玉ねぎ（約100g・5mm幅の薄切り）" },
+      { "q": 2, "u": "tsp", "en": "vegetable oil", "ja": "サラダ油" }
+    ] },
+    { "group": { "en": "For the ginger sauce", "ja": "しょうがだれ" }, "items": [
+      { "q": 1, "u": "tbsp", "en": "ginger, freshly grated with its juice (a 3 cm piece, about 15 g)", "ja": "しょうが（すりおろし・汁ごと）" },
+      { "q": 2, "u": "tbsp", "en": "soy sauce", "ja": "しょうゆ" },
+      { "q": 2, "u": "tbsp", "en": "mirin", "ja": "みりん" },
+      { "q": 1, "u": "tbsp", "en": "sake", "ja": "酒" },
+      { "q": 1, "u": "tsp", "en": "sugar", "ja": "砂糖" }
+    ] },
+    { "group": { "en": "To serve", "ja": "つけ合わせ" }, "items": [
+      { "q": 3, "u": "leaf", "en": "cabbage (about 150 g), finely shredded", "ja": "キャベツ（約150g・千切り）" },
+      { "q": null, "en": "mayonnaise and tomato wedges (optional)", "ja": "マヨネーズ・トマト（お好みで）", "free": { "en": "to serve", "ja": "適量" } }
+    ] }
+  ],
+  "steps": [
+    { "en": "Shred the cabbage as finely as you can (about 2 mm), soak it in cold water for 5 minutes to crisp it up, then drain well and spin or pat dry. Pile it onto two plates.",
+      "ja": "キャベツはできるだけ細く（2mm程度）千切りにし、冷水に5分さらしてシャキッとさせます。しっかり水気をきり、2枚の皿に盛っておきます。",
+      "timer": 5 },
+    { "en": "Grate the ginger, skin and all, and mix it and its juice with the soy sauce, mirin, sake and sugar in a small bowl until the sugar dissolves.",
+      "ja": "しょうがは皮ごとすりおろし、汁ごとしょうゆ、みりん、酒、砂糖と小さなボウルで混ぜ、砂糖を溶かしておきます。" },
+    { "en": "Pat the pork dry. Make 3–4 short cuts (about 1 cm) through the white sinew between the fat and the meat on each slice so it doesn't curl. Just before cooking, dust both sides thinly with the flour through a tea strainer and shake off the excess.",
+      "ja": "豚肉はペーパータオルで水気を拭きます。脂身と赤身の境の白い筋に、1枚につき3〜4か所、1cmほどの切り込みを入れて反り返りを防ぎます。焼く直前に、茶こしで両面に薄力粉を薄くふり、余分な粉をはたきます。" },
+    { "en": "Heat the oil in the frying pan over medium-high heat. Add the onion and cook for 2 minutes until the edges soften, then push it to the side. Lay the pork slices flat without overlapping (in two batches if they don't fit) and cook for about 1 minute per side, until lightly browned and no longer pink.",
+      "ja": "フライパンにサラダ油を中強火で熱し、玉ねぎを2分ほど、ふちがしんなりするまで炒めて端に寄せます。豚肉を重ならないように広げて入れ（入りきらなければ2回に分けて）、片面1分ずつ、軽く焼き色がついてピンク色がなくなるまで焼きます。",
+      "timer": 3 },
+    { "en": "Turn the heat down to medium, give the sauce a stir and pour it over the pork. Toss everything for 1–2 minutes, until the sauce bubbles, thickens and coats the meat with a glossy glaze, with a spoonful still left in the pan.",
+      "ja": "中火に落とし、たれをひと混ぜしてから回し入れます。1〜2分全体をからめ、たれが煮立ってとろみがつき、肉につやよくからんだら完成。フライパンにたれが少し残るくらいで火を止めます。",
+      "timer": 2 },
+    { "en": "Arrange the pork and onion next to the cabbage and spoon the pan sauce over the meat. Serve straight away with rice, miso soup, and mayonnaise and tomato on the side if you like.",
+      "ja": "キャベツの横に豚肉と玉ねぎを盛り、フライパンに残ったたれを肉にかけます。お好みでマヨネーズやトマトを添え、ごはんとみそ汁と一緒に熱々をどうぞ。" }
+  ],
+  "nutrition": { "calories": 450, "carbs": 20, "protein": 27, "fat": 27, "satFat": 9, "cholesterol": 80, "sodium": 1150, "fiber": 2, "sugar": 13 },
+  "comments": [
+    { "name": { "en": "Piyoko", "ja": "ぴよ子" }, "date": "2026-10-03", "stars": 5,
+      "en": "I'd never made the little cuts in the sinew before, and the slices stayed completely flat. My husband said it tasted just like a set-meal restaurant.",
+      "ja": "筋切りを初めてちゃんとやってみたら、お肉がまったく反り返りませんでした。夫に「定食屋さんの味だ」と言われてうれしかったです。" },
+    { "name": { "en": "Jake (Sydney)", "ja": "Jake（シドニー）" }, "date": "2026-09-25", "stars": 3,
+      "en": "I marinated the pork in the sauce overnight to save time, and the texture came out mealy, almost crumbly. Flavour was great though.",
+      "ja": "時短のつもりで前の晩からたれに漬けておいたら、肉の食感がぼそぼそして崩れるような感じに。味はとてもよかったです。",
+      "reply": { "en": "That's the ginger enzyme at work, Jake! It breaks down the meat if it sits too long, so never more than 15 minutes. To save time, mix the sauce in the morning and keep it separate from the pork; it will be ready in 10 minutes in the evening.",
+        "ja": "それはしょうがの酵素のしわざなんです。長く漬けると肉が分解されてしまうので、15分以内にしてください。時短なら、朝のうちにたれだけ合わせて肉とは別にしておけば、夜は10分で完成しますよ。" } },
+    { "name": { "en": "A fifty-something homemaker", "ja": "アラフィフ主婦" }, "date": "2026-09-10", "stars": null,
+      "en": "Can I use ginger paste from a tube?",
+      "ja": "チューブのしょうがでも作れますか？",
+      "reply": { "en": "Yes, use about 2 tsp. Tube ginger is milder and a little salty, so taste before adding more soy sauce. If you have even a small piece of fresh ginger, grating a little on top at the end brings the aroma back.",
+        "ja": "はい、小さじ2くらいが目安です。チューブは辛みが穏やかで塩分も少し入っているので、しょうゆを足す前に味見を。生のしょうがが少しでもあれば、仕上げにすりおろして加えると香りがぐんとよくなります。" } },
+    { "name": { "en": "Clara (Hamburg)", "ja": "Clara（ハンブルク）" }, "date": "2026-08-14", "stars": 5,
+      "en": "No thin-sliced pork here, so I froze a piece of loin for 40 minutes and sliced it myself with a sharp knife. Easy! Perfect with rice.",
+      "ja": "こちらでは薄切り肉が売っていないので、ロースのかたまりを40分冷凍して、よく切れる包丁で自分で切りました。簡単でした！ごはんが進みます。" },
+    { "name": { "en": "Kentaro", "ja": "けんたろう" }, "date": "2026-07-02", "stars": 5,
+      "en": "Made it with new ginger, 1.5 times the amount like you said. Fresh and not too spicy. Perfect for summer.",
+      "ja": "新しょうがで、書いてある通り1.5倍にして作りました。さわやかで辛すぎず、夏にぴったりでした。" },
+    { "name": { "en": "Nora (Oslo)", "ja": "Nora（オスロ）" }, "date": "2026-05-20", "stars": 4,
+      "en": "My sauce burned a little and went bitter. I think my pan was too hot when I poured it in.",
+      "ja": "たれが少し焦げて苦くなってしまいました。入れたときにフライパンが熱すぎたのだと思います。",
+      "reply": { "en": "Yes, mirin and sugar caramelise in seconds. Turn the heat down to medium before the sauce goes in, and if it starts to catch, add a tablespoon of water and shake the pan.",
+        "ja": "そうですね、みりんと砂糖はすぐに焦げます。たれを入れる前に中火に落とし、焦げそうになったら水を大さじ1加えてフライパンをゆすってください。" } },
+    { "name": { "en": "Yukinko", "ja": "ゆきんこ" }, "date": "2025-12-05", "stars": 5,
+      "en": "My go-to bento filling. I pack the cabbage in a separate little cup so the pork doesn't get soggy, and it's still delicious at lunchtime.",
+      "ja": "お弁当の定番おかずです。キャベツは別のカップに入れると肉が水っぽくならず、お昼に食べてもおいしいです。" }
+  ]
+}

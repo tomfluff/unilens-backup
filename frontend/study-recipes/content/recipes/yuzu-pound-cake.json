@@ -1,0 +1,166 @@
+{
+  "slug": "yuzu-pound-cake",
+  "categories": ["baking"],
+  "cuisine": "western",
+  "diet": ["vegetarian"],
+  "difficulty": "medium",
+  "course": "dessert",
+  "times": { "prep": 20, "cook": 50, "extra": 60, "extraLabel": { "en": "Cooling", "ja": "冷ます" } },
+  "servings": 8,
+  "servingsUnit": { "en": "slices", "ja": "切れ" },
+  "image": "yuzu-pound-cake",
+  "rating": 4.6,
+  "ratings": 198,
+  "published": "2019-11-23",
+  "updated": "2026-09-29",
+  "related": ["milk-bread", "kabocha-pudding", "yuzu-kosho", "yuzu-miso-salmon"],
+  "en": {
+    "title": "Yuzu Pound Cake",
+    "teaser": "A classic equal-weights butter cake baked in an 18 cm loaf pan, full of Harukawa yuzu: zest in the batter, a yuzu syrup brushed on while it's hot, and a tangy yuzu glaze on top. Even better the next day.",
+    "intro": [
+      "When I was a girl, the first yellow yuzu of the year arrived at my grandmother Fumi's inn in Tsukimi Onsen in a crate from a farmer down in the Kagami valley. She floated a few in the big bath for the guests, grated the zest into almost everything, and on Sunday afternoons she baked a butter cake that made the whole inn smell like a yuzu orchard. This is my version of that cake.",
+      "Every year I bake one for the Lantern Festival. We take thick slices down to the Kagami River and eat them on the steps while we wait for the lanterns to be lit. This year that's Saturday 10 October, so the yuzu in my kitchen right now are from the Ishida family's orchard below Mount Tsukimi: early-season fruit, still half green, sharp and very fragrant.",
+      { "h": "Why you'll love it" },
+      { "ul": [
+        "A buttery, close-textured cake with yuzu in three layers: zest in the batter, syrup soaked in, glaze on top.",
+        "The classic equal-weights formula, so it's easy to remember and scale.",
+        "It keeps for days and freezes well, so it's the perfect make-ahead gift."
+      ] },
+      { "h": "Choosing and using yuzu" },
+      "A yuzu has much more zest and much less juice than a lemon: one gives only about 15–20 ml, so you need three for this cake. Grate only the yellow (or green) skin with a fine grater; the white pith underneath is bitter. Rub the zest into the sugar with your fingers before you add it to the butter, and the oils will scent the whole cake. If you can't find yuzu, see the substitutions; and my <a href=\"{{guide:seasonal-produce}}\">seasonal produce guide</a> shows when green and yellow yuzu are in season.",
+      { "h": "Weights and cups" },
+      "A pound cake is traditionally equal weights of butter, sugar, egg and flour: here 100 g of each, which is exactly two Japanese M eggs. I really recommend weighing. If you use US cups, 100 g sugar is ½ cup and 100 g cake flour is about ¾ cup plus 1 tablespoon (125 g per cup, spooned and levelled); the <a href=\"{{guide:measurement-conversions}}\">conversions guide</a> has more.",
+      { "h": "Tips for success" },
+      "<strong>Everything at room temperature.</strong> Take the butter and eggs out an hour ahead. The butter should be about 20°C: your finger pushes in easily, but it isn't shiny or greasy. Cold eggs are the main cause of curdled batter, the lumpy, watery look that happens when the butter can't hold the egg. Add the eggs a little at a time; if it does split, beat in a tablespoon of the measured flour, or hold the bowl over warm water for 10 seconds while you beat. It comes back.",
+      "Bake at 170°C (340°F), or 150°C (300°F) in a fan oven. After 10 minutes I slash the top down the middle, so the cake cracks neatly instead of wherever it likes. It's done when a skewer in the centre comes out clean, usually at 45–50 minutes in my oven-microwave. Don't open the door before 30 minutes (apart from the quick slash), or it may sink. My <a href=\"{{guide:oven-temperatures}}\">oven temperatures guide</a> explains why ovens without a fan run a little slower.",
+      "For more yuzu, try my <a href=\"{{recipe:yuzu-miso-salmon}}\">yuzu miso salmon</a>, or make <a href=\"{{recipe:yuzu-kosho}}\">yuzu kosho</a> with the leftover green fruit."
+    ],
+    "equipment": ["18 cm loaf (pound cake) pan, about 18 × 8 × 6 cm", "Baking paper", "Digital kitchen scale", "Hand mixer (or a whisk and patience)", "Fine grater (Microplane) for the zest", "Bamboo skewer", "Pastry brush", "Cooling rack"],
+    "notes": [
+      "Japanese M eggs are about 50 g without the shell. If your two beaten eggs weigh more than 100 g, leave a spoonful out rather than adding more of everything.",
+      "Curdled batter isn't ruined: beat in 1 tbsp of the measured flour, or warm the bottom of the bowl over 40°C water for 10 seconds while beating. If the butter has gone oily instead, chill the bowl for 5 minutes.",
+      "Fold in the flour with about 40–50 strokes, just until no dry flour shows and the batter turns glossy. Too few leaves streaks and tunnels; too many makes the cake tough.",
+      "A skewer in the centre should come out clean, with no wet batter (a few moist crumbs are fine). If it's wet, bake 5 minutes more and test again. If the top browns too fast after 30 minutes, lay a sheet of foil over it.",
+      "Sinking in the middle usually means underbaked, or the door was opened too early."
+    ],
+    "subs": [
+      ["Yuzu", "Meyer lemon, or half lemon and half lime; bottled 100% yuzu juice works for the juice, with lemon zest for the aroma"],
+      ["Cake flour", "All-purpose flour (slightly denser), or 85 g all-purpose flour + 15 g cornflour (cornstarch)"],
+      ["Unsalted butter", "Salted butter; leave out the pinch of salt"],
+      ["Powdered sugar", "Skip the glaze and brush on a little extra syrup instead"]
+    ],
+    "makeAhead": "Pound cake is better on day two, when the syrup has spread through and the yuzu flavour deepens. Bake it 1–2 days ahead, brush with the syrup, wrap it tightly in cling film once it is barely warm, and glaze it on the day you serve it.",
+    "storage": "Wrapped in cling film, it keeps 4–5 days at cool room temperature; in hot weather keep it in the fridge and let slices come back to room temperature before eating. Freeze unglazed slices individually wrapped for up to a month and thaw for 1 hour at room temperature. The glaze turns sticky and weeps after freezing, so glaze after thawing."
+  },
+  "ja": {
+    "title": "ゆずのパウンドケーキ",
+    "teaser": "バター・砂糖・卵・粉を同量で作る、18cmパウンド型の基本のバターケーキ。春川のゆずを皮・シロップ・アイシングの三段構えでたっぷり使います。翌日がいちばんおいしい焼き菓子です。",
+    "intro": [
+      "子どものころ、その年最初の黄色いゆずは、鏡川の谷のゆず農家さんから木箱で祖母ふみの宿に届きました。祖母は月見温泉の宿の大浴場にいくつか浮かべ、皮はあらゆる料理にすりおろし、日曜の午後にはバターケーキを焼いていました。宿じゅうがゆず畑のような香りに包まれたのを覚えています。このケーキは、そのレシピを私なりにアレンジしたものです。",
+      "毎年、灯籠まつりのときにはこのケーキを焼きます。厚めに切って鏡川まで持って行き、灯籠に灯がともるのを待ちながら川べりの石段で食べるのがわが家の恒例です。今年のおまつりは10月10日（土）から。いま台所にあるのは、月見山のふもとにある石田さんのゆず園のもの。出始めでまだ半分青く、酸味がきりっとしていて香りがとても強いゆずです。",
+      { "h": "このレシピのおすすめポイント" },
+      { "ul": [
+        "生地に皮、焼き上がりにシロップ、仕上げにアイシング。ゆずを三重に楽しめます。",
+        "4つの材料が同量の基本配合なので、覚えやすく、倍量にも簡単。",
+        "日持ちして冷凍もできるので、手みやげにぴったりです。"
+      ] },
+      { "h": "ゆずの選び方・使い方" },
+      "ゆずはレモンに比べて皮が多く、果汁はずっと少なめ。1個から取れる果汁は15〜20mlほどなので、このケーキには3個使います。皮は目の細かいおろし器で、黄色（または緑）の表面だけを削ってください。下の白いわたは苦みがあります。すりおろした皮を砂糖に加えて指でもみ込んでからバターに入れると、香りの油がケーキ全体に広がります。ゆずが手に入らない場合は「代用」を参考に。青ゆずと黄ゆずの旬は<a href=\"{{guide:seasonal-produce}}\">旬の食材ガイド</a>にまとめています。",
+      { "h": "分量とカップ換算" },
+      "パウンドケーキは本来、バター・砂糖・卵・粉を同じ重さで作るお菓子。このレシピは各100gで、卵はMサイズちょうど2個分です。ぜひはかりで量ってください。USカップの場合、砂糖100gは1/2カップ、薄力粉100gは3/4カップ＋大さじ1ほど（1カップ125g、すくってすり切った場合）です。くわしくは<a href=\"{{guide:measurement-conversions}}\">計量換算ガイド</a>をどうぞ。",
+      { "h": "上手に作るコツ" },
+      "<strong>材料はすべて室温に。</strong>バターと卵は1時間前に冷蔵庫から出しておきます。バターは20℃くらい、指で押すとすっと入るけれど、つやが出て溶けかけてはいない状態が目安です。分離（生地がもろもろして水っぽくなる状態）のいちばんの原因は冷たい卵。卵は少しずつ加えてください。もし分離しても、分量の薄力粉から大さじ1を加えて混ぜるか、ボウルの底を10秒ほどぬるま湯に当てながら混ぜれば、ちゃんと元に戻ります。",
+      "オーブンは170℃（ファン付きなら150℃）。焼き始めて10分たったら、表面の中央にナイフで切り込みを入れます。こうすると割れ目がまっすぐきれいに入ります。中心に竹串を刺して何もついてこなければ焼き上がり。わが家のオーブンレンジでは45〜50分かかります。切り込みのとき以外は、30分たつまで扉を開けないで。しぼむ原因になります。ファンなしのオーブンが少し時間がかかる理由は<a href=\"{{guide:oven-temperatures}}\">オーブン温度ガイド</a>で。",
+      "ゆずをもっと楽しみたい方は<a href=\"{{recipe:yuzu-miso-salmon}}\">鮭のゆず味噌焼き</a>や、青ゆずで作る<a href=\"{{recipe:yuzu-kosho}}\">自家製ゆずこしょう</a>もどうぞ。"
+    ],
+    "equipment": ["18cmパウンド型（約18×8×6cm）", "オーブンシート", "デジタルスケール", "ハンドミキサー（なければ泡立て器）", "目の細かいおろし器（皮用）", "竹串", "はけ", "ケーキクーラー（網）"],
+    "notes": [
+      "Mサイズの卵は殻を除いて約50g。溶いた卵が100gより多ければ、ほかの材料を増やすより、少し残すほうが簡単です。",
+      "分離しても失敗ではありません。分量の薄力粉から大さじ1を加えて混ぜるか、ボウルの底を40℃くらいのお湯に10秒当てながら混ぜてください。逆にバターが溶けて油っぽくなったときは、ボウルごと冷蔵庫で5分冷やします。",
+      "粉はゴムべらで40〜50回、粉っぽさがなくなって生地につやが出るまで混ぜます。少なすぎるとムラや空洞の原因に、混ぜすぎるとかたい食感になります。",
+      "中心に竹串を刺し、生の生地がついてこなければ焼き上がり（しっとりしたくずが少しつく程度はOK）。ついてきたら5分追加して再確認します。30分以降に焼き色が濃くなりすぎたら、アルミホイルをかぶせてください。",
+      "真ん中がへこむのは、たいてい焼き不足か、早い段階で扉を開けたためです。"
+    ],
+    "subs": [
+      ["ゆず", "マイヤーレモン、またはレモンとライムを半々に。果汁は市販のゆず果汁100%でもOK（香りづけの皮はレモンで）"],
+      ["薄力粉", "中力粉（少し重めの食感に）、または中力粉85g＋コーンスターチ15g"],
+      ["食塩不使用バター", "有塩バター（塩ひとつまみは入れない）"],
+      ["粉糖", "アイシングはやめて、シロップを少し多めに塗る"]
+    ],
+    "makeAhead": "パウンドケーキは焼いた翌日以降が食べごろ。シロップが全体になじみ、ゆずの香りが落ち着きます。1〜2日前に焼いてシロップを塗り、粗熱が取れたらすぐにラップでぴったり包み、アイシングは食べる当日にかけます。",
+    "storage": "ラップで包んで涼しい場所で4〜5日。暑い時期は冷蔵庫に入れ、食べる前に室温に戻してください（冷たいままだとバターの風味が感じにくくなります）。冷凍はアイシング前のものを1切れずつラップで包んで1か月。室温で1時間ほど解凍します。アイシングは冷凍するとべたついて溶け出すので、解凍してからかけましょう。"
+  },
+  "ingredients": [
+    { "items": [
+      { "q": 100, "u": "g", "us": [7, "tbsp"], "en": "butter, unsalted, at room temperature", "ja": "バター（食塩不使用、室温に戻す）" },
+      { "q": 100, "u": "g", "us": [0.5, "cup"], "en": "sugar (granulated or caster)", "ja": "砂糖（グラニュー糖）" },
+      { "q": 2, "u": "pc", "en": "eggs (100 g without the shell), at room temperature, beaten", "ja": "卵（Mサイズ、室温に戻して溶きほぐす）" },
+      { "q": 100, "u": "g", "us": [0.8, "cup"], "en": "cake flour", "ja": "薄力粉" },
+      { "q": 0.5, "u": "tsp", "en": "baking powder", "ja": "ベーキングパウダー" },
+      { "q": 1, "u": "pinch", "en": "salt", "ja": "塩" },
+      { "q": 3, "u": "pc", "en": "yuzu (finely grated zest of 2; juice of all 3, about 55 ml)", "ja": "ゆず（皮は2個分をすりおろし、果汁は3個分を搾る）" },
+      { "q": 1, "u": "tbsp", "en": "yuzu juice, for the batter", "ja": "ゆず果汁（生地用）" }
+    ]},
+    { "group": { "en": "Yuzu syrup", "ja": "ゆずシロップ" }, "items": [
+      { "q": 2, "u": "tbsp", "en": "yuzu juice", "ja": "ゆず果汁" },
+      { "q": 25, "u": "g", "us": [2, "tbsp"], "en": "sugar", "ja": "砂糖" },
+      { "q": 1, "u": "tbsp", "en": "water", "ja": "水" }
+    ]},
+    { "group": { "en": "Yuzu glaze", "ja": "ゆずアイシング" }, "items": [
+      { "q": 50, "u": "g", "us": [0.4, "cup"], "en": "powdered sugar (icing sugar)", "ja": "粉糖" },
+      { "q": 2, "u": "tsp", "en": "yuzu juice", "ja": "ゆず果汁" }
+    ]}
+  ],
+  "steps": [
+    { "en": "An hour ahead, take out the butter and eggs. Line the loaf pan with baking paper, grate the zest of 2 yuzu (yellow or green part only) and squeeze the juice of all 3. Sift the cake flour, baking powder and salt together. Preheat the oven to 170°C (340°F), or 150°C (300°F) for a fan oven.",
+      "ja": "1時間前にバターと卵を冷蔵庫から出しておきます。型にオーブンシートを敷き、ゆず2個の皮（表面の色のついた部分だけ）をすりおろし、3個分の果汁を搾ります。薄力粉、ベーキングパウダー、塩を合わせてふるいます。オーブンを170℃（ファン付きなら150℃）に予熱します。" },
+    { "en": "Rub the yuzu zest into the 100 g sugar with your fingertips until fragrant. Beat the butter with a hand mixer for 1 minute until creamy, then add the sugar in 3 additions and beat on high for 3–4 minutes, until pale, almost white, and fluffy.",
+      "ja": "砂糖100gにゆずの皮を加え、香りが立つまで指先でもみ込みます。バターをハンドミキサーで1分ほど混ぜてクリーム状にし、砂糖を3回に分けて加え、高速で3〜4分、白っぽくふんわりするまで泡立てます。", "timer": 4 },
+    { "en": "Add the beaten eggs about 1 tbsp at a time (6–8 additions), beating for 30 seconds after each until fully absorbed. If the batter starts to look lumpy and watery (curdled), beat in 1 tbsp of the sifted flour, or warm the bottom of the bowl over warm water for 10 seconds while beating, then carry on.",
+      "ja": "溶き卵を大さじ1杯分ずつ（6〜8回に分けて）加え、そのつど30秒ほど、完全になじむまで混ぜます。生地がもろもろと水っぽくなってきたら（分離）、ふるった粉から大さじ1を加えて混ぜるか、ボウルの底を10秒ほどぬるま湯に当てながら混ぜてから続けます。" },
+    { "en": "Beat in the 1 tbsp yuzu juice for the batter; it may look slightly split, which the flour will fix. Sift in the flour mixture and fold with a spatula, cutting down through the middle and lifting from the bottom while turning the bowl, about 40–50 strokes, until no dry flour shows and the batter is glossy.",
+      "ja": "生地用のゆず果汁大さじ1を加えて混ぜます。少し分離したように見えても、粉を入れれば戻ります。粉類をふるい入れ、ゴムべらで底からすくい上げるように、ボウルを回しながら40〜50回、粉っぽさがなくなりつやが出るまで混ぜます。" },
+    { "en": "Scrape the batter into the pan, level it, then push it up towards the ends so the middle is slightly lower. Tap the pan twice on the counter to knock out large bubbles. Bake on the middle shelf for 10 minutes, until a thin skin has formed on top.",
+      "ja": "生地を型に入れて表面をならし、両端を高く、中央が少し低くなるようにします。型を台に2回ほど軽く落として大きな気泡を抜きます。オーブンの中段で10分、表面に薄い膜ができるまで焼きます。", "timer": 10 },
+    { "en": "Quickly open the oven and slash the top lengthwise down the centre, about 1 cm deep, with a knife dipped in oil. Close the door and bake for another 35–40 minutes (45–50 in total). If the top browns too fast after 30 minutes, lay a sheet of foil over it. Meanwhile, make the syrup: microwave the 2 tbsp yuzu juice, 25 g sugar and 1 tbsp water at 600 W for 20–30 seconds and stir until the sugar dissolves.",
+      "ja": "すばやくオーブンを開け、油をつけたナイフで表面の中央に縦に1cmほどの深さの切り込みを入れます。扉を閉め、さらに35〜40分（合計45〜50分）焼きます。30分以降に焼き色が濃くなりすぎたら、アルミホイルをかぶせます。その間にシロップを作ります。ゆず果汁大さじ2、砂糖25g、水大さじ1を電子レンジ（600W）で20〜30秒加熱し、砂糖が溶けるまで混ぜます。", "timer": 40 },
+    { "en": "Test with a skewer in the centre: it should come out clean, and the crack should look dry and golden, not wet. If there's wet batter on the skewer, bake 5 minutes more and test again.",
+      "ja": "中心に竹串を刺して確認します。何もついてこず、割れ目も濡れた感じがなくきつね色になっていれば焼き上がり。生の生地がついてきたら、5分追加して再確認します。" },
+    { "en": "Lift the cake out of the pan onto a rack, peel the paper away from the sides, and brush the hot syrup all over the top and sides; it soaks right in. When it is barely warm (about 1 hour), wrap it tightly in cling film so it stays moist.",
+      "ja": "型から出して網にのせ、側面の紙をはがし、熱いうちにシロップを上面と側面にまんべんなく塗ります。すっとしみ込んでいきます。1時間ほどして粗熱が取れたら、乾燥しないようにすぐラップでぴったり包みます。", "timer": 60 },
+    { "en": "To glaze, stir the powdered sugar with the 2 tsp yuzu juice into a thick paste that falls from the spoon in a ribbon; add juice a few drops at a time if it's too stiff. Drizzle it over the cooled cake and let it set for 30 minutes before slicing. For the best flavour, wait until the next day.",
+      "ja": "アイシングは、粉糖にゆず果汁小さじ2を加えて混ぜ、スプーンからリボン状にとろりと落ちるくらいの固さにします。固すぎたら果汁を数滴ずつ足してください。冷めたケーキにかけ、30分おいて固まってから切ります。いちばんおいしいのは翌日です。" }
+  ],
+  "nutrition": { "calories": 240, "carbs": 31, "protein": 3, "fat": 11.5, "satFat": 7, "cholesterol": 73, "sodium": 70, "fiber": 0.5, "sugar": 22 },
+  "comments": [
+    { "name": { "en": "Olivia (London)", "ja": "Olivia（ロンドン）" }, "date": "2026-09-29", "stars": 5,
+      "en": "No yuzu in my part of London, so I used Meyer lemons from the market and a splash of bottled yuzu juice in the glaze. Gorgeous, and it really was better on day two.",
+      "ja": "近所にゆずがないので、マーケットのマイヤーレモンを使い、アイシングに市販のゆず果汁を少し加えました。とてもおいしく、本当に2日目のほうがおいしかったです。" },
+    { "name": { "en": "Mameko", "ja": "まめこ" }, "date": "2026-09-18", "stars": null,
+      "en": "My batter separated when I added the eggs and looked like scrambled eggs. Should I have thrown it out?",
+      "ja": "卵を入れたら生地が分離して、スクランブルエッグみたいになってしまいました。捨てるべきでしたか？",
+      "reply": { "en": "No, never throw it out! Beat in a tablespoon of the measured flour and it will smooth out; if the bowl feels cold, hold it over warm water for 10 seconds while beating. Next time make sure the eggs are at room temperature (cold eggs are the usual cause) and add them a tablespoon at a time. Even a slightly curdled batter bakes into a good cake, just a little denser.",
+        "ja": "捨てなくて大丈夫です！分量の薄力粉から大さじ1を加えて混ぜれば、なめらかに戻ります。ボウルが冷たく感じたら、10秒ほどぬるま湯に当てながら混ぜてください。次回は卵をしっかり室温に戻して（冷たい卵がいちばんの原因です）、大さじ1ずつ加えてみてくださいね。少し分離した生地でも、きめが少し詰まるくらいで、ちゃんとおいしく焼けますよ。" } },
+    { "name": { "en": "Hiroshi (Osaka)", "ja": "ひろし（大阪）" }, "date": "2026-09-02", "stars": 4,
+      "en": "Delicious, but the middle sank a little after it cooled.",
+      "ja": "おいしかったのですが、冷めたら真ん中が少しへこみました。",
+      "reply": { "en": "Kenta here (I test Natsuki's recipes). A sunken middle almost always means it needed a few more minutes. Check with a skewer right in the centre of the crack, where it's least cooked, and give it 5 minutes more if there's any wet batter. Also keep the door closed for the first 30 minutes, apart from the quick slash.",
+        "ja": "レシピ試作担当の森です。真ん中がへこむのは、ほとんどの場合あと数分焼き足りなかったためです。いちばん火が通りにくい割れ目の中心に竹串を刺して確認し、生の生地がついてきたら5分追加してください。また、切り込みを入れるとき以外は、最初の30分は扉を開けないようにしましょう。" } },
+    { "name": { "en": "Jenny (Seattle)", "ja": "Jenny（シアトル）" }, "date": "2026-08-11", "stars": null,
+      "en": "Can I bake this in a standard US 9 × 5 inch loaf pan?",
+      "ja": "アメリカの一般的な9×5インチのパウンド型で焼けますか？",
+      "reply": { "en": "Yes, but a 9 × 5 inch pan (about 23 × 13 cm) is much bigger than our 18 cm pan, so the cake will be flat. I'd make 1½ times the recipe (150 g each of butter, sugar, eggs and flour, so 3 eggs) and bake it for 55–60 minutes, checking with a skewer from 50.",
+        "ja": "焼けますが、9×5インチ（約23×13cm）は18cm型よりかなり大きいので、そのままだと平たいケーキになります。1.5倍量（バター・砂糖・卵・粉を各150g、卵は3個）にして55〜60分、50分から竹串で確認するのがおすすめです。" } },
+    { "name": { "en": "Yuzu farmer's wife", "ja": "ゆず農家の嫁" }, "date": "2025-12-05", "stars": 5,
+      "en": "We grow yuzu in the Kagami valley, so I make this every December. I added 30 g of chopped candied yuzu peel to the batter. Highly recommended!",
+      "ja": "鏡川の谷でゆずを育てているので、毎年12月に作っています。刻んだゆずピール30gを生地に加えてみました。とてもおすすめです！" },
+    { "name": { "en": "Lena (Berlin)", "ja": "Lena（ベルリン）" }, "date": "2025-01-20", "stars": 3,
+      "en": "The cake itself was lovely, but with the syrup and the glaze it was too sweet for me.",
+      "ja": "ケーキ自体はとてもおいしかったのですが、シロップとアイシングの両方だと私には甘すぎました。",
+      "reply": { "en": "Thank you for the honest review, Lena. You can leave out the glaze completely and just use the syrup, or make the syrup with only 1 tbsp sugar. It's a little more tart that way, which I like too.",
+        "ja": "正直なご感想をありがとうございます。アイシングはまるごと省いてシロップだけにするか、シロップの砂糖を大さじ1に減らしてみてください。酸味が立って、それはそれでおいしいですよ。" } },
+    { "name": { "en": "Aoi", "ja": "あおい" }, "date": "2024-11-15", "stars": 5,
+      "en": "I freeze slices without the glaze and put one in my lunch bag in the morning. It's thawed by lunchtime.",
+      "ja": "アイシング前のものを1切れずつ冷凍して、朝お弁当袋に入れています。お昼にはちょうど解凍されています。" }
+  ]
+}

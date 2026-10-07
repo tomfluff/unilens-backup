@@ -1,0 +1,151 @@
+{
+  "slug": "wafu-mushroom-pasta",
+  "categories": ["weeknight", "vegetarian"],
+  "cuisine": "fusion",
+  "diet": ["vegetarian"],
+  "difficulty": "easy",
+  "course": "noodles",
+  "times": { "prep": 5, "cook": 15 },
+  "servings": 2,
+  "image": "wafu-mushroom-pasta",
+  "rating": 4.6,
+  "ratings": 198,
+  "published": "2021-10-20",
+  "updated": "2026-09-24",
+  "related": ["kinoko-takikomi-gohan", "yuzu-kosho", "agedashi-tofu", "kabocha-soup"],
+  "en": {
+    "title": "Butter-Soy Mushroom Pasta (Wafu Pasta)",
+    "teaser": "Spaghetti tossed with deeply browned autumn mushrooms, garlic, butter and a splash of soy sauce, finished with crisp nori. A 20-minute Japanese-style pasta.",
+    "intro": [
+      "Wednesdays are our most chaotic evening. Sota has swimming until six, Hana has piano until half past, and Daisuke is never home before seven. For years I tried to have something slow-cooked ready, and for years I failed. Then one October afternoon I came home from the Saturday market with far too many mushrooms, and this pasta happened. It has been our Wednesday dinner every autumn since. Kenta, who tests every recipe on this site, says he now makes it twice a week, which I take as the highest praise.",
+      "<em>Wafū</em> pasta means Japanese-style pasta. It grew up in Japan's coffee shops in the decades after the war, where cooks started tossing spaghetti with soy sauce, butter, nori, cod roe and whatever else was in the kitchen. Butter and soy sauce, <em>batā-jōyu</em>, is one of the great Japanese flavour pairings: we put it on corn, on scallops, on rice. With browned mushrooms it tastes deep and savoury, almost meaty.",
+      { "h": "Why you'll love it" },
+      { "ul": [
+        "It takes 20 minutes and one frying pan plus a pot.",
+        "Any mix of mushrooms works, so it is a good use for odds and ends.",
+        "It is vegetarian, and easy to make vegan."
+      ] },
+      { "h": "Choosing the mushrooms" },
+      "I buy mine from the Kagami Kinoko-en stall at the Saturday market by Harukawa Central. They grow shimeji, maitake and shiitake on logs in the valley below Mount Tsukimi. A mix gives the most interesting texture: shimeji stay bouncy, maitake go crisp and frilly at the edges, shiitake are meaty, and king oyster mushrooms (eringi) are almost like scallops. Don't wash them; wipe off any dirt with damp kitchen paper. Wet mushrooms steam instead of browning.",
+      { "h": "Leave them alone" },
+      "This is the whole secret. Spread the mushrooms in one layer in a hot pan and don't touch them for three minutes. They will squeak and hiss and you will want to stir; resist. When you finally turn them, the undersides should be deep golden brown. That colour is the flavour. If your pan is crowded they will steam grey, so for four servings brown them in two batches. And don't salt them yet: salt draws out their water.",
+      { "h": "Tips for success" },
+      "Salt the pasta water properly, at 1% of the water: 20 g of salt in 2 litres. The spaghetti seasons itself as it cooks, so the sauce needs only a little soy sauce. Cook the pasta a minute less than the packet says, because it finishes in the pan. Pour the soy sauce onto the hot side of the pan, not over the mushrooms; it sizzles and caramelises for a toasty smell. Before draining, scoop out a mugful of pasta water. Its starch turns the butter and soy into a glossy sauce that clings.",
+      "For a grown-up kick, try a little of my <a href=\"{{recipe:yuzu-kosho}}\">homemade yuzu kosho</a> in the butter. If you still have mushrooms left over, make <a href=\"{{recipe:kinoko-takikomi-gohan}}\">autumn mushroom rice</a> at the weekend."
+    ],
+    "equipment": ["Large pot (at least 3 L) for the pasta", "Large frying pan (about 26 cm)", "Tongs", "Kitchen scissors for the nori", "Mug for the pasta water"],
+    "notes": [
+      "The pasta water should taste pleasantly salty, like a mild soup. If you use less salt, add a little more soy sauce at the end.",
+      "If the sauce looks oily or separated, add another splash of pasta water and toss hard; it will come together.",
+      "Cut the nori with scissors right before serving and scatter it at the table so it stays crisp.",
+      "Yuzu kosho variation: stir ½ tsp yuzu kosho into the butter in step 4 and use only 1 tbsp soy sauce, because yuzu kosho is salty.",
+      "For greens, add a handful of spinach or komatsuna to the pan with the pasta; it wilts in the 1-minute toss."
+    ],
+    "subs": [
+      ["Butter (vegan)", "1 more tbsp olive oil plus ½ tsp white miso stirred into the soy sauce"],
+      ["Mixed mushrooms", "Any single variety, or button and chestnut mushrooms; 200 g in total"],
+      ["Spaghetti (gluten-free)", "Gluten-free spaghetti, with tamari instead of soy sauce"],
+      ["Nori", "Shredded shiso, thinly sliced green onion or toasted sesame seeds"]
+    ],
+    "makeAhead": "This is best made fresh. You can trim and tear the mushrooms in the morning; keep them in a paper bag in the fridge, not a sealed plastic box, where they go slimy.",
+    "storage": "Leftovers keep 1 day in the fridge. Reheat in a frying pan with 2 tbsp water, tossing until hot, and add fresh nori. Cooked pasta does not freeze well, but raw mushrooms do: see the comments."
+  },
+  "ja": {
+    "title": "きのこの和風パスタ（バターしょうゆ）",
+    "teaser": "こんがり焼きつけた秋のきのこに、にんにく、バター、しょうゆをからめて、仕上げにパリッとした焼きのりを。20分でできる和風パスタです。",
+    "intro": [
+      "わが家でいちばん慌ただしいのが水曜の夜。蒼太は6時までスイミング、花は6時半までピアノ、大輔の帰りは7時過ぎ。何年も「煮込み料理を用意しておこう」と挑戦しては失敗していました。ところがある10月の土曜、朝市でついきのこを買いすぎてしまい、その日の夕方に生まれたのがこのパスタです。それ以来、秋の水曜はこれと決まっています。このサイトのレシピをすべて試作してくれている森健太さんも「週2で作ってます」とのこと。最高のほめ言葉です。",
+      "和風パスタは、戦後の喫茶店文化の中で生まれた、日本ならではのスパゲッティ。しょうゆやバター、のり、たらこなど、台所にあるものを合わせて工夫されてきました。中でも「バターしょうゆ」は、とうもろこしにもホタテにもごはんにも合う、日本人の大好きな組み合わせ。こんがり焼いたきのこと合わせると、お肉のようなコクとうまみが出ます。",
+      { "h": "きのこの選び方" },
+      "私はいつも、春川中央駅そばの土曜の朝市に出ている「鏡きのこ園」さんで買っています。月見山のふもとの谷で、しめじ、まいたけ、しいたけを原木栽培している農園です。何種類か混ぜると食感が楽しくなります。しめじはぷりっと、まいたけはふちがカリッと香ばしく、しいたけは肉厚、エリンギはホタテのような歯ごたえに。きのこは洗わず、汚れは湿らせたペーパータオルで拭き取ってください。水気がつくと焼き色がつかず、蒸し煮のようになってしまいます。",
+      { "h": "きのこは「触らない」が鉄則" },
+      "おいしさの秘密はこれだけ。熱したフライパンにきのこを重ならないように広げたら、3分間は触らずに焼きます。ジュージューと音がして混ぜたくなりますが、ぐっと我慢。返したときに裏面がこんがりきつね色になっていれば成功です。この焼き色こそがうまみ。フライパンに詰め込むと蒸れて色がつかないので、4人分なら2回に分けて焼きましょう。塩はまだ入れないこと。塩をふると水分が出てしまいます。",
+      { "h": "おいしく作るコツ" },
+      "パスタのゆで湯には、湯の量の1％の塩を入れます。2Lなら20g。パスタ自体にほどよく塩味がつくので、仕上げのしょうゆは少量で決まります。ゆで時間は表示より1分短く。フライパンで仕上げる間にちょうどよくなります。しょうゆはきのこに直接かけず、フライパンのあいている部分に回し入れて、ジュッと焦がすと香ばしい香りが立ちます。湯をきる前に、ゆで汁をマグカップ1杯分取っておくのも忘れずに。ゆで汁のでんぷんが、バターとしょうゆをつやのあるソースにまとめてくれます。",
+      "大人向けには、<a href=\"{{recipe:yuzu-kosho}}\">自家製ゆずこしょう</a>をバターに少し溶かすのもおすすめ。きのこが余ったら、週末は<a href=\"{{recipe:kinoko-takikomi-gohan}}\">きのこの炊き込みご飯</a>をどうぞ。"
+    ],
+    "equipment": ["パスタをゆでる大きめの鍋（3L以上）", "フライパン（直径26cm程度）", "トング", "キッチンばさみ（のり用）", "ゆで汁を取るマグカップ"],
+    "notes": [
+      "ゆで湯は、薄めのスープくらいの「ほどよい塩味」が目安です。塩を減らした場合は、仕上げのしょうゆを少し増やしてください。",
+      "ソースが油っぽく分離して見えるときは、ゆで汁をもう少し加えて手早くあおると、きれいにまとまります。",
+      "のりは食べる直前にキッチンばさみで切り、食卓でのせるとパリッとしたまま楽しめます。",
+      "ゆずこしょうアレンジ：手順4でバターにゆずこしょう小さじ1/2を溶かし、しょうゆは大さじ1に。ゆずこしょうは塩分が多いので控えめにします。",
+      "青菜を足すなら、ほうれん草や小松菜をひとつかみ、パスタと一緒にフライパンへ。1分あおる間にしんなりします。"
+    ],
+    "subs": [
+      ["バター（ヴィーガンの場合）", "オリーブ油を大さじ1増やし、しょうゆに白みそ小さじ1/2を混ぜる"],
+      ["きのこ（数種類）", "1種類だけでも、マッシュルームなどでもOK。合計200gに"],
+      ["スパゲッティ（グルテンフリーにする場合）", "グルテンフリーのパスタ。しょうゆもたまりじょうゆに"],
+      ["焼きのり", "大葉の千切り、小ねぎの小口切り、または炒りごま"]
+    ],
+    "makeAhead": "できたてがいちばんおいしいパスタです。きのこの下ごしらえは朝のうちにしておけます。密閉容器ではぬめりが出やすいので、紙袋に入れて冷蔵庫へ。",
+    "storage": "残ったら冷蔵で1日。フライパンに水大さじ2を加えて、あおりながら温め直し、のりは新しいものをのせます。ゆでたパスタの冷凍は向きませんが、生のきのこは冷凍できます（コメント欄をご覧ください）。"
+  },
+  "ingredients": [
+    { "items": [
+      { "q": 200, "u": "g", "en": "spaghetti (1.6 mm)", "ja": "スパゲッティ（1.6mm）" },
+      { "q": 2, "u": "l", "en": "water, for boiling", "ja": "水（ゆでる用）" },
+      { "q": 20, "u": "g", "us": [3.33, "tsp"], "en": "salt, for the pasta water", "ja": "塩（ゆでる用）" },
+      { "q": 200, "u": "g", "en": "mixed mushrooms (shimeji, maitake, shiitake, king oyster)", "ja": "きのこ（しめじ、まいたけ、しいたけ、エリンギなど）" },
+      { "q": 1, "u": "clove", "en": "garlic, thinly sliced", "ja": "にんにく（薄切り）" },
+      { "q": 1, "u": "tbsp", "en": "olive oil", "ja": "オリーブ油" },
+      { "q": 20, "u": "g", "us": [1.5, "tbsp"], "en": "butter", "ja": "バター" },
+      { "q": 1, "q2": 1.5, "u": "tbsp", "en": "soy sauce", "ja": "しょうゆ" },
+      { "q": null, "en": "pasta cooking water", "ja": "パスタのゆで汁", "free": { "en": "about 80 ml", "ja": "約80ml" } },
+      { "q": null, "en": "black pepper", "ja": "黒こしょう", "free": { "en": "to taste", "ja": "少々" } }
+    ] },
+    { "group": { "en": "To finish", "ja": "仕上げ" }, "items": [
+      { "q": 0.5, "u": "sheet", "en": "nori, cut into thin strips", "ja": "焼きのり（細切り）" },
+      { "q": 4, "u": "leaf", "en": "shiso leaves, finely shredded (optional)", "ja": "大葉（千切り・お好みで）" }
+    ] }
+  ],
+  "steps": [
+    { "en": "Bring the 2 litres of water to a rolling boil in a large pot over high heat and add the 20 g salt. Meanwhile, cut the root ends off the mushrooms; break the shimeji into small clumps, tear the maitake into bite-sized pieces, slice the shiitake 5 mm thick and cut the king oyster mushrooms into 5 cm strips.",
+      "ja": "大きめの鍋に水2Lを入れて強火で沸かし、塩20gを加えます。その間にきのこの石づきを切り落とし、しめじは小房に分け、まいたけは食べやすく手でさき、しいたけは5mm厚さに、エリンギは5cm長さの細切りにします。" },
+    { "en": "Add the spaghetti and stir for the first minute so it doesn't stick. Cook it 1 minute less than the packet time (6 minutes for a 7-minute 1.6 mm spaghetti).",
+      "ja": "スパゲッティを入れ、くっつかないように最初の1分はときどき混ぜます。袋の表示時間より1分短くゆでます（表示7分の1.6mmなら6分）。",
+      "timer": 6 },
+    { "en": "While the pasta cooks, put the olive oil and garlic into the cold frying pan and heat over medium-low for 1–2 minutes, until fragrant and pale gold at the edges. Turn the heat to medium-high, add the mushrooms in one layer and leave them completely alone for 3 minutes, until the undersides are deep golden. Then toss and cook for 1–2 minutes more.",
+      "ja": "パスタをゆでている間に、冷たいフライパンにオリーブ油とにんにくを入れ、弱めの中火で1〜2分、香りが立ってふちが薄く色づくまで熱します。中強火にしてきのこを重ならないように広げ、3分間は触らずに焼いて、裏面をこんがりきつね色にします。そのあと全体を返して、さらに1〜2分炒めます。",
+      "timer": 3 },
+    { "en": "Turn the heat down to medium. Add the butter, and as it melts, pour 1 tbsp of the soy sauce onto an empty, hot part of the pan so it sizzles for a few seconds before you toss it through the mushrooms. Before draining the pasta, scoop out a mugful (about 150 ml) of the cooking water.",
+      "ja": "中火に落としてバターを加えます。溶けてきたら、しょうゆ大さじ1をフライパンのあいている熱い部分に回し入れ、数秒ジュッと焦がしてからきのこと合わせます。パスタの湯をきる前に、ゆで汁をマグカップ1杯分（約150ml）取っておきます。" },
+    { "en": "Drain the spaghetti, or lift it straight into the frying pan with tongs, and add about 80 ml of the pasta water. Toss over medium heat for about 1 minute, until the butter, soy sauce and water turn into a glossy sauce that clings to the pasta; add another splash of water if it looks dry. Taste, add the last ½ tbsp soy sauce if needed, and season with black pepper.",
+      "ja": "スパゲッティの湯をきり（またはトングで直接フライパンへ移し）、ゆで汁約80mlを加えます。中火で1分ほどあおり、バター、しょうゆ、ゆで汁がつやのあるソースになってパスタにからめば完成。水分が足りなければゆで汁を少し足します。味を見て、必要なら残りのしょうゆ大さじ1/2を加え、黒こしょうをふります。",
+      "timer": 1 },
+    { "en": "Divide between warm plates, top with the nori strips and shredded shiso and eat straight away.",
+      "ja": "温めた器に盛り、焼きのりと大葉をのせて、すぐにいただきます。" }
+  ],
+  "nutrition": { "calories": 560, "carbs": 76, "protein": 15, "fat": 20, "satFat": 8, "cholesterol": 30, "sodium": 1100, "fiber": 6, "sugar": 4 },
+  "comments": [
+    { "name": { "en": "Mushroom-hunting mum", "ja": "きのこ狩り母さん" }, "date": "2026-10-02", "stars": 5,
+      "en": "Made the yuzu kosho version with only 1 tbsp soy sauce like the note says. The citrus and chilli with the butter is incredible. My husband scraped the pan.",
+      "ja": "メモの通り、しょうゆを大さじ1にしてゆずこしょうバージョンで作りました。ゆずの香りとピリッとした辛さがバターと合って最高。夫はフライパンまでこそげていました。" },
+    { "name": { "en": "Liam (Dublin)", "ja": "Liam（ダブリン）" }, "date": "2026-09-20", "stars": null,
+      "en": "My mushrooms came out soggy and grey, not brown like yours. What went wrong?",
+      "ja": "きのこが写真のように茶色くならず、水っぽくて灰色になってしまいました。何がいけなかったのでしょう？",
+      "reply": { "en": "Usually one of three things: the pan was crowded, the mushrooms were wet from washing, or they were stirred too soon. Use the biggest pan you have, make sure it's properly hot before they go in, and count to 180 before you touch them!",
+        "ja": "原因はたいてい3つのどれかです。フライパンに詰め込みすぎた、洗って水気がついていた、早く混ぜすぎた。いちばん大きなフライパンを使い、しっかり熱してから入れて、180数えるまで触らないでくださいね！" } },
+    { "name": { "en": "Sakura", "ja": "さくら" }, "date": "2026-09-09", "stars": 5,
+      "en": "Can I use mushrooms I froze myself? I always buy too many at the market.",
+      "ja": "自分で冷凍したきのこでも作れますか？朝市でいつも買いすぎてしまうんです。",
+      "reply": { "en": "Yes, and they're even more savoury after freezing! Trim and separate them, freeze raw in a flat bag for up to a month, and add them to the hot pan still frozen. They'll release water first, so cook on high for 4–5 minutes until it evaporates, then let them brown.",
+        "ja": "作れますし、冷凍するとうまみがさらに増しますよ！石づきを取ってほぐし、生のまま保存袋に平らに入れて冷凍で1か月。凍ったまま熱したフライパンに入れてください。最初に水分が出るので、強火で4〜5分水分を飛ばしてから焼き色をつけます。" } },
+    { "name": { "en": "Inês (Lisbon)", "ja": "Inês（リスボン）" }, "date": "2026-08-21", "stars": 4,
+      "en": "Lovely, but a bit salty for us with 1½ tbsp soy sauce. The second time I used 1 tbsp and it was perfect.",
+      "ja": "とてもおいしかったけれど、しょうゆ大さじ1と1/2では私たちには少ししょっぱかったです。2回目は大さじ1にしたらちょうどよかったです。",
+      "reply": { "en": "Thanks, Inês. Soy sauces vary a lot from brand to brand, and so does the saltiness of the pasta water, so starting with 1 tbsp and tasting is exactly right.",
+        "ja": "ありがとうございます。しょうゆはメーカーによって塩分がかなり違いますし、ゆで湯の塩加減でも変わるので、まず大さじ1で味見をするのが正解です。" } },
+    { "name": { "en": "Working mum Aya", "ja": "ワーママあや" }, "date": "2026-06-14", "stars": 5,
+      "en": "I ordered the mushroom set from the Kagami Kinoko-en shop on Marketa and dinner was ready in 15 minutes. The kids ate the maitake like crisps.",
+      "ja": "マルケタで鏡きのこ園さんのきのこセットを注文して作りました。15分で晩ごはんが完成。子どもたちはカリカリのまいたけをお菓子みたいに食べていました。" },
+    { "name": { "en": "Hiro (Seattle)", "ja": "Hiro（シアトル）" }, "date": "2026-03-03", "stars": 5,
+      "en": "I put a raw egg yolk on top of each plate and mixed it in at the table. Rich and silky, like a Japanese carbonara.",
+      "ja": "お皿ごとに卵黄をのせて、食べるときに混ぜました。濃厚でなめらか、和風カルボナーラみたいです。" },
+    { "name": { "en": "Martha (Toronto)", "ja": "Martha（トロント）" }, "date": "2025-10-30", "stars": 3,
+      "en": "Tasty, but the nori went soggy and clumped together in the sauce. Not very nice to eat.",
+      "ja": "味はよかったのですが、のりがソースで湿ってかたまりになってしまい、食べにくかったです。",
+      "reply": { "en": "Sorry about that, Martha! Nori softens in seconds on hot, saucy pasta. Cut it with dry scissors right before serving and scatter it on at the table, or sprinkle it on a bite at a time.",
+        "ja": "残念でしたね。のりは熱いソースにのせると数秒でしんなりしてしまいます。乾いたキッチンばさみで食べる直前に切り、食卓でのせるか、ひと口ずつかけながら食べてみてください。" } }
+  ]
+}

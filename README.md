@@ -144,7 +144,10 @@ cd unilens-lib && make build         # -> dist/unilens.js
 ```
 
 Options: `trigger` (MouseEvent predicate, default alt+click), `mouseWindow` (seconds
-of mouse trace), `backend` (Flask base URL).
+of mouse trace), `backend` (Flask base URL), `preset` (a study preset such as
+`'initial'`; see `unilens-lib/src/presets.ts`). A page address with
+`?unilens-preset=initial` or `?unilens-preset=off` overrides the option and is
+remembered for the site.
 
 To test against the SoftBank mirror: copy `unilens-lib/dist/unilens.js` into
 `softbank-mirror/`, add the two script tags above to its `index.html`, and serve the

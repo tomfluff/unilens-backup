@@ -1,0 +1,70 @@
+title: Mount Tsukimi
+short: Dormant volcano in Minori Prefecture, Japan (1,214 m)
+type: article
+categories: mountains; volcanoes; geography; minori; tourism
+infobox: Mount Tsukimi
+ib-subtitle: 月見山
+ib-image: mountain-01.jpg | Mount Tsukimi seen across rice terraces from Kagami Town
+ib-map: mount-tsukimi | Location in Minori Prefecture
+ib-section: Geography
+ib: Elevation | 1,214 m<br>(1,216 m before 2014)
+ib: Location | Tsukimi Town, [[minori-prefecture|Minori Prefecture]], Japan
+ib: Distance | about 32 km north-east of central [[harukawa|Harukawa]]
+ib: Summit | Meigetsu-dake (明月岳)
+ib: Rank | 2nd highest in the prefecture
+ib-section: Geology
+ib: Type | Stratovolcano (dormant)
+ib: Rock | Andesite
+ib: Last eruption | about 24,000 years ago
+ib-section: Climbing
+ib: Easiest route | [[mount-tsukimi#Ropeway|Tsukimi Ropeway]] and Sanjō trail (1 h 10 min)
+ib: Protected area | Tsukimi–Kagami Prefectural Natural Park (1959)
+---
+'''Mount Tsukimi''' (月見山, ''Tsukimi-yama'', "moon-viewing mountain") is a dormant stratovolcano in the town of Tsukimi, [[minori-prefecture|Minori Prefecture]], Japan, about 32 km north-east of central [[harukawa|Harukawa]]. At 1,214 m it is the second-highest peak in the prefecture after Mount Hiwada (1,477 m), but its rounded cone, visible from most of the Harukawa plain, makes it the best-known mountain in Minori.{{efn|The height was revised from 1,216 m to 1,214 m after a national survey in 2014 measured the summit with satellite positioning. Older maps, guidebooks and some trail signs still give 1,216 m.}} The [[kagami-river|Kagami River]] rises on its north slope, and the hot-spring town of [[tsukimi-onsen|Tsukimi Onsen]] lies at its southern foot.<ref name="gsi2014">Geospatial Information Authority of Japan (2014). ''Revised Elevations of Major Peaks, 2014''. p. 31.</ref>
+
+== Geography and geology ==
+[[Map:mount-tsukimi|Location of Mount Tsukimi in Minori Prefecture]]
+Mount Tsukimi is an andesite stratovolcano built by eruptions that began about 300,000 years ago. The summit, Meigetsu-dake (明月岳), is a lava dome from the last eruptive stage; the most recent eruption, about 24,000 years ago, produced lava flows on the south-west flank that now form the cliffs above the Kagami Gorge.<ref name="ishida">Ishida, Kazuo (2008). ''Volcanoes of Western Honshū''. Harukawa University Press, pp. 144–159.</ref> Because it has not erupted in the last 10,000 years, it is not on the national list of active volcanoes; the heat of the old magma body is thought to feed the springs of Tsukimi Onsen.
+
+The [[kagami-river|Kagami River]] rises at about 1,050 m on the north slope and circles the mountain to the east before flowing south through Tsukimi Valley. The summit is about 7.5 °C colder than Harukawa on average, and snow covers the upper slopes from December to March. Beech forest grows above about 900 m, with mixed maple and oak forest below.
+
+== Name ==
+The mountain is named for the moon. Seen from [[harukawa-castle|Harukawa Castle]], the full moon of the 15th night of the 8th lunar month, the traditional night for moon viewing, rises over its rounded summit, and the Asagiri lords held moon-viewing parties in the castle keep to watch it. The summit's name, Meigetsu-dake, "bright-moon peak", has the same origin.<ref name="shishi5">Harukawa City History Compilation Committee (1989). ''Harukawa City History'', vol. 5: ''Folk Culture''. Harukawa City, pp. 402–409.</ref>
+
+== Religion ==
+The summit has been a place of mountain worship since at least the Heian period. The upper shrine of Tsukimi Shrine stands on Meigetsu-dake, and its lower shrine is in Tsukimi Onsen. The [[asagiri-clan|Asagiri]] lords of Harukawa prayed there for rain in years of drought and rebuilt the upper shrine in 1702.{{cn}} The climbing season opens with a ceremony at the upper shrine on the first Sunday of May.
+
+== Climbing ==
+Pilgrims to the upper shrine used the Omote trail from the Edo period, and in the early 20th century the mountain became a favorite outing for students from Harukawa. The arrival of the [[kagami-line|Kagami Line]] at Tsukimi Onsen in 1931 brought day hikers from the city, and the first Meigetsu Hut was built in 1932; the present hut dates from 1987.{{cn}} On clear days the summit looks south over the Harukawa plain to [[minori-bay|Minori Bay]] and north to Mount Hiwada.
+
+Three main trails reach the summit. The Meigetsu Hut, just below the summit, is staffed from May to November and has about 40 beds.<ref name="tsukimiguide">Tsukimi Town Tourism Association (2023). ''Tsukimi Onsen Guide''. Tsukimi Town, pp. 30–35.</ref>
+
+{| Main trails to the summit
+! Trail !! Start (elevation) !! Distance !! Ascent !! Descent !! Notes
+| Omote trail || Tsukimi Onsen (310 m) || 7.2 km || 3 h 40 min || 2 h 50 min || Main traditional route, via the lower shrine
+| Sanjō trail || Sanjō Station of the ropeway (1,020 m) || 2.4 km || 1 h 10 min || 55 min || Easiest route
+| West trail || Kagami-kyō Station (190 m) || 10.5 km || 5 h || 3 h 50 min || Above the Kagami Gorge; long beech forest section
+|}
+
+The west trail begins at Kagami-kyō Station on the [[kagami-line|Kagami Line]], and the Omote trail begins near Tsukimi Onsen Station, the line's terminus.
+
+=== Ropeway ===
+The '''Tsukimi Ropeway''' (月見ロープウェイ), opened in 1968, climbs 2,140 m from Kōgen Station (580 m) to Sanjō Station (1,020 m) in 9 minutes. A round trip costs ¥2,200 for adults (one way ¥1,300; children half price). Cars leave every 20 minutes. Tsukimi Bus route 5 runs from Tsukimi Onsen Station, the stop for the [[tsukikage|Tsukikage]] limited express, to Kōgen Station in 25 minutes (¥480), every 40 minutes; the last bus leaves the station at 16:20.<ref name="ropeway">Tsukimi Ropeway Co. (2026). ''Fares and Timetable 2026''. Tsukimi Town, p. 2.</ref> The ropeway carries about 240,000 passengers a year, most of them in October and November.
+
+== Seasons ==
+Azaleas flower on the upper slopes in late May. In autumn the leaves turn first at the summit, from mid to late October, and the colors move down to Tsukimi Onsen by early to mid November; the ropeway is busiest during these weeks. Winter ascents need crampons, and the ropeway runs year-round for views of the snow-covered summit.
+
+== Natural park ==
+The mountain is the center of the '''Tsukimi–Kagami Prefectural Natural Park''', designated in 1959. The park covers about 18,400 ha, including the summit area, Tsukimi Valley and the Kagami Gorge. Japanese serow, Asian black bears and copper pheasants live in its forests, and hikers are advised to carry bear bells.<ref name="park">Minori Prefecture Environment Division (2019). ''Tsukimi–Kagami Prefectural Natural Park: 60th Anniversary Report''. Minori Prefecture, pp. 4–12.</ref>
+
+== See also ==
+* [[tsukimi-onsen]]
+* [[kagami-river]]
+* [[kagami-line]]
+* [[minori-prefecture]]
+
+== Notes ==
+{{notelist}}
+
+== References ==
+{{reflist}}

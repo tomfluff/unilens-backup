@@ -1,0 +1,202 @@
+{
+  "slug": "tamagoyaki",
+  "categories": ["japanese", "weeknight"],
+  "cuisine": "japanese",
+  "diet": ["dairy-free", "pescatarian"],
+  "difficulty": "easy",
+  "course": "side",
+  "times": { "prep": 5, "cook": 10 },
+  "servings": 2,
+  "image": "tamagoyaki",
+  "rating": 4.7,
+  "ratings": 538,
+  "published": "2018-04-12",
+  "updated": "2026-09-12",
+  "related": ["chicken-karaage", "oyakodon", "kinoko-takikomi-gohan", "ginger-pork"],
+  "en": {
+    "title": "Tamagoyaki (Japanese Rolled Omelette)",
+    "teaser": "A lightly sweet rolled omelette made in thin layers with a splash of dashi. Ten minutes, four eggs, and the star of every bento box.",
+    "intro": [
+      "Every school morning at 6:15, before anyone else is up, I make one tamagoyaki. It goes into two bento boxes, Hana's and Sota's, and the two scruffy end pieces go into me with my first coffee. I've made this rolled omelette something like three thousand times, and I still love the moment when the last layer rolls over and the whole thing becomes a neat golden log.",
+      "October is sports-day season in Japan, and on the morning of <em>undōkai</em> the whole of Harukawa seems to be making tamagoyaki at once. My grandmother Fumi made a softer, dashi-rich version for breakfast at her inn in Tsukimi Onsen, served with a little mound of grated daikon. My recipe sits halfway between hers and the sweet bento style: lightly sweet, juicy from a little dashi, but sturdy enough to sit in a lunchbox until noon.",
+      { "h": "Why you'll love it" },
+      { "ul": [
+        "Four eggs, ten minutes, and ingredients you already have.",
+        "Lovely warm for breakfast and just as good at room temperature in a bento.",
+        "Once you get the rolling rhythm, you'll never need the recipe again."
+      ] },
+      { "h": "Sweet or savoury?" },
+      "Tamagoyaki in eastern Japan tends to be sweet, while Kansai-style <em>dashimaki tamago</em> is savoury and very juicy, with up to 6 tbsp of dashi for 4 eggs. My 2 tsp of sugar gives a gentle sweetness. For a sweeter omelette go up to 1 tbsp, but turn the heat down a little, because sugar browns quickly. To try dashimaki, add more dashi gradually: the more liquid, the softer the egg and the trickier it is to roll.",
+      { "h": "The pan" },
+      "A square tamagoyaki pan (mine is 13 × 18 cm) makes the neatest rolls, but a 20 cm round frying pan works too: as you roll, fold the curved sides in to make a rectangle. Non-stick is easiest. Professionals use copper, but I wouldn't start there.",
+      { "h": "Tips for success" },
+      "<strong>Don't whisk the eggs into a foam.</strong> Cut through the whites with chopsticks, keeping the tips on the bottom of the bowl, so you don't beat in air. <strong>Medium heat, and oil every layer</strong>: I keep a folded paper towel soaked in oil in a small dish and wipe the pan each time. The egg should sizzle the moment it touches the pan. <strong>Pop the big bubbles</strong> with the tip of a chopstick so you don't get holes. And <strong>roll while the top is still slightly runny</strong>; that wet egg is the glue that holds the layers together. If the pan gets too hot, lift it off the flame for a few seconds rather than fiddling with the knob.",
+      "Don't panic if the first layer looks messy. It ends up in the middle and nobody will ever see it. For bento, make sure the egg is cooked through and completely cool before packing. It sits beautifully next to <a href=\"{{recipe:chicken-karaage}}\">karaage</a> and a <a href=\"{{recipe:kinoko-takikomi-gohan}}\">mushroom rice</a> onigiri."
+    ],
+    "equipment": [
+      "Square tamagoyaki pan (about 13 × 18 cm) or a 20 cm non-stick frying pan",
+      "Long chopsticks and a thin spatula",
+      "Folded paper towel in a small dish of oil, for greasing",
+      "Bamboo sushi mat (makisu) or paper towel, for shaping",
+      "Fine sieve (optional, for an extra-smooth omelette)"
+    ],
+    "notes": [
+      "It's cooked when the roll feels springy when you press it and no liquid egg seeps out when you slice it. For bento, it must be cooked through.",
+      "If you go up to 1 tbsp sugar, cook over medium-low heat; sugary egg burns quickly.",
+      "If the layers separate when you slice it, you rolled too late, once the top had dried. Roll sooner, while the surface is still glossy.",
+      "Fillings: 2 tbsp finely sliced green onion or shirasu mixed into the egg, or a half sheet of nori laid on a layer before rolling.",
+      "In a 20 cm round pan, cook the egg in 3 layers instead of 4 and fold the curved edges in each time."
+    ],
+    "subs": [
+      ["Dashi", "Water plus an extra pinch of salt, or ¼ tsp instant dashi granules dissolved in 3 tbsp hot water"],
+      ["Mirin", "1 tsp sake + ⅓ tsp sugar, or leave it out and add an extra ½ tsp sugar"],
+      ["Light soy sauce", "Regular soy sauce; the omelette will be slightly darker"],
+      ["Square pan", "A 20 cm round frying pan; fold the curved sides in as you roll"]
+    ],
+    "makeAhead": "For bento, you can cook the omelette the night before: cool it completely, wrap it tightly in cling film, refrigerate it, and slice it in the morning. The egg mixture can be mixed up to a few hours ahead and kept in the fridge.",
+    "storage": "Keeps for 2 days in the fridge, wrapped in cling film. It freezes for up to 2 weeks with each slice wrapped separately; the texture becomes slightly spongy. Reheat frozen slices in the microwave at 600 W for about 20 seconds per slice until hot, and cool them before packing a bento."
+  },
+  "ja": {
+    "title": "卵焼き",
+    "teaser": "だしを少し加えて、薄く何層にも巻いたほんのり甘い卵焼き。卵4個で10分、お弁当の主役です。",
+    "intro": [
+      "毎朝6時15分、家族が起きる前に卵焼きをひとつ焼きます。花と蒼太のお弁当に入れて、形の悪い両端は、最初のコーヒーと一緒に私のおなかへ。これまで3,000回は焼いているはずですが、最後の一巻きでくるっと黄金色の四角い形にまとまる瞬間は、今でも大好きです。",
+      "10月は運動会のシーズン。運動会の朝は、春川じゅうの台所で卵焼きを焼いているんじゃないかと思うほどです。月見温泉で宿を営んでいた祖母ふみは、朝ごはんに大根おろしを添えた、やわらかくてだしたっぷりの卵焼きを出していました。私のレシピは、祖母の味と甘いお弁当の卵焼きのちょうど中間。ほんのり甘くて、だしでしっとり、それでいてお昼までお弁当箱の中でしっかり形を保ちます。",
+      { "h": "このレシピのおすすめポイント" },
+      { "ul": [
+        "卵4個で10分。材料はいつも家にあるものだけ。",
+        "焼きたての朝ごはんにも、冷めたお弁当にも。",
+        "巻くリズムがつかめたら、もうレシピは見なくても作れます。"
+      ] },
+      { "h": "甘い派？だし巻き派？" },
+      "関東の卵焼きは甘め、関西のだし巻き卵は卵4個にだし大さじ6ほどを入れた、ジューシーな味が主流です。このレシピは砂糖小さじ2で、ほんのりした甘さ。もっと甘くしたいときは大さじ1まで増やせますが、砂糖は焦げやすいので火を少し弱めてください。だし巻きに挑戦するなら、だしを少しずつ増やしていきましょう。水分が多いほどふんわりしますが、巻くのは難しくなります。",
+      { "h": "フライパンについて" },
+      "卵焼き器（私のは13×18cm）があればきれいに巻けますが、直径20cmの丸いフライパンでも大丈夫。巻きながら丸い両端を内側に折り込んで、長方形にしていきます。フッ素樹脂加工のものがいちばん扱いやすいです。プロは銅の卵焼き器を使いますが、最初の一枚にはおすすめしません。",
+      { "h": "きれいに作るコツ" },
+      "<strong>卵は泡立てない。</strong>菜箸の先をボウルの底につけたまま、白身を切るように混ぜると空気が入りません。<strong>中火で、毎回油をひく。</strong>油をしみ込ませたキッチンペーパーを小皿に用意しておき、そのつどフライパンをふきます。卵液を入れた瞬間にジュッと音がするのが適温です。<strong>大きな気泡は菜箸の先でつぶす</strong>と、穴があきません。そして<strong>表面がまだ少しとろっとしているうちに巻く</strong>こと。半熟の卵が、層どうしをくっつける「のり」になります。熱くなりすぎたら、火加減をいじるよりフライパンを数秒火から外すほうが簡単です。",
+      "1回目がぐちゃっとしても大丈夫。いちばん内側になるので、誰にも見えません。お弁当に入れるときは、中までしっかり火を通し、完全に冷ましてから詰めてください。<a href=\"{{recipe:chicken-karaage}}\">唐揚げ</a>や<a href=\"{{recipe:kinoko-takikomi-gohan}}\">きのこの炊き込みご飯</a>のおにぎりと相性抜群です。"
+    ],
+    "equipment": [
+      "卵焼き器（13×18cmくらい）または直径20cmのフッ素樹脂加工のフライパン",
+      "菜箸、薄いフライ返し",
+      "油をしみ込ませたキッチンペーパー（小皿に入れて）",
+      "巻きす（なければキッチンペーパー）",
+      "こし器（なめらかに仕上げたいとき）"
+    ],
+    "notes": [
+      "押すと弾力があり、切ったときに卵液がしみ出してこなければ焼き上がり。お弁当用は必ず中まで火を通してください。",
+      "砂糖を大さじ1に増やすときは、弱めの中火で焼きます。甘い卵液は焦げやすいです。",
+      "切ったときに層がはがれるのは、表面が乾いてから巻いたのが原因。表面にまだつやがあるうちに巻きましょう。",
+      "アレンジ：小ねぎの小口切りやしらす大さじ2を卵液に混ぜたり、巻く前に焼きのり1/2枚をのせたりしても。",
+      "直径20cmの丸いフライパンなら、4回ではなく3回に分けて焼き、毎回丸い端を内側に折り込みます。"
+    ],
+    "subs": [
+      ["だし汁", "水＋塩ひとつまみ追加、または顆粒だし小さじ1/4を湯大さじ3で溶いたもの"],
+      ["みりん", "酒小さじ1＋砂糖小さじ1/3。または省いて砂糖を小さじ1/2増やす"],
+      ["薄口しょうゆ", "濃口しょうゆでもOK。少し色が濃くなります"],
+      ["卵焼き器", "直径20cmの丸いフライパン。巻きながら丸い両端を内側に折り込みます"]
+    ],
+    "makeAhead": "お弁当用なら前の晩に焼いてもOK。完全に冷ましてからラップでぴったり包んで冷蔵庫へ入れ、朝切り分けます。卵液は数時間前に混ぜて冷蔵庫に入れておけます。",
+    "storage": "ラップに包んで冷蔵で2日。1切れずつラップに包めば2週間冷凍できますが、少しスポンジのような食感になります。冷凍したものは電子レンジ（600W）で1切れ20秒ほど、中まで温めてから冷まして、お弁当に詰めてください。"
+  },
+  "ingredients": [
+    { "items": [
+      { "q": 4, "u": "pc", "en": "eggs (M size)", "ja": "卵（Mサイズ）" },
+      { "q": 3, "u": "tbsp", "en": "dashi (or water)", "ja": "だし汁（または水）" },
+      { "q": 2, "u": "tsp", "en": "sugar", "ja": "砂糖" },
+      { "q": 1, "u": "tsp", "en": "mirin", "ja": "みりん" },
+      { "q": 1, "u": "tsp", "en": "soy sauce (light, usukuchi, if you have it)", "ja": "しょうゆ（あれば薄口しょうゆ）" },
+      { "q": 1, "u": "pinch", "en": "salt", "ja": "塩" },
+      { "q": null, "en": "vegetable oil, for the pan", "ja": "サラダ油", "free": { "en": "for greasing", "ja": "適量" } }
+    ] },
+    { "group": { "en": "To serve (optional)", "ja": "添えもの（お好みで）" }, "items": [
+      { "q": null, "en": "daikon radish, finely grated", "ja": "大根おろし", "free": { "en": "a little", "ja": "適量" } }
+    ] }
+  ],
+  "steps": [
+    {
+      "en": "Crack the eggs into a bowl. Beat them with chopsticks, keeping the tips on the bottom of the bowl and cutting through the whites about 30 times, without making foam. Add the dashi, sugar, mirin, soy sauce and salt and mix until the sugar dissolves. For an extra-smooth finish, pour the mixture through a sieve.",
+      "ja": "ボウルに卵を割り入れ、菜箸の先をボウルの底につけたまま、白身を切るように30回ほど混ぜます。泡立てないように注意。だし汁、砂糖、みりん、しょうゆ、塩を加え、砂糖が溶けるまで混ぜます。なめらかに仕上げたいときは、こし器でこします。"
+    },
+    {
+      "en": "Heat the pan over medium heat for about 1 minute, then wipe it with the oiled paper towel. Test with a drop of egg: it should sizzle immediately and set within a second or two.",
+      "ja": "卵焼き器を中火で1分ほど熱し、油をしみ込ませたキッチンペーパーで全体に油をなじませます。卵液を少し落として、すぐにジュッと音がして1〜2秒で固まれば適温です。"
+    },
+    {
+      "en": "Pour in about a quarter of the egg (about 60 ml) and tilt the pan so it covers the base. Pop any big bubbles with the tip of a chopstick.",
+      "ja": "卵液の1/4量（約60ml）を流し入れ、フライパンを傾けて全体に広げます。大きな気泡は菜箸の先でつぶします。"
+    },
+    {
+      "en": "When the edges have set but the top is still slightly runny, after 30–40 seconds, roll the egg from the far side towards you in 3 or 4 turns, using chopsticks or the spatula.",
+      "ja": "縁が固まり、表面がまだ少しとろっとしているうち（30〜40秒）に、菜箸かフライ返しで奥から手前へ3〜4回に分けて巻きます。",
+      "img": "tamagoyaki-rolling"
+    },
+    {
+      "en": "Push the roll back to the far side and oil the empty part of the pan, lifting the roll to oil underneath it too. Pour in another quarter of the egg and lift the roll so the egg flows underneath. Pop the bubbles and, when it is half set, roll towards you again. Repeat until all the egg is used (4 layers). If it browns too fast, lift the pan off the heat for a few seconds.",
+      "ja": "巻いた卵を奥へ戻し、空いたところに油をひきます。卵を持ち上げて下にも油を。残りの卵液の1/3量を流し入れ、巻いた卵を持ち上げて下にも卵液を流します。気泡をつぶし、半熟になったら再び手前に巻きます。これを繰り返して、合計4層に焼きます。色づきが早すぎるときは、数秒火から外しましょう。"
+    },
+    {
+      "en": "After the last roll, press the omelette against the sides of the pan with the spatula for about 10 seconds on each side to square it off. Turn it out onto a bamboo mat or paper towel, wrap it up firmly and leave it for 5 minutes to set its shape.",
+      "ja": "最後まで巻いたら、フライ返しで卵焼き器の縁に押し当てて、各面10秒ほど形を整えます。巻きすかキッチンペーパーに取り出してしっかり包み、5分おいて形を落ち着かせます。",
+      "timer": 5
+    },
+    {
+      "en": "Cut into 8 slices about 2 cm thick. Serve warm with a little grated daikon and a drop of soy sauce, or cool completely before packing in a bento.",
+      "ja": "2cm幅の8切れに切ります。温かいうちに大根おろしとしょうゆ少々を添えて。お弁当に入れるときは完全に冷ましてから詰めてください。"
+    }
+  ],
+  "nutrition": { "calories": 190, "carbs": 5, "protein": 13, "fat": 12, "satFat": 3, "cholesterol": 370, "sodium": 480, "fiber": 0, "sugar": 4 },
+  "comments": [
+    {
+      "name": { "en": "Sarah (London)", "ja": "Sarah（ロンドン）" }, "date": "2026-09-30", "stars": 4,
+      "en": "Made it in a round frying pan, folding the sides in like you said. Not the prettiest, but it tasted lovely. Ordering a square pan now!",
+      "ja": "丸いフライパンで、書いてあるとおり両端を折り込みながら作りました。見た目はいまいちでも味は最高。卵焼き器を注文します！"
+    },
+    {
+      "name": { "en": "Undokai mum", "ja": "運動会ママ" }, "date": "2026-09-27", "stars": 5,
+      "en": "Made a double batch for sports day: 8 eggs in two rolls. Everyone in our picnic group asked for the recipe.",
+      "ja": "運動会のお弁当用に倍量（卵8個で2本）作りました。一緒にお弁当を食べたママたちにレシピを聞かれました。"
+    },
+    {
+      "name": { "en": "Ken (Osaka)", "ja": "けん（大阪）" }, "date": "2026-09-15", "stars": 4,
+      "en": "As a Kansai person I made it as dashimaki: 6 tbsp dashi, no sugar. Tricky to roll, but it worked on medium-low heat.",
+      "ja": "関西人なので、だし大さじ6・砂糖なしでだし巻きにしました。巻くのは難しかったですが、弱めの中火でなんとかできました。",
+      "reply": {
+        "en": "Great work! A tip for dashimaki: dissolve ½ tsp potato starch in the dashi before mixing it in. The egg holds together better and is much easier to roll, and nobody can tell.",
+        "ja": "さすがです！だし巻きのコツをひとつ。だしに片栗粉小さじ1/2を溶かしてから卵に混ぜると、卵がまとまりやすく、ずっと巻きやすくなります。食べてもわかりませんよ。"
+      }
+    },
+    {
+      "name": { "en": "Maria (São Paulo)", "ja": "Maria（サンパウロ）" }, "date": "2026-08-21", "stars": null,
+      "en": "Mine always comes out brown on the outside instead of yellow. What am I doing wrong?",
+      "ja": "いつも表面が黄色ではなく茶色になってしまいます。何が悪いのでしょうか？",
+      "reply": {
+        "en": "The heat is a little high. On gas, medium means the tips of the flame just touch the bottom of the pan, not lick up the sides. Sugar browns fast, so lift the pan off the flame for a few seconds whenever it sizzles too loudly, and wipe on only a thin film of oil.",
+        "ja": "火が少し強いようです。ガスの中火は、炎の先がフライパンの底にちょうど当たるくらい。側面まで炎が回るのは強すぎです。砂糖は焦げやすいので、音が大きくなったら数秒火から外し、油は薄くひいてください。"
+      }
+    },
+    {
+      "name": { "en": "Rin", "ja": "りん" }, "date": "2026-06-02", "stars": 5,
+      "en": "I added shirasu and green onion to the egg. My husband says it's better than the one at his office canteen.",
+      "ja": "しらすと小ねぎを入れました。夫いわく、社員食堂の卵焼きよりおいしいそうです。"
+    },
+    {
+      "name": { "en": "Ben (Auckland)", "ja": "Ben（オークランド）" }, "date": "2026-02-14", "stars": null,
+      "en": "Is it OK to pack it in my son's lunch if the middle is still a bit soft?",
+      "ja": "真ん中が少しやわらかくても、息子のお弁当に入れて大丈夫ですか？",
+      "reply": {
+        "en": "For lunchboxes I always cook it through: press the roll gently and no liquid should come out. Let it cool completely before closing the box, and in warm weather pack it with an ice pack. Soft, just-set tamagoyaki is lovely, but save it for eating straight away.",
+        "ja": "お弁当用は必ず中まで火を通しています。軽く押して卵液が出てこなければOK。完全に冷ましてからふたをし、暖かい時期は保冷剤と一緒に。半熟のふわふわ卵焼きもおいしいですが、それはすぐに食べるときに。"
+      }
+    },
+    {
+      "name": { "en": "Tamagoyaki apprentice", "ja": "卵焼き修行中" }, "date": "2025-05-11", "stars": 3,
+      "en": "Tasted good but the layers fell apart when I sliced it.",
+      "ja": "味はよかったのですが、切ったら層がバラバラになってしまいました。",
+      "reply": {
+        "en": "That usually means the top had dried out before you rolled. Roll a little earlier, while it's still glossy and slightly runny, and remember to lift the roll so the new egg flows underneath it.",
+        "ja": "表面が乾いてから巻くと、そうなりがちです。もう少し早め、つやがあってとろっとしているうちに巻いてみてください。巻いた卵を持ち上げて、新しい卵液を下に流し込むのも忘れずに。"
+      }
+    }
+  ]
+}

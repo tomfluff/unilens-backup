@@ -1,0 +1,151 @@
+{
+  "slug": "oyakodon",
+  "categories": ["weeknight", "japanese"],
+  "cuisine": "japanese",
+  "diet": ["dairy-free"],
+  "difficulty": "easy",
+  "course": "rice",
+  "times": { "prep": 10, "cook": 15 },
+  "servings": 2,
+  "image": "oyakodon",
+  "rating": 4.8,
+  "ratings": 472,
+  "published": "2019-05-15",
+  "updated": "2026-09-05",
+  "related": ["ginger-pork", "tamagoyaki", "kinoko-takikomi-gohan", "chicken-karaage"],
+  "en": {
+    "title": "Oyakodon (Chicken and Egg Rice Bowl)",
+    "teaser": "Tender chicken thigh and onion simmered in a sweet dashi and soy broth, then set with softly cooked egg and slid over hot rice. One small pan, 25 minutes.",
+    "intro": [
+      "At my grandmother's inn in Tsukimi Onsen there was a quiet hour every day, after the morning guests had checked out and before the afternoon guests arrived. That was when the staff ate, and more often than not Fumi made oyakodon. She cooked each bowl in a little copper pan with an upright handle, sliding the trembling egg onto the rice with a flick of her wrist, and I sat on a stool in the corner of the kitchen waiting for mine. I have that pan now. Hana, who is twelve, borrowed it last spring and made her first oyakodon by herself, and it has been her Saturday lunch ever since.",
+      "<em>Oyako</em> means \"parent and child\", the chicken and the egg, and <em>don</em> is short for <em>donburi</em>, a rice bowl. Chicken thigh and sliced onion simmer for a few minutes in dashi, soy sauce and mirin, then beaten egg goes in and sets just enough to hold together. The whole thing slides over hot rice, and the sauce seeps down into it.",
+      { "h": "Why you'll love it" },
+      { "ul": [
+        "It's on the table in 25 minutes from a fridge of basics.",
+        "One small pan and a bowl are all the washing up.",
+        "The broth ratio is easy to remember: 5 parts dashi, 1 soy sauce, 1 mirin."
+      ] },
+      { "h": "One bowl at a time" },
+      "Cook each serving separately in a small pan, 16 to 20 cm across. It seems fussy, but in a big pan the egg spreads thin and overcooks at the edges while the middle is still raw. A small frying pan with a lid works perfectly; you don't need a special oyakodon pan. Make the <a href=\"{{guide:dashi}}\">dashi</a> from scratch if you have time, or use granules; both are delicious here.",
+      { "h": "The secret is two pours" },
+      "Beat the eggs only lightly, so you can still see streaks of white. Pour about two-thirds over the simmering chicken first. When the edges begin to set, pour the rest into the centre, put the lid on and turn off the heat. The first pour cooks through and holds everything together; the second stays soft and glossy. That contrast is what makes a great oyakodon.",
+      { "h": "A note on soft eggs, for readers abroad" },
+      "In Japan, eggs are produced to be eaten raw, so a soft, barely set top is normal and safe. Many countries' eggs are not. If yours are not pasteurised or salmonella-controlled, or you are cooking for someone pregnant, very young, elderly or with a weak immune system, leave the lid on over low heat for 2 to 3 minutes until the egg is fully set. The chicken must always be cooked through to 75°C, whatever you do with the egg.",
+      { "h": "Tips for success" },
+      "Cut the chicken into even 2–3 cm pieces and slice through the thickest parts so they cook at the same speed. Make sure the rice is piping hot before the egg goes in, because the egg waits for no one. For more autumn rice, try my <a href=\"{{recipe:kinoko-takikomi-gohan}}\">mushroom rice</a>."
+    ],
+    "equipment": ["Small frying pan (16–20 cm) with a lid, or an oyakodon pan", "Two deep rice bowls", "Chopsticks for beating the egg", "Measuring jug"],
+    "notes": [
+      "To check the chicken, cut the largest piece in half: it should be white all the way through with clear juices (75°C).",
+      "For a firmer egg, keep the heat on low with the lid on for 2–3 minutes after the second pour.",
+      "The broth ratio of 5:1:1 (dashi, soy sauce, mirin) scales easily; 75 ml dashi + 1 tbsp each makes one bowl.",
+      "For one serving, use half of everything and 2 eggs (1½ eggs is hard to measure; the extra egg is fine).",
+      "Same method, other toppings: thin beef or pork instead of chicken makes tanindon, the \"strangers' bowl\"."
+    ],
+    "subs": [
+      ["Dashi", "½ tsp instant dashi granules dissolved in 150 ml hot water"],
+      ["Chicken thigh", "Chicken breast, sliced 1 cm thick and simmered 4–5 minutes; it is leaner and less juicy"],
+      ["Mirin", "1 tbsp sake + 1 tsp sugar for each tbsp of mirin (alcohol-free: 1 tbsp water + 1 tsp sugar)"],
+      ["Mitsuba", "Thinly sliced green onion or chives"],
+      ["Soy sauce (gluten-free)", "Tamari"]
+    ],
+    "makeAhead": "Cut the chicken and onion and mix the sauce up to a day ahead and keep them in the fridge. You can also simmer the chicken and onion in the sauce (step 3), chill it, then bring it back to a bubble and add the egg just before eating.",
+    "storage": "Oyakodon is best eaten at once. If you must keep some, cook the egg until fully set, store the topping apart from the rice in the fridge for up to 1 day and reheat until piping hot. It does not freeze well; the egg turns spongy and watery."
+  },
+  "ja": {
+    "title": "親子丼",
+    "teaser": "鶏もも肉と玉ねぎを甘めのだしで煮て、ふんわり卵でとじ、熱々のごはんにのせて。小さなフライパンひとつ、25分でできます。",
+    "intro": [
+      "月見温泉の祖母の宿には、毎日ぽっかりと静かな時間がありました。朝のお客さまがチェックアウトして、午後のお客さまが到着するまでのひととき。それが従業員のまかないの時間で、祖母のふみがよく作っていたのが親子丼です。柄がまっすぐ上に伸びた小さな銅の親子鍋で一人分ずつ作り、ふるふるの卵を手首のひと振りでごはんの上にすべらせる。私は台所の隅の丸椅子に座って、自分の番を待っていました。その親子鍋は今、私の手元にあります。去年の春、12歳の花がその鍋を借りて初めて一人で親子丼を作り、それ以来、土曜のお昼は花の担当になりました。",
+      "鶏肉と卵で「親子」。鶏もも肉と玉ねぎを、だし、しょうゆ、みりんで数分煮て、溶き卵でとじ、熱々のごはんにのせます。煮汁がごはんにしみたところがまたおいしいのです。煮汁の割合は「だし5：しょうゆ1：みりん1」と覚えておくと、いつでも作れますよ。",
+      { "h": "一人分ずつ作るのがコツ" },
+      "直径16〜20cmくらいの小さなフライパンで、一人分ずつ作ってください。手間に思えるかもしれませんが、大きなフライパンで一度に作ると卵が薄く広がり、ふちは固まりすぎて真ん中は生のまま、ということになりがちです。ふた付きの小さなフライパンがあれば、親子鍋がなくても大丈夫。だしは<a href=\"{{guide:dashi}}\">基本のだし</a>で取ってもいいですし、顆粒だしでも十分おいしく作れます。",
+      { "h": "卵は2回に分けて入れる" },
+      "卵は白身がところどころ残るくらいに、軽く溶きます。まず3分の2を煮立った鶏肉の上に回し入れ、ふちが固まり始めたら残りを真ん中に流し入れて、ふたをして火を止めます。1回目の卵は全体をまとめる役、2回目はとろりとつやよく仕上げる役。この食感の違いが、おいしい親子丼の秘密です。",
+      { "h": "海外にお住まいの方へ：半熟卵について" },
+      "日本の卵は生で食べることを前提に衛生管理されているので、半熟でもふつうに食べられます。ただ、海外では生食を想定していない卵も多くあります。殺菌卵やサルモネラ対策済みの卵でない場合や、妊娠中の方、小さなお子さん、ご高齢の方、免疫力が落ちている方に作る場合は、2回目の卵を入れたあと、ふたをして弱火で2〜3分、卵が完全に固まるまで加熱してください。鶏肉は卵の仕上がりにかかわらず、必ず中心まで75℃に火を通しましょう。",
+      { "h": "おいしく作るために" },
+      "鶏肉は2〜3cm角にそろえ、厚い部分は切り開いて火の通りを均一に。卵を入れる前に、ごはんを熱々にして丼に盛っておくのも大切です。卵は待ってくれませんから。秋のごはんものなら、<a href=\"{{recipe:kinoko-takikomi-gohan}}\">きのこの炊き込みご飯</a>もどうぞ。"
+    ],
+    "equipment": ["ふた付きの小さなフライパン（直径16〜20cm）または親子鍋", "深めの丼2個", "卵を溶く菜箸", "計量カップ"],
+    "notes": [
+      "鶏肉の火の通りは、いちばん大きな一切れを半分に切って確認します。中まで白く、透明な肉汁が出ればOK（75℃）。",
+      "卵をしっかり固めたいときは、2回目の卵を入れたあと、ふたをして弱火で2〜3分加熱します。",
+      "煮汁は「だし5：しょうゆ1：みりん1」。1人分なら、だし75mlにしょうゆ・みりん各大さじ1です。",
+      "1人分作るときは材料を半量にし、卵は2個に（1個半は量りにくいので、多めで大丈夫です）。",
+      "同じ作り方で、鶏肉の代わりに牛や豚の薄切り肉を使うと「他人丼」になります。"
+    ],
+    "subs": [
+      ["だし汁", "顆粒だし小さじ1/2を湯150mlで溶いたもの"],
+      ["鶏もも肉", "鶏むね肉。1cm厚さのそぎ切りにして4〜5分煮ます。脂が少なく、さっぱりした仕上がりに"],
+      ["みりん", "みりん大さじ1につき、酒大さじ1＋砂糖小さじ1（アルコールなしなら水大さじ1＋砂糖小さじ1）"],
+      ["三つ葉", "小ねぎの小口切り、またはチャイブ"],
+      ["しょうゆ（グルテンフリーにする場合）", "たまりじょうゆ"]
+    ],
+    "makeAhead": "鶏肉と玉ねぎを切り、煮汁を合わせるところまでは前日にでき、冷蔵庫で保存できます。手順3まで煮て冷蔵しておき、食べる直前に再び煮立たせてから卵でとじても大丈夫です。",
+    "storage": "親子丼はできたてがいちばん。どうしても保存する場合は卵を完全に固めて、ごはんとは別に冷蔵で1日まで。食べるときは中までしっかり温め直してください。冷凍は卵がスカスカで水っぽくなるので向きません。"
+  },
+  "ingredients": [
+    { "items": [
+      { "q": 1, "u": "pc", "jaU": "枚", "en": "chicken thigh, boneless and skin on (about 250 g), cut into 2–3 cm pieces", "ja": "鶏もも肉（約250g・2〜3cm角）" },
+      { "q": 0.5, "u": "pc", "en": "onion (about 100 g), sliced 5 mm thick", "ja": "玉ねぎ（約100g・5mm幅の薄切り）" },
+      { "q": 3, "u": "pc", "en": "eggs", "ja": "卵" },
+      { "q": 4, "u": "stalk", "en": "mitsuba (Japanese wild parsley), cut into 3 cm lengths", "ja": "三つ葉（3cm長さに切る）" },
+      { "q": 400, "u": "g", "en": "cooked Japanese rice, hot (2 bowls)", "ja": "ご飯（温かいもの・丼2杯分）" }
+    ] },
+    { "group": { "en": "For the broth", "ja": "煮汁" }, "items": [
+      { "q": 150, "u": "ml", "en": "dashi", "ja": "だし汁" },
+      { "q": 2, "u": "tbsp", "en": "soy sauce", "ja": "しょうゆ" },
+      { "q": 2, "u": "tbsp", "en": "mirin", "ja": "みりん" },
+      { "q": 1, "q2": 2, "u": "tsp", "en": "sugar", "ja": "砂糖" },
+      { "q": null, "en": "shichimi togarashi, to serve (optional)", "ja": "七味唐辛子（お好みで）", "free": { "en": "to serve", "ja": "適量" } }
+    ] }
+  ],
+  "steps": [
+    { "en": "Make sure the rice is hot. Trim any large lumps of fat from the chicken and cut it into even 2–3 cm pieces, slicing through the thickest parts. Slice the onion 5 mm thick and cut the mitsuba into 3 cm lengths.",
+      "ja": "ごはんは温かい状態にしておきます。鶏肉は余分な脂を取り、厚い部分は切り開いて2〜3cm角にそろえます。玉ねぎは5mm幅の薄切り、三つ葉は3cm長さに切ります。" },
+    { "en": "Mix the dashi, soy sauce, mirin and sugar. Crack the eggs into a bowl and beat them lightly, cutting through the whites with chopsticks 10–15 times; stop while you can still see streaks of white.",
+      "ja": "だし汁、しょうゆ、みりん、砂糖を混ぜ合わせます。卵はボウルに割り入れ、菜箸で白身を切るように10〜15回ほど軽く溶きます。白身が少し残っているくらいでやめるのがポイントです。" },
+    { "en": "For the first bowl, put half the broth and half the onion into the small pan and bring to the boil over medium heat. Add half the chicken, skin side down, in one layer. Simmer for 3 minutes, turn the pieces and simmer for 3 minutes more, until the chicken is white all the way through and the onion is soft.",
+      "ja": "1人分ずつ作ります。小さなフライパンに煮汁と玉ねぎの半量を入れて中火で煮立て、鶏肉の半量を皮目を下にして並べ入れます。3分煮たら上下を返してさらに3分、鶏肉の中まで白くなり、玉ねぎがしんなりするまで煮ます。",
+      "timer": 6 },
+    { "en": "Keep the broth bubbling over medium heat. Take half the beaten egg for this bowl and pour about two-thirds of it in a spiral from the outside in. Leave it for 30–40 seconds, until the edges start to set and puff.",
+      "ja": "中火で煮立った状態を保ちます。溶き卵の半量（1人分）のうち3分の2ほどを、外側から内側へうずを描くように回し入れ、30〜40秒、ふちが固まってふっくらしてくるまでそのままおきます。",
+      "timer": 1 },
+    { "en": "Pour the rest of this bowl's egg into the centre, scatter over half the mitsuba, cover with the lid and turn off the heat. Leave for 30 seconds to 1 minute, until the top is just set but still glossy. (For a fully set egg, keep it on low heat with the lid on for 2–3 minutes.)",
+      "ja": "残りの卵を中央に流し入れ、三つ葉の半量を散らしてふたをし、火を止めます。30秒〜1分おき、表面がちょうど固まりかけてつやが残っている状態にします（しっかり固めたい場合は、ふたをして弱火で2〜3分加熱）。",
+      "timer": 1 },
+    { "en": "Tilt the pan over a bowl of hot rice and slide the chicken and egg on top with a spatula, pouring over any remaining broth. Repeat steps 3–5 for the second bowl. Sprinkle with shichimi if you like and eat straight away.",
+      "ja": "丼に盛ったごはんの上でフライパンを傾け、へらを使って具をすべらせるようにのせ、残った煮汁もかけます。もう1人分も手順3〜5と同様に作ります。お好みで七味唐辛子をふり、熱いうちにどうぞ。" }
+  ],
+  "nutrition": { "calories": 650, "carbs": 86, "protein": 36, "fat": 17, "satFat": 5, "cholesterol": 390, "sodium": 1250, "fiber": 2, "sugar": 14 },
+  "comments": [
+    { "name": { "en": "Sophie (Lyon)", "ja": "Sophie（リヨン）" }, "date": "2026-09-29", "stars": 5,
+      "en": "Our eggs here aren't meant for eating raw, so I followed your note and kept the lid on over low heat for 2½ minutes. The egg was fully set but still tender. Lovely, comforting dinner.",
+      "ja": "こちらの卵は生食用ではないので、注意書きの通りふたをして弱火で2分半加熱しました。卵はしっかり固まっているのにやわらかくて、ほっとする晩ごはんになりました。" },
+    { "name": { "en": "Mitsuba lover", "ja": "みつば好き" }, "date": "2026-09-15", "stars": 5,
+      "en": "The first time I made both portions together in a big pan and the egg didn't set properly. One bowl at a time worked perfectly. Is there a trick for keeping the first bowl warm?",
+      "ja": "最初は2人分を大きなフライパンで一度に作ったら、卵がうまく固まりませんでした。1人分ずつにしたら大成功！先に作った分を冷めないようにするコツはありますか？",
+      "reply": { "en": "So glad it worked! Each bowl only takes about 8 minutes, so I put a small plate or a lid on top of the finished bowl, which keeps it hot. Or cook both bowls' chicken together in a larger pan first and do only the egg in the small pan, which takes 2 minutes per bowl.",
+        "ja": "うまくいってよかったです！1杯8分ほどなので、できた丼には小皿かふたをかぶせておけば十分温かいですよ。または、鶏肉と玉ねぎだけ2人分まとめて大きめの鍋で煮ておき、卵とじだけ小さなフライパンで1人分ずつすれば、1杯2分で仕上がります。" } },
+    { "name": { "en": "Mike (Chicago)", "ja": "Mike（シカゴ）" }, "date": "2026-08-28", "stars": null,
+      "en": "My family prefers white meat. Will chicken breast work?",
+      "ja": "家族が白身の肉を好むのですが、鶏むね肉でも作れますか？",
+      "reply": { "en": "Yes. Slice the breast at an angle into 1 cm thick pieces and toss them in 1 tsp potato starch before they go into the broth; it keeps them moist and slightly thickens the sauce. Simmer for 4–5 minutes, until white all the way through.",
+        "ja": "作れます。むね肉は1cm厚さのそぎ切りにし、煮汁に入れる前に片栗粉小さじ1をまぶしてください。しっとり仕上がり、煮汁にも少しとろみがつきます。中まで白くなるまで4〜5分煮れば大丈夫です。" } },
+    { "name": { "en": "Chiizu", "ja": "ちーず" }, "date": "2026-07-12", "stars": 4,
+      "en": "A bit sweet for my taste, so next time I'll use just 1 tsp of sugar. The two-pour egg is brilliant though.",
+      "ja": "私には少し甘めだったので、次は砂糖を小さじ1にします。卵を2回に分けて入れる方法は最高でした。" },
+    { "name": { "en": "Student in Harukawa", "ja": "春川の大学生" }, "date": "2026-06-03", "stars": 5,
+      "en": "Made this in my dorm with instant dashi and a cheap 20 cm frying pan with a plate as the lid. Better than the cafeteria!",
+      "ja": "寮で顆粒だしと安い20cmのフライパン、ふた代わりのお皿で作りました。学食よりおいしいです！" },
+    { "name": { "en": "Anna (Berlin)", "ja": "Anna（ベルリン）" }, "date": "2026-04-18", "stars": 3,
+      "en": "The taste was good, but my egg came out rubbery and flat, not soft like the photo.",
+      "ja": "味はよかったのですが、卵がかたくてぺたんこになり、写真のようなふわとろにはなりませんでした。",
+      "reply": { "en": "Two things usually cause that: beating the eggs until completely smooth, and cooking too long after the second pour. Beat them only 10–15 strokes, and turn the heat off as soon as the lid goes on; the trapped steam finishes the top.",
+        "ja": "原因はたいてい2つです。卵を完全に混ぜてしまうことと、2回目を入れたあとに加熱しすぎること。溶くのは10〜15回くらいにして、ふたをしたらすぐに火を止めてください。こもった蒸気で表面がちょうどよく仕上がります。" } },
+    { "name": { "en": "Tomoko", "ja": "ともこ" }, "date": "2025-11-20", "stars": 5,
+      "en": "I added two sliced shiitake with the onion for an autumn version. The mushrooms soak up the broth beautifully.",
+      "ja": "秋バージョンで、玉ねぎと一緒に薄切りのしいたけを2枚分加えました。きのこが煮汁を吸って、とてもおいしかったです。" }
+  ]
+}

@@ -1,0 +1,217 @@
+title: Harukawa
+short: Capital city of Minori Prefecture, Japan
+type: article
+categories: harukawa; minori; geography; history; tourism
+hatnote: This article is about the city. For the castle, see [[harukawa-castle|Harukawa Castle]]. For the railway company, see [[harukawa-railway|Harukawa Railway]].
+infobox: Harukawa
+ib-subtitle: 春川市
+ib-image: river-01.jpg | The Kagami River in central Harukawa, with Kagami Bridge and the castle keep on Sagimai Hill in the distance
+ib-map: harukawa | Location of Harukawa in Minori Prefecture
+ib-section: Overview
+ib: Country | Japan
+ib: Prefecture | [[minori-prefecture|Minori Prefecture]]
+ib: Status | Prefectural capital; core city
+ib: Former province | Minori Province (実野国)
+ib-section: History
+ib: Castle town founded | 1603
+ib: Prefectural capital | 1871
+ib: City status | 1 April 1889
+ib: Core city | 1 April 1998
+ib: Last merger | 1 October 1954
+ib-section: Government
+ib: Mayor | Takuya Hirose (independent, since November 2018)
+ib: City assembly | 44 seats
+ib: City hall | 1-1 Shiromachi
+ib-section: Area
+ib: Total | 486.3 km²
+ib: Highest point | Kurayama (683 m)
+ib: Elevation | about 4 m (city center)
+ib-section: Population
+ib: Estimate (1 Oct 2025) | 412,800
+ib: 2020 census | 418,316
+ib: Peak (2005 census) | 431,072
+ib: Density | about 849/km²
+ib: Households | 191,300
+ib: Aged 65 and over | 30.4%
+ib: Foreign residents | 6,920 (1.7%)
+ib-section: Symbols
+ib: Tree | Ginkgo
+ib: Flower | Azalea
+ib: Bird | Kingfisher
+ib-section: Other
+ib: Climate | Humid subtropical (Köppen ''Cfa'')
+ib: Time zone | Japan Standard Time (UTC+9)
+ib: Sister city | [[?Kellbridge]], United Kingdom (since 1987)
+---
+'''Harukawa''' (春川市, ''Harukawa-shi'') is a city in [[minori-prefecture|Minori Prefecture]], Japan, and the capital of the prefecture. It lies on the delta of the [[kagami-river|Kagami River]], where the river flows into [[minori-bay|Minori Bay]]. As of 1 October 2025 the city had an estimated population of 412,800 in 191,300 households and an area of 486.3 km², giving a population density of about 849 people per km².<ref name="popest">Minori Prefecture Statistics Division (2025). ''Population Estimates of Minori Prefecture, 1 October 2025''. Minori Prefecture, p. 3.</ref> It is by far the largest city in the prefecture, home to about 38% of its 1,086,400 people, and has been a core city since 1 April 1998.
+
+Harukawa grew up as the castle town of the [[asagiri-clan|Asagiri clan]], who ruled the Harukawa Domain for eleven generations, from 1601 to 1871, from [[harukawa-castle|Harukawa Castle]] on Sagimai Hill, begun in 1603. It became the prefectural capital in 1871 and one of Japan's first cities under the municipal system on 1 April 1889. The city is known for [[harukawa-ware|Harukawa ware]], a stoneware with a pale "mist" glaze made mainly in the Suyama district; for yuzu citrus (see [[yuzu-cultivation-in-minori|Yuzu cultivation in Minori]]); for sea bream and oysters from the bay; and for the [[harukawa-lantern-festival|Harukawa Lantern Festival]], held on the second weekend of October in memory of the victims of the Great Genbun Flood of 1739. Its economy rests on shipbuilding, machine tools, services and tourism, and it received a record 6.5 million tourist visitors in 2025.<ref name="tourism">Harukawa City Tourism Division (2026). ''Harukawa Tourism Statistics 2025''. Harukawa City, pp. 3–9.</ref>
+
+The privately owned [[harukawa-railway|Harukawa Railway]], known as HaruTetsu, links [[harukawa-central-station|Harukawa Central Station]] with the pottery district of Suyama, the hot-spring town of [[tsukimi-onsen|Tsukimi Onsen]] at the foot of [[mount-tsukimi|Mount Tsukimi]], and the ferry terminal at Minori Port.
+
+== Etymology ==
+The name is written with the characters 春 (''haru'', "spring") and 川 (''kawa'', "river") and means "spring river". Before the castle was built, the fishing and market village at the mouth of the Kagami River was called Kagami-no-tsu (鏡津, "harbor of the Kagami"). According to the clan genealogy ''Asagiri Kafu'' (朝霧家譜), compiled in the 1680s, Asagiri Tadamasa chose the new name in 1603, the year work on the castle began, recalling that he had first seen the river in the spring of 1601, swollen with snowmelt from Mount Tsukimi and lined with flowering trees.<ref name="okada">Okada, Shin'ichi (1978). "The place name Harukawa and its origins". ''Journal of Minori Local History'' 14: 21–34, p. 24.</ref> A second explanation, current in the Edo period, holds that the name expressed a wish that the new town would flourish "like spring", a common motif in castle-town names of the early 17th century.{{cn}}
+
+The name passed from the castle town to the Harukawa Domain (春川藩), to the short-lived Harukawa Prefecture of 1871 and to the modern city. The older name survives in the river, in Kagami Shrine and in local institutions such as Kagami-no-tsu Elementary School in Uomachi. The castle's hill, Sagimai ("dancing heron"), gave its name to the castle's nickname, the main avenue, a bridge, the university's main campus and the city's football club.
+
+== History ==
+{{main|history-of-harukawa}}
+[[File:castle-02.jpg|The Tatsumi Turret of [[harukawa-castle|Harukawa Castle]], built in 1609 and the oldest surviving building in the city]]
+
+=== Before the castle town ===
+The oldest evidence of settlement is the [[?Uchiura Shell Mound]] on the Uchiura Peninsula, a Jōmon-period midden from about 3000 BCE. From the 8th century the area belonged to Kagami District of Minori Province (実野国). From the 1400s until 1600 the district was ruled by the Uchiura clan (内浦氏) from Kurayama Castle (倉山城), a mountain fortress on Kurayama, the peak that now marks the city's northern boundary.<ref name="shishi1">Harukawa City History Compilation Committee (1989). ''Harukawa City History'', vol. 1: ''Ancient and Medieval''. Harukawa City, pp. 212–219.</ref>
+
+=== Edo period ===
+After the Battle of Sekigahara in 1600, in which he fought on the Tokugawa side, [[asagiri-clan|Asagiri Tadamasa]] (1562–1629), head of a minor family of Kagami District, received the province of Minori with an assessed yield of 186,000 ''koku''. He arrived in 1601, and in the spring of 1603 he broke ground for a new castle on Sagimai Hill beside the river. The castle town was laid out between 1603 and 1610, with samurai residences around the castle in present-day Shiromachi, a merchant quarter along Gofukumachi street and a fishermen's quarter at Uomachi. The keep was completed in 1611.{{efn|Some sources give 1612 for the completion of the keep, because the gilded ''shachihoko'' roof ornaments and the final fittings were installed in the spring of that year.}}<ref name="uchida">Uchida, Masao (2004). ''The Asagiri and Their Castle Town''. Harukawa University Press, pp. 41–58.</ref>
+
+In 1624 Tadamasa invited the potter Ōtani Sōemon from Hizen to found a domain kiln in the castle's Ninomaru, the origin of Harukawa ware. The second lord, Masatsugu, built the 3.2 km Masatsugu Embankment along the river between 1641 and 1648, and in 1651 the third lord, Tadakiyo, granted 10,000 ''koku'' to a branch family, the Uchiura Asagiri, leaving the main domain at 176,000 ''koku''. After the Tenna famine of 1681–82 the fourth lord, Tadanobu, ordered in 1688 that every farming household plant three yuzu trees.
+
+On 4 October 1739, after three days of typhoon rain, the river overtopped the embankment in the Great Genbun Flood and killed about 1,140 people. In 1740 the sixth lord, Tadatoki, ordered lanterns to be floated on the river in memory of the dead, the origin of the Lantern Festival. On 15 June 1749 lightning set fire to the castle keep, which burned down; it was rebuilt to the same height between 1752 and 1755, and the Sagimai Gate followed in 1757. The eighth lord, Masahiro, founded the domain school Shūkōkan (修好館) in 1803. The Ansei earthquake of 1854 damaged the castle's north walls, which were repaired in 1856.<ref name="shishi3">Harukawa City History Compilation Committee (1989). ''Harukawa City History'', vol. 3: ''Early Modern II''. Harukawa City, pp. 402–431.</ref>
+
+=== Meiji period to 1945 ===
+The domain sided with the new imperial government in the Boshin War of 1868. When the domains were abolished in 1871 it became Harukawa Prefecture, which was merged with two smaller prefectures on 14 November 1871 to form Minori Prefecture (then written 実野県), with Harukawa as its capital. In 1874 the castle buildings were sold off and the keep was demolished; only the Tatsumi Turret and the Sagimai Gate were kept. Oyster farming in the bay began in 1878, the newspaper ''Harukawa Nippō'' was founded in 1888, and Harukawa received city status on 1 April 1889 with about 31,200 inhabitants. Minori Bank was founded in 1897.
+
+The Kagami Valley Railway, founded in 1923, opened its first section, from Harukawa to Kamano, on 15 July 1926 under its chief engineer [[kenzo-hattori|Kenzō Hattori]]; the line reached Tsukimi Onsen on 4 October 1931. The Harukawa Shipyard opened in 1937, and the pottery village of Suyama was merged into the city on 1 April 1942. On 29 July 1945 an air raid burned 38% of the urban area and killed 1,072 people.<ref name="nippo1995">"Fifty years since the Harukawa air raid". ''Harukawa Nippō'', 29 July 1995, p. 1.</ref>
+
+=== Since 1945 ===
+Reconstruction was led by [[tetsuo-saeki|Tetsuo Saeki]], deputy mayor from 1947 and mayor from 1951 to 1967, whose plan created the 50 m wide Sagimai Avenue (built 1949–1958). [[harukawa-university|Harukawa University]] was founded on 31 May 1949. On 1 October 1954 the city absorbed the villages of Kawamata, Ichinose, Uchiura and Sakurahama. The [[bayside-line|Bayside Line]] opened to Minori Port on 1 October 1962. Between 1961 and 1966, 2.4 km² of the bay was reclaimed for the shipyard, and a reinforced-concrete reconstruction of the castle keep opened on 3 November 1966.
+
+In 1971 the prefecture's name was changed to the hiragana form みのり県, Minori Airport opened and the Ōkubo Dam was completed upstream. The [[minori-prefectural-museum-of-art|Minori Prefectural Museum of Art]] opened in the castle grounds in 1983, the potter [[hanae-ishizuka|Hanae Ishizuka]] was designated a Living National Treasure in 1985, and the city signed a sister-city agreement with Kellbridge in the United Kingdom in 1987. Harukawa became a core city in 1998. A typhoon in September 2004 brought the worst flooding in seventy years, and the population peaked at 431,072 in the 2005 census. A new Harukawa Central Station building opened on 26 March 2011, and the castle keep reopened on 1 April 2023 after a seismic retrofit.
+
+== Geography ==
+[[Map:kagami-river|The Kagami River basin; Harukawa lies at the river's mouth]]
+
+Harukawa occupies the delta and alluvial plain of the lower Kagami River and the hills around it, at the head of Minori Bay. The river, 94 km long,{{efn|The length of 94 km is the figure of the national river authority. The prefecture's own river register gives 96 km because it also counts the Hosoya headwater stream.}} rises on the north slope of [[mount-tsukimi|Mount Tsukimi]] (1,214 m), about 32 km north-east of the city center, and crosses the plain from north-east to south-west. Most of the city center lies at an elevation of about 4 m, and parts of Uomachi and Shiomi stand on land reclaimed from the bay. Harukawa Castle stands on Sagimai Hill (鷺舞山, 48 m), an isolated hill on the left (east) bank of the river 2.6 km from its mouth.<ref name="yearbook">Harukawa City Planning Division (2026). ''Harukawa Statistical Yearbook 2025''. Harukawa City, pp. 2–5.</ref>
+
+North of the plain the land rises to forested hills; the highest point in the city is Kurayama (倉山, 683 m) on the northern boundary, site of the medieval castle. To the south the hilly Uchiura Peninsula, whose terraced slopes are planted with yuzu, forms the south side of the inner bay, with the beach of Sakurahama on its shore. Harukawa borders the city of Kitano to the north, the town of Kagami to the north-east, the city of Takasu to the east and the city of Nishiura to the south-west.
+
+=== Districts ===
+The city has no wards. Its best-known districts are:
+
+{| Main districts of Harukawa
+! District !! Japanese !! Description
+| Shiromachi || 城町 || Castle and civic center: Castle Park, City Hall, the prefectural government, the Museum of Art and the head office of Minori Bank
+| Ekimae || 駅前 || The area around Harukawa Central Station and its station building, Harukawa Central Terrace (2011)
+| Gofukumachi || 呉服町 || Old merchant street with a covered shopping arcade; the "Hundred Lantern Road" during the festival
+| Uomachi || 魚町 || Fishing port and central fish market (1956); birthplace of Michiyo Tōno and Kenzō Hattori
+| Shiomi || 汐見 || Riverside district by Shiomi Bridge, where the festival's floating lanterns are collected; nearest station Ichiba
+| Suyama || 陶山 || Pottery district north-east of the center, reached from Kamano Station (13.5 km); 38 kilns, the Suyama Old Kiln and the Kamano Pottery Fair
+| Uchiura || 内浦 || Former village (merged 1954) on the Uchiura Peninsula; shell mound and yuzu terraces
+| Sakurahama || 桜浜 || Former village (merged 1954) with the city's main beach, near Minori Port
+|}
+
+== Climate ==
+{{main|climate-of-harukawa}}
+[[Chart:climate|Monthly mean temperature and precipitation in Harukawa (1991–2020 normals)]]
+
+Harukawa has a humid subtropical climate (Köppen ''Cfa'') with hot, humid summers and mild winters. On the 1991–2020 normals of the Harukawa Local Meteorological Observatory, the annual mean temperature is 16.5 °C and annual precipitation is 1,878.2 mm, falling on 110.7 days; the city receives 2,082.9 hours of sunshine a year. August is the hottest month (mean 28.1 °C, mean high 32.3 °C) and also the sunniest (216.0 hours); January is the coldest (mean 5.6 °C). June, at the height of the ''tsuyu'' rainy season, is the wettest month with 312.5 mm, ahead of September (289.7 mm), when typhoons approach;{{efn|On the older 1961–1990 normals September (about 301 mm) was wetter than June (about 287 mm), and older guidebooks still name September as the wettest month.}} January is the driest (52.4 mm), so June brings about six times as much rain as January.<ref name="normals">Harukawa Local Meteorological Observatory (2021). ''Climatological Normals for Harukawa, 1991–2020''. Harukawa Local Meteorological Observatory, pp. 6–9.</ref>
+
+The rainy season usually lasts from about 6 June to 19 July, and about 2.6 typhoons approach the city each year. Snow falls on about two days a year and seldom settles. The highest temperature on record is 38.4 °C (7 August 2018) and the lowest −6.2 °C (28 January 1981). The heaviest daily rainfall, 287.0 mm on 19 September 2004, caused the city's worst flood since 1934. Inland it is markedly cooler: Tsukimi Onsen, at 310 m, has an annual mean of 13.8 °C, and the summit of Mount Tsukimi is about 7.5 °C colder than the city.
+
+== Demographics ==
+[[Chart:population|Population of Harukawa, 1889–2025 (census figures, with the 2025 estimate)]]
+
+On 1 October 2025 Harukawa had an estimated 412,800 inhabitants{{efn|The figure of 412,800 is the prefecture's estimate, which starts from the 2020 census and adds births, deaths and moves recorded since. The city's own resident register, which counts people registered as living in the city, gave 409,962 on 1 September 2026. The two figures are compiled by different methods and are not directly comparable.}} in 191,300 households.<ref name="popest"/><ref name="register">Harukawa City Citizens' Affairs Division (2026). ''Resident Register Population and Households, 1 September 2026''. Harukawa City, p. 1.</ref> The 2020 census counted 418,316 people.
+
+The population grew from about 31,200 when city status was granted in 1889 to 96,412 at the first national census in 1920 and 152,884 in 1940. The air raid and wartime evacuation reduced it to 149,310 by 1947. The merger with four villages on 1 October 1954 raised it from 171,346 in 1950 to 238,517 in 1955, an increase of 39% in five years. Growth continued with the shipyard and new housing estates along the Kagami Line, and the population passed 400,000 in the late 1980s (409,788 in 1990), peaking at 431,072 in the 2005 census. Since then it has fallen slowly, by about 3% between 2005 and 2020, because deaths now exceed births; net migration has been close to zero since the mid-2010s.
+
+In 2025, 30.4% of residents were aged 65 or over. Foreign residents numbered 6,920 (1.7%), the largest groups coming from Vietnam, China and the Philippines, many of them working at the shipyard and in food processing.{{cn}}
+
+{{Data:population}}
+
+== Government ==
+Harukawa has a directly elected mayor and a city assembly. The mayor, Takuya Hirose (広瀬拓也), an independent who worked in the city government for 28 years and a 1986 graduate of the Faculty of Economics of Harukawa University, was first elected in November 2018 and re-elected in November 2022.<ref name="nippo2022">"Hirose wins second term". ''Harukawa Nippō'', 14 November 2022, p. 1.</ref> He is seeking a third term at the mayoral election of 8 November 2026, against the former prefectural assembly member Michiko Sawada; flood control is the main issue.{{cn}} The city assembly has 44 members elected for four-year terms; the next assembly election is due in April 2027. City Hall stands in Shiromachi, facing Castle Park. As a core city since 1 April 1998, Harukawa exercises some powers normally held by the prefecture, such as running its own public health center and licensing restaurants and care homes. Its general-account budget for FY2026 is ¥187.2 billion.<ref name="budget">Harukawa City Finance Division (2026). ''Outline of the FY2026 Budget''. Harukawa City, p. 2.</ref>
+
+Harukawa is also the seat of the Minori Prefectural Government, headed since 2017 by Governor Hiroshi Takemura, and of the Minori Prefectural Assembly. Among the city's former mayors, Tetsuo Saeki (1951–1967) is remembered for postwar reconstruction, the 1954 merger and the rebuilding of the castle keep.
+
+== Economy ==
+{{main|economy-of-harukawa}}
+[[Chart:sectors|Harukawa's economy by sector, FY2022 (share of gross city product)]]
+
+Harukawa's gross city product was ¥1.68 trillion in FY2022, about ¥4.0 million per resident. Manufacturing is the largest sector (21.4%), followed by wholesale and retail (13.8%), health and social care (12.6%) and real estate (11.2%).<ref name="accounts">Harukawa City Planning Division (2025). ''Harukawa City Economic Accounts, FY2022''. Harukawa City, pp. 8–12.</ref> The largest industrial employers are the [[?Harukawa Shipyard]] of Minori Heavy Industries, opened in 1937 and now on land reclaimed from the bay, with about 3,100 workers, and Kagami Precision (鏡精機), a machine-tool maker founded in 1952, with about 2,400. Harukawa University and its hospital employ about 4,200 people, Minori Bank (founded 1897, head office in Shiromachi) about 1,850 and the Harukawa Railway 684. Unemployment was 2.4% in 2025.
+
+Traditional industries remain visible. In 2024 the 38 kilns of the Harukawa ware industry employed about 210 people and produced ware worth ¥2.1 billion, less than half of the 1991 peak of ¥4.6 billion from 71 kilns. The Uomachi central fish market, opened in 1956, handles sea bream, oysters and other catches from Minori Bay, and the terraces of the Uchiura Peninsula are among the prefecture's main yuzu-growing areas.
+
+Tourism has grown in importance. The city received a record 6.5 million tourist visitors in 2025, up from 6.2 million in 2024 and 2.9 million in 2020, with 1.94 million overnight stays.<ref name="tourism"/> The castle keep (512,000 visitors in FY2024), the [[?Minori Bay Aquarium]] (466,000), the Lantern Festival (380,000 in 2025) and the Museum of Art (186,000) are the leading attractions. The main shopping areas are the covered arcade of Gofukumachi and Harukawa Central Terrace, the station building opened in 2011; the Kumo Mobile Harukawa Central shop is a minute's walk from the station's South Exit.
+
+== Transport ==
+[[File:station-01.jpg|The North Exit of [[harukawa-central-station|Harukawa Central Station]] at dusk]]
+
+=== Rail ===
+{{see|harukawa-railway|kagami-line|bayside-line}}
+Rail services are run by the Harukawa Railway (HaruTetsu), a private company founded in 1923 as the Kagami Valley Railway, with its head office in Ekimae. Both of its lines start at Harukawa Central Station, which had 38,420 boardings a day in FY2025.
+
+The [[kagami-line|Kagami Line]] runs 38.6 km up the Kagami River valley to Tsukimi Onsen, with 14 stations, seven of them in Harukawa: Harukawa Central, Shiromachi, Harukawa Daigaku-mae, Kawabata, Yanagihara, Nishi-Haruno and Kamano. Local trains stop at every station and take 63 minutes end to end; on weekday daytimes they run every 30 minutes as far as Kamano and hourly beyond, and hourly rapid trains take 55 minutes. The limited express [[tsukikage|Tsukikage]], which stops at Shiromachi, Kamano and Kagami-kyō, covers the line in 39 minutes. The [[bayside-line|Bayside Line]] runs 16.2 km along the north shore of the bay to Minori Port, with nine stations, all in the city; its trains stop at every station, run every 15 minutes in the weekday peaks and every 20 minutes on weekday middays and at weekends, and take 28 minutes. HaruTetsu carried about 41 million passengers in FY2025, with 112,430 boardings a day at its 22 stations.<ref name="harutetsu">Harukawa Railway (2026). ''Company Report FY2025''. Harukawa Railway Co., pp. 4–7.</ref> Fares start at ¥170; Harukawa Central to Tsukimi Onsen costs ¥730, plus a ¥760 surcharge on the Tsukikage, and to Minori Port ¥410. The [[haruca|HaruCa]] contactless card, introduced in 2012, is accepted on trains, Harukawa City Bus and Tsukimi Bus, and fares paid with it are up to ¥18 cheaper. The timetable revision of Saturday 14 November 2026 adds a Tsukikage stop at Tsukimi-guchi, which lengthens the journey to 41 minutes, and gives the Bayside Line a train every 15 minutes on weekday middays as well.<ref name="rev2026">Harukawa Railway (2026). "Timetable revision on Saturday 14 November 2026". Notice, October 2026.</ref> Shiromachi Station, 1.8 km from Harukawa Central, is the nearest to the castle, eight minutes' walk from its Castle Exit.
+
+=== Roads and buses ===
+The North Exit of Harukawa Central has a bus terminal with 16 bays for Harukawa City Bus, whose route 1, the Castle Loop, runs every 12 minutes and reaches the castle in 6 minutes; long-distance highway coaches stop at the South Exit. Sagimai Avenue, 50 m wide, is the main axis of the rebuilt city center, and the Minori Expressway serves the city through the Harukawa interchange. In the city center three road bridges cross the Kagami River: Sagimai Bridge, [[kagami-bridge|Kagami Bridge]] (386 m, opened 1932) and Shiomi Bridge.
+
+=== Air and sea ===
+[[?Minori Airport]], 22 km south-west of the center in Nishiura, opened in 1971 and handles domestic flights; airport limousine buses leave the South Exit of Harukawa Central every 30 minutes, take 55 minutes and cost ¥1,300. Ferries from Minori Port reach [[?Kasumi Island]] in the bay in 35 minutes.
+
+== Culture ==
+=== Festivals ===
+{{main|harukawa-lantern-festival}}
+[[File:lanterns-02.jpg|Painted lanterns over Gofukumachi street, the "Hundred Lantern Road", during the Lantern Festival]]
+
+The Harukawa Lantern Festival (春川灯籠まつり) is the city's largest event, held on the second weekend of October (10–11 October in 2026). It began in 1740 as a memorial for the victims of the 1739 flood, and its organizers count the 2026 festival as the 282nd.{{efn|The festival committee counts every year in which the festival was held, including the scaled-down 2021 festival without floating lanterns, and calls the 2026 festival the 282nd; the ''Harukawa Nippō'' counts only full editions and calls it the 281st. The festival was cancelled in 1863, 1944–1946 and 2020.}} On the Saturday evening (18:00–20:30) about 12,000 floating lanterns of Tsukimi washi are released below Kagami Bridge and drift 1.4 km to Shiomi Bridge, where nets collect them. On the Sunday about 3,500 lanterns painted by citizens and schoolchildren hang over Gofukumachi street as the "Hundred Lantern Road", 36 large lantern floats parade from Kagami Shrine to the castle, and 4,000 fireworks are launched over the bay at 19:30. Attendance was 380,000 in 2025; the record is 405,000 (2019).<ref name="festival">Harukawa Lantern Festival Executive Committee (2025). ''Report on the 281st Harukawa Lantern Festival''. Harukawa Lantern Festival Executive Committee, p. 2.</ref>
+
+The Kamano Pottery Fair (釜野陶器市) has been held every year since 1952 on the first weekend of May, in front of Kamano Station and in the Suyama pottery district, and draws about 150,000 visitors to the stalls of the kilns. In spring about 1,100 cherry trees bloom in Castle Park, and the park's 600 maples turn in November.
+
+=== Harukawa ware ===
+{{main|harukawa-ware}}
+[[File:ware-02.jpg|A Harukawa ware storage jar with ''kawasuji'' (river-line) brushwork]]
+
+Harukawa ware (春川焼) is a stoneware made since 1624, when Asagiri Tadamasa invited the potter Ōtani Sōemon from Hizen to found the domain kiln.{{efn|The Suyama Kiln Association dates the ware to 1616, from a shard inscribed "Genna 2"; most historians think the shard comes from an earlier, unrelated kiln.}} It is known for the ''kasumi'' ("mist") glaze, a milky pale blue-grey glaze, and for ''kawasuji'' brushwork of loose wavy lines in iron oxide. The commercial kilns of Suyama date from the 1680s; the 14-chamber Suyama Old Kiln, used from about 1690 to 1931, has been a National Historic Site since 4 October 2015. After a long decline the ware was revived from 1919 by the potter [[?Kawabe Shūzan]], and his pupil [[hanae-ishizuka|Hanae Ishizuka]] recreated the domain's kasumi glaze in 1964. Harukawa ware was designated a Traditional Craft by the national government in 1979.<ref name="ware">Suyama Kiln Association (2019). ''Harukawa Ware: Four Hundred Years''. Suyama Kiln Association, pp. 12–30.</ref>
+
+=== Cuisine ===
+{{main|cuisine-of-harukawa}}
+[[File:dish-01.jpg|''Tai-yuzu meshi'', sea bream rice with yuzu, cooked in a clay pot]]
+
+The city's signature dish is ''tai-yuzu meshi'' (鯛柚子めし), sea bream from Minori Bay cooked on rice in a clay pot with yuzu peel, at its best from March to May. Other local dishes include ''kagami-jiru'', a clear soup of grilled ayu from the Kagami River (June–October); Minori ''kaki-nabe'', an oyster hot pot with white miso and yuzu (November–March); ''sagimai-zushi'', pressed sushi of Spanish mackerel; and yuzu-miso ''oden'' sold at street stalls in Uomachi. ''Tōrō manjū'', lantern-shaped buns with white bean paste, were created in 1911 by the Gofukumachi confectioner Kikuya. Harukawa households spent ¥4,812 on sea bream in 2024, the most of any prefectural capital.<ref name="nippo2025">"Harukawa tops sea bream spending again". ''Harukawa Nippō'', 8 February 2025, p. 3.</ref>
+
+=== Shrines and temples ===
+[[?Kagami Shrine]] (鏡神社) enshrines a bronze mirror that, according to legend, a princess lost in the river and a fisherman later recovered; its autumn festival falls on the Sunday of the Lantern Festival. [[?Kōun-ji]] (光雲寺) is the family temple of the Asagiri clan and holds the graves of several of its lords.
+
+=== Museums ===
+The [[minori-prefectural-museum-of-art|Minori Prefectural Museum of Art]], opened in 1983 in the castle's Sannomaru, holds about 9,600 works, including 1,240 pieces of Harukawa ware. The museum in the castle keep displays the armor and documents of the Asagiri clan, including the 2,300 "Asagiri family papers" donated in 1966, and has an observation floor on its sixth floor. The Old Main Building of Harukawa University (1931) houses the university museum, and the Minori Bay Aquarium, opened in 1997, stands by Minori-kōen Station on the Bayside Line.
+
+=== Literature and media ===
+The novelist [[michiyo-tono|Michiyo Tōno]], born in Uomachi, set her best-known novel, ''The River Mirror'' (1956), in the city at the time of the 1739 flood; the city has awarded the Michiyo Tōno Literary Prize since 1989. The local daily ''Harukawa Nippō'' (春川日報) was founded in 1888, and its English edition, ''The Harukawa Herald'', has appeared since 1998.
+
+=== Sport ===
+Harukawa Sagimai FC plays in the third tier of Japanese football. The Harukawa Castle Marathon, run each February from Castle Park along the river, was first held in 2012.{{cn}}
+
+== Education ==
+[[File:university-01.jpg|The Old Main Building (1931) of [[harukawa-university|Harukawa University]]]]
+
+[[harukawa-university|Harukawa University]], a national university, was founded on 31 May 1949 by merging the Minori Higher Commercial School (1923), the Minori Normal School (1874) and Harukawa Medical College (1943). It has seven faculties, 8,940 undergraduates and 1,620 graduate students (May 2025), and three main sites: the Sagimai Campus (Harukawa Daigaku-mae Station), the adjacent Medical Campus with the medical faculty and a 720-bed hospital, and the Yuzuhara Field Station in the town of Kagami.<ref name="univ">Harukawa University (2025). ''Harukawa University Fact Book 2025''. Harukawa University, pp. 3–8.</ref> The city also has Minori Prefectural University (1992) and the private Harukawa Gakuin University (1951).
+
+The city runs 58 elementary schools and 27 junior high schools. The prefectural Shūkōkan High School takes its name from the domain school founded in 1803.
+
+== International relations ==
+Harukawa has been the sister city of [[?Kellbridge]] (ケルブリッジ), a pottery town in Staffordshire, United Kingdom, since 14 May 1987. The link grew out of contacts between the potters of the two towns, and since 1988 each town has sent two young potters to work in the other every year.<ref name="kellbridge">Harukawa City International Exchange Division (2017). ''Thirty Years of Friendship: Harukawa and Kellbridge''. Harukawa City, pp. 4–15.</ref> A joint exhibition marked the 30th anniversary of the link in 2017.
+
+== Notable people ==
+* [[asagiri-clan|Asagiri Tadamasa]] (1562–1629), first lord of the Harukawa Domain and founder of the castle and town
+* [[?Kawabe Shūzan]] (1881–1958), potter who revived Harukawa ware from 1919
+* [[kenzo-hattori|Kenzō Hattori]] (1873–1941), railway engineer who built the Kagami Line, born in Uomachi
+* [[tetsuo-saeki|Tetsuo Saeki]] (1902–1979), mayor from 1951 to 1967, born in Kawamata village
+* [[michiyo-tono|Michiyo Tōno]] (1914–1987), novelist, born in Uomachi{{efn|Tōno's family register gives 4 August 1914 as her date of birth; she gave 1915 in her memoir ''Tsukimi Diary'', and some references follow her.}}
+* [[hanae-ishizuka|Hanae Ishizuka]] (1921–2009), potter and Living National Treasure, born in Suyama
+* [[?Ren Mizuhara]] (born 1956), potter, head of the Kasumi Kiln since 2009
+
+== See also ==
+* [[history-of-harukawa]]
+* [[economy-of-harukawa]]
+* [[climate-of-harukawa]]
+* [[harukawa-castle]]
+* [[harukawa-lantern-festival]]
+* [[minori-prefecture]]
+* [[minori-bay]]
+
+== Notes ==
+{{notelist}}
+
+== References ==
+{{reflist}}

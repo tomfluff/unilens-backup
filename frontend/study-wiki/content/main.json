@@ -1,0 +1,264 @@
+{
+  "en": {
+    "welcome": "Welcome to Openpedia,",
+    "welcomeSub": "the free encyclopedia that anyone can edit. Featured topic: [[minori-prefecture|Minori Prefecture]] and its capital, [[harukawa|Harukawa]].",
+    "featured": {
+      "title": "From today's featured article",
+      "image": "castle-01.jpg",
+      "imageAlt": "Harukawa Castle keep",
+      "text": "'''[[harukawa-castle|Harukawa Castle]]''' is a hirayama-style Japanese castle on Sagimai Hill in [[harukawa|Harukawa]], [[minori-prefecture|Minori Prefecture]]. It was built between 1603 and 1611 by Asagiri Tadamasa, first lord of the [[asagiri-clan|Asagiri clan]], and gave the city its castle town. The original five-tiered keep burned after a lightning strike on 15 June 1749 and was rebuilt by 1755, only to be demolished in 1874 when the castle buildings were sold off. The present keep, a reinforced-concrete reconstruction opened on 3 November 1966, was paid for in large part by citizens' donations collected under Mayor [[tetsuo-saeki|Tetsuo Saeki]]. Two original buildings survive: the Tatsumi Turret of 1609 and the Sagimai Gate of 1757. The castle grounds host the [[minori-prefectural-museum-of-art|Minori Prefectural Museum of Art]] and, every October, the processions of the [[harukawa-lantern-festival|Harukawa Lantern Festival]].",
+      "more": "([[harukawa-castle|Full article...]]) Recently featured: [[harukawa-ware|Harukawa ware]] · [[kagami-line|Kagami Line]] · [[michiyo-tono|Michiyo Tōno]]"
+    },
+    "dyk": {
+      "title": "Did you know ...",
+      "image": "ware-02.jpg",
+      "imageAlt": "Harukawa ware jar",
+      "items": [
+        "... that [[minori-prefecture|Minori Prefecture]] has officially written its name in hiragana since 1971 because the kanji 実野 was so often misread?",
+        "... that the oldest surviving building of [[harukawa-castle|Harukawa Castle]] is 357 years older than the castle's keep?",
+        "... that the potter [[hanae-ishizuka|Hanae Ishizuka]] (''pictured: a jar with kawasuji brushwork'') needed 214 test firings to recreate the \"mist glaze\" of [[harukawa-ware|Harukawa ware]]?",
+        "... that the [[tsukikage|Tsukikage]] limited express is built for 120 km/h but never runs faster than 95 km/h?",
+        "... that in 1688 every farming household in Minori was ordered to plant three [[yuzu-cultivation-in-minori|yuzu trees]]?",
+        "... that [[mount-tsukimi|Mount Tsukimi]] lost two metres of height in a 2014 survey?"
+      ],
+      "more": "[[harukawa|More about Harukawa]]"
+    },
+    "news": {
+      "title": "In the news",
+      "image": "lanterns-02.jpg",
+      "imageAlt": "Lanterns over Gofukumachi",
+      "items": [
+        "Preparations are under way for the 282nd '''[[harukawa-lantern-festival|Harukawa Lantern Festival]]''' (''lanterns pictured''), to be held on 10–11 October.",
+        "The [[harukawa-railway|Harukawa Railway]] revises its timetables on 14 November: the [[tsukikage|Tsukikage]] will also stop at Tsukimi-guchi, and [[bayside-line|Bayside Line]] trains will run every 15 minutes on weekday middays.",
+        "Mayor Takuya Hirose seeks a third term in the [[harukawa|Harukawa]] mayoral election on 8 November.",
+        "The [[minori-prefectural-museum-of-art|Minori Prefectural Museum of Art]] opens a retrospective of the potter [[hanae-ishizuka|Hanae Ishizuka]], running until 23 November.",
+        "Tourist visitors to [[harukawa|Harukawa]] reached a record 6.5 million in 2025, according to [[economy-of-harukawa|city figures]].",
+        "The green [[yuzu-cultivation-in-minori|yuzu]] harvest ends in Minori Prefecture; picking of yellow fruit begins this month."
+      ],
+      "ongoing": "'''Ongoing:''' Autumn colours on [[mount-tsukimi|Mount Tsukimi]] · Ayu season on the [[kagami-river|Kagami River]] (until 31 October)",
+      "more": "'''Upcoming:''' [[harukawa-lantern-festival|Harukawa Lantern Festival]] (10–11 October) · Yuzu baths at [[tsukimi-onsen|Tsukimi Onsen]] (winter solstice, 21 December)"
+    },
+    "onThisDay": {
+      "title": "On this day",
+      "date": "4 October",
+      "lead": "Events in the history of [[harukawa|Harukawa]] and [[minori-prefecture|Minori Prefecture]]:",
+      "items": [
+        "'''1739''' – The Great Genbun Flood of the [[kagami-river|Kagami River]] killed about 1,140 people in Harukawa; the [[harukawa-lantern-festival|Lantern Festival]] began as their memorial the following year.",
+        "'''1931''' – The Kagami Valley Railway, today's [[kagami-line|Kagami Line]], reached [[tsukimi-onsen|Tsukimi Onsen]] with the opening of the 2,184-metre [[tsukimi-tunnel|Tsukimi Tunnel]].",
+        "'''2015''' – The Suyama Old Kiln, a 14-chamber climbing kiln of [[harukawa-ware|Harukawa ware]], was designated a National Historic Site."
+      ],
+      "more": "[[history-of-harukawa|More history...]]"
+    },
+    "picture": {
+      "title": "Today's featured picture",
+      "image": "lanterns-01.jpg",
+      "caption": "Floating lanterns on the [[kagami-river|Kagami River]] during the [[harukawa-lantern-festival|Harukawa Lantern Festival]]. On the Saturday evening about 12,000 paper lanterns are released just below [[kagami-bridge|Kagami Bridge]] and drift 1.4 km downstream to Shiomi Bridge, where nets collect them. Photograph: Openpedia contributor."
+    },
+    "portalsTitle": "Browse Openpedia",
+    "portals": [
+      [
+        "Geography",
+        [
+          "geography",
+          "rivers",
+          "mountains",
+          "climate"
+        ]
+      ],
+      [
+        "History",
+        [
+          "history",
+          "castles",
+          "asagiri",
+          "edo"
+        ]
+      ],
+      [
+        "Culture",
+        [
+          "culture",
+          "festivals",
+          "pottery",
+          "cuisine"
+        ]
+      ],
+      [
+        "Transport",
+        [
+          "rail",
+          "rail-lines",
+          "stations",
+          "trains"
+        ]
+      ],
+      [
+        "People",
+        [
+          "people",
+          "potters",
+          "novelists",
+          "mayors"
+        ]
+      ],
+      [
+        "Economy",
+        [
+          "economy",
+          "agriculture",
+          "tourism",
+          "onsen"
+        ]
+      ]
+    ]
+  },
+  "ja": {
+    "welcome": "ようこそ オープンペディアへ",
+    "welcomeSub": "オープンペディアは誰でも編集できるフリー百科事典です。特集：[[minori-prefecture|みのり県]]とその県庁所在地[[harukawa|春川市]]",
+    "featured": {
+      "title": "今日の一項目",
+      "image": "castle-01.jpg",
+      "imageAlt": "春川城天守",
+      "text": "'''[[harukawa-castle|春川城]]'''は、[[minori-prefecture|みのり県]][[harukawa|春川市]]の鷺舞山にある平山城である。1603年から1611年にかけて[[asagiri-clan|朝霧氏]]初代の朝霧忠正が築き、城下町春川の起点となった。五重の天守は1749年6月15日の落雷による火災で焼失し、1755年までに再建されたが、1874年に城内の建物が払い下げられた際に取り壊された。現在の天守は1966年11月3日に完成した鉄筋コンクリート造の復元天守で、[[tetsuo-saeki|佐伯哲夫]]市長のもとで集められた市民の寄付が費用の多くを賄った。1609年の巽櫓と1757年の鷺舞門の2棟が現存する。城跡には[[minori-prefectural-museum-of-art|みのり県立美術館]]があり、毎年10月には[[harukawa-lantern-festival|春川灯籠まつり]]の行列が練り歩く。",
+      "more": "（[[harukawa-castle|続きを読む]]）最近の一項目：[[harukawa-ware|春川焼]]・[[kagami-line|鏡線]]・[[michiyo-tono|遠野美千代]]"
+    },
+    "dyk": {
+      "title": "新しい記事から",
+      "image": "ware-02.jpg",
+      "imageAlt": "春川焼の壺",
+      "items": [
+        "…[[minori-prefecture|みのり県]]の表記が1971年からひらがなになったのは、「実野」がよく読み間違えられたためである",
+        "…[[harukawa-castle|春川城]]で現存する最古の建物は、天守より357年古い",
+        "…陶芸家の[[hanae-ishizuka|石塚花枝]]は、[[harukawa-ware|春川焼]]の「霞釉」を再現するまでに214回の試し焼きを重ねた（写真は川筋文の壺）",
+        "…特急[[tsukikage|「月影」]]の車両は最高時速120 kmで設計されているが、営業運転では95 kmを超えることがない",
+        "…1688年、みのりの農家は一戸あたり3本の[[yuzu-cultivation-in-minori|ユズ]]を植えるよう命じられた",
+        "…[[mount-tsukimi|月見山]]の標高は2014年の測量で2 m低くなった"
+      ],
+      "more": "[[harukawa|春川市についてもっと読む]]"
+    },
+    "news": {
+      "title": "ニュース",
+      "image": "lanterns-02.jpg",
+      "imageAlt": "呉服町の灯籠",
+      "items": [
+        "第282回'''[[harukawa-lantern-festival|春川灯籠まつり]]'''（写真）が10月10日・11日に開かれる。準備が進んでいる。",
+        "[[harukawa-railway|春川鉄道]]は11月14日にダイヤを改正する。特急[[tsukikage|「月影」]]が月見口にも停車し、[[bayside-line|湾岸線]]は平日日中も15分間隔になる。",
+        "11月8日の[[harukawa|春川市]]長選挙で、広瀬拓也市長が3選を目指す。",
+        "[[minori-prefectural-museum-of-art|みのり県立美術館]]で陶芸家[[hanae-ishizuka|石塚花枝]]の回顧展が始まった。会期は11月23日まで。",
+        "2025年の[[harukawa|春川市]]の観光入込客数は過去最多の650万人に達した（[[economy-of-harukawa|市の統計]]）。",
+        "みのり県で青ユズの収穫が終わり、今月から黄ユズの収穫が始まる（[[yuzu-cultivation-in-minori|ユズ栽培]]）。"
+      ],
+      "ongoing": "'''開催中：'''[[mount-tsukimi|月見山]]の紅葉・[[kagami-river|鏡川]]のアユ漁（10月31日まで）",
+      "more": "'''今後の予定：'''[[harukawa-lantern-festival|春川灯籠まつり]]（10月10日・11日）・[[tsukimi-onsen|月見温泉]]のゆず湯（冬至、12月21日）"
+    },
+    "onThisDay": {
+      "title": "今日は何の日",
+      "date": "10月4日",
+      "lead": "[[harukawa|春川市]]と[[minori-prefecture|みのり県]]の歴史から",
+      "items": [
+        "'''1739年''' - [[kagami-river|鏡川]]で元文の大洪水が起き、春川で約1,140人が死亡。翌年、犠牲者の供養として[[harukawa-lantern-festival|灯籠流し]]が始まる。",
+        "'''1931年''' - 全長2,184 mの[[tsukimi-tunnel|月見トンネル]]の完成により、鏡谷鉄道（現在の[[kagami-line|鏡線]]）が[[tsukimi-onsen|月見温泉]]まで開通。",
+        "'''2015年''' - [[harukawa-ware|春川焼]]の14室の登り窯「陶山古窯」が国の史跡に指定される。"
+      ],
+      "more": "[[history-of-harukawa|春川市の歴史をもっと見る]]"
+    },
+    "picture": {
+      "title": "今日の画像",
+      "image": "lanterns-01.jpg",
+      "caption": "[[harukawa-lantern-festival|春川灯籠まつり]]で[[kagami-river|鏡川]]を流れる灯籠。土曜日の夕方、約12,000基の灯籠が[[kagami-bridge|鏡橋]]のすぐ下流から流され、1.4 km下った汐見橋で網に回収される。撮影：オープンペディア利用者"
+    },
+    "portalsTitle": "分野別に探す",
+    "portals": [
+      [
+        "地理",
+        [
+          "geography",
+          "rivers",
+          "mountains",
+          "climate"
+        ]
+      ],
+      [
+        "歴史",
+        [
+          "history",
+          "castles",
+          "asagiri",
+          "edo"
+        ]
+      ],
+      [
+        "文化",
+        [
+          "culture",
+          "festivals",
+          "pottery",
+          "cuisine"
+        ]
+      ],
+      [
+        "交通",
+        [
+          "rail",
+          "rail-lines",
+          "stations",
+          "trains"
+        ]
+      ],
+      [
+        "人物",
+        [
+          "people",
+          "potters",
+          "novelists",
+          "mayors"
+        ]
+      ],
+      [
+        "経済",
+        [
+          "economy",
+          "agriculture",
+          "tourism",
+          "onsen"
+        ]
+      ]
+    ]
+  },
+  "about": {
+    "en": [
+      "'''Openpedia''' is a free online encyclopedia written collaboratively by its readers. This copy is a fictional website made for a research study of UniLens, an assistant for people with low vision. Its articles describe the fictional city of [[harukawa|Harukawa]] and [[minori-prefecture|Minori Prefecture]]; the people, places and organisations in them do not exist.",
+      "== help::Help ==",
+      "Use the search box at the top of every page to find an article. Suggestions appear as you type; press Enter to see all results. Every article links to related articles, and the categories at the bottom of each article list similar pages. The language link at the top right opens the same page in Japanese.",
+      "== citations::Citations and \"citation needed\" ==",
+      "Openpedia articles cite their sources in numbered footnotes. A statement marked [citation needed] has not yet been supported by a reliable source. To cite an article, give its title, \"Openpedia\" and the date you read it.",
+      "== community::Community portal ==",
+      "Editing, talk pages and page histories are not available in this copy.",
+      "== donate::Donations ==",
+      "Donations are not collected by this copy of Openpedia. The fundraising banner is part of the study design.",
+      "== privacy::Privacy policy ==",
+      "This site sets no cookies and collects no personal data. A small setting in your browser's local storage remembers whether you closed the fundraising banner.",
+      "== disclaimers::Disclaimers ==",
+      "Openpedia makes no guarantee of validity. All content is fictional.",
+      "== contact::Contact ==",
+      "Questions about the study go to the research team that invited you."
+    ],
+    "ja": [
+      "'''オープンペディア'''は、読者が共同で執筆する無料のオンライン百科事典です。このサイトは、ロービジョンの人のためのアシスタント UniLens の研究用に作成した架空のウェブサイトです。記事は架空の都市[[harukawa|春川市]]と[[minori-prefecture|みのり県]]について書かれており、登場する人物・場所・団体は実在しません。",
+      "== help::ヘルプ ==",
+      "各ページ上部の検索ボックスで記事を探せます。入力中に候補が表示され、Enter キーを押すとすべての検索結果が表示されます。記事中のリンクから関連記事へ移動でき、記事末尾のカテゴリから同じ分野の記事一覧を見ることができます。右上の言語リンクで同じページの英語版を開けます。",
+      "== citations::出典と「要出典」 ==",
+      "オープンペディアの記事は、番号付きの脚注で出典を示しています。[要出典] と書かれた記述には、まだ信頼できる出典が示されていません。記事を引用する場合は、記事名、「オープンペディア」、閲覧日を記してください。",
+      "== community::コミュニティ・ポータル ==",
+      "このサイトでは編集、ノートページ、履歴表示は利用できません。",
+      "== donate::寄付 ==",
+      "このサイトでは寄付を受け付けていません。募金バナーは調査のための演出です。",
+      "== privacy::プライバシー・ポリシー ==",
+      "このサイトは Cookie を使用せず、個人情報を収集しません。募金バナーを閉じたかどうかだけをブラウザのローカルストレージに記録します。",
+      "== disclaimers::免責事項 ==",
+      "オープンペディアは内容の正確性を保証しません。すべての内容は架空のものです。",
+      "== contact::お問い合わせ ==",
+      "調査についての質問は、参加を依頼した研究チームまでお寄せください。"
+    ]
+  }
+}

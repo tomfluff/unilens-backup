@@ -1,0 +1,103 @@
+title: Kagami Line
+short: Railway line from Harukawa to Tsukimi Onsen, Minori Prefecture
+type: article
+categories: rail; rail-lines; harukawa; tourism
+hatnote: For other uses, see [[kagami]].
+infobox: Kagami Line
+ib-subtitle: 鏡線
+ib-image: train-02.jpg | A 2000 series local train at Hotarudani Station
+ib-section: Overview
+ib: Native name | 鏡線 (''Kagami-sen'')
+ib: Owner | [[harukawa-railway|Harukawa Railway]]
+ib: Termini | [[harukawa-central-station|Harukawa Central]]<br>[[tsukimi-onsen|Tsukimi Onsen]]
+ib: Stations | 14
+ib: Opened | 15 July 1926 (Harukawa–Kamano)<br>4 October 1931 (whole line)
+ib: Boardings | 43,590 a day at the 13 stations beyond Harukawa Central (FY2025)
+ib: Services | Local; rapid; limited express [[tsukikage|Tsukikage]]
+ib-section: Technical
+ib: Length | 38.6 km
+ib: Track | Double track Harukawa Central–Kamano (13.5 km); single track beyond
+ib: Gauge | 1,067 mm
+ib: Electrification | 1,500 V DC overhead (1952)
+ib: Maximum speed | 95 km/h
+ib: Ruling gradient | 25 ‰ (Hotarudani–Tsukimi Onsen)
+ib: Longest tunnel | [[tsukimi-tunnel|Tsukimi Tunnel]] (2,184 m)
+ib: Longest bridge | Futamata Bridge (218 m)
+---
+The '''Kagami Line''' (鏡線, ''Kagami-sen'') is a 38.6 km railway line of the [[harukawa-railway|Harukawa Railway]] (HaruTetsu) in [[minori-prefecture|Minori Prefecture]], Japan. It runs from [[harukawa-central-station|Harukawa Central Station]] in [[harukawa|Harukawa]] up the valley of the [[kagami-river|Kagami River]] to the hot-spring town of [[tsukimi-onsen|Tsukimi Onsen]], serving 14 stations in the city of Harukawa and the towns of Kagami and Tsukimi. It is double track for its first 13.5 km to Kamano and single track beyond.
+
+The line was planned by the engineer [[kenzo-hattori|Kenzō Hattori]] for the Kagami Valley Railway, as HaruTetsu was called until 1951, and opened in four stages between 1926 and 1931; it was built to 1,067 mm gauge and electrified in 1952. Local trains take 63 minutes from end to end and rapid trains 55 minutes, and the limited express [[tsukikage|Tsukikage]] covers the line in 39 minutes. In FY2025 its stations other than Harukawa Central had 43,590 boardings a day, against 30,420 at those of the [[bayside-line|Bayside Line]].<ref name="factbook">Harukawa Railway (2026). ''HaruTetsu Fact Book 2026''. Harukawa Railway Co., pp. 6–9.</ref>
+
+== Route ==
+[[Chart:railmap|Route diagram of the Kagami Line and the Bayside Line]]
+The line rises from about 4 m above sea level at Harukawa Central to 310 m at Tsukimi Onsen, following the Kagami River, which flows 94 km from [[mount-tsukimi|Mount Tsukimi]] to [[minori-bay|Minori Bay]],{{efn|The length of 94 km is the figure of the national river authority; the prefecture's river register gives 96 km because it also counts the Hosoya headwater stream.}} for most of its length.
+
+=== Harukawa Central to Kamano ===
+Leaving the elevated platforms of Harukawa Central, the line heads north-east through the city. Shiromachi (1.8 km) is the nearest station to [[harukawa-castle|Harukawa Castle]]: from its Castle Exit on the west side the keep is about eight minutes' walk uphill, and its River Exit on the east side leads to the Kagami River and a gallery street of [[harukawa-ware|Harukawa ware]] shops. Harukawa Daigaku-mae (3.6 km), opened in 1951, serves the Sagimai Campus of [[harukawa-university|Harukawa University]], whose main gate is three minutes from the station, and the neighboring Medical Campus with the University Hospital, seven minutes on foot. Kawabata (5.9 km) was added in 1968 for a new housing estate. Beyond Yanagihara (8.2 km) the line follows the left (east) bank of the river past rice fields and orchards to Nishi-Haruno (10.7 km), between Kawamata and Ichinose, two former villages merged into Harukawa in 1954.
+
+Kamano (13.5 km) is the station for the Suyama pottery district, where Harukawa ware is made and where the [[harukawa-ware#Pottery Fair|Kamano Pottery Fair]] is held every year on the first weekend of May in front of the station; the railway markets the district as the "Kamano Pottery Village", which is also served by City Bus 21 from Harukawa Central once an hour. The double track ends here, many local trains turn back, and the company's depot, Kamano Depot, lies just beyond the station.
+
+=== Kamano to Kagami-kyō ===
+Beyond Kamano the single track enters the town of Kagami at the unstaffed Ōtsuka (16.4 km) and reaches Yuzuhara (19.8 km), surrounded by the terraced orchards that grow much of the prefecture's [[yuzu-cultivation-in-minori|yuzu]] and home to Harukawa University's Yuzuhara Field Station. Upstream of Yuzuhara the line passes the Ōkubo Dam, and at Futamata, where the Hosoya River joins the Kagami just below Kagami-kyō Station, it crosses to the right bank on the Futamata Bridge.
+
+=== Kagami-kyō to Tsukimi Onsen ===
+Kagami-kyō (23.6 km) stands at the mouth of the Kagami Gorge and is the start of the five-hour west trail up Mount Tsukimi. After the unstaffed Nakazawa (27.1 km), the last station in Kagami, the line reaches Hotarudani (30.4 km), the first station in the town of Tsukimi, known for its fireflies in June; with 190 boardings a day it is the quietest on the line. From here the line climbs at up to 25 ‰ into the 2,184 m [[tsukimi-tunnel|Tsukimi Tunnel]], which takes it under a spur of Mount Tsukimi to Tsukimi-guchi (34.9 km), where a statue of Hattori stands in front of the station.<ref name="tsukimi">Tsukimi Town History Committee (1994). ''Tsukimi Town History''. Tsukimi Town, pp. 286–291.</ref> The last 3.7 km run up the Tsukimi Valley to the terminus at Tsukimi Onsen (38.6 km), from where Tsukimi Bus route 5 takes 25 minutes to the Tsukimi Ropeway.
+
+== History ==
+{{main|harukawa-railway}}
+Hattori became chief engineer of the newly founded Kagami Valley Railway in 1923 and chose a route that kept close to the river, avoiding the hills on either side. The line was built to 1,067 mm gauge from the start and worked by steam. It opened in four stages:<ref name="hr100">Harukawa Railway (2023). ''One Hundred Years of HaruTetsu''. Harukawa Railway Co., pp. 21–64.</ref>
+
+{| Opening of the Kagami Line
+! Date !! Section !! Length !! Notes
+| 15 July 1926 || Harukawa – Kamano || 13.5 km || Steam; Shiromachi, Yanagihara and Nishi-Haruno opened at the same time
+| 20 May 1928 || Kamano – Yuzuhara || 6.3 km || Ōtsuka
+| 3 November 1929 || Yuzuhara – Hotarudani || 10.6 km || Futamata Bridge; Kagami-kyō and Nakazawa stations
+| 4 October 1931 || Hotarudani – Tsukimi Onsen || 8.2 km || Tsukimi Tunnel; Tsukimi-guchi station{{efn|The opening day fell on the anniversary of the Great Genbun Flood of 4 October 1739; the company history describes the choice of date as a coincidence.}}
+|}
+
+Harukawa Daigaku-mae station opened on 1 April 1951, the year the company was renamed the Harukawa Railway, and the line was electrified at 1,500 V DC in 1952. On 1 October 1968 the double track was completed as far as Kamano and Kawabata station opened. In 1994 track improvements raised the maximum speed from 85 km/h to the present 95 km/h.{{cn}} The flood of September 2004 washed away part of the embankment near Ichinose, and trains between Yanagihara and Yuzuhara were replaced by buses for 23 days.<ref name="nippo2004">"Kagami Line to reopen on 13 October". ''Harukawa Nippō'', 9 October 2004, p. 2.</ref> When Harukawa Central was rebuilt as an elevated station in 2011, the first 1.9 km of the line were raised onto a viaduct.
+
+== Stations ==
+All 14 stations are listed below; distances are measured from Harukawa Central. Stations K01–K07 are in Harukawa, K08–K11 in the town of Kagami and K12–K14 in the town of Tsukimi. Boarding figures are daily averages for FY2025.<ref name="prefstats">Minori Prefecture (2026). ''Minori Prefecture Transport Statistics, FY2025''. Minori Prefecture Planning Department, pp. 36–37.</ref>
+
+{{Data:kagami-stations}}
+
+== Services ==
+=== Local and rapid trains ===
+Local trains, formed of two-car 2000 series sets, call at every station and take 63 minutes from end to end. On weekdays during the day they run every 30 minutes between Harukawa Central and Kamano, where every other train turns back, and hourly beyond Kamano; in the morning and evening peaks through trains to Tsukimi Onsen run every 30 minutes. Beyond Kamano trains are driver-only, and passengers boarding at the unstaffed stations (Ōtsuka, Nakazawa and Hotarudani) touch [[haruca|HaruCa]] on the platform reader or take a boarding certificate from a machine on the platform.<ref name="factbook"/>
+
+Rapid trains (快速, ''kaisoku'') run hourly between Harukawa Central and Tsukimi Onsen and take 55 minutes. They stop at every station except Kawabata, Nishi-Haruno and Ōtsuka.<ref name="timetable">Harukawa Railway (2026). ''HaruTetsu Timetable, March 2026 edition''. Harukawa Railway Co., pp. 2–5.</ref>
+
+=== Tsukikage ===
+The limited express [[tsukikage|Tsukikage]] runs 7 trains to Tsukimi Onsen and 8 back on weekdays, and 9 and 10 on Saturdays, Sundays and holidays. It stops at Shiromachi, Kamano and Kagami-kyō and takes 39 minutes from Harukawa Central to Tsukimi Onsen. All seats are reserved; for the whole line the limited express surcharge is ¥760 on top of the ordinary fare of ¥730, or ¥1,490 in all. On the evenings of the [[harukawa-lantern-festival|Harukawa Lantern Festival]] (10–11 October 2026) extra local trains run between Harukawa Central and Kamano or Kagami-kyō, and Tsukikage 21, 24, 25 and 28 do not stop at Shiromachi.
+
+=== Timetable revision of November 2026 ===
+On Saturday 14 November 2026 HaruTetsu will revise the timetable. Every Tsukikage will also stop at Tsukimi-guchi, which lengthens the journey to 41 minutes; Tsukikage 1 on weekdays will leave Harukawa Central at 7:25 and reach Tsukimi Onsen at 8:06, instead of 7:30 and 8:09. Rapid trains will also call at Kawabata, taking one minute longer. Last trains will run later: on Saturdays, Sundays and holidays the last train from Tsukimi Onsen will leave at 21:40 (Harukawa Central 22:43) instead of 21:05, and the last weekday northbound train from Harukawa Central, at 23:20, will run to Kagami-kyō (arriving 23:59) instead of Kamano. On the Bayside Line, weekday trains between 10:00 and 16:40 will run every 15 minutes instead of every 20. Fares, surcharges and pass prices do not change, and the new station timetables are published on 1 November.<ref name="rev2026">Harukawa Railway (2026). "Timetable revision on Saturday 14 November 2026". Notice, October 2026.</ref>
+
+== Infrastructure ==
+[[File:train-01.jpg|A Tsukikage 8000 series train on the Futamata Bridge]]
+The '''Futamata Bridge''' (二股橋梁), completed in 1929 to Hattori's design, carries the line over the Kagami River just above its confluence with the Hosoya River, a short distance below Kagami-kyō Station. It is 218 m long, with three steel truss spans on masonry piers and short plate-girder approaches, and is the longest bridge on the HaruTetsu network.<ref name="kuroda">Kuroda, Shin'ichi (2016). "Kenzō Hattori and the 25-per-mille rule". ''Railway History Review'' 42: 15–31, p. 22.</ref> It was strengthened for electrification in 1952 and was selected as civil engineering heritage by the Japan Society of Civil Engineers in 2008.{{cn}}
+
+The '''Tsukimi Tunnel''' (2,184 m), between Hotarudani and Tsukimi-guchi, was bored from both ends between 1927 and 1931; the headings met on 12 December 1930. Fourteen workers died during its construction and are remembered by a memorial stone of 1932 at Tsukimi-guchi. It was the longest tunnel in Minori Prefecture until the Hiwada Road Tunnel opened in 1979.<ref name="hattori1932">Hattori, Kenzō (1932). "The construction of the Tsukimi Tunnel". ''Journal of the Japan Society of Civil Engineers'' 18 (4): 512–538.</ref>
+
+The ruling gradient is 25 ‰ (1 in 40), on the climb between Hotarudani and Tsukimi Onsen. Hattori insisted on this limit, which he considered the most a steam locomotive could manage with a full train, even though it meant boring a long tunnel instead of a cheaper route over the ridge with gradients of 33 ‰.<ref name="kuroda"/> Single-track sections have passing loops at Ōtsuka, Yuzuhara, Kagami-kyō, Nakazawa and Tsukimi-guchi.
+
+== Rolling stock ==
+* '''2000 series''' (since 1996): eight two-car sets (16 cars) in cream with a river-blue stripe, used on all local and rapid trains. They replaced the 1000 series of 1965.
+* '''8000 series''' (since 2019): three three-car sets (9 cars) in navy blue with a gold stripe, used on the Tsukikage. Built by Nishiura Sharyō for 120 km/h, they are limited to the line's 95 km/h.
+
+Steam locomotives worked the line until electrification in 1952. The first Tsukikage trains, the 6000 series, ran from 1987 to 2019; set 6001 is preserved at Tsukimi Onsen Station.<ref name="hr100"/>
+
+== See also ==
+* [[bayside-line|Bayside Line]]
+* [[tsukikage|Tsukikage]]
+* [[tsukimi-tunnel|Tsukimi Tunnel]]
+* [[kenzo-hattori|Kenzō Hattori]]
+* [[kagami-river|Kagami River]]
+* [[mount-tsukimi|Mount Tsukimi]]
+
+== Notes ==
+{{notelist}}
+
+== References ==
+{{reflist}}

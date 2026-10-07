@@ -1,0 +1,93 @@
+title: Tsukikage (train)
+short: Limited express train between Harukawa Central and Tsukimi Onsen
+type: article
+categories: rail; trains; tourism
+hatnote: For the mountain after which the train is named, see [[mount-tsukimi]].
+infobox: Tsukikage
+ib-subtitle: 特急「月影」
+ib-image: train-01.jpg | An 8000 series Tsukikage crossing the Futamata Bridge over the Kagami River
+ib-section: Overview
+ib: Service type | Limited express
+ib: Operator | [[harukawa-railway|Harukawa Railway]]
+ib: First service | 1987
+ib: Passengers | about 400,000 a year
+ib-section: Route
+ib: Line | [[kagami-line|Kagami Line]]
+ib: Termini | [[harukawa-central-station|Harukawa Central]]<br>[[tsukimi-onsen|Tsukimi Onsen]]
+ib: Intermediate stops | Shiromachi, Kamano, Kagami-kyō<br>Tsukimi-guchi (from 14 November 2026)
+ib: Distance | 38.6 km
+ib: Journey time | 39 minutes (41 minutes from 14 November 2026)
+ib: Frequency | Weekdays: 7 northbound, 8 southbound<br>Weekends and holidays: 9 northbound, 10 southbound
+ib-section: Service
+ib: Seating | All seats reserved; Premium car (car 1)
+ib: Surcharge | ¥520 (up to 25 km), ¥760 (26 km or more); Premium ¥700 extra
+ib: Rolling stock | 8000 series (3 cars)
+ib: Maximum speed | 95 km/h in service (design speed 120 km/h)
+---
+The '''Tsukikage''' (月影, "moonlight") is a limited express train service operated by the [[harukawa-railway|Harukawa Railway]] (HaruTetsu) on the [[kagami-line|Kagami Line]] in [[minori-prefecture|Minori Prefecture]], Japan. It links [[harukawa-central-station|Harukawa Central Station]] in [[harukawa|Harukawa]] with the hot-spring town of [[tsukimi-onsen|Tsukimi Onsen]], 38.6 km up the valley of the [[kagami-river|Kagami River]], in 39 minutes, against 55 minutes by rapid and 63 minutes by local train. It runs 7 trains to Tsukimi Onsen and 8 back on weekdays, and 9 and 10 on Saturdays, Sundays and holidays, and carries about 400,000 passengers a year.<ref name="factbook">Harukawa Railway (2026). ''HaruTetsu Fact Book 2026''. Harukawa Railway Co., p. 14.</ref>
+
+The service began in 1987 with the 6000 series. Since 16 March 2019 it has been operated by three three-car 8000 series trains in navy blue with a gold stripe. All seats are reserved, and the Premium car offers wider seats and a forward view. Although the 8000 series was designed for 120 km/h, it never runs faster than 95 km/h, the maximum speed of the Kagami Line.
+
+== Service pattern ==
+The Tsukikage departs from track 3 at Harukawa Central. On weekdays northbound trains leave every two hours from 7:30 to 19:30, and southbound trains leave Tsukimi Onsen from 6:55 to 20:50; on Saturdays, Sundays and holidays trains run hourly to Tsukimi Onsen in the morning and back in the afternoon for day trippers to Tsukimi Onsen and [[mount-tsukimi|Mount Tsukimi]].<ref name="timetable">Harukawa Railway (2026). ''HaruTetsu Timetable, March 2026 edition''. Harukawa Railway Co., pp. 6–9.</ref> From Tsukimi Onsen Station, Tsukimi Bus route 5 runs to the Tsukimi Ropeway every 40 minutes (25 minutes, last bus 16:20). During the [[harukawa-lantern-festival|Harukawa Lantern Festival]] the peak surcharge applies from 10 to 12 October 2026, and Tsukikage 21, 24, 25 and 28 do not stop at Shiromachi on 10 and 11 October.
+
+Every train stops at Shiromachi, Kamano and Kagami-kyō. The line is single track beyond Kamano, and the Tsukikage passes local trains in the loops at Ōtsuka, Yuzuhara, Nakazawa and Tsukimi-guchi. From the timetable revision of 14 November 2026 all trains will also stop at Tsukimi-guchi, which lengthens the journey to 41 minutes; Tsukikage 1 on weekdays will leave Harukawa Central at 7:25 instead of 7:30 and arrive at 8:06 instead of 8:09. Surcharges do not change.<ref name="rev2026">Harukawa Railway (2026). "Timetable revision on Saturday 14 November 2026". Notice, October 2026.</ref>
+
+== Stopping pattern ==
+{| Tsukikage stopping pattern (2026)
+! Station !! Japanese !! km !! Tsukikage !! Notes
+| [[harukawa-central-station|Harukawa Central]] || 春川中央 || 0.0 || Stops || Track 3; change for the [[bayside-line|Bayside Line]]
+| Shiromachi || 城町 || 1.8 || Stops || For [[harukawa-castle|Harukawa Castle]]
+| Harukawa Daigaku-mae || 春川大学前 || 3.6 || Passes || For [[harukawa-university|Harukawa University]]
+| Kawabata || 川端 || 5.9 || Passes ||
+| Yanagihara || 柳原 || 8.2 || Passes ||
+| Nishi-Haruno || 西春野 || 10.7 || Passes ||
+| Kamano || 釜野 || 13.5 || Stops || Suyama pottery district ([[harukawa-ware|Harukawa ware]]); end of double track
+| Ōtsuka || 大塚 || 16.4 || Passes ||
+| Yuzuhara || 柚子原 || 19.8 || Passes ||
+| Kagami-kyō || 鏡峡 || 23.6 || Stops || Kagami Gorge; Futamata Bridge
+| Nakazawa || 中沢 || 27.1 || Passes ||
+| Hotarudani || 蛍谷 || 30.4 || Passes ||
+| Tsukimi-guchi || 月見口 || 34.9 || Stops from 14 November 2026 || [[tsukimi-tunnel|Tsukimi Tunnel]]
+| [[tsukimi-onsen|Tsukimi Onsen]] || 月見温泉 || 38.6 || Stops || Terminus; Tsukimi Bus to the Tsukimi Ropeway
+|}
+
+== History ==
+=== 6000 series (1987–2019) ===
+HaruTetsu introduced the limited express Tsukikage in 1987, 35 years after the Kagami Line was electrified, mainly to carry holidaymakers to the inns of Tsukimi Onsen. The three five-car 6000 series sets built for it each included a panoramic lounge car called "Moonlight" that was open to all passengers. Trains at first took 52 minutes, and by the early 1990s there were six round trips a day.{{cn}} After track improvements in 1994 raised the line's limit to 95 km/h, the journey fell to 47 minutes.<ref name="hr100">Harukawa Railway (2023). ''One Hundred Years of HaruTetsu''. Harukawa Railway Co., pp. 141–158.</ref>
+
+=== Since 2019 ===
+The 8000 series entered service on 16 March 2019, the day after the last run of the 6000 series, and brought the present 39-minute timing. During the pandemic the service was cut to five round trips a day from April to June 2020.<ref name="nippo2020">"Tsukikage cut to five round trips". ''Harukawa Nippō'', 2 April 2020, p. 2.</ref> The added stop at Tsukimi-guchi from 14 November 2026 will make the journey 41 minutes.<ref name="rev2026"/>
+
+== Rolling stock ==
+{| Rolling stock used on the Tsukikage
+! Series !! Type !! In service !! Cars !! Sets !! Max speed !! Notes
+| 6000 series || EMU || 1987–2019 || 5 || 3 || 110 km/h || Panoramic "Moonlight" lounge car; set 6001 preserved at Tsukimi Onsen Station
+| 8000 series || EMU || 2019– || 3 || 3 || 120 km/h{{efn|Design speed. In service the 8000 series never exceeds 95 km/h, the maximum speed of the Kagami Line.}} || Sets 8001–8003; built by Nishiura Sharyō
+|}
+
+=== 8000 series ===
+The three 8000 series sets (8001–8003) were built by Nishiura Sharyō (西浦車輌) of Nishiura, which also built the company's other current trains. They have aluminum-alloy bodies painted navy blue with a gold stripe and seat 118 passengers: 24 in the Premium car (car 1), 38 in car 2, which also has two wheelchair spaces and a multipurpose toilet, and 56 in car 3, which has a luggage area.<ref name="nishiura">Nishiura Sharyō (2019). "HaruTetsu 8000 series limited express EMU". ''Nishiura Sharyō Technical Review'' 61: 4–19.</ref>
+
+The trains were designed for 120 km/h because, when they were ordered, HaruTetsu planned to raise the speed limit between Kamano and Kagami-kyō to 110 km/h. That plan, estimated to cost ¥6.8 billion, was postponed indefinitely in 2017, and the 8000 series therefore runs at no more than the line's 95 km/h. The extra power is used instead for faster acceleration and on the 25 ‰ climb to Tsukimi Onsen, which is the main reason the journey is eight minutes shorter than with the 6000 series.<ref name="nippo2019">"New Tsukikage: built for 120, runs at 95". ''Harukawa Nippō'', 17 March 2019, p. 1.</ref>
+
+== Premium car ==
+The '''Premium''' car (プレミアム) is car 1, at the Tsukimi Onsen end of the train. Its 24 leather seats are arranged two plus one, with footrests and reading lights, and a panoramic window behind the driver's cab gives a forward view of the valley, the Futamata Bridge and the approach to the [[tsukimi-tunnel|Tsukimi Tunnel]]. It costs ¥700 on top of the limited express surcharge, also for children, and is often sold out on weekends in the autumn-color season and during the Lantern Festival.{{cn}}
+
+== Fares ==
+The limited express surcharge depends on the distance traveled on the Tsukikage: ¥520 for up to 25 km and ¥760 for 26 km or more (children ¥260 and ¥380), charged on top of the ordinary fare.{{efn|Kamano to Tsukimi Onsen is 25.1 km, which is rounded up to 26 km and therefore charged ¥760.}} On peak dates (10–12 October 2026, 28 December 2026 – 6 January 2027, 27 April – 6 May 2027 and 8–17 August 2027) it is ¥200 higher, and a surcharge bought on board costs ¥260 more. A trip from Harukawa Central to Tsukimi Onsen therefore costs ¥730 + ¥760 = ¥1,490, or ¥2,190 in the Premium car.<ref name="fares">Harukawa Railway (2019). ''Passenger Fare Tariff'', revised edition. Harukawa Railway Co., pp. 4–9.</ref> Reservations open at 10:00 one month before the travel date, at staffed stations, from reserved-seat ticket machines and online. A [[haruca|HaruCa]] card touched at the gates pays only the fare, but the surcharge can be paid from its balance at reserved-seat machines, and since 2024 Mobile HaruCa can also hold a ticketless Tsukikage seat reservation.
+
+== Name ==
+''Tsukikage'' is a literary word for "moonlight" or the light of the moon (literally "moon's shadow"). The name refers to [[mount-tsukimi|Mount Tsukimi]] (1,214 m),{{efn|Older maps and signs give 1,216 m; the height was revised after a national survey in 2014.}} the "moon-viewing mountain" over whose rounded summit the harvest moon rises when seen from [[harukawa-castle|Harukawa Castle]]. It was chosen in 1986 from 3,412 entries in a public naming contest.<ref name="hr100"/> The moon theme continued in the "Moonlight" lounge car of the 6000 series.
+
+== See also ==
+* [[kagami-line|Kagami Line]]
+* [[harukawa-railway|Harukawa Railway]]
+* [[tsukimi-onsen|Tsukimi Onsen]]
+* [[mount-tsukimi|Mount Tsukimi]]
+
+== Notes ==
+{{notelist}}
+
+== References ==
+{{reflist}}

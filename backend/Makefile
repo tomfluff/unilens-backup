@@ -36,4 +36,4 @@ test:
 
 # Runs the formatter
 format:
-	. $(VENV_ACTIVATE) && black app.py tests
+	. $(VENV_ACTIVATE) && black app.py study_export.py tests
