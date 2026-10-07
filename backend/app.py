@@ -785,10 +785,11 @@ def _wav_header(rate: int) -> bytes:
     )
 
 
-def _speak_gemini(text: str, model: str, voice: str):
-    """Gemini's speech for `text`, as WAV bytes while it is made. The request is made,
-    and its first audio awaited, before this returns: a refused key or model raises
-    here, while the route can still answer with an error rather than an empty WAV."""
+def _speak_gemini(text: str, model: str, voice: str, wav_header: bool = True):
+    """Gemini's speech for `text`, as WAV bytes while it is made (or the bare 16-bit
+    PCM, without the header). The request is made, and its first audio awaited, before
+    this returns: a refused key or model raises here, while the route can still answer
+    with an error rather than an empty WAV."""
     from google import genai
     from google.genai import types
 
@@ -819,17 +820,35 @@ def _speak_gemini(text: str, model: str, voice: str):
     except BaseException:
         client.close()
         raise
+    return _Speech(first, chunks, client, wav_header)
 
-    def wav():
+
+class _Speech:
+    """A reading being made: iterated by the response, and closed when the response
+    closes, whether or not it was iterated (Response.call_on_close), so the provider's
+    connection never stays open."""
+
+    def __init__(self, first, chunks, client, wav_header: bool):
+        self._first, self._chunks, self._client = first, chunks, client
+        self._wav_header, self._closed = wav_header, False
+
+    def __iter__(self):
         try:
-            yield _wav_header(TTS_RATE)
-            yield first
-            yield from chunks
+            if self._wav_header:
+                yield _wav_header(TTS_RATE)
+            yield self._first
+            yield from self._chunks
         finally:
-            chunks.close()
-            client.close()
+            self.close()
 
-    return wav()
+    def close(self):
+        if self._closed:
+            return
+        self._closed = True
+        try:
+            self._chunks.close()
+        finally:
+            self._client.close()
 
 
 def _transcribe(provider: str, model: str, audio: bytes, mime: str, lang: str) -> str:
@@ -2069,6 +2088,77 @@ def create_app():
             tts_texts.pop(next(iter(tts_texts)))
         return jsonify({"id": tid})
 
+    @app.post("/api/tts/stream")
+    def tts_stream_post():
+        """The reading itself, as the answer to the POST: 16-bit mono PCM at 24 kHz,
+        sent as it is made (OpenAI's "pcm", Gemini's own audio), for the widget to
+        play with WebAudio. A quick tunnel holds a GET's body until it is complete
+        (the <audio> route below waits for the whole reading) but passes a POST's on
+        at once, so the first words play within a second or two."""
+        data = request.get_json(force=True)
+        data = data if isinstance(data, dict) else {}
+        choice = _tts_choice(data)
+        if choice is None:
+            return jsonify({"error": "no API key: read aloud unavailable"}), 501
+        text = _text_field(data, "text")[:2000]
+        if not text:
+            return jsonify({"error": "empty text"}), 400
+        provider, model, voice = choice
+        _server_event(
+            _study_ids(), "read_aloud_prepared", chars=len(text), provider=provider
+        )
+        headers = {
+            "Cache-Control": "no-cache, no-transform",
+            "X-Accel-Buffering": "no",
+            "X-Audio-Sample-Rate": str(TTS_RATE),
+            "X-Audio-Format": "pcm_s16le",
+            "Access-Control-Expose-Headers": "X-Audio-Sample-Rate, X-Audio-Format",
+        }
+        if provider == "gemini":
+            try:
+                pcm = _speak_gemini(text, model, voice, wav_header=False)
+            except Exception as e:  # the key, the model or the quota: said, not audio
+                print(f"[tts] gemini failed: {e}", flush=True)
+                return jsonify({"error": "read aloud failed"}), 502
+            res = Response(
+                stream_with_context(pcm), mimetype="audio/pcm", headers=headers
+            )
+            res.call_on_close(pcm.close)
+            return res
+        from openai import OpenAI
+
+        client = OpenAI()
+        # opened before the response starts: a refused key or model is an error
+        # answer, not an empty stream
+        try:
+            ctx = client.audio.speech.with_streaming_response.create(
+                model=model, voice=voice, input=text, response_format="pcm"
+            )
+            resp = ctx.__enter__()
+        except Exception as e:
+            print(f"[tts] openai failed: {e}", flush=True)
+            return jsonify({"error": "read aloud failed"}), 502
+
+        closed = []
+
+        def close():
+            # once, whether the body was read to the end, cut off, or never read
+            if not closed:
+                closed.append(True)
+                ctx.__exit__(None, None, None)
+
+        def generate():
+            try:
+                yield from resp.iter_bytes(4096)
+            finally:
+                close()
+
+        res = Response(
+            stream_with_context(generate()), mimetype="audio/pcm", headers=headers
+        )
+        res.call_on_close(close)
+        return res
+
     @app.get("/api/tts/<tid>.mp3")
     def tts_stream(tid):
         """The reading, streamed: OpenAI's MP3, or Gemini's WAV (the name is the
@@ -2084,7 +2174,9 @@ def create_app():
             except Exception as e:  # the key, the model or the quota: said, not a WAV
                 print(f"[tts] gemini failed: {e}", flush=True)
                 return jsonify({"error": "read aloud failed"}), 502
-            return Response(stream_with_context(wav), mimetype="audio/wav")
+            res = Response(stream_with_context(wav), mimetype="audio/wav")
+            res.call_on_close(wav.close)
+            return res
         from openai import OpenAI
 
         client = OpenAI()
