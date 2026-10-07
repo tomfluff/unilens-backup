@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>UniLens 検証 — SoftBank IR ミラー</title>
+    <style>
+      body { font-family: system-ui, sans-serif; margin: 0; background: #f5f5f5; color: #222; }
+      .hero { background: #16213e; color: #fff; padding: 48px 24px; text-align: center; }
+      .hero kbd { background: rgba(255, 255, 255, 0.2); border-radius: 4px; padding: 2px 7px; font-family: monospace; }
+      .container { max-width: 800px; margin: 0 auto; padding: 32px 20px; }
+      .card { background: #fff; border-radius: 12px; padding: 24px; margin: 16px 0; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.07); }
+      .card ul { margin: 0.5em 0; padding-left: 1.25em; }
+      .card code { background: #eee; padding: 2px 6px; border-radius: 4px; font-size: 0.92em; }
+      .actions { margin-top: 1.25em; }
+      .actions a { display: inline-block; margin-right: 12px; font-weight: 600; }
+    </style>
+  </head>
+  <body>
+    <div class="hero">
+      <h1>SoftBank IR ミラー — 検証</h1>
+      <p><code>make bundle</code> でコピーされた <code>accessibility.js</code> / <code>unilens.js</code> を使います。</p>
+    </div>
+    <div class="container">
+      <div class="card" id="verify">
+        <h2>main 取り込み後の確認項目</h2>
+        <ul>
+          <li><strong>表示調整</strong> — 右上の ♿ パネル（<code>Accessibility.init()</code>）。</li>
+          <li><strong>設定パネル</strong> — 左下のギア。変更内容が分かる UI（main の設定パネル）。</li>
+          <li><strong>チャット</strong> — <kbd>Alt</kbd> + クリック（<code>make serve-backend</code>、ポート 5000）。</li>
+          <li><strong>共同デザイン用プリセット</strong> — URL に <code>?unilens-preset=initial</code>、またはファシリテータ <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>B</kbd>。</li>
+          <li><strong>研究ログ</strong> — <code>?pid=P01&amp;session=1</code>（バックエンド起動時）。</li>
+        </ul>
+        <p>他の検証用フロント（<code>make serve-all</code> または <code>make serve-frontend …</code>）：</p>
+        <ul>
+          <li>簡易デモ — <a href="http://127.0.0.1:8001/">localhost:8001</a>（<code>dev-demo</code>）</li>
+          <li>採用 disability ミラー — <a href="http://127.0.0.1:8002/recruit/disability/">localhost:8002/recruit/disability/</a></li>
+          <li>研究用モック — ポート 8031–8036（<code>frontend/STUDY-SITES.md</code>）</li>
+        </ul>
+        <p class="actions">
+          <a href="index.html">ミラー本体を開く（IR ページ）</a>
+        </p>
+      </div>
+    </div>
+    <script src="accessibility.js"></script>
+    <script src="unilens.js"></script>
+    <script>
+      Accessibility.init()
+      UniLens.init({ backend: 'http://127.0.0.1:5000', mouseWindow: 5 })
+    </script>
+  </body>
+</html>

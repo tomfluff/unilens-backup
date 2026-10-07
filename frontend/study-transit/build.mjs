@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 import * as D from './content/data.mjs';
 import proseEn from './content/pages-en.mjs';
 import proseJa from './content/pages-ja.mjs';
+import { UNILENS_A11Y_BODY_SCRIPTS } from '../unilens-embed.mjs';
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const LANGS = ['en', 'ja'];
@@ -178,8 +179,7 @@ ${body}
 </main>${side ? SIDEBAR(lang) : ''}</div>
 ${footer(lang)}
 <script src="/assets/js/site.js"></script>
-<script src="/unilens.js"></script>
-<script>UniLens.init({ backend: 'http://127.0.0.1:5000', mouseWindow: 5 })</script>
+${UNILENS_A11Y_BODY_SCRIPTS}
 </body>
 </html>
 `;
@@ -662,7 +662,7 @@ for (const [id, rel, crumbs, side] of PROSE_PAGES) addPage(rel, lang => {
 // ---------- render, data files, search index ----------
 for (const [rel, fn] of queue) for (const lang of LANGS) layout(lang, rel, fn(lang));
 for (const pg of pages) write(`${pg.lang}/${pg.rel}`, pg.html);
-write('index.html', `<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Harukawa Railway</title><meta http-equiv="refresh" content="0; url=/en/index.html"></head><body><a href="/en/index.html">Harukawa Railway</a> · <a href="/ja/index.html">春川鉄道</a><script>location.replace((navigator.language || '').startsWith('ja') ? '/ja/index.html' : '/en/index.html')</script></body></html>\n`);
+write('index.html', `<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Harukawa Railway</title><meta http-equiv="refresh" content="0; url=/en/index.html"></head><body><a href="/en/index.html">Harukawa Railway</a> · <a href="/ja/index.html">春川鉄道</a><script>location.replace((navigator.language || '').startsWith('ja') ? '/ja/index.html' : '/en/index.html')</script>${UNILENS_A11Y_BODY_SCRIPTS}</body></html>\n`);
 write('assets/data/network.json', JSON.stringify({
   stations: stations.map(s => ({ id: s.id, codes: s.codes, en: s.en, ja: s.ja, km: s.km })), xStops, fareBands: D.fareBands, fee: D.tsukikageFee, holidays: D.holidays,
   peak: ['2026-10-10', '2026-10-11', '2026-10-12'], range: RANGE, lines: Object.fromEntries(Object.entries(lines).map(([k, v]) => [k, { en: v.en, ja: v.ja, color: v.color }])),

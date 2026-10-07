@@ -294,7 +294,11 @@
 </footer>
 <div class="cookie" id="cookie" hidden><p>We use cookies and similar tools to make purchases, show recommendations and measure how you use Marketa. You can accept all cookies or only the ones we need to run the site. <a href="/en/help/faq.html">Cookie notice</a></p><div><button class="btn" data-cookie="essential">Essential only</button><button class="btn btn-y" data-cookie="all">Accept all</button></div></div>
 <script src="/assets/js/site.js"></script>
+<script src="/accessibility.js"></script>
 <script src="/unilens.js"></script>
-<script>UniLens.init({ backend: 'http://127.0.0.1:5000', mouseWindow: 5 })</script>
+<script>
+  Accessibility.init()
+  UniLens.init({ backend: 'http://127.0.0.1:5000', mouseWindow: 5 })
+</script>
 </body>
 </html>

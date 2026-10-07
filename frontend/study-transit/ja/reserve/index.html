@@ -43,7 +43,11 @@
 <a class="to-top" href="#top" title="ページの先頭へ"><svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true"><path d="M4 12l6-6 6 6" stroke="currentColor" stroke-width="2.2" fill="none"/></svg></a>
 <div class="cookie" hidden><p>当サイトでは、利便性の向上とアクセス解析のためにCookieを使用しています。サイトを引き続きご利用いただくと、Cookieの使用に同意したものとみなします。 <a href="/ja/about.html#privacy">詳しく見る</a></p><button type="button" class="cookie-ok">同意する</button><button type="button" class="cookie-x" aria-label="Close">×</button></div>
 <script src="/assets/js/site.js"></script>
+<script src="/accessibility.js"></script>
 <script src="/unilens.js"></script>
-<script>UniLens.init({ backend: 'http://127.0.0.1:5000', mouseWindow: 5 })</script>
+<script>
+  Accessibility.init()
+  UniLens.init({ backend: 'http://127.0.0.1:5000', mouseWindow: 5 })
+</script>
 </body>
 </html>

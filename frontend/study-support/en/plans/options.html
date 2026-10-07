@@ -63,7 +63,11 @@
 <ul><li><a href="/en/procedures/switch-to-kumo.html">Switching to Kumo</a></li><li><a href="/en/billing/read-your-bill.html">My bill</a></li><li><a href="/en/procedures/lost-phone.html">Lost phone</a></li><li><a href="/en/procedures/esim.html">eSIM</a></li><li><a href="/en/faq.html">FAQ</a></li></ul></div>
 <form class="chat-f"><input type="text" placeholder="Type a message" aria-label="Message"><button type="submit" class="btn" style="padding:6px 12px">Send</button></form></div>
 <script src="/assets/site.js"></script>
+<script src="/accessibility.js"></script>
 <script src="/unilens.js"></script>
-<script>UniLens.init({ backend: 'http://127.0.0.1:5000', mouseWindow: 5 })</script>
+<script>
+  Accessibility.init()
+  UniLens.init({ backend: 'http://127.0.0.1:5000', mouseWindow: 5 })
+</script>
 </body>
 </html>

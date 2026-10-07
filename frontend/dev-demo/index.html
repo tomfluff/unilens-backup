@@ -10,6 +10,8 @@
       .hero kbd { background: rgba(255,255,255,0.2); border-radius: 4px; padding: 2px 7px; font-family: monospace; }
       .container { max-width: 800px; margin: 0 auto; padding: 40px 24px; }
       .card { background: #fff; border-radius: 12px; padding: 24px; margin: 20px 0; box-shadow: 0 2px 10px rgba(0,0,0,0.07); }
+      .card ul { margin: 0.5em 0; padding-left: 1.25em; }
+      .card code { background: #eee; padding: 2px 6px; border-radius: 4px; font-size: 0.92em; }
       img { width: 100%; height: 260px; object-fit: cover; border-radius: 12px; }
     </style>
   </head>
@@ -19,6 +21,23 @@
       <p><kbd>Alt</kbd> + <kbd>Click</kbd> anywhere to capture and open the chat popover.</p>
     </div>
     <div class="container">
+      <div class="card" id="verify">
+        <h2>Verification checklist (main)</h2>
+        <p>This page loads the latest <code>accessibility.js</code> and <code>unilens.js</code> copied by <code>make bundle</code>.</p>
+        <ul>
+          <li><strong>Display adjustment</strong> — top-right ♿ panel (<code>Accessibility.init()</code>).</li>
+          <li><strong>Settings panel</strong> — gear at bottom-left; shows what each control changes.</li>
+          <li><strong>Chat</strong> — <kbd>Alt</kbd> + click (needs <code>make serve-backend</code> on port 5000).</li>
+          <li><strong>Co-design preset</strong> — add <code>?unilens-preset=initial</code> (or facilitator <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>B</kbd>).</li>
+          <li><strong>Study log</strong> — <code>?pid=P01&amp;session=1</code> with the backend running.</li>
+        </ul>
+        <p>Other local frontends (after <code>make serve-all</code> or separate <code>make serve-frontend …</code>):</p>
+        <ul>
+          <li>SoftBank IR mirror — <a href="http://127.0.0.1:8000/verify.html">localhost:8000/verify.html</a></li>
+          <li>Recruit disability mirror — <a href="http://127.0.0.1:8002/verify.html">localhost:8002/verify.html</a></li>
+          <li>Study mock sites — ports 8031–8036 (<code>frontend/STUDY-SITES.md</code>)</li>
+        </ul>
+      </div>
       <div class="card">
         <h2>Section one</h2>
         <p>Scroll around, move the mouse, then alt+click. The capture includes the full page, your recent mouse trace, and the click position.</p>

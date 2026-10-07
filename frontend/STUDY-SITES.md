@@ -2,6 +2,8 @@
 
 Six small, realistic, information-dense websites for studies of UniLens, each a frontend target of its own (`make serve-frontend study-<slug>`). They are fictional, set in one fictional place, so participants and the assistant cannot answer from prior knowledge: the answers are on the page. English first, every page also in Japanese.
 
+**Without make** (from the repo root): `npm run bundle`, then `npm run serve:study` (all six) or `npm run serve:study -- study-wiki` (one). On Windows: `.\scripts\bundle.ps1` and `.\scripts\serve-study-sites.ps1`. See `docs/RUNNING.md`.
+
 | Site | Folder | Port | Kind of web task |
 |---|---|---|---|
 | Kumo Mobile Support | `study-support` | 8031 | Following instructions and procedures: plans, fees, step-by-step guides, FAQs (like the SoftBank mirror) |
@@ -27,10 +29,14 @@ Each site's `STUDY-NOTES.md` lists 15 or so candidate study tasks (English and J
 - **Static, multi-page, no dependencies.** Plain HTML, CSS and a little vanilla JS. No frameworks, no CDNs, no web fonts, no requests to other origins at runtime (the assistant captures the page; a cross-origin image breaks that). Generate the pages with a Node script using only the standard library (`build.mjs` in the site folder) from content files, and keep the generated HTML in the folder: the folder is served as is.
 - **Layout of a site folder:** `index.html` (sends the visitor to `en/`), `en/…` and `ja/…` (the same pages, the same paths), `assets/` (CSS, JS, images, charts), `build.mjs`, `content/` (the site's data, English and Japanese), `README.md`, `STUDY-NOTES.md`. Leave `unilens.js`, `unilens.js.map`, `accessibility.js` and `accessibility.js.map` in the folder root alone: they are copied in by `make bundle`.
 - **Languages:** `<html lang="en">` and `<html lang="ja">`; every page links to the same page in the other language (a language switch in the header). The Japanese is complete and natural, written as a Japanese site would write it, not translated word for word.
-- **UniLens on every page,** last in `<body>`:
+- **UniLens and display adjustment on every page,** last in `<body>` (see `frontend/unilens-embed.mjs`):
   ```html
+  <script src="/accessibility.js"></script>
   <script src="/unilens.js"></script>
-  <script>UniLens.init({ backend: 'http://127.0.0.1:5000', mouseWindow: 5 })</script>
+  <script>
+    Accessibility.init()
+    UniLens.init({ backend: 'http://127.0.0.1:5000', mouseWindow: 5 })
+  </script>
   ```
 - **Search:** a search box in the header; a `search.html?q=` page filtering a generated JSON index on the client.
 - **Images:** photographs and illustrations made with Codex image generation (below); charts and diagrams drawn as SVG by the build script. Some charts are shown as `<img>` with no useful alt text, as many real sites do.

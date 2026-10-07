@@ -6,7 +6,7 @@ Everything runs through `make` from the repo root. Requires Node 20+ and Python 
 |---|---|---|
 | Backend | `backend/` | Flask API, port `5000` |
 | JS libs | `unilens-lib/`, `accessibility-lib/` | esbuild bundles, copied into frontends as `unilens.js` / `accessibility.js` |
-| Frontends | `frontend/softbank-mirror` (8000), `frontend/dev-demo` (8001), `frontend/softbank-mirror-recruit` (8002) | static sites served by `live-server` |
+| Frontends | `frontend/softbank-mirror` (8000), `frontend/dev-demo` (8001), `frontend/softbank-mirror-recruit` (8002), six `frontend/study-*` mock sites (8031–8036; see `frontend/STUDY-SITES.md`) | static sites served by `live-server` |
 
 ## Setup
 
@@ -21,10 +21,26 @@ If `make init` fails with `ensurepip is not available`, see [Troubleshooting](#t
 
 ```bash
 make serve softbank-mirror     # backend + one frontend, rebuild on save. The usual one.
-make serve-all                 # backend + all three frontends
+make serve-all                 # backend + every frontend in make-targets.mk
 make run dev-demo              # one frontend, no build, no backend
 make serve-backend             # backend only
 ```
+
+### Without make (study mock sites, ports 8031–8036)
+
+From the repo root, after `npm install` at the root and in `accessibility-lib` /
+`unilens-lib`:
+
+```bash
+npm run bundle          # accessibility.js + unilens.js → every frontend/
+npm run serve:study     # all six study sites via live-server
+npm run serve:study -- study-wiki   # one site only
+```
+
+Windows PowerShell: `.\scripts\bundle.ps1` then `.\scripts\serve-study-sites.ps1`
+(optional argument: site folder name). Flask for chat is still separate — see
+**Backend only** below (`flask --app app.py --debug run --port 5000` from
+`backend/` with the venv activated).
 
 `serve` bundles once at startup, then rebuilds and recopies on any change under
 the libs' `src/` or the frontend dir. It does **not** typecheck — see below.

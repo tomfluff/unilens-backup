@@ -69,6 +69,19 @@ make serve-backend
 # Flask サーバを http://127.0.0.1:5000 に配信
 ```
 
+### make なしで研究用モック 6 サイトを起動
+
+リポジトリルートで（`docs/RUNNING.md` も参照）:
+
+```powershell
+npm install
+npm run bundle
+npm run serve:study
+# 1 サイトだけ: npm run serve:study -- study-wiki
+```
+
+PowerShell: `.\scripts\bundle.ps1` → `.\scripts\serve-study-sites.ps1`
+
 ### フロントエンドのみ
 
 指定したターゲットディレクトリでフロントエンドの dev demo を実行し変更を監視する（/api を Flask にプロキシ）:

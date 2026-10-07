@@ -15,6 +15,8 @@ make serve-frontend softbank-mirror-recruit
 
 http://localhost:8002/recruit/disability/ (root `/` redirects there via `index.html`).
 
+Verification checklist (main features, same as `dev-demo`): http://localhost:8002/verify.html
+
 This is a plain static site. `live-server` serves this directory as the document root, so absolute `/recruit/...` paths match the on-disk layout.
 
 Copy library builds from the repository root:

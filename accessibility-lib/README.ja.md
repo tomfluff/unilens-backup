@@ -28,7 +28,7 @@ make init
 make serve softbank-mirror
 ```
 
-ブラウザで http://localhost:8000/ を開きます。右上の **♿ 表示調整** がこのライブラリです。
+ブラウザで http://localhost:8000/ を開きます（検証チェックリストは http://localhost:8000/verify.html ）。右上の **♿ 表示調整** がこのライブラリです。
 
 採用サイトミラー（`softbank-mirror-recruit`）へビルド成果物を反映する場合:
 
@@ -38,13 +38,14 @@ make build
 ```
 
 成果物は `frontend/softbank-mirror-recruit/` にコピーされます（このディレクトリが配信ルートです）。  
-フロントのみ起動する例: `make serve-frontend softbank-mirror-recruit`（ポート 8002）。 http://localhost:8002/recruit/disability/ を開きます。
+フロントのみ起動する例: `make serve-frontend softbank-mirror-recruit`（ポート 8002）。 http://localhost:8002/recruit/disability/ を開きます（検証一覧は http://localhost:8002/verify.html ）。
 
 | コマンド | 内容 |
 |---|---|
 | `make serve-frontend softbank-mirror` | フロントのみ（ポート 8000） |
 | `make serve-frontend softbank-mirror-recruit` | 採用ミラー（ポート 8002） |
 | `make serve-frontend dev-demo` | 簡易デモ（ポート 8001） |
+| `make serve-frontend study-support` など | 研究用モックサイト（8031–8036、`frontend/STUDY-SITES.md`） |
 | `make serve-target accessibility-lib` | このライブラリだけ watch ビルド（保存時に frontend へ自動コピー） |
 | `cd accessibility-lib && npm run dev` | 上と同じ（Make なし / Windows 向け） |
 | `cd accessibility-lib && make build` | 型チェック後に単一の `dist/accessibility.js` を出力 |

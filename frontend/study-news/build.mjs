@@ -5,6 +5,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import * as S from './content/site.mjs';
 import { ui, ads, pages } from './content/pages.mjs';
+import { UNILENS_A11Y_BODY_SCRIPTS } from '../unilens-embed.mjs';
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const LANGS = ['en', 'ja'];
@@ -418,8 +419,7 @@ ${main}
 ${footer(ctx)}
 ${overlays(ctx)}
 <script src="${A(ctx, 'assets/site.js')}"></script>
-<script src="/unilens.js"></script>
-<script>UniLens.init({ backend: 'http://127.0.0.1:5000', mouseWindow: 5 })</script>
+${UNILENS_A11Y_BODY_SCRIPTS}
 </body>
 </html>
 `;
@@ -736,8 +736,7 @@ write('index.html', `<!doctype html>
 <html lang="en">
 <head><meta charset="utf-8"><title>The Harukawa Herald</title><meta http-equiv="refresh" content="0; url=en/index.html"></head>
 <body><p><a href="en/index.html">The Harukawa Herald (English)</a> · <a href="ja/index.html">春川日報（日本語）</a></p>
-<script src="/unilens.js"></script>
-<script>UniLens.init({ backend: 'http://127.0.0.1:5000', mouseWindow: 5 })</script>
+${UNILENS_A11Y_BODY_SCRIPTS}
 </body>
 </html>
 `);

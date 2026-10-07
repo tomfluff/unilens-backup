@@ -28,7 +28,7 @@ Demo (SoftBank mirror):
 make serve softbank-mirror
 ```
 
-Open http://localhost:8000/ . The top-right **♿ accessibility** panel is this library.
+Open http://localhost:8000/ (verification checklist: http://localhost:8000/verify.html). The top-right **♿ accessibility** panel is this library.
 
 To copy build outputs into the recruit mirror (`softbank-mirror-recruit`):
 
@@ -45,6 +45,7 @@ Frontend only: `make serve-frontend softbank-mirror-recruit` (port 8002). Open h
 | `make serve-frontend softbank-mirror` | Frontend only (port 8000) |
 | `make serve-frontend softbank-mirror-recruit` | Recruit mirror (port 8002) |
 | `make serve-frontend dev-demo` | Small demo (port 8001) |
+| `make serve-frontend study-support`, etc. | User-study mock sites (ports 8031–8036; `frontend/STUDY-SITES.md`) |
 | `make serve-target accessibility-lib` | Watch-build this library only |
 | `cd accessibility-lib && make build` | Typecheck, then write a single `dist/accessibility.js` |
 | `cd accessibility-lib && make lint` | Typecheck |

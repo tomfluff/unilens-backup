@@ -8,8 +8,10 @@ import { GUIDES, CUTS, RICE_CHART, CUP_CHART, PRODUCE } from './content/guides.m
 import { checkRecipe, loadRecipes } from './check.mjs';
 import { amount, duration } from './assets/js/units.js';
 import * as charts from './charts.mjs';
+import { fileURLToPath } from 'node:url';
+import { UNILENS_A11Y_BODY_SCRIPTS } from '../unilens-embed.mjs';
 
-const ROOT = new URL('./', import.meta.url).pathname;
+const ROOT = fileURLToPath(new URL('.', import.meta.url));
 const SRC = '/home/yotam/projects/unilens/.local/study-sites-src/recipes/';
 const LANGS = ['en', 'ja'];
 const AUTHOR = { en: 'Natsuki Aoyama', ja: '青山夏希' };
@@ -159,8 +161,7 @@ ${footer(lang)}
 ${chrome(lang)}
 <script src="/assets/js/site.js" defer></script>
 ${scripts.map((s) => `<script type="module" src="${s}"></script>`).join('\n')}
-<script src="/unilens.js"></script>
-<script>UniLens.init({ backend: 'http://127.0.0.1:5000', mouseWindow: 5 })</script>
+${UNILENS_A11Y_BODY_SCRIPTS}
 </body>
 </html>
 `;
@@ -555,5 +556,5 @@ write('assets/data/recipes.json', JSON.stringify(Object.fromEntries(recipes.map(
   title: { en: r.en.title, ja: r.ja.title }, servings: r.servings, unit: r.servingsUnit ?? null, image: r.image,
   items: r.ingredients.flatMap((g) => g.items),
 }]))));
-write('index.html', '<!doctype html>\n<html lang="en"><head><meta charset="utf-8"><meta http-equiv="refresh" content="0; url=/en/"><title>Daily Table</title></head><body><script>location.replace("/en/")</script><p><a href="/en/">Daily Table</a></p></body></html>\n');
+write('index.html', `<!doctype html>\n<html lang="en"><head><meta charset="utf-8"><meta http-equiv="refresh" content="0; url=/en/"><title>Daily Table</title></head><body><script>location.replace("/en/")</script><p><a href="/en/">Daily Table</a></p>${UNILENS_A11Y_BODY_SCRIPTS}</body></html>\n`);
 console.log(`built ${pages} pages (${recipes.length} recipes × ${LANGS.length} languages)`);
