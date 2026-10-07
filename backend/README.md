@@ -14,6 +14,7 @@
 | `POST /api/chat` | Passes the image, metadata, and history to the LLM, returning the reply all at once |
 | `POST /api/chat/stream` | Same as above, but streams tokens incrementally via SSE (`text/event-stream`) |
 | `GET /health` | Health check for confirming the active provider |
+| `POST /api/tts/stream` | Reads `text` aloud as the POST's own answer: 16-bit mono PCM at 24 kHz, sent as it is made (OpenAI or Gemini), for the widget to play with WebAudio. A quick tunnel passes a POST's body on at once but holds a GET's until it is complete |
 | `POST /api/study/log?pid=&session=` | The widget's events for a study participant, appended to `study-logs/<pid>/session-<n>.jsonl` (see Storage) |
 
 ## LLM provider selection

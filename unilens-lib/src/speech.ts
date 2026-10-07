@@ -22,7 +22,6 @@ function toSpeakable(text: string): string {
 }
 
 let backendUrl = "";
-let audioEl: HTMLAudioElement | null = null;
 let stateCb: ((s: SpeechState) => void) | null = null;
 /** bumped by every stop (and so by every new reading): a reading whose audio comes back
  *  after that is dropped, not played over the silence or the newer one */
@@ -53,9 +52,41 @@ function speakNative(text: string, mine: number) {
     speechSynthesis.speak(u);
 }
 
+/** a reading played with WebAudio: its context, its scheduled pieces, its stream */
+interface Player {
+    ctx: AudioContext;
+    abort: AbortController;
+    sources: Set<AudioBufferSourceNode>;
+    /** the whole reading has arrived: the last piece's end is the reading's end */
+    done: boolean;
+}
+let player: Player | null = null;
+
+/** audio held before the first sound, and gathered into each piece after it, s */
+const START_S = 0.3;
+const PIECE_S = 0.25;
+
+function closePlayer(p: Player) {
+    p.abort.abort();
+    for (const src of p.sources) {
+        try {
+            src.stop();
+        } catch {
+            // never started, or already ended
+        }
+    }
+    p.sources.clear();
+    void p.ctx.close().catch(() => undefined);
+    if (player === p) player = null;
+}
+
 /**
- * API voice first (streamed mp3, plays while downloading; handles mixed ja/en);
- * native fallback on any failure. onState tracks loading → playing → idle.
+ * The backend's voice (handles mixed ja/en), streamed as the POST's own answer and
+ * played as it arrives: 16-bit PCM pieces scheduled back to back with WebAudio. A
+ * quick tunnel holds back a GET's body until it is complete, but passes a POST's on
+ * at once, so the first words play in a second or two whatever the answer's length.
+ * The browser's own voice takes over if the backend's cannot start. onState tracks
+ * loading → playing → idle.
  */
 export async function speak(text: string, onState?: (s: SpeechState) => void) {
     stopSpeaking();
@@ -63,12 +94,148 @@ export async function speak(text: string, onState?: (s: SpeechState) => void) {
     stateCb = onState ?? null;
     setStateSafe("loading");
     const plain = toSpeakable(text);
+    let ctx: AudioContext;
     try {
-        const res = await fetch(studyUrl(`${backendUrl}/api/tts`), {
+        // made now, inside the press that asked for it: browsers let audio start only
+        // from a person's gesture
+        ctx = new AudioContext();
+        void ctx.resume().catch(() => undefined);
+    } catch {
+        speakNative(text, mine);
+        return;
+    }
+    const me: Player = {
+        ctx,
+        abort: new AbortController(),
+        sources: new Set(),
+        done: false,
+    };
+    player = me;
+    let started = false;
+    let next = 0;
+    /** when the first piece sounds, in the context's time; heard once it has passed */
+    let firstAt = -1;
+    const heard = () => firstAt >= 0 && ctx.currentTime >= firstAt;
+    const finish = () => {
+        if (player !== me || mine !== reading) return;
+        closePlayer(me);
+        setState("idle");
+    };
+    /** schedule the bytes as one piece, right after the one before */
+    const schedule = (bytes: Uint8Array, rate: number) => {
+        const n = bytes.length >> 1;
+        if (!n) return;
+        const buf = ctx.createBuffer(1, n, rate);
+        const ch = buf.getChannelData(0);
+        const view = new DataView(bytes.buffer, bytes.byteOffset, n * 2);
+        for (let i = 0; i < n; i++) ch[i] = view.getInt16(i * 2, true) / 32768;
+        const src = ctx.createBufferSource();
+        src.buffer = buf;
+        src.connect(ctx.destination);
+        // a late piece (the network paused) starts at once rather than in the past
+        const at = Math.max(next, ctx.currentTime + 0.02);
+        src.start(at);
+        if (firstAt < 0) firstAt = at;
+        next = at + buf.duration;
+        me.sources.add(src);
+        src.onended = () => {
+            me.sources.delete(src);
+            if (me.done && !me.sources.size) finish();
+        };
+        if (!started) {
+            started = true;
+            setState("playing");
+        }
+    };
+    try {
+        const res = await fetch(studyUrl(`${backendUrl}/api/tts/stream`), {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             // the provider, model and voice chosen in the AI settings; the backend
             // checks each
+            body: JSON.stringify({
+                text: plain,
+                provider:
+                    getSettings().ttsProvider === "auto"
+                        ? undefined
+                        : getSettings().ttsProvider,
+                model: getSettings().ttsModel || undefined,
+                voice: getSettings().ttsVoice || undefined,
+            }),
+            signal: me.abort.signal,
+        });
+        // an older backend without the streamed reading: its <audio> route
+        if (res.status === 404 || res.status === 405) {
+            closePlayer(me);
+            return speakByAudio(plain, text, mine);
+        }
+        if (!res.ok || !res.body) throw new Error(`tts ${res.status}`);
+        const rate = Number(res.headers.get("X-Audio-Sample-Rate")) || 24000;
+        const reader = res.body.getReader();
+        let held: Uint8Array[] = [];
+        let heldBytes = 0;
+        /** the browser may hold the context suspended (no gesture it trusts): then the
+         *  reading is not "playing", and the browser's voice reads instead */
+        const ensureRunning = async () => {
+            if (ctx.state === "running") return;
+            await Promise.race([
+                ctx.resume().catch(() => undefined),
+                new Promise((r) => setTimeout(r, 500)),
+            ]);
+            // read again: resume() may have changed it meanwhile
+            if ((ctx.state as AudioContextState) !== "running")
+                throw new Error("audio blocked");
+        };
+        const flush = () => {
+            // whole samples only: an odd byte waits for the next chunk
+            const all = new Uint8Array(heldBytes);
+            let o = 0;
+            for (const c of held) {
+                all.set(c, o);
+                o += c.length;
+            }
+            const even = all.length & ~1;
+            schedule(all.subarray(0, even), rate);
+            held = even < all.length ? [all.subarray(even)] : [];
+            heldBytes = all.length - even;
+        };
+        for (;;) {
+            const { done, value } = await reader.read();
+            if (mine !== reading) return;
+            if (value?.length) {
+                held.push(value);
+                heldBytes += value.length;
+            }
+            const enough = (started ? PIECE_S : START_S) * rate * 2;
+            if (done || heldBytes >= enough) {
+                if (!started) await ensureRunning();
+                if (mine !== reading) return;
+                flush();
+            }
+            if (done) break;
+        }
+        me.done = true;
+        if (!me.sources.size) finish();
+    } catch (err) {
+        if (mine !== reading || me.abort.signal.aborted) return;
+        closePlayer(me);
+        // nothing heard yet: the browser's voice reads it; cut off midway: it ends
+        if (!heard()) {
+            console.warn("[UniLens] read aloud: browser voice", err);
+            speakNative(text, mine);
+        } else setState("idle");
+    }
+}
+
+/** the reading through an <audio> element: for a backend without the streamed
+ *  reading (before 2026-10-07). A quick tunnel delivers it only once complete */
+let audioEl: HTMLAudioElement | null = null;
+async function speakByAudio(plain: string, text: string, mine: number) {
+    let started = false;
+    try {
+        const res = await fetch(studyUrl(`${backendUrl}/api/tts`), {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
                 text: plain,
                 provider:
@@ -86,9 +253,6 @@ export async function speak(text: string, onState?: (s: SpeechState) => void) {
             studyUrl(`${backendUrl}/api/tts/${encodeURIComponent(id)}.mp3`),
         );
         audioEl = el;
-        // media events arrive late: one from a stopped reading must not touch the next,
-        // and a "playing" queued before a pause must not undo it
-        let started = false;
         el.onplaying = () => {
             if (audioEl !== el || el.paused) return;
             started = true;
@@ -99,8 +263,6 @@ export async function speak(text: string, onState?: (s: SpeechState) => void) {
             audioEl = null;
             setState("idle");
         };
-        // a load failure also rejects play(), whose catch hands the reading to the
-        // browser's voice: only a failure mid-reading ends it here
         el.onerror = () => {
             if (audioEl !== el || !started) return;
             audioEl = null;
@@ -108,10 +270,7 @@ export async function speak(text: string, onState?: (s: SpeechState) => void) {
         };
         await el.play();
     } catch (err) {
-        // a stop or a pause interrupts play() (AbortError): not a failure to read aloud
         if (mine === reading && (err as Error)?.name !== "AbortError") {
-            // the browser's voice takes over: pause and resume must reach it, not the
-            // audio that failed
             audioEl = null;
             speakNative(text, mine);
         }
@@ -125,11 +284,10 @@ function setStateSafe(s: SpeechState) {
 export function stopSpeaking() {
     reading++;
     speechSynthesis.cancel();
+    if (player) closePlayer(player);
     if (audioEl) {
         audioEl.pause();
-        // a paused element keeps downloading, and the backend streams each reading
-        // live: drop the source so the stream closes (six held streams exhaust the
-        // browser's connections to the backend, and every reading after waits forever)
+        // drop the source so its stream closes (held streams exhaust the connections)
         audioEl.removeAttribute("src");
         audioEl.load();
         audioEl = null;
@@ -139,7 +297,10 @@ export function stopSpeaking() {
 
 /** hold the reading where it is; resumeSpeaking carries on from there */
 export function pauseSpeaking() {
-    if (audioEl && !audioEl.paused) {
+    if (player && player.ctx.state === "running") {
+        void player.ctx.suspend();
+        setStateSafe("paused");
+    } else if (audioEl && !audioEl.paused) {
         audioEl.pause();
         setStateSafe("paused");
     } else if (speechSynthesis.speaking && !speechSynthesis.paused) {
@@ -149,7 +310,10 @@ export function pauseSpeaking() {
 }
 
 export function resumeSpeaking() {
-    if (audioEl?.paused) {
+    if (player && player.ctx.state === "suspended") {
+        void player.ctx.resume();
+        setStateSafe("playing");
+    } else if (audioEl?.paused) {
         void audioEl.play();
         setStateSafe("playing");
     } else if (speechSynthesis.paused) {
@@ -159,7 +323,11 @@ export function resumeSpeaking() {
 }
 
 export function isSpeaking(): boolean {
-    return speechSynthesis.speaking || (audioEl != null && !audioEl.paused);
+    return (
+        speechSynthesis.speaking ||
+        (player != null && player.ctx.state === "running") ||
+        (audioEl != null && !audioEl.paused)
+    );
 }
 
 // ── STT ────────────────────────────────────────────────────────────────────
