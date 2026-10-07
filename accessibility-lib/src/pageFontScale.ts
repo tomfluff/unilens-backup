@@ -7,6 +7,7 @@
  * replaced content keeps its host layout size.
  */
 
+import { afterNextPaint } from "./afterPaint";
 import {
     HTML_STYLE_FONT_SCALE,
     isUniLensOverlayNode,
@@ -121,20 +122,16 @@ export function readUnscaledFontSizePx(el: HTMLElement): number {
 }
 
 /**
+ * Only an out-of-flow node is measured against its in-flow siblings.
  * In-flow descendants of a `position:fixed` header (nav tabs) must not
- * inherit that header's tighter cap — CSS variables inherit. Only the
- * out-of-flow node itself is measured against in-flow siblings.
+ * inherit that header's tighter cap — CSS variables inherit — so every
+ * marked node writes its own cap.
  */
-function pageFontCapNeighbors(el: HTMLElement) {
-    if (!isOutOfFlowPositioned(el)) return [];
-    return collectOverlapNeighbors(el);
-}
-
 function capAgainstNeighbors(el: HTMLElement, desiredScale: number): number {
     try {
         return resolvePageFontCap(
             desiredScale,
-            pageFontCapNeighbors(el),
+            collectOverlapNeighbors(el),
             (trial) => {
                 setHostInlineStyle(el, PAGE_FONT_CAP_VAR, String(trial));
                 return el.getBoundingClientRect();
@@ -147,20 +144,14 @@ function capAgainstNeighbors(el: HTMLElement, desiredScale: number): number {
     }
 }
 
+/** Marks a node at the full scale. Writes only — no layout reads. */
 function applyScale(el: HTMLElement, originalPx: number, desiredScale: number) {
     el.setAttribute(PAGE_FONT_ATTR, "true");
-    el.setAttribute(
-        PAGE_FONT_ORIGINAL_ATTR,
-        String(Math.round(originalPx * 100) / 100),
-    );
+    el.setAttribute(PAGE_FONT_ORIGINAL_ATTR, String(originalPx));
     el.setAttribute(PAGE_FONT_CAP_SCALE_ATTR, String(desiredScale));
     el.classList.add(PAGE_FONT_CLASS);
     setHostInlineStyle(el, PAGE_FONT_TARGET_VAR, `${originalPx}px`);
-    setHostInlineStyle(
-        el,
-        PAGE_FONT_CAP_VAR,
-        String(capAgainstNeighbors(el, desiredScale)),
-    );
+    setHostInlineStyle(el, PAGE_FONT_CAP_VAR, String(desiredScale));
 }
 
 function restoreElement(el: HTMLElement) {
@@ -186,7 +177,8 @@ export function scanPageFont(
     if (scale === 1 || !document.body) return result;
 
     const nodes: Element[] = [root, ...Array.from(root.querySelectorAll("*"))];
-    const batch: { el: HTMLElement; originalPx: number }[] = [];
+    const batch: { el: HTMLElement; originalPx: number; outOfFlow: boolean }[] =
+        [];
 
     for (const el of nodes) {
         if (shouldSkipPageFontElement(el) || !(el instanceof HTMLElement))
@@ -204,12 +196,26 @@ export function scanPageFont(
         ) {
             continue;
         }
-        batch.push({ el, originalPx });
+        batch.push({ el, originalPx, outOfFlow: false });
     }
 
+    // Phase 1 (reads only): `position` is not affected by font-size, so it is
+    // read for the whole batch before anything is written. Reading it after
+    // each write forced a style recalc per node (hundreds of ms per click).
+    for (const item of batch) item.outOfFlow = isOutOfFlowPositioned(item.el);
+
+    // Phase 2 (writes only): every node at the full scale.
     for (const { el, originalPx } of batch) {
         applyScale(el, originalPx, scale);
         result.scaled++;
+    }
+
+    // Phase 3: only out-of-flow nodes can grow into reserved space, so only
+    // they are measured — against the final, already-scaled layout.
+    for (const { el, outOfFlow } of batch) {
+        if (!outOfFlow) continue;
+        const cap = capAgainstNeighbors(el, scale);
+        setHostInlineStyle(el, PAGE_FONT_CAP_VAR, String(cap));
     }
 
     lastScan = result;
@@ -249,24 +255,51 @@ export function getLastPageFontScan(): PageFontScanResult {
     return lastScan;
 }
 
-export function refreshPageFontScale() {
+/** Page walk for a new size, run after the panel has repainted. */
+const deferredScan = afterNextPaint(() => {
+    if (pageFontActive && getEffectivePageFontScale() !== 1) scanPageFont();
+});
+
+/**
+ * @param deferScan run the page walk after the next paint instead of now.
+ *   Used for size changes made from the panel, so the pressed button
+ *   repaints first; the first apply on page load stays synchronous so a
+ *   saved size shows without a 1× flash.
+ */
+export function refreshPageFontScale(deferScan = false) {
     if (typeof document === "undefined" || !document.body) return;
     ensureStylesheet();
     startObserver();
+    const wasActive = pageFontActive;
     pageFontActive = true;
     const scale = getEffectivePageFontScale();
     writeScaleVar(scale);
     if (scale === 1) {
+        deferredScan.cancel();
         clearPageFontScale();
         return;
     }
+    if (deferScan && wasActive) {
+        deferredScan.schedule();
+        return;
+    }
+    deferredScan.cancel();
     scanPageFont();
 }
 
 /** Panel text-size choice (1 / 1.95 / 2.6). Combined with auto-text extra scale. */
 export function setPageFontSizeScale(scale: number) {
-    fontSizeScale = Number.isFinite(scale) && scale > 0 ? scale : 1;
-    refreshPageFontScale();
+    const next = Number.isFinite(scale) && scale > 0 ? scale : 1;
+    if (next === fontSizeScale && pageFontActive) {
+        // Called on every settings change; an unchanged size needs no page
+        // walk (new host nodes are picked up by the observer). The html
+        // scale var is rewritten because applyA11yToDocument just set it to
+        // the panel-only value.
+        writeScaleVar(getEffectivePageFontScale());
+        return;
+    }
+    fontSizeScale = next;
+    refreshPageFontScale(true);
 }
 
 /** Auto-text extra multiplier. 1 when that feature is off. */
@@ -288,6 +321,7 @@ export function destroyPageFontScale() {
         return;
     }
     pageFontActive = false;
+    deferredScan.cancel();
     observer?.disconnect();
     observer = null;
     if (typeof window !== "undefined") window.clearTimeout(rescanTimer);

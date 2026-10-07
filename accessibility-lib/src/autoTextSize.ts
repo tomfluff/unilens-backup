@@ -7,9 +7,9 @@ import { isUniLensOverlayNode, UI_ATTR } from "./domIds";
 import { restoreHostInlineStyle, setHostInlineStyle } from "./hostSurface";
 import {
     getSettings,
-    onSettingsChange,
     patchSettings,
     saveSettings,
+    useSettings,
 } from "./settings";
 
 export type { AutoTextMode } from "./accessibilityStoreTypes";
@@ -281,8 +281,16 @@ export function initAutoTextSize() {
     const s = getSettings();
     if (s.autoTextSize && s.autoTextMode !== "off") refreshAutoTextSize();
     window.addEventListener("resize", onResize);
-    settingsUnsub = onSettingsChange(() => {
-        const live = getSettings();
+    // Re-measure only when an auto-text setting changes. Reacting to every
+    // panel setting re-read the layout of the whole page on each click.
+    settingsUnsub = useSettings.subscribe((live, prev) => {
+        if (
+            live.autoTextSize === prev.autoTextSize &&
+            live.autoTextMode === prev.autoTextMode &&
+            live.autoTextMinPx === prev.autoTextMinPx &&
+            live.autoTextMaxScale === prev.autoTextMaxScale
+        )
+            return;
         if (live.autoTextSize && live.autoTextMode !== "off")
             refreshAutoTextSize();
         else clearPageScale();

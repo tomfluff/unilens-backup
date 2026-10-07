@@ -95,7 +95,12 @@ import {
     runAutoTextAction,
     type TextAnalysis,
 } from "./autoTextSize";
-import { getLastBodyTextScan, scanBodyText } from "./bodyTextExpand";
+import {
+    afterBodyTextApplied,
+    getLastBodyTextScan,
+    onBodyTextScan,
+    scanBodyText,
+} from "./bodyTextExpand";
 import {
     lastOnFocusCursorBandPx,
     rememberFocusCursorBandPx,
@@ -152,7 +157,12 @@ import {
     saveSettings,
     useSettings,
 } from "./settings";
-import { getLastSmallTextScan, scanSmallText } from "./smallTextBoost";
+import {
+    afterSmallTextApplied,
+    getLastSmallTextScan,
+    onSmallTextScan,
+    scanSmallText,
+} from "./smallTextBoost";
 
 export type { PanelTab } from "./accessibilityPanelOptions";
 
@@ -1269,6 +1279,8 @@ function FocusEnhanceCard() {
 
 function BodyExpandCard() {
     const [, setBump] = useState(0);
+    // The page walk runs after the click repaints; re-render with its count.
+    useExternalSignal(onBodyTextScan);
     const level = useSettings((s) => s.bodyTextExpandLevel);
     const labels = bodyExpandLevelLabels();
     const [name, hint] = labels[level];
@@ -1297,15 +1309,18 @@ function BodyExpandCard() {
                     patchA11ySettings({
                         bodyTextExpandLevel: value as TextAdjustLevel,
                     });
-                    // The rescan triggered by the setting change is synchronous, so this count is already the final result.
-                    if (value === 0) announce(t().bodyExpandAnnounceOff);
-                    else
-                        announce(
-                            t().bodyExpandAnnounce(
-                                labels[value as TextAdjustLevel][0],
-                                getLastBodyTextScan().expanded,
-                            ),
-                        );
+                    // The rescan runs after the next paint; announce its
+                    // count once it is done.
+                    afterBodyTextApplied(() => {
+                        if (value === 0) announce(t().bodyExpandAnnounceOff);
+                        else
+                            announce(
+                                t().bodyExpandAnnounce(
+                                    labels[value as TextAdjustLevel][0],
+                                    getLastBodyTextScan().expanded,
+                                ),
+                            );
+                    });
                 }}
             />
             {level > 0 && (
@@ -1342,6 +1357,8 @@ function BodyExpandCard() {
 
 function SmallBoostCard() {
     const [, setBump] = useState(0);
+    // The page walk runs after the click repaints; re-render with its count.
+    useExternalSignal(onSmallTextScan);
     const level = useSettings((s) => s.smallTextBoostLevel);
     const labels = smallBoostLevelLabels();
     const [name, hint] = labels[level];
@@ -1371,14 +1388,18 @@ function SmallBoostCard() {
                     patchA11ySettings({
                         smallTextBoostLevel: value as TextAdjustLevel,
                     });
-                    if (value === 0) announce(t().smallBoostAnnounceOff);
-                    else
-                        announce(
-                            t().smallBoostAnnounce(
-                                labels[value as TextAdjustLevel][0],
-                                getLastSmallTextScan().boosted,
-                            ),
-                        );
+                    // The rescan runs after the next paint; announce its
+                    // count once it is done.
+                    afterSmallTextApplied(() => {
+                        if (value === 0) announce(t().smallBoostAnnounceOff);
+                        else
+                            announce(
+                                t().smallBoostAnnounce(
+                                    labels[value as TextAdjustLevel][0],
+                                    getLastSmallTextScan().boosted,
+                                ),
+                            );
+                    });
                 }}
             />
             {level > 0 && (

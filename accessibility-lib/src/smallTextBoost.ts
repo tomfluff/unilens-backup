@@ -1,7 +1,8 @@
 /**
  * Boost only text smaller than 16px — leaves headings and body text (≥16px) unchanged.
  */
-import { getA11ySettings, onA11yChange } from "./accessibilityStore";
+import { getA11ySettings } from "./accessibilityStore";
+import { afterNextPaint } from "./afterPaint";
 import {
     isUniLensOverlayNode,
     SMALL_BOOST_ATTR,
@@ -13,6 +14,7 @@ import {
 } from "./domIds";
 import { restoreHostInlineStyle, setHostInlineStyle } from "./hostSurface";
 import { getEffectivePageFontScale } from "./pageFontScale";
+import { useSettings } from "./settings";
 import {
     computeSmallTextTargetPx,
     SMALL_TEXT_THRESHOLD_PX,
@@ -163,6 +165,35 @@ function applyEnabledState() {
     }
 }
 
+const scanListeners = new Set<() => void>();
+let appliedCallbacks: (() => void)[] = [];
+
+const deferredApply = afterNextPaint(() => {
+    applyEnabledState();
+    const callbacks = appliedCallbacks;
+    appliedCallbacks = [];
+    for (const cb of callbacks) cb();
+    for (const listener of scanListeners) listener();
+});
+
+/** Notified after a level change has been applied to the page. */
+export function onSmallTextScan(listener: () => void): () => void {
+    scanListeners.add(listener);
+    return () => {
+        scanListeners.delete(listener);
+    };
+}
+
+/**
+ * Runs `cb` once the level just set has been applied to the page — after the
+ * next paint when a change is pending, otherwise right away. Lets the panel
+ * announce the final count without waiting inside the click.
+ */
+export function afterSmallTextApplied(cb: () => void) {
+    if (deferredApply.pending) appliedCallbacks.push(cb);
+    else cb();
+}
+
 function scheduleRescan() {
     clearTimeout(rescanTimer);
     rescanTimer = window.setTimeout(() => {
@@ -188,7 +219,13 @@ export function initSmallTextBoost() {
     ensureStylesheet();
     startObserver();
     applyEnabledState();
-    a11yUnsub = onA11yChange(applyEnabledState);
+    // Only this feature's level changes what it marks; other panel settings
+    // used to clear and rescan every text node on each click. The rescan
+    // runs after the next paint so the panel button repaints first.
+    a11yUnsub = useSettings.subscribe((state, prev) => {
+        if (state.smallTextBoostLevel !== prev.smallTextBoostLevel)
+            deferredApply.schedule();
+    });
 }
 
 export function destroySmallTextBoost() {
@@ -199,6 +236,8 @@ export function destroySmallTextBoost() {
     window.clearTimeout(rescanTimer);
     a11yUnsub?.();
     a11yUnsub = null;
+    deferredApply.cancel();
+    appliedCallbacks = [];
     clearSmallTextBoost();
     releaseTextSizeStyles("smallBoost");
 }

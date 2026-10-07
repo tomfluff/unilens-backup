@@ -1,7 +1,8 @@
 /**
  * Expand body / annotation text only — headings and text ≥18px are excluded.
  */
-import { getA11ySettings, onA11yChange } from "./accessibilityStore";
+import { getA11ySettings } from "./accessibilityStore";
+import { afterNextPaint } from "./afterPaint";
 import {
     BODY_EXPAND_ATTR,
     BODY_EXPAND_CLASS,
@@ -13,6 +14,7 @@ import {
 } from "./domIds";
 import { restoreHostInlineStyle, setHostInlineStyle } from "./hostSurface";
 import { getEffectivePageFontScale } from "./pageFontScale";
+import { useSettings } from "./settings";
 import {
     bodyTextExpandConfig,
     computeBodyTextTargetPx,
@@ -202,6 +204,35 @@ function applyEnabledState() {
     }
 }
 
+const scanListeners = new Set<() => void>();
+let appliedCallbacks: (() => void)[] = [];
+
+const deferredApply = afterNextPaint(() => {
+    applyEnabledState();
+    const callbacks = appliedCallbacks;
+    appliedCallbacks = [];
+    for (const cb of callbacks) cb();
+    for (const listener of scanListeners) listener();
+});
+
+/** Notified after a level change has been applied to the page. */
+export function onBodyTextScan(listener: () => void): () => void {
+    scanListeners.add(listener);
+    return () => {
+        scanListeners.delete(listener);
+    };
+}
+
+/**
+ * Runs `cb` once the level just set has been applied to the page — after the
+ * next paint when a change is pending, otherwise right away. Lets the panel
+ * announce the final count without waiting inside the click.
+ */
+export function afterBodyTextApplied(cb: () => void) {
+    if (deferredApply.pending) appliedCallbacks.push(cb);
+    else cb();
+}
+
 function scheduleRescan() {
     clearTimeout(rescanTimer);
     rescanTimer = window.setTimeout(() => {
@@ -227,7 +258,13 @@ export function initBodyTextExpand() {
     ensureStylesheet();
     startObserver();
     applyEnabledState();
-    a11yUnsub = onA11yChange(applyEnabledState);
+    // Only this feature's level changes what it marks; other panel settings
+    // used to clear and rescan every text node on each click. The rescan
+    // runs after the next paint so the panel button repaints first.
+    a11yUnsub = useSettings.subscribe((state, prev) => {
+        if (state.bodyTextExpandLevel !== prev.bodyTextExpandLevel)
+            deferredApply.schedule();
+    });
 }
 
 export function destroyBodyTextExpand() {
@@ -238,6 +275,8 @@ export function destroyBodyTextExpand() {
     window.clearTimeout(rescanTimer);
     a11yUnsub?.();
     a11yUnsub = null;
+    deferredApply.cancel();
+    appliedCallbacks = [];
     clearBodyTextExpand();
     releaseTextSizeStyles("bodyExpand");
 }

@@ -54,4 +54,10 @@ describe("readOriginalFontPx", () => {
         expect(storedOriginalFontPx(el({}))).toBeNull();
         expect(readOriginalFontPx(el({}, 18))).toBe(18);
     });
+
+    it("rounds the computed size to the precision it is recorded at", () => {
+        // 10pt form controls compute to 13.3333px; the stored original is
+        // 13.33, so the first read must agree or every rescan re-applies.
+        expect(readOriginalFontPx(el({}, 13.333333))).toBe(13.33);
+    });
 });

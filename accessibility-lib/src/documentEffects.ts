@@ -19,6 +19,7 @@ import {
     UD_FONT_STACK,
     WORD_SPACING_EM,
 } from "./accessibilityStoreTypes";
+import { afterNextPaint } from "./afterPaint";
 import { clearBackgroundMediaMarkers } from "./backgroundMediaOverlay";
 import {
     A11Y_UD_FONT_LINK_ID,
@@ -342,9 +343,16 @@ function clearPositionedOverlayMarkers(root: ParentNode | null = document) {
  * `.p-homeMv__cursive`) stay transparent so photos show through, while plates
  * like `.megadropdown-view-inner` / `.p-homeCareer__nowBox` keep an opaque fill
  * even when they are not position:fixed/absolute.
+ *
+ * Text plates are synced first: the plate rule paints `::before`/`::after`
+ * (it has no bg-sample opt-out), so pseudo-element sampling must see the
+ * current plate markers. Walking the page once for plates is enough — the
+ * markers pass below never changes what the plate pass reads.
  */
 export function syncPositionedOverlayMarkers(pageRoot: HTMLElement | null) {
     if (!pageRoot) return;
+
+    syncHighContrastTextPlates(pageRoot);
 
     const prev = pageRoot.querySelectorAll(`[${POSITIONED_OVERLAY_ATTR}]`);
     const keep = new Set<Element>();
@@ -408,23 +416,126 @@ export function syncPositionedOverlayMarkers(pageRoot: HTMLElement | null) {
     });
 
     clearBackgroundMediaMarkers(pageRoot);
-    syncHighContrastTextPlates(pageRoot);
 }
 
-let overlayMarkerObserver: MutationObserver | null = null;
-let overlayMarkerRaf = 0;
+/*
+ * The surface pass above walks every page node and reads computed style
+ * three times per node — hundreds of ms on a large host page. It used to run
+ * synchronously inside every panel click (even for a link-underline toggle),
+ * so the pressed button could not repaint until it finished. Now it runs:
+ *  - only when something it depends on changed (see surfaceInputsKey), and
+ *  - after the next paint, so the panel and the html-level CSS switch first.
+ */
 
-function schedulePositionedOverlaySync(pageRoot: HTMLElement | null) {
-    if (!pageRoot || overlayMarkerRaf) return;
-    overlayMarkerRaf = requestAnimationFrame(() => {
-        overlayMarkerRaf = 0;
-        syncPositionedOverlayMarkers(pageRoot);
-    });
+let overlayMarkerObserver: MutationObserver | null = null;
+let surfaceSyncRoot: HTMLElement | null = null;
+let lastSurfaceInputsKey: string | null = null;
+
+const surfaceSync = afterNextPaint(() => {
+    const root = surfaceSyncRoot;
+    surfaceSyncRoot = null;
+    if (!root || !overlayMarkerObserver || !root.isConnected) return;
+    syncPositionedOverlayMarkers(root);
+});
+
+/**
+ * Settings that change what the surface pass reads: the theme (display on /
+ * off, text plates on / off) and link backgrounds (their rule has no
+ * bg-sample opt-out, so it shows up in the sampled background). Font,
+ * spacing, tone filters, underline and the pointer cues never touch
+ * background-color, so they no longer re-walk the page.
+ */
+export function surfaceInputsKey(
+    s: Pick<A11ySettings, "theme" | "linkBackground">,
+): string {
+    return `${s.theme}|${s.linkBackground ? 1 : 0}`;
+}
+
+/** Runs the surface pass after the next paint; repeated calls coalesce. */
+function scheduleDisplaySurfaceSync(pageRoot: HTMLElement) {
+    surfaceSyncRoot = pageRoot;
+    surfaceSync.schedule();
+}
+
+function cancelDisplaySurfaceSync() {
+    surfaceSync.cancel();
+    surfaceSyncRoot = null;
+}
+
+/** Run a pending surface pass now (embedders / tests that need it settled). */
+export function flushDisplaySurfaceSync() {
+    surfaceSync.flush();
+}
+
+const OWN_CLASS_PREFIX = "unilens-";
+const OWN_STYLE_PREFIX = "--unilens-";
+
+function withoutOwnClasses(value: string): string {
+    let out = "";
+    // classList re-serializes with single spaces, so split on any whitespace.
+    for (const c of value.split(/\s+/)) {
+        if (c === "" || c.startsWith(OWN_CLASS_PREFIX)) continue;
+        out = out === "" ? c : `${out} ${c}`;
+    }
+    return out;
+}
+
+function withoutOwnStyles(value: string): string {
+    let out = "";
+    for (const d of value.split(";")) {
+        // Writing one property re-serializes the attribute ("a:b" → "a: b").
+        const t = d.trim().replace(/\s*:\s*/, ": ");
+        if (t === "" || t.startsWith(OWN_STYLE_PREFIX)) continue;
+        out = out === "" ? t : `${out};${t}`;
+    }
+    return out;
+}
+
+/**
+ * True when a class/style mutation only touched what this library writes
+ * (`unilens-*` classes, `--unilens-*` custom properties — the text-size
+ * features). Those never change a host background, and reacting to them made
+ * every text-size change walk the page a second time.
+ */
+export function isOwnStyleMutation(
+    attributeName: string | null,
+    oldValue: string | null,
+    newValue: string | null,
+): boolean {
+    if (attributeName !== "class" && attributeName !== "style") return false;
+    const before = oldValue ?? "";
+    const after = newValue ?? "";
+    if (before === after) return true;
+    // Nothing of ours on either side: any difference is the host's.
+    const own = attributeName === "class" ? OWN_CLASS_PREFIX : OWN_STYLE_PREFIX;
+    if (!before.includes(own) && !after.includes(own)) return false;
+    return attributeName === "class"
+        ? withoutOwnClasses(before) === withoutOwnClasses(after)
+        : withoutOwnStyles(before) === withoutOwnStyles(after);
+}
+
+function onHostMutations(records: MutationRecord[], pageRoot: HTMLElement) {
+    for (const r of records) {
+        if (
+            r.type === "attributes" &&
+            r.target instanceof Element &&
+            isOwnStyleMutation(
+                r.attributeName,
+                r.oldValue,
+                r.target.getAttribute(r.attributeName ?? ""),
+            )
+        ) {
+            continue;
+        }
+        scheduleDisplaySurfaceSync(pageRoot);
+        return;
+    }
 }
 
 function ensurePositionedOverlayObserver(
     pageRoot: HTMLElement | null,
     active: boolean,
+    inputsKey: string | null = null,
 ) {
     if (typeof MutationObserver === "undefined") {
         if (active) syncPositionedOverlayMarkers(pageRoot);
@@ -435,24 +546,27 @@ function ensurePositionedOverlayObserver(
     if (!active || !pageRoot) {
         overlayMarkerObserver?.disconnect();
         overlayMarkerObserver = null;
-        if (overlayMarkerRaf) {
-            cancelAnimationFrame(overlayMarkerRaf);
-            overlayMarkerRaf = 0;
-        }
+        cancelDisplaySurfaceSync();
+        lastSurfaceInputsKey = null;
         clearPositionedOverlayMarkers(pageRoot);
         return;
     }
 
-    syncPositionedOverlayMarkers(pageRoot);
+    const firstRun = overlayMarkerObserver === null;
+    if (firstRun || inputsKey !== lastSurfaceInputsKey) {
+        scheduleDisplaySurfaceSync(pageRoot);
+    }
+    lastSurfaceInputsKey = inputsKey;
 
-    if (overlayMarkerObserver) return;
-    overlayMarkerObserver = new MutationObserver(() =>
-        schedulePositionedOverlaySync(pageRoot),
+    if (!firstRun) return;
+    overlayMarkerObserver = new MutationObserver((records) =>
+        onHostMutations(records, pageRoot),
     );
     overlayMarkerObserver.observe(pageRoot, {
         subtree: true,
         childList: true,
         attributes: true,
+        attributeOldValue: true,
         attributeFilter: ["class", "style", "hidden", "aria-hidden", "src"],
     });
 }
@@ -534,7 +648,9 @@ function syncTextPlate(
     setHostInlineStyle(html, HTML_STYLE_DISPLAY_SURFACE, pair.bg);
     setHostInlineStyle(html, HTML_STYLE_DISPLAY_LINK, pair.fg);
     setHostInlineStyle(html, HTML_STYLE_DISPLAY_BORDER, pair.fg);
-    syncHighContrastTextPlates(pageRoot);
+    // Per-node plate markers are placed by the deferred surface pass
+    // (syncPositionedOverlayMarkers), which always runs while a plate theme
+    // is active. A plate style change only swaps the colors above.
 }
 
 export function applyA11yToDocument() {
@@ -599,7 +715,11 @@ export function applyA11yToDocument() {
     else removeUdFontLink();
 
     syncPageDisplayFilters(pageRoot, s);
-    ensurePositionedOverlayObserver(pageRoot, isDisplayActive(s));
+    ensurePositionedOverlayObserver(
+        pageRoot,
+        isDisplayActive(s),
+        surfaceInputsKey(s),
+    );
     syncPageFontScale(s.fontSize);
     syncWidgetDisplayIsolation();
     notifyLayoutChange();

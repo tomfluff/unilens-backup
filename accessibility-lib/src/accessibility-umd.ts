@@ -86,6 +86,7 @@ import {
     type TextAnalysis,
 } from "./autoTextSize";
 import {
+    afterBodyTextApplied,
     type BodyTextScanResult,
     clearBodyTextExpand,
     computeExpandedFontPx,
@@ -120,6 +121,7 @@ import {
     type SelectionInfo,
 } from "./selectionTextSize";
 import {
+    afterSmallTextApplied,
     clearSmallTextBoost,
     computeTargetFontPx,
     destroySmallTextBoost,
@@ -392,6 +394,7 @@ const UniLensA11y = {
 
     // Body text expand
     scanBodyText,
+    afterBodyTextApplied,
     clearBodyTextExpand,
     getLastBodyTextScan,
     initBodyTextExpand,
@@ -399,6 +402,7 @@ const UniLensA11y = {
 
     // Small text boost
     scanSmallText,
+    afterSmallTextApplied,
     clearSmallTextBoost,
     getLastSmallTextScan,
     initSmallTextBoost,

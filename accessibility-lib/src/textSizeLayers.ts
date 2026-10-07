@@ -118,5 +118,8 @@ export function readOriginalFontPx(el: HTMLElement, pageScale = 1): number {
     ) {
         return Math.round((computed / pageScale) * 100) / 100;
     }
-    return computed;
+    // Same 0.01px precision as the recorded original, so the next scan reads
+    // back exactly this value and sees the node as already up to date
+    // (13.3333 vs a stored 13.33 used to re-apply it on every scan).
+    return Math.round(computed * 100) / 100;
 }
