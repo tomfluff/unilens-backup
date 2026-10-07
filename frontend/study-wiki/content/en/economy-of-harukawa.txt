@@ -1,9 +1,9 @@
-title: Economy of Harukawa
-short: Economy of the city of Harukawa, Minori Prefecture
+title: Economy of Springvale
+short: Economy of the city of Springvale, Harvest Prefecture
 type: article
 categories: economy; harukawa; tourism
-infobox: Economy of Harukawa
-ib-image: bay-01.jpg | Oyster rafts on Minori Bay
+infobox: Economy of Springvale
+ib-image: bay-01.jpg | Oyster rafts on Harvest Bay
 ib: Currency | Japanese yen (¥)
 ib: Fiscal year | 1 April – 31 March
 ib: GDP | ¥1.68 trillion (FY2022)
@@ -11,52 +11,52 @@ ib: GDP per capita | about ¥4.0 million (FY2022)
 ib: Largest sector | Manufacturing (21.4 %)
 ib: Unemployment | 2.4 % (2025)
 ib: Main industries | Shipbuilding, machine tools, ceramics, fisheries, tourism
-ib: Largest private employer | Harukawa Shipyard (about 3,100)
+ib: Largest private employer | Springvale Shipyard (about 3,100)
 ib: Tourist visitors | 6.5 million (2025)
 ---
-The '''economy of Harukawa''' is the economy of [[harukawa|Harukawa]], the capital and largest city of [[minori-prefecture|Minori Prefecture]], Japan. The city's gross domestic product was ¥1.68 trillion in fiscal year 2022, about ¥4.0 million per inhabitant.{{efn|Municipal GDP is estimated by the prefecture from its own economic accounts and is not directly comparable with national GDP figures. The per-capita figure divides it by the resident population of about 420,000 in 2022.}}<ref name="citygdp">Minori Prefecture Statistics Division (2025). ''Municipal Economic Accounts of Minori Prefecture, FY2022''. Minori Prefecture, pp. 22–25.</ref> Manufacturing is the largest sector, led by shipbuilding at the Harukawa Shipyard and machine tools at Kagami Precision, and the city is also the commercial, administrative, medical and educational center of the prefecture. Traditional industries include [[harukawa-ware|Harukawa ware]] pottery, oyster and sea bream farming in [[minori-bay|Minori Bay]] and yuzu growing. Tourism reached a record 6.5 million visitors in 2025.
+The '''economy of Springvale''' is the economy of [[harukawa|Springvale]], the capital and largest city of [[minori-prefecture|Harvest Prefecture]], Japan. The city's gross domestic product was ¥1.68 trillion in fiscal year 2022, about ¥4.0 million per inhabitant.{{efn|Municipal GDP is estimated by the prefecture from its own economic accounts and is not directly comparable with national GDP figures. The per-capita figure divides it by the resident population of about 420,000 in 2022.}}<ref name="citygdp">Harvest Prefecture Statistics Division (2025). ''Municipal Economic Accounts of Harvest Prefecture, FY2022''. Harvest Prefecture, pp. 22–25.</ref> Manufacturing is the largest sector, led by shipbuilding at the Springvale Shipyard and machine tools at Mirror Precision, and the city is also the commercial, administrative, medical and educational center of the prefecture. Traditional industries include [[harukawa-ware|Springvale ware]] pottery, oyster and sea bream farming in [[minori-bay|Harvest Bay]] and yuzu growing. Tourism reached a record 6.5 million visitors in 2025.
 
 == Overview ==
-Harukawa's economy is more industrial than that of most Japanese prefectural capitals of its size. The shipyard on reclaimed land along the bay and the machine-tool plants of the inner suburbs together employ more than 5,000 people, while the city's role as the seat of the prefectural government, of [[harukawa-university|Harukawa University]] and of the head office of Minori Bank makes public services, health care and finance large employers as well. Unemployment was 2.4 % in 2025, below the national average.<ref name="labour">Harukawa Public Employment Security Office (2026). ''Labor Market in Harukawa, 2025''. pp. 3–6.</ref>
+Springvale's economy is more industrial than that of most Japanese prefectural capitals of its size. The shipyard on reclaimed land along the bay and the machine-tool plants of the inner suburbs together employ more than 5,000 people, while the city's role as the seat of the prefectural government, of [[harukawa-university|Springvale University]] and of the head office of Harvest Bank makes public services, health care and finance large employers as well. Unemployment was 2.4 % in 2025, below the national average.<ref name="labour">Springvale Public Employment Security Office (2026). ''Labor Market in Springvale, 2025''. pp. 3–6.</ref>
 
 == Sectors ==
-[[Chart:sectors|Harukawa's GDP by sector, FY2022 (share of ¥1.68 trillion)]]
+[[Chart:sectors|Springvale's GDP by sector, FY2022 (share of ¥1.68 trillion)]]
 The table shows the city's GDP by sector in fiscal year 2022.<ref name="citygdp"/>
 
 {{Data:sectors}}
 
 == Industries ==
 === Shipbuilding ===
-The [[?Harukawa Shipyard]] of Minori Heavy Industries (みのり重工業春川造船所) opened in 1937 and is the city's largest private employer, with about 3,100 workers. It builds bulk carriers, ferries and other commercial ships, and is served by Shinkō-dōri Station on the [[bayside-line|Bayside Line]], which opened in 1962 to carry freight to the port and the shipyard as well as passengers. Its expansion onto 2.4 km² of land reclaimed from the bay in 1961–1966, under Mayor [[tetsuo-saeki|Tetsuo Saeki]], was opposed by oyster fishermen; their 1965 lawsuit was settled in 1968 with ¥380 million in compensation.<ref name="shishi7">Harukawa City History Compilation Committee (1989). ''Harukawa City History'', vol. 6: ''Contemporary''. Harukawa City, pp. 512–540.</ref>
+The [[?Springvale Shipyard]] of Harvest Heavy Industries (みのり重工業春川造船所) opened in 1937 and is the city's largest private employer, with about 3,100 workers. It builds bulk carriers, ferries and other commercial ships, and is served by Pier Road Station on the [[bayside-line|Bayside Line]], which opened in 1962 to carry freight to the port and the shipyard as well as passengers. Its expansion onto 2.4 km² of land reclaimed from the bay in 1961–1966, under Mayor [[tetsuo-saeki|Tetsuo Saeki]], was opposed by oyster fishermen; their 1965 lawsuit was settled in 1968 with ¥380 million in compensation.<ref name="shishi7">Springvale City History Compilation Committee (1989). ''Springvale City History'', vol. 6: ''Contemporary''. Springvale City, pp. 512–540.</ref>
 
 === Machinery ===
-Kagami Precision (鏡精機), founded in 1952, makes machine tools, mainly lathes and machining centers, and employs about 2,400 people at its main plant in Kawamata. It exports about half of its output and supplies parts makers across western Japan. Dozens of smaller metalworking firms in Kawamata and Kawabata work as its subcontractors.{{cn}}
+Mirror Precision (鏡精機), founded in 1952, makes machine tools, mainly lathes and machining centers, and employs about 2,400 people at its main plant in Kawamata. It exports about half of its output and supplies parts makers across western Japan. Dozens of smaller metalworking firms in Kawamata and Riverside work as its subcontractors.{{cn}}
 
 === Ceramics ===
 [[File:kiln-01.jpg|The Suyama Old Kiln, a 14-chamber climbing kiln used until 1931]]
-[[harukawa-ware|Harukawa ware]], made mainly in the Suyama district since the 17th century, is the city's best-known craft. In 2024 the industry had 38 kilns and about 210 workers and produced goods worth ¥2.1 billion, about half the peak of ¥4.6 billion from 71 kilns in 1991.<ref name="ware">Suyama Kiln Association (2025). ''Harukawa Ware Production Survey 2024''. Suyama Kiln Association, p. 4.</ref> The Kamano Pottery Fair, held in front of Kamano Station on the first weekend of May every year since 1952, draws about 150,000 visitors.
+[[harukawa-ware|Springvale ware]], made mainly in the Suyama district since the 17th century, is the city's best-known craft. In 2024 the industry had 38 kilns and about 210 workers and produced goods worth ¥2.1 billion, about half the peak of ¥4.6 billion from 71 kilns in 1991.<ref name="ware">Suyama Kiln Association (2025). ''Springvale Ware Production Survey 2024''. Suyama Kiln Association, p. 4.</ref> The Clayfield Pottery Fair, held in front of Clayfield Station on the first weekend of May every year since 1952, draws about 150,000 visitors.
 
 === Fisheries ===
-Oyster farming in [[minori-bay|Minori Bay]] began in 1878; about 1,920 rafts produced 6,300 tonnes of shucked oysters in 2023. Sea bream (''madai'') are farmed in the outer bay, and wild fish are landed at the Uomachi fishing port, where the central wholesale fish market opened in 1956. A red tide in the summer of 2017 cost the bay's fisheries about ¥1.2 billion.<ref name="fish">Minori Prefecture Fisheries Division (2024). ''Fisheries of Minori Prefecture 2024''. Minori Prefecture, pp. 14–19.</ref>
+Oyster farming in [[minori-bay|Harvest Bay]] began in 1878; about 1,920 rafts produced 6,300 tonnes of shucked oysters in 2023. Sea bream (''madai'') are farmed in the outer bay, and wild fish are landed at the Uomachi fishing port, where the central wholesale fish market opened in 1956. A red tide in the summer of 2017 cost the bay's fisheries about ¥1.2 billion.<ref name="fish">Harvest Prefecture Fisheries Division (2024). ''Fisheries of Harvest Prefecture 2024''. Harvest Prefecture, pp. 14–19.</ref>
 
 === Agriculture ===
-Agriculture, forestry and fisheries together make up only 1.9 % of the city's GDP. Rice is grown on the remaining farmland of the [[kagami-river|Kagami River]] plain, and yuzu on stone terraces on the Uchiura Peninsula, where about 290 households farm 140 ha of orchards; see [[yuzu-cultivation-in-minori]]. Local yuzu and seafood supply the city's restaurants and food processors (see [[cuisine-of-harukawa]]).
+Agriculture, forestry and fisheries together make up only 1.9 % of the city's GDP. Rice is grown on the remaining farmland of the [[kagami-river|Mirror River]] plain, and yuzu on stone terraces on the Uchiura Peninsula, where about 290 households farm 140 ha of orchards; see [[yuzu-cultivation-in-minori]]. Local yuzu and seafood supply the city's restaurants and food processors (see [[cuisine-of-harukawa]]).
 
 == Largest employers ==
-{| Largest employers in Harukawa, excluding national, prefectural and city government (2025)
+{| Largest employers in Springvale, excluding national, prefectural and city government (2025)
 ! Employer !! Sector !! Employees !! Notes
-| [[harukawa-university|Harukawa University]] and University Hospital || Education, health || about 4,200 || Including the 720-bed hospital on the Medical Campus
-| Harukawa Shipyard (Minori Heavy Industries) || Shipbuilding || about 3,100 || Opened 1937
-| Kagami Precision || Machine tools || about 2,400 || Founded 1952
-| Minori Bank || Banking || 1,850 || Founded 1897; head office in Shiromachi
-| [[harukawa-railway|Harukawa Railway]] (HaruTetsu) || Transport || 684 || Founded 1923; April 2026
+| [[harukawa-university|Springvale University]] and University Hospital || Education, health || about 4,200 || Including the 720-bed hospital on the Medical Campus
+| Springvale Shipyard (Harvest Heavy Industries) || Shipbuilding || about 3,100 || Opened 1937
+| Mirror Precision || Machine tools || about 2,400 || Founded 1952
+| Harvest Bank || Banking || 1,850 || Founded 1897; head office in Castle Town
+| [[harukawa-railway|Springvale Railway]] (Vale Rail) || Transport || 684 || Founded 1923; April 2026
 |}
 
 == Tourism ==
-[[Chart:visitors|Tourist visitors to Harukawa, 2015–2025 (millions)]]
-Harukawa received a record 6.5 million tourist visitors in 2025, up from 6.2 million in 2024, and 1.94 million overnight stays.{{efn|The city counts visits, not people: a visitor who stays two nights or visits on two separate days is counted twice, and day-trippers from elsewhere in the prefecture are included.}}<ref name="tourism">Harukawa City Tourism Division (2026). ''Harukawa Tourism Statistics 2025''. Harukawa City, pp. 4–18.</ref> The main attractions are the keep of [[harukawa-castle|Harukawa Castle]] (512,000 visitors in FY2024), the [[?Minori Bay Aquarium]] (466,000), the [[harukawa-lantern-festival|Harukawa Lantern Festival]] (380,000 in 2025) and the [[minori-prefectural-museum-of-art|Minori Prefectural Museum of Art]] (186,000). Many visitors also travel on to [[tsukimi-onsen|Tsukimi Onsen]] and [[mount-tsukimi|Mount Tsukimi]] by the [[kagami-line|Kagami Line]].
+[[Chart:visitors|Tourist visitors to Springvale, 2015–2025 (millions)]]
+Springvale received a record 6.5 million tourist visitors in 2025, up from 6.2 million in 2024, and 1.94 million overnight stays.{{efn|The city counts visits, not people: a visitor who stays two nights or visits on two separate days is counted twice, and day-trippers from elsewhere in the prefecture are included.}}<ref name="tourism">Springvale City Tourism Division (2026). ''Springvale Tourism Statistics 2025''. Springvale City, pp. 4–18.</ref> The main attractions are the keep of [[harukawa-castle|Springvale Castle]] (512,000 visitors in FY2024), the [[?Harvest Bay Aquarium]] (466,000), the [[harukawa-lantern-festival|Springvale Lantern Festival]] (380,000 in 2025) and the [[minori-prefectural-museum-of-art|Harvest Prefectural Museum of Art]] (186,000). Many visitors also travel on to [[tsukimi-onsen|Moonview Spa]] and [[mount-tsukimi|Mount Moonview]] by the [[kagami-line|Mirror Line]].
 
-{| Tourist visitors to Harukawa (millions)
+{| Tourist visitors to Springvale (millions)
 ! Year !! Visitors !! Notes
 | 2015 || 5.4 ||
 | 2016 || 5.6 ||
@@ -72,19 +72,19 @@ Harukawa received a record 6.5 million tourist visitors in 2025, up from 6.2 mil
 |}
 
 == Retail ==
-Wholesale and retail trade is the second-largest sector, at 13.8 % of GDP. The main shopping areas are the Gofukumachi shopping arcade, the old merchant street between the castle and the river, and Harukawa Central Terrace, the shopping building of [[harukawa-central-station|Harukawa Central Station]] opened in 2011; the Kumo Mobile Harukawa Central shop is a minute's walk from the station's South Exit. Large suburban shopping centers have grown up near the Harukawa interchange of the Minori Expressway since the 1990s, and many Suyama kilns now also sell through the online marketplace Marketa.{{cn}}
+Wholesale and retail trade is the second-largest sector, at 13.8 % of GDP. The main shopping areas are the Gofukumachi shopping arcade, the old merchant street between the castle and the river, and Springvale Central Terrace, the shopping building of [[harukawa-central-station|Springvale Central Station]] opened in 2011; the Kumo Mobile Springvale Central shop is a minute's walk from the station's South Exit. Large suburban shopping centers have grown up near the Springvale interchange of the Harvest Expressway since the 1990s, and many Suyama kilns now also sell through the online marketplace Marketa.{{cn}}
 
 == Labor ==
 The unemployment rate was 2.4 % in 2025.<ref name="labour"/> As the population ages (30.4 % of residents were 65 or older in 2025), employers in shipbuilding, construction and care report shortages of workers. The city's 6,920 foreign residents (1.7 % of the population) include many technical trainees at the shipyard and in fish processing.
 
 == Finance ==
-Minori Bank, founded in 1897, is the prefecture's largest regional bank and has its head office in Shiromachi, near the castle; it employs 1,850 people. The city is also served by a shinkin bank, the fisheries and agricultural cooperatives and the branches of national banks.<ref name="bank">Minori Bank (2025). ''Integrated Report 2025''. Minori Bank, pp. 2–5.</ref>
+Harvest Bank, founded in 1897, is the prefecture's largest regional bank and has its head office in Castle Town, near the castle; it employs 1,850 people. The city is also served by a shinkin bank, the fisheries and agricultural cooperatives and the branches of national banks.<ref name="bank">Harvest Bank (2025). ''Integrated Report 2025''. Harvest Bank, pp. 2–5.</ref>
 
 == History of the economy ==
 {{main|history-of-harukawa}}
-In the Edo period Harukawa was the castle town of the [[asagiri-clan|Asagiri]] domain, assessed at 186,000 koku (176,000 after 1651). Its merchants traded cloth in Gofukumachi and fish in Uomachi, and the domain promoted pottery (the domain kiln from 1624) and, after 1688, yuzu. After 1871 the city became the prefectural capital; oyster farming began in 1878, Minori Bank was founded in 1897, and the Kagami Valley Railway, the forerunner of the Harukawa Railway, was founded in 1923 and opened its first line in 1926. Export pottery was shipped abroad from the 1880s to the 1910s.
+In the Edo period Springvale was the castle town of the [[asagiri-clan|Asagiri]] domain, assessed at 186,000 koku (176,000 after 1651). Its merchants traded cloth in Gofukumachi and fish in Uomachi, and the domain promoted pottery (the domain kiln from 1624) and, after 1688, yuzu. After 1871 the city became the prefectural capital; oyster farming began in 1878, Harvest Bank was founded in 1897, and the Mirror Valley Railway, the forerunner of the Springvale Railway, was founded in 1923 and opened its first line in 1926. Export pottery was shipped abroad from the 1880s to the 1910s.
 
-The opening of the shipyard in 1937 made Harukawa an industrial city. Much of it was destroyed in the air raid of 29 July 1945, and postwar reconstruction brought Kagami Precision (1952), the Uomachi fish market (1956), the bay reclamation (1961–1966) and Minori Airport (1971). Pottery output peaked in 1991. The population peaked at 431,072 in 2005, and since the 2010s tourism has been the fastest-growing part of the economy, interrupted by the pandemic in 2020.<ref name="shishi7"/>
+The opening of the shipyard in 1937 made Springvale an industrial city. Much of it was destroyed in the air raid of 29 July 1945, and postwar reconstruction brought Mirror Precision (1952), the Uomachi fish market (1956), the bay reclamation (1961–1966) and Harvest Airport (1971). Pottery output peaked in 1991. The population peaked at 431,072 in 2005, and since the 2010s tourism has been the fastest-growing part of the economy, interrupted by the pandemic in 2020.<ref name="shishi7"/>
 
 == See also ==
 * [[harukawa]]

@@ -1,41 +1,41 @@
-title: Minori Prefectural Museum of Art
-short: Art museum in Harukawa, Minori Prefecture
+title: Harvest Prefectural Museum of Art
+short: Art museum in Springvale, Harvest Prefecture
 type: article
 categories: museums; harukawa; culture; tourism
-infobox: Minori Prefectural Museum of Art
+infobox: Harvest Prefectural Museum of Art
 ib-subtitle: みのり県立美術館
 ib-image: museum-01.jpg | The museum beside its reflecting pond
-ib-map: harukawa | Location in Minori Prefecture
+ib-map: harukawa | Location in Harvest Prefecture
 ib-section: General information
 ib: Established | 3 November 1983
-ib: Location | Sannomaru, [[harukawa-castle|Harukawa Castle]], Shiromachi, [[harukawa|Harukawa]]
+ib: Location | Sannomaru, [[harukawa-castle|Springvale Castle]], Castle Town, [[harukawa|Springvale]]
 ib: Type | Art museum
-ib: Owner | [[minori-prefecture|Minori Prefecture]]
+ib: Owner | [[minori-prefecture|Harvest Prefecture]]
 ib: Architect | Shūji Kamiya
 ib: Collection size | about 9,600 works
 ib: Visitors | 186,000 (FY2024)
-ib: Public transit | Shiromachi Station ([[kagami-line|Kagami Line]]), 5 min walk
+ib: Public transit | Castle Town Station ([[kagami-line|Mirror Line]]), 5 min walk
 ---
-The '''Minori Prefectural Museum of Art''' (みのり県立美術館, ''Minori kenritsu bijutsukan'') is the prefectural art museum of [[minori-prefecture|Minori Prefecture]], in the Sannomaru (third enclosure) of [[harukawa-castle|Harukawa Castle]] in [[harukawa|Harukawa]]. Opened in 1983, it holds about 9,600 works, including the largest public collection of [[harukawa-ware|Harukawa ware]]. It received 186,000 visitors in fiscal year 2024.<ref name="pref2025">Minori Prefecture Board of Education (2025). ''Annual Report of the Minori Prefectural Museum of Art, FY2024''. Minori Prefecture, pp. 3–8.</ref>
+The '''Harvest Prefectural Museum of Art''' (みのり県立美術館, ''Minori kenritsu bijutsukan'') is the prefectural art museum of [[minori-prefecture|Harvest Prefecture]], in the Sannomaru (third enclosure) of [[harukawa-castle|Springvale Castle]] in [[harukawa|Springvale]]. Opened in 1983, it holds about 9,600 works, including the largest public collection of [[harukawa-ware|Springvale ware]]. It received 186,000 visitors in fiscal year 2024.<ref name="pref2025">Harvest Prefecture Board of Education (2025). ''Annual Report of the Harvest Prefectural Museum of Art, FY2024''. Harvest Prefecture, pp. 3–8.</ref>
 
 == History ==
-Plans for a prefectural museum were made in the 1970s, when the prefecture acquired land in the former Sannomaru beside the castle's West Moat.{{efn|The Sannomaru was the outer enclosure of the castle, where senior retainers of the [[asagiri-clan|Asagiri clan]] had their residences. It is now occupied by the museum and civic buildings.}} The museum opened on 3 November 1983, Culture Day. It closed in April 2017 for renovation, which renewed the air conditioning, lighting and earthquake protection of the display cases, and reopened on 3 November 2018, its 35th anniversary.<ref name="nippo2018">"Museum of Art reopens after renovation". ''Harukawa Nippō'', 4 November 2018, p. 1.</ref>
+Plans for a prefectural museum were made in the 1970s, when the prefecture acquired land in the former Sannomaru beside the castle's West Moat.{{efn|The Sannomaru was the outer enclosure of the castle, where senior retainers of the [[asagiri-clan|Asagiri clan]] had their residences. It is now occupied by the museum and civic buildings.}} The museum opened on 3 November 1983, Culture Day. It closed in April 2017 for renovation, which renewed the air conditioning, lighting and earthquake protection of the display cases, and reopened on 3 November 2018, its 35th anniversary.<ref name="nippo2018">"Museum of Art reopens after renovation". ''Springvale Herald'', 4 November 2018, p. 1.</ref>
 
 == Architecture ==
-The building was designed by the architect Shūji Kamiya (神谷修二). It is a long, low structure of exposed concrete with long glass walls that face a shallow reflecting pond, laid out so that the galleries do not compete with the castle walls beside them. The galleries are on two floors, with a glass corridor along the pond.<ref name="kamiya">Kamiya, Shūji (1984). "Minori Prefectural Museum of Art". ''Architecture Japan Review'' 59 (2): 44–53.</ref>
+The building was designed by the architect Shūji Kamiya (神谷修二). It is a long, low structure of exposed concrete with long glass walls that face a shallow reflecting pond, laid out so that the galleries do not compete with the castle walls beside them. The galleries are on two floors, with a glass corridor along the pond.<ref name="kamiya">Kamiya, Shūji (1984). "Harvest Prefectural Museum of Art". ''Architecture Japan Review'' 59 (2): 44–53.</ref>
 
 == Collection ==
-[[File:ware-02.jpg|Harukawa ware storage jar with kawasuji brushwork, a type well represented in the collection]]
-The collection of about 9,600 works covers Japanese painting, Western art, prints and the crafts of Minori. Its 1,240 pieces of Harukawa ware range from pieces of the Edo-period domain kiln and export ware to contemporary work. They include 312 works and the glaze notebooks of the potter [[hanae-ishizuka|Hanae Ishizuka]], donated by her family in 2010; a gallery devoted to her work opened in 2011.<ref name="mpma2011">Minori Prefectural Museum of Art (2011). ''Hanae Ishizuka: The Donated Collection''. Exhibition catalog, pp. 2–3.</ref> Her jars "River Line" (1967) and "Tsukimi" (1985) are among the best-known works on display.
+[[File:ware-02.jpg|Springvale ware storage jar with kawasuji brushwork, a type well represented in the collection]]
+The collection of about 9,600 works covers Japanese painting, Western art, prints and the crafts of Harvest. Its 1,240 pieces of Springvale ware range from pieces of the Edo-period domain kiln and export ware to contemporary work. They include 312 works and the glaze notebooks of the potter [[hanae-ishizuka|Hanae Ishizuka]], donated by her family in 2010; a gallery devoted to her work opened in 2011.<ref name="mpma2011">Harvest Prefectural Museum of Art (2011). ''Hanae Ishizuka: The Donated Collection''. Exhibition catalog, pp. 2–3.</ref> Her jars "River Line" (1967) and "Moonview" (1985) are among the best-known works on display.
 
-Outside the ceramics, the largest groups are woodblock prints and Japanese-style paintings of the [[kagami-river|Kagami River]], [[minori-bay|Minori Bay]] and [[mount-tsukimi|Mount Tsukimi]] by artists from Minori. The museum holds about four special exhibitions a year.
+Outside the ceramics, the largest groups are woodblock prints and Japanese-style paintings of the [[kagami-river|Mirror River]], [[minori-bay|Harvest Bay]] and [[mount-tsukimi|Mount Moonview]] by artists from Harvest. The museum holds about four special exhibitions a year.
 
 {| Main fields of the collection (approximate, 2025)
 ! Field !! Works
 | Prints || 3,960
 | Japanese painting || 2,350
 | Western painting and sculpture || 1,780
-| Harukawa ware || 1,240
+| Springvale ware || 1,240
 | Other crafts || 270
 | Total || 9,600
 |}
@@ -43,7 +43,7 @@ Outside the ceramics, the largest groups are woodblock prints and Japanese-style
 == Visiting ==
 * '''Hours''': 9:30–17:00, Fridays until 19:00.
 * '''Closed''': Mondays (Tuesday if Monday is a national holiday).
-* '''Access''': 5 minutes' walk from Shiromachi Station on the Kagami Line of the [[harukawa-railway|Harukawa Railway]].
+* '''Access''': 5 minutes' walk from Castle Town Station on the Mirror Line of the [[harukawa-railway|Springvale Railway]].
 
 {| Admission to the collection galleries
 ! Visitor !! Admission

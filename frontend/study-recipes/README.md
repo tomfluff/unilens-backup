@@ -1,6 +1,6 @@
 # Daily Table (デイリーテーブル) — study site
 
-A fictional recipe website for UniLens user studies: choosing a dish, then cooking it while reading (following steps, scaling quantities, converting units, checking substitutions). Set in Harukawa, Minori Prefecture (see `../STUDY-SITES.md`). Served on port 8036: `make serve-frontend study-recipes`.
+A fictional recipe website for UniLens user studies: choosing a dish, then cooking it while reading (following steps, scaling quantities, converting units, checking substitutions). Set in Springvale, Harvest Prefecture (see `../STUDY-SITES.md`). Served on port 8036: `make serve-frontend study-recipes`.
 
 ## Pages (48 per language, the same paths under `en/` and `ja/`)
 
@@ -34,7 +34,7 @@ node build.mjs            # writes en/, ja/, assets/data/, assets/charts/
 
 ## Charts and diagrams (SVG, drawn by `charts.mjs`)
 
-- Rice-to-water bar chart (`<img alt="">`), cup-weight bar chart (`alt="chart"`), oven temperature scale (`alt=""`), Minori Prefecture seasonal produce calendar (`alt="calendar"`), dashi temperature timeline (`alt=""`), a macro donut per recipe and language (`alt=""`), 12 knife-cut diagrams (`alt="diagram"`). The meal-plan chart is inline SVG with a text alternative.
+- Rice-to-water bar chart (`<img alt="">`), cup-weight bar chart (`alt="chart"`), oven temperature scale (`alt=""`), Harvest Prefecture seasonal produce calendar (`alt="calendar"`), dashi temperature timeline (`alt=""`), a macro donut per recipe and language (`alt=""`), 12 knife-cut diagrams (`alt="diagram"`). The meal-plan chart is inline SVG with a text alternative.
 
 ## Images (Codex `gpt-6.1-sol` image generation)
 

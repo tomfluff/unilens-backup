@@ -13,7 +13,7 @@ const warn = (where, msg) => warnings.push(`${where}: ${msg}`);
 
 const DATA = JSON.parse(fs.readFileSync(C('data.json'), 'utf8'));
 const CATS = JSON.parse(fs.readFileSync(C('categories.json'), 'utf8'));
-CATS.stubs = ['Minori Prefecture stubs', 'みのり県関連のスタブ項目'];
+CATS.stubs = ['Harvest Prefecture stubs', 'みのり県関連のスタブ項目'];
 CATS.disambig = ['Disambiguation pages', '曖昧さ回避'];
 // every article the site is meant to have (missing ones are not reported as broken links while writing)
 const PLANNED = ['harukawa', 'minori-prefecture', 'kagami-river', 'minori-bay', 'climate-of-harukawa', 'economy-of-harukawa', 'harukawa-castle', 'history-of-harukawa', 'asagiri-clan', 'tetsuo-saeki', 'kagami-bridge', 'kagami', 'harukawa-ware', 'hanae-ishizuka', 'michiyo-tono', 'minori-prefectural-museum-of-art', 'harukawa-university', 'harukawa-railway', 'kagami-line', 'bayside-line', 'tsukikage', 'harukawa-central-station', 'kenzo-hattori', 'tsukimi-tunnel', 'haruca', 'harukawa-lantern-festival', 'cuisine-of-harukawa', 'yuzu-cultivation-in-minori', 'mount-tsukimi', 'tsukimi-onsen'];
@@ -32,7 +32,7 @@ const T = {
     login: 'Log in', create: 'Create account', donate: 'Donate',
     cn: 'citation needed', cnTitle: 'This claim needs references to reliable sources.',
     seeMain: 'Main article: ', seeAlso: 'See also: ',
-    stub: (t) => `This article about a place or topic in Minori Prefecture is a <a href="${t}">stub</a>. You can help Openpedia by expanding it.`,
+    stub: (t) => `This article about a place or topic in Harvest Prefecture is a <a href="${t}">stub</a>. You can help Openpedia by expanding it.`,
     disambig: (title) => `This <a href="#">disambiguation</a> page lists articles associated with the title <b>${title}</b>. If an internal link led you here, you may wish to change the link to point directly to the intended article.`,
     lastEdited: (d, t) => `This page was last edited on ${d}, at ${t} (UTC).`,
     licence: 'Text is available under an open content licence; additional terms may apply. By using this site, you agree to the Terms of Use and Privacy Policy.',
@@ -431,7 +431,7 @@ function dataTable(name, doc) {
     ];
     const head = `<tr><th>${ja ? '月' : 'Month'}</th>${L.month.map((m) => `<th>${m}</th>`).join('')}<th>${ja ? '年' : 'Year'}</th></tr>`;
     const body = rows.map(([label, vals, year, f, cls]) => `<tr><th scope="row">${label}</th>${vals.map((v) => `<td class="num ${cls}">${f(v)}</td>`).join('')}<td class="num ${cls} year">${f(year)}</td></tr>`).join('');
-    return `<div class="table-wrap"><table class="wikitable climate"><caption>${ja ? '春川（1991年 - 2020年）の気候' : 'Climate data for Harukawa (1991–2020 normals, extremes 1891–present)'}</caption>${head}${body}<tr><td colspan="14" class="source">${ja ? '出典：' : 'Source: '}${c.source[doc.lang]}</td></tr></table></div>`;
+    return `<div class="table-wrap"><table class="wikitable climate"><caption>${ja ? '春川（1991年 - 2020年）の気候' : 'Climate data for Springvale (1991–2020 normals, extremes 1891–present)'}</caption>${head}${body}<tr><td colspan="14" class="source">${ja ? '出典：' : 'Source: '}${c.source[doc.lang]}</td></tr></table></div>`;
   }
   if (name === 'population') {
     const p = DATA.population;
@@ -451,16 +451,16 @@ function dataTable(name, doc) {
     const st = kag ? DATA.kagamiStations : DATA.baysideStations;
     const head = ja
       ? ['駅番号', '駅名', 'よみ', '駅間キロ', '営業キロ', ...(kag ? ['特急「月影」'] : []), '開業日', '1日平均乗車人員（2025年度）', '接続・備考', '所在地']
-      : ['No.', 'Station', 'Japanese', 'Between (km)', 'Distance (km)', ...(kag ? ['Tsukikage'] : []), 'Opened', 'Daily boardings (FY2025)', 'Transfers and notes', 'Location'];
+      : ['No.', 'Station', 'Japanese', 'Between (km)', 'Distance (km)', ...(kag ? ['Comet'] : []), 'Opened', 'Daily boardings (FY2025)', 'Transfers and notes', 'Location'];
     const rows = st.map((r, i) => {
       const [no, en, j, kana, km, opened, tk, muni, munij, board, note, notej] = r;
       const between = i ? (km - st[i - 1][4]).toFixed(1) : '—';
       const tkCell = tk === 'stop' ? '●' : tk === 'nov' ? '◇' : '｜';
-      const boardCell = board ? nf(board) : (ja ? '（鏡線に含む）' : '(see Kagami Line)');
+      const boardCell = board ? nf(board) : (ja ? '（鏡線に含む）' : '(see Mirror Line)');
       return `<tr><td>${kag ? 'K' : 'B'}${String(no).padStart(2, '0')}</td><td>${ja ? j : en}</td><td>${ja ? kana : j}</td><td class="num">${between}</td><td class="num">${km.toFixed(1)}</td>${kag ? `<td class="center">${tkCell}</td>` : ''}<td>${fmtDate(opened, doc.lang)}</td><td class="num">${boardCell}</td><td>${ja ? notej : note}</td><td>${ja ? munij : muni}</td></tr>`;
     }).join('');
-    const legend = kag ? `<tr><td colspan="${head.length}" class="source">${ja ? '●：特急「月影」停車、◇：2026年11月14日のダイヤ改正から停車、｜：通過。快速は川端（2026年11月13日まで）・西春野・大塚を除く各駅に停車。乗車人員は春川中央が両線の合計。' : '●: Tsukikage stops; ◇: Tsukikage stops from the timetable revision of 14 November 2026; ｜: passes. Rapid trains stop at all stations except Kawabata (until 13 November 2026), Nishi-Haruno and Ōtsuka. Boardings at Harukawa Central are for both lines.'}</td></tr>` : `<tr><td colspan="${head.length}" class="source">${ja ? '全列車が各駅に停車。' : 'All trains stop at every station.'}</td></tr>`;
-    return `<div class="table-wrap"><table class="wikitable stations"><caption>${ja ? (kag ? '鏡線 駅一覧' : '湾岸線 駅一覧') : (kag ? 'Kagami Line stations' : 'Bayside Line stations')}</caption><tr>${head.map((h) => `<th>${h}</th>`).join('')}</tr>${rows}${legend}</table></div>`;
+    const legend = kag ? `<tr><td colspan="${head.length}" class="source">${ja ? '●：特急「月影」停車、◇：2026年11月14日のダイヤ改正から停車、｜：通過。快速は川端（2026年11月13日まで）・西春野・大塚を除く各駅に停車。乗車人員は春川中央が両線の合計。' : '●: Comet stops; ◇: Comet stops from the timetable revision of 14 November 2026; ｜: passes. Rapid trains stop at all stations except Riverside (until 13 November 2026), West Meadow and Hilltop. Boardings at Springvale Central are for both lines.'}</td></tr>` : `<tr><td colspan="${head.length}" class="source">${ja ? '全列車が各駅に停車。' : 'All trains stop at every station.'}</td></tr>`;
+    return `<div class="table-wrap"><table class="wikitable stations"><caption>${ja ? (kag ? '鏡線 駅一覧' : '湾岸線 駅一覧') : (kag ? 'Mirror Line stations' : 'Bayside Line stations')}</caption><tr>${head.map((h) => `<th>${h}</th>`).join('')}</tr>${rows}${legend}</table></div>`;
   }
   warn(doc.where(), `unknown data table ${name}`);
   return '';

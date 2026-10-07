@@ -125,7 +125,7 @@ function footer(lang) {
     ${col(t.collections, Object.entries(COLLECTIONS).map(([k, c]) => [c[lang].name, url(lang, `collections/${k}.html`)]))}
     ${col(t.siteName, [[t.about, url(lang, 'about.html')], [t.mealPlan, url(lang, 'meal-plan.html')], [t.shoppingList, url(lang, 'shopping-list.html')], [t.search, url(lang, 'search.html')], [ja ? '広告について' : 'Advertise', url(lang, 'about.html') + '#advertising'], [ja ? 'プライバシー' : 'Privacy policy', url(lang, 'about.html') + '#privacy'], [ja ? 'お問い合わせ' : 'Contact', url(lang, 'about.html') + '#contact']])}
   </div>
-  <div class="fbottom"><div class="wrap"><span>© 2017–2026 Daily Table · ${ja ? 'みのり県春川市' : 'Harukawa, Minori Prefecture'}</span><span class="research">${t.footerNote}</span></div></div>
+  <div class="fbottom"><div class="wrap"><span>© 2017–2026 Daily Table · ${ja ? 'みのり県春川市' : 'Springvale, Harvest Prefecture'}</span><span class="research">${t.footerNote}</span></div></div>
 </footer>`;
 }
 

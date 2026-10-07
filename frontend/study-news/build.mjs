@@ -1,4 +1,4 @@
-// Builds The Harukawa Herald / 春川日報 (en/ and ja/) from content/. Node standard library only.
+// Builds The Springvale Herald / 春川日報 (en/ and ja/) from content/. Node standard library only.
 // Usage: node build.mjs
 import fs from 'node:fs';
 import path from 'node:path';
@@ -174,7 +174,7 @@ function blocks(src, ctx) {
 function embed(kind, id, extra, ctx) {
   if (kind === 'table') return tableHtml(id, ctx.lang);
   if (kind === 'chart') return chartFigure(id, ctx);
-  if (kind === 'map' && id === 'festival') return `<figure class="figure map"><img src="${A(ctx, `assets/charts/festival-map.${ctx.lang}.svg`)}" alt="${ctx.lang === 'ja' ? '地図' : 'Map'}" width="640" height="440"><figcaption>${ctx.lang === 'ja' ? '交通規制図（番号は下の表と対応）。地図は概略' : 'Road closures (numbers match the table below). Map not to scale.'}<span class="credit">${ctx.lang === 'ja' ? '春川日報作成' : 'Graphic: The Harukawa Herald'}</span></figcaption></figure>`;
+  if (kind === 'map' && id === 'festival') return `<figure class="figure map"><img src="${A(ctx, `assets/charts/festival-map.${ctx.lang}.svg`)}" alt="${ctx.lang === 'ja' ? '地図' : 'Map'}" width="640" height="440"><figcaption>${ctx.lang === 'ja' ? '交通規制図（番号は下の表と対応）。地図は概略' : 'Road closures (numbers match the table below). Map not to scale.'}<span class="credit">${ctx.lang === 'ja' ? '春川日報作成' : 'Graphic: The Springvale Herald'}</span></figcaption></figure>`;
   if (kind === 'photo') return `<figure class="figure photo"><img src="${img(ctx, id)}" alt="" loading="lazy"><figcaption>${inline(extra || '', ctx)}</figcaption></figure>`;
   warn(`unknown embed ${kind}:${id} in ${ctx.page}`);
   return '';
@@ -275,7 +275,7 @@ function chartSvg(id, lang) {
 function chartFigure(id, ctx) {
   const c = S.charts[id];
   if (!c) { warn(`unknown chart ${id}`); return ''; }
-  const credit = ctx.lang === 'ja' ? '春川日報作成' : 'Graphic: The Harukawa Herald';
+  const credit = ctx.lang === 'ja' ? '春川日報作成' : 'Graphic: The Springvale Herald';
   if (c.display === 'inline') {
     const svg = chartSvg(id, ctx.lang).replace('<svg ', `<svg role="img" aria-labelledby="t-${id}" `).replace(/(<rect[^>]*\/>)/, `$1<title id="t-${id}">${esc(c[ctx.lang].title)}</title>`);
     return `<figure class="figure chart">${svg}<figcaption><span class="credit">${credit}</span></figcaption></figure>`;
@@ -288,7 +288,7 @@ function weatherSvg(lang) {
   const rmax = 40, tmin = 14, tmax = 30;
   const ry = v => bottom - (v / rmax) * (bottom - top);
   const ty = v => bottom - ((v - tmin) / (tmax - tmin)) * (bottom - top);
-  const t = lang === 'ja' ? { title: '春川市の24時間予報（4日18時〜5日17時）', rain: '雨量 mm/h', temp: '気温 ℃', wind: '風速 m/s', src: 'みのり地方気象台の資料をもとに作成' } : { title: 'Harukawa, next 24 hours (Sun 18:00 – Mon 17:00)', rain: 'Rain mm/h', temp: 'Temp °C', wind: 'Wind m/s', src: 'Based on Minori Local Meteorological Office data' };
+  const t = lang === 'ja' ? { title: '春川市の24時間予報（4日18時〜5日17時）', rain: '雨量 mm/h', temp: '気温 ℃', wind: '風速 m/s', src: 'みのり地方気象台の資料をもとに作成' } : { title: 'Springvale, next 24 hours (Sun 18:00 – Mon 17:00)', rain: 'Rain mm/h', temp: 'Temp °C', wind: 'Wind m/s', src: 'Based on Harvest Local Meteorological Office data' };
   let s = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" ${FONT}><rect width="${W}" height="${H}" fill="#fff"/><text x="10" y="22" font-size="15" font-weight="700" fill="#1b1b1b">${esc(t.title)}</text>`;
   for (let g = 0; g <= 4; g++) { const y = bottom - g * (bottom - top) / 4; s += `<line x1="${left}" y1="${y}" x2="${right}" y2="${y}" stroke="#eee"/><text x="${left - 5}" y="${y + 4}" font-size="10" text-anchor="end" fill="#3a78b5">${g * 10}</text><text x="${right + 5}" y="${y + 4}" font-size="10" fill="#c8102e">${tmin + g * 4}</text>`; }
   h.hours.forEach((hr, i) => {
@@ -308,7 +308,7 @@ function typhoonSvg(lang) {
   const j = lang === 'ja';
   let s = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" ${FONT} role="img" aria-label="${j ? '台風21号の進路図' : 'Typhoon No. 21 track map'}"><rect width="${W}" height="${H}" fill="#dcebf5"/>`;
   s += `<path d="M0 0H600V210C560 200 520 182 480 172 430 160 400 166 372 152 352 142 346 128 336 129 322 132 312 150 292 160 252 176 200 160 150 176 100 190 50 180 0 192Z" fill="#eeeadf" stroke="#b9b2a0"/>`;
-  s += `<text x="30" y="60" font-size="13" fill="#7a725f">${j ? 'みのり県' : 'Minori Prefecture'}</text><text x="300" y="185" font-size="11" fill="#4f7894" font-style="italic">${j ? 'みのり湾' : 'Minori Bay'}</text><text x="60" y="320" font-size="12" fill="#4f7894" font-style="italic">${j ? '太平洋' : 'Pacific Ocean'}</text>`;
+  s += `<text x="30" y="60" font-size="13" fill="#7a725f">${j ? 'みのり県' : 'Harvest Prefecture'}</text><text x="300" y="185" font-size="11" fill="#4f7894" font-style="italic">${j ? 'みのり湾' : 'Harvest Bay'}</text><text x="60" y="320" font-size="12" fill="#4f7894" font-style="italic">${j ? '太平洋' : 'Pacific Ocean'}</text>`;
   const now = tr.find(p => p.now);
   s += `<circle cx="${now.x}" cy="${now.y}" r="180" fill="#f2c94c" fill-opacity=".18" stroke="#d9a400" stroke-dasharray="4 3"/><circle cx="${now.x}" cy="${now.y}" r="54" fill="#c8102e" fill-opacity=".22" stroke="#c8102e"/>`;
   tr.filter(p => p.r).forEach(p => { s += `<circle cx="${p.x}" cy="${p.y}" r="${p.r}" fill="none" stroke="#fff" stroke-width="1.6" stroke-dasharray="5 4"/>`; });
@@ -320,7 +320,7 @@ function typhoonSvg(lang) {
     const end = p.x > 400;
     s += `<text x="${end ? p.x - 12 : p.x + 12}" y="${p.y + 4}" font-size="11" fill="#1b1b1b" font-weight="${p.now ? 700 : 400}"${end ? ' text-anchor="end"' : ''} paint-order="stroke" stroke="#fff" stroke-width="3" stroke-opacity=".7">${esc(p.t[lang])} · ${p.hpa} hPa</text>`;
   });
-  s += `<path d="M330 112l3 7 7 .5-5.5 4.5 2 7-6.5-4-6.5 4 2-7-5.5-4.5 7-.5z" fill="#0e2d4f"/><text x="316" y="104" font-size="12" font-weight="700" fill="#0e2d4f" text-anchor="end">${j ? '春川市' : 'Harukawa'}</text>`;
+  s += `<path d="M330 112l3 7 7 .5-5.5 4.5 2 7-6.5-4-6.5 4 2-7-5.5-4.5 7-.5z" fill="#0e2d4f"/><text x="316" y="104" font-size="12" font-weight="700" fill="#0e2d4f" text-anchor="end">${j ? '春川市' : 'Springvale'}</text>`;
   s += `<g transform="translate(470 395)"><rect x="0" y="-6" width="36" height="5" fill="#333"/><text x="44" y="0" font-size="10.5" fill="#333">100 km</text></g>`;
   s += `<g font-size="10.5" fill="#333" transform="translate(12 345)"><circle cx="6" cy="0" r="6" fill="#c8102e" fill-opacity=".3" stroke="#c8102e"/><text x="18" y="4">${j ? '暴風域（25m/s以上）' : 'Storm area (25 m/s+)'}</text><circle cx="6" cy="20" r="6" fill="#f2c94c" fill-opacity=".3" stroke="#d9a400"/><text x="18" y="24">${j ? '強風域（15m/s以上）' : 'Gale area (15 m/s+)'}</text><circle cx="6" cy="40" r="6" fill="none" stroke="#0e2d4f" stroke-dasharray="3 2"/><text x="18" y="44">${j ? '予報円' : 'Forecast circle'}</text></g>`;
   return s + '</svg>';
@@ -328,7 +328,7 @@ function typhoonSvg(lang) {
 function festivalSvg(lang) {
   const j = lang === 'ja';
   const T = j ? { castle: '城址公園', station: '春川中央駅', shiro: '城町駅', river: '鏡川', nishiki: '錦橋', asahi: '朝日橋', minato: '港橋', riverside: '川端通り', komachi: '小町通り', otemachi: '大手町通り', lanterns: '灯籠流し（メインステージ）', shuttle: 'シャトルバス乗降場（東門）', bikes: '臨時駐輪場（城山小）', closed: '車両通行止め', partial: '片側通行', ped: '歩行者天国', north: '北', scale: '概略図' }
-    : { castle: 'Castle Park', station: 'Harukawa Central Stn', shiro: 'Shiromachi Stn', river: 'Kagami River', nishiki: 'Nishiki Bridge', asahi: 'Asahi Bridge', minato: 'Minato Bridge', riverside: 'Riverside Avenue', komachi: 'Komachi-dori', otemachi: 'Otemachi-dori', lanterns: 'Lantern floating (main stage)', shuttle: 'Shuttle stop (east gate)', bikes: 'Bike parking (Shiroyama ES)', closed: 'Closed to vehicles', partial: 'One lane only', ped: 'Pedestrians only', north: 'N', scale: 'Not to scale' };
+    : { castle: 'Castle Park', station: 'Springvale Central Stn', shiro: 'Castle Town Stn', river: 'Mirror River', nishiki: 'Nishiki Bridge', asahi: 'Asahi Bridge', minato: 'Minato Bridge', riverside: 'Riverside Avenue', komachi: 'Komachi-dori', otemachi: 'Otemachi-dori', lanterns: 'Lantern floating (main stage)', shuttle: 'Shuttle stop (east gate)', bikes: 'Bike parking (Shiroyama ES)', closed: 'Closed to vehicles', partial: 'One lane only', ped: 'Pedestrians only', north: 'N', scale: 'Not to scale' };
   const num = (x, y, n) => `<circle cx="${x}" cy="${y}" r="10" fill="#1b1b1b"/><text x="${x}" y="${y + 4}" font-size="12" font-weight="700" fill="#fff" text-anchor="middle">${n}</text>`;
   let s = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 440" width="640" height="440" ${FONT}><rect width="640" height="440" fill="#f4f2ec"/>`;
   s += `<g stroke="#fff" stroke-width="7">${[[40, 30, 40, 380], [600, 200, 600, 300], [0, 105, 210, 100], [370, 112, 640, 104], [120, 0, 120, 110], [460, 0, 465, 140]].map(([a, b, c, d]) => `<line x1="${a}" y1="${b}" x2="${c}" y2="${d}"/>`).join('')}</g>`;
@@ -361,7 +361,7 @@ function header(ctx) {
   const nav = S.sections.map(s => `<li${ctx.section === s.id ? ' class="on"' : ''}><a href="${L(ctx, sectionUrl(s.id))}">${esc(s[ctx.lang])}</a></li>`).join('');
   return `<div class="topbar"><div class="wrap">
 <span class="tb-date">${t.today}</span>
-<a class="tb-weather" href="${L(ctx, 'weather.html')}">${icon('umbrella')} ${ctx.lang === 'ja' ? '春川 22℃ 暴風警報' : 'Harukawa 22°C · Storm warning'}</a>
+<a class="tb-weather" href="${L(ctx, 'weather.html')}">${icon('umbrella')} ${ctx.lang === 'ja' ? '春川 22℃ 暴風警報' : 'Springvale 22°C · Storm warning'}</a>
 <span class="tb-spacer"></span>
 <a class="tb-link" href="${L(ctx, pageUrl.newsletters)}">${t.newsletters}</a>
 <a class="tb-link" href="${L(ctx, pageUrl.epaper)}">${t.epaper}</a>
@@ -659,7 +659,7 @@ function aboutPage(lang) {
   const ctx = mk(lang, 'about.html');
   const p = pages[lang].about;
   const main = `<main id="main" class="wrap layout-article"><article class="article">
-<h1>${p.title}</h1><figure class="hero"><img src="${img(ctx, 'castle')}" alt=""><figcaption>${lang === 'ja' ? '春川城と市街地。春川日報は1898年からこの町を伝えてきた。' : 'Harukawa Castle above the city. The paper has covered the town since 1898.'} <span class="credit">${S.credits.kanda[lang]}</span></figcaption></figure>
+<h1>${p.title}</h1><figure class="hero"><img src="${img(ctx, 'castle')}" alt=""><figcaption>${lang === 'ja' ? '春川城と市街地。春川日報は1898年からこの町を伝えてきた。' : 'Springvale Castle above the city. The paper has covered the town since 1898.'} <span class="credit">${S.credits.kanda[lang]}</span></figcaption></figure>
 <div class="body">${blocks(p.body, ctx)}</div></article>${rail(ctx, { adIndex: 1 })}</main>`;
   return layout(ctx, { title: p.title, main, bodyClass: 'page-about' });
 }
@@ -734,8 +734,8 @@ for (const lang of LANGS) {
 }
 write('index.html', `<!doctype html>
 <html lang="en">
-<head><meta charset="utf-8"><title>The Harukawa Herald</title><meta http-equiv="refresh" content="0; url=en/index.html"></head>
-<body><p><a href="en/index.html">The Harukawa Herald (English)</a> · <a href="ja/index.html">春川日報（日本語）</a></p>
+<head><meta charset="utf-8"><title>The Springvale Herald</title><meta http-equiv="refresh" content="0; url=en/index.html"></head>
+<body><p><a href="en/index.html">The Springvale Herald (English)</a> · <a href="ja/index.html">春川日報（日本語）</a></p>
 <script src="/unilens.js"></script>
 <script>UniLens.init({ backend: 'http://127.0.0.1:5000', mouseWindow: 5 })</script>
 </body>

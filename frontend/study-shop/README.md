@@ -1,13 +1,13 @@
 # Marketa (マルケタ): study site for shopping
 
-A fictional Amazon-like marketplace for UniLens user studies, served on port 8033 (`make serve-frontend study-shop`). English in `en/`, Japanese in `ja/`, the same pages at the same paths. It is set in the shared world of `frontend/STUDY-SITES.md`. Today on the site is **Monday 5 October 2026, 10:40**. The shopper is Aki Mori in Harukawa, who is not a Marketa Fast member.
+A fictional Amazon-like marketplace for UniLens user studies, served on port 8033 (`make serve-frontend study-shop`). English in `en/`, Japanese in `ja/`, the same pages at the same paths. It is set in the shared world of `frontend/STUDY-SITES.md`. Today on the site is **Monday 5 October 2026, 10:40**. The shopper is Aki Mori in Springvale, who is not a Marketa Fast member.
 
 ## Pages (55 per language, 110 in all)
 
 - `index.html`: the home page, with a hero deals carousel, four promo cards, department tiles, "Recommended for you", a sponsored banner, browsing history (from localStorage), best sellers in Kitchen and Electronics, and festival gifts.
 - `p/<id>.html`: **32 products** in 6 departments and 8 groups of four similar items:
-  - **Kitchen:** kettles and rice cookers (including a Harukawa ware donabe).
-  - **Home & Tableware:** Harukawa ware.
+  - **Kitchen:** kettles and rice cookers (including a Springvale ware donabe).
+  - **Home & Tableware:** Springvale ware.
   - **Electronics:** headphones and power banks.
   - **Sports & Outdoors:** rain jackets.
   - **Health & Beauty:** yuzu bath and body.
@@ -16,7 +16,7 @@ A fictional Amazon-like marketplace for UniLens user studies, served on port 803
   Each product page has:
   - a gallery, price, list price and discount, points, and a coupon to clip;
   - options with their own price, stock and delivery;
-  - a buy box with delivery to Harukawa, ships-from/sold-by and returns;
+  - a buy box with delivery to Springvale, ships-from/sold-by and returns;
   - "About this item" and "Frequently bought together";
   - a comparison with 3 similar items and a sponsored row;
   - a spec table, description and extra tables (size charts and the like);
@@ -49,7 +49,7 @@ The build regenerates `en/`, `ja/`, `assets/data/`, `assets/charts/` and `index.
 
 ## Images
 
-35 product photos were made with Codex image generation (gpt-6.1-sol): one per product, plus a second angle for the Hearth kettle (lid open), the Kagami donabe (with cooked rice) and the Northpine jacket (packed in its pouch). They are in `assets/img/*.jpg` (2.5 MB in all, each under 200 KB). The PNG originals, the generation script `gen-images.sh` and its prompts are in `/home/yotam/projects/unilens/.local/study-sites-src/shop/`. The logo, favicon and price charts are SVG drawn by the build.
+35 product photos were made with Codex image generation (gpt-6.1-sol): one per product, plus a second angle for the Hearth kettle (lid open), the Mirror donabe (with cooked rice) and the Northpine jacket (packed in its pouch). They are in `assets/img/*.jpg` (2.5 MB in all, each under 200 KB). The PNG originals, the generation script `gen-images.sh` and its prompts are in `/home/yotam/projects/unilens/.local/study-sites-src/shop/`. The logo, favicon and price charts are SVG drawn by the build.
 
 ## Checks
 

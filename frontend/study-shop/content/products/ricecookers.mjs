@@ -206,7 +206,7 @@ export default [
         'CARRY IT TO THE TABLE: a fold-down handle on top, 20 cm wide and 1.8 kg, with a magnetic cord that pulls off safely if someone trips on it.',
         'FIVE MENUS: white, quick (1 cup in about 25 min), porridge, takikomi and steam. A steam tray is included for vegetables, dumplings or reheating. No brown-rice menu.',
         'TIMER AND 12-HOUR KEEP WARM: set rice to be ready up to 12 hours ahead; keeps it warm for up to 12 hours.',
-        '1-YEAR WARRANTY. Beige is stocked in Harukawa; Mint ships from a warehouse outside Minori Prefecture. Both are identical apart from colour.',
+        '1-YEAR WARRANTY. Beige is stocked in Springvale; Mint ships from a warehouse outside Harvest Prefecture. Both are identical apart from colour.',
       ],
       ja: [
         '【1〜2人にちょうどいい3合炊き】0.5〜3合（1合＝生米180mL）まで。3合でお茶碗約6杯分です。「0.54L」は3合×180mLのことです。',
@@ -257,7 +257,7 @@ export default [
     },
     reviews: [
       { stars: 5, date: '2026-09-10', variant: 'beige', helpful: 198, verified: true,
-        en: { name: 'Haru (student)', title: 'Perfect for my tiny room', body: 'Harukawa University student with a very small room. It cooks 1 cup in 35 minutes and the steam tray does gyoza at the same time. I signed up for the Fast Student trial and it came the next day.' },
+        en: { name: 'Haru (student)', title: 'Perfect for my tiny room', body: 'Springvale University student with a very small room. It cooks 1 cup in 35 minutes and the steam tray does gyoza at the same time. I signed up for the Fast Student trial and it came the next day.' },
         ja: { name: 'はる（大学生）', title: '狭い部屋にぴったり', body: '春川大学の学生で、部屋がとても狭いです。1合を35分で炊けて、蒸しトレーで同時に餃子も温められます。Fast Studentの無料体験に登録したら翌日に届きました。' } },
       { stars: 2, date: '2026-08-17', variant: 'beige', helpful: 162, verified: true,
         en: { name: 'Shingo', title: 'Spits starchy water at 3 cups', body: 'At the full 3 cups, starchy water bubbles out of the steam vent and runs down the back. I have to put a towel under it. At 2 cups it is fine, so effectively it is a 2-cup cooker.' },
@@ -395,7 +395,7 @@ export default [
       en: [
         'The Inaho is for people who eat rice every day and want it as good as it gets without a donabe. Pressure raises the boiling point to about 105 °C, so the grains cook right through and come out glossy, sweet and slightly sticky. You can make white rice firmer or softer and more or less sticky, and the cooker remembers the setting for each menu.',
         'Brown rice is where pressure helps most: about 70 minutes, soft enough for children, with no soaking. The 23-minute quick cook is also the fastest of the cookers here. If you like very firm, separate grains, the Komekko IH or a donabe may suit you better: even on the firmest setting, pressure-cooked rice is stickier.',
-        'Choosing a size: the 5.5-cup model cooks 1 to 5.5 cups and suits most households of two to four. The 10-cup model (1.8 L, called "1 shō" in Japanese) is for five or more people, or for cooking a big batch to freeze. It needs at least 2 cups to cook properly, so it is not a good choice for one person, and it is 4 cm taller and 1.5 kg heavier. The 5.5-cup is stocked in Harukawa; the 10-cup ships from a warehouse outside Minori Prefecture.',
+        'Choosing a size: the 5.5-cup model cooks 1 to 5.5 cups and suits most households of two to four. The 10-cup model (1.8 L, called "1 shō" in Japanese) is for five or more people, or for cooking a big batch to freeze. It needs at least 2 cups to cook properly, so it is not a good choice for one person, and it is 4 cm taller and 1.5 kg heavier. The 5.5-cup is stocked in Springvale; the 10-cup ships from a warehouse outside Harvest Prefecture.',
         'Care: after each cook, wash the inner pot, the inner lid, the steam cap and the pressure valve; all come off without tools. If the lid starts to smell of rice, the seal needs a wash. Replace the pressure seal about every two years (Inaho sells it for ¥1,650). At the end of cooking the cooker releases pressure with a short hiss and a puff of steam from the top. At 1,240–1,410 W it should have its own wall socket: sharing a power strip with a kettle can trip the breaker.',
         'Inaho gives a three-year warranty that includes the coating of the inner pot in normal use; damage from metal utensils, scouring pads or the dishwasher is not covered. The voice guide reads out the menu, the texture setting and the minutes left; hold MENU for 3 seconds to change its volume or switch it off.',
       ],
@@ -418,7 +418,7 @@ export default [
           ['Size (W × D × H)', '27 × 33 × 22 cm', '30 × 37 × 26 cm'],
           ['Weight', '5.6 kg', '7.1 kg'],
           ['Price', '¥39,800', '¥44,800'],
-          ['Ships from', 'Marketa Harukawa (HRK1)', 'Marketa warehouse outside Minori'],
+          ['Ships from', 'Marketa Springvale (HRK1)', 'Marketa warehouse outside Harvest'],
         ],
         ja: [
           ['', '5.5合（1.0L）', '1升（1.8L）'],
@@ -452,7 +452,7 @@ export default [
         en: { name: 'Gaku', title: 'The firm setting fixed it for me', body: 'At first it was too sticky, but firmness 5 and stickiness 1 gives exactly the firm rice I like. Give it a week of trying the settings before you decide.' },
         ja: { name: 'がく', title: '硬め設定で解決', body: '最初は粘りが強すぎると思いましたが、硬さ5・粘り1にしたら好みの硬めのごはんになりました。判断する前に1週間ほど設定を試してみてください。' } },
       { stars: 1, date: '2026-05-20', variant: '10', helpful: 63, verified: true,
-        en: { name: 'Ishida', title: 'Arrived with a cracked hinge cover', body: 'The hinge cover was cracked in the box. I sent photos the day it came and Marketa replaced it, but the replacement took three days because the 10-cup ships from outside Minori. The rice is good, but one star for the experience.' },
+        en: { name: 'Ishida', title: 'Arrived with a cracked hinge cover', body: 'The hinge cover was cracked in the box. I sent photos the day it came and Marketa replaced it, but the replacement took three days because the 10-cup ships from outside Harvest. The rice is good, but one star for the experience.' },
         ja: { name: '石田', title: 'ヒンジカバーが割れて届いた', body: '箱を開けたらヒンジカバーが割れていました。届いた日に写真を送りマルケタが交換してくれましたが、1升タイプはみのり県外からの発送なので交換品まで3日かかりました。ごはんはおいしいですが、この経験で星1つ。' } },
       { stars: 3, date: '2026-08-09', variant: '5-5', helpful: 37, verified: true,
         en: { name: 'Sachi', title: 'Great rice, loud hiss', body: 'At the end of cooking it lets the pressure out with a loud hiss and a jet of steam. It scares my cat every time. The rice is excellent.' },
@@ -499,7 +499,7 @@ export default [
     seller: 'kagami',
     images: ['kagami-donabe', 'kagami-donabe-2'],
     title: {
-      en: 'Kagami Kiln Harukawa Ware Donabe Rice Pot with Double Lid, Handmade in Harukawa, Gas Flame Only, 2-gō or 3-gō, Iron Black Glaze or Made-to-Order Amber Glaze',
+      en: 'Kagami Kiln Springvale Ware Donabe Rice Pot with Double Lid, Handmade in Springvale, Gas Flame Only, 2-gō or 3-gō, Iron Black Glaze or Made-to-Order Amber Glaze',
       ja: '鏡窯 春川焼 土鍋 ごはん鍋 二重蓋 手作り 直火（ガス火）専用 2合炊き／3合炊き 黒釉 飴釉（受注生産） 日本製',
     },
     short: { en: 'Kagami Kiln Donabe Rice Pot', ja: '鏡窯 春川焼 ごはん土鍋' },
@@ -521,7 +521,7 @@ export default [
     },
     bullets: {
       en: [
-        'HANDMADE IN HARUKAWA by fourth-generation potter Kagami Sōichi at Kagami Kiln (founded 1891) in the Kamagaoka pottery district, from heat-resistant clay. Each pot varies slightly in glaze and size.',
+        'HANDMADE IN SPRINGVALE by fourth-generation potter Kagami Sōichi at Kagami Kiln (founded 1891) in the Kamagaoka pottery district, from heat-resistant clay. Each pot varies slightly in glaze and size.',
         'DOUBLE LID, NO BOIL-OVER: the inner lid holds the steam in and the heavy outer lid adds light pressure, so you do not need to watch the pot. Rice is ready in about 35 minutes after a 30-minute soak.',
         'GAS FLAME ONLY: for gas hobs and portable gas stoves. Not for IH, electric radiant or halogen hobs, the microwave, the oven or the dishwasher.',
         'SEASON IT BEFORE FIRST USE: simmer rice porridge in the pot for about an hour to seal the clay (medome). Instructions are included; allow an evening.',
@@ -539,14 +539,14 @@ export default [
     },
     specs: {
       en: [
-        ['Maker', 'Kagami Kiln (Kagami Sōichi), Harukawa ware'], ['Capacity', '2-gō: 1–2 cups of rice; 3-gō: 1–3 cups (1 cup = 180 mL)'],
+        ['Maker', 'Kagami Kiln (Kagami Sōichi), Springvale ware'], ['Capacity', '2-gō: 1–2 cups of rice; 3-gō: 1–3 cups (1 cup = 180 mL)'],
         ['Size (diameter × height with lid)', '2-gō: 21 × 15 cm; 3-gō: 24 × 17 cm (handles included)'], ['Weight', '2-gō: about 2.4 kg; 3-gō: about 3.1 kg (with lids)'],
-        ['Material', 'Heat-resistant Harukawa clay with petalite'], ['Glaze', 'Iron black (2-gō, 3-gō); amber (3-gō, made to order)'],
+        ['Material', 'Heat-resistant Springvale clay with petalite'], ['Glaze', 'Iron black (2-gō, 3-gō); amber (3-gō, made to order)'],
         ['Lid', 'Double lid (inner and outer), steam hole in the outer lid'], ['Heat source', 'Gas flame only (gas hob, portable gas stove)'],
         ['Not suitable for', 'IH, electric and halogen hobs, microwave, oven, dishwasher'],
         ['Cooking time', 'Soak 30 min; medium heat about 10–12 min (2-gō) or 12–14 min (3-gō); rest 20 min'],
         ['Before first use', 'Season with rice porridge (medome), about 1 hour plus cooling'], ['Keep warm', 'No heater; stays warm for about 1 hour with the lids on'],
-        ['Made in', 'Japan (Harukawa, Minori Prefecture)'], ['Warranty', 'No manufacturer warranty; breakage in delivery replaced (report within 48 h)'],
+        ['Made in', 'Japan (Springvale, Harvest Prefecture)'], ['Warranty', 'No manufacturer warranty; breakage in delivery replaced (report within 48 h)'],
         ['In the box', 'Pot, inner lid, outer lid, care and recipe leaflet (Japanese and English), gift box'],
       ],
       ja: [
@@ -562,12 +562,12 @@ export default [
       ],
     },
     compare: {
-      en: ['2 or 3 cups (gō)', 'Gas flame (clay pot)', 'None (gas only)', 'Harukawa ware clay, double lid', 'No (stays warm about 1 h)', 'Delivery breakage only'],
+      en: ['2 or 3 cups (gō)', 'Gas flame (clay pot)', 'None (gas only)', 'Springvale ware clay, double lid', 'No (stays warm about 1 h)', 'Delivery breakage only'],
       ja: ['2合／3合', 'ガス火（土鍋）', 'なし（ガス火専用）', '春川焼の土鍋、二重蓋', 'なし（約1時間は温かい）', '配送中の破損のみ'],
     },
     description: {
       en: [
-        'Kagami Kiln has made pots in the Kamagaoka pottery district of Harukawa since 1891. This donabe is thrown and glazed by hand by Kagami Sōichi, the fourth-generation potter, from a heat-resistant clay that takes the heat slowly and spreads it evenly. Rice cooked in it has firm, glossy grains and, if you like, a thin crisp layer of okoge at the bottom.',
+        'Kagami Kiln has made pots in the Kamagaoka pottery district of Springvale since 1891. This donabe is thrown and glazed by hand by Kagami Sōichi, the fourth-generation potter, from a heat-resistant clay that takes the heat slowly and spreads it evenly. Rice cooked in it has firm, glossy grains and, if you like, a thin crisp layer of okoge at the bottom.',
         'How to cook: rinse the rice and soak it in the pot with the water for 30 minutes (20 in summer). Put on both lids and heat over a medium flame for 10–14 minutes, until steam comes steadily out of the hole in the outer lid. Turn off the heat and leave it for 20 minutes without lifting the lid. For okoge, turn the flame up high for the last 30 seconds before switching off.',
         'Before first use, season the pot (medome): fill it 70% with water, add a bowl of cooked rice, simmer on a low flame for about an hour until it becomes porridge, leave it to cool overnight, then discard the porridge, wash and dry. This fills the fine pores of the clay so it does not seep or crack. If water ever seeps through the base, season it again.',
         'Care: gas flame only, never IH or the microwave. Never heat it empty or with the outside wet, do not put a hot pot on a cold or wet surface, and do not pour cold water into it while it is hot. Wash by hand with a soft sponge without soaking, and let the unglazed base dry upside down for a full day (two in the rainy season) before putting it away; storing it damp causes mould. Fine crackle lines in the glaze are normal.',
@@ -639,7 +639,7 @@ export default [
         en: { name: 'Ume', title: 'Glaze differs from the photo', body: 'Mine is more brown than black, with a few tiny pinholes. The kiln explained this is normal for handmade ware. It cooks perfectly, so I am happy with it.' },
         ja: { name: 'うめ', title: '写真と釉薬の色が違う', body: '届いたものは黒というより茶色に近く、小さなピンホールもいくつか。窯元からは手作りならではの個体差との説明でした。炊き上がりは完璧なので満足しています。' } },
       { stars: 5, date: '2026-09-28', variant: '2go', helpful: 9, verified: true,
-        en: { name: 'Camper', title: 'Great on a camping stove', body: 'Used it on a portable gas stove at the Tsukimi campsite. The 2-gō fits well; the 3-gō would cover the gas canister, which the kiln warns against.' },
+        en: { name: 'Camper', title: 'Great on a camping stove', body: 'Used it on a portable gas stove at the Moonview campsite. The 2-gō fits well; the 3-gō would cover the gas canister, which the kiln warns against.' },
         ja: { name: 'キャンパー', title: 'カセットコンロでも活躍', body: '月見のキャンプ場でカセットコンロにのせて使いました。2合ならちょうどよいサイズ。3合だとボンベの上まで覆ってしまうので、窯元も注意を呼びかけています。' } },
     ],
     qa: [

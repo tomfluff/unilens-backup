@@ -1,11 +1,11 @@
 ---
 headline: Kuroda homer sends Seagulls into the final, first place two wins away
-standfirst: Daichi Kuroda's two-run home run in the first inning and two more runs in the seventh beat the Tsukimi Wild Boars 5–3 and clinched the Harukawa Seagulls a place in the Shiokaze League final. Sunday's game has been postponed because of the typhoon.
-caption: The Seagulls in the field at Harukawa Bayside Stadium on Saturday night, in front of 3,412 fans.
+standfirst: Daichi Kuroda's two-run home run in the first inning and two more runs in the seventh beat the Moonview Wild Boars 5–3 and clinched the Springvale Seagulls a place in the Shiokaze League final. Sunday's game has been postponed because of the typhoon.
+caption: The Seagulls in the field at Springvale Bayside Stadium on Saturday night, in front of 3,412 fans.
 ---
-**Update, 11:20, Sunday 4 October:** The Shiokaze League has postponed Sunday's 13:00 game between the Seagulls and the Wild Boars at Harukawa Bayside Stadium because of [Typhoon No. 21](page:live). It will now be played on Tuesday 6 October at 18:00. Tickets for Sunday's game are valid on Tuesday, or can be refunded at the stadium box office until 11 October.
+**Update, 11:20, Sunday 4 October:** The Shiokaze League has postponed Sunday's 13:00 game between the Seagulls and the Wild Boars at Springvale Bayside Stadium because of [Typhoon No. 21](page:live). It will now be played on Tuesday 6 October at 18:00. Tickets for Sunday's game are valid on Tuesday, or can be refunded at the stadium box office until 11 October.
 
-The Harukawa Seagulls are in the Shiokaze League final. Daichi Kuroda hit a two-run home run in the first inning, Takumi Hoshino struck out seven in six innings, and the Seagulls beat the Tsukimi Wild Boars 5–3 at Harukawa Bayside Stadium on Saturday night to make certain of a top-two finish with three games to play.
+The Springvale Seagulls are in the Shiokaze League final. Daichi Kuroda hit a two-run home run in the first inning, Takumi Hoshino struck out seven in six innings, and the Seagulls beat the Moonview Wild Boars 5–3 at Springvale Bayside Stadium on Saturday night to make certain of a top-two finish with three games to play.
 
 The Aogiri Comets, who won 4–1 away at the Nishiura Tritons, have also clinched a place, so the final from 17 October will be the Seagulls against the Comets. What remains to be settled is who finishes first: the first-placed team hosts games one, two and, if needed, five of the best-of-five series. The Seagulls lead the Comets by two games, and their magic number for first place is two.
 
@@ -44,8 +44,8 @@ The Seagulls' remaining games are Tuesday's rearranged home game against the Wil
 Two Seagulls wins, two Comets defeats, or one of each, will secure first place. If the Comets take all three of their games and the Seagulls win only one, the two teams would finish level, and first place would go to the Comets on their head-to-head record this season.
 
 !! The road to the final
-- Tue 6 Oct, 18:00: Seagulls v Tsukimi Wild Boars, Harukawa Bayside Stadium (postponed from 4 Oct)
-- Sat 10 Oct, 13:00: Seagulls v Shiomi Red Crabs, Harukawa Bayside Stadium (moved from 18:00)
+- Tue 6 Oct, 18:00: Seagulls v Moonview Wild Boars, Springvale Bayside Stadium (postponed from 4 Oct)
+- Sat 10 Oct, 13:00: Seagulls v Shiomi Red Crabs, Springvale Bayside Stadium (moved from 18:00)
 - Sun 11 Oct: Aogiri Comets v Seagulls, away
 - Final (best of five): from Sat 17 Oct; the first-placed team hosts games 1, 2 and 5
 

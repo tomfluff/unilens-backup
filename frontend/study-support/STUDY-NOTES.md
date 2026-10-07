@@ -52,7 +52,7 @@ Today on the site is Sunday 4 October 2026. Prices include tax. Paths are under 
 
 ## 7. Shop hours during the Lantern Festival
 
-- **EN:** "Is the Harukawa Central shop open on Sunday evening during the Lantern Festival? Can I sign a new contract at 20:00?"
+- **EN:** "Is the Springvale Central shop open on Sunday evening during the Lantern Festival? Can I sign a new contract at 20:00?"
 - **JA:** 「春川灯籠まつりの日曜の夜、春川中央店は開いていますか？20時に新規契約できますか？」
 - **Where:** `shops/harukawa-central.html` (note, waiting-time table), `news/index.html`, home carousel.
 - **Why interesting:** the general hours, the festival exception and the reception cut-off are in different places.
@@ -96,12 +96,12 @@ Today on the site is Sunday 4 October 2026. Prices include tax. Paths are under 
 - **Why interesting:** the bill is a drawing (SVG), with explanations in a separate list.
 - **Answer:** Family discount (3 lines) −¥1,100 and home internet bundle −¥1,100. Device instalment ¥3,980 (13 of 24); communication charges ¥4,998; total ¥8,978. Paid 28 September 2026 by bank transfer, because the 26th was a Saturday.
 
-## 13. 5G at Tsukimi Onsen
+## 13. 5G at Moonview Spa
 
-- **EN:** "I'm staying at Tsukimi Onsen next week. Will I have 5G, and is any maintenance planned there?"
+- **EN:** "I'm staying at Moonview Spa next week. Will I have 5G, and is any maintenance planned there?"
 - **JA:** 「来週、月見温泉に泊まります。5Gは使えますか？メンテナンスの予定はありますか？」
 - **Where:** `network.html` (coverage map SVG, municipality table), `status.html#maintenance`, `news/maintenance-october-2026.html`.
-- **Answer:** Mostly 4G: Tsukimi Town has 61.2% 5G population coverage (target 80% by March 2027). Network work on Wed 14 October 01:00–05:00 in Tsukimi Town and Shiose Village: breaks of up to 10 minutes, and emergency calls may also be unavailable. Also 5G work along the Kagami Line on 27 October 00:30–05:30.
+- **Answer:** Mostly 4G: Moonview Town has 61.2% 5G population coverage (target 80% by March 2027). Network work on Wed 14 October 01:00–05:00 in Moonview Town and Shiose Village: breaks of up to 10 minutes, and emergency calls may also be unavailable. Also 5G work along the Mirror Line on 27 October 00:30–05:30.
 
 ## 14. A chart without a description
 

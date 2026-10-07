@@ -314,12 +314,12 @@ export const GUIDES = {
   'seasonal-produce': {
     image: null, chartThumb: 'produce-calendar',
     en: {
-      title: 'Seasonal produce calendar for Minori Prefecture', teaser: 'What is in season month by month, from Kagami valley yuzu to Minori Bay oysters.',
+      title: 'Seasonal produce calendar for Harvest Prefecture', teaser: 'What is in season month by month, from Mirror valley yuzu to Harvest Bay oysters.',
       body: [
-        { p: 'Minori Prefecture runs from the warm coast of Minori Bay up to the cool valleys around Mount Tsukimi, so the season for the same vegetable can differ by a few weeks between the coast and the mountains. This calendar is what I see at the Minori Port morning market (Saturdays 6–10 am) and the farm stands along the Kagami Line. The darker bar is the peak: cheapest, tastiest and most plentiful.' },
+        { p: 'Harvest Prefecture runs from the warm coast of Harvest Bay up to the cool valleys around Mount Moonview, so the season for the same vegetable can differ by a few weeks between the coast and the mountains. This calendar is what I see at the Ferry Port morning market (Saturdays 6–10 am) and the farm stands along the Mirror Line. The darker bar is the peak: cheapest, tastiest and most plentiful.' },
         { chart: 'produce-calendar', caption: '' },
         { h: 'What to buy in October' },
-        { ul: ['<strong>Green yuzu</strong>, the last of them: make {{recipe:yuzu-kosho}} before they turn yellow in November.', '<strong>Kabocha</strong>: local kabocha harvested in August is at its sweetest now, after curing. Choose one that feels heavy, with a dry, corky stem.', '<strong>Sweet potatoes</strong> and <strong>chestnuts</strong>: the Lantern Festival stalls sell both roasted.', '<strong>Mushrooms</strong>: log-grown shiitake from the Tsukimi forests start in October; maitake and shimeji are cheap all autumn.', '<strong>New-crop rice</strong> (shinmai): use about 10% less water. See the {{guide:rice-water-ratios}}.', '<strong>Autumn mackerel</strong> (aki-saba) and <strong>Pacific saury</strong> (sanma) at Minori Port; yellowtail (buri) gets fattier from November.'] },
+        { ul: ['<strong>Green yuzu</strong>, the last of them: make {{recipe:yuzu-kosho}} before they turn yellow in November.', '<strong>Kabocha</strong>: local kabocha harvested in August is at its sweetest now, after curing. Choose one that feels heavy, with a dry, corky stem.', '<strong>Sweet potatoes</strong> and <strong>chestnuts</strong>: the Lantern Festival stalls sell both roasted.', '<strong>Mushrooms</strong>: log-grown shiitake from the Moonview forests start in October; maitake and shimeji are cheap all autumn.', '<strong>New-crop rice</strong> (shinmai): use about 10% less water. See the {{guide:rice-water-ratios}}.', '<strong>Autumn mackerel</strong> (aki-saba) and <strong>Pacific saury</strong> (sanma) at Ferry Port; yellowtail (buri) gets fattier from November.'] },
         { tip: 'Late-autumn eggplant (aki-nasu) has fewer seeds and a tighter skin than summer eggplant. There is an old saying that it is too good to give your daughter-in-law.' },
       ],
     },
@@ -499,5 +499,5 @@ export const PRODUCE = [
   ['Pacific saury (sanma)', 'さんま', [9, 11], [10, 10]],
   ['Mackerel (saba)', 'さば', [10, 2], [11, 1]],
   ['Yellowtail (buri)', 'ぶり', [11, 3], [12, 2]],
-  ['Minori Bay oysters', 'みのり湾のかき', [11, 3], [1, 2]],
+  ['Harvest Bay oysters', 'みのり湾のかき', [11, 3], [1, 2]],
 ];

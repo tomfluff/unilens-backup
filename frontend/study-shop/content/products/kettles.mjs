@@ -97,7 +97,7 @@ export default [
         en: { name: 'Daisuke M.', title: 'The outside gets dangerously hot', body: 'It boils fast, but the whole body is too hot to touch for about five minutes afterwards. I brushed it with my wrist and got a red mark. The description does say single wall, but the photos make it look like the double-wall kind. With kids in the house I returned it and bought the Hearth double-wall one, which costs ¥1,000 more and stays warm, not hot.' },
         ja: { name: 'だいすけ', title: '外側がかなり熱くなります', body: '沸くのは速いですが、沸騰後5分くらいは本体全体が触れないほど熱いです。手首が当たって赤くなりました。説明にはシングル構造と書いてありますが、写真だと二重構造に見えます。子どもがいるので返品し、1,000円ほど高いハースの二重構造タイプに買い替えました。そちらは温かい程度で済みます。' } },
       { stars: 4, date: '2026-09-02', variant: 'black', helpful: 96, verified: true,
-        en: { name: 'Mina', title: 'Black finish shows water spots', body: 'Good kettle, and the matte black looks great on the counter for the first day. After that every drip and fingerprint shows. I wipe it daily. Took three days to arrive because black was not in the Harukawa warehouse; silver would have come the next day.' },
+        en: { name: 'Mina', title: 'Black finish shows water spots', body: 'Good kettle, and the matte black looks great on the counter for the first day. After that every drip and fingerprint shows. I wipe it daily. Took three days to arrive because black was not in the Springvale warehouse; silver would have come the next day.' },
         ja: { name: 'みな', title: 'ブラックは水滴の跡が目立ちます', body: 'ケトルとしては満足。マットブラックは置いた初日はとても素敵ですが、その後は水滴や指紋がすべて目立ちます。毎日拭いています。ブラックは春川の倉庫に在庫がなかったようで届くまで3日かかりました。シルバーなら翌日だったそうです。' } },
       { stars: 1, date: '2026-07-14', variant: 'silver', helpful: 152, verified: true,
         en: { name: 'H. Ono', title: 'Lid hinge snapped after five months', body: 'The plastic inner part of the lid hinge cracked and now the lid will not stay closed, so it never switches off by itself because the steam does not reach the sensor. Corvo replaced it under the 1-year warranty, but it took 12 days and I had to send photos twice.' },
@@ -115,7 +115,7 @@ export default [
         en: { name: 'Aya K.', title: 'Bought with the coupon, great deal', body: 'Clipped the ¥300 coupon, so it was under ¥4,000 for the black one. Quick to boil, easy to clean, no complaints so far after three weeks.' },
         ja: { name: 'あや', title: 'クーポンでお得に購入', body: '300円クーポンを使ってブラックが4,000円以下でした。沸くのが速く、手入れも簡単。3週間使って不満はありません。' } },
       { stars: 2, date: '2026-04-03', variant: 'silver', helpful: 88, verified: true,
-        en: { name: 'Shun', title: 'Limescale in two weeks with hard water', body: 'Our water at Tsukimi Onsen is very hard and the bottom turned white in two weeks. Citric acid cleans it, but the plate is not flat so the white collects around the edge. Not the kettle\'s fault exactly, but a concealed element would help.' },
+        en: { name: 'Shun', title: 'Limescale in two weeks with hard water', body: 'Our water at Moonview Spa is very hard and the bottom turned white in two weeks. Citric acid cleans it, but the plate is not flat so the white collects around the edge. Not the kettle\'s fault exactly, but a concealed element would help.' },
         ja: { name: 'しゅん', title: '硬水だと2週間で水あか', body: '月見温泉の水はかなり硬く、2週間で底が白くなりました。クエン酸で落ちますが、底が平らでないので縁に白い汚れがたまります。ケトルのせいとは言い切れませんが、ヒーター隠蔽型なら良かったです。' } },
       { stars: 4, date: '2026-08-08', variant: 'silver', helpful: 19, verified: true,
         en: { name: 'Yuki', title: 'Arrived next day as promised', body: 'Ordered at 13:30 on a Sunday with Marketa Fast and it came the next evening. Works well. Minus one star because there is no water window.' },
@@ -234,7 +234,7 @@ export default [
         en: { name: 'Kenji', title: 'No drips at all on mine', body: 'I read the reviews about dripping and was worried, but mine pours cleanly even when full. Press the lid down until it clicks at both the front and the back; if it only clicks at the front, it leaks. Big, cheap, works.' },
         ja: { name: 'けんじ', title: 'うちのは全く垂れません', body: '水漏れのレビューを読んで心配でしたが、満水でもきれいに注げます。ふたは前と後ろの両方でカチッと鳴るまで押し込むこと。前だけだと漏れます。大きくて安くて、ちゃんと使えます。' } },
       { stars: 2, date: '2026-07-30', variant: 'infuser', helpful: 119, verified: true,
-        en: { name: 'Sayaka', title: 'The glass shows every bit of limescale', body: 'Our water in Tsukimi Onsen is hard, and within ten days the glass had a cloudy white ring and spots. You have to descale with citric acid every week to keep it looking like the photos. The infuser is nice for loose tea, but tea stains the glass as well.' },
+        en: { name: 'Sayaka', title: 'The glass shows every bit of limescale', body: 'Our water in Moonview Spa is hard, and within ten days the glass had a cloudy white ring and spots. You have to descale with citric acid every week to keep it looking like the photos. The infuser is nice for loose tea, but tea stains the glass as well.' },
         ja: { name: 'さやか', title: 'ガラスだと水あかが全部見える', body: '月見温泉の水は硬水で、10日ほどでガラスに白い輪と斑点ができました。写真のような見た目を保つには毎週クエン酸で洗う必要があります。茶こしはリーフティーに便利ですが、ガラスに茶渋も付きます。' } },
       { stars: 3, date: '2026-09-08', variant: 'standard', helpful: 64, verified: true,
         en: { name: 'Mari O.', title: 'Fine, but slow and heavy when full', body: 'A full kettle takes about six minutes. My old 1.0 L Corvo was much quicker for a single cup. Full, this one weighs almost 3 kg and is hard to lift with one hand. Good if you really need the volume.' },
@@ -260,7 +260,7 @@ export default [
     ],
     qa: [
       { date: '2026-06-20', votes: 12,
-        en: { q: 'How long does delivery to Harukawa take?', a: 'Mine came in two days, so I think it ships from the Marketa warehouse at Minori Port.', by: 'Marketa customer (Jun)' },
+        en: { q: 'How long does delivery to Springvale take?', a: 'Mine came in two days, so I think it ships from the Marketa warehouse at Ferry Port.', by: 'Marketa customer (Jun)' },
         ja: { q: '春川市まで何日くらいで届きますか？', a: '私は2日で届いたので、みのり港のマルケタ倉庫から発送されていると思います。', by: 'マルケタ購入者（じゅん）' } },
       { date: '2026-08-03', votes: 37,
         en: { q: 'Is this eligible for Marketa Fast next-day delivery?', a: 'No. We ship every order from our own warehouse in Kobe within 1–3 days, and delivery takes 4–8 days in total with free shipping. Marketa Fast benefits do not apply to this item.', by: 'BrightDeal Trading (seller)' },
@@ -313,7 +313,7 @@ export default [
         'HOLDS THE TEMPERATURE FOR 60 MINUTES: press HOLD and it keeps your setting for up to an hour (at 100 °C it holds about 97 °C). Lift it off the base and put it back within 2 minutes and it carries on.',
         'BUILT-IN BREW TIMER: the display counts up from 0:00 when you press the timer button, so you can time the bloom and the pour without your phone.',
         'SMALLER, GENTLER HEATER: 1,000 W boils 0.6 L in about 3 min 10 s. The body is single-wall stainless steel with a matte coating and gets hot; the handle stays cool.',
-        '2-YEAR WARRANTY from Tetsuyu. Matte Black and Matte White are identical apart from colour; black is stocked in Harukawa, white ships from a warehouse outside Minori Prefecture.',
+        '2-YEAR WARRANTY from Tetsuyu. Matte Black and Matte White are identical apart from colour; black is stocked in Springvale, white ships from a warehouse outside Harvest Prefecture.',
       ],
       ja: [
         '【1℃単位で温度設定】ベースのボタンで40〜100℃を1℃刻みで設定。ハンドドリップ（90〜96℃）、緑茶（70〜80℃）、玉露（50〜60℃）、ミルク作り（70℃）に。ディスプレイに現在の温度と設定温度を表示します。',
@@ -455,7 +455,7 @@ export default [
         'KEEPS WARM FOR 30 MINUTES: press KEEP WARM after choosing a temperature and it holds it for 30 minutes, then switches off.',
         'TIP-OVER SPILL PROTECTION: with the lid locked, a valve in the spout limits the spill to about 50 mL if the kettle is knocked over. Also auto shut-off, boil-dry protection and lift-off shut-off.',
         'WATER WINDOW: a window on the side shows the water level, so you can fill it without opening the lid.',
-        'TWO SIZES, CREAM ONLY: 1.2 L (about 6 mugs) is stocked in Harukawa; 1.5 L (about 8 mugs) ships from a warehouse outside Minori Prefecture. 1-year warranty.',
+        'TWO SIZES, CREAM ONLY: 1.2 L (about 6 mugs) is stocked in Springvale; 1.5 L (about 8 mugs) ships from a warehouse outside Harvest Prefecture. 1-year warranty.',
       ],
       ja: [
         '【本体が熱くなりにくい二重構造】内側はステンレス、外側はクリーム色の樹脂で、間に空気の層があります。沸騰後も側面は約45℃と、触れても熱くなりにくい設計で、小さなお子さまのいるご家庭にも安心です。ふたと注ぎ口は熱くなります。',
@@ -496,7 +496,7 @@ export default [
       en: [
         'The Hearth is the kettle to choose if you want something safe to leave on a family kitchen counter. Its double wall keeps the sides at around 45 °C after boiling, warm but not painful, and if a child pulls it over with the lid locked, a valve in the spout lets out only about 50 mL instead of the whole kettle. The lid and the spout are not insulated and do get hot.',
         'Five buttons on top of the handle choose 60, 70, 80, 90 or 100 °C, and a small light shows which one is on. It beeps once when you press a button and three times when the water is ready; the beeps cannot be switched off. Press KEEP WARM afterwards to hold that temperature for 30 minutes, after which it switches off. The presets cover most tea and coffee, but they are 10 °C apart and accurate to about ±3 °C: if you want 92 °C for pour-over coffee or exactly 55 °C for gyokuro, the Tetsuyu Gooseneck sets 1 °C steps.',
-        'The two sizes are the same kettle at different heights. The 1.2 L makes about six mugs and suits one to three people; the 1.5 L makes about eight and suits a bigger family or a jug of barley tea, but it is 23.5 cm tall and may hit a low cupboard when the lid opens. The 1.2 L is stocked at Marketa\'s Harukawa warehouse and can arrive next day; the 1.5 L ships from a warehouse outside Minori Prefecture and takes about three days.',
+        'The two sizes are the same kettle at different heights. The 1.2 L makes about six mugs and suits one to three people; the 1.5 L makes about eight and suits a bigger family or a jug of barley tea, but it is 23.5 cm tall and may hit a low cupboard when the lid opens. The 1.2 L is stocked at Marketa\'s Springvale warehouse and can arrive next day; the 1.5 L ships from a warehouse outside Harvest Prefecture and takes about three days.',
         'The water touches stainless steel, the silicone lid seal and the inside of the resin water window. The window marks are printed in light grey on the cream body, which some people find hard to read; with the lid open the level is easier to see from above. Descale monthly with citric acid (1 tablespoon in 1.0 L, boil, leave for an hour and rinse). Hearth covers the kettle and base for one year.',
       ],
       ja: [
@@ -515,7 +515,7 @@ export default [
           ['Size (W × D × H)', '22 × 15.5 × 21 cm', '23 × 16 × 23.5 cm'],
           ['Weight (kettle only)', '1.1 kg', '1.25 kg'],
           ['Price', '¥4,980', '¥5,480'],
-          ['Ships from', 'Marketa Harukawa (HRK1), next day possible', 'Marketa warehouse outside Minori, about 3 days'],
+          ['Ships from', 'Marketa Springvale (HRK1), next day possible', 'Marketa warehouse outside Harvest, about 3 days'],
         ],
         ja: [
           ['', '1.2L', '1.5L'],
@@ -567,7 +567,7 @@ export default [
     ],
     qa: [
       { date: '2026-09-27', votes: 26,
-        en: { q: 'Will the 1.5 L arrive next day like the 1.2 L?', a: 'No. When I ordered, the 1.2 L showed next-day delivery, but the 1.5 L came from a warehouse outside Minori and took three days even with Marketa Fast.', by: 'Marketa customer (Chika)' },
+        en: { q: 'Will the 1.5 L arrive next day like the 1.2 L?', a: 'No. When I ordered, the 1.2 L showed next-day delivery, but the 1.5 L came from a warehouse outside Harvest and took three days even with Marketa Fast.', by: 'Marketa customer (Chika)' },
         ja: { q: '1.5Lも1.2Lのように翌日届きますか？', a: 'いいえ。私が注文したときは1.2Lは翌日配送でしたが、1.5Lはみのり県外の倉庫からの発送で、マルケタFast会員でも3日かかりました。', by: 'マルケタ購入者（ちか）' } },
       { date: '2026-03-14', votes: 7,
         en: { q: 'Is the inside plastic?', a: 'I think the whole kettle is plastic. It feels very light.', by: 'Marketa customer (Ken)' },

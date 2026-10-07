@@ -3,7 +3,7 @@
 
 export const UI = {
   en: {
-    siteName: 'Daily Table', tagline: 'Home cooking from Harukawa, tested in a real family kitchen',
+    siteName: 'Daily Table', tagline: 'Home cooking from Springvale, tested in a real family kitchen',
     langName: '日本語', home: 'Home', recipes: 'Recipes', allRecipes: 'All recipes', collections: 'Collections', guides: 'Guides',
     mealPlan: 'Meal plan', shoppingList: 'Shopping list', about: 'About', search: 'Search', searchPlaceholder: 'Search recipes, ingredients…',
     saved: 'Shopping list', menu: 'Menu',
@@ -26,7 +26,7 @@ export const UI = {
     related: 'You might also like', moreIn: 'More', recipeBy: 'Recipe by',
     n: { calories: 'Calories', carbs: 'Carbohydrates', protein: 'Protein', fat: 'Fat', satFat: 'Saturated fat', cholesterol: 'Cholesterol', sodium: 'Sodium', fiber: 'Fiber', sugar: 'Sugar' },
     diets: { vegetarian: 'Vegetarian', vegan: 'Vegan', 'gluten-free': 'Gluten-free', 'dairy-free': 'Dairy-free', pescatarian: 'Pescatarian' },
-    cuisines: { japanese: 'Japanese', harukawa: 'Harukawa (local)', western: 'Western', fusion: 'Fusion' },
+    cuisines: { japanese: 'Japanese', harukawa: 'Springvale (local)', western: 'Western', fusion: 'Fusion' },
     difficulties: { easy: 'Easy', medium: 'Medium', hard: 'Hard' },
     courses: { main: 'Main course', side: 'Side dish', soup: 'Soup', rice: 'Rice', noodles: 'Noodles & pasta', dessert: 'Dessert', bread: 'Bread', snack: 'Snack', condiment: 'Condiment' },
     defaultUnit: 'servings', ad: 'Advertisement', adClose: 'Close ad',
@@ -35,7 +35,7 @@ export const UI = {
     emailPlaceholder: 'Your email address', subscribe: 'Subscribe', noThanks: 'No thanks', subscribed: 'Thanks! Check your inbox to confirm.',
     cookieText: 'We use cookies to remember your settings, measure traffic and show ads. See our <a href="/en/about.html#privacy">privacy policy</a>.',
     cookieAccept: 'Accept all', cookieSettings: 'Settings',
-    authorCardTitle: 'Hi, I\'m Natsuki!', authorCardText: 'Former school-lunch nutritionist, mum of two, and the cook behind Daily Table. I write the recipes my family actually eats in Harukawa.',
+    authorCardTitle: 'Hi, I\'m Natsuki!', authorCardText: 'Former school-lunch nutritionist, mum of two, and the cook behind Daily Table. I write the recipes my family actually eats in Springvale.',
     readMore: 'Read more', popular: 'Popular this week', viewAll: 'View all', min: 'min',
     breadcrumbHome: 'Home', searchTitle: 'Search recipes', results: 'results', noResults: 'No recipes match. Try fewer filters or another word.',
     filterTime: 'Total time', filterDiet: 'Diet', filterCuisine: 'Cuisine', filterDifficulty: 'Difficulty', filterType: 'Show', any: 'Any',
@@ -93,8 +93,8 @@ export const UI = {
 };
 
 export const CATEGORIES = {
-  japanese: { image: 'nikujaga', en: { name: 'Japanese home cooking', text: 'The everyday Japanese dishes we eat at home: simmered dishes, rice, eggs and fish, the way my grandmother Fumi made them in Tsukimi Onsen, adjusted for a busy family kitchen.' }, ja: { name: '和食・家庭料理', text: '煮物、ごはんもの、卵料理、魚料理。月見温泉の祖母ふみの味を、忙しい家庭でも作りやすいように整えた、毎日の和食です。' } },
-  harukawa: { image: 'minato-nabe', en: { name: 'Harukawa specialities', text: 'Dishes from our corner of Minori Prefecture: fishermen\'s stews from Minori Port, yuzu from the Kagami valley, and the snacks sold at the Lantern Festival stalls.' }, ja: { name: '春川の郷土料理', text: 'みのり港の漁師鍋、鏡川流域のゆず、灯籠まつりの屋台の味。みのり県・春川ならではの料理を集めました。' } },
+  japanese: { image: 'nikujaga', en: { name: 'Japanese home cooking', text: 'The everyday Japanese dishes we eat at home: simmered dishes, rice, eggs and fish, the way my grandmother Fumi made them in Moonview Spa, adjusted for a busy family kitchen.' }, ja: { name: '和食・家庭料理', text: '煮物、ごはんもの、卵料理、魚料理。月見温泉の祖母ふみの味を、忙しい家庭でも作りやすいように整えた、毎日の和食です。' } },
+  harukawa: { image: 'minato-nabe', en: { name: 'Springvale specialities', text: 'Dishes from our corner of Harvest Prefecture: fishermen\'s stews from Ferry Port, yuzu from the Mirror valley, and the snacks sold at the Lantern Festival stalls.' }, ja: { name: '春川の郷土料理', text: 'みのり港の漁師鍋、鏡川流域のゆず、灯籠まつりの屋台の味。みのり県・春川ならではの料理を集めました。' } },
   western: { image: 'beef-stew', en: { name: 'Western & yōshoku', text: 'Western dishes as Japanese home cooks make them, yōshoku: hamburg steak, beef stew and creamy soups, rich but never heavy.' }, ja: { name: '洋食', text: 'ハンバーグ、ビーフシチュー、ポタージュ。家庭で作る、ほっとする洋食のレシピです。' } },
   weeknight: { image: 'ginger-pork', en: { name: 'Quick weeknight', text: 'Dinners on the table in about 30 minutes, with one pan and ingredients from an ordinary supermarket.' }, ja: { name: '平日のスピードごはん', text: '30分前後で作れる晩ごはん。フライパンひとつ、近所のスーパーでそろう材料で作れます。' } },
   baking: { image: 'milk-bread', en: { name: 'Baking & desserts', text: 'Soft bread, simple cakes and Japanese sweets, written with grams and cups and tested by Kenta, our former baker.' }, ja: { name: 'お菓子・パン', text: 'ふんわり食パン、素朴なケーキ、和のおやつ。元パン職人の森健太がグラムとカップの両方で試作しています。' } },
@@ -109,17 +109,17 @@ export const COLLECTIONS = {
   },
   'cooking-for-two': {
     image: 'oyakodon', pick: (r) => r.servings === 2,
-    en: { name: 'Cooking for two', teaser: 'Recipes written for two, with no half-onion left over.', intro: ['When the children are at their grandparents\' in Tsukimi Onsen, Daisuke and I cook for two, and I learned that halving a family recipe rarely works: sauces reduce too fast in a big pan and you end up with half an egg.', 'These recipes are written for two servings from the start. Use the servings scaler on any recipe card if you want to cook for one (the timings stay the same, but use a smaller pan).'], tips: ['A 20 cm frying pan is the right size for two portions of most stir-fries.', 'Freeze leftover sliced meat flat in a freezer bag; it thaws in 15 minutes in cold water.', 'Leftover half onions keep 4–5 days wrapped in the fridge, and go straight into miso soup.'] },
+    en: { name: 'Cooking for two', teaser: 'Recipes written for two, with no half-onion left over.', intro: ['When the children are at their grandparents\' in Moonview Spa, Daisuke and I cook for two, and I learned that halving a family recipe rarely works: sauces reduce too fast in a big pan and you end up with half an egg.', 'These recipes are written for two servings from the start. Use the servings scaler on any recipe card if you want to cook for one (the timings stay the same, but use a smaller pan).'], tips: ['A 20 cm frying pan is the right size for two portions of most stir-fries.', 'Freeze leftover sliced meat flat in a freezer bag; it thaws in 15 minutes in cold water.', 'Leftover half onions keep 4–5 days wrapped in the fridge, and go straight into miso soup.'] },
     ja: { name: '2人分のごはん', teaser: '最初から2人分で書いたレシピ。中途半端に余る材料なし。', intro: ['子どもたちが月見温泉の祖父母の家に泊まりに行く日は、夫の大輔と2人分の料理。家族分のレシピを半分にすると、大きな鍋で煮汁が早く煮詰まったり、卵が半端に余ったりと、意外とうまくいきません。', 'ここに集めたのは、最初から2人分で考えたレシピです。1人分にしたいときはレシピカードの分量調整を使ってください（加熱時間はそのまま、小さめの鍋で）。'], tips: ['炒め物の2人分には直径20cmのフライパンがちょうどいい大きさです。', '余った薄切り肉は保存袋に平らに入れて冷凍。冷水につければ15分で解凍できます。', '残った玉ねぎ半分はラップで包んで冷蔵庫で4〜5日。みそ汁の具にどうぞ。'] },
   },
   'lantern-festival-snacks': {
     image: 'chochin-dango', slugs: ['chochin-dango', 'chicken-karaage', 'daigaku-imo', 'tamagoyaki', 'kinoko-takikomi-gohan', 'yuzu-pound-cake'],
-    en: { name: 'Lantern Festival snacks', teaser: 'Stall favourites to make at home for the riverside picnic.', intro: ['On the second weekend of October the whole of Harukawa walks down to the Kagami River for the Lantern Festival. This year it is Saturday 10 and Sunday 11 October, and the lanterns are floated at 6:30 pm on the Sunday. The stalls along the riverbank sell glazed dango, karaage in paper cones and candied sweet potatoes, and the queues are long.', 'We take a picnic box and buy one or two things from the stalls. These are the recipes that go in our box: they are good at room temperature and travel well.'], tips: ['Pack fried food only after it has cooled completely, or it steams and goes soft.', 'Dango harden as they cool: make them no more than 4–5 hours before you eat them.', 'Mushroom rice makes excellent onigiri; wet your hands and salt them lightly before shaping.', 'Evenings by the river are cold in October (about 14°C at 8 pm). Bring a flask of hot tea.'] },
+    en: { name: 'Lantern Festival snacks', teaser: 'Stall favourites to make at home for the riverside picnic.', intro: ['On the second weekend of October the whole of Springvale walks down to the Mirror River for the Lantern Festival. This year it is Saturday 10 and Sunday 11 October, and the lanterns are floated at 6:30 pm on the Sunday. The stalls along the riverbank sell glazed dango, karaage in paper cones and candied sweet potatoes, and the queues are long.', 'We take a picnic box and buy one or two things from the stalls. These are the recipes that go in our box: they are good at room temperature and travel well.'], tips: ['Pack fried food only after it has cooled completely, or it steams and goes soft.', 'Dango harden as they cool: make them no more than 4–5 hours before you eat them.', 'Mushroom rice makes excellent onigiri; wet your hands and salt them lightly before shaping.', 'Evenings by the river are cold in October (about 14°C at 8 pm). Bring a flask of hot tea.'] },
     ja: { name: '灯籠まつりのおやつ', teaser: '屋台の人気メニューを家で。川べりのピクニックに。', intro: ['10月の第2週末、春川の人はみんな鏡川へ灯籠まつりに出かけます。今年は10月10日（土）・11日（日）。灯籠流しは日曜日の18時30分からです。川沿いには、みたらしだんご、紙コップの唐揚げ、大学いもの屋台が並び、どこも長い行列です。', 'わが家はお弁当を持って行き、屋台では1〜2品だけ買います。ここに集めたのは、わが家のお弁当箱に入るレシピ。常温でもおいしく、持ち運びにも向いています。'], tips: ['揚げ物は完全に冷ましてから詰めること。温かいうちに詰めると蒸れてべちゃっとします。', 'だんごは冷めると固くなるので、食べる4〜5時間前までに作りましょう。', 'きのこの炊き込みご飯はおにぎりにぴったり。手を水でぬらし、塩を少しつけてにぎります。', '10月の夜の川べりは冷えます（20時で14℃前後）。温かいお茶を水筒にどうぞ。'] },
   },
   'yuzu-season': {
     image: 'yuzu-miso-salmon', slugs: ['yuzu-kosho', 'yuzu-miso-salmon', 'yuzu-pound-cake', 'minato-nabe', 'chochin-dango', 'wafu-mushroom-pasta'],
-    en: { name: 'Yuzu season', teaser: 'Green yuzu in early autumn, yellow yuzu from November.', intro: ['Harukawa yuzu grow in the Kagami valley below Mount Tsukimi. In September and October the fruit is still green, sharp and fragrant, perfect for yuzu kosho. From November it turns yellow and juicy, and the farm stands along the Kagami Line sell bags of ten for about ¥500.', 'One yuzu gives about 1 tablespoon of juice and 1 teaspoon of packed zest. If you cannot find yuzu, use a mix of lemon and lime juice (half each) with a little mandarin zest.'], tips: ['Zest before you juice: it is almost impossible the other way round.', 'Freeze whole yuzu in a bag; grate the zest straight from frozen.', 'Use only the coloured part of the peel; the white pith is bitter.'] },
+    en: { name: 'Yuzu season', teaser: 'Green yuzu in early autumn, yellow yuzu from November.', intro: ['Springvale yuzu grow in the Mirror valley below Mount Moonview. In September and October the fruit is still green, sharp and fragrant, perfect for yuzu kosho. From November it turns yellow and juicy, and the farm stands along the Mirror Line sell bags of ten for about ¥500.', 'One yuzu gives about 1 tablespoon of juice and 1 teaspoon of packed zest. If you cannot find yuzu, use a mix of lemon and lime juice (half each) with a little mandarin zest.'], tips: ['Zest before you juice: it is almost impossible the other way round.', 'Freeze whole yuzu in a bag; grate the zest straight from frozen.', 'Use only the coloured part of the peel; the white pith is bitter.'] },
     ja: { name: 'ゆずの季節', teaser: '初秋は青ゆず、11月からは黄ゆず。', intro: ['春川のゆずは、月見山のふもと、鏡川の谷で育ちます。9月から10月は青ゆずの季節。香りが鋭く、ゆずこしょうにぴったりです。11月になると黄色く色づいて果汁もたっぷり。鏡線沿いの直売所では10個入りが500円ほどで並びます。', 'ゆず1個から、果汁は大さじ1ほど、皮のすりおろしは小さじ1ほど取れます。手に入らないときは、レモンとライムの果汁を半量ずつ混ぜ、みかんの皮を少し加えると近い香りになります。'], tips: ['皮をすりおろしてから果汁をしぼること。逆の順番だとほぼ無理です。', 'ゆずは丸ごと保存袋に入れて冷凍。凍ったまま皮をすりおろせます。', '使うのは色のついた表皮だけ。白いわたは苦みが出ます。'] },
   },
   'make-ahead-autumn': {
@@ -131,9 +131,9 @@ export const COLLECTIONS = {
 
 // Ads between paragraphs and in the sidebar. Fictional advertisers from the shared world.
 export const ADS = [
-  { kind: 'pottery', en: { title: 'Harukawa Ware Autumn Kiln Market', text: '120 potters · 17–18 Oct · Harukawa Castle grounds', cta: 'Plan your visit' }, ja: { title: '春川焼 秋の窯元市', text: '窯元120軒・10月17日〜18日・春川城跡広場', cta: '詳しく見る' } },
+  { kind: 'pottery', en: { title: 'Springvale Ware Autumn Kiln Market', text: '120 potters · 17–18 Oct · Springvale Castle grounds', cta: 'Plan your visit' }, ja: { title: '春川焼 秋の窯元市', text: '窯元120軒・10月17日〜18日・春川城跡広場', cta: '詳しく見る' } },
   { kind: 'market', en: { title: 'Marketa Kitchen Week', text: 'Up to 30% off knives, pans and donabe. Free delivery over ¥3,000.', cta: 'Shop now' }, ja: { title: 'マルケタ キッチンウィーク', text: '包丁・フライパン・土鍋が最大30%OFF。3,000円以上で送料無料', cta: '今すぐチェック' } },
-  { kind: 'onsen', en: { title: 'Autumn leaves at Tsukimi Onsen', text: 'Ride the limited express Tsukikage. Stay & dine plans from ¥14,800.', cta: 'See plans' }, ja: { title: '紅葉の月見温泉へ', text: '特急「月影」で行く、1泊2食付きプラン 14,800円から', cta: 'プランを見る' } },
+  { kind: 'onsen', en: { title: 'Autumn leaves at Moonview Spa', text: 'Ride the limited express Comet. Stay & dine plans from ¥14,800.', cta: 'See plans' }, ja: { title: '紅葉の月見温泉へ', text: '特急「月影」で行く、1泊2食付きプラン 14,800円から', cta: 'プランを見る' } },
   { kind: 'mobile', en: { title: 'Kumo Mobile Family Plan', text: 'Add a line for ¥990/month. Recipes load fast in your kitchen.', cta: 'Learn more' }, ja: { title: 'クモモバイル 家族割', text: '2回線目から月額990円。キッチンでもレシピがサクサク。', cta: '詳しくはこちら' } },
 ];
 
@@ -146,8 +146,8 @@ export const HOME = {
     ],
     seasonalTitle: 'Fresh this autumn', seasonalText: 'Kabocha, mushrooms, sweet potatoes and the first yuzu of the year.',
     categoriesTitle: 'Browse by category', collectionsTitle: 'Collections', guidesTitle: 'Cooking guides',
-    aboutTitle: 'From my kitchen in Harukawa',
-    aboutText: 'I\'m Natsuki. For nine years I planned school lunches for 600 children in Harukawa; now I write the recipes my own family eats. Every recipe here is tested at least three times, written in grams and cups, and checked by Kenta, our former baker.',
+    aboutTitle: 'From my kitchen in Springvale',
+    aboutText: 'I\'m Natsuki. For nine years I planned school lunches for 600 children in Springvale; now I write the recipes my own family eats. Every recipe here is tested at least three times, written in grams and cups, and checked by Kenta, our former baker.',
     planTitle: 'This week\'s meal plan', planText: 'Seven dinners for the week of 5 October, with one shopping list and a prep-ahead plan.',
   },
   ja: {
@@ -173,10 +173,10 @@ export const MEAL_PLAN = {
     { day: { en: 'Wed 7 Oct', ja: '10/7（水）' }, recipe: 'sheet-pan-miso-chicken', side: { en: 'Spinach with sesame dressing', ja: 'ほうれん草のごま和え' }, lunch: { en: 'Miso chicken and kabocha (cook 2 extra thighs)', ja: '鶏とかぼちゃの味噌焼き（2枚多めに焼く）' }, prep: { en: 'Make the kabocha pudding after dinner; it needs 4 hours in the fridge.', ja: '夕食後にかぼちゃプリンを作る（冷蔵庫で4時間）' }, active: 25, cost: 1620 },
     { day: { en: 'Thu 8 Oct', ja: '10/8（木）' }, recipe: 'wafu-mushroom-pasta', side: { en: 'Green salad; kabocha pudding for dessert', ja: 'グリーンサラダ、デザートにかぼちゃプリン' }, lunch: { en: 'Miso chicken leftovers', ja: '味噌焼きの残り' }, prep: { en: 'Buy double mushrooms: half go into Friday\'s rice.', ja: 'きのこは2倍買う（半分は金曜日の炊き込みご飯に）' }, active: 20, cost: 980 },
     { day: { en: 'Fri 9 Oct', ja: '10/9（金）' }, recipe: 'saba-misoni', side: { en: 'Autumn mushroom rice, miso soup', ja: 'きのこの炊き込みご飯、みそ汁' }, lunch: { en: 'Mushroom rice onigiri', ja: 'きのこご飯のおにぎり' }, prep: { en: 'Soak the rice for 30 minutes before cooking; make 4 extra onigiri for Saturday.', ja: '米は30分浸水。土曜日用におにぎりを4個多めに' }, active: 35, cost: 1460 },
-    { day: { en: 'Sat 10 Oct', ja: '10/10（土）' }, recipe: 'chochin-dango', side: { en: 'Chicken karaage and tamagoyaki for the festival picnic', ja: 'まつり弁当に唐揚げと卵焼き' }, lunch: { en: 'Minori Port morning market (6–10 am): buy yellowtail for Sunday', ja: 'みのり港朝市（6〜10時）で日曜日用のぶりを買う' }, prep: { en: 'Marinate the karaage at noon; make the dango no earlier than 1 pm.', ja: '唐揚げは正午に下味。だんごは13時以降に作る' }, active: 70, cost: 2150 },
+    { day: { en: 'Sat 10 Oct', ja: '10/10（土）' }, recipe: 'chochin-dango', side: { en: 'Chicken karaage and tamagoyaki for the festival picnic', ja: 'まつり弁当に唐揚げと卵焼き' }, lunch: { en: 'Ferry Port morning market (6–10 am): buy yellowtail for Sunday', ja: 'みのり港朝市（6〜10時）で日曜日用のぶりを買う' }, prep: { en: 'Marinate the karaage at noon; make the dango no earlier than 1 pm.', ja: '唐揚げは正午に下味。だんごは13時以降に作る' }, active: 70, cost: 2150 },
     { day: { en: 'Sun 11 Oct', ja: '10/11（日）' }, recipe: 'minato-nabe', side: { en: 'Udon to finish the pot, yuzu kosho', ja: 'しめのうどん、ゆずこしょう' }, lunch: { en: 'Lantern floating at 6:30 pm: eat early, at 5 pm', ja: '灯籠流しは18時30分。夕食は早めの17時に' }, prep: { en: 'Make the broth in the morning; add the fish just before eating.', ja: '朝のうちに煮汁を作り、魚は食べる直前に入れる' }, active: 45, cost: 2480 },
   ],
-  en: { title: 'Weekly meal plan', intro: 'Seven family dinners for the week of the Lantern Festival, planned so that one cooking session feeds the next: extra chicken on Wednesday becomes Thursday\'s lunchboxes, double mushrooms on Thursday go into Friday\'s rice, and Saturday\'s market trip buys Sunday\'s fish. Prices are what I paid at the Harukawa Central supermarket for a family of four (two adults, two children).', cols: ['Day', 'Dinner', 'Side & extras', 'Lunchbox / plans', 'Prep ahead', 'Active time', 'Est. cost'], totals: 'Week total', addAll: 'Add the whole week to my shopping list', addedAll: 'Added 7 recipes to your shopping list', notes: ['Costs do not include rice (we use about 3 kg a week, ¥2,400) or pantry seasonings.', 'Swap any day for a recipe from the 30-minute dinners collection if your evening is short.', 'Vegetarian week: swap Monday for agedashi tofu, Tuesday for autumn vegetable curry and Sunday for kabocha soup.'] },
+  en: { title: 'Weekly meal plan', intro: 'Seven family dinners for the week of the Lantern Festival, planned so that one cooking session feeds the next: extra chicken on Wednesday becomes Thursday\'s lunchboxes, double mushrooms on Thursday go into Friday\'s rice, and Saturday\'s market trip buys Sunday\'s fish. Prices are what I paid at the Springvale Central supermarket for a family of four (two adults, two children).', cols: ['Day', 'Dinner', 'Side & extras', 'Lunchbox / plans', 'Prep ahead', 'Active time', 'Est. cost'], totals: 'Week total', addAll: 'Add the whole week to my shopping list', addedAll: 'Added 7 recipes to your shopping list', notes: ['Costs do not include rice (we use about 3 kg a week, ¥2,400) or pantry seasonings.', 'Swap any day for a recipe from the 30-minute dinners collection if your evening is short.', 'Vegetarian week: swap Monday for agedashi tofu, Tuesday for autumn vegetable curry and Sunday for kabocha soup.'] },
   ja: { title: '1週間の献立表', intro: '灯籠まつりの週の、家族の晩ごはん7日分。ひとつの料理が次の日につながるように組んでいます。水曜日に多めに焼いた鶏は木曜日のお弁当に、木曜日に2倍買ったきのこは金曜日の炊き込みご飯に、土曜日の朝市で日曜日の魚を買います。金額は春川中央駅前のスーパーで買った、4人家族（大人2人・子ども2人）の目安です。', cols: ['日付', '主菜', '副菜・その他', 'お弁当・予定', '前日までの準備', '調理時間', '材料費の目安'], totals: '1週間の合計', addAll: '1週間分を買い物リストに追加', addedAll: '7品を買い物リストに追加しました', notes: ['金額にお米（わが家は週に約3kg、2,400円）と常備調味料は含みません。', '帰りが遅い日は「30分で晩ごはん」特集のレシピと入れ替えてください。', 'ベジタリアン週にするなら、月曜日を揚げ出し豆腐、火曜日を秋野菜のカレー、日曜日をかぼちゃのポタージュに。'] },
 };
 
@@ -184,14 +184,14 @@ export const ABOUT = {
   en: {
     title: 'About Daily Table',
     body: [
-      'Daily Table is a home-cooking website written in Harukawa, Minori Prefecture. I\'m Natsuki Aoyama. I grew up in Tsukimi Onsen, where my grandmother Fumi ran a small inn with eight rooms and cooked breakfast and dinner for every guest. I spent my childhood in her kitchen, peeling chestnuts and watching the dashi.',
-      'I trained as a registered dietitian at Harukawa University and spent nine years as the school-lunch nutritionist at Kawabata Elementary School, planning meals for 600 children on ¥290 a day. That job taught me three things that shape every recipe here: measure properly, plan the week, and never waste the second half of an onion.',
-      'I started Daily Table in 2017 as a notebook for parents who asked for the school curry recipe. Today about 1.2 million people visit each month. I live in Harukawa with my husband Daisuke and our children Hana (12) and Sota (9), who are the first and harshest testers.',
+      'Daily Table is a home-cooking website written in Springvale, Harvest Prefecture. I\'m Natsuki Aoyama. I grew up in Moonview Spa, where my grandmother Fumi ran a small inn with eight rooms and cooked breakfast and dinner for every guest. I spent my childhood in her kitchen, peeling chestnuts and watching the dashi.',
+      'I trained as a registered dietitian at Springvale University and spent nine years as the school-lunch nutritionist at Riverside Elementary School, planning meals for 600 children on ¥290 a day. That job taught me three things that shape every recipe here: measure properly, plan the week, and never waste the second half of an onion.',
+      'I started Daily Table in 2017 as a notebook for parents who asked for the school curry recipe. Today about 1.2 million people visit each month. I live in Springvale with my husband Daisuke and our children Hana (12) and Sota (9), who are the first and harshest testers.',
     ],
     teamTitle: 'The team',
     team: [
       ['Natsuki Aoyama', 'Founder, recipe developer and writer. Registered dietitian.'],
-      ['Kenta Mori', 'Recipe tester. Ran Mori Bakery near Harukawa Central for 14 years; answers most baking questions.'],
+      ['Kenta Mori', 'Recipe tester. Ran Mori Bakery near Springvale Central for 14 years; answers most baking questions.'],
       ['Yui Tanabe', 'Photographer. Shoots every dish in natural light in our kitchen, usually before it goes cold.'],
       ['Ryo Ishida', 'English editor. Converts every recipe to US cups and ounces and checks them in a US-measure kitchen.'],
     ],
@@ -206,7 +206,7 @@ export const ABOUT = {
     ],
     adTitle: 'Advertising and disclosure', ad: 'Daily Table is free to read and is paid for by advertising and affiliate links. Ads are served by our advertising partner and are marked "Advertisement". When I link to a product on Marketa and you buy it, we may earn a small commission. We never accept payment for a recipe or a review.',
     privacyTitle: 'Privacy', privacy: 'We use cookies to remember your settings (such as Metric or US units), to count visits, and to show ads. Your shopping list and ratings are stored in your browser only. Newsletter addresses are used only to send the newsletter, and you can unsubscribe with one click.',
-    contactTitle: 'Contact', contact: 'Email: hello@dailytable.example · Daily Table, 3-12-7 Kawabata, Harukawa, Minori Prefecture 870-0412. We usually reply within three working days. For press and partnerships, mark your subject "Partnership".',
+    contactTitle: 'Contact', contact: 'Email: hello@dailytable.example · Daily Table, 3-12-7 Riverside, Springvale, Harvest Prefecture 870-0412. We usually reply within three working days. For press and partnerships, mark your subject "Partnership".',
   },
   ja: {
     title: 'デイリーテーブルについて',

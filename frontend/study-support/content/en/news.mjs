@@ -7,13 +7,13 @@ export const NEWS = [
   ['2026-09-29', '29 Sep 2026', 'Maintenance', 'tag-gry', 'Network and My Kumo maintenance in October 2026', 'news/maintenance-october-2026.html'],
   ['2026-09-24', '24 Sep 2026', 'Important', 'tag-red', 'Beware of scam text messages pretending to be Kumo Mobile', 'news/scam-sms-warning.html'],
   ['2026-09-15', '15 Sep 2026', 'Important', 'tag-red', 'Kumo 3G service will end on 31 March 2027', 'news/3g-service-end.html'],
-  ['2026-09-10', '10 Sep 2026', 'Shops', '', 'Kumo Shop Harukawa Central open until 21:00 during the Harukawa Lantern Festival (10–11 October)', 'shops/harukawa-central.html'],
+  ['2026-09-10', '10 Sep 2026', 'Shops', '', 'Kumo Shop Springvale Central open until 21:00 during the Springvale Lantern Festival (10–11 October)', 'shops/harukawa-central.html'],
   ['2026-09-01', '1 Sep 2026', 'Services', 'tag-grn', 'Watch Service now included free with Kumo 65+', 'plans/senior.html'],
   ['2026-08-20', '20 Aug 2026', 'Services', 'tag-grn', 'eSIM quick transfer now available between Android phones', 'procedures/esim.html'],
-  ['2026-07-30', '30 Jul 2026', 'Network', '', '5G now available in Mikage City and along part of the Kagami Line', 'network.html'],
+  ['2026-07-30', '30 Jul 2026', 'Network', '', '5G now available in Mikage City and along part of the Mirror Line', 'network.html'],
   ['2026-07-01', '1 Jul 2026', 'Prices', 'tag-org', 'Under-22 discount: application period extended to 31 March 2027', 'plans/index.html#u22'],
   ['2026-06-10', '10 Jun 2026', 'Procedures', '', 'Old-style health insurance cards no longer accepted as ID from 1 July 2026', 'procedures/new-contract.html#id'],
-  ['2026-05-20', '20 May 2026', 'Shops', '', 'Kumo Shop Tsukimi Onsen: new closing days (Tuesdays and Wednesdays) from 1 June 2026', 'shops/index.html#tsukimi'],
+  ['2026-05-20', '20 May 2026', 'Shops', '', 'Kumo Shop Moonview Spa: new closing days (Tuesdays and Wednesdays) from 1 June 2026', 'shops/index.html#tsukimi'],
 ];
 export const newsList = (items) => `<ul class="news-list">${items.map(([iso, d, cat, cls, t, href]) => `<li><time datetime="${iso}">${d}</time><span class="tag ${cls}">${cat}</span><a href="@/${href}">${t}</a></li>`).join('')}</ul>`;
 const back = '<p style="margin-top:24px"><a href="@/news/index.html">‹ Back to all notices</a></p>';
@@ -53,15 +53,15 @@ ${back}`,
 <p>We will carry out the following maintenance. We apologise for any inconvenience.</p>
 ${table(['Date and time', 'Area', 'Services affected'], [
     ['Thu 8 Oct 2026, 01:00–06:00', 'All areas', 'My Kumo (web and app): all online procedures'],
-    ['Wed 14 Oct 2026, 01:00–05:00', 'Tsukimi Town and Shiose Village (Minori Prefecture)', 'Calls, SMS and data; breaks of up to 10 minutes'],
+    ['Wed 14 Oct 2026, 01:00–05:00', 'Moonview Town and Shiose Village (Harvest Prefecture)', 'Calls, SMS and data; breaks of up to 10 minutes'],
     ['Wed 21 Oct 2026, 02:00–04:00', 'All areas', 'SMS may be delayed'],
-    ['Tue 27 Oct 2026, 00:30–05:30', 'Along the Kagami Line, Harukawa City to Tsukimi Town', '5G data may switch to 4G'],
+    ['Tue 27 Oct 2026, 00:30–05:30', 'Along the Mirror Line, Springvale City to Moonview Town', '5G data may switch to 4G'],
   ])}
 <h2>During My Kumo maintenance (8 October)</h2>
 <ul><li>You cannot suspend a lost phone online: call the Lost and Stolen line, ${TEL.lost.free} (24 hours).</li><li>Data purchases, plan changes and bill viewing are unavailable. Plan change requests are not affected otherwise: the deadline is still the last day of the month.</li><li>Calls and data on your phone work normally.</li></ul>
-<h2>During network work in Tsukimi Town and Shiose Village (14 October)</h2>
+<h2>During network work in Moonview Town and Shiose Village (14 October)</h2>
 ${note('alert', '<p>During each break of up to 10 minutes, <b>emergency calls (110, 118, 119) may also be unavailable</b>. If you need to call in an emergency, try again after a few minutes or use a landline.</p>')}
-<p>Guests staying in Tsukimi Onsen may also be affected. Wi-Fi calling works if your phone is connected to Wi-Fi.</p>
+<p>Guests staying in Moonview Spa may also be affected. Wi-Fi calling works if your phone is connected to Wi-Fi.</p>
 <p>The latest information is on <a href="@/status.html#maintenance">Service status</a>.</p>
 ${back}`,
     related: ['status.html', 'procedures/lost-phone.html', 'network.html'],
@@ -84,7 +84,7 @@ ${smsMock('KUMO', 'Mon 12:15', 'We tried to deliver your new SIM card but nobody
 <p>Fake messages can appear in the same conversation as real messages from Kumo, because senders can fake the sender name. Always open My Kumo from a bookmark or the official app, not from a link.</p>
 <h2>If you entered your details</h2>
 <ol><li>Change your Kumo ID password in My Kumo straight away.</li><li>If you entered card details, call your card company to stop the card.</li><li>Call Technical Support (${TEL.tech.free}) to check for unknown purchases or SIM reissues on your line.</li><li>For advice, contact the police consultation line (#9110).</li></ol>
-${note('ok', '<p><a href="@/plans/options.html#other">Security Pack</a> (¥440/month, first 31 days free) filters most known scam messages and warns you about scam calls. Learn more at our free smartphone class on 13 October at <a href="@/shops/harukawa-central.html">Kumo Shop Harukawa Central</a>.</p>', 'Protect yourself')}
+${note('ok', '<p><a href="@/plans/options.html#other">Security Pack</a> (¥440/month, first 31 days free) filters most known scam messages and warns you about scam calls. Learn more at our free smartphone class on 13 October at <a href="@/shops/harukawa-central.html">Kumo Shop Springvale Central</a>.</p>', 'Protect yourself')}
 ${back}`,
     related: ['plans/options.html', 'faq.html', 'contact.html'],
   },

@@ -17,7 +17,7 @@
     "title": "Japanese-Style Beef Stew",
     "teaser": "Tender chunks of beef in a deep, glossy red wine sauce thickened with a homemade brown roux, the way my grandmother made it at her inn every November.",
     "intro": [
-      "When the first frost touches the top of Mount Tsukimi, my grandmother Fumi used to say it was stew weather. Every November her little inn in Tsukimi Onsen had a regular guest, a retired hotel cook from Kobe who came for the hot springs and the autumn leaves. Years ago he taught her his beef stew, and from then on a heavy pot of it sat at the back of her stove all afternoon on cold weekends. My job, aged about seven, was to stir the bottom every half hour. I still think of that whenever I lift the lid.",
+      "When the first frost touches the top of Mount Moonview, my grandmother Fumi used to say it was stew weather. Every November her little inn in Moonview Spa had a regular guest, a retired hotel cook from Kobe who came for the hot springs and the autumn leaves. Years ago he taught her his beef stew, and from then on a heavy pot of it sat at the back of her stove all afternoon on cold weekends. My job, aged about seven, was to stir the bottom every half hour. I still think of that whenever I lift the lid.",
       "Japanese beef stew (<em>bīfu shichū</em>) is a <em>yōshoku</em> dish, close to a French daube but richer and a little sweeter: beef simmered in red wine until it falls apart, then finished with a brown roux, tomato, ketchup and Worcestershire sauce, so the sauce turns dark, glossy and thick enough to coat a spoon.",
       { "h": "Why you'll love it" },
       { "ul": [
@@ -32,7 +32,7 @@
       { "h": "Stovetop or oven" },
       "On the hob, keep the heat so low that the surface barely trembles and stir the bottom every 30 minutes. In the oven, the heat comes from all sides and nothing scorches: I put the lidded pot in at 160°C (325°F), or 140°C with a fan; see my <a href=\"{{guide:oven-temperatures}}\">oven temperature guide</a>.",
       { "h": "Tips for success" },
-      "For the wine, choose something you would happily drink, nothing expensive. I use a fruity Muscat Bailey A from the Kagami valley. Add the salt at the very end, because the sauce reduces and concentrates. And when the stew is done, cool it quickly: divide it into shallow containers and refrigerate within two hours rather than leaving the big pot on the stove overnight."
+      "For the wine, choose something you would happily drink, nothing expensive. I use a fruity Muscat Bailey A from the Mirror valley. Add the salt at the very end, because the sauce reduces and concentrates. And when the stew is done, cool it quickly: divide it into shallow containers and refrigerate within two hours rather than leaving the big pot on the stove overnight."
     ],
     "equipment": ["Heavy casserole or Dutch oven (about 24 cm, 4 L) with a lid", "Small frying pan for the roux", "Wooden spatula", "Ladle"],
     "notes": [
@@ -154,8 +154,8 @@
       "ja": "味に深みがあってとてもおいしかったです。最後に少しシャバシャバだったので、ふたを取ってさらに10分煮詰めました。次はルーを少し多めに作ります。",
       "reply": { "en": "Every pot evaporates differently, so that's normal. A quick fix at the end: knead 1 tsp soft butter with 1 tsp flour, whisk it in a little at a time and simmer for 2 minutes.",
         "ja": "鍋によって煮詰まり方が違うので、よくあることです。最後に手早くとろみをつけたいときは、やわらかくしたバター小さじ1と薄力粉小さじ1を練り合わせ、少しずつ溶かし入れて2分ほど煮てください。" } },
-    { "name": { "en": "Satoko in Minori", "ja": "みのり在住さとこ" }, "date": "2026-03-08", "stars": 5,
-      "en": "I used the Muscat Bailey A from the Kagami valley like you do. Lovely fruity sauce. The next day I put the leftover sauce on omurice and the kids were thrilled.",
+    { "name": { "en": "Satoko in Harvest", "ja": "みのり在住さとこ" }, "date": "2026-03-08", "stars": 5,
+      "en": "I used the Muscat Bailey A from the Mirror valley like you do. Lovely fruity sauce. The next day I put the leftover sauce on omurice and the kids were thrilled.",
       "ja": "なつきさんと同じ鏡川のマスカット・ベーリーAで作りました。フルーティーでおいしいソースに。翌日は残ったソースをオムライスにかけたら、子どもたちが大喜びでした。" },
     { "name": { "en": "Lucas (São Paulo)", "ja": "Lucas（サンパウロ）" }, "date": "2026-01-19", "stars": null,
       "en": "Can I make this in a pressure cooker?",

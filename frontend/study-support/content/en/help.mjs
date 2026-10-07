@@ -61,16 +61,16 @@ const CATS = [
     ['Can I change my plan more than once a month?', '<p>Only one change applies per month: the last request made before the deadline.</p>'],
   ]],
   ['network', 'Network and travel', [
-    ['Is there 5G in Tsukimi Onsen?', '<p>Mostly 4G at present (5G population coverage in Tsukimi Town is 61.2%). 5G along the Kagami Line towards Tsukimi Onsen is planned by March 2027. <a href="@/network.html">Coverage and 5G</a></p>'],
+    ['Is there 5G in Moonview Spa?', '<p>Mostly 4G at present (5G population coverage in Moonview Town is 61.2%). 5G along the Mirror Line towards Moonview Spa is planned by March 2027. <a href="@/network.html">Coverage and 5G</a></p>'],
     ['Will my old phone work after 3G ends?', '<p>3G-only phones and 4G phones without VoLTE will not be able to make calls after 31 March 2027. <a href="@/news/3g-service-end.html">3G service end</a></p>'],
     ['How much does data cost abroad?', '<p>A 24-hour Kumo World pass costs from ¥980 (Asia). Kumo Unlimited includes 2 GB a month free in Asia and North America. <a href="@/plans/roaming.html">International roaming</a></p>'],
     ['Is there a limit on roaming charges on a cruise ship?', '<p>No. On ships and aircraft there is no daily cap on pay-as-you-go data. Turn off data roaming on board.</p>'],
-    ['5G is slow near Harukawa Central Station today. Is there a problem?', '<p>Yes, an incident affecting 5G data around Harukawa Central Station is being investigated. <a href="@/status.html">Service status</a></p>'],
+    ['5G is slow near Springvale Central Station today. Is there a problem?', '<p>Yes, an incident affecting 5G data around Springvale Central Station is being investigated. <a href="@/status.html">Service status</a></p>'],
   ]],
   ['account', 'My Kumo and shops', [
     ['I forgot my My Kumo password.', '<p>Press "Forgot password" on the login screen and enter the code sent by SMS to your Kumo phone. If your phone is lost, visit a shop with your ID. <a href="@/my-kumo.html">About My Kumo</a></p>'],
     ['Do I need an appointment at a shop?', '<p>No, but without one you may wait 60–90 minutes on weekend afternoons. <a href="@/shops/appointments.html">Book an appointment</a></p>'],
-    ['Is the Harukawa Central shop open during the Lantern Festival?', '<p>Yes, until 21:00 on 10 and 11 October 2026. <a href="@/shops/harukawa-central.html">Kumo Shop Harukawa Central</a></p>'],
+    ['Is the Springvale Central shop open during the Lantern Festival?', '<p>Yes, until 21:00 on 10 and 11 October 2026. <a href="@/shops/harukawa-central.html">Kumo Shop Springvale Central</a></p>'],
   ]],
 ];
 export const FAQ_COUNT = CATS.reduce((n, c) => n + c[2].length, 0);

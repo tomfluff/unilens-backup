@@ -180,8 +180,8 @@
   function listing(el, idx) {
     var PAGE = 6;
     var CATS = { kitchen: T('Kitchen', 'キッチン用品'), home: T('Home & Tableware', 'ホーム・食器'), electronics: T('Electronics', '家電・オーディオ'), outdoor: T('Sports & Outdoors', 'スポーツ・アウトドア'), beauty: T('Health & Beauty', 'ビューティー・ヘルスケア'), gifts: T('Food & Gifts', '食品・ギフト') };
-    var SUBS = { kettles: T('Electric kettles', '電気ケトル'), ricecookers: T('Rice cookers & donabe', '炊飯器・土鍋'), tableware: T('Harukawa ware & tableware', '春川焼・和食器'), audio: T('Headphones & earbuds', 'ヘッドホン・イヤホン'), power: T('Power banks', 'モバイルバッテリー'), jackets: T('Rain jackets', 'レインジャケット'), bath: T('Bath & body', '入浴剤・ボディケア'), gifts: T('Local food & gifts', 'ご当地グルメ・ギフト') };
-    var SELLERS = { marketa: T('Marketa', 'マルケタ'), kagami: T('Kagami Kiln', '鏡窯'), minori: T('Minori Yuzu Farm', 'みのり柚子園'), brightdeal: T('BrightDeal Trading', 'ブライトディール商事') };
+    var SUBS = { kettles: T('Electric kettles', '電気ケトル'), ricecookers: T('Rice cookers & donabe', '炊飯器・土鍋'), tableware: T('Springvale ware & tableware', '春川焼・和食器'), audio: T('Headphones & earbuds', 'ヘッドホン・イヤホン'), power: T('Power banks', 'モバイルバッテリー'), jackets: T('Rain jackets', 'レインジャケット'), bath: T('Bath & body', '入浴剤・ボディケア'), gifts: T('Local food & gifts', 'ご当地グルメ・ギフト') };
+    var SELLERS = { marketa: T('Marketa', 'マルケタ'), kagami: T('Mirror Kiln', '鏡窯'), minori: T('Harvest Yuzu Farm', 'みのり柚子園'), brightdeal: T('BrightDeal Trading', 'ブライトディール商事') };
     var PR = [['', '3000', T('Under ¥3,000', '3,000円以下')], ['3000', '10000', T('¥3,000 to ¥10,000', '3,000〜10,000円')], ['10000', '20000', T('¥10,000 to ¥20,000', '10,000〜20,000円')], ['20000', '', T('Over ¥20,000', '20,000円以上')]];
     var fixedCat = el.dataset.cat;
     var q = new URLSearchParams(location.search);
@@ -242,7 +242,7 @@
       f += '<h4>' + T('Price', '価格') + '</h4>' + PR.map(function (r) { var c = new URLSearchParams(q); var on = g('pmin') === r[0] && g('pmax') === r[1]; if (on) { c.delete('pmin'); c.delete('pmax'); } else { if (r[0]) c.set('pmin', r[0]); else c.delete('pmin'); if (r[1]) c.set('pmax', r[1]); else c.delete('pmax'); } c.delete('page'); return '<a href="?' + c + '"' + (on ? ' class="on"' : '') + '>' + r[2] + '</a>'; }).join('') +
         '<div class="price-in"><input id="pmin" inputmode="numeric" placeholder="' + T('¥ Min', '￥ 最低') + '" value="' + esc(g('pmin')) + '" aria-label="' + T('Minimum price', '最低価格') + '"><input id="pmax" inputmode="numeric" placeholder="' + T('¥ Max', '￥ 最高') + '" value="' + esc(g('pmax')) + '" aria-label="' + T('Maximum price', '最高価格') + '"><button class="btn btn-sm" id="pgo">' + T('Go', '検索') + '</button></div>';
       f += '<h4>' + T('Deals & discounts', 'セール・割引') + '</h4><label><input type="checkbox" data-f="sale" value="1"' + (g('sale') ? ' checked' : '') + '> ' + T('On sale', 'セール中') + '</label><label><input type="checkbox" data-f="coupon" value="1"' + (g('coupon') ? ' checked' : '') + '> ' + T('With a coupon', 'クーポン対象') + '</label>';
-      f += '<h4>' + T('Seller', '出品者') + '</h4><label><input type="checkbox" data-f="local" value="1"' + (g('local') ? ' checked' : '') + '> ' + T('Harukawa Local sellers', '春川ローカル出品者') + '</label>' + Object.keys(SELLERS).map(function (k) { return '<a href="' + href('seller', g('seller') === k ? '' : k) + '"' + (g('seller') === k ? ' class="on"' : '') + '>' + esc(SELLERS[k]) + '</a>'; }).join('');
+      f += '<h4>' + T('Seller', '出品者') + '</h4><label><input type="checkbox" data-f="local" value="1"' + (g('local') ? ' checked' : '') + '> ' + T('Springvale Local sellers', '春川ローカル出品者') + '</label>' + Object.keys(SELLERS).map(function (k) { return '<a href="' + href('seller', g('seller') === k ? '' : k) + '"' + (g('seller') === k ? ' class="on"' : '') + '>' + esc(SELLERS[k]) + '</a>'; }).join('');
       f += '<p><a href="?' + (text ? 'q=' + encodeURIComponent(g('q')) : '') + '">' + T('Clear all filters', 'すべての絞り込みを解除') + '</a></p>';
       var fe = $('#filters'); fe.innerHTML = f;
       $$('[data-f]', fe).forEach(function (c) { c.addEventListener('change', function () { set(c.dataset.f, c.checked ? c.value : ''); }); });
@@ -252,7 +252,7 @@
       var from = res.length ? (page - 1) * PAGE + 1 : 0, to = Math.min(res.length, page * PAGE);
       var where = text ? T(' for ', '「') + '<b>"' + esc(g('q')) + '"</b>' + T('', '」の検索結果') : (cat ? T(' in ', '：') + '<b>' + esc(CATS[cat]) + '</b>' : '');
       $('#res-count').innerHTML = JA ? res.length + '件中 ' + from + '〜' + to + '件' + (text ? ' ' + where : where) : from + '–' + to + ' of ' + res.length + ' results' + where;
-      var h = $('#sr-h'); if (h) h.textContent = text ? T('Results for "' + g('q') + '"', '「' + g('q') + '」の検索結果') : (g('local') ? T('Harukawa Local sellers', '春川ローカル出品者の商品') : g('brand') ? T('Brand: ', 'ブランド：') + brands.map(function (b) { return bn[b] || b; }).join(', ') : T('All departments', 'すべてのカテゴリー'));
+      var h = $('#sr-h'); if (h) h.textContent = text ? T('Results for "' + g('q') + '"', '「' + g('q') + '」の検索結果') : (g('local') ? T('Springvale Local sellers', '春川ローカル出品者の商品') : g('brand') ? T('Brand: ', 'ブランド：') + brands.map(function (b) { return bn[b] || b; }).join(', ') : T('All departments', 'すべてのカテゴリー'));
       var spons = res.filter(function (p) { return p.sponsored; })[0];
       $('#res-spons').innerHTML = page === 1 && spons ? cardHtml(spons, { sponsored: true }) : '';
       $('#res').innerHTML = shown.length ? shown.map(function (p) { return cardHtml(p, { sponsored: false }); }).join('') : '<div class="empty"><b>' + T('No results.', '該当する商品はありません。') + '</b><p>' + T('Try checking your spelling or use more general terms. Or clear some filters.', 'キーワードを変えるか、絞り込み条件を減らしてお試しください。') + '</p></div>';
@@ -270,7 +270,7 @@
   }
 
   // ---------- shipping rules shared by cart and checkout ----------
-  var SELLER_RULE = { kagami: { fee: 700, free: 5000, name: T('Kagami Kiln', '鏡窯') }, minori: { fee: 600, free: 4000, name: T('Minori Yuzu Farm', 'みのり柚子園') }, brightdeal: { fee: 0, free: 0, name: T('BrightDeal Trading', 'ブライトディール商事') } };
+  var SELLER_RULE = { kagami: { fee: 700, free: 5000, name: T('Mirror Kiln', '鏡窯') }, minori: { fee: 600, free: 4000, name: T('Harvest Yuzu Farm', 'みのり柚子園') }, brightdeal: { fee: 0, free: 0, name: T('BrightDeal Trading', 'ブライトディール商事') } };
   var DT = {
     today: T('Today, Monday 5 October, 18:00–22:00', '本日 10月5日(月) 18:00〜22:00'), tue6: T('Tomorrow, Tuesday 6 October', '明日 10月6日(火)'), wed7: T('Wednesday 7 October', '10月7日(水)'),
     thu8: T('Thursday 8 October', '10月8日(木)'), fri9: T('Friday 9 October', '10月9日(金)'), sat10: T('Saturday 10 October', '10月10日(土)'), sun11: T('Sunday 11 October', '10月11日(日)'), mon12: T('Monday 12 October', '10月12日(月)'),
@@ -346,9 +346,9 @@
       return [
         { id: 'std', name: T('Standard delivery', '通常配送'), when: DT[stdDay], fee: m || sub >= 3500 || locker ? 0 : 450, ok: true },
         any2
-          ? { id: 'next', name: T('Fastest delivery', 'お急ぎ便'), when: DT.thu8, fee: m ? 0 : 600, ok: true, note: T('An item ships from a warehouse outside Minori Prefecture, so next-day is not available.', 'みのり県外の倉庫から発送する商品があるため、翌日配送はご利用いただけません。') }
+          ? { id: 'next', name: T('Fastest delivery', 'お急ぎ便'), when: DT.thu8, fee: m ? 0 : 600, ok: true, note: T('An item ships from a warehouse outside Harvest Prefecture, so next-day is not available.', 'みのり県外の倉庫から発送する商品があるため、翌日配送はご利用いただけません。') }
           : { id: 'next', name: T('Next-day delivery', 'お急ぎ便（翌日）'), when: DT.tue6, fee: m ? 0 : 600, ok: true, note: T('Order by 14:00 (3 hrs 20 mins)', '14時までのご注文（あと3時間20分）') },
-        { id: 'same', name: T('Same-day delivery', '当日お急ぎ便'), when: DT.today, fee: m ? (sub >= 2000 ? 0 : 300) : 900, ok: !any2 && !minori && !locker, why: any2 ? T('Not available for items outside the Harukawa warehouse.', '春川倉庫以外の在庫の商品は対象外です。') : T('Harukawa city addresses only (not lockers). Order by 11:00.', '春川市内の住所のみ（ロッカー不可）。11時までのご注文。'), note: T('Order within 20 mins (by 11:00)', 'あと20分以内（11時まで）にご注文') },
+        { id: 'same', name: T('Same-day delivery', '当日お急ぎ便'), when: DT.today, fee: m ? (sub >= 2000 ? 0 : 300) : 900, ok: !any2 && !minori && !locker, why: any2 ? T('Not available for items outside the Springvale warehouse.', '春川倉庫以外の在庫の商品は対象外です。') : T('Springvale city addresses only (not lockers). Order by 11:00.', '春川市内の住所のみ（ロッカー不可）。11時までのご注文。'), note: T('Order within 20 mins (by 11:00)', 'あと20分以内（11時まで）にご注文') },
         { id: 'sched', name: T('Scheduled delivery', 'お届け日時指定便'), when: null, fee: m ? 0 : 350, ok: !locker, why: T('Not available for Marketa Lockers.', 'マルケタロッカーではご利用いただけません。') },
       ];
     }

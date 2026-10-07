@@ -2,7 +2,7 @@
 
 export const ui = {
   en: {
-    siteName: 'The Harukawa Herald', siteSub: 'Harukawa Nippō · English edition', tagline: 'News from Harukawa and Minori Prefecture since 1898',
+    siteName: 'The Springvale Herald', siteSub: 'Springvale Herald · English edition', tagline: 'News from Springvale and Harvest Prefecture since 1898',
     today: 'Sunday 4 October 2026', home: 'Home', search: 'Search', searchPlaceholder: 'Search the Herald', subscribe: 'Subscribe', login: 'Log in',
     newsletters: 'Newsletters', epaper: "Today's paper", more: 'More', live: 'LIVE', liveNav: 'Typhoon live', archive: 'Archive', corrections: 'Corrections',
     about: 'About us', weather: 'Weather', otherLang: '日本語', otherLangLabel: 'Japanese edition',
@@ -11,22 +11,22 @@ export const ui = {
     commentsClosed: 'Comments on this article are open to subscribers.', addComment: 'Join the conversation', postComment: 'Post', likes: 'likes', reply: 'Reply', report: 'Report',
     commentPlaceholder: 'Subscribers can comment. Log in to add yours.', sortBy: 'Sort by', newest: 'Newest', oldest: 'Oldest', best: 'Most liked',
     correction: 'Correction', breadcrumbHome: 'Home', photo: 'Photo', subscriberOnly: 'Subscribers only',
-    paywallTitle: 'Subscribe to continue reading', paywallText: 'This article is for subscribers. Get unlimited access to The Harukawa Herald from ¥980 a month, first month free until 31 October.',
+    paywallTitle: 'Subscribe to continue reading', paywallText: 'This article is for subscribers. Get unlimited access to The Springvale Herald from ¥980 a month, first month free until 31 October.',
     paywallBtn: 'See subscription plans', paywallLogin: 'Already a subscriber? Log in', paywallFree: 'Free members can read 3 subscriber articles a month.',
-    breaking: 'Typhoon No. 21: evacuation instruction for four districts; Bayside Line suspended, last Kagami Line train from Harukawa Central at 19:15',
+    breaking: 'Typhoon No. 21: evacuation instruction for four districts; Bayside Line suspended, last Mirror Line train from Springvale Central at 19:15',
     tickerLabel: 'Breaking',
     cookie: { text: 'We and our 214 partners use cookies and similar technologies to personalise content and ads, measure audiences and improve our services. You can change your choice at any time under "Cookie settings" at the bottom of every page.', accept: 'Accept all', reject: 'Reject non-essential', settings: 'Cookie settings' },
-    newsletter: { title: 'The Morning Briefing', text: 'The five stories Harukawa is talking about, in your inbox at 6:30 every weekday. Free.', placeholder: 'Your email address', btn: 'Sign me up', no: 'No thanks', fine: 'By signing up you agree to our privacy policy. Unsubscribe at any time.', close: 'Close' },
+    newsletter: { title: 'The Morning Briefing', text: 'The five stories Springvale is talking about, in your inbox at 6:30 every weekday. Free.', placeholder: 'Your email address', btn: 'Sign me up', no: 'No thanks', fine: 'By signing up you agree to our privacy policy. Unsubscribe at any time.', close: 'Close' },
     nlBox: { title: 'Get the Morning Briefing', text: 'Free every weekday at 6:30.', btn: 'Sign up' },
-    weatherWidget: 'Harukawa weather', weatherNow: 'Rain, storm tonight', weatherLink: 'Full forecast',
-    footerAbout: 'The Harukawa Herald is the English edition of Harukawa Nippō, the daily newspaper of Harukawa and Minori Prefecture.',
+    weatherWidget: 'Springvale weather', weatherNow: 'Rain, storm tonight', weatherLink: 'Full forecast',
+    footerAbout: 'The Springvale Herald is the English edition of Springvale Herald, the daily newspaper of Springvale and Harvest Prefecture.',
     footerCols: [
       ['Sections', null],
       ['Services', [['epaper', "Today's paper (e-paper)"], ['newsletters', 'Newsletters'], ['subscribe', 'Subscribe'], ['subscribe', 'Gift a subscription'], ['about', 'Apps']]],
       ['The Herald', [['about', 'About us'], ['corrections', 'Corrections'], ['about', 'Contact the newsroom'], ['about', 'Advertise with us'], ['about', 'Careers'], ['archive', 'Archive']]],
       ['Legal', [['about', 'Privacy policy'], ['about', 'Cookie settings'], ['about', 'Terms of use'], ['about', 'Copyright and syndication']]],
     ],
-    copyright: '© 2026 Harukawa Nippō Co., Ltd. All rights reserved. Reproduction without permission is prohibited.',
+    copyright: '© 2026 Springvale Herald Co., Ltd. All rights reserved. Reproduction without permission is prohibited.',
     fictional: 'Fictional website made for research (UniLens user study).',
     sectionLatest: 'Latest in', allSection: 'More from', liveNow: 'Live now', inPictures: 'In pictures', opinionTitle: 'Opinion', topStories: 'Top stories',
     prev: 'Previous', next: 'Next', page: 'Page',
@@ -37,7 +37,7 @@ export const ui = {
     liveUpdates: 'updates', liveLatest: 'Latest update', liveKey: 'Key points', livePinned: 'Pinned', liveFilter: 'Show', liveCats: { all: 'All updates', warnings: 'Warnings', evacuation: 'Evacuation', transport: 'Transport', city: 'City and services' },
     liveAuto: 'This page updates automatically. Times are JST.', liveStarted: 'Live coverage started', newUpdates: 'Show new updates',
     jst: 'JST', editorial: 'Editorial', column: 'Column', correctionKind: 'Correction',
-    weatherDetails: { title: 'Today in Harukawa', high: 'High', low: 'Low', humidity: 'Humidity', pressure: 'Pressure', wind: 'Wind', gust: 'gusts', rainSoFar: 'Rain so far today', rain24: 'Expected rain, next 24 h', sunrise: 'Sunrise', sunset: 'Sunset', uv: 'UV index' },
+    weatherDetails: { title: 'Today in Springvale', high: 'High', low: 'Low', humidity: 'Humidity', pressure: 'Pressure', wind: 'Wind', gust: 'gusts', rainSoFar: 'Rain so far today', rain24: 'Expected rain, next 24 h', sunrise: 'Sunrise', sunset: 'Sunset', uv: 'UV index' },
   },
   ja: {
     siteName: '春川日報', siteSub: 'THE HARUKAWA HERALD', tagline: '1898年創刊　春川とみのり県のニュース',
@@ -82,11 +82,11 @@ export const ui = {
 // Sidebar and in-feed adverts (fictional businesses from the shared world).
 export const ads = {
   en: [
-    { cls: 'ad-onsen', kicker: 'Tsukimi Onsen Ryokan Association', title: 'Autumn leaves and hot springs', text: 'Two days, one night with dinner from ¥14,800 per person. Limited express Tsukikage 39 minutes from Harukawa Central.', cta: 'Find a ryokan' },
-    { cls: 'ad-kumo', kicker: 'Kumo Mobile', title: 'Switch today, keep your number', text: 'Kumo Basic 20 GB for ¥4,378 a month. Visit our shop at Harukawa Central or switch online.', cta: 'See plans' },
-    { cls: 'ad-marketa', kicker: 'Marketa', title: 'Autumn Super Sale', text: 'Up to 40% off kitchenware, heaters and Harukawa ware. Free delivery over ¥3,000.', cta: 'Shop now' },
-    { cls: 'ad-table', kicker: 'Daily Table', title: 'Yuzu season is here', text: '42 recipes with fresh Harukawa yuzu: ponzu, yuzu kosho, yuzu cake.', cta: 'Get cooking' },
-    { cls: 'ad-haruca', kicker: 'Harukawa Railway', title: '1-Day Free Pass', text: 'Unlimited rides on the Kagami and Bayside Lines all day: ¥1,100 on Saturdays, Sundays and holidays, ¥1,300 on weekdays.', cta: 'Details' },
+    { cls: 'ad-onsen', kicker: 'Moonview Spa Ryokan Association', title: 'Autumn leaves and hot springs', text: 'Two days, one night with dinner from ¥14,800 per person. Limited express Comet 39 minutes from Springvale Central.', cta: 'Find a ryokan' },
+    { cls: 'ad-kumo', kicker: 'Kumo Mobile', title: 'Switch today, keep your number', text: 'Kumo Basic 20 GB for ¥4,378 a month. Visit our shop at Springvale Central or switch online.', cta: 'See plans' },
+    { cls: 'ad-marketa', kicker: 'Marketa', title: 'Autumn Super Sale', text: 'Up to 40% off kitchenware, heaters and Springvale ware. Free delivery over ¥3,000.', cta: 'Shop now' },
+    { cls: 'ad-table', kicker: 'Daily Table', title: 'Yuzu season is here', text: '42 recipes with fresh Springvale yuzu: ponzu, yuzu kosho, yuzu cake.', cta: 'Get cooking' },
+    { cls: 'ad-haruca', kicker: 'Springvale Railway', title: '1-Day Free Pass', text: 'Unlimited rides on the Mirror and Bayside Lines all day: ¥1,100 on Saturdays, Sundays and holidays, ¥1,300 on weekdays.', cta: 'Details' },
   ],
   ja: [
     { cls: 'ad-onsen', kicker: '月見温泉旅館協同組合', title: '紅葉と湯けむりの秋', text: '1泊2食付き、お一人様14,800円から。春川中央から特急「月影」で39分。', cta: '宿を探す' },
@@ -100,17 +100,17 @@ export const ads = {
 // Fixed pages. Blocks use the same markup as articles.
 export const pages = {
   en: {
-    about: { title: 'About The Harukawa Herald', body: `
-Harukawa Nippō (春川日報) has reported on Harukawa and Minori Prefecture since 15 April 1898, when it was founded as a four-page weekly by the printer and former samurai retainer Seijirō Kanzaki. It became a daily in 1911 and has printed a morning edition every day since, except for nine days after the air raid of July 1945.
+    about: { title: 'About The Springvale Herald', body: `
+Springvale Herald (春川日報) has reported on Springvale and Harvest Prefecture since 15 April 1898, when it was founded as a four-page weekly by the printer and former samurai retainer Seijirō Kanzaki. It became a daily in 1911 and has printed a morning edition every day since, except for nine days after the air raid of July 1945.
 
-The Harukawa Herald, its English edition, started in 2019 for the city's growing number of international residents, students and visitors. It publishes the same news as the Japanese edition, written for English readers by the same newsroom.
+The Springvale Herald, its English edition, started in 2019 for the city's growing number of international residents, students and visitors. It publishes the same news as the Japanese edition, written for English readers by the same newsroom.
 
 ## The newspaper today
 
 - Print circulation: 82,400 (morning edition, September 2026)
 - Digital subscribers: 46,100, of whom 3,900 read the English edition
-- Newsroom: 96 journalists, including 11 photographers, in Harukawa and bureaus in Tsukimi Onsen and the prefectural capital
-- Head office: 2-5-1 Otemachi, Harukawa, Minori Prefecture
+- Newsroom: 96 journalists, including 11 photographers, in Springvale and bureaus in Moonview Spa and the prefectural capital
+- Head office: 2-5-1 Otemachi, Springvale, Harvest Prefecture
 
 ## Our standards
 
@@ -133,16 +133,16 @@ Advertisements are marked "Advertisement". Advertisers have no say over our jour
 
 We use cookies to keep you logged in, to count visits and, if you allow it, to show advertising that matches your interests. You can change your choice at any time with the "Cookie settings" link at the bottom of every page. We do not sell personal data.
 ` },
-    subscribe: { title: 'Subscribe to The Harukawa Herald', intro: 'Independent local journalism for Harukawa and Minori Prefecture. Choose the plan that suits you. All prices include consumption tax.', faqTitle: 'Frequently asked questions', faq: [
+    subscribe: { title: 'Subscribe to The Springvale Herald', intro: 'Independent local journalism for Springvale and Harvest Prefecture. Choose the plan that suits you. All prices include consumption tax.', faqTitle: 'Frequently asked questions', faq: [
       ['Can I read the English and Japanese editions with one subscription?', 'Yes. Every digital plan includes both editions on the web and in the app.'],
       ['How many free articles can I read?', 'Most news is free to read. Articles marked "Subscribers only" can be read three times a month with a free registration.'],
       ['When does the first-month-free offer end?', 'The offer applies to new Digital Basic subscriptions started by 31 October 2026. You will be charged ¥980 from the second month unless you cancel.'],
       ['How do I cancel?', 'Online at any time from "My account". You keep access until the end of the month you have paid for. There is no cancellation fee.'],
-      ['Is home delivery available outside Harukawa?', 'Print + Digital is available anywhere in Minori Prefecture. In some mountain areas the paper arrives by post a day later; the price is the same.'],
+      ['Is home delivery available outside Springvale?', 'Print + Digital is available anywhere in Harvest Prefecture. In some mountain areas the paper arrives by post a day later; the price is the same.'],
       ['Do you offer a student discount?', 'Yes, ¥500 a month for students at universities, colleges and vocational schools. We check your student ID once a year.'],
     ], perks: ['Every article, including subscriber-only reports and analysis', 'The e-paper: the printed edition as it appears, from 4:00 every morning (Premium)', 'Comment on articles', 'Archive back to 1985 (Premium)', 'Ad-light reading: no pop-ups or in-article ads'] },
     corrections: { title: 'Corrections and clarifications', intro: 'We correct significant errors as quickly as possible. Each correction is shown at the foot of the article concerned and listed here, newest first. To report an error, write to corrections@harukawa-nippo.example.' },
-    weather: { title: 'Harukawa weather', intro: 'Forecast for Harukawa city, issued by the Herald weather desk using data from the Minori Local Meteorological Office. Issued 17:00, Sunday 4 October 2026.', warningsTitle: 'Warnings and advisories in force', warnLevel: { warning: 'Warning', advisory: 'Advisory' }, issuedAt: 'issued', hourlyTitle: 'Next 24 hours', hourlyNote: 'Bars: rain (mm per hour). Line: temperature (°C).', weekTitle: '7-day forecast', weekHead: ['Day', 'Weather', 'High', 'Low', 'Chance of rain', 'Wind', 'Reliability'], confNote: 'Reliability of the forecast: A high, B fairly high, C fairly low.', trackTitle: 'Typhoon No. 21: track and forecast', trackNote: 'Circles show where the centre is expected to be with 70% probability. The red circle is the current storm-force wind area (25 m/s or more).', newsTitle: 'Weather news', tidesTitle: 'Tides, Minori Bay (Monday 5 October)', tides: [['High tide', '05:12 (2.4 m above standard level forecast with storm surge)'], ['Low tide', '11:30'], ['High tide', '17:41'], ['Low tide', '23:58']], festivalNote: 'Lantern Festival weekend (10–11 October): sunny on Saturday, sunny then cloudy on Sunday. Evenings around 16 °C — bring a jacket for the lantern floating (19:30–21:00 both evenings).' },
+    weather: { title: 'Springvale weather', intro: 'Forecast for Springvale city, issued by the Herald weather desk using data from the Harvest Local Meteorological Office. Issued 17:00, Sunday 4 October 2026.', warningsTitle: 'Warnings and advisories in force', warnLevel: { warning: 'Warning', advisory: 'Advisory' }, issuedAt: 'issued', hourlyTitle: 'Next 24 hours', hourlyNote: 'Bars: rain (mm per hour). Line: temperature (°C).', weekTitle: '7-day forecast', weekHead: ['Day', 'Weather', 'High', 'Low', 'Chance of rain', 'Wind', 'Reliability'], confNote: 'Reliability of the forecast: A high, B fairly high, C fairly low.', trackTitle: 'Typhoon No. 21: track and forecast', trackNote: 'Circles show where the centre is expected to be with 70% probability. The red circle is the current storm-force wind area (25 m/s or more).', newsTitle: 'Weather news', tidesTitle: 'Tides, Harvest Bay (Monday 5 October)', tides: [['High tide', '05:12 (2.4 m above standard level forecast with storm surge)'], ['Low tide', '11:30'], ['High tide', '17:41'], ['Low tide', '23:58']], festivalNote: 'Lantern Festival weekend (10–11 October): sunny on Saturday, sunny then cloudy on Sunday. Evenings around 16 °C — bring a jacket for the lantern floating (19:30–21:00 both evenings).' },
     archive: {},
     search: {},
   },
