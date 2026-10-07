@@ -130,11 +130,11 @@ ${v.list && v.list > v.price ? `<div class="pb-list muted">${L(lang, 'List price
 const catNav = (lang) => site.cats.map((c) => `<a href="${u(lang, `c/${c.id}.html`)}">${esc(c[lang])}</a>`).join('');
 function header(lang, pth) {
   const other = lang === 'en' ? 'ja' : 'en';
-  return `<div class="topbar"><span>${L(lang, '<b>Harukawa Lantern Festival Sale</b> · up to 40% off until Sun 11 Oct 23:59', '<b>春川灯籠まつりセール</b>開催中・最大40%OFF 10月11日(日)23:59まで')}</span> <a href="${u(lang, 'deals.html')}">${L(lang, 'See deals', 'セール会場へ')} ›</a> <span class="sep">|</span> <a href="${u(lang, 'help/fast.html')}">${L(lang, 'Try Marketa Fast free for 30 days', 'マルケタFast 30日間無料体験')}</a></div>
+  return `<div class="topbar"><span>${L(lang, '<b>Springvale Lantern Festival Sale</b> · up to 40% off until Sun 11 Oct 23:59', '<b>春川灯籠まつりセール</b>開催中・最大40%OFF 10月11日(日)23:59まで')}</span> <a href="${u(lang, 'deals.html')}">${L(lang, 'See deals', 'セール会場へ')} ›</a> <span class="sep">|</span> <a href="${u(lang, 'help/fast.html')}">${L(lang, 'Try Marketa Fast free for 30 days', 'マルケタFast 30日間無料体験')}</a></div>
 <header class="hdr" id="top">
 <div class="hdr-top">
 <a class="logo" href="${u(lang, 'index.html')}" aria-label="Marketa"><svg viewBox="0 0 32 32" width="30" height="30" aria-hidden="true"><rect width="32" height="32" rx="8" fill="#ff7a45"/><path d="M8 12h16l-1.6 11.2a2 2 0 0 1-2 1.8h-8.8a2 2 0 0 1-2-1.8z" fill="#fff"/><path d="M12 12a4 4 0 0 1 8 0" stroke="#fff" stroke-width="2.2" fill="none"/></svg><span class="logo-w">marketa</span>${lang === 'ja' ? '<span class="logo-ja">マルケタ</span>' : ''}</a>
-<a class="deliver" href="${u(lang, 'help/shipping.html')}"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M12 2a7 7 0 0 0-7 7c0 5 7 13 7 13s7-8 7-13a7 7 0 0 0-7-7zm0 9.5A2.5 2.5 0 1 1 12 6a2.5 2.5 0 0 1 0 5.5z"/></svg><span><small>${L(lang, 'Deliver to Aki', 'お届け先：アキさん')}</small><b>${L(lang, 'Harukawa 795-0021', '春川市 795-0021')}</b></span></a>
+<a class="deliver" href="${u(lang, 'help/shipping.html')}"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M12 2a7 7 0 0 0-7 7c0 5 7 13 7 13s7-8 7-13a7 7 0 0 0-7-7zm0 9.5A2.5 2.5 0 1 1 12 6a2.5 2.5 0 0 1 0 5.5z"/></svg><span><small>${L(lang, 'Deliver to Aki', 'お届け先：アキさん')}</small><b>${L(lang, 'Springvale 795-0021', '春川市 795-0021')}</b></span></a>
 <form class="search" action="${u(lang, 'search.html')}" role="search">
 <select name="cat" aria-label="${L(lang, 'Search in', 'カテゴリー')}"><option value="">${L(lang, 'All', 'すべて')}</option>${site.cats.map((c) => `<option value="${c.id}">${esc(c[lang])}</option>`).join('')}</select>
 <input name="q" type="search" placeholder="${L(lang, 'Search Marketa', 'マルケタで検索')}" aria-label="${L(lang, 'Search', '検索')}" autocomplete="off">
@@ -147,11 +147,11 @@ function header(lang, pth) {
 <a class="cart" href="${u(lang, 'cart.html')}" aria-label="${L(lang, 'Basket', 'カート')}"><svg viewBox="0 0 32 28" width="34" height="28" aria-hidden="true"><path d="M1 3h5l4 15h16l3-11H8" fill="none" stroke="currentColor" stroke-width="2.4"/><circle cx="12" cy="23.5" r="2.3" fill="currentColor"/><circle cx="24" cy="23.5" r="2.3" fill="currentColor"/></svg><span class="cart-n" data-cart-count>0</span><b>${L(lang, 'Basket', 'カート')}</b></a>
 </div>
 <nav class="hdr-nav" aria-label="${L(lang, 'Departments', 'カテゴリー')}">
-<div class="menu all"><a href="${u(lang, 'search.html')}">☰ ${L(lang, 'All', 'すべて')}</a><div class="drop">${catNav(lang)}<hr><a href="${u(lang, 'deals.html')}">${L(lang, 'Today’s Deals', 'タイムセール')}</a><a href="${u(lang, 'search.html?local=1')}">${L(lang, 'Harukawa Local sellers', '春川ローカル出品者')}</a></div></div>
+<div class="menu all"><a href="${u(lang, 'search.html')}">☰ ${L(lang, 'All', 'すべて')}</a><div class="drop">${catNav(lang)}<hr><a href="${u(lang, 'deals.html')}">${L(lang, 'Today’s Deals', 'タイムセール')}</a><a href="${u(lang, 'search.html?local=1')}">${L(lang, 'Springvale Local sellers', '春川ローカル出品者')}</a></div></div>
 <a href="${u(lang, 'deals.html')}">${L(lang, 'Today’s Deals', 'タイムセール')}</a>
 <a href="${u(lang, 'help/fast.html')}">Marketa Fast</a>
 ${catNav(lang)}
-<a href="${u(lang, 'search.html?local=1')}">${L(lang, 'Harukawa Local', '春川ローカル')}</a>
+<a href="${u(lang, 'search.html?local=1')}">${L(lang, 'Springvale Local', '春川ローカル')}</a>
 <a href="${u(lang, 'help/index.html')}">${L(lang, 'Customer Service', 'カスタマーサービス')}</a>
 </nav>
 </header>`;
@@ -162,7 +162,7 @@ function footer(lang) {
 <a class="ftr-top" href="#top">${L(lang, 'Back to top', 'トップへ戻る')}</a>
 <div class="ftr-cols">
 ${col(L(lang, 'Shop with Marketa', 'お買い物'), site.cats.map((c) => [`c/${c.id}.html`, esc(c[lang])]))}
-${col(L(lang, 'Deals & Local', 'セール・ローカル'), [['deals.html', L(lang, 'Today’s Deals', 'タイムセール')], ['deals.html#coupons', L(lang, 'Coupons', 'クーポン')], ['search.html?local=1', L(lang, 'Harukawa Local', '春川ローカル')], ['seller/kagami.html', L(lang, 'Kagami Kiln', '鏡窯')], ['seller/minori.html', L(lang, 'Minori Yuzu Farm', 'みのり柚子園')], ['seller/brightdeal.html', L(lang, 'BrightDeal Trading', 'ブライトディール商事')]])}
+${col(L(lang, 'Deals & Local', 'セール・ローカル'), [['deals.html', L(lang, 'Today’s Deals', 'タイムセール')], ['deals.html#coupons', L(lang, 'Coupons', 'クーポン')], ['search.html?local=1', L(lang, 'Springvale Local', '春川ローカル')], ['seller/kagami.html', L(lang, 'Mirror Kiln', '鏡窯')], ['seller/minori.html', L(lang, 'Harvest Yuzu Farm', 'みのり柚子園')], ['seller/brightdeal.html', L(lang, 'BrightDeal Trading', 'ブライトディール商事')]])}
 ${col(L(lang, 'Your Account', 'アカウント'), [['orders.html', L(lang, 'Your orders', '注文履歴')], ['track.html', L(lang, 'Track a package', '配送状況')], ['cart.html', L(lang, 'Your basket', 'カート')], ['help/fast.html', L(lang, 'Marketa Fast', 'マルケタFast')]])}
 ${col(L(lang, 'Let Us Help You', 'ヘルプ'), [['help/shipping.html', L(lang, 'Shipping rates & delivery', '配送料と配送日')], ['help/returns.html', L(lang, 'Returns & refunds', '返品・返金')], ['help/payment.html', L(lang, 'Payment methods', 'お支払い方法')], ['help/faq.html', L(lang, 'FAQ', 'よくある質問')], ['help/index.html', L(lang, 'Customer Service', 'カスタマーサービス')]])}
 </div>
@@ -283,7 +283,7 @@ function productPage(lang, p) {
 <a class="brandlink" href="${u(lang, `search.html?brand=${encodeURIComponent(p.brand.en)}`)}">${L(lang, `Visit the ${esc(p.brand.en)} Store`, `${esc(p.brand.ja)}のストアを表示`)}</a>
 <div class="rline"><span class="rnum">${r}</span> ${stars(lang, r)} <a href="#reviews">${L(lang, `${num(p.ratings)} ratings`, `${num(p.ratings)}個の評価`)}</a> <span class="sep">|</span> <a href="#qa">${L(lang, `${p.qa.length} answered questions`, `${p.qa.length}件の質問に回答`)}</a></div>
 ${badges ? `<div class="badges">${badges}</div>` : ''}
-${isLocal(p) ? `<div class="localtag">${L(lang, 'Harukawa Local seller', '春川ローカル出品者')}</div>` : ''}
+${isLocal(p) ? `<div class="localtag">${L(lang, 'Springvale Local seller', '春川ローカル出品者')}</div>` : ''}
 <div class="bought muted">${L(lang, `${bought(p)} bought in past month`, `過去1か月で${bought(p)}点購入されました`)}</div>
 <hr>
 ${ld ? `<div class="ldeal"><b>${L(lang, 'Lightning Deal', 'タイムセール')}</b> <span>${L(lang, `${ld.claimed}% claimed · Ends ${ld.ends} today`, `${ld.claimed}%取得済み・本日${ld.ends}終了`)}</span><div class="claim"><i style="width:${ld.claimed}%"></i></div></div>` : ''}
@@ -299,7 +299,7 @@ ${variants}
   const buy = `<aside class="buybox">
 <div id="bb-price">${vd.bbp}</div>
 <div id="bb-dl" class="bb-dl">${vd.dl}</div>
-<a class="deliver-s" href="${u(lang, 'checkout.html')}">📍 ${L(lang, 'Deliver to Aki – Harukawa 795-0021', 'お届け先：アキさん – 春川市 795-0021')}</a>
+<a class="deliver-s" href="${u(lang, 'checkout.html')}">📍 ${L(lang, 'Deliver to Aki – Springvale 795-0021', 'お届け先：アキさん – 春川市 795-0021')}</a>
 <div id="bb-stock">${vd.st}</div>
 <label class="qty">${L(lang, 'Quantity:', '数量：')} <select id="qty">${[1, 2, 3, 4, 5].map((n) => `<option>${n}</option>`).join('')}</select></label>
 <button class="btn btn-y btn-full" id="add" data-id="${p.id}">${L(lang, 'Add to basket', 'カートに入れる')}</button>
@@ -383,7 +383,7 @@ function listingShell(lang, o) {
 }
 function categoryPage(lang, c) {
   const head = `<div class="cat-hero"><div><h1>${esc(c[lang])}</h1><p class="muted">${esc(tx(lang, c.blurb))}</p></div><div class="cat-subs">${c.clusters.map((k) => `<a href="${u(lang, `c/${c.id}.html?sub=${k}`)}"><img src="${img(products.find((p) => p.cluster === k).images[0])}" alt="" loading="lazy"><span>${esc(tx(lang, site.clusterNames[k]))}</span></a>`).join('')}</div></div>
-<div class="ad-strip"><span class="spons">${L(lang, 'Sponsored', 'スポンサー')}</span> ${c.id === 'kitchen' || c.id === 'home' ? L(lang, 'Gift-wrapped Harukawa ware from Kagami Kiln, with free noshi. <a href="/en/seller/kagami.html">Shop now ›</a>', '鏡窯の春川焼、のし無料・ギフト包装承ります。<a href="/ja/seller/kagami.html">ストアを見る ›</a>') : L(lang, 'Marketa Fast: free next-day delivery on millions of items. <a href="/en/help/fast.html">Try 30 days free ›</a>', 'マルケタFast：対象商品の翌日配送が無料。<a href="/ja/help/fast.html">30日間無料で試す ›</a>')}</div>`;
+<div class="ad-strip"><span class="spons">${L(lang, 'Sponsored', 'スポンサー')}</span> ${c.id === 'kitchen' || c.id === 'home' ? L(lang, 'Gift-wrapped Springvale ware from Mirror Kiln, with free noshi. <a href="/en/seller/kagami.html">Shop now ›</a>', '鏡窯の春川焼、のし無料・ギフト包装承ります。<a href="/ja/seller/kagami.html">ストアを見る ›</a>') : L(lang, 'Marketa Fast: free next-day delivery on millions of items. <a href="/en/help/fast.html">Try 30 days free ›</a>', 'マルケタFast：対象商品の翌日配送が無料。<a href="/ja/help/fast.html">30日間無料で試す ›</a>')}</div>`;
   emit(lang, `c/${c.id}.html`, { title: L(lang, `${c.en} | Marketa`, `${c.ja} | マルケタ`), crumbs: [['index.html', 'Marketa'], [null, c[lang]]], body: listingShell(lang, { cat: c.id, head }), cls: 'pg-list' });
 }
 
@@ -413,9 +413,9 @@ function homePage(lang) {
   const body = `${hero}
 <div class="quads">
 ${quad(L(lang, 'Today’s Lightning Deals', '本日のタイムセール'), deals.slice(0, 4), 'deals.html', L(lang, 'See all deals', 'すべてのセールを見る'))}
-${quad(L(lang, 'Shop Harukawa Local', '春川ローカルの逸品'), ['kagami-donabe', 'kagami-mug-pair', 'minori-ponzu-set', 'minori-bath-salts'], 'search.html?local=1', L(lang, 'Discover local sellers', 'ローカル出品者を見る'))}
+${quad(L(lang, 'Shop Springvale Local', '春川ローカルの逸品'), ['kagami-donabe', 'kagami-mug-pair', 'minori-ponzu-set', 'minori-bath-salts'], 'search.html?local=1', L(lang, 'Discover local sellers', 'ローカル出品者を見る'))}
 ${quad(L(lang, 'Warm drinks for autumn', '秋のあたたかい一杯に'), ['hearth-kettle', 'tetsuyu-gooseneck', 'kagami-tea-set', 'minori-marmalade-set'], 'c/kitchen.html?sub=kettles', L(lang, 'Shop kettles', 'ケトルを見る'))}
-<div class="qcard signin"><h3>${L(lang, 'Your Marketa Fast trial', 'マルケタFastを無料で体験')}</h3><p>${L(lang, 'Free next-day delivery on Fast items, free same-day delivery in Harukawa on orders of ¥2,000 or more, and early access to deals. 30 days free, then ¥600 a month.', 'Fast対象商品の翌日配送が無料、春川市内は2,000円以上で当日配送も無料、タイムセールに先行参加。30日間無料、その後は月額600円。')}</p><a class="btn btn-y" href="${u(lang, 'help/fast.html')}">${L(lang, 'Learn more', '詳しく見る')}</a><p class="muted sm">${L(lang, 'One free trial per account. Not available if you were a member in the last 12 months.', '無料体験は1アカウント1回限り。過去12か月以内に会員だった場合は対象外です。')}</p></div>
+<div class="qcard signin"><h3>${L(lang, 'Your Marketa Fast trial', 'マルケタFastを無料で体験')}</h3><p>${L(lang, 'Free next-day delivery on Fast items, free same-day delivery in Springvale on orders of ¥2,000 or more, and early access to deals. 30 days free, then ¥600 a month.', 'Fast対象商品の翌日配送が無料、春川市内は2,000円以上で当日配送も無料、タイムセールに先行参加。30日間無料、その後は月額600円。')}</p><a class="btn btn-y" href="${u(lang, 'help/fast.html')}">${L(lang, 'Learn more', '詳しく見る')}</a><p class="muted sm">${L(lang, 'One free trial per account. Not available if you were a member in the last 12 months.', '無料体験は1アカウント1回限り。過去12か月以内に会員だった場合は対象外です。')}</p></div>
 </div>
 <section class="sec home-sec"><h2>${L(lang, 'Shop by department', 'カテゴリーから探す')}</h2><div class="tiles">${site.cats.map((c) => `<a class="tile" href="${u(lang, `c/${c.id}.html`)}"><img src="${img(c.img)}" alt="" loading="lazy"><b>${esc(c[lang])}</b><span class="muted sm">${esc(tx(lang, c.blurb))}</span></a>`).join('')}</div></section>
 <section class="sec home-sec"><h2>${L(lang, 'Recommended for you, Aki', 'アキさんへのおすすめ')}</h2>${row(lang, h.recommended)}</section>
@@ -425,8 +425,8 @@ ${quad(L(lang, 'Warm drinks for autumn', '秋のあたたかい一杯に'), ['he
 <section class="sec home-sec"><h2>${L(lang, 'Best Sellers in Kitchen', 'キッチン用品の売れ筋ランキング')}</h2><ol class="best">${best('kitchen').slice(0, 5).map((p, i) => `<li><span class="rank">#${i + 1}</span><img src="${img(p.images[0])}" alt="" loading="lazy"><div><a href="${u(lang, `p/${p.id}.html`)}">${esc(tx(lang, p.short))}</a><div>${stars(lang, avg(p))} <span class="muted sm">${num(p.ratings)}</span></div><span class="pb-price sm">${yen(lang, minPriceVar(p).price)}</span></div></li>`).join('')}</ol></section>
 <section class="sec home-sec"><h2>${L(lang, 'Best Sellers in Electronics', '家電・オーディオの売れ筋ランキング')}</h2><ol class="best">${best('electronics').slice(0, 5).map((p, i) => `<li><span class="rank">#${i + 1}</span><img src="${img(p.images[0])}" alt="" loading="lazy"><div><a href="${u(lang, `p/${p.id}.html`)}">${esc(tx(lang, p.short))}</a><div>${stars(lang, avg(p))} <span class="muted sm">${num(p.ratings)}</span></div><span class="pb-price sm">${yen(lang, minPriceVar(p).price)}</span></div></li>`).join('')}</ol></section>
 </div>
-<section class="sec home-sec"><h2>${L(lang, 'Gifts from Harukawa for the Lantern Festival', '灯籠まつりの贈り物に、春川の名産')}</h2>${row(lang, ['minori-ponzu-set', 'kagami-sake-set', 'shiroshita-senbei', 'minori-marmalade-set', 'kagami-plate-set', 'kagami-tea-set', 'minori-hand-cream'])}</section>`;
-  emit(lang, 'index.html', { title: L(lang, 'Marketa: online shopping for kitchen, electronics, outdoor and Harukawa local goods', 'マルケタ｜春川発のオンラインショッピング'), body, cls: 'pg-home' });
+<section class="sec home-sec"><h2>${L(lang, 'Gifts from Springvale for the Lantern Festival', '灯籠まつりの贈り物に、春川の名産')}</h2>${row(lang, ['minori-ponzu-set', 'kagami-sake-set', 'shiroshita-senbei', 'minori-marmalade-set', 'kagami-plate-set', 'kagami-tea-set', 'minori-hand-cream'])}</section>`;
+  emit(lang, 'index.html', { title: L(lang, 'Marketa: online shopping for kitchen, electronics, outdoor and Springvale local goods', 'マルケタ｜春川発のオンラインショッピング'), body, cls: 'pg-home' });
 }
 
 // ---------- deals ----------
@@ -436,7 +436,7 @@ function dealsPage(lang) {
   const disc = products.filter((p) => p.variants.some((v) => pct(v) > 0)).sort((a, b) => pct(minPriceVar(b)) - pct(minPriceVar(a)));
   const cps = products.filter((p) => p.coupon);
   const body = `<h1>${L(lang, 'Today’s Deals', 'タイムセール')}</h1>
-<div class="fest-banner"><b>${L(lang, 'Harukawa Lantern Festival Sale', '春川灯籠まつりセール')}</b> <span>${L(lang, 'Fri 2 Oct – Sun 11 Oct 23:59', '10月2日(金)〜10月11日(日)23:59')}</span><span class="muted sm">${L(lang, 'New Lightning Deals every day at 0:00, 12:00 and 18:00. Fast members see each Lightning Deal 30 minutes early.', 'タイムセールは毎日0時・12時・18時に追加。Fast会員は各タイムセールに30分早く参加できます。')}</span></div>
+<div class="fest-banner"><b>${L(lang, 'Springvale Lantern Festival Sale', '春川灯籠まつりセール')}</b> <span>${L(lang, 'Fri 2 Oct – Sun 11 Oct 23:59', '10月2日(金)〜10月11日(日)23:59')}</span><span class="muted sm">${L(lang, 'New Lightning Deals every day at 0:00, 12:00 and 18:00. Fast members see each Lightning Deal 30 minutes early.', 'タイムセールは毎日0時・12時・18時に追加。Fast会員は各タイムセールに30分早く参加できます。')}</span></div>
 <div class="deal-tabs" role="tablist"><a class="on" href="#lightning">${L(lang, 'Lightning Deals', 'タイムセール')}</a><a href="#dotd">${L(lang, 'Deal of the Day', '特選タイムセール')}</a><a href="#upcoming">${L(lang, 'Upcoming', 'まもなく開始')}</a><a href="#all">${L(lang, 'All discounts', '割引中の商品')}</a><a href="#coupons">${L(lang, 'Coupons', 'クーポン')}</a></div>
 <section class="sec" id="lightning"><h2>${L(lang, 'Lightning Deals', 'タイムセール')}</h2><div class="grid-cards">${site.deals.lightning.map((d) => { const p = P[d.id]; return `<div class="dcard">${card(lang, p, { deal: true, v: defVar(p) })}<div class="claim"><i style="width:${d.claimed}%"></i></div><p class="sm">${L(lang, `${d.claimed}% claimed · Ends ${d.ends} today`, `${d.claimed}%取得済み・本日${d.ends}終了`)}</p></div>`; }).join('')}</div>
 <p class="muted sm">${L(lang, 'Lightning Deals are available in limited quantities until the end time or until all units are claimed. Limit one per customer. When a deal is 100% claimed you can join the waitlist; if someone removes the deal from their basket, the next person on the waitlist gets it.', 'タイムセールは数量限定で、終了時刻またはすべて取得されるまで有効です。お一人様1点限り。100%取得された場合はキャンセル待ちに登録できます。他のお客様がカートから削除すると、キャンセル待ちの順にご案内します。')}</p></section>
@@ -489,8 +489,8 @@ function checkoutPage(lang) {
 <div class="checkout" data-checkout data-points="${acc.points}"><div class="co-steps">
 <section class="co-step" data-step="1"><h2><span>1</span>${L(lang, 'Delivery address', 'お届け先住所')}</h2><div class="co-sum"></div><div class="co-body">
 ${acc.addresses.map((a, i) => `<label class="addr"><input type="radio" name="addr" value="${a.id}" data-region="${a.region}"${i ? '' : ' checked'}> <span><b>${esc(a[lang].name)}</b> <span class="muted sm">(${esc(a[lang].label)})</span><br>${a[lang].lines.map(esc).join('<br>')}<br><span class="sm muted">${L(lang, 'Phone: 090-•••-4471', '電話番号：090-•••-4471')}</span></span></label>`).join('')}
-<label class="addr"><input type="radio" name="addr" value="locker" data-region="harukawa"> <span><b>${L(lang, 'Marketa Locker – Harukawa Central Station', 'マルケタロッカー – 春川中央駅')}</b><br><span class="sm">${L(lang, 'Ground floor, east exit · open 5:00–24:30 · parcels held 3 days · max 45 × 35 × 30 cm, 10 kg', '1階 東口・5:00〜24:30・保管期間3日間・最大45×35×30cm、10kgまで')}</span></span></label>
-<details class="sm"><summary>${L(lang, 'Add a new address', '新しい住所を追加')}</summary><div class="form-grid"><label>${L(lang, 'Full name', '氏名')}<input></label><label>${L(lang, 'Postcode', '郵便番号')}<input placeholder="795-0021"></label><label>${L(lang, 'Prefecture', '都道府県')}<input value="${L(lang, 'Minori', 'みのり県')}"></label><label>${L(lang, 'City and street', '市区町村・番地')}<input></label><label>${L(lang, 'Building, room', '建物名・部屋番号')}<input></label><label>${L(lang, 'Phone', '電話番号')}<input></label><p class="muted">${L(lang, 'New addresses are checked before the order ships. Next-day and same-day delivery are not available to a new address on its first order.', '新しい住所は発送前に確認します。初回のご注文では、新しい住所への翌日・当日配送はご利用いただけません。')}</p></div></details>
+<label class="addr"><input type="radio" name="addr" value="locker" data-region="harukawa"> <span><b>${L(lang, 'Marketa Locker – Springvale Central Station', 'マルケタロッカー – 春川中央駅')}</b><br><span class="sm">${L(lang, 'Ground floor, east exit · open 5:00–24:30 · parcels held 3 days · max 45 × 35 × 30 cm, 10 kg', '1階 東口・5:00〜24:30・保管期間3日間・最大45×35×30cm、10kgまで')}</span></span></label>
+<details class="sm"><summary>${L(lang, 'Add a new address', '新しい住所を追加')}</summary><div class="form-grid"><label>${L(lang, 'Full name', '氏名')}<input></label><label>${L(lang, 'Postcode', '郵便番号')}<input placeholder="795-0021"></label><label>${L(lang, 'Prefecture', '都道府県')}<input value="${L(lang, 'Harvest', 'みのり県')}"></label><label>${L(lang, 'City and street', '市区町村・番地')}<input></label><label>${L(lang, 'Building, room', '建物名・部屋番号')}<input></label><label>${L(lang, 'Phone', '電話番号')}<input></label><p class="muted">${L(lang, 'New addresses are checked before the order ships. Next-day and same-day delivery are not available to a new address on its first order.', '新しい住所は発送前に確認します。初回のご注文では、新しい住所への翌日・当日配送はご利用いただけません。')}</p></div></details>
 <button class="btn btn-y" data-next>${L(lang, 'Use this address', 'この住所を使う')}</button></div></section>
 <section class="co-step" data-step="2"><h2><span>2</span>${L(lang, 'Delivery options', '配送オプション')}</h2><div class="co-sum"></div><div class="co-body"><div id="co-delivery"></div><button class="btn btn-y" data-next>${L(lang, 'Continue', '続行')}</button></div></section>
 <section class="co-step" data-step="3"><h2><span>3</span>${L(lang, 'Payment method', 'お支払い方法')}</h2><div class="co-sum"></div><div class="co-body"><div id="co-pay"></div><button class="btn btn-y" data-next>${L(lang, 'Use this payment method', 'このお支払い方法を使う')}</button></div></section>
@@ -534,7 +534,7 @@ function trackPage(lang) {
   const body = `<h1>${L(lang, 'Track your packages', '配送状況の確認')}</h1>
 <section class="track" id="ship"><div class="track-head"><div><p class="muted sm">${L(lang, 'Arriving', 'お届け予定')}</p><h2 class="warn">${esc(tx(lang, t.ship.eta))}</h2><p class="sm"><s>${esc(tx(lang, t.ship.was))}</s> ${L(lang, '(original estimate)', '（当初の予定）')}</p></div>${item(t.ship.order)}</div>
 <div class="alert">${esc(tx(lang, t.ship.alert))}</div>
-<div class="track-cols">${tl(t.ship)}<div class="track-info"><table class="kv"><tr><th>${L(lang, 'Carrier', '配送業者')}</th><td>${esc(tx(lang, t.ship.carrier))}</td></tr><tr><th>${L(lang, 'Tracking ID', '追跡番号')}</th><td>${t.ship.number}</td></tr><tr><th>${L(lang, 'Ship to', 'お届け先')}</th><td>${L(lang, 'Aki Mori, Harukawa 795-0021', '森 亜希様　春川市 795-0021')}</td></tr></table>
+<div class="track-cols">${tl(t.ship)}<div class="track-info"><table class="kv"><tr><th>${L(lang, 'Carrier', '配送業者')}</th><td>${esc(tx(lang, t.ship.carrier))}</td></tr><tr><th>${L(lang, 'Tracking ID', '追跡番号')}</th><td>${t.ship.number}</td></tr><tr><th>${L(lang, 'Ship to', 'お届け先')}</th><td>${L(lang, 'Aki Mori, Springvale 795-0021', '森 亜希様　春川市 795-0021')}</td></tr></table>
 <h3>${L(lang, 'Delivery options', '受け取り方法の変更')}</h3><ul class="opts">${t.ship.options[lang].map((x) => `<li><label><input type="radio" name="dopt"> ${esc(x)}</label></li>`).join('')}</ul><button class="btn btn-y btn-sm" data-dopt>${L(lang, 'Save', '保存')}</button><p class="saved sm" hidden>${L(lang, 'Saved. The carrier will confirm by message.', '保存しました。配送業者からメッセージで確認が届きます。')}</p>
 <p class="sm"><a href="${u(lang, 'seller/brightdeal.html')}">${L(lang, 'Contact BrightDeal Trading', 'ブライトディール商事に問い合わせる')}</a> · <a href="${u(lang, 'help/returns.html#protection')}">${L(lang, 'Marketa Purchase Protection', 'マルケタ購入者保護')}</a></p></div></div></section>
 <section class="track" id="return"><div class="track-head"><div><p class="muted sm">${L(lang, 'Return', '返品')}</p><h2>${esc(tx(lang, t.return.eta))}</h2><p class="sm">${esc(tx(lang, t.return.carrier))} · ${t.return.number}</p></div>${item(t.return.order)}</div>

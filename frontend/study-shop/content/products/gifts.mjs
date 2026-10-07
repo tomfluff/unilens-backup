@@ -12,14 +12,14 @@ export default [
     id: 'minori-ponzu-set',
     cat: 'gifts',
     cluster: 'gifts',
-    brand: { en: 'Minori Yuzu Farm', ja: 'みのり柚子園' },
+    brand: { en: 'Harvest Yuzu Farm', ja: 'みのり柚子園' },
     seller: 'minori',
     images: ['minori-ponzu-set'],
     title: {
-      en: 'Minori Yuzu Farm Yuzu Ponzu (2 × 300 mL) and Green Yuzu Kosho (50 g) Gift Set, Made with Yuzu Grown in the Kagami River Valley, Harukawa Souvenir, Free Noshi and Message Card',
+      en: 'Harvest Yuzu Farm Yuzu Ponzu (2 × 300 mL) and Green Yuzu Kosho (50 g) Gift Set, Made with Yuzu Grown in the Mirror River Valley, Springvale Souvenir, Free Noshi and Message Card',
       ja: 'みのり柚子園 ゆずぽん酢 300ml×2本 青柚子こしょう 50g ギフトセット 鏡川流域産 柚子使用 春川 お土産 贈答 内祝い 御礼 のし・メッセージカード無料',
     },
-    short: { en: 'Minori Yuzu Ponzu & Kosho Set', ja: 'みのり柚子園 ぽん酢＆柚子こしょう' },
+    short: { en: 'Harvest Yuzu Ponzu & Kosho Set', ja: 'みのり柚子園 ぽん酢＆柚子こしょう' },
     rating: 4.7,
     ratings: 803,
     hist: [80, 12, 4, 2, 2],
@@ -32,12 +32,12 @@ export default [
       { id: 'home-pack', name: { en: 'Home pack (no box)', ja: 'ご家庭用（箱なし）' }, price: 3780, list: null, stock: 38, ship: 'minori' },
     ],
     returns: {
-      en: 'Sold and shipped by Minori Yuzu Farm. Food cannot be returned unless it arrives damaged or faulty: send photos to the farm within 7 days of delivery for a replacement or refund.',
+      en: 'Sold and shipped by Harvest Yuzu Farm. Food cannot be returned unless it arrives damaged or faulty: send photos to the farm within 7 days of delivery for a replacement or refund.',
       ja: 'みのり柚子園が販売・発送する商品です。食品のため返品はお受けできません。破損・不良品が届いた場合は、到着後7日以内に写真を添えて当園までご連絡ください。交換または返金いたします。',
     },
     bullets: {
       en: [
-        'TWO HARUKAWA FLAVOURS: two 300 mL bottles of yuzu ponzu and a 50 g jar of green yuzu kosho, made by the Hirose family in the kitchen at their orchard near Tsukimi Onsen.',
+        'TWO SPRINGVALE FLAVOURS: two 300 mL bottles of yuzu ponzu and a 50 g jar of green yuzu kosho, made by the Hirose family in the kitchen at their orchard near Moonview Spa.',
         'REAL YUZU JUICE: the ponzu contains 20% hand-squeezed juice from our own trees, blended with soy sauce, rice vinegar, mirin, bonito and kombu stock. Tangy first, with a salty finish: 1.1 g salt per tablespoon.',
         'FRESH GREEN YUZU KOSHO: green yuzu peel picked in August, green chillies and salt, ground in small batches. Very hot and aromatic; a little goes a long way on hot pot, grilled chicken, sashimi or pasta.',
         'ALLERGENS: the ponzu contains soy and wheat, plus bonito (fish) extract, so it is not suitable for fish allergies or a gluten-free diet. The yuzu kosho contains none of these.',
@@ -57,15 +57,15 @@ export default [
     },
     specs: {
       en: [
-        ['Brand', 'Minori Yuzu Farm'], ['Contents', '2 × 300 mL yuzu ponzu, 1 × 50 g green yuzu kosho'],
-        ['Ponzu ingredients', 'Soy sauce (soybeans, wheat, salt), yuzu juice (20%, Minori Prefecture), rice vinegar, mirin, bonito flake extract, kombu extract'],
-        ['Yuzu kosho ingredients', 'Green yuzu peel (Minori Prefecture), green chilli, salt'],
+        ['Brand', 'Harvest Yuzu Farm'], ['Contents', '2 × 300 mL yuzu ponzu, 1 × 50 g green yuzu kosho'],
+        ['Ponzu ingredients', 'Soy sauce (soybeans, wheat, salt), yuzu juice (20%, Harvest Prefecture), rice vinegar, mirin, bonito flake extract, kombu extract'],
+        ['Yuzu kosho ingredients', 'Green yuzu peel (Harvest Prefecture), green chilli, salt'],
         ['Allergens', 'Soy, wheat (ponzu). Also contains bonito (fish).'], ['Salt', 'Ponzu 1.1 g per 15 mL; yuzu kosho about 15%'],
         ['Additives', 'No preservatives, colourings or MSG'], ['Best before (unopened)', 'Ponzu 8 months from bottling; yuzu kosho 6 months'],
         ['After opening', 'Ponzu: refrigerate, use within 1 month. Yuzu kosho: refrigerate, use within 3 months'],
         ['Storage', 'Ponzu: cool, dark place until opened. Yuzu kosho: always refrigerate'],
         ['Gift box', '26 × 18 × 8 cm, 1.3 kg, kraft box with yuzu illustration'], ['Home pack', 'Same contents in a plain carton'],
-        ['Noshi / message card', 'Free (gift box only)'], ['Producer', 'Minori Yuzu Farm (Hirose family), Tsukimi Onsen area, Minori Prefecture'],
+        ['Noshi / message card', 'Free (gift box only)'], ['Producer', 'Harvest Yuzu Farm (Hirose family), Moonview Spa area, Harvest Prefecture'],
         ['Country of origin', 'Japan'], ['Guarantee', 'Damaged or faulty on arrival: replacement or refund (report within 7 days)'],
       ],
       ja: [
@@ -82,7 +82,7 @@ export default [
       ],
     },
     compare: {
-      en: ['2 × 300 mL ponzu + 50 g yuzu kosho', 'Ponzu 8 months, kosho 6 months (unopened)', 'Soy, wheat; also bonito (fish)', 'Gift box: free noshi and card; home pack: none', 'Minori Yuzu Farm, near Tsukimi Onsen', 'Ponzu: cool and dark; kosho: refrigerate'],
+      en: ['2 × 300 mL ponzu + 50 g yuzu kosho', 'Ponzu 8 months, kosho 6 months (unopened)', 'Soy, wheat; also bonito (fish)', 'Gift box: free noshi and card; home pack: none', 'Harvest Yuzu Farm, near Moonview Spa', 'Ponzu: cool and dark; kosho: refrigerate'],
       ja: ['ぽん酢300mL×2＋柚子こしょう50g', 'ぽん酢8か月・柚子こしょう6か月（未開封）', '小麦・大豆、かつお（魚）', 'ギフト箱：のし・カード無料／ご家庭用：なし', 'みのり柚子園（月見温泉近郊）', 'ぽん酢は冷暗所、柚子こしょうは要冷蔵'],
     },
     tables: [
@@ -121,11 +121,11 @@ export default [
     ],
     description: {
       en: [
-        'Minori Yuzu Farm is a family orchard on the terraced hillsides of the Kagami River valley, a short drive from Tsukimi Onsen. The Hirose family has grown yuzu here since 1978; cool nights and morning fog off the river give the fruit thick, fragrant peel. Everything in this box is made in the farm’s own small kitchen from fruit picked on the hillside.',
+        'Harvest Yuzu Farm is a family orchard on the terraced hillsides of the Mirror River valley, a short drive from Moonview Spa. The Hirose family has grown yuzu here since 1978; cool nights and morning fog off the river give the fruit thick, fragrant peel. Everything in this box is made in the farm’s own small kitchen from fruit picked on the hillside.',
         'The ponzu is made from ripe yellow yuzu harvested in November and December and squeezed by hand. At 20% yuzu juice it is much fruitier than most supermarket ponzu, and it is brewed with real bonito flakes and kombu rather than stock powder. It is a dipping and dressing sauce: use it on hot pot, tofu, gyoza, grilled fish or salad. It is tangy first with a noticeably salty finish; if you are watching your salt, mix it half and half with dashi or water.',
         'The green yuzu kosho is made once a year, in August, from unripe green yuzu and green chillies grown on the farm. It is bright green when made and slowly turns olive green in the fridge; this is natural and does not affect the taste. It is very hot: start with an amount the size of a grain of rice. There are no preservatives, so keep it refrigerated even before opening.',
         'Allergens: the ponzu contains soy and wheat (from the soy sauce), and bonito, which is a fish. Bonito is not one of the allergens Japanese labels must highlight, so on the bottle it appears only in the ingredients list. The yuzu kosho contains no soy, wheat or fish and is made on separate equipment.',
-        'For gifts, choose the gift box: noshi paper (御祝, 御礼, 内祝, 御歳暮 and more) and a message card are free; write the inscription and your name in the order notes. The farm ships Monday to Saturday and the set arrives Wed 7 – Thu 8 Oct in Harukawa city, before the Lantern Festival. Food cannot be returned, but if a bottle arrives broken or leaking, send photos within 7 days and the farm replaces it or refunds you.',
+        'For gifts, choose the gift box: noshi paper (御祝, 御礼, 内祝, 御歳暮 and more) and a message card are free; write the inscription and your name in the order notes. The farm ships Monday to Saturday and the set arrives Wed 7 – Thu 8 Oct in Springvale city, before the Lantern Festival. Food cannot be returned, but if a bottle arrives broken or leaking, send photos within 7 days and the farm replaces it or refunds you.',
       ],
       ja: [
         'みのり柚子園は、月見温泉から車ですぐ、鏡川流域の段々畑にある家族経営の柚子園です。広瀬家が1978年から柚子を育てています。夜の冷え込みと川から上がる朝霧のおかげで、皮が厚く香りの強い柚子が実ります。この箱の中身はすべて、斜面の畑で収穫した柚子を使い、園内の小さな加工場で作ったものです。',
@@ -170,27 +170,27 @@ export default [
         en: { name: 'Atsuko', title: 'Good year-end gift', body: 'Sent as an oseibo. The ponzu had six months left before its best-before date, plenty for a gift. One star off because the kosho needs the fridge, which I had to tell the recipient.' },
         ja: { name: '敦子', title: 'お歳暮にちょうどいい', body: 'お歳暮に贈りました。ぽん酢は賞味期限まで半年あり、贈り物には十分。柚子こしょうが要冷蔵なので、先方にひとこと伝える必要があり星4つ。' } },
       { stars: 5, date: '2026-09-11', variant: 'gift-box', helpful: 11, verified: true,
-        en: { name: 'Yuko', title: 'Our standard Harukawa souvenir', body: 'We send this and the Shiroshita senbei to relatives every autumn. Note that the ponzu contains wheat and soy; the senbei box also has shrimp, so check allergies for both.' },
+        en: { name: 'Yuko', title: 'Our standard Springvale souvenir', body: 'We send this and the Shiroshita senbei to relatives every autumn. Note that the ponzu contains wheat and soy; the senbei box also has shrimp, so check allergies for both.' },
         ja: { name: '優子', title: 'わが家の春川みやげの定番', body: '毎年秋、これと城下製菓のおせんべいを親戚に送っています。ぽん酢には小麦・大豆が、おせんべいには海老も入っているので、どちらもアレルギーの確認をお忘れなく。' } },
     ],
     qa: [
       { date: '2026-06-12', votes: 48,
-        en: { q: 'Does the ponzu contain fish?', a: 'Yes, bonito flake extract. Bonito is not one of the allergens Japanese labels must highlight, so it appears only in the ingredients list on the bottle. The ponzu is not suitable for anyone with a fish allergy. The yuzu kosho contains no fish.', by: 'Minori Yuzu Farm' },
+        en: { q: 'Does the ponzu contain fish?', a: 'Yes, bonito flake extract. Bonito is not one of the allergens Japanese labels must highlight, so it appears only in the ingredients list on the bottle. The ponzu is not suitable for anyone with a fish allergy. The yuzu kosho contains no fish.', by: 'Harvest Yuzu Farm' },
         ja: { q: 'ぽん酢に魚は入っていますか？', a: 'はい、かつお節エキスを使用しています。かつおは表示義務のある品目ではないため、瓶では原材料名欄にのみ記載しております。魚アレルギーの方はお控えください。柚子こしょうには魚は含まれていません。', by: 'みのり柚子園' } },
       { date: '2026-10-04', votes: 9,
-        en: { q: 'If I order the gift box tomorrow, will it arrive before 10 October?', a: 'Yes. We ship Monday to Saturday, and orders placed by Monday 5 Oct arrive in Harukawa city on Wed 7 – Thu 8 Oct.', by: 'Minori Yuzu Farm' },
+        en: { q: 'If I order the gift box tomorrow, will it arrive before 10 October?', a: 'Yes. We ship Monday to Saturday, and orders placed by Monday 5 Oct arrive in Springvale city on Wed 7 – Thu 8 Oct.', by: 'Harvest Yuzu Farm' },
         ja: { q: '明日ギフト箱を注文したら、10月10日までに届きますか？', a: 'はい。当園は月曜〜土曜に発送しております。10月5日（月）までのご注文は、春川市内に10月7日（水）〜8日（木）にお届けします。', by: 'みのり柚子園' } },
       { date: '2026-08-30', votes: 14,
-        en: { q: 'Can I add noshi to the home pack?', a: 'No, the home pack ships in a plain carton, so noshi and the message card are available with the gift box only.', by: 'Minori Yuzu Farm' },
+        en: { q: 'Can I add noshi to the home pack?', a: 'No, the home pack ships in a plain carton, so noshi and the message card are available with the gift box only.', by: 'Harvest Yuzu Farm' },
         ja: { q: 'ご家庭用にものしを付けられますか？', a: 'ご家庭用は無地の段ボールでお届けするため、のし・メッセージカードはギフト箱のみの対応となります。', by: 'みのり柚子園' } },
       { date: '2026-07-01', votes: 6,
         en: { q: 'Does the yuzu kosho need to go in the fridge before opening?', a: 'No, I kept mine in the cupboard until I opened it and it was fine.', by: 'Marketa customer (Kenta)' },
         ja: { q: '柚子こしょうは開封前も冷蔵が必要ですか？', a: '私は開けるまで戸棚に置いていましたが、問題ありませんでした。', by: 'マルケタ購入者（けんた）' } },
       { date: '2026-07-03', votes: 22,
-        en: { q: 'How should I store the yuzu kosho?', a: 'Please refrigerate it at all times, including before opening. It contains no preservatives, so at room temperature the colour and aroma fade quickly. Unopened it keeps 6 months in the fridge; once opened, use it within 3 months.', by: 'Minori Yuzu Farm' },
+        en: { q: 'How should I store the yuzu kosho?', a: 'Please refrigerate it at all times, including before opening. It contains no preservatives, so at room temperature the colour and aroma fade quickly. Unopened it keeps 6 months in the fridge; once opened, use it within 3 months.', by: 'Harvest Yuzu Farm' },
         ja: { q: '柚子こしょうの保存方法を教えてください。', a: '開封前も含めて、常に冷蔵庫で保存してください。保存料を使っていないため、常温では色と香りがすぐに落ちてしまいます。未開封なら冷蔵で6か月、開封後は3か月以内にお召し上がりください。', by: 'みのり柚子園' } },
       { date: '2026-05-19', votes: 11,
-        en: { q: 'Is it gluten-free?', a: 'The ponzu is not: the soy sauce contains wheat. The yuzu kosho is gluten-free.', by: 'Minori Yuzu Farm' },
+        en: { q: 'Is it gluten-free?', a: 'The ponzu is not: the soy sauce contains wheat. The yuzu kosho is gluten-free.', by: 'Harvest Yuzu Farm' },
         ja: { q: 'グルテンフリーですか？', a: 'ぽん酢はしょうゆに小麦を含むため、グルテンフリーではありません。柚子こしょうはグルテンフリーです。', by: 'みのり柚子園' } },
     ],
     similar: ['minori-marmalade-set', 'shiroshita-senbei', 'kagami-sake-set'],
@@ -201,14 +201,14 @@ export default [
     id: 'minori-marmalade-set',
     cat: 'gifts',
     cluster: 'gifts',
-    brand: { en: 'Minori Yuzu Farm', ja: 'みのり柚子園' },
+    brand: { en: 'Harvest Yuzu Farm', ja: 'みのり柚子園' },
     seller: 'minori',
     images: ['minori-marmalade-set'],
     title: {
-      en: 'Minori Yuzu Farm Yuzu Marmalade (2 × 200 g) and Yuzu-cha Citron Tea (430 g) Gift Set, Made with Kagami Valley Yuzu, No Added Pectin, Gift Box, Free Noshi',
+      en: 'Harvest Yuzu Farm Yuzu Marmalade (2 × 200 g) and Yuzu-cha Citron Tea (430 g) Gift Set, Made with Mirror Valley Yuzu, No Added Pectin, Gift Box, Free Noshi',
       ja: 'みのり柚子園 ゆずマーマレード 200g×2 ゆず茶 430g ギフトセット 鏡川流域産柚子 ペクチン無添加 化粧箱入り のし対応 春川みやげ 贈り物',
     },
-    short: { en: 'Minori Yuzu Marmalade & Yuzu-cha Set', ja: 'みのり柚子園 マーマレード＆ゆず茶' },
+    short: { en: 'Harvest Yuzu Marmalade & Yuzu-cha Set', ja: 'みのり柚子園 マーマレード＆ゆず茶' },
     rating: 4.5,
     ratings: 1290,
     hist: [71, 16, 6, 3, 4],
@@ -220,13 +220,13 @@ export default [
       { id: 'set', name: { en: '2 marmalade + 1 yuzu-cha', ja: 'マーマレード2個＋ゆず茶1個' }, price: 3240, list: null, stock: 54, ship: 'fast' },
     ],
     returns: {
-      en: 'Sold by Minori Yuzu Farm and shipped by Marketa, so Marketa’s return policy applies: food and drink cannot be returned unless defective, damaged in delivery or wrong. Report damage within 7 days of delivery for a free replacement or full refund.',
+      en: 'Sold by Harvest Yuzu Farm and shipped by Marketa, so Marketa’s return policy applies: food and drink cannot be returned unless defective, damaged in delivery or wrong. Report damage within 7 days of delivery for a free replacement or full refund.',
       ja: 'みのり柚子園が販売し、マルケタが発送する商品のため、マルケタの返品規定が適用されます。食品・飲料は、不良品・配送中の破損・誤配送の場合を除き返品できません。破損は到着後7日以内にご連絡いただければ、無料で交換または全額返金いたします。',
     },
     bullets: {
       en: [
         'TWO WAYS TO ENJOY YUZU: two 200 g jars of yuzu marmalade and a 430 g jar of yuzu-cha (citron tea concentrate) in a gift box.',
-        'THICK-CUT, GENTLY BITTER MARMALADE: whole Kagami-valley yuzu peel, sugar and yuzu juice, set with the fruit’s own pectin. At 45 Brix it is less sweet than ordinary jam, so it must be refrigerated after opening.',
+        'THICK-CUT, GENTLY BITTER MARMALADE: whole Mirror-valley yuzu peel, sugar and yuzu juice, set with the fruit’s own pectin. At 45 Brix it is less sweet than ordinary jam, so it must be refrigerated after opening.',
         'YUZU-CHA: fine strips of peel in a honey-yuzu syrup. Stir 2 tablespoons into a cup (about 150 mL) of hot water for a warming drink, or use it with soda water, yogurt or as a glaze for meat. Contains honey: not for babies under 1 year.',
         'ALLERGENS: none of the 28 allergens labelled in Japan. Made in a kitchen that also handles soy and wheat (for the farm’s ponzu).',
         'BEST BEFORE 12 months unopened at room temperature (at least 6 months left on delivery). After opening refrigerate; marmalade within 3 weeks, yuzu-cha within 1 month.',
@@ -243,14 +243,14 @@ export default [
     },
     specs: {
       en: [
-        ['Brand', 'Minori Yuzu Farm'], ['Contents', '2 × 200 g yuzu marmalade, 1 × 430 g yuzu-cha'],
-        ['Marmalade ingredients', 'Yuzu (Minori Prefecture), sugar, yuzu juice'], ['Yuzu-cha ingredients', 'Sugar, yuzu peel (Minori Prefecture), honey, yuzu juice'],
+        ['Brand', 'Harvest Yuzu Farm'], ['Contents', '2 × 200 g yuzu marmalade, 1 × 430 g yuzu-cha'],
+        ['Marmalade ingredients', 'Yuzu (Harvest Prefecture), sugar, yuzu juice'], ['Yuzu-cha ingredients', 'Sugar, yuzu peel (Harvest Prefecture), honey, yuzu juice'],
         ['Sugar content', 'Marmalade about 45 Brix; yuzu-cha about 55 Brix'], ['Allergens', 'None of the 28 labelled allergens (yuzu-cha contains honey)'],
         ['Additives', 'No added pectin, preservatives or colourings'], ['Best before (unopened)', '12 months from production; at least 6 months left on delivery'],
         ['After opening', 'Refrigerate; marmalade within 3 weeks, yuzu-cha within 1 month'], ['Storage', 'Room temperature, away from direct sunlight, until opened'],
         ['Energy', 'Marmalade about 38 kcal per tablespoon (20 g); yuzu-cha about 95 kcal per 2 tablespoons (40 g)'],
-        ['Packaging', 'Glass jars with metal lids in a printed gift box (22 × 16 × 9 cm, 1.4 kg)'], ['Producer', 'Minori Yuzu Farm (Hirose family), Tsukimi Onsen area, Minori Prefecture'],
-        ['Seller / shipping', 'Sold by Minori Yuzu Farm, ships from Marketa'], ['Country of origin', 'Japan'],
+        ['Packaging', 'Glass jars with metal lids in a printed gift box (22 × 16 × 9 cm, 1.4 kg)'], ['Producer', 'Harvest Yuzu Farm (Hirose family), Moonview Spa area, Harvest Prefecture'],
+        ['Seller / shipping', 'Sold by Harvest Yuzu Farm, ships from Marketa'], ['Country of origin', 'Japan'],
         ['Guarantee', 'Damaged, faulty or wrong: replacement or refund (report within 7 days)'],
       ],
       ja: [
@@ -266,16 +266,16 @@ export default [
       ],
     },
     compare: {
-      en: ['2 × 200 g marmalade + 430 g yuzu-cha', '12 months (unopened)', 'None of the 28 labelled (yuzu-cha contains honey)', 'Gift box; free noshi, wrap ¥330 (Marketa)', 'Minori Yuzu Farm, near Tsukimi Onsen', 'Room temperature; refrigerate after opening'],
+      en: ['2 × 200 g marmalade + 430 g yuzu-cha', '12 months (unopened)', 'None of the 28 labelled (yuzu-cha contains honey)', 'Gift box; free noshi, wrap ¥330 (Marketa)', 'Harvest Yuzu Farm, near Moonview Spa', 'Room temperature; refrigerate after opening'],
       ja: ['マーマレード200g×2＋ゆず茶430g', '12か月（未開封）', '28品目不使用（ゆず茶にはちみつ）', 'ギフト箱入り、のし無料・ラッピング330円（マルケタ）', 'みのり柚子園（月見温泉近郊）', '常温。開封後は冷蔵'],
     },
     description: {
       en: [
-        'This set comes from the same hillside orchard as the farm’s ponzu: Minori Yuzu Farm, run by the Hirose family in the Kagami River valley near Tsukimi Onsen since 1978. The yuzu are harvested ripe in November and December, and the peel, which holds most of the fruit’s fragrance, goes into both jars.',
+        'This set comes from the same hillside orchard as the farm’s ponzu: Harvest Yuzu Farm, run by the Hirose family in the Mirror River valley near Moonview Spa since 1978. The yuzu are harvested ripe in November and December, and the peel, which holds most of the fruit’s fragrance, goes into both jars.',
         'The marmalade is made the old way in small copper pans: thick-cut peel simmered with sugar and juice and set only by the fruit’s own pectin. It has a pleasant bitterness from the pith and is less sweet than ordinary jam (about 45 Brix), which is why it must go in the fridge once opened and be finished within three weeks. Children who are used to sweet jam sometimes find it too bitter.',
         'Yuzu-cha is a Korean-style citron tea concentrate: fine strips of peel in a syrup of sugar, honey and yuzu juice. Stir two tablespoons into about 150 mL of water at 80 °C or hotter and eat the peel at the end. It is sweet, so start with less if you prefer it lighter. Because it contains honey, do not give it to babies under one year old.',
         'Neither jar contains any of the 28 allergens labelled in Japan, but they are made in the farm’s kitchen, which also handles soy and wheat for the ponzu. Unopened, both keep for 12 months at room temperature; Marketa ships stock with at least 6 months left.',
-        'This item is sold by Minori Yuzu Farm and shipped from Marketa’s Harukawa warehouse: Marketa Fast members get free next-day delivery on Tue 6 Oct if they order by 14:00. Without membership, standard delivery is ¥450 because the set is under ¥3,500 (free if your Marketa-shipped order reaches ¥3,500). It arrives separately from anything shipped by the farm itself, such as the ponzu set. Free noshi paper and ¥330 gift wrap can be chosen at checkout.',
+        'This item is sold by Harvest Yuzu Farm and shipped from Marketa’s Springvale warehouse: Marketa Fast members get free next-day delivery on Tue 6 Oct if they order by 14:00. Without membership, standard delivery is ¥450 because the set is under ¥3,500 (free if your Marketa-shipped order reaches ¥3,500). It arrives separately from anything shipped by the farm itself, such as the ponzu set. Free noshi paper and ¥330 gift wrap can be chosen at checkout.',
       ],
       ja: [
         'ぽん酢と同じ、月見温泉近くの鏡川流域の斜面の柚子園「みのり柚子園」のセットです。1978年から広瀬家が営んでいます。11月から12月に完熟の柚子を収穫し、香りのもとである皮を両方の瓶にたっぷり使いました。',
@@ -322,10 +322,10 @@ export default [
     ],
     qa: [
       { date: '2026-04-22', votes: 29,
-        en: { q: 'Can I give the yuzu-cha to my 8-month-old?', a: 'No. The yuzu-cha contains honey, which must not be given to babies under one year old. The marmalade contains no honey, but it is quite bitter for small children.', by: 'Minori Yuzu Farm' },
+        en: { q: 'Can I give the yuzu-cha to my 8-month-old?', a: 'No. The yuzu-cha contains honey, which must not be given to babies under one year old. The marmalade contains no honey, but it is quite bitter for small children.', by: 'Harvest Yuzu Farm' },
         ja: { q: '生後8か月の子にゆず茶を飲ませてもいいですか？', a: 'いいえ。ゆず茶にははちみつを使用しているため、1歳未満の乳児には与えないでください。マーマレードにははちみつは入っていませんが、小さなお子さまにはかなり苦く感じられると思います。', by: 'みのり柚子園' } },
       { date: '2026-07-14', votes: 21,
-        en: { q: 'How long does it keep after opening?', a: 'Refrigerate after opening. Eat the marmalade within 3 weeks and the yuzu-cha within 1 month, and always use a clean, dry spoon.', by: 'Minori Yuzu Farm' },
+        en: { q: 'How long does it keep after opening?', a: 'Refrigerate after opening. Eat the marmalade within 3 weeks and the yuzu-cha within 1 month, and always use a clean, dry spoon.', by: 'Harvest Yuzu Farm' },
         ja: { q: '開封後はどのくらいもちますか？', a: '開封後は冷蔵庫で保存し、マーマレードは3週間、ゆず茶は1か月以内にお召し上がりください。乾いた清潔なスプーンをお使いください。', by: 'みのり柚子園' } },
       { date: '2026-08-02', votes: 10,
         en: { q: 'Does this ship from the farm or from Marketa?', a: 'From Marketa. Mine came the next day with Fast, while the ponzu I ordered at the same time came from the farm two days later.', by: 'Marketa customer (Sayaka)' },
@@ -334,7 +334,7 @@ export default [
         en: { q: 'Is the set vegan?', a: 'Yes, it is just fruit and sugar.', by: 'Marketa customer (Jo)' },
         ja: { q: 'このセットはヴィーガン対応ですか？', a: 'はい、果物と砂糖だけなので大丈夫です。', by: 'マルケタ購入者（じょー）' } },
       { date: '2026-05-08', votes: 17,
-        en: { q: 'Is the yuzu-cha vegan?', a: 'No, the yuzu-cha contains honey. The marmalade is vegan: yuzu, sugar and yuzu juice only.', by: 'Minori Yuzu Farm' },
+        en: { q: 'Is the yuzu-cha vegan?', a: 'No, the yuzu-cha contains honey. The marmalade is vegan: yuzu, sugar and yuzu juice only.', by: 'Harvest Yuzu Farm' },
         ja: { q: 'ゆず茶はヴィーガン対応ですか？', a: 'いいえ、ゆず茶にははちみつが入っています。マーマレードは柚子・砂糖・柚子果汁のみで、ヴィーガン対応です。', by: 'みのり柚子園' } },
     ],
     similar: ['minori-ponzu-set', 'shiroshita-senbei', 'kagami-sake-set'],
@@ -349,7 +349,7 @@ export default [
     seller: 'kagami',
     images: ['kagami-sake-set'],
     title: {
-      en: 'Kagami Kiln Harukawa Ware Sake Set, Tokkuri Flask 300 mL and 2 Guinomi Cups, White Ash Glaze with Indigo Drips, Signed Paulownia Box, Handmade in Harukawa, Japan, Retirement or 60th Birthday Gift',
+      en: 'Kagami Kiln Springvale Ware Sake Set, Tokkuri Flask 300 mL and 2 Guinomi Cups, White Ash Glaze with Indigo Drips, Signed Paulownia Box, Handmade in Springvale, Japan, Retirement or 60th Birthday Gift',
       ja: '鏡窯 春川焼 酒器セット 徳利 300ml ぐい呑み 2客 白灰釉 藍流し 桐箱入り 共箱 手作り 日本製 還暦祝い 退職祝い 父の日 贈り物',
     },
     short: { en: 'Kagami Kiln Sake Set', ja: '鏡窯 酒器セット（桐箱入り）' },
@@ -387,12 +387,12 @@ export default [
     },
     specs: {
       en: [
-        ['Brand', 'Kagami Kiln (Harukawa, Minori Prefecture)'], ['Ware', 'Harukawa ware (春川焼), stoneware'], ['Contents', 'Tokkuri ×1, guinomi ×2'],
+        ['Brand', 'Kagami Kiln (Springvale, Harvest Prefecture)'], ['Ware', 'Springvale ware (春川焼), stoneware'], ['Contents', 'Tokkuri ×1, guinomi ×2'],
         ['Tokkuri capacity', '300 mL to the shoulder (about 1.7 gō)'], ['Tokkuri size', 'Ø8 × H14 cm, about 380 g'],
         ['Guinomi capacity', 'About 60 mL each'], ['Guinomi size', 'Ø6.5 × H5 cm, about 90 g each'], ['Glaze', 'White ash glaze with indigo drips (lead-free)'],
         ['Box', 'Paulownia (kiri) wood, lid signed and sealed by Kagami Sōichi, yellow cotton cloth'], ['Boxed size and weight', '24 × 16 × 16 cm, about 1.1 kg'],
         ['Warming', 'Hot-water bath only'], ['Microwave', 'No'], ['Dishwasher', 'No (hand wash)'],
-        ['Country of origin', 'Japan (Harukawa)'], ['Warranty', 'No manufacturer warranty; breakage in delivery handled by the seller (report within 48 hours)'],
+        ['Country of origin', 'Japan (Springvale)'], ['Warranty', 'No manufacturer warranty; breakage in delivery handled by the seller (report within 48 hours)'],
         ['In the box', 'Tokkuri, 2 guinomi, paulownia box, cotton cloth, care leaflet (English/Japanese)'],
       ],
       ja: [
@@ -406,7 +406,7 @@ export default [
       ],
     },
     compare: {
-      en: ['Tokkuri 300 mL + 2 guinomi', 'Not applicable (tableware)', 'Not applicable', 'Signed paulownia box; noshi free, wrap ¥330', 'Kagami Kiln, Harukawa (handmade)', 'Dry fully before boxing; keep the box dry'],
+      en: ['Tokkuri 300 mL + 2 guinomi', 'Not applicable (tableware)', 'Not applicable', 'Signed paulownia box; noshi free, wrap ¥330', 'Kagami Kiln, Springvale (handmade)', 'Dry fully before boxing; keep the box dry'],
       ja: ['徳利300mL＋ぐい呑み2客', '該当なし（器）', '該当なし', '桐の共箱入り、のし無料・ラッピング330円', '鏡窯（春川・手作り）', 'よく乾かしてから箱へ。箱は湿気を避けて'],
     },
     tables: [
@@ -430,11 +430,11 @@ export default [
     ],
     description: {
       en: [
-        'This set pairs two of the oldest Harukawa ware glazes. The milky white ash glaze is made at Kagami Kiln from wood ash and feldspar, and the indigo is poured over it from the rim, so that in the 1,250 °C firing it runs down the sides in streaks. Kagami Kiln has made sake ware in Kamagaoka, above the Kagami River, since it was founded in 1891; today the work is led by fourth-generation potter Kagami Sōichi.',
+        'This set pairs two of the oldest Springvale ware glazes. The milky white ash glaze is made at Kagami Kiln from wood ash and feldspar, and the indigo is poured over it from the rim, so that in the 1,250 °C firing it runs down the sides in streaks. Kagami Kiln has made sake ware in Kamagaoka, above the Mirror River, since it was founded in 1891; today the work is led by fourth-generation potter Kagami Sōichi.',
         'Each tokkuri is thrown on the wheel and its neck is narrowed by hand, so the flask pours in a thin, steady stream. Capacities vary by a few millilitres, and the drips on the flask and the two cups will not match each other exactly: they are made and glazed as a set but run in their own way in the kiln. The photos show a typical set; yours may have fewer or wider drips.',
         'For warm sake, stand the filled tokkuri in a pan of water just off the boil (see the table: about 3 minutes for nuru-kan). The narrow neck stays cool enough to hold. Do not heat it in a microwave or on a flame: the narrow neck heats unevenly and can crack. Wash by hand, rinse well so no sake smell remains, and dry the inside upside down for a day before storing.',
         'The set comes in a paulownia (kiri) tomobako, a box whose lid is brush-inscribed and signed by the potter, the traditional way to present Japanese ceramics as a gift. Paulownia breathes and keeps out damp, but it dents easily, so the box is shipped inside a padded outer carton. Noshi paper is free: write the inscription (御祝, 還暦御祝, 退職御祝, 御礼, 寿 and so on), the name, and inner or outer noshi in the order notes. Gift wrapping is ¥330.',
-        'Kagami Kiln ships within 2 business days, so the set arrives Thu 8 – Fri 9 Oct in Harukawa city, before the Lantern Festival, with free shipping. Unused items can be returned within 14 days (you pay return shipping for a change of mind). Please open the outer carton the day it arrives: breakage must be reported within 48 hours.',
+        'Kagami Kiln ships within 2 business days, so the set arrives Thu 8 – Fri 9 Oct in Springvale city, before the Lantern Festival, with free shipping. Unused items can be returned within 14 days (you pay return shipping for a change of mind). Please open the outer carton the day it arrives: breakage must be reported within 48 hours.',
       ],
       ja: [
         '春川焼でも古くから使われてきた2つの釉薬を組み合わせた酒器セットです。鏡窯で木の灰と長石から調合する乳白色の白灰釉の上に、口縁から藍釉を流し掛けると、約1,250℃の焼成で側面を筋になって流れ落ちます。鏡窯は1891年の創業以来、鏡川を見下ろす窯ヶ丘で酒器を作り続けてきました。現在は4代目の鏡 宗一が中心となって制作しています。',
@@ -470,7 +470,7 @@ export default [
         en: { name: 'Hiroshi', title: 'Good for warm sake in winter', body: 'The hot-water method works well and the neck stays cool. One star off because the narrow inside is hard to dry; I stand it upside down in a glass overnight.' },
         ja: { name: '博', title: '冬の燗酒に', body: '湯煎でうまく燗がつき、首も熱くなりません。中が細くて乾きにくいので星ひとつ減。ひと晩コップに逆さに立てて乾かしています。' } },
       { stars: 5, date: '2025-10-14', variant: 'white-ash', helpful: 14, verified: true,
-        en: { name: 'Ellen', title: 'Toasting at the Lantern Festival', body: 'Ordered on the Monday of festival week and it arrived on Thursday. We took it to the riverbank on Saturday night and drank cold sake while the lanterns floated past. A very Harukawa memory.' },
+        en: { name: 'Ellen', title: 'Toasting at the Lantern Festival', body: 'Ordered on the Monday of festival week and it arrived on Thursday. We took it to the riverbank on Saturday night and drank cold sake while the lanterns floated past. A very Springvale memory.' },
         ja: { name: 'エレン', title: '灯籠まつりで乾杯', body: 'まつりの週の月曜に注文して木曜に届きました。土曜の夜に河原へ持っていき、流れていく灯籠を眺めながら冷酒を。春川らしい思い出になりました。' } },
       { stars: 2, date: '2026-05-02', variant: 'white-ash', helpful: 12, verified: true,
         en: { name: 'Masaki', title: 'Mine dribbles', body: 'Unlike other reviewers, mine dribbles down the neck unless I pour quickly. Handmade, so I suppose it depends on the piece. Lovely to look at.' },
@@ -502,7 +502,7 @@ export default [
     seller: 'marketa',
     images: ['shiroshita-senbei'],
     title: {
-      en: 'Shiroshita Seika Harukawa Castle Senbei Assortment, 6 Flavours, Individually Wrapped Rice Crackers in a Castle Gift Box, Harukawa Souvenir (24 or 36 Pieces)',
+      en: 'Shiroshita Seika Springvale Castle Senbei Assortment, 6 Flavours, Individually Wrapped Rice Crackers in a Castle Gift Box, Springvale Souvenir (24 or 36 Pieces)',
       ja: '城下製菓 春川城せんべい 詰め合わせ 6種 個包装 化粧箱入り 春川みやげ 手土産 お菓子 ギフト 24枚入／36枚入',
     },
     short: { en: 'Shiroshita Castle Senbei Assortment', ja: '城下製菓 春川城せんべい詰め合わせ' },
@@ -523,12 +523,12 @@ export default [
     },
     bullets: {
       en: [
-        'HARUKAWA’S CLASSIC SOUVENIR: baked by Shiroshita Seika, a confectioner beside the Harukawa Castle moat since 1921. Each cracker is stamped with the castle’s crest.',
-        'SIX FLAVOURS: soy sauce, nori seaweed, black sesame, shrimp (ebi), yuzu sugar made with Minori yuzu, and sea salt, in equal numbers in both sizes.',
+        'SPRINGVALE’S CLASSIC SOUVENIR: baked by Shiroshita Seika, a confectioner beside the Springvale Castle moat since 1921. Each cracker is stamped with the castle’s crest.',
+        'SIX FLAVOURS: soy sauce, nori seaweed, black sesame, shrimp (ebi), yuzu sugar made with Harvest yuzu, and sea salt, in equal numbers in both sizes.',
         'ALLERGENS: wheat, soy, sesame and shrimp. Shrimp is in the ebi senbei only, but all six flavours are baked on the same line, so the box is not suitable for anyone with a shrimp allergy, even with the shrimp crackers removed.',
         'BEST BEFORE 90 DAYS from baking, with at least 60 days left on delivery. Each cracker is individually wrapped, so they stay crisp; store at room temperature away from heat and damp.',
         'TWO SIZES: 24 pieces (21 × 28 cm box) for a family visit, 36 pieces (28 × 32 cm box) for an office or a large family. Each cracker is about 7 cm across and fairly hard.',
-        'GIFT-READY: free noshi paper and gift wrap ¥330 at checkout. The 24-piece box arrives tomorrow for Fast members; the 36-piece box ships from outside Minori Prefecture (Fast: Thu 8 Oct; standard: Sat 10 Oct).',
+        'GIFT-READY: free noshi paper and gift wrap ¥330 at checkout. The 24-piece box arrives tomorrow for Fast members; the 36-piece box ships from outside Harvest Prefecture (Fast: Thu 8 Oct; standard: Sat 10 Oct).',
       ],
       ja: [
         '【春川みやげの定番】1921年創業、春川城のお堀端の菓子店「城下製菓」が焼き上げます。一枚一枚に春川城の家紋入り。',
@@ -541,14 +541,14 @@ export default [
     },
     specs: {
       en: [
-        ['Brand', 'Shiroshita Seika'], ['Maker', 'Shiroshita Seika Co., Ltd., Harukawa (founded 1921)'],
+        ['Brand', 'Shiroshita Seika'], ['Maker', 'Shiroshita Seika Co., Ltd., Springvale (founded 1921)'],
         ['Contents', '24 pieces (6 flavours × 4) or 36 pieces (6 flavours × 6)'], ['Flavours', 'Soy sauce, nori, black sesame, shrimp, yuzu sugar, sea salt'],
-        ['Main ingredients', 'Non-glutinous rice (Minori Prefecture), soy sauce (soybeans, wheat), sugar, black sesame, shrimp, green nori, yuzu peel, sea salt (Minori Bay)'],
+        ['Main ingredients', 'Non-glutinous rice (Harvest Prefecture), soy sauce (soybeans, wheat), sugar, black sesame, shrimp, green nori, yuzu peel, sea salt (Harvest Bay)'],
         ['Allergens', 'Wheat, soy, sesame, shrimp (all flavours made on a shared line)'], ['Best before', '90 days from baking (at least 60 days left on delivery)'],
         ['Storage', 'Room temperature, away from direct sunlight, heat and humidity'], ['Piece size', 'About 7 cm across, 6 mm thick'],
         ['Energy', 'About 38 kcal per piece'], ['Packaging', 'Each piece individually wrapped; castle-print gift box'],
         ['Box size and weight', '24 pieces: 21 × 28 × 5 cm, 520 g. 36 pieces: 28 × 32 × 5 cm, 760 g'],
-        ['Country of origin', 'Japan (Harukawa)'], ['Sold by', 'Marketa'],
+        ['Country of origin', 'Japan (Springvale)'], ['Sold by', 'Marketa'],
         ['Guarantee', 'Damaged, defective or wrong: replacement or refund (report within 7 days)'],
       ],
       ja: [
@@ -564,7 +564,7 @@ export default [
       ],
     },
     compare: {
-      en: ['24 or 36 pieces, 6 flavours', '90 days from baking (60+ days on delivery)', 'Wheat, soy, sesame, shrimp', 'Castle-print box; free noshi, wrap ¥330 (Marketa)', 'Shiroshita Seika, Harukawa', 'Room temperature, away from damp'],
+      en: ['24 or 36 pieces, 6 flavours', '90 days from baking (60+ days on delivery)', 'Wheat, soy, sesame, shrimp', 'Castle-print box; free noshi, wrap ¥330 (Marketa)', 'Shiroshita Seika, Springvale', 'Room temperature, away from damp'],
       ja: ['24枚または36枚、6種', '製造から90日（お届け時60日以上）', '小麦・大豆・ごま・えび', '春川城柄の化粧箱、のし無料・ラッピング330円（マルケタ）', '城下製菓（春川）', '常温、湿気を避けて'],
     },
     tables: [
@@ -594,11 +594,11 @@ export default [
     ],
     description: {
       en: [
-        'Shiroshita Seika has baked rice crackers beside the outer moat of Harukawa Castle since 1921, and this assortment has been the city’s standard souvenir for decades. The name means “below the castle”, and every cracker is stamped with the castle’s crest. They are made from Minori Prefecture rice, pressed into discs, dried for two days and baked twice on iron plates, which gives them their firm, crunchy bite.',
-        'There are six flavours in equal numbers: soy sauce, brushed with the shop’s own blend and baked again; nori; black sesame; shrimp, with whole small shrimp pressed into the dough; yuzu sugar, glazed with sugar and Minori Yuzu Farm peel; and sea salt from Minori Bay. They are on the hard side. Most people find them pleasantly crunchy, but they may be difficult for very young children or anyone with weak teeth.',
+        'Shiroshita Seika has baked rice crackers beside the outer moat of Springvale Castle since 1921, and this assortment has been the city’s standard souvenir for decades. The name means “below the castle”, and every cracker is stamped with the castle’s crest. They are made from Harvest Prefecture rice, pressed into discs, dried for two days and baked twice on iron plates, which gives them their firm, crunchy bite.',
+        'There are six flavours in equal numbers: soy sauce, brushed with the shop’s own blend and baked again; nori; black sesame; shrimp, with whole small shrimp pressed into the dough; yuzu sugar, glazed with sugar and Harvest Yuzu Farm peel; and sea salt from Harvest Bay. They are on the hard side. Most people find them pleasantly crunchy, but they may be difficult for very young children or anyone with weak teeth.',
         'Allergens: wheat and soy (soy sauce), sesame and shrimp. All six flavours are baked on the same line, so even the yuzu sugar and salt crackers may contain traces of shrimp and sesame. If anyone you are giving them to has a shrimp or crab allergy, choose a different gift; taking out the shrimp crackers is not enough.',
         'Best before is 90 days from baking, printed on the side of the box, and Marketa ships stock with at least 60 days left. Each piece is individually wrapped, so an opened box stays crisp for weeks; once a wrapper is opened, eat that cracker the same day. Keep the box at room temperature away from the stove and humidity.',
-        'Both sizes are sold and shipped by Marketa. The 24-piece box is in stock in Harukawa: Fast members get it free tomorrow, Tue 6 Oct, if they order by 14:00. The 36-piece box ships from a warehouse outside Minori Prefecture: Thu 8 Oct for Fast members, Sat 10 Oct, the first day of the Lantern Festival, by standard delivery. Free noshi paper and gift wrap (¥330) can be added at checkout. Food cannot be returned, but a crushed box with broken crackers counts as damage in delivery: report it within 7 days.',
+        'Both sizes are sold and shipped by Marketa. The 24-piece box is in stock in Springvale: Fast members get it free tomorrow, Tue 6 Oct, if they order by 14:00. The 36-piece box ships from a warehouse outside Harvest Prefecture: Thu 8 Oct for Fast members, Sat 10 Oct, the first day of the Lantern Festival, by standard delivery. Free noshi paper and gift wrap (¥330) can be added at checkout. Food cannot be returned, but a crushed box with broken crackers counts as damage in delivery: report it within 7 days.',
       ],
       ja: [
         '城下製菓は1921年から春川城の外堀のほとりでおせんべいを焼き続けている菓子店で、この詰め合わせは長年、春川みやげの定番です。店名は「城の下」の意味で、一枚一枚に春川城の家紋を押しています。みのり県産のうるち米を円形に打ち抜き、2日間乾燥させてから鉄板で二度焼きすることで、しっかりした歯ごたえに仕上げています。',
@@ -643,7 +643,7 @@ export default [
         en: { name: 'Lena', title: 'Brought to last year’s Lantern Festival', body: 'Shared these with friends on the riverbank during last year’s festival. Every flavour was gone in half an hour; the yuzu sugar was the favourite.' },
         ja: { name: 'レナ', title: '去年の灯籠まつりに持参', body: '去年のまつりで、河原で友だちと分けて食べました。30分で全種類なくなり、いちばん人気は柚子ざらめでした。' } },
       { stars: 4, date: '2026-09-30', variant: 'p24', helpful: 5, verified: true,
-        en: { name: 'Hideki', title: 'Yuzu sugar ones go first', body: 'If you like the yuzu sugar crackers, you will probably like the Minori Yuzu Farm marmalade too: same bittersweet peel. I wish there were a yuzu-only box.' },
+        en: { name: 'Hideki', title: 'Yuzu sugar ones go first', body: 'If you like the yuzu sugar crackers, you will probably like the Harvest Yuzu Farm marmalade too: same bittersweet peel. I wish there were a yuzu-only box.' },
         ja: { name: 'ひでき', title: '柚子ざらめが一番人気', body: '柚子ざらめが好きなら、みのり柚子園のマーマレードもきっと気に入ると思います。同じほろ苦い柚子の皮の味。柚子ざらめだけの箱があればいいのに。' } },
     ],
     qa: [
@@ -660,7 +660,7 @@ export default [
         en: { q: 'Is the 90-day best-before from delivery or from baking?', a: 'From baking. Marketa ships stock with at least 60 days left, and the exact date is printed on the side of the box.', by: 'Shiroshita Seika' },
         ja: { q: '賞味期限90日は、届いてからですか？製造日からですか？', a: '製造日からです。マルケタからは期限まで60日以上あるものを発送しており、正確な日付は箱の側面に記載しています。', by: '城下製菓' } },
       { date: '2026-10-03', votes: 6,
-        en: { q: 'Will the 36-piece box arrive before the festival?', a: 'It ships from outside Minori Prefecture. Mine took five days without Fast; Fast members get it in about three. If you need it before the festival weekend, the 24-piece box is safer.', by: 'Marketa customer (Steve)' },
+        en: { q: 'Will the 36-piece box arrive before the festival?', a: 'It ships from outside Harvest Prefecture. Mine took five days without Fast; Fast members get it in about three. If you need it before the festival weekend, the 24-piece box is safer.', by: 'Marketa customer (Steve)' },
         ja: { q: '36枚入はまつりまでに届きますか？', a: '36枚入はみのり県外からの発送です。私はFastなしで5日かかりました。Fast会員なら3日ほどだそうです。まつりの週末より前に必要なら、24枚入のほうが確実です。', by: 'マルケタ購入者（スティーブ）' } },
     ],
     similar: ['minori-ponzu-set', 'minori-marmalade-set', 'kagami-sake-set'],

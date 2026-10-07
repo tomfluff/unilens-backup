@@ -1,4 +1,4 @@
-// Marketa seller pages: Kagami Kiln, Minori Yuzu Farm, BrightDeal Trading (English and Japanese).
+// Marketa seller pages: Kagami Kiln, Harvest Yuzu Farm, BrightDeal Trading (English and Japanese).
 // Shape: { id, name, rating, ratings, positive, since, location, tagline, about, shipping, returns, contact, legal, hist, feedback }.
 // Policies follow the Marketa content brief; keep them in step with help.mjs and the product files.
 
@@ -10,14 +10,14 @@ export default [
     ratings: 612,
     positive: 98,
     since: 2020,
-    location: { en: 'Kamagaoka pottery district, Harukawa, Minori Prefecture', ja: 'みのり県春川市 窯ヶ丘' },
+    location: { en: 'Kamagaoka pottery district, Springvale, Harvest Prefecture', ja: 'みのり県春川市 窯ヶ丘' },
     tagline: {
-      en: 'Harukawa ware from a family kiln in Kamagaoka, since 1891',
+      en: 'Springvale ware from a family kiln in Kamagaoka, since 1891',
       ja: '明治二十四年創業。窯ヶ丘の家族窯がつくる春川焼',
     },
     about: {
-      en: `<p>Kagami Kiln was founded in <strong>1891</strong> in Kamagaoka, the hillside pottery district above the Kagami River where Harukawa ware has been made since the castle town was young. Today the kiln is run by the fourth-generation potter <strong>Kagami Sōichi</strong>, with his wife Yoshiko on glazes and their daughter Mio on the wheel.</p>
-<p>Every piece is thrown on the wheel from clay dug in the Kagami River valley and fired in our gas kiln; twice a year we also fire the old climbing kiln with wood. Our best-known glazes are the <strong>yuzu-yellow ash glaze</strong>, made with ash from pruned yuzu branches from a farm up the valley, a deep <strong>indigo</strong>, <strong>celadon crackle</strong>, <strong>amber</strong>, <strong>iron brown</strong> and <strong>white ash with blue drips</strong>.</p>
+      en: `<p>Kagami Kiln was founded in <strong>1891</strong> in Kamagaoka, the hillside pottery district above the Mirror River where Springvale ware has been made since the castle town was young. Today the kiln is run by the fourth-generation potter <strong>Kagami Sōichi</strong>, with his wife Yoshiko on glazes and their daughter Mio on the wheel.</p>
+<p>Every piece is thrown on the wheel from clay dug in the Mirror River valley and fired in our gas kiln; twice a year we also fire the old climbing kiln with wood. Our best-known glazes are the <strong>yuzu-yellow ash glaze</strong>, made with ash from pruned yuzu branches from a farm up the valley, a deep <strong>indigo</strong>, <strong>celadon crackle</strong>, <strong>amber</strong>, <strong>iron brown</strong> and <strong>white ash with blue drips</strong>.</p>
 <p>On Marketa: the <a href="/en/p/kagami-donabe.html">donabe rice pot</a>, the <a href="/en/p/kagami-mug-pair.html">mug pair</a>, the <a href="/en/p/kagami-tea-set.html">kyusu tea set</a>, the <a href="/en/p/kagami-plate-set.html">plate set of 5</a> and the <a href="/en/p/kagami-sake-set.html">sake set</a>.</p>
 <p><strong>About handmade ware:</strong> no two pieces are the same. Glaze, colour and size vary from the photos, and small pinholes in the glaze are part of the nature of handmade pottery, not a defect. Our donabe is for gas flames only (not IH, microwave or dishwasher) and must be seasoned with rice porridge before first use; the iron-brown plate is not for the microwave.</p>`,
       ja: `<p>鏡窯は<strong>明治24年（1891年）</strong>、鏡川を見下ろす焼き物の里・窯ヶ丘で開窯しました。現在は四代目の<strong>鏡 宗一</strong>が窯を預かり、妻・佳子が釉薬を、娘・美緒がろくろを担当する家族窯です。</p>
@@ -30,7 +30,7 @@ export default [
 <thead><tr><th></th><th>In stock</th><th>Made to order</th></tr></thead>
 <tbody>
 <tr><td>Dispatch</td><td>Within 2 business days</td><td>In 3–4 weeks</td></tr>
-<tr><td>Order today (Mon 5 Oct), delivery in Harukawa</td><td>Thu 8 – Fri 9 Oct</td><td>About 2–9 Nov</td></tr>
+<tr><td>Order today (Mon 5 Oct), delivery in Springvale</td><td>Thu 8 – Fri 9 Oct</td><td>About 2–9 Nov</td></tr>
 <tr><td>Shipping fee</td><td colspan="2">¥700 per order; <strong>free on Kagami Kiln orders of ¥5,000 or more</strong>. Hokkaido, Okinawa and remote islands ¥1,300 (also free on ¥5,000 or more).</td></tr>
 </tbody>
 </table>
@@ -83,7 +83,7 @@ export default [
       en: [
         ['Legal name', 'Kagami Kiln Co., Ltd. (有限会社鏡窯)'],
         ['Representative', 'Kagami Sōichi'],
-        ['Address', '2-14-3 Kamagaoka, Harukawa, Minori Prefecture 781-0412'],
+        ['Address', '2-14-3 Kamagaoka, Springvale, Harvest Prefecture 781-0412'],
         ['Phone', '0897-55-2618 (Mon–Sat 9:00–17:00)'],
         ['Email', 'shop@kagami-kiln.example'],
         ['Business hours', 'Mon–Sat 9:00–17:00; closed Sundays and public holidays'],
@@ -148,18 +148,18 @@ export default [
   },
   {
     id: 'minori',
-    name: { en: 'Minori Yuzu Farm', ja: 'みのり柚子園' },
+    name: { en: 'Harvest Yuzu Farm', ja: 'みのり柚子園' },
     rating: 4.6,
     ratings: 1940,
     positive: 95,
     since: 2018,
-    location: { en: 'Kagami River valley near Tsukimi Onsen, Harukawa, Minori Prefecture', ja: 'みのり県春川市 鏡川上流（月見温泉近く）' },
+    location: { en: 'Mirror River valley near Moonview Spa, Springvale, Harvest Prefecture', ja: 'みのり県春川市 鏡川上流（月見温泉近く）' },
     tagline: {
       en: 'Yuzu from our hillside orchard, made into ponzu, marmalade and bath goods by the Hirose family since 1978',
       ja: '昭和53年から広瀬家が育てる山あいの柚子。ぽん酢・マーマレード・バス用品に',
     },
     about: {
-      en: `<p>Minori Yuzu Farm sits on the terraced hillsides of the Kagami River valley, twenty minutes downriver from Tsukimi Onsen. The <strong>Hirose family</strong> planted its first yuzu trees here in <strong>1978</strong>; today Hirose Kenta, the second generation, looks after about 1,200 trees on 3.2 hectares with his parents and a small team.</p>
+      en: `<p>Harvest Yuzu Farm sits on the terraced hillsides of the Mirror River valley, twenty minutes downriver from Moonview Spa. The <strong>Hirose family</strong> planted its first yuzu trees here in <strong>1978</strong>; today Hirose Kenta, the second generation, looks after about 1,200 trees on 3.2 hectares with his parents and a small team.</p>
 <p>We pick <strong>green yuzu</strong> in August and September for yuzu kosho, and <strong>ripe yellow yuzu</strong> from November to December for ponzu, marmalade and yuzu-cha, all made in our own workshop beside the orchard. Peel that is not used in the kitchen goes into our bath products, and pruned branches go to Kagami Kiln in Kamagaoka, which makes its yuzu ash glaze from them.</p>
 <p>On Marketa: the <a href="/en/p/minori-ponzu-set.html">yuzu ponzu and green yuzu kosho gift box</a> (shipped from the farm), and the <a href="/en/p/minori-marmalade-set.html">marmalade and yuzu-cha set</a>, <a href="/en/p/minori-bath-salts.html">yuzu bath salts</a> and <a href="/en/p/minori-hand-cream.html">yuzu hand cream</a> (stored at and shipped from Marketa).</p>
 <p><small>Allergens: our ponzu contains soy, wheat and bonito (fish). Products are made in a workshop that also handles these ingredients.</small></p>`,
@@ -174,7 +174,7 @@ export default [
 <tbody>
 <tr><td>Products</td><td>Ponzu and yuzu kosho gift box / home pack</td><td>Bath salts, hand cream, marmalade and yuzu-cha set</td></tr>
 <tr><td>Dispatch and delivery</td><td>We ship Monday to Saturday; arrives in 2–3 days</td><td>Marketa's speeds, including next day</td></tr>
-<tr><td>Order today (Mon 5 Oct), delivery in Harukawa</td><td>Wed 7 – Thu 8 Oct</td><td>Tue 6 Oct with next-day delivery</td></tr>
+<tr><td>Order today (Mon 5 Oct), delivery in Springvale</td><td>Wed 7 – Thu 8 Oct</td><td>Tue 6 Oct with next-day delivery</td></tr>
 <tr><td>Fee</td><td>¥600; <strong>free on farm orders of ¥4,000 or more</strong>. Hokkaido, Okinawa and remote islands ¥1,200.</td><td>Marketa's rates (free for Fast members)</td></tr>
 </tbody>
 </table>
@@ -222,9 +222,9 @@ export default [
     },
     legal: {
       en: [
-        ['Legal name', 'Hirose Farm Co., Ltd. (有限会社広瀬農園), trading as Minori Yuzu Farm'],
+        ['Legal name', 'Hirose Farm Co., Ltd. (有限会社広瀬農園), trading as Harvest Yuzu Farm'],
         ['Representative', 'Hirose Kenta'],
-        ['Address', '1182 Okutani, Kagamigawa-chō, Harukawa, Minori Prefecture 781-1906'],
+        ['Address', '1182 Okutani, Kagamigawa-chō, Springvale, Harvest Prefecture 781-1906'],
         ['Phone', '0897-58-3307 (Mon–Sat 8:00–17:00)'],
         ['Email', 'order@minori-yuzu.example'],
         ['Business hours', 'Mon–Sat 8:00–17:00; closed Sundays'],
@@ -301,11 +301,11 @@ export default [
     },
     about: {
       en: `<p>BrightDeal Trading is a general-goods importer based in Kobe. Since 2012 we have sourced everyday products directly from overseas factories and sell them at low prices, shipping from our own warehouse on Rokko Island.</p>
-<p>On Marketa: the <a href="/en/p/vetrina-kettle.html">Vetrina glass electric kettle</a>, <a href="/en/p/voltx-pods.html">VoltX Pods</a> earbuds, the <a href="/en/p/titancell-40k.html">TitanCell 40000</a> power bank, the <a href="/en/p/drizzle-pro.html">Drizzle Pro</a> rain jacket and the <a href="/en/p/tokiya-mug-pair.html">Tokiya "Harukawa-style" mug pair</a>.</p>
+<p>On Marketa: the <a href="/en/p/vetrina-kettle.html">Vetrina glass electric kettle</a>, <a href="/en/p/voltx-pods.html">VoltX Pods</a> earbuds, the <a href="/en/p/titancell-40k.html">TitanCell 40000</a> power bank, the <a href="/en/p/drizzle-pro.html">Drizzle Pro</a> rain jacket and the <a href="/en/p/tokiya-mug-pair.html">Tokiya "Springvale-style" mug pair</a>.</p>
 <ul>
 <li>Electrical products carry the PSE mark and come with a Japanese manual.</li>
 <li>Electronics have a <strong>6-month BrightDeal warranty</strong>.</li>
-<li>The Tokiya mugs are factory-made in China in a Harukawa style; they are not hand-made Harukawa ware.</li>
+<li>The Tokiya mugs are factory-made in China in a Springvale style; they are not hand-made Springvale ware.</li>
 <li>The TitanCell 40000 is 148 Wh: it needs airline approval as carry-on and can never go in checked baggage.</li>
 </ul>`,
       ja: `<p>ブライトディール商事は神戸の輸入雑貨商社です。2012年から海外の工場と直接取引し、日用品をお手頃価格でお届けしています。商品は六甲アイランドの自社倉庫から発送します。</p>
@@ -319,7 +319,7 @@ export default [
     },
     shipping: {
       en: `<table>
-<thead><tr><th>Dispatch</th><th>Delivery</th><th>Order today (Mon 5 Oct), delivery in Harukawa</th><th>Fee</th></tr></thead>
+<thead><tr><th>Dispatch</th><th>Delivery</th><th>Order today (Mon 5 Oct), delivery in Springvale</th><th>Fee</th></tr></thead>
 <tbody>
 <tr><td>1–3 business days from our Kobe warehouse</td><td>4–8 days from your order</td><td>Fri 9 – Tue 13 Oct</td><td><strong>Free</strong>, nationwide</td></tr>
 </tbody>
@@ -436,7 +436,7 @@ export default [
       },
       {
         stars: 1, date: '2026-07-19',
-        en: { name: 'Fumi', text: 'I thought the Tokiya mugs were real Harukawa ware. They are factory-made in China. The seller pointed out the description says "Harukawa-style" and that returning them unopened would cost me ¥880. Read the small print.' },
+        en: { name: 'Fumi', text: 'I thought the Tokiya mugs were real Springvale ware. They are factory-made in China. The seller pointed out the description says "Springvale-style" and that returning them unopened would cost me ¥880. Read the small print.' },
         ja: { name: 'ふみ', text: 'トキヤのマグを本物の春川焼だと思って買いましたが、中国の工場製でした。出品者からは「説明に『春川風』と書いてある」「未開封での返品は返送料880円がかかる」との返答。説明はよく読むべきでした。' },
       },
     ],

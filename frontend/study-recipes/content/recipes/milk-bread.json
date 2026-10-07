@@ -18,8 +18,8 @@
     "title": "Milk Bread with Tangzhong (Japanese Shokupan)",
     "teaser": "A tall, cloud-soft Japanese milk loaf made with a cooked flour paste (tangzhong) that keeps it moist for days. Exact weights, photos of the dough, and what to do when the dough is sticky.",
     "intro": [
-      "On Sunday mornings when I was little, my grandmother Fumi would clear away the breakfast trays at her inn in Tsukimi Onsen, sit down with a cup of tea, and toast a thick slice of shokupan from the bakery by the station, with butter and a spoonful of her own yuzu marmalade. That bakery closed years ago, and I spent a long time trying to bake a loaf that soft at home. The answer, it turned out, was a few spoonfuls of cooked flour paste.",
-      "Our recipe tester Kenta Mori, who baked bread professionally for years before he started checking my recipes, helped me get this one right, and it's now the loaf Hana and Sota want for school-morning toast. This week I'm baking two: one for us and one for my parents, who come down from Tsukimi Onsen every year for the Lantern Festival weekend.",
+      "On Sunday mornings when I was little, my grandmother Fumi would clear away the breakfast trays at her inn in Moonview Spa, sit down with a cup of tea, and toast a thick slice of shokupan from the bakery by the station, with butter and a spoonful of her own yuzu marmalade. That bakery closed years ago, and I spent a long time trying to bake a loaf that soft at home. The answer, it turned out, was a few spoonfuls of cooked flour paste.",
+      "Our recipe tester Kenta Mori, who baked bread professionally for years before he started checking my recipes, helped me get this one right, and it's now the loaf Hana and Sota want for school-morning toast. This week I'm baking two: one for us and one for my parents, who come down from Moonview Spa every year for the Lantern Festival weekend.",
       { "h": "Why you'll love it" },
       { "ul": [
         "Soft, fluffy and lightly sweet, and it stays soft for three days.",
@@ -33,7 +33,7 @@
       { "h": "Tips for success" },
       "<strong>The dough will be sticky.</strong> Very sticky for the first five minutes. Please don't keep adding flour: a tablespoon at most, or the bread turns dense. If it's sticking everywhere, cover it and walk away for 10 minutes, then knead by slapping and folding with a scraper in your other hand. The butter goes in once the dough starts to hold together, and you knead until it passes the windowpane test (step 4).",
       "For rising, the dough likes 28–30°C (82–86°F); the proofing setting on an oven-microwave is perfect. Use the finger test rather than the clock. One thing that catches people out with combination ovens: you can't proof and preheat at the same time, so take the pan out a little early for the second rise and let it finish on the counter while the oven heats. My <a href=\"{{guide:oven-temperatures}}\">oven temperatures guide</a> explains fan and non-fan settings.",
-      "And the hardest part: let the loaf cool for a full hour before you slice it. Warm bread squashes under the knife and the crumb turns gummy. If you want a sweet slice with it, my <a href=\"{{recipe:yuzu-pound-cake}}\">yuzu pound cake</a> uses the same Kagami valley yuzu."
+      "And the hardest part: let the loaf cool for a full hour before you slice it. Warm bread squashes under the knife and the crumb turns gummy. If you want a sweet slice with it, my <a href=\"{{recipe:yuzu-pound-cake}}\">yuzu pound cake</a> uses the same Mirror valley yuzu."
     ],
     "equipment": ["1.5-kin loaf pan (about 21 × 10 cm and 11 cm deep)", "Digital kitchen scale", "Small saucepan and whisk", "Bench scraper (dough scraper)", "Rolling pin", "Cooling rack", "Thermometer (optional, for the tangzhong and the dough)"],
     "notes": [
@@ -163,8 +163,8 @@
     { "name": { "en": "Grace (Sydney)", "ja": "Grace（シドニー）" }, "date": "2025-05-03", "stars": 5,
       "en": "I swapped 100 g of the bread flour for wholemeal. It rose a bit less but still very soft, with a nice nutty taste.",
       "ja": "強力粉のうち100gを全粒粉にしてみました。膨らみは少し控えめでしたが、それでもとてもやわらかく、香ばしくておいしかったです。" },
-    { "name": { "en": "Harukawa bread lover", "ja": "春川のパン好き" }, "date": "2024-02-11", "stars": 5,
-      "en": "I remember that bakery by Tsukimi Onsen station! This is just as good. Toasted with butter and yuzu jam, of course.",
+    { "name": { "en": "Springvale bread lover", "ja": "春川のパン好き" }, "date": "2024-02-11", "stars": 5,
+      "en": "I remember that bakery by Moonview Spa station! This is just as good. Toasted with butter and yuzu jam, of course.",
       "ja": "月見温泉駅前のあのパン屋さん、覚えています！これは負けないくらいおいしいです。もちろんバターとゆずジャムでトーストして。" }
   ]
 }

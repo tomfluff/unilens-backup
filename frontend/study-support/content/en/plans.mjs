@@ -181,7 +181,7 @@ ${kome(['To keep the network fair for everyone, speeds may be limited during con
 <li><b>5 GB of data.</b> After 5 GB, speed is limited to ${P.senior.slow}. Extra data: 1 GB ${yen(DATA.gb1)}.</li>
 <li><b>Watch Service</b> (normally ${yen(OPT.watch)}/month): sends a daily message to up to 3 family members when the phone has not been used for 24 hours. Included free since 1 September 2026.</li>
 <li><b>No paper bill fee.</b> The ${yen(209)} paper bill fee is waived.</li>
-<li><b>Free smartphone classes</b> at many shops (booking required). See <a href="@/shops/harukawa-central.html">Kumo Shop Harukawa Central</a>.</li>
+<li><b>Free smartphone classes</b> at many shops (booking required). See <a href="@/shops/harukawa-central.html">Kumo Shop Springvale Central</a>.</li>
 </ul>
 <h2>Discounts</h2>
 <ul>
