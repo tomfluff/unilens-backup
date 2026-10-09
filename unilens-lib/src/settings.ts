@@ -162,6 +162,9 @@ export interface Settings {
     debugShortcut: boolean;
     /** the assistant zooms the page when the user asks (the chat and Live) */
     assistantZoom: boolean;
+    /** the assistant takes the user to a place on the page when it decides they asked
+     *  (a go-to marker in the chat: scroll there and outline it) */
+    assistantGoTo: boolean;
     /** underline the fewest words each source supports, joined to its number */
     associateText: boolean;
     /** where an answer's source numbers go: where the model put them, at the end of
@@ -300,6 +303,7 @@ const DEFAULTS: Settings = {
     aboutLine: true,
     debugShortcut: true,
     assistantZoom: true,
+    assistantGoTo: false,
     associateText: false,
     citePlacement: "inline",
     settingsButton: true,
@@ -368,6 +372,7 @@ export const TOGGLE_LABELS: Record<BoolSettingKey, string> = {
     aboutLine: "Show what the next question is about, above the field",
     debugShortcut: "Ctrl+Shift+D opens the debug view",
     assistantZoom: "The assistant can zoom the page when asked",
+    assistantGoTo: "The assistant can take you to a place on the page",
     associateText:
         "Associate response text (underline what each source supports)",
     settingsButton: "Settings button (hidden: Ctrl+Alt+Shift+S opens settings)",
@@ -776,6 +781,7 @@ export const PANEL_TABS: { id: PanelTabId; groups: PanelGroup[] }[] = [
                     "associateText",
                     "sourceStyleButton",
                     "chatMovesAside",
+                    "assistantGoTo",
                     "aboutLine",
                     "regionSelect",
                     "elementContext",
@@ -985,10 +991,18 @@ function mergePersisted(persisted: unknown, current: Settings): Settings {
 
 /** the preset in effect (presets.ts), or null: set once, at init, before anything
  *  reads the settings */
-let preset: { id: string; name: string; values: Partial<Settings> } | null =
-    null;
-export const activePreset = (): { id: string; name: string } | null =>
-    preset && { id: preset.id, name: preset.name };
+let preset: {
+    id: string;
+    name: string;
+    values: Partial<Settings>;
+    /** the settings a participant's panel shows (the gear); none: no such panel */
+    panel?: readonly (keyof Settings)[];
+} | null = null;
+export const activePreset = (): {
+    id: string;
+    name: string;
+    panel?: readonly (keyof Settings)[];
+} | null => preset && { id: preset.id, name: preset.name, panel: preset.panel };
 
 const STORE_NAME = "unilens-settings";
 /**
@@ -1055,8 +1069,9 @@ export function startPreset(
     id: string,
     name: string,
     values: Partial<Settings>,
+    panel?: readonly (keyof Settings)[],
 ) {
-    preset = { id, name, values };
+    preset = { id, name, values, panel };
     let stored: unknown;
     try {
         stored = JSON.parse(

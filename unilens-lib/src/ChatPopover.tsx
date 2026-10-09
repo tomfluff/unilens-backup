@@ -15,6 +15,7 @@ import {
     asksToLocate,
     asksToZoom,
     type Cited,
+    gotoAsked,
     mdLite,
     type NavCommand,
     navCommand,
@@ -30,6 +31,7 @@ import {
     claimEscape,
     clearHighlights,
     hasHighlight,
+    isLatest,
     nextToken,
     onHighlightsCleared,
     registerPopoverClose,
@@ -1560,11 +1562,13 @@ export default function ChatPopover({
     const sourceVia = (fromText: boolean, still: boolean) =>
         still
             ? "live"
-            : byCommand.current
-              ? "command"
-              : fromText
-                ? "number in the answer"
-                : "controls";
+            : byGoto.current
+              ? "assistant go-to"
+              : byCommand.current
+                ? "command"
+                : fromText
+                  ? "number in the answer"
+                  : "controls";
     /** outline a reply's evidence (all, or item `index`), on the user's click or command */
     function point(
         m: Msg,
@@ -1770,9 +1774,57 @@ export default function ChatPopover({
                 ms.map((x) => (x.id === m.id ? { ...x, zoomed: true } : x)),
             );
         };
+        // the place the answer takes the user to (co-design study, 2026-10-09): the
+        // model decides, with no guard on the question; it goes as a pressed number goes
+        const goal = getSettings().assistantGoTo ? gotoAsked(m.text) : null;
+        const gotoNow = (latest: boolean) => {
+            if (!goal || !c || !src) return;
+            const k = c.ids.indexOf(goal);
+            const el = src.registry.get(goal);
+            const skip = (reason: string) =>
+                logEvent("goto", {
+                    msg: m.id,
+                    question,
+                    target: goal,
+                    done: false,
+                    reason,
+                });
+            if (k < 0) return skip("not a source of the answer");
+            if (!el?.isConnected) return skip("not on the page");
+            // a late answer moves nothing: the user closed the chat, or asked or
+            // clicked again since (the guard the answer's own outlines have)
+            if (hiddenRef.current) return skip("the chat was closed");
+            if (!latest) return skip("a newer question or click came first");
+            const where = directionOf(el);
+            byGoto.current = true;
+            let moved = false;
+            try {
+                moved = point(m, k, true);
+            } finally {
+                byGoto.current = false;
+            }
+            // nothing drawn: the element is there but shows nothing (collapsed,
+            // hidden), so the user was taken nowhere
+            const shown = hasHighlight();
+            logEvent("goto", {
+                msg: m.id,
+                question,
+                target: goal,
+                label: labelOfWire(goal, src.inventory),
+                n: k + 1,
+                where,
+                moved,
+                done: shown,
+                ...(shown ? {} : { reason: "nothing to show on the page" }),
+            });
+        };
         const done = () => {
+            // judged before the answer's own zoom, whose outline is a newer request
+            const latest = !!src && isLatest(src.id, token);
             zoomNow();
             act("done", said);
+            // after the answer's own status, so the move is the last thing said
+            gotoNow(latest);
         };
         showAnswerStart(m.id);
         // asked where, pointed nowhere: "nothing found", styled apart from an answer
@@ -1840,6 +1892,8 @@ export default function ChatPopover({
 
     /** a command is choosing the source: point() logs it as the command's */
     const byCommand = useRef(false);
+    /** the assistant's go-to is choosing the source (the study's log) */
+    const byGoto = useRef(false);
     function runNav(cmd: NavCommand, text: string): boolean {
         byCommand.current = true;
         try {
@@ -1942,6 +1996,7 @@ export default function ChatPopover({
                 selection: sel ? { items: selectionIn(sel, on) } : undefined,
                 mark_phrases: phrasesAsked(),
                 assistant_zoom: getSettings().assistantZoom,
+                go_to: getSettings().assistantGoTo,
                 ai: aiChoice(),
             }),
         });
@@ -2050,6 +2105,7 @@ export default function ChatPopover({
                 selection: sel ? { items: selectionIn(sel, on) } : undefined,
                 mark_phrases: phrasesAsked(),
                 assistant_zoom: getSettings().assistantZoom,
+                go_to: getSettings().assistantGoTo,
                 ai: aiChoice(),
             }),
         });

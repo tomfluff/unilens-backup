@@ -1442,16 +1442,19 @@ function SettingsSearch({
     lang,
     q,
     setQ,
+    tabs,
 }: {
     s: Settings;
     lang: PanelLang;
     q: string;
     setQ: (q: string) => void;
+    tabs: Tabs;
 }) {
     const T = PANEL_TEXT[lang];
     const words = q.trim().toLowerCase();
     const hits = words
-        ? PANEL_TABS.flatMap((t) => t.groups.map((g) => ({ t, g })))
+        ? tabs
+              .flatMap((t) => t.groups.map((g) => ({ t, g })))
               .map(({ t, g }) => ({
                   t,
                   g,
@@ -1512,11 +1515,22 @@ function SettingsSearch({
 const MAX_SETTINGS_FILE = 256 * 1024;
 
 /** this tab back to its defaults; every setting to or from a file */
-function Footer({ tab, T }: { tab: PanelTabId; T: Text }) {
+function Footer({
+    tab,
+    T,
+    tabs,
+    files = true,
+}: {
+    tab: PanelTabId;
+    T: Text;
+    tabs: Tabs;
+    /** save and load settings files: the facilitator's, not a participant's */
+    files?: boolean;
+}) {
     const [status, setStatus] = useState("");
     const picker = useRef<HTMLInputElement>(null);
     const reset = () => {
-        for (const g of PANEL_TABS.find((t) => t.id === tab)?.groups ?? [])
+        for (const g of tabs.find((t) => t.id === tab)?.groups ?? [])
             for (const k of [...g.first, ...g.more]) write(k, defaultOf(k));
         setStatus(T.resetDone(T.tabs[tab]));
     };
@@ -1552,35 +1566,58 @@ function Footer({ tab, T }: { tab: PanelTabId; T: Text }) {
                 <ResetIcon />
                 {T.reset}
             </button>
-            <button type="button" className="s-btn" onClick={save}>
-                <SaveIcon />
-                {T.save}
-            </button>
-            <button
-                type="button"
-                className="s-btn"
-                onClick={() => picker.current?.click()}
-            >
-                <LoadIcon />
-                {T.load}
-            </button>
-            <input
-                ref={picker}
-                type="file"
-                accept="application/json,.json"
-                hidden
-                onChange={(e) => {
-                    const file = e.currentTarget.files?.[0];
-                    // cleared, so choosing the same file again imports it again
-                    e.currentTarget.value = "";
-                    if (file) void load(file);
-                }}
-            />
+            {files && (
+                <>
+                    <button type="button" className="s-btn" onClick={save}>
+                        <SaveIcon />
+                        {T.save}
+                    </button>
+                    <button
+                        type="button"
+                        className="s-btn"
+                        onClick={() => picker.current?.click()}
+                    >
+                        <LoadIcon />
+                        {T.load}
+                    </button>
+                </>
+            )}
+            {files && (
+                <input
+                    ref={picker}
+                    type="file"
+                    accept="application/json,.json"
+                    hidden
+                    onChange={(e) => {
+                        const file = e.currentTarget.files?.[0];
+                        // cleared, so choosing the same file again imports it again
+                        e.currentTarget.value = "";
+                        if (file) void load(file);
+                    }}
+                />
+            )}
             <p className="s-status" role="status" aria-live="polite">
                 {status}
             </p>
         </div>
     );
+}
+
+type Tabs = { id: PanelTabId; groups: PanelGroup[] }[];
+/** a participant's panel (a preset's list): only those settings, every one of them
+ *  shown in its group (none folded away); empty groups and tabs go */
+function limitTabs(keys: readonly Key[]): Tabs {
+    const set = new Set(keys);
+    return PANEL_TABS.map((t) => ({
+        id: t.id,
+        groups: t.groups
+            .map((g) => ({
+                id: g.id,
+                first: [...g.first, ...g.more].filter((k) => set.has(k)),
+                more: [] as Key[],
+            }))
+            .filter((g) => g.first.length),
+    })).filter((t) => t.groups.length);
 }
 
 /** the tab shown last time the panel was open, for this page view */
@@ -1590,11 +1627,23 @@ const NO_PREVIEW = new Set<PanelTabId>(["ai", "advanced"]);
 /** whether the preview was shown last time, for this page view */
 let lastPreview = true;
 
-function Panel({ onClose }: { onClose: () => void }) {
+function Panel({
+    onClose,
+    limited,
+}: {
+    onClose: () => void;
+    /** a participant's panel: only these settings (the preset's list) */
+    limited?: readonly Key[];
+}) {
+    const shownTabs = limited ? limitTabs(limited) : PANEL_TABS;
     const s = useSettings();
     const lang: PanelLang = chatLang();
     const T = PANEL_TEXT[lang];
-    const [tab, setTab] = useState<PanelTabId>(lastTab);
+    const [tab, setTab] = useState<PanelTabId>(
+        shownTabs.some((t) => t.id === lastTab)
+            ? lastTab
+            : (shownTabs[0]?.id ?? "general"),
+    );
     /** words in the search: while there are any, only what they match shows */
     const [q, setQ] = useState("");
     const [preview, setPreview] = useState(lastPreview);
@@ -1623,7 +1672,7 @@ function Panel({ onClose }: { onClose: () => void }) {
     // Escape closes the settings before it touches the chat or the outlines
     useEffect(() => claimEscape(onClose), [onClose]);
     const onTabKey = (e: ReactKeyboardEvent) => {
-        const ids = PANEL_TABS.map((t) => t.id);
+        const ids = shownTabs.map((t) => t.id);
         const i = ids.indexOf(tab);
         const to =
             e.key === "ArrowRight"
@@ -1644,7 +1693,7 @@ function Panel({ onClose }: { onClose: () => void }) {
                 ?.focus(),
         );
     };
-    const groups = PANEL_TABS.find((t) => t.id === tab)?.groups ?? [];
+    const groups = shownTabs.find((t) => t.id === tab)?.groups ?? [];
     const preset = activePreset();
     /** the preview beside the settings: on tabs with something to show */
     const shown = preview && !NO_PREVIEW.has(tab);
@@ -1698,7 +1747,7 @@ function Panel({ onClose }: { onClose: () => void }) {
                         <CloseIcon />
                     </button>
                 </div>
-                {preset && (
+                {preset && !limited && (
                     <p className="s-preset">{T.presetOn(preset.name)}</p>
                 )}
                 <div
@@ -1708,7 +1757,7 @@ function Panel({ onClose }: { onClose: () => void }) {
                     aria-label={T.title}
                     onKeyDown={onTabKey}
                 >
-                    {PANEL_TABS.map((t) => (
+                    {shownTabs.map((t) => (
                         <button
                             key={t.id}
                             type="button"
@@ -1732,7 +1781,13 @@ function Panel({ onClose }: { onClose: () => void }) {
                         role="tabpanel"
                         aria-labelledby={`${uid}-${tab}`}
                     >
-                        <SettingsSearch s={s} lang={lang} q={q} setQ={setQ} />
+                        <SettingsSearch
+                            s={s}
+                            lang={lang}
+                            q={q}
+                            setQ={setQ}
+                            tabs={shownTabs}
+                        />
                         {!q.trim() &&
                             groups.map((g) => (
                                 <Group key={g.id} g={g} s={s} lang={lang}>
@@ -1741,7 +1796,12 @@ function Panel({ onClose }: { onClose: () => void }) {
                                     )}
                                 </Group>
                             ))}
-                        <Footer tab={tab} T={T} />
+                        <Footer
+                            tab={tab}
+                            T={T}
+                            tabs={shownTabs}
+                            files={!limited}
+                        />
                     </div>
                     {shown && (tab === "general" || tab === "conversation") && (
                         <div
@@ -1798,11 +1858,14 @@ function SettingsLauncher() {
             (back ?? launcher.current)?.focus();
         });
     };
+    /** opened from the gear under a preset with a participant's panel: that panel */
+    const [limitedOpen, setLimitedOpen] = useState(false);
     togglePanel = () => {
         if (open) return close();
         const had = document.activeElement;
         before.current =
             had instanceof HTMLElement && had !== document.body ? had : null;
+        setLimitedOpen(false);
         setOpen(true);
     };
     return (
@@ -1825,13 +1888,19 @@ function SettingsLauncher() {
                     onClick={() => {
                         if (open) return close();
                         before.current = null;
+                        setLimitedOpen(Boolean(activePreset()?.panel));
                         setOpen(true);
                     }}
                 >
                     <SettingsIcon />
                 </button>
             )}
-            {open && <Panel onClose={close} />}
+            {open && (
+                <Panel
+                    onClose={close}
+                    limited={limitedOpen ? activePreset()?.panel : undefined}
+                />
+            )}
         </>
     );
 }

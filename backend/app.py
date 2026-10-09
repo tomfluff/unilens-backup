@@ -570,6 +570,19 @@ ZOOM_RULES = (
 )
 ZOOM_RE = re.compile(r"( ?)\[\[zoom:(n\d+|in|out|reset)\]\]")
 
+# The assistant takes the user to a place on the page (co-design study, Yotam
+# 2026-10-09): the model decides, the widget scrolls there and outlines it once the
+# answer is complete. Only when the chat says it may (the go_to request field)
+GOTO_RULES = (
+    "The user can ask you to take them to something on the page, to show them where "
+    "it is, or to let them see it on the page. When they do, add one go-to marker to "
+    "your answer: [[goto:ID]] with the id of the inventory element that shows it, the "
+    "most specific one; cite it as well. When your answer is complete, the page "
+    "scrolls there and outlines it: say in a few words what they will see there. "
+    "Never mention the marker."
+)
+GOTO_RE = re.compile(r"( ?)\[\[goto:(n\d+)\]\]")
+
 # a selection is a few sources at most; their labels are the page's own words
 SELECTION_MAX = 30  # the chat's own cap; the About line says when it cut
 SELECTION_LABEL_MAX = 160
@@ -637,13 +650,16 @@ def _page_data(inventory, selection) -> str | None:
     return "\n\n".join(parts) or None
 
 
-def _chat_rules(inventory, selection, phrases=False, zoom=False) -> str | None:
+def _chat_rules(
+    inventory, selection, phrases=False, zoom=False, goto=False
+) -> str | None:
     rules = [
         r
         for r, on in (
             (EVIDENCE_RULES, inventory),
             (PHRASE_RULES, inventory and phrases),
             (ZOOM_RULES, zoom),
+            (GOTO_RULES, inventory and goto),
             (SELECTION_RULES, selection),
         )
         if on
@@ -892,6 +908,22 @@ def _unzoom(text: str) -> str:
     )
 
 
+def _ungoto(text: str) -> str:
+    """A go-to marker as the history keeps it: its element's citation (the move
+    happened once; a later turn must not copy it, nor a chat back from a reload move).
+    """
+    rest = _unjoin_cites(GOTO_RE.sub("", text))
+
+    def cite(m: re.Match) -> str:
+        # the rules ask for a citation as well: one number, not two (only a marker
+        # the chat reads counts; a malformed [n7] is none)
+        if f"[[{m.group(2)}]]" in rest:
+            return ""
+        return f"{m.group(1)}[[{m.group(2)}]]"
+
+    return GOTO_RE.sub(cite, text)
+
+
 def _strip_unknown_cites(text: str, ids: set[str]) -> str:
     """Drop [[id]] markers that name no element of the inventory in use. The
     space before one goes with it only when punctuation or the end follows:
@@ -983,6 +1015,7 @@ def _chat_openai_request(
     selection=None,
     phrases=False,
     zoom=False,
+    goto=False,
     ai=None,
 ) -> dict:
     """Keyword arguments for responses.create; pure, so tests can inspect it.
@@ -1000,7 +1033,7 @@ def _chat_openai_request(
     }
     if (ai or {}).get("reasoning"):
         req["reasoning"] = {"effort": ai["reasoning"]}
-    rules = _chat_rules(inventory, selection, phrases, zoom)
+    rules = _chat_rules(inventory, selection, phrases, zoom, goto)
     if rules:
         req["instructions"] = rules
     if stream:
@@ -1018,6 +1051,7 @@ def _call_openai(
     selection=None,
     phrases=False,
     zoom=False,
+    goto=False,
     ai=None,
 ) -> str:
     from openai import OpenAI
@@ -1033,6 +1067,7 @@ def _call_openai(
             selection=selection,
             phrases=phrases,
             zoom=zoom,
+            goto=goto,
             ai=ai,
         )
     )
@@ -1102,12 +1137,13 @@ def _chat_gemini_request(
     selection=None,
     phrases=False,
     zoom=False,
+    goto=False,
     ai=None,
 ) -> dict:
     """Keyword arguments for generate_content(_stream); pure, so tests can inspect it."""
     from google.genai import types
 
-    rules = _chat_rules(inventory, selection, phrases, zoom)
+    rules = _chat_rules(inventory, selection, phrases, zoom, goto)
     level = (ai or {}).get("reasoning")
     return {
         "model": (ai or {}).get("model") or GEMINI_MODEL,
@@ -1142,6 +1178,7 @@ def _call_gemini(
     selection=None,
     phrases=False,
     zoom=False,
+    goto=False,
     ai=None,
 ) -> str:
     from google import genai
@@ -1160,6 +1197,7 @@ def _call_gemini(
             selection,
             phrases,
             zoom=zoom,
+            goto=goto,
             ai=ai,
         )
     )
@@ -1176,6 +1214,7 @@ def _stream_openai(
     selection=None,
     phrases=False,
     zoom=False,
+    goto=False,
     ai=None,
 ):
     """Yield text deltas from the OpenAI Responses streaming API."""
@@ -1193,6 +1232,7 @@ def _stream_openai(
             selection=selection,
             phrases=phrases,
             zoom=zoom,
+            goto=goto,
             ai=ai,
         )
     )
@@ -1211,6 +1251,7 @@ def _stream_gemini(
     selection=None,
     phrases=False,
     zoom=False,
+    goto=False,
     ai=None,
 ):
     from google import genai
@@ -1229,6 +1270,7 @@ def _stream_gemini(
             selection,
             phrases,
             zoom=zoom,
+            goto=goto,
             ai=ai,
         )
     ):
@@ -2415,6 +2457,9 @@ def create_app():
         zoom = data.get("assistant_zoom", False)
         if not isinstance(zoom, bool):
             return jsonify({"error": "assistant_zoom must be a boolean"}), 400
+        goto = data.get("go_to", False)
+        if not isinstance(goto, bool):
+            return jsonify({"error": "go_to must be a boolean"}), 400
         cite_ids = set(_inventory_ids(inventory or []))
 
         choice = _ai_choice(data)
@@ -2441,6 +2486,7 @@ def create_app():
                     selection=selection,
                     phrases=phrases,
                     zoom=zoom,
+                    goto=goto,
                     ai=choice,
                 )
                 for delta in deltas:
@@ -2452,7 +2498,7 @@ def create_app():
                 return
             # deltas went out as the model wrote them; history keeps only real ids,
             # checked after a zoom marker became its citation
-            reply = _strip_unknown_cites(_unzoom("".join(parts)), cite_ids)
+            reply = _strip_unknown_cites(_ungoto(_unzoom("".join(parts))), cite_ids)
             new_history = history + [
                 {"role": "user", "text": message, "capture_id": cap_id},
                 {"role": "assistant", "text": reply},
@@ -2509,6 +2555,9 @@ def create_app():
         zoom = data.get("assistant_zoom", False)
         if not isinstance(zoom, bool):
             return jsonify({"error": "assistant_zoom must be a boolean"}), 400
+        goto = data.get("go_to", False)
+        if not isinstance(goto, bool):
+            return jsonify({"error": "go_to must be a boolean"}), 400
 
         choice = _ai_choice(data)
         provider = choice["provider"]
@@ -2526,11 +2575,12 @@ def create_app():
                 selection=selection,
                 phrases=phrases,
                 zoom=zoom,
+                goto=goto,
                 ai=choice,
             )
             ids = set(_inventory_ids(inventory or []))
             # the widget gets the zoom marker; the history its citation, checked
-            saved = _strip_unknown_cites(_unzoom(reply), ids)
+            saved = _strip_unknown_cites(_ungoto(_unzoom(reply)), ids)
             reply = _strip_unknown_cites(reply, ids)
         except Exception as e:  # surface provider errors to the popover
             _server_event(_study_ids(), "error", where="answer", message=str(e))

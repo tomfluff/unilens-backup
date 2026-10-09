@@ -148,6 +148,10 @@ export function nextToken(): number {
     return ++issued;
 }
 
+/** this capture and request are still the latest: nothing newer was asked or clicked */
+export const isLatest = (captureId: string, token: number) =>
+    captureId === currentCapture && token === issued;
+
 export const hasHighlight = () => boxes.length > 0;
 
 // ── announcements: this module is the live region's only writer ──────────────
@@ -1192,10 +1196,7 @@ export function showHighlights(
     token: number,
     opts: ShowOptions = {},
 ): boolean {
-    if (
-        !opts.userInitiated &&
-        (captureId !== currentCapture || token !== issued)
-    ) {
+    if (!opts.userInitiated && !isLatest(captureId, token)) {
         console.debug("[UniLens] dropped stale highlight", {
             captureId,
             token,

@@ -8,6 +8,7 @@ import {
     foldNested,
     hasHighlight,
     init,
+    isLatest,
     nextToken,
     onHighlightsCleared,
     registerPopoverClose,
@@ -104,6 +105,15 @@ describe("showHighlights", () => {
         } finally {
             updateSetting("chatLanguage", "auto");
         }
+    });
+
+    it("knows whether a request is still the latest (a late go-to waits on it)", () => {
+        setCurrentCapture("c3");
+        const t = nextToken();
+        expect(isLatest("c3", t)).toBe(true);
+        expect(isLatest("c2", t)).toBe(false); // another capture since
+        nextToken(); // a newer question, or a number pressed
+        expect(isLatest("c3", t)).toBe(false);
     });
 
     it("is a no-op for another capture or a superseded token", () => {

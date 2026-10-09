@@ -93,6 +93,12 @@ def summarize(ev: dict) -> str:
         )
         labels = ", ".join(_short(x, 30) for x in ev.get("labels") or [])
         return f"source {ev.get('n')} ({labels}), {how}; {moved}"
+    if kind == "goto":
+        q = _short(ev.get("question"), 60)
+        if not ev.get("done"):
+            return f'assistant go-to {ev.get("target")} not done ({ev.get("reason")}), asked "{q}"'
+        moved = "page moved" if ev.get("moved") else "page stayed (on screen)"
+        return f'assistant took them to {ev.get("n")} ({_short(ev.get("label"), 30)}, {ev.get("where") or "on screen"}); {moved}; asked "{q}"'
     if kind == "command":
         n = f" {ev['n']}" if ev.get("n") else ""
         return f'{ev.get("kind")}{n}: "{_short(ev.get("text"), 40)}" → {_short(ev.get("result"), 60)}'
@@ -161,9 +167,11 @@ def stats(events: list[dict]) -> dict:
             1
             for e in events
             if e.get("type") == "source"
-            and e.get("via") not in ("command", "live")
+            and e.get("via") not in ("command", "live", "assistant go-to")
             and e.get("action") != "off"
         ),
+        # the assistant took them to a place (session 2's go-to marker)
+        "gotos": count("goto", done=True),
         "mic_starts": count("mic", action="start"),
         "read_aloud_plays": count("read_aloud", action="play"),
         "chat_drags": count("chat_dragged"),
@@ -218,7 +226,7 @@ def export_session(pid: str, path: Path, out: Path) -> dict:
         "",
         f"- {s['start']} to {s['end']} ({s['minutes']} min), {s['pages']} pages",
         f"- {s['alt_clicks']} Alt+clicks; {s['questions']} questions ({s['typed']} typed, {s['voice']} by voice), {s['commands']} of them commands",
-        f"- {s['answers']} answers, {s['mean_answer_s'] or '–'} s on average; {s['sources_pressed']} sources chosen",
+        f"- {s['answers']} answers, {s['mean_answer_s'] or '–'} s on average; {s['sources_pressed']} sources chosen; {s['gotos']} times taken to a place by the assistant",
         f"- {s['mic_starts']} microphone uses, {s['read_aloud_plays']} read-aloud plays, {s['chat_drags']} chat drags, {s['errors']} errors",
         "",
         "Status lines are left out here; the CSV has every event. Captures: backend/captures/<id>/.",

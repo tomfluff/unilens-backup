@@ -3,6 +3,7 @@ import {
     asksToLocate,
     asksToZoom,
     getLastEvidenceDebug,
+    gotoAsked,
     mdLite,
     navCommand,
     placeLiveMarkers,
@@ -629,5 +630,50 @@ describe("citation placement (co-design initial prototype: numbers out of the se
             "end",
         );
         expect(r.html).toMatch(/and Team\n\n<button[^>]*>1<\/button>$/);
+    });
+});
+
+describe("the go-to marker (co-design study, 2026-10-09)", () => {
+    it("names the element the answer takes the user to", () => {
+        expect(gotoAsked("The centre is here [[goto:n12]] [[n12]].")).toBe(
+            "n12",
+        );
+        expect(gotoAsked("No marker [[n12]].")).toBeNull();
+    });
+
+    it("is a citation in the chat and gone from what is read aloud", () => {
+        const r = renderCited("The centre is here [[goto:n12]].", known, label);
+        expect(r.ids).toEqual(["n12"]);
+        expect(r.html).not.toContain("goto");
+        expect(speakable("Here [[goto:n12]].")).toBe("Here.");
+    });
+
+    it("adds no second number when the answer cites the element too", () => {
+        // P02's "take me to the notise", through a tunnel: the model wrote both
+        const chips = (t: string) =>
+            renderCited(t, known, label).html.match(/class="unilens-cite"/g)
+                ?.length ?? 0;
+        expect(chips("In Service Info. [[n12]] [[goto:n12]]")).toBe(1);
+        expect(chips("In Service Info [[goto:n12]] [[n12]].")).toBe(1);
+        expect(chips("In Service Info [[goto:n12]] [[n3, n12]].")).toBe(2);
+        // another element cited: the go-to still counts as its own source
+        expect(chips("In Service Info [[n3]] [[goto:n12]].")).toBe(2);
+        expect(
+            renderCited("Here [[n12]] [[goto:n12]]", known, label).ids,
+        ).toEqual(["n12"]);
+        expect(chips("In Service Info [[goto:n12]] [[n3], [n12]].")).toBe(2);
+        // a malformed citation is none: the go-to stays the element's number
+        for (const t of [
+            "Here [[goto:n12]] [n12].",
+            "Here [[goto:n12]] [[n12 n3]].",
+        ]) {
+            expect(chips(t), t).toBe(1);
+            expect(renderCited(t, known, label).ids, t).toEqual(["n12"]);
+        }
+    });
+
+    it("never shows half a marker while the answer streams", () => {
+        const r = renderCited("The centre is here [[got", known, label, true);
+        expect(r.html).toBe("The centre is here");
     });
 });

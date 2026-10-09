@@ -28,6 +28,27 @@ export function zoomAsked(text: string): ZoomAsk | null {
         ? { id: m[1] }
         : { change: m[1] as "in" | "out" | "reset" };
 }
+/** the assistant takes the user to an element (co-design study, 2026-10-09): acted on
+ *  once the answer is complete, whenever the model adds it */
+const GOTO = /\s?\[\[goto:(n\d{1,5})\]\]/g;
+/** ...and one still streaming in */
+const PARTIAL_GOTO = /\s?\[\[g(o(t(o(:[a-z0-9]*\]?)?)?)?)?$/;
+/** the element an answer takes the user to (its first go-to), or null */
+export function gotoAsked(text: string): string | null {
+    return [...text.matchAll(GOTO)][0]?.[1] ?? null;
+}
+/** an element cited in the text by a marker the chat renders ([[n5]], [[n4, n5]],
+ *  [[n4], [n5]]); a malformed one ([n5]) is no citation */
+const citedIn = (text: string, id: string) =>
+    unjoin(text).includes(`[[${id}]]`);
+/** go-to markers out of the text: each is its element's citation, unless the answer
+ *  cites that element already (the rules ask for both: one number, not two) */
+const ungoto = (text: string) => {
+    const rest = text.replace(GOTO, "");
+    return text.replace(GOTO, (all, id: string) =>
+        citedIn(rest, id) ? "" : `${all.startsWith("[") ? "" : " "}[[${id}]]`,
+    );
+};
 /** zoom markers out of the text: one into an element is its source, as a citation */
 const unzoom = (text: string) =>
     text.replace(ZOOM, (all, what: string) =>
@@ -104,9 +125,10 @@ export function renderCited(
      *  or all after the answer. Underlines need them where the model put them */
     placement: CitePlacement = "inline",
 ): Cited {
-    let t = unjoin(unzoom(text.replace(/[\uE0FC-\uE0FF]/g, "")));
+    let t = unjoin(ungoto(unzoom(text.replace(/[\uE0FC-\uE0FF]/g, ""))));
     if (streaming)
         t = t
+            .replace(PARTIAL_GOTO, "")
             .replace(PARTIAL_ZOOM, "")
             .replace(PARTIAL_JOINED, "")
             .replace(PARTIAL, "");
@@ -371,7 +393,7 @@ export function placeLiveMarkers(
 
 /** the reply as it should be read aloud or copied: no markers, no phrase braces */
 export const speakable = (text: string) =>
-    unjoin(unzoom(text))
+    unjoin(ungoto(unzoom(text)))
         .replace(MARKER, "")
         .replace(/\{\{|\}\}/g, "");
 

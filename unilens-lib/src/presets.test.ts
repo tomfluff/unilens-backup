@@ -111,7 +111,44 @@ describe("session 2 (2026-10-09)", () => {
             associateText: false,
             sourceStyleButton: true,
             voicePauseMs: 2000,
+            // the gear opens the participant's panel; the model may take them places
+            settingsButton: true,
+            assistantGoTo: true,
         });
+    });
+
+    it("lists a participant's panel of real panel settings", async () => {
+        const { PANEL_TABS } = await import("./settings");
+        const placed = new Set(
+            PANEL_TABS.flatMap((t) =>
+                t.groups.flatMap((g) => [...g.first, ...g.more]),
+            ),
+        );
+        expect(PRESETS.session2.panel.length).toBeGreaterThan(0);
+        for (const k of PRESETS.session2.panel)
+            expect(placed.has(k), k).toBe(true);
+        // session-lead's list: chat text size and high contrast in; the source
+        // style (the Sources button has it) and the voice pause out
+        const panel: readonly string[] = PRESETS.session2.panel;
+        expect(panel).toEqual(
+            expect.arrayContaining([
+                "chatTextScale",
+                "highContrast",
+                "liveTalk",
+            ]),
+        );
+        for (const k of [
+            "sourceStyleButton",
+            "citePlacement",
+            "associateText",
+            "voicePauseMs",
+            "voiceAutoSend",
+            "assistantGoTo",
+            "settingsButton",
+        ])
+            expect(panel, k).not.toContain(k);
+        // session 1 has no participant panel
+        expect("panel" in PRESETS.initial).toBe(false);
     });
 });
 

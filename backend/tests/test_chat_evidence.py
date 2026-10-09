@@ -364,3 +364,45 @@ def test_the_reply_keeps_its_zoom_marker_for_the_widget(client, capture, monkeyp
         "/api/chat", json={"capture_id": cap, "message": "x", "assistant_zoom": "yes"}
     )
     assert bad.status_code == 400
+
+
+def test_goto_rules_only_when_the_chat_may_take_the_user_there():
+    """Co-design study, 2026-10-09: the model decides the go-to, when allowed."""
+    inv = [{"i": "n1", "n": "Lost Property Centre"}]
+    assert app_module.GOTO_RULES in app_module._chat_rules(inv, [], goto=True)
+    assert app_module.GOTO_RULES not in app_module._chat_rules(inv, [], goto=False)
+    # nothing on the page to go to: no rule
+    assert not app_module._chat_rules(None, [], goto=True)
+
+
+def test_history_keeps_a_goto_as_its_citation():
+    assert app_module._ungoto("It is here [[goto:n7]].") == "It is here [[n7]]."
+    # cited as well (the rules ask for both): one citation, not two
+    assert app_module._ungoto("It is here [[goto:n7]] [[n7]].") == "It is here [[n7]]."
+    assert (
+        app_module._ungoto("Here [[n3, n7]] [[goto:n7]]; there [[goto:n9]].")
+        == "Here [[n3, n7]]; there [[n9]]."
+    )
+    assert app_module._ungoto("Here [[n77]] [[goto:n7]].") == "Here [[n77]] [[n7]]."
+    assert app_module._ungoto("Here [[n3], [n7]] [[goto:n7]].") == "Here [[n3], [n7]]."
+    # a malformed citation is none: the go-to stays the element's citation
+    assert app_module._ungoto("Here [[goto:n7]] [n7].") == "Here [[n7]] [n7]."
+
+
+def test_the_reply_keeps_its_goto_marker_for_the_widget(client, capture, monkeypatch):
+    monkeypatch.setitem(
+        app_module.PROVIDERS["stub"],
+        "call",
+        lambda **kw: "The centre is here [[goto:n1]]." if kw.get("goto") else "No.",
+    )
+    cap = capture()
+    res = client.post(
+        "/api/chat",
+        json={"capture_id": cap, "message": "take me to the centre", "go_to": True},
+    )
+    assert res.get_json()["reply"] == "The centre is here [[goto:n1]]."
+    assert "goto" not in _saved(cap)[-1]["text"]
+    bad = client.post(
+        "/api/chat", json={"capture_id": cap, "message": "x", "go_to": "yes"}
+    )
+    assert bad.status_code == 400
