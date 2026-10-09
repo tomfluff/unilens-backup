@@ -1748,7 +1748,9 @@ function Panel({
                     </button>
                 </div>
                 {preset && !limited && (
-                    <p className="s-preset">{T.presetOn(preset.name)}</p>
+                    <p className="s-preset">
+                        {T.presetOn(preset.name, preset.keepFor)}
+                    </p>
                 )}
                 <div
                     ref={tabs}

@@ -12,8 +12,8 @@ const EN = {
     open: "UniLens settings",
     /** a study preset is on (presets.ts): for the facilitator, who opened the panel
      *  with its hidden key */
-    presetOn: (name: string) =>
-        `Preset on: ${name}. Changes made here last until this tab is closed. Ctrl+Alt+Shift+B switches the preset.`,
+    presetOn: (name: string, keptFor?: string) =>
+        `Preset on: ${name}. ${keptFor ? `Changes made here are kept for ${keptFor} in this browser, until Ctrl+Alt+Shift+R.` : "Changes made here last until this tab is closed."} Ctrl+Alt+Shift+B switches the preset.`,
     close: "Close settings",
     preview: "Preview",
     tabs: {
@@ -86,8 +86,8 @@ const EN = {
 const JA: typeof EN = {
     title: "UniLens 設定",
     open: "UniLens 設定",
-    presetOn: (name: string) =>
-        `プリセット使用中：${name}。ここでの変更はこのタブを閉じるまで有効です。Ctrl＋Alt＋Shift＋B でプリセットを切り替えます。`,
+    presetOn: (name: string, keptFor?: string) =>
+        `プリセット使用中：${name}。${keptFor ? `ここでの変更はこのブラウザに ${keptFor} の分として残ります（Ctrl＋Alt＋Shift＋R で消えます）。` : "ここでの変更はこのタブを閉じるまで有効です。"}Ctrl＋Alt＋Shift＋B でプリセットを切り替えます。`,
     close: "設定を閉じる",
     preview: "プレビュー",
     tabs: {

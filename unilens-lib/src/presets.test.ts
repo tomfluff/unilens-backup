@@ -198,6 +198,88 @@ describe("a preset in effect", () => {
     });
 });
 
+describe("session 2 keeps a participant's changes across tabs", () => {
+    it("by pid in this browser, until the facilitator's reset", () => {
+        localStorage.clear();
+        sessionStorage.clear();
+        // P03's first task link: a change in the panel and the Sources button
+        history.replaceState(
+            null,
+            "",
+            "/en/?unilens-preset=session2&pid=P03&session=2",
+        );
+        expect(startChosenPreset()).toBe("session2");
+        updateSetting("chatTextScale", 160);
+        updateSetting("citePlacement", "end");
+        expect(
+            JSON.parse(
+                localStorage.getItem("unilens-settings:session2:P03") as string,
+            ).state,
+        ).toEqual({ chatTextScale: 160, citePlacement: "end" });
+
+        // the next task link opens a new tab (no sessionStorage), the pid remembered
+        sessionStorage.clear();
+        history.replaceState(
+            null,
+            "",
+            "/en/status.html?unilens-preset=session2",
+        );
+        startChosenPreset();
+        expect(getSettings().chatTextScale).toBe(160);
+        expect(getSettings().citePlacement).toBe("end");
+
+        // another participant in the same browser starts from the preset
+        history.replaceState(null, "", "/en/?unilens-preset=session2&pid=P04");
+        startChosenPreset();
+        expect(getSettings().chatTextScale).toBe(120);
+        expect(getSettings().citePlacement).toBe("inline");
+
+        // the reset forgets what P03 changed
+        history.replaceState(null, "", "/en/?unilens-preset=session2&pid=P03");
+        startChosenPreset();
+        clearPresetChanges();
+        expect(
+            JSON.parse(
+                localStorage.getItem("unilens-settings:session2:P03") as string,
+            ).state,
+        ).toEqual({});
+
+        // an older P03 tab still open takes up a newer tab's change (storage event)
+        updateSetting("chatTextScale", 140);
+        const kept = localStorage.getItem("unilens-settings:session2:P03");
+        localStorage.setItem(
+            "unilens-settings:session2:P03",
+            JSON.stringify({ state: { sounds: false }, version: 0 }),
+        );
+        window.dispatchEvent(
+            new StorageEvent("storage", {
+                key: "unilens-settings:session2:P03",
+                storageArea: localStorage,
+                oldValue: kept,
+            }),
+        );
+        expect(getSettings().sounds).toBe(false);
+        expect(getSettings().chatTextScale).toBe(120);
+
+        // a change made in the tab before the pid came is forgotten by the reset too
+        sessionStorage.setItem(
+            "unilens-settings:session2",
+            JSON.stringify({ state: { chatTextScale: 170 }, version: 0 }),
+        );
+        clearPresetChanges();
+        expect(sessionStorage.getItem("unilens-settings:session2")).toBeNull();
+
+        // session 1 keeps changes in the tab only, even with a pid
+        history.replaceState(null, "", "/en/?unilens-preset=initial&pid=P03");
+        startChosenPreset();
+        updateSetting("chatTextScale", 150);
+        expect(localStorage.getItem("unilens-settings:initial:P03")).toBeNull();
+        expect(
+            sessionStorage.getItem("unilens-settings:initial"),
+        ).not.toBeNull();
+    });
+});
+
 describe("?sources= in the facilitator's link", () => {
     it("sets where the numbers go, and ignores anything else", async () => {
         const { applySourcesParam } = await import("./presets");

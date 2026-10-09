@@ -997,12 +997,21 @@ let preset: {
     values: Partial<Settings>;
     /** the settings a participant's panel shows (the gear); none: no such panel */
     panel?: readonly (keyof Settings)[];
+    /** the participant whose changes are kept across tabs (presets.ts) */
+    keepFor?: string;
 } | null = null;
 export const activePreset = (): {
     id: string;
     name: string;
     panel?: readonly (keyof Settings)[];
-} | null => preset && { id: preset.id, name: preset.name, panel: preset.panel };
+    keepFor?: string;
+} | null =>
+    preset && {
+        id: preset.id,
+        name: preset.name,
+        panel: preset.panel,
+        keepFor: preset.keepFor,
+    };
 
 const STORE_NAME = "unilens-settings";
 /**
@@ -1010,21 +1019,29 @@ const STORE_NAME = "unilens-settings";
  * on, this tab's sessionStorage under the preset's own key, and only the values that
  * differ from the preset: every page load starts from the preset whatever
  * localStorage holds, a change made in the panel lasts until the tab closes, and the
- * user's own settings in localStorage are left as they were.
+ * user's own settings in localStorage are left as they were. A preset that keeps a
+ * participant's changes (session 2: each task link opens a new tab) keeps them in
+ * localStorage under the preset and the participant id instead.
  */
+function presetStore(name: string): [Storage, string] | null {
+    if (!preset) return null;
+    return preset.keepFor
+        ? [localStorage, `${name}:${preset.id}:${preset.keepFor}`]
+        : [sessionStorage, `${name}:${preset.id}`];
+}
 const settingsStorage: StateStorage = {
     getItem: (name) => {
         try {
-            return preset
-                ? sessionStorage.getItem(`${name}:${preset.id}`)
-                : localStorage.getItem(name);
+            const at = presetStore(name);
+            return at ? at[0].getItem(at[1]) : localStorage.getItem(name);
         } catch {
             return null;
         }
     },
     setItem: (name, value) => {
         try {
-            if (preset) sessionStorage.setItem(`${name}:${preset.id}`, value);
+            const at = presetStore(name);
+            if (at) at[0].setItem(at[1], value);
             else localStorage.setItem(name, value);
         } catch {
             // storage blocked or full: the settings still apply for this page
@@ -1032,7 +1049,8 @@ const settingsStorage: StateStorage = {
     },
     removeItem: (name) => {
         try {
-            if (preset) sessionStorage.removeItem(`${name}:${preset.id}`);
+            const at = presetStore(name);
+            if (at) at[0].removeItem(at[1]);
             else localStorage.removeItem(name);
         } catch {
             // as above
@@ -1063,15 +1081,34 @@ export const useSettings = create<Settings>()(
 /**
  * Put a preset in effect for this page (presets.ts decides which): the settings
  * become the defaults plus its values, plus what was changed in this tab while it
- * was on. Called once, at init.
+ * was on (or, with keepFor, what that participant changed in this browser). Called
+ * once, at init.
  */
 export function startPreset(
     id: string,
     name: string,
     values: Partial<Settings>,
     panel?: readonly (keyof Settings)[],
+    keepFor?: string,
 ) {
-    preset = { id, name, values, panel };
+    preset = { id, name, values, panel, keepFor };
+    loadPresetChanges();
+    // kept across tabs: an older tab still open takes up what a newer one changed
+    // (or the facilitator's reset), so its next change does not undo them
+    if (keepFor && !following) {
+        following = true;
+        window.addEventListener("storage", (e) => {
+            const at = presetStore(STORE_NAME);
+            if (at && e.storageArea === at[0] && e.key === at[1])
+                loadPresetChanges();
+        });
+    }
+}
+let following = false;
+
+/** the preset's values plus the changes kept for it */
+function loadPresetChanges() {
+    if (!preset) return;
     let stored: unknown;
     try {
         stored = JSON.parse(
@@ -1081,14 +1118,23 @@ export function startPreset(
         stored = undefined;
     }
     useSettings.setState(
-        mergePersisted(stored, { ...DEFAULTS, ...values } as Settings),
+        mergePersisted(stored, { ...DEFAULTS, ...preset.values } as Settings),
     );
 }
 
-/** back to the preset's own values: what was changed in this tab while it is on is
- *  forgotten (the next participant) */
+/** back to the preset's own values: what was changed in this tab (or kept for the
+ *  participant) while it is on is forgotten (the next participant) */
 export function clearPresetChanges() {
-    if (preset) useSettings.setState({ ...DEFAULTS, ...preset.values });
+    if (!preset) return;
+    useSettings.setState({ ...DEFAULTS, ...preset.values });
+    // kept for a participant: what this tab changed before the pid came goes too,
+    // or it would come back once the reset has forgotten the pid
+    if (preset.keepFor)
+        try {
+            sessionStorage.removeItem(`${STORE_NAME}:${preset.id}`);
+        } catch {
+            // no session storage: nothing kept there
+        }
 }
 
 /** live snapshot for non-React modules (React components use the useSettings hook) */

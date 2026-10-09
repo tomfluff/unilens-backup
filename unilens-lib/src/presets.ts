@@ -24,7 +24,7 @@ import {
     setSourceStyle,
     startPreset,
 } from "./settings";
-import { forgetStudyIds, logEvent } from "./studyLog";
+import { forgetStudyIds, logEvent, readStudyIds } from "./studyLog";
 
 export interface Preset {
     /** what the facilitator sees: the confirmation toast, the settings panel */
@@ -33,6 +33,10 @@ export interface Preset {
     /** the participant's settings panel: only these settings, behind the gear
      *  (settingsButton on); the facilitator's key still opens every setting */
     panel?: readonly (keyof Settings)[];
+    /** a participant's changes (the panel, the Sources button) are kept in this
+     *  browser for their pid, across tabs and page loads, not only in the tab; the
+     *  facilitator's reset forgets them. Without a pid, the tab only */
+    keepPerParticipant?: boolean;
 }
 
 /**
@@ -146,6 +150,8 @@ export const PRESETS = {
             "chatTextScale",
             "highContrast",
         ],
+        // each task link opens a new tab (session lead, 2026-10-09)
+        keepPerParticipant: true,
     },
 } as const satisfies Record<string, Preset>;
 
@@ -231,7 +237,11 @@ export function startChosenPreset(initOption?: string): PresetId | null {
     const id = choosePreset(initOption, location.href);
     if (id) {
         const p: Preset = PRESETS[id];
-        startPreset(id, p.name, p.values, p.panel);
+        // session 2 pastes each task link in the Zoom chat: a new tab each time
+        const keepFor = p.keepPerParticipant
+            ? readStudyIds(location.href)?.pid
+            : undefined;
+        startPreset(id, p.name, p.values, p.panel, keepFor);
         console.info(`[UniLens] preset: ${PRESETS[id].name}`);
     }
     // the facilitator's link may say where the source numbers go
