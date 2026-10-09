@@ -21,6 +21,7 @@ import {
     activePreset,
     clearPresetChanges,
     type Settings,
+    setSourceStyle,
     startPreset,
 } from "./settings";
 import { forgetStudyIds, logEvent } from "./studyLog";
@@ -37,6 +38,64 @@ export interface Preset {
  * for. Values equal to the defaults are listed anyway, where they matter, so a later
  * change of a default does not change a preset.
  */
+/** the initial prototype's values (session 1); later presets start from them */
+const INITIAL = {
+    // asking: Alt+click only, and the question typed or spoken
+    regionSelect: false,
+    quickActions: false,
+    hints: false,
+    voiceInput: true,
+    voiceAutoSend: true,
+    // speech is heard by the server, with OpenAI, for everyone: one recognizer
+    // whatever the browser, and one provider (Yotam, 2026-10-07)
+    sttEngine: "openai",
+    liveTalk: false,
+    // hearing: read aloud on request (the button on each answer), action sounds
+    autoRead: false,
+    ttsProvider: "openai",
+    sounds: true,
+    // answers point at the page: every answer outlines its sources, numbered
+    // as the chips are; a chip, "next" or "the second one" goes to its source
+    citeEvidence: true,
+    autoHighlight: "always",
+    moveToEvidence: "offscreen",
+    associateText: false,
+    citePlacement: "end",
+    // one fixed look, every part of it named here
+    hlOutline: "ring",
+    hlBackdrop: "none",
+    hlFill: false,
+    hlGlow: true,
+    hlBadges: true,
+    hlColor: "#ffef26",
+    ringWidth: 2,
+    ringScale: false,
+    // the chat stays where it opened: stepping aside (or folding) to uncover
+    // a source is a later feature (Yotam, 2026-10-07)
+    chatMovesAside: false,
+    // no "About all 3 sources" line above the field (not decided for good)
+    aboutLine: false,
+    // nothing else moves or zooms the page
+    offscreenCue: "none",
+    minimap: "off",
+    zoom: false,
+    zoomKeys: false,
+    smartZoom: false,
+    lensPan: false,
+    assistantZoom: false,
+    // the chat: the standard look, in English (the study runs in English),
+    // no settings gear and no debug view or its shortcut
+    chatStyle: "assistant",
+    chatLanguage: "en",
+    clickFx: "orb",
+    motion: "smooth",
+    continuity: true,
+    restoreAfterReload: true,
+    settingsButton: false,
+    debugView: false,
+    debugShortcut: false,
+} as const satisfies Partial<Settings>;
+
 export const PRESETS = {
     /** Session 1's first look (Yotam, 2026-10-06 and 07): Alt+click and chat, by
      *  typing or the mic, in English; answers highlight their sources in one fixed
@@ -44,61 +103,19 @@ export const PRESETS = {
      *  never moves to uncover a source; no settings on screen */
     initial: {
         name: "Initial prototype (co-design session 1)",
+        values: INITIAL,
+    },
+    /** Session 2 (Yotam, 2026-10-09): source numbers inside the text by default,
+     *  with a Sources button to underline the words they support or move them after
+     *  the answer; a 2 s pause ends a voice message */
+    session2: {
+        name: "Session 2 (co-design)",
         values: {
-            // asking: Alt+click only, and the question typed or spoken
-            regionSelect: false,
-            quickActions: false,
-            hints: false,
-            voiceInput: true,
-            voiceAutoSend: true,
-            // speech is heard by the server, with OpenAI, for everyone: one recognizer
-            // whatever the browser, and one provider (Yotam, 2026-10-07)
-            sttEngine: "openai",
-            liveTalk: false,
-            // hearing: read aloud on request (the button on each answer), action sounds
-            autoRead: false,
-            ttsProvider: "openai",
-            sounds: true,
-            // answers point at the page: every answer outlines its sources, numbered
-            // as the chips are; a chip, "next" or "the second one" goes to its source
-            citeEvidence: true,
-            autoHighlight: "always",
-            moveToEvidence: "offscreen",
+            ...INITIAL,
+            citePlacement: "inline",
             associateText: false,
-            citePlacement: "end",
-            // one fixed look, every part of it named here
-            hlOutline: "ring",
-            hlBackdrop: "none",
-            hlFill: false,
-            hlGlow: true,
-            hlBadges: true,
-            hlColor: "#ffef26",
-            ringWidth: 2,
-            ringScale: false,
-            // the chat stays where it opened: stepping aside (or folding) to uncover
-            // a source is a later feature (Yotam, 2026-10-07)
-            chatMovesAside: false,
-            // no "About all 3 sources" line above the field (not decided for good)
-            aboutLine: false,
-            // nothing else moves or zooms the page
-            offscreenCue: "none",
-            minimap: "off",
-            zoom: false,
-            zoomKeys: false,
-            smartZoom: false,
-            lensPan: false,
-            assistantZoom: false,
-            // the chat: the standard look, in English (the study runs in English),
-            // no settings gear and no debug view or its shortcut
-            chatStyle: "assistant",
-            chatLanguage: "en",
-            clickFx: "orb",
-            motion: "smooth",
-            continuity: true,
-            restoreAfterReload: true,
-            settingsButton: false,
-            debugView: false,
-            debugShortcut: false,
+            sourceStyleButton: true,
+            voicePauseMs: 2000,
         },
     },
 } as const satisfies Record<string, Preset>;
@@ -158,6 +175,28 @@ export function choosePreset(
     return isPreset(pick) ? pick : null;
 }
 
+/**
+ * ?sources=inline|underline|end in the page address sets where an answer's source
+ * numbers go (the facilitator puts it in a participant's link); kept like any change
+ * made in the settings (for the tab, under a preset)
+ */
+export function applySourcesParam(href: string) {
+    let v: string | null = null;
+    try {
+        v = new URL(href).searchParams.get("sources");
+    } catch {
+        v = null;
+    }
+    if (v !== "inline" && v !== "underline" && v !== "end") return;
+    setSourceStyle(v);
+    // applied once: a reload of this page must not undo a later press of the button
+    if (href === location.href) {
+        const url = new URL(href);
+        url.searchParams.delete("sources");
+        history.replaceState(history.state, "", url);
+    }
+}
+
 /** put this page load's preset in effect; before anything reads the settings */
 export function startChosenPreset(initOption?: string): PresetId | null {
     const id = choosePreset(initOption, location.href);
@@ -165,6 +204,8 @@ export function startChosenPreset(initOption?: string): PresetId | null {
         startPreset(id, PRESETS[id].name, PRESETS[id].values);
         console.info(`[UniLens] preset: ${PRESETS[id].name}`);
     }
+    // the facilitator's link may say where the source numbers go
+    applySourcesParam(location.href);
     return id;
 }
 

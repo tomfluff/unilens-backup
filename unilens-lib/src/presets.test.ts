@@ -102,6 +102,19 @@ describe("every preset", () => {
     });
 });
 
+describe("session 2 (2026-10-09)", () => {
+    it("starts from the initial prototype, with numbers in the text and a Sources button", () => {
+        const b: Partial<Settings> = PRESETS.session2.values;
+        expect(b).toMatchObject({
+            ...PRESETS.initial.values,
+            citePlacement: "inline",
+            associateText: false,
+            sourceStyleButton: true,
+            voicePauseMs: 2000,
+        });
+    });
+});
+
 describe("a preset in effect", () => {
     it("starts from its values whatever localStorage holds, and leaves it alone", () => {
         // the participant's browser, left with other settings by an earlier session
@@ -145,5 +158,38 @@ describe("a preset in effect", () => {
                 sessionStorage.getItem("unilens-settings:initial") as string,
             ).state,
         ).toEqual({});
+    });
+});
+
+describe("?sources= in the facilitator's link", () => {
+    it("sets where the numbers go, and ignores anything else", async () => {
+        const { applySourcesParam } = await import("./presets");
+        const { getSettings, sourceStyleOf } = await import("./settings");
+        applySourcesParam("https://x/en/?sources=underline");
+        expect(sourceStyleOf(getSettings())).toBe("underline");
+        applySourcesParam("https://x/en/?sources=end");
+        expect(sourceStyleOf(getSettings())).toBe("end");
+        applySourcesParam("https://x/en/?sources=everywhere");
+        expect(sourceStyleOf(getSettings())).toBe("end");
+        applySourcesParam("https://x/en/?sources=inline");
+        expect(sourceStyleOf(getSettings())).toBe("inline");
+    });
+
+    it("is applied once: a reload keeps the participant's later choice", async () => {
+        const { applySourcesParam } = await import("./presets");
+        const { getSettings, setSourceStyle, sourceStyleOf } = await import(
+            "./settings"
+        );
+        history.replaceState(
+            null,
+            "",
+            "/en/?unilens-preset=session2&sources=underline",
+        );
+        applySourcesParam(location.href);
+        expect(sourceStyleOf(getSettings())).toBe("underline");
+        expect(location.search).not.toContain("sources");
+        setSourceStyle("end");
+        applySourcesParam(location.href); // the reload
+        expect(sourceStyleOf(getSettings())).toBe("end");
     });
 });

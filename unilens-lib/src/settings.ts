@@ -42,6 +42,8 @@ export interface Settings {
     liveTalk: boolean;
     /** the mic sends what was heard when the speaker pauses; off, it stays in the field */
     voiceAutoSend: boolean;
+    /** how long a pause ends a voice message (the server's recognizer), ms */
+    voicePauseMs: number;
     hints: boolean;
     /** the minimap: never, while the page is zoomed, or always */
     minimap: "off" | "zoomed" | "always";
@@ -167,6 +169,9 @@ export interface Settings {
     citePlacement: "inline" | "sentence" | "end";
     /** the settings gear on the page; hidden, Ctrl+Alt+Shift+S still opens settings */
     settingsButton: boolean;
+    /** a button in the chat's header that switches where the source numbers go: in the
+     *  text, with the words they support underlined, or after the answer */
+    sourceStyleButton: boolean;
     /** AI settings (research): the backend checks each choice against its catalogue */
     aiProvider: "auto" | "openai" | "gemini";
     /** a model id from the backend's catalogue; "" = the provider's default */
@@ -230,6 +235,7 @@ const DEFAULTS: Settings = {
     voiceInput: false,
     liveTalk: true,
     voiceAutoSend: true,
+    voicePauseMs: 2000,
     hints: false,
     minimap: "zoomed",
     lensPan: false,
@@ -297,6 +303,7 @@ const DEFAULTS: Settings = {
     associateText: false,
     citePlacement: "inline",
     settingsButton: true,
+    sourceStyleButton: false,
     aiProvider: "auto",
     aiModel: "",
     aiReasoning: "default",
@@ -364,6 +371,8 @@ export const TOGGLE_LABELS: Record<BoolSettingKey, string> = {
     associateText:
         "Associate response text (underline what each source supports)",
     settingsButton: "Settings button (hidden: Ctrl+Alt+Shift+S opens settings)",
+    sourceStyleButton:
+        "Sources button in the chat (in the text, underlined, after the answer)",
     sounds: "A sound for every action",
     refreshView: "Send my new view with follow-ups",
     fxCore: "Orb: glossy core",
@@ -459,6 +468,12 @@ export const NUMBER_KNOBS: Record<
         min: 48,
         max: 128,
         step: 8,
+    },
+    voicePauseMs: {
+        label: "Pause that ends a voice message (ms)",
+        min: 600,
+        max: 4000,
+        step: 100,
     },
     motionMs: {
         label: "Movement duration (ms)",
@@ -759,6 +774,7 @@ export const PANEL_TABS: { id: PanelTabId; groups: PanelGroup[] }[] = [
                     "citeEvidence",
                     "citePlacement",
                     "associateText",
+                    "sourceStyleButton",
                     "chatMovesAside",
                     "aboutLine",
                     "regionSelect",
@@ -797,7 +813,7 @@ export const PANEL_TABS: { id: PanelTabId; groups: PanelGroup[] }[] = [
             {
                 id: "voiceSound",
                 first: ["voiceInput", "liveTalk", "autoRead", "sounds"],
-                more: ["voiceAutoSend", "ttsVoice"],
+                more: ["voiceAutoSend", "voicePauseMs", "ttsVoice"],
             },
             {
                 id: "live",
@@ -866,6 +882,21 @@ export const PANEL_TABS: { id: PanelTabId; groups: PanelGroup[] }[] = [
         ],
     },
 ];
+
+/** where an answer's source numbers go, as the chat's Sources button names it */
+export type SourceStyle = "inline" | "underline" | "end";
+export const SOURCE_STYLES: SourceStyle[] = ["inline", "underline", "end"];
+export function sourceStyleOf(s: Settings): SourceStyle {
+    if (s.citePlacement !== "inline") return "end";
+    return s.associateText ? "underline" : "inline";
+}
+/** set the source style: numbers in the text, underlined words too, or after */
+export function setSourceStyle(style: SourceStyle) {
+    useSettings.setState({
+        citePlacement: style === "end" ? "end" : "inline",
+        associateText: style === "underline",
+    });
+}
 
 /** a setting's starting value: the preset's while one is on (presets.ts), else the
  *  shipped one. What "Reset this tab" restores, and what "changed" means */

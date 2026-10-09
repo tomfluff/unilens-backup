@@ -51,6 +51,7 @@ import {
     PlayIcon,
     PrevIcon,
     SendIcon,
+    SourcesIcon,
     StopIcon,
     WaitIcon,
 } from "./icons";
@@ -72,7 +73,14 @@ import {
     placeOf,
 } from "./places";
 import { recordAsk, type SentAsk } from "./sentLog";
-import { getSettings, motionMs, useSettings } from "./settings";
+import {
+    getSettings,
+    motionMs,
+    SOURCE_STYLES,
+    setSourceStyle,
+    sourceStyleOf,
+    useSettings,
+} from "./settings";
 import {
     listenVoice,
     pauseSpeaking,
@@ -168,9 +176,12 @@ function cited(m: Msg): Cited | null {
 }
 
 /** underlined words need the numbers where the model put them: only then are they
- *  asked for and drawn */
+ *  drawn */
 const phrasesOn = () =>
     getSettings().associateText && getSettings().citePlacement === "inline";
+/** ...and asked for; with the Sources button always, so a switch to underlines is
+ *  exact for every answer at once */
+const phrasesAsked = () => phrasesOn() || getSettings().sourceStyleButton;
 
 /** station signs number their sources like station codes */
 const chipText = (n: number) =>
@@ -1929,7 +1940,7 @@ export default function ChatPopover({
                 session_id: sessionId,
                 cite: getSettings().citeEvidence,
                 selection: sel ? { items: selectionIn(sel, on) } : undefined,
-                mark_phrases: phrasesOn(),
+                mark_phrases: phrasesAsked(),
                 assistant_zoom: getSettings().assistantZoom,
                 ai: aiChoice(),
             }),
@@ -2037,7 +2048,7 @@ export default function ChatPopover({
                 session_id: sessionId,
                 cite: getSettings().citeEvidence,
                 selection: sel ? { items: selectionIn(sel, on) } : undefined,
-                mark_phrases: phrasesOn(),
+                mark_phrases: phrasesAsked(),
                 assistant_zoom: getSettings().assistantZoom,
                 ai: aiChoice(),
             }),
@@ -2557,6 +2568,31 @@ export default function ChatPopover({
                     <b>{style === "station" ? T.stationName : T.title}</b>
                     {style === "station" && <small>{T.otherName}</small>}
                 </div>
+                {!mini && settings.sourceStyleButton && (
+                    <button
+                        type="button"
+                        className="ulc-ib"
+                        aria-label={T.sourcesButton(
+                            T.sourceStyle[sourceStyleOf(settings)],
+                        )}
+                        title={T.sourcesButton(
+                            T.sourceStyle[sourceStyleOf(settings)],
+                        )}
+                        onClick={() => {
+                            const now = sourceStyleOf(getSettings());
+                            const next =
+                                SOURCE_STYLES[
+                                    (SOURCE_STYLES.indexOf(now) + 1) %
+                                        SOURCE_STYLES.length
+                                ];
+                            setSourceStyle(next);
+                            logEvent("sources_style", { style: next });
+                            act("press", T.sSources(T.sourceStyle[next]));
+                        }}
+                    >
+                        <SourcesIcon />
+                    </button>
+                )}
                 {!mini && onNewConversation && (
                     <button
                         type="button"

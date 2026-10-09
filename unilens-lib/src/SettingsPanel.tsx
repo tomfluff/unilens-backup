@@ -139,6 +139,8 @@ function relevant(key: Key, s: Settings): boolean {
     if (s.mmFollowHighlight && MM_OWN_LOOK.has(key)) return false;
     if (key === "fxRippleLook" && !s.fxRipple) return false;
     if (key === "voiceAutoSend" && !s.voiceInput) return false;
+    if (key === "voicePauseMs" && !(s.voiceInput && s.voiceAutoSend))
+        return false;
     if (key === "associateText" && s.citePlacement !== "inline") return false;
     if (MM_ALL.has(key) && s.minimap === "off") return false;
     const own = FX_OWN[key];

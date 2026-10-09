@@ -441,7 +441,9 @@ export function listenVoice(
 
 /** ponytail: a fixed level for "speaking"; a calibration step if rooms are noisy */
 const SPEAKING_RMS = 0.02;
-const PAUSE_MS = 1200;
+/** the pause that ends a message: the voicePauseMs setting (2 s from 2026-10-09: 1.2 s
+ *  cut a participant off mid-sentence) */
+const pauseMs = () => getSettings().voicePauseMs;
 const MAX_MESSAGE_MS = 60_000;
 
 function record(
@@ -541,7 +543,7 @@ function record(
             };
             rec.start(250);
             const started = performance.now();
-            // a pause ends the message: once speech was heard, PAUSE_MS under the level
+            // a pause ends the message: once speech was heard, pauseMs() under the level
             let level: (() => number) | null = null;
             if (opts.endOnPause) {
                 ctx = new AudioContext();
@@ -568,7 +570,7 @@ function record(
                     quietSince = 0;
                 } else if (spoke) {
                     quietSince ||= now;
-                    if (now - quietSince > PAUSE_MS) stop();
+                    if (now - quietSince > pauseMs()) stop();
                 }
             }, 100);
         })

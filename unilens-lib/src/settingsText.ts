@@ -312,6 +312,8 @@ export const NAMES_JA: Partial<Record<keyof Settings, string>> = {
     assistantZoom: "頼まれたらアシスタントがページを拡大する",
     associateText: "回答と根拠を結ぶ（根拠が支える語句に下線）",
     settingsButton: "設定ボタン（隠しても Ctrl＋Alt＋Shift＋S で設定を開く）",
+    sourceStyleButton: "チャットの「根拠」ボタン（文中・下線・回答の後）",
+    voicePauseMs: "声の質問を終える間 (ms)",
     citePlacement: "根拠の番号の位置",
     refreshView: "続けて質問するとき今の画面を送る",
     fxCore: "オーブ：光沢のある芯",

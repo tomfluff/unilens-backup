@@ -86,6 +86,14 @@ const EN = {
     aboutDrop: "Stop asking about this (clears the outline)",
     sTranscribing: "Turning your message into text…",
     newConversation: "Start a new conversation",
+    /** the Sources button: where the numbers go now, and that a press changes it */
+    sourcesButton: (now: string) => `Sources: ${now}. Press to change`,
+    sourceStyle: {
+        inline: "numbers in the text",
+        underline: "numbers in the text, words underlined",
+        end: "numbers after the answer",
+    } as Record<"inline" | "underline" | "end", string>,
+    sSources: (now: string) => `Sources now: ${now}.`,
     newConvAsk:
         "Start a new conversation? This one ends, and its places are cleared.",
     newConvYes: "New conversation",
@@ -230,6 +238,13 @@ const JA: Strings = {
     aboutDrop: "これについて聞くのをやめる（強調を消す）",
     sTranscribing: "音声を文字にしています…",
     newConversation: "新しい会話を始める",
+    sourcesButton: (now: string) => `根拠：${now}。押すと切り替わります`,
+    sourceStyle: {
+        inline: "文中に番号",
+        underline: "文中に番号、語句に下線",
+        end: "回答の後に番号",
+    },
+    sSources: (now: string) => `根拠の表示：${now}。`,
     newConvAsk:
         "新しい会話を始めますか？この会話は終わり、場所の一覧も消えます。",
     newConvYes: "新しい会話",

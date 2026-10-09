@@ -30,6 +30,13 @@ export const PinIcon = () => (
         <path d="M12 16v4" />
     </Icon>
 );
+/** lines of text and a numbered dot: where an answer's sources go */
+export const SourcesIcon = () => (
+    <Icon>
+        <path d="M4 7h9M4 12h7M4 17h9" />
+        <circle cx="18" cy="12" r="2.5" />
+    </Icon>
+);
 /** a speech bubble with a plus: a new conversation */
 export const NewChatIcon = () => (
     <Icon>
