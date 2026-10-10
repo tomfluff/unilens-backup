@@ -166,7 +166,7 @@ export const OWN_SETTINGS: Partial<
     },
     chatLanguage: { label: { en: "Language", ja: "言語" } },
     chatFontSize: {
-        label: { en: "Chat size", ja: "チャットの大きさ" },
+        label: { en: "Interface size", ja: "表示の大きさ" },
         hint: {
             en: "The whole chat: words, buttons and panel",
             ja: "文字・ボタン・パネル全体",
@@ -178,7 +178,10 @@ export const OWN_SETTINGS: Partial<
     },
     highContrast: {
         label: { en: "High contrast", ja: "ハイコントラスト" },
-        hint: { en: "Black, white and yellow", ja: "黒・白・黄色で表示" },
+        hint: {
+            en: "Stronger colours and borders, light or dark with the theme",
+            ja: "色と枠を強く（テーマに合わせて明るく・暗く）",
+        },
     },
     quickActions: {
         label: { en: "Quick-action buttons", ja: "クイック操作ボタン" },
@@ -316,6 +319,8 @@ export const NAMES_JA: Partial<Record<keyof Settings, string>> = {
     sourceStyleButton: "チャットの「根拠」ボタン（文中・下線・回答の後）",
     voicePauseMs: "声の質問を終える間 (ms)",
     citePlacement: "根拠の番号の位置",
+    chatTheme: "テーマ",
+    ttsSpeed: "読み上げの速さ",
     refreshView: "続けて質問するとき今の画面を送る",
     fxCore: "オーブ：光沢のある芯",
     fxSwirl: "オーブ：2色の渦",
@@ -433,6 +438,17 @@ export const CHOICES_JA: Partial<
         offscreen: "画面の外にあるときだけ",
         always: "いつも中央に",
         never: "動かさない（矢印だけ）",
+    },
+    ttsSpeed: {
+        slow: "ゆっくり",
+        normal: "ふつう",
+        fast: "速い",
+        fastest: "とても速い",
+    },
+    chatTheme: {
+        light: "ライト",
+        dark: "ダーク",
+        system: "コンピューターの設定に合わせる",
     },
     citePlacement: {
         inline: "文の中（語句のすぐ後）",

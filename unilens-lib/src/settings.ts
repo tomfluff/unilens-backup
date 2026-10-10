@@ -33,6 +33,8 @@ export interface Settings {
     elementContext: boolean;
     regionSelect: boolean;
     highContrast: boolean;
+    /** the chat's colours: light, dark, or as the computer is set (Yotam, 2026-10-10) */
+    chatTheme: "light" | "dark" | "system";
     continuity: boolean;
     /** after a reload, the conversation on this site comes back (UniLens's own store) */
     restoreAfterReload: boolean;
@@ -186,6 +188,8 @@ export interface Settings {
     ttsModel: string;
     /** the read-aloud voice; "" = the provider's default */
     ttsVoice: string;
+    /** how fast answers are read aloud (Yotam, 2026-10-10; OpenAI's reader) */
+    ttsSpeed: "slow" | "normal" | "fast" | "fastest";
     /** who hears a voice message: the browser, else the server (auto), or a provider */
     sttEngine: "auto" | "browser" | "openai" | "gemini";
     /** the server's speech-to-text model; "" = the backend's default */
@@ -232,6 +236,7 @@ const DEFAULTS: Settings = {
     elementContext: true,
     regionSelect: true,
     highContrast: false,
+    chatTheme: "light",
     continuity: true,
     restoreAfterReload: true,
     autoRead: false,
@@ -314,6 +319,7 @@ const DEFAULTS: Settings = {
     ttsProvider: "auto",
     ttsModel: "",
     ttsVoice: "",
+    ttsSpeed: "normal",
     sttEngine: "auto",
     sttModel: "",
     liveProvider: "auto",
@@ -411,7 +417,7 @@ export const NUMBER_KNOBS: Record<
     { label: string; min: number; max: number; step: number }
 > = {
     captureRes: { label: "Capture resolution", min: 0.5, max: 1, step: 0.5 },
-    chatFontSize: { label: "Chat scale", min: 14, max: 20, step: 3 },
+    chatFontSize: { label: "Interface size", min: 14, max: 20, step: 3 },
     chatTextScale: { label: "Text size (%)", min: 80, max: 200, step: 10 },
     liveSpeed: {
         label: "Speaking rate (%, OpenAI)",
@@ -592,6 +598,23 @@ export const ENUM_CHOICES = {
         },
     },
     autoHighlight: { label: "Auto-highlight", choices: AUTO_HIGHLIGHTS },
+    chatTheme: {
+        label: "Theme",
+        choices: {
+            light: "Light",
+            dark: "Dark",
+            system: "As the computer is set",
+        },
+    },
+    ttsSpeed: {
+        label: "Reading speed",
+        choices: {
+            slow: "Slow",
+            normal: "Normal",
+            fast: "Fast",
+            fastest: "Fastest",
+        },
+    },
     citePlacement: {
         label: "Where the source numbers go",
         choices: {
@@ -706,6 +729,7 @@ export const PANEL_TABS: { id: PanelTabId; groups: PanelGroup[] }[] = [
                 id: "chat",
                 first: [
                     "chatStyle",
+                    "chatTheme",
                     "chatLanguage",
                     "chatFontSize",
                     "chatTextScale",
@@ -819,7 +843,7 @@ export const PANEL_TABS: { id: PanelTabId; groups: PanelGroup[] }[] = [
             {
                 id: "voiceSound",
                 first: ["voiceInput", "liveTalk", "autoRead", "sounds"],
-                more: ["voiceAutoSend", "voicePauseMs", "ttsVoice"],
+                more: ["voiceAutoSend", "voicePauseMs", "ttsVoice", "ttsSpeed"],
             },
             {
                 id: "live",
@@ -890,6 +914,14 @@ export const PANEL_TABS: { id: PanelTabId; groups: PanelGroup[] }[] = [
 ];
 
 /** where an answer's source numbers go, as the chat's Sources button names it */
+/** the reading speeds, as OpenAI takes them */
+export const TTS_SPEEDS: Record<Settings["ttsSpeed"], number> = {
+    slow: 0.75,
+    normal: 1,
+    fast: 1.5,
+    fastest: 2,
+};
+
 export type SourceStyle = "inline" | "underline" | "end";
 export const SOURCE_STYLES: SourceStyle[] = ["inline", "underline", "end"];
 export function sourceStyleOf(s: Settings): SourceStyle {

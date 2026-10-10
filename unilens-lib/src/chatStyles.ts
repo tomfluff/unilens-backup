@@ -17,6 +17,8 @@ const A = `${R}[data-style="assistant"]`;
 const G = `${R}[data-style="audioGuide"]`;
 const S = `${R}[data-style="station"]`;
 const HC = '[data-hc="true"]';
+/** the dark theme (the assistant style; the others have their own colours) */
+const DK = '[data-theme="dark"]';
 const UD = `"BIZ UDPGothic", "BIZ UDGothic", system-ui, -apple-system, "Segoe UI", "Hiragino Sans", "Yu Gothic UI", Meiryo, sans-serif`;
 const SYS = `system-ui, -apple-system, "Segoe UI", "Hiragino Sans", "Yu Gothic UI", Meiryo, sans-serif`;
 
@@ -55,6 +57,7 @@ ${R} .ulc-speak { display: inline-grid; place-items: center; width: 2em; height:
 ${R} .ulc-speak svg { width: 1.1em; height: 1.1em; }
 ${R} .ulc-read { display: inline-flex; gap: .3em; margin-left: .35em; vertical-align: middle; }
 ${R} .ulc-read .ulc-speak { margin-left: 0; }
+${R} .ulc-speak.has-label { display: inline-flex; align-items: center; gap: .35em; width: auto; padding: 0 .8em 0 .65em; }
 ${R} .ulc-voice[aria-pressed="true"], ${R} .ulc-live[aria-pressed="true"] { animation: ulc-rec 1.2s ease-in-out infinite; }
 @keyframes ulc-rec { 50% { box-shadow: 0 0 0 .3em rgba(220, 38, 38, .35); } }
 ${R} .ulc-where { display: inline-flex; align-items: center; gap: .4em; flex: none; max-width: 100%; min-height: 2.3em; padding: .15em .75em .15em .5em; font-size: .95em; line-height: 1.3; }
@@ -120,22 +123,33 @@ ${B} b { font-weight: 700; }
 
 /* ── Assistant (default): the assistant-widget convention, done carefully ── */
 ${A} { --cite-line: var(--acc); --bg: #fff; --soft: #f1f3f5; --fg: #1f2937; --muted: #4b5563; --line: #d1d5db; --acc: #2563eb; --acc-fg: #fff; --err-bg: #fef2f2; --err: #b91c1c;
-  background: var(--bg); color: var(--fg); border: 1px solid #e5e7eb; border-radius: 16px; font-family: ${SYS};
+  /* control edges (buttons, the field), the frame, the recording mic */
+  --ctl: #6b7280; --frame: #e5e7eb; --rec: #dc2626; --rec-fg: #fff;
+  background: var(--bg); color: var(--fg); border: 1px solid var(--frame); border-radius: 16px; font-family: ${SYS};
   box-shadow: 0 16px 40px rgba(17, 24, 39, .18), 0 2px 6px rgba(17, 24, 39, .08); }
-${A}${HC} { --bg: #000; --soft: #000; --fg: #fff; --muted: #fff; --line: #fff; --acc: #ffd400; --acc-fg: #000; --err-bg: #000; --err: #ffd400; border: 3px solid #fff; }
+/* dark theme (Yotam, 2026-10-10): the same chat on a dark ground */
+${A}${DK} { --bg: #1b1f24; --soft: #2a3038; --fg: #f3f4f6; --muted: #c7ccd4; --line: #3f4651; --acc: #7db2ff; --acc-fg: #0b1526; --err-bg: #3a1717; --err: #ffb4ab;
+  --ctl: #9aa3ae; --frame: #3f4651; --rec: #ff6b6b; --rec-fg: #1b1f24; box-shadow: 0 16px 40px rgba(0, 0, 0, .5); }
+/* high contrast follows the theme: black on white with deep blue, or white and yellow on black */
+${A}${HC} { --bg: #fff; --soft: #fff; --fg: #000; --muted: #000; --line: #000; --acc: #0030b8; --acc-fg: #fff; --err-bg: #fff; --err: #a00000;
+  --ctl: #000; --frame: #000; --rec: #a00000; --rec-fg: #fff; border: 3px solid #000; }
+${A}${DK}${HC} { --bg: #000; --soft: #000; --fg: #fff; --muted: #fff; --line: #fff; --acc: #ffd400; --acc-fg: #000; --err-bg: #000; --err: #ffd400;
+  --ctl: #fff; --frame: #fff; --rec: #ffd400; --rec-fg: #000; border: 3px solid #fff; }
 ${A} ::selection { background: var(--acc); color: var(--acc-fg); }
-${A} .ulc-hd { padding: .75em .75em .75em 1em; border-bottom: 1px solid var(--line); cursor: grab; }
+/* a compact header (Yotam, 2026-10-10): less space, buttons that look like buttons */
+${A} .ulc-hd { gap: .4em; padding: .4em .5em .4em .85em; border-bottom: 1px solid var(--line); cursor: grab; }
 ${A} .ulc-title small { color: var(--muted); }
-${A} .ulc-ib { width: 2.4em; height: 2.4em; border: 0; border-radius: 10px; background: var(--soft); color: var(--fg); }
-${A}${HC} .ulc-ib { border: 2px solid #fff; }
-${A} .ulc-ib[aria-pressed="true"] { background: var(--acc); color: var(--acc-fg); }
-${A} .ulc-log { padding: .9em 1em .4em; }
-${A} .ulc-me { background: var(--acc); color: var(--acc-fg); padding: .6em .85em; border-radius: 14px 14px 4px 14px; }
-${A} .ulc-bot { background: var(--soft); padding: .75em .9em; border-radius: 14px 14px 14px 4px; line-height: 1.65; }
-${A}${HC} .ulc-bot { border: 2px solid #fff; }
+${A} .ulc-ib { width: 2.3em; height: 2.3em; border: 1.5px solid var(--ctl); border-radius: 10px; background: var(--bg); color: var(--fg); }
+${A}${HC} .ulc-ib { border-width: 2px; }
+${A} .ulc-ib:hover { background: var(--soft); }
+${A} .ulc-ib[aria-pressed="true"] { background: var(--acc); color: var(--acc-fg); border-color: var(--acc); }
+${A} .ulc-log { padding: .6em .85em .4em; gap: .55em; }
+${A} .ulc-me { background: var(--acc); color: var(--acc-fg); padding: .55em .85em; border-radius: 14px 14px 4px 14px; }
+${A} .ulc-bot { background: var(--soft); padding: .65em .85em; border-radius: 14px 14px 14px 4px; line-height: 1.6; }
+${A}${HC} .ulc-bot { border: 2px solid var(--ctl); }
 ${A} .ulc-bot.is-err { background: var(--err-bg); color: var(--err); border: 1.5px solid var(--err); }
 ${A}${HC} .ulc-bot.is-err { border-width: 3px; }
-${A} .ulc-bot.is-quiet { background: transparent; border: 1.5px dashed #6b7280; }
+${A} .ulc-bot.is-quiet { background: transparent; border: 1.5px dashed var(--ctl); }
 ${A} .unilens-cite { background: var(--acc); color: var(--acc-fg); margin: 0 .25em; }
 ${A} .unilens-cite[aria-current="true"] { box-shadow: 0 0 0 2px var(--soft), 0 0 0 4px var(--acc); }
 ${A} .ulc-where { align-self: flex-end; border: 1.5px solid var(--acc); border-radius: 999px; background: var(--bg); color: var(--acc); font-weight: 600; }
@@ -143,31 +157,32 @@ ${A} .ulc-where b { padding: 0 .45em; border-radius: 999px; background: var(--ac
 ${A}${HC} .ulc-where { border-width: 2px; }
 ${A} .ulc-where[aria-pressed="true"] { background: var(--acc); color: var(--acc-fg); }
 ${A} .ulc-where[aria-pressed="true"] b { background: var(--acc-fg); color: var(--acc); }
-${A} .ulc-ctl { margin-top: .6em; }
-${A} .ulc-c { height: 2.3em; min-width: 2.3em; border: 1px solid #6b7280; border-radius: 999px; background: var(--bg); color: var(--fg); }
-${A}${HC} .ulc-c { border: 2px solid #fff; }
+${A} .ulc-ctl { margin-top: .55em; }
+${A} .ulc-c { height: 2.3em; min-width: 2.3em; border: 1px solid var(--ctl); border-radius: 999px; background: var(--bg); color: var(--fg); }
+${A}${HC} .ulc-c { border-width: 2px; }
 ${A} .ulc-all.has-label { padding: 0 .8em; color: var(--acc); border: 1.5px solid var(--acc); font-weight: 600; }
 ${A} .ulc-all[aria-pressed="true"] { background: var(--acc); color: var(--acc-fg); border-color: var(--acc); font-weight: 700; }
 ${A} .ulc-of { min-width: 2.6em; text-align: center; font-weight: 600; font-variant-numeric: tabular-nums; }
 ${A} .ulc-back { margin-left: auto; }
-${A} .ulc-speak { color: var(--muted); border-color: #9ca3af; }
-${A}${HC} .ulc-speak { color: #fff; border-color: #fff; }
+/* read aloud: a pill with its words, like "All", on its own line under the answer */
+${A} .ulc-read { display: flex; width: fit-content; margin: .55em 0 0; gap: .4em; }
+${A} .ulc-speak { color: var(--muted); border-color: var(--ctl); }
+${A} .ulc-speak.has-label { display: inline-flex; gap: .35em; width: auto; height: 2.3em; padding: 0 .85em 0 .7em; color: var(--acc); border: 1.5px solid var(--acc); background: var(--bg); font-weight: 600; }
+${A}${HC} .ulc-speak, ${A}${HC} .ulc-speak.has-label { border-width: 2px; }
 ${A} .ulc-quick { padding: .55em 1em 0; border-top: 1px solid var(--line); }
-${A} .ulc-quick button { min-height: 2.3em; border: 1px solid #6b7280; border-radius: 999px; background: var(--soft); color: var(--fg); font-size: 1em; }
-${A}${HC} .ulc-quick button { border: 2px solid #fff; }
-${A} .ulc-in { padding: .6em .8em .35em; }
+${A} .ulc-quick button { min-height: 2.3em; border: 1px solid var(--ctl); border-radius: 999px; background: var(--soft); color: var(--fg); font-size: 1em; }
+${A}${HC} .ulc-quick button { border-width: 2px; }
+${A} .ulc-in { padding: .5em .7em .3em; }
 ${A} .ulc-confirm { padding: .5em .8em 0; }
 ${A} .ulc-about { padding: .45em .8em 0; }
-${A} .ulc-in input { height: 2.8em; padding: 0 .85em; border: 1px solid #6b7280; border-radius: 12px; background: var(--bg); color: var(--fg); caret-color: var(--acc); }
-${A}${HC} .ulc-in input { border: 2px solid #fff; }
+${A} .ulc-in input { height: 2.8em; padding: 0 .85em; border: 1px solid var(--ctl); border-radius: 12px; background: var(--bg); color: var(--fg); caret-color: var(--acc); }
+${A}${HC} .ulc-in input { border-width: 2px; }
 ${A} .ulc-in input::placeholder { color: var(--muted); }
 ${A} .ulc-in .ulc-ib { width: 2.8em; height: 2.8em; border-radius: 12px; }
-${A} .ulc-in .ulc-go { background: var(--acc); color: var(--acc-fg); }
-${A} .ulc-log { scrollbar-color: #9ca3af transparent; }
-${A}${HC} .ulc-log { scrollbar-color: #fff #000; }
-${A} .ulc-in .ulc-ib[aria-pressed="true"] { background: #dc2626; color: #fff; }
-${A}${HC} .ulc-in .ulc-ib[aria-pressed="true"] { background: #ffd400; color: #000; }
-${A} .ulc-status { padding: 0 1em .65em; color: var(--muted); }
+${A} .ulc-in .ulc-go { background: var(--acc); color: var(--acc-fg); border-color: var(--acc); }
+${A} .ulc-log { scrollbar-color: var(--ctl) transparent; }
+${A} .ulc-in .ulc-ib[aria-pressed="true"] { background: var(--rec); color: var(--rec-fg); border-color: var(--rec); }
+${A} .ulc-status { padding: 0 1em .55em; color: var(--muted); }
 ${A} :focus-visible { outline: 3px solid var(--acc); outline-offset: 2px; }
 
 /* ── Audio guide: graphite handset, amber display, white label, number keys ── */

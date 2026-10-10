@@ -135,12 +135,15 @@ describe("session 2 (2026-10-09)", () => {
                 "chatTextScale",
                 "highContrast",
                 "liveTalk",
+                // Yotam, 2026-10-10
+                "chatFontSize",
+                "chatTheme",
+                "associateText",
             ]),
         );
         for (const k of [
             "sourceStyleButton",
             "citePlacement",
-            "associateText",
             "voicePauseMs",
             "voiceAutoSend",
             "assistantGoTo",

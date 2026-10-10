@@ -555,7 +555,12 @@ PHRASE_RULES = (
     "fact from the page in {{ and }}, immediately before its marker, for example: "
     "Shareholders get {{¥1,000 of PayPay Money Lite}}[[n30]]. Every marker gets "
     "its own marked words. Mark only words of your own answer, a few words, never "
-    "a whole sentence. Never explain or mention the braces."
+    "a whole sentence. When a sentence names several things, mark and cite each "
+    "where it is named, each with the element that shows it: The plan includes "
+    "{{unlimited calls}}[[n12]], {{5 GB of data}}[[n13]] and {{free roaming}}[[n14]]. "
+    "Never put several markers together "
+    "after one phrase unless each of those elements states that same phrase. "
+    "Never explain or mention the braces."
 )
 
 # The assistant zooms the page when the user asks (R1 of the 2026-09-27 report); only
@@ -780,6 +785,20 @@ def _tts_choice(data: dict) -> tuple[str, str, str] | None:
     fallback = os.getenv("TTS_VOICE", "alloy") if provider == "openai" else voices[0]
     voice = data.get("voice") if data.get("voice") in voices else fallback
     return provider, model, voice
+
+
+# reading speed (Yotam, 2026-10-10: slow 0.75, normal 1, fast 1.5, fastest 2); OpenAI
+# takes 0.25-4.0, also with gpt-4o-mini-tts (checked: 6.2 s at 1, 2.8 s at 2); Gemini
+# has none and reads at its own pace
+TTS_SPEED = (0.25, 4.0)
+
+
+def _tts_speed(data: dict) -> float:
+    """The request's reading speed, within OpenAI's range; 1.0 without one."""
+    v = data.get("speed")
+    if not isinstance(v, (int, float)) or isinstance(v, bool) or v != v:
+        return 1.0
+    return min(max(float(v), TTS_SPEED[0]), TTS_SPEED[1])
 
 
 def _wav_header(rate: int) -> bytes:
@@ -2109,7 +2128,7 @@ def create_app():
     # Two-step streaming TTS: POST the text, GET the mp3 by id. The GET streams
     # chunks straight from OpenAI so the <audio> element starts playing before
     # synthesis finishes (an <audio> src can only GET, hence the id hop).
-    tts_texts: dict[str, tuple[str, str]] = {}
+    tts_texts: dict[str, tuple[str, str, str, str, float]] = {}
 
     @app.post("/api/tts")
     def tts_prepare():
@@ -2122,7 +2141,7 @@ def create_app():
         if not text:
             return jsonify({"error": "empty text"}), 400
         tid = uuid.uuid4().hex[:12]
-        tts_texts[tid] = (text, *choice)
+        tts_texts[tid] = (text, *choice, _tts_speed(data))
         _server_event(
             _study_ids(), "read_aloud_prepared", chars=len(text), provider=choice[0]
         )
@@ -2174,7 +2193,11 @@ def create_app():
         # answer, not an empty stream
         try:
             ctx = client.audio.speech.with_streaming_response.create(
-                model=model, voice=voice, input=text, response_format="pcm"
+                model=model,
+                voice=voice,
+                input=text,
+                response_format="pcm",
+                speed=_tts_speed(data),
             )
             resp = ctx.__enter__()
         except Exception as e:
@@ -2205,7 +2228,7 @@ def create_app():
     def tts_stream(tid):
         """The reading, streamed: OpenAI's MP3, or Gemini's WAV (the name is the
         widget's; the type says what it is)."""
-        text, provider, model, voice = tts_texts.pop(tid, (None,) * 4)
+        text, provider, model, voice, speed = tts_texts.pop(tid, (None,) * 5)
         if text is None:
             return jsonify({"error": "unknown or expired tts id"}), 404
         if provider == "gemini":
@@ -2229,6 +2252,7 @@ def create_app():
                 voice=voice,
                 input=text,
                 response_format="mp3",
+                speed=speed,
             ) as resp:
                 yield from resp.iter_bytes(4096)
 

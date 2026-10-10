@@ -37,6 +37,23 @@ export const SourcesIcon = () => (
         <circle cx="18" cy="12" r="2.5" />
     </Icon>
 );
+/** lines of text, the first underlined: the words a source supports, underlined */
+export const GroundingIcon = ({ on }: { on: boolean }) => (
+    <Icon>
+        {on ? (
+            <>
+                <path d="M4 6h11M4 12h8M4 18h11" />
+                <path d="M4 8.5h11" strokeWidth="3" />
+                <circle cx="19" cy="6.5" r="2.2" />
+            </>
+        ) : (
+            <>
+                <path d="M4 7h9M4 12h7M4 17h9" />
+                <circle cx="18" cy="12" r="2.5" />
+            </>
+        )}
+    </Icon>
+);
 /** a speech bubble with a plus: a new conversation */
 export const NewChatIcon = () => (
     <Icon>

@@ -4,7 +4,7 @@
  * API-based backend (assets26 pattern) can replace this later without UI change.
  */
 
-import { getSettings } from "./settings";
+import { getSettings, TTS_SPEEDS } from "./settings";
 import { studyUrl } from "./studyLog";
 
 /** ja if the text contains kana/kanji, else the browser locale */
@@ -161,6 +161,7 @@ export async function speak(text: string, onState?: (s: SpeechState) => void) {
                         : getSettings().ttsProvider,
                 model: getSettings().ttsModel || undefined,
                 voice: getSettings().ttsVoice || undefined,
+                speed: TTS_SPEEDS[getSettings().ttsSpeed] ?? 1,
             }),
             signal: me.abort.signal,
         });
@@ -244,6 +245,7 @@ async function speakByAudio(plain: string, text: string, mine: number) {
                         : getSettings().ttsProvider,
                 model: getSettings().ttsModel || undefined,
                 voice: getSettings().ttsVoice || undefined,
+                speed: TTS_SPEEDS[getSettings().ttsSpeed] ?? 1,
             }),
         });
         if (!res.ok) throw new Error(`tts ${res.status}`);

@@ -53,7 +53,7 @@ import {
     PlayIcon,
     PrevIcon,
     SendIcon,
-    SourcesIcon,
+    GroundingIcon,
     StopIcon,
     WaitIcon,
 } from "./icons";
@@ -78,9 +78,8 @@ import { recordAsk, type SentAsk } from "./sentLog";
 import {
     getSettings,
     motionMs,
-    SOURCE_STYLES,
-    setSourceStyle,
     sourceStyleOf,
+    updateSetting,
     useSettings,
 } from "./settings";
 import {
@@ -183,6 +182,14 @@ const phrasesOn = () =>
     getSettings().associateText && getSettings().citePlacement === "inline";
 /** ...and asked for; with the Sources button always, so a switch to underlines is
  *  exact for every answer at once */
+/** the computer's dark-mode setting, where the browser can tell */
+const prefersDark = (): MediaQueryList | null => {
+    try {
+        return window.matchMedia?.("(prefers-color-scheme: dark)") ?? null;
+    } catch {
+        return null;
+    }
+};
 const phrasesAsked = () => phrasesOn() || getSettings().sourceStyleButton;
 
 /** station signs number their sources like station codes */
@@ -373,6 +380,23 @@ export default function ChatPopover({
 
     const fs = settings.chatFontSize;
     const hc = settings.highContrast;
+    // the theme: light, dark, or the computer's, followed live
+    const [sysDark, setSysDark] = useState(
+        () => prefersDark()?.matches ?? false,
+    );
+    useEffect(() => {
+        const q = prefersDark();
+        if (!q) return;
+        const on = () => setSysDark(q.matches);
+        q.addEventListener("change", on);
+        return () => q.removeEventListener("change", on);
+    }, []);
+    const theme =
+        settings.chatTheme === "system"
+            ? sysDark
+                ? "dark"
+                : "light"
+            : settings.chatTheme;
     const style = settings.chatStyle;
     const T = chatText();
     // on a phone-width screen the chat docks as a bottom sheet over half the height,
@@ -470,12 +494,15 @@ export default function ChatPopover({
         text: string,
         cls: string,
         playLabel = T.readAloud,
+        /** visible words beside the icon (the answer's pill; not the folded header) */
+        labelled = false,
     ) => {
         const phase = speaking?.idx === idx ? speaking.phase : null;
         const main =
             phase === "playing"
                 ? {
                       label: T.pauseReading,
+                      short: T.pauseShort,
                       icon: <PauseIcon />,
                       run: () => {
                           pauseSpeaking();
@@ -486,6 +513,7 @@ export default function ChatPopover({
                 : phase === "paused"
                   ? {
                         label: T.resumeReading,
+                        short: T.resumeShort,
                         icon: <PlayIcon />,
                         run: () => {
                             resumeSpeaking();
@@ -499,11 +527,13 @@ export default function ChatPopover({
                   : phase === "loading"
                     ? {
                           label: T.preparingAudio,
+                          short: T.preparingShort,
                           icon: <WaitIcon />,
                           run: () => {},
                       }
                     : {
                           label: playLabel,
+                          short: T.readShort,
                           icon: <PlayIcon />,
                           run: () => readMessage(idx, text),
                       };
@@ -517,6 +547,7 @@ export default function ChatPopover({
                     onClick={main.run}
                 >
                     {main.icon}
+                    {labelled && <span>{main.short}</span>}
                 </button>
                 {phase && (
                     <button
@@ -534,6 +565,7 @@ export default function ChatPopover({
                         }}
                     >
                         <StopIcon />
+                        {labelled && <span>{T.stopShort}</span>}
                     </button>
                 )}
             </>
@@ -2308,6 +2340,8 @@ export default function ChatPopover({
             className="ulc-c ulc-back"
             aria-label={T.back}
             title={T.backTitle}
+            // always there, so it is found; usable once there is a place to go back to
+            disabled={!returnable}
             onClick={goBack}
         >
             <BackIcon />
@@ -2403,7 +2437,7 @@ export default function ChatPopover({
                         <span>{nav ? T.allShort : T.highlightAll(n)}</span>
                     )}
                 </button>
-                {returnable && backButton}
+                {backButton}
             </div>
         );
     }
@@ -2477,7 +2511,13 @@ export default function ChatPopover({
                     {/* read aloud sits at the end of the answer, not on a row of its own */}
                     {m.text && !m.streaming && (
                         <span className="ulc-read">
-                            {readControls(i, speakable(m.text), "ulc-speak")}
+                            {readControls(
+                                i,
+                                speakable(m.text),
+                                "ulc-speak has-label",
+                                T.readAloud,
+                                true,
+                            )}
                         </span>
                     )}
                     {style === "assistant" && controls}
@@ -2583,6 +2623,7 @@ export default function ChatPopover({
             className="ul-chat"
             data-style={style}
             data-hc={hc ? "true" : "false"}
+            data-theme={theme}
             data-mini={mini ? "true" : "false"}
             data-short={short ? "true" : "false"}
             role="dialog"
@@ -2625,28 +2666,25 @@ export default function ChatPopover({
                     {style === "station" && <small>{T.otherName}</small>}
                 </div>
                 {!mini && settings.sourceStyleButton && (
+                    // a toggle (Yotam, 2026-10-10): the words each source supports,
+                    // underlined or not; pressed, it looks and reads as on
                     <button
                         type="button"
-                        className="ulc-ib"
-                        aria-label={T.sourcesButton(
-                            T.sourceStyle[sourceStyleOf(settings)],
-                        )}
-                        title={T.sourcesButton(
-                            T.sourceStyle[sourceStyleOf(settings)],
-                        )}
+                        className="ulc-ib ulc-ground"
+                        aria-pressed={settings.associateText}
+                        aria-label={T.groundingButton}
+                        title={T.groundingButton}
                         onClick={() => {
-                            const now = sourceStyleOf(getSettings());
-                            const next =
-                                SOURCE_STYLES[
-                                    (SOURCE_STYLES.indexOf(now) + 1) %
-                                        SOURCE_STYLES.length
-                                ];
-                            setSourceStyle(next);
-                            logEvent("sources_style", { style: next });
-                            act("press", T.sSources(T.sourceStyle[next]));
+                            const on = !getSettings().associateText;
+                            updateSetting("associateText", on);
+                            logEvent("sources_style", {
+                                style: sourceStyleOf(getSettings()),
+                                underline: on,
+                            });
+                            act(on ? "readOn" : "readOff", T.sGrounding(on));
                         }}
                     >
-                        <SourcesIcon />
+                        <GroundingIcon on={settings.associateText} />
                     </button>
                 )}
                 {!mini && onNewConversation && (
