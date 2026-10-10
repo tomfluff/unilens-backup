@@ -92,7 +92,9 @@ export interface Settings {
      *  glow there was before) */
     hlGlow: "none" | "small" | "medium" | "large";
     /** numbers on the outlines, matching the chips in the chat */
-    hlBadges: boolean;
+    /** the number on each source on the page, by size (Yotam, 2026-10-10; small is
+     *  the one there was); none hides it, the answer's numbers still work */
+    hlBadges: "none" | "small" | "medium" | "large";
     /** the highlight colour, #rgb or #rrggbb; the two-band ring stays black and white */
     hlColor: string;
     /** how an outlined element outside the screen is pointed at */
@@ -271,7 +273,7 @@ const DEFAULTS: Settings = {
     hlOutline: "ring",
     hlFill: false,
     hlGlow: "medium",
-    hlBadges: true,
+    hlBadges: "small",
     hlColor: "#ffef26",
     offscreenCue: "edge",
     cueRadius: 60,
@@ -373,7 +375,6 @@ export const TOGGLE_LABELS: Record<BoolSettingKey, string> = {
     inventory: "Send page inventory with captures",
     ringScale: "Outline grows with the zoom",
     hlFill: "Colour fill",
-    hlBadges: "Numbered badges",
     mmFollowHighlight: "Same look as the highlights",
     mmFill: "Colour fill (see-through)",
     mmGlow: "Glow around targets",
@@ -611,6 +612,15 @@ export const ENUM_CHOICES = {
             system: "As the computer is set",
         },
     },
+    hlBadges: {
+        label: "Number on the page",
+        choices: {
+            none: "None",
+            small: "Small",
+            medium: "Medium",
+            large: "Large",
+        },
+    },
     hlGlow: {
         label: "Glow",
         choices: {
@@ -766,8 +776,14 @@ export const PANEL_TABS: { id: PanelTabId; groups: PanelGroup[] }[] = [
         groups: [
             {
                 id: "highlight",
-                first: ["hlColor", "hlOutline", "hlBackdrop", "hlGlow"],
-                more: ["hlFill", "hlBadges", "ringWidth", "ringScale"],
+                first: [
+                    "hlColor",
+                    "hlOutline",
+                    "hlBadges",
+                    "hlBackdrop",
+                    "hlGlow",
+                ],
+                more: ["hlFill", "ringWidth", "ringScale"],
             },
             {
                 id: "cues",
@@ -1006,6 +1022,9 @@ export function clampSetting<K extends keyof Settings>(
     // the glow was on or off before it had sizes
     if (key === "hlGlow" && typeof value === "boolean")
         return (value ? "medium" : "none") as Settings[K];
+    // the badges were on or off before they had sizes
+    if (key === "hlBadges" && typeof value === "boolean")
+        return (value ? "small" : "none") as Settings[K];
     if (Object.hasOwn(ENUM_CHOICES, key)) {
         const { choices } = ENUM_CHOICES[key as EnumKey];
         return Object.hasOwn(choices, String(value))

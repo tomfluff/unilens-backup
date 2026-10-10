@@ -62,7 +62,7 @@ beforeEach(() => {
     updateSetting("hlBackdrop", "none");
     updateSetting("hlFill", false);
     updateSetting("hlGlow", "none");
-    updateSetting("hlBadges", true);
+    updateSetting("hlBadges", "small");
     updateSetting("hlColor", "#ffd400");
     updateSetting("offscreenCue", "none");
     updateSetting("cueRadius", 90);
@@ -490,11 +490,11 @@ describe("layered look", () => {
     });
 
     it("badges are an addition the user can turn off", () => {
-        updateSetting("hlBadges", false);
+        updateSetting("hlBadges", "none");
         one();
         expect(document.querySelector(".unilens-hl-badge")).toBeNull();
         clearHighlights();
-        updateSetting("hlBadges", true);
+        updateSetting("hlBadges", "small");
         one();
         expect(document.querySelector(".unilens-hl-badge")?.textContent).toBe(
             "1",

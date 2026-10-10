@@ -18,6 +18,7 @@ const look = (over: Partial<HighlightLook>): HighlightLook => ({
     glow: false,
     glowSize: "medium",
     badges: true,
+    badgeSize: "small",
     color: "#ffd400",
     ...over,
 });
@@ -30,7 +31,12 @@ describe("highlight look", () => {
     });
 
     it("never draws nothing: no outline and no other layer falls back to the ring", () => {
-        expect(drawnOutline(look({ outline: "none" }))).toBe("ring");
+        // the number alone marks it (Yotam, 2026-10-10: "None" draws no border)
+        expect(drawnOutline(look({ outline: "none" }))).toBe("none");
+        expect(drawnOutline(look({ outline: "none" }), false)).toBe("ring");
+        expect(drawnOutline(look({ outline: "none", badges: false }))).toBe(
+            "ring",
+        );
         expect(drawnOutline(look({ outline: "none", fill: true }))).toBe(
             "none",
         );
@@ -60,7 +66,7 @@ describe("minimapLook", () => {
         hlOutline: "brackets" as const,
         hlFill: false,
         hlGlow: "medium" as const,
-        hlBadges: false,
+        hlBadges: "none" as const,
         hlColor: "#00ff00",
         mmBackdrop: "dim" as const,
         mmOutline: "none" as const,
@@ -76,6 +82,7 @@ describe("minimapLook", () => {
             glow: false,
             glowSize: "medium",
             badges: true,
+            badgeSize: "small",
             color: "#00ff00",
         });
     });

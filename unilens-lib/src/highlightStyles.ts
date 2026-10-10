@@ -22,6 +22,7 @@ export type Backdrop = keyof typeof BACKDROPS;
 export const OUTLINES = {
     band: "Thick band in the colour",
     ring: "Two-band ring (black and white)",
+    thin: "Thin border",
     brackets: "Corner brackets",
     underline: "Marker underline",
     none: "No outline",
@@ -29,6 +30,8 @@ export const OUTLINES = {
 export type Outline = keyof typeof OUTLINES;
 
 export type GlowSize = "small" | "medium" | "large";
+/** the number badge's size on the page (Yotam, 2026-10-10; small is the one there was) */
+export type BadgeSize = "small" | "medium" | "large";
 /** each glow's box-shadow: blur and spread, px (medium is the glow there was before) */
 export const GLOW_SHADOW: Record<GlowSize, string> = {
     small: "0 0 10px 3px",
@@ -44,6 +47,8 @@ export interface HighlightLook {
     /** its spread, when there is one */
     glowSize: GlowSize;
     badges: boolean;
+    /** its size, when there is one */
+    badgeSize: BadgeSize;
     color: string;
 }
 
@@ -72,7 +77,7 @@ export function lookFrom(s: {
     hlOutline: Outline;
     hlFill: boolean;
     hlGlow: GlowSize | "none" | boolean;
-    hlBadges: boolean;
+    hlBadges: BadgeSize | "none" | boolean;
     hlColor: string;
 }): HighlightLook {
     return {
@@ -84,7 +89,11 @@ export function lookFrom(s: {
             typeof s.hlGlow === "string" && s.hlGlow !== "none"
                 ? s.hlGlow
                 : "medium",
-        badges: s.hlBadges,
+        badges: s.hlBadges !== "none" && s.hlBadges !== false,
+        badgeSize:
+            typeof s.hlBadges === "string" && s.hlBadges !== "none"
+                ? s.hlBadges
+                : "small",
         color: isHexColor(s.hlColor) ? s.hlColor : "#ffd400",
     };
 }
@@ -101,7 +110,7 @@ export function minimapLook(s: {
     hlOutline: Outline;
     hlFill: boolean;
     hlGlow: GlowSize | "none" | boolean;
-    hlBadges: boolean;
+    hlBadges: BadgeSize | "none" | boolean;
     hlColor: string;
 }): HighlightLook {
     return s.mmFollowHighlight
@@ -120,8 +129,13 @@ export function minimapLook(s: {
  * The outline actually drawn. "No outline" with nothing else on would draw
  * nothing at all; a highlight must always be visible, so it falls back to the ring.
  */
-export function drawnOutline(look: HighlightLook): Outline {
-    const other = look.fill || look.glow || look.backdrop !== "none";
+export function drawnOutline(look: HighlightLook, numbered = true): Outline {
+    // the number alone marks it too (Yotam, 2026-10-10: "None" draws no border)
+    const other =
+        look.fill ||
+        look.glow ||
+        look.backdrop !== "none" ||
+        (numbered && look.badges);
     return look.outline === "none" && !other ? "ring" : look.outline;
 }
 

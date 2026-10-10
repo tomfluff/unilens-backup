@@ -305,7 +305,7 @@ export const NAMES_JA: Partial<Record<keyof Settings, string>> = {
     ringScale: "拡大に合わせて枠を太くする",
     hlFill: "色で塗る",
     hlGlow: "光彩",
-    hlBadges: "番号バッジ",
+    hlBadges: "ページの番号",
     mmFollowHighlight: "ハイライトと同じ見た目",
     mmFill: "色で塗る（半透明）",
     mmGlow: "対象のまわりを光らせる",
@@ -386,6 +386,7 @@ export const NAMES_JA: Partial<Record<keyof Settings, string>> = {
 const OUTLINES_JA = {
     band: "色の太い帯",
     ring: "黒と白の二重の枠",
+    thin: "細い枠",
     brackets: "角のかっこ",
     underline: "マーカーの下線",
     none: "枠なし",
@@ -441,6 +442,12 @@ export const CHOICES_JA: Partial<
         offscreen: "画面の外にあるときだけ",
         always: "いつも中央に",
         never: "動かさない（矢印だけ）",
+    },
+    hlBadges: {
+        none: "なし",
+        small: "小",
+        medium: "中",
+        large: "大",
     },
     hlGlow: {
         none: "なし",
@@ -509,6 +516,7 @@ export const CHOICES_JA: Partial<
 
 /** the look cards' short names in Japanese, by stored value (the full name is the tooltip) */
 export const SHORT_JA: Record<string, string> = {
+    thin: "細い枠",
     small: "小",
     medium: "中",
     large: "大",

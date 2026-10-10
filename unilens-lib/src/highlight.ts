@@ -290,6 +290,7 @@ function padFor(outline: string, w: number): number {
     if (outline === "ring") return OUTLINE_OFFSET + w;
     if (outline === "band") return OUTLINE_OFFSET + 3 * w;
     if (outline === "brackets") return OUTLINE_OFFSET + 2 * w;
+    if (outline === "thin") return OUTLINE_OFFSET + THIN;
     return OUTLINE_OFFSET;
 }
 
@@ -327,7 +328,20 @@ const BADGE_LOOK: Record<string, Partial<CSSStyleDeclaration>> = {
     },
 };
 
-function makeBadge(text: string): HTMLDivElement {
+/** the thin border's width, px (a dark line with a light edge, on any page) */
+const THIN = 2;
+/** the badge at each size: its height, font size and how far it sits out, px */
+const BADGE_SIZE = {
+    small: { h: 24, font: 14, off: 14 },
+    medium: { h: 32, font: 19, off: 18 },
+    large: { h: 42, font: 25, off: 23 },
+} as const;
+
+function makeBadge(
+    text: string,
+    size: keyof typeof BADGE_SIZE = "small",
+): HTMLDivElement {
+    const z = BADGE_SIZE[size];
     const style = getSettings().chatStyle;
     const badge = document.createElement("div");
     badge.className = `${CLASS}-badge`;
@@ -340,17 +354,20 @@ function makeBadge(text: string): HTMLDivElement {
         badge.style,
         {
             position: "absolute",
-            left: "-14px",
-            top: "-14px",
-            minWidth: "24px",
-            height: "24px",
-            padding: "0 5px",
+            left: `-${z.off}px`,
+            top: `-${z.off}px`,
+            minWidth: `${z.h}px`,
+            height: `${z.h}px`,
+            padding: `0 ${Math.round(z.h / 5)}px`,
             boxSizing: "border-box",
-            font: "700 14px/20px system-ui, sans-serif",
+            font: `700 ${z.font}px/${z.h - 4}px system-ui, sans-serif`,
             textAlign: "center",
         },
         BADGE_LOOK[style] ?? BADGE_LOOK.assistant,
     );
+    // a round badge stays round at every size
+    if (badge.style.borderRadius === "12px")
+        badge.style.borderRadius = `${z.h / 2}px`;
     return badge;
 }
 
@@ -361,12 +378,12 @@ function decorate(
     outline: string,
     w: number,
 ) {
-    const key = `${outline}|${look.badges}|${look.color}|${w}|${getSettings().chatStyle}`;
+    const key = `${outline}|${look.badges}|${look.badgeSize}|${look.color}|${w}|${getSettings().chatStyle}`;
     if (entry.decoKey === key) return;
     entry.decoKey = key;
     entry.box.replaceChildren();
     if (look.badges && entry.badge)
-        entry.box.appendChild(makeBadge(entry.badge));
+        entry.box.appendChild(makeBadge(entry.badge, look.badgeSize));
     if (outline === "brackets") {
         const svg = document.createElementNS(SVG_NS, "svg");
         svg.setAttribute("class", `${CLASS}-brackets`);
@@ -437,13 +454,17 @@ function paintBox(
         // real strokes, not shadows, so forced colours keep them
         border: band
             ? `${band}px solid ${outline === "ring" ? RING.inner : look.color}`
-            : "0",
+            : outline === "thin"
+              ? `${THIN}px solid ${EDGE}`
+              : "0",
         outline:
             outline === "ring"
                 ? `${w}px solid ${RING.outer}`
                 : outline === "band"
                   ? `2px solid ${EDGE}`
-                  : "none",
+                  : outline === "thin"
+                    ? `1px solid ${RING.outer}`
+                    : "none",
         outlineOffset: "0",
         background: look.fill
             ? colorWithAlpha(look.color, FILL_ALPHA)
@@ -473,8 +494,15 @@ export function paintOutline(
         withBackdrop = false,
     }: { look?: HighlightLook; badge?: string; withBackdrop?: boolean } = {},
 ) {
-    let outline = drawnOutline(look);
-    if (outline === "none" && !look.fill && !look.glow && !withBackdrop)
+    // nothing else would show it (no number here, no fill, glow or backdrop): the ring
+    let outline = drawnOutline(look, Boolean(badge));
+    if (
+        outline === "none" &&
+        !look.fill &&
+        !look.glow &&
+        !withBackdrop &&
+        !(look.badges && badge)
+    )
         outline = "ring";
     box.style.boxSizing = "border-box";
     box.style.borderRadius = "4px";
@@ -483,7 +511,6 @@ export function paintOutline(
 
 function render() {
     const look = currentLook();
-    const outline = drawnOutline(look);
     const w = bandWidth();
     const gone: typeof boxes = [];
     for (const entry of boxes) {
@@ -499,6 +526,8 @@ function render() {
         const parts = (!isEmptyBox(r) && measureLines(el)) || [r];
         lastParts.set(entry, parts);
         syncLines(entry, parts.length - 1);
+        // "None" leaves only the number; one without a number keeps the ring
+        const outline = drawnOutline(look, Boolean(entry.badge));
         paintBox(entry, parts[0], look, outline, w);
         for (const [i, l] of entry.lines.entries())
             paintBox(l, parts[i + 1], look, outline, w);

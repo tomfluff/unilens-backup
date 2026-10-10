@@ -156,6 +156,7 @@ const PICKERS = new Set<Key>([
     "hlOutline",
     "hlBackdrop",
     "hlGlow",
+    "hlBadges",
     "mmOutline",
     "mmBackdrop",
     "offscreenCue",
@@ -165,6 +166,7 @@ const PICKERS = new Set<Key>([
 const SHORT: Record<string, string> = {
     band: "Thick band",
     ring: "Black and white ring",
+    thin: "Thin border",
     brackets: "Corner brackets",
     underline: "Underline",
     dim: "Dim",
@@ -181,6 +183,7 @@ const SHORT: Record<string, string> = {
 };
 const SHORT_NONE = new Set<Key>([
     "hlGlow",
+    "hlBadges",
     "hlOutline",
     "mmOutline",
     "hlBackdrop",
@@ -421,7 +424,7 @@ function paintCue(
         width: `${size}px`,
         height: `${size}px`,
     });
-    el.innerHTML = cueSvg(lookFrom(s).color, s.hlBadges ? num : "");
+    el.innerHTML = cueSvg(lookFrom(s).color, s.hlBadges !== "none" ? num : "");
     aimCue(el, angle);
     layer.appendChild(el);
 }
@@ -516,10 +519,40 @@ function Thumb({ k, v, s, T }: { k: Key; v: string; s: Settings; T: Text }) {
             <Stage
                 w={TIGHT.w}
                 h={TIGHT.h}
-                paint={(l) => paintHighlight(l, look, TIGHT.w, TIGHT.h, word)}
+                // with its number, as on the page (so "None" shows the number alone)
+                paint={(l) =>
+                    paintHighlight(
+                        l,
+                        look,
+                        TIGHT.w,
+                        TIGHT.h,
+                        word,
+                        look.badges ? "1" : undefined,
+                    )
+                }
             >
                 <span className="s-word" style={word}>
                     9:30–17:00
+                </span>
+            </Stage>
+        );
+    }
+    if (k === "hlBadges") {
+        // the number at that size on the chosen outline, no backdrop
+        const look: HighlightLook = {
+            ...lookFrom({ ...s, hlBadges: v as Settings["hlBadges"] }),
+            backdrop: "none",
+        };
+        return (
+            <Stage
+                w={GLOWY.w}
+                h={GLOWY.h}
+                paint={(l) =>
+                    paintHighlight(l, look, GLOWY.w, GLOWY.h, GLOW_WORD, "1")
+                }
+            >
+                <span className="s-word" style={GLOW_WORD}>
+                    9:30
                 </span>
             </Stage>
         );
@@ -535,7 +568,14 @@ function Thumb({ k, v, s, T }: { k: Key; v: string; s: Settings; T: Text }) {
                 w={GLOWY.w}
                 h={GLOWY.h}
                 paint={(l) =>
-                    paintHighlight(l, look, GLOWY.w, GLOWY.h, GLOW_WORD)
+                    paintHighlight(
+                        l,
+                        look,
+                        GLOWY.w,
+                        GLOWY.h,
+                        GLOW_WORD,
+                        look.badges ? "1" : undefined,
+                    )
                 }
             >
                 <span className="s-word" style={GLOW_WORD}>

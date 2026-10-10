@@ -90,7 +90,7 @@ describe("every preset", () => {
             hlBackdrop: "none",
             hlFill: false,
             hlGlow: "medium",
-            hlBadges: true,
+            hlBadges: "small",
             hlColor: "#ffef26",
             ringWidth: 2,
             ringScale: false,
