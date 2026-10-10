@@ -414,3 +414,23 @@ describe("a voice message the server turns into text", () => {
         expect(fetch).not.toHaveBeenCalled();
     });
 });
+
+describe("the browser's family, for the read-aloud fallback log", () => {
+    it("names the family only", async () => {
+        const { browserFamily } = await import("./speech");
+        const chrome =
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0 Safari/537.36";
+        expect(browserFamily(chrome)).toBe("Chrome");
+        expect(browserFamily(`${chrome} Edg/131.0`)).toBe("Edge");
+        expect(
+            browserFamily(
+                "Mozilla/5.0 (Macintosh) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Safari/605.1.15",
+            ),
+        ).toBe("Safari");
+        expect(
+            browserFamily(
+                "Mozilla/5.0 (X11; Linux) Gecko/20100101 Firefox/131.0",
+            ),
+        ).toBe("Firefox");
+    });
+});

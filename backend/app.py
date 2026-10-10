@@ -1036,6 +1036,7 @@ def _chat_openai_request(
     zoom=False,
     goto=False,
     ai=None,
+    usage=None,
 ) -> dict:
     """Keyword arguments for responses.create; pure, so tests can inspect it.
     Without an inventory or a selection the request is exactly the pre-citation one."""
@@ -1072,24 +1073,25 @@ def _call_openai(
     zoom=False,
     goto=False,
     ai=None,
+    usage=None,
 ) -> str:
     from openai import OpenAI
 
-    response = OpenAI().responses.create(
-        **_chat_openai_request(
-            png_b64,
-            viewport_b64,
-            meta,
-            history,
-            message,
-            inventory,
-            selection=selection,
-            phrases=phrases,
-            zoom=zoom,
-            goto=goto,
-            ai=ai,
-        )
+    req = _chat_openai_request(
+        png_b64,
+        viewport_b64,
+        meta,
+        history,
+        message,
+        inventory,
+        selection=selection,
+        phrases=phrases,
+        zoom=zoom,
+        goto=goto,
+        ai=ai,
     )
+    response = OpenAI().responses.create(**req)
+    _record_usage(usage, "openai", req["model"], getattr(response, "usage", None))
     return response.output_text
 
 
@@ -1158,6 +1160,7 @@ def _chat_gemini_request(
     zoom=False,
     goto=False,
     ai=None,
+    usage=None,
 ) -> dict:
     """Keyword arguments for generate_content(_stream); pure, so tests can inspect it."""
     from google.genai import types
@@ -1199,26 +1202,29 @@ def _call_gemini(
     zoom=False,
     goto=False,
     ai=None,
+    usage=None,
 ) -> str:
     from google import genai
 
     # a named client: a temporary one is closed once collected, which google-genai does
     # mid-request ("Cannot send a request, as the client has been closed")
     client = genai.Client()
-    response = client.models.generate_content(
-        **_chat_gemini_request(
-            png_b64,
-            viewport_b64,
-            meta,
-            history,
-            message,
-            inventory,
-            selection,
-            phrases,
-            zoom=zoom,
-            goto=goto,
-            ai=ai,
-        )
+    req = _chat_gemini_request(
+        png_b64,
+        viewport_b64,
+        meta,
+        history,
+        message,
+        inventory,
+        selection,
+        phrases,
+        zoom=zoom,
+        goto=goto,
+        ai=ai,
+    )
+    response = client.models.generate_content(**req)
+    _record_usage(
+        usage, "gemini", req["model"], getattr(response, "usage_metadata", None)
     )
     return response.text
 
@@ -1235,29 +1241,37 @@ def _stream_openai(
     zoom=False,
     goto=False,
     ai=None,
+    usage=None,
 ):
     """Yield text deltas from the OpenAI Responses streaming API."""
     from openai import OpenAI
 
-    stream = OpenAI().responses.create(
-        **_chat_openai_request(
-            png_b64,
-            viewport_b64,
-            meta,
-            history,
-            message,
-            inventory,
-            stream=True,
-            selection=selection,
-            phrases=phrases,
-            zoom=zoom,
-            goto=goto,
-            ai=ai,
-        )
+    req = _chat_openai_request(
+        png_b64,
+        viewport_b64,
+        meta,
+        history,
+        message,
+        inventory,
+        stream=True,
+        selection=selection,
+        phrases=phrases,
+        zoom=zoom,
+        goto=goto,
+        ai=ai,
     )
+    stream = OpenAI().responses.create(**req)
     for event in stream:
         if event.type == "response.output_text.delta":
             yield event.delta
+        elif event.type == "response.completed":
+            # the whole response, with its token counts, comes last
+            _record_usage(
+                usage,
+                "openai",
+                req["model"],
+                getattr(getattr(event, "response", None), "usage", None),
+            )
 
 
 def _stream_gemini(
@@ -1272,29 +1286,33 @@ def _stream_gemini(
     zoom=False,
     goto=False,
     ai=None,
+    usage=None,
 ):
     from google import genai
 
     # held for the whole stream: a temporary client is closed once collected, and the
     # stream then fails on its next chunk ("the client has been closed")
     client = genai.Client()
-    for chunk in client.models.generate_content_stream(
-        **_chat_gemini_request(
-            png_b64,
-            viewport_b64,
-            meta,
-            history,
-            message,
-            inventory,
-            selection,
-            phrases,
-            zoom=zoom,
-            goto=goto,
-            ai=ai,
-        )
-    ):
+    req = _chat_gemini_request(
+        png_b64,
+        viewport_b64,
+        meta,
+        history,
+        message,
+        inventory,
+        selection,
+        phrases,
+        zoom=zoom,
+        goto=goto,
+        ai=ai,
+    )
+    last = None
+    for chunk in client.models.generate_content_stream(**req):
+        # each chunk carries the counts so far; the last one has the whole call's
+        last = getattr(chunk, "usage_metadata", None) or last
         if chunk.text:
             yield chunk.text
+    _record_usage(usage, "gemini", req["model"], last)
 
 
 def _stream_stub(meta: dict, message: str, inventory: list | None = None):
@@ -1497,10 +1515,12 @@ def _locate_openai_request(
     }
 
 
-def _locate_openai(**kw) -> dict:
+def _locate_openai(usage=None, **kw) -> dict:
     from openai import OpenAI
 
-    response = OpenAI().responses.create(**_locate_openai_request(**kw))
+    req = _locate_openai_request(**kw)
+    response = OpenAI().responses.create(**req)
+    _record_usage(usage, "openai", req["model"], getattr(response, "usage", None))
     return json.loads(response.output_text)
 
 
@@ -1529,11 +1549,15 @@ def _locate_gemini_request(
     }
 
 
-def _locate_gemini(**kw) -> dict:
+def _locate_gemini(usage=None, **kw) -> dict:
     from google import genai
 
     client = genai.Client()  # named: a temporary one closes once collected
-    response = client.models.generate_content(**_locate_gemini_request(**kw))
+    req = _locate_gemini_request(**kw)
+    response = client.models.generate_content(**req)
+    _record_usage(
+        usage, "gemini", req["model"], getattr(response, "usage_metadata", None)
+    )
     return json.loads(response.text)
 
 
@@ -1562,6 +1586,77 @@ def _locate_stub(question: str, inventory: list) -> dict:
 # One dispatch table for every route that talks to a model. The stub takes only
 # (meta, message), so its entries adapt the shape here rather than widening the
 # stub's signature; `_run` is the single place an unknown provider can fail.
+# token use per model call (Yotam, 2026-10-10: why "gpt-5.6-terra, cache writes" costs
+# so much): logged only, nothing about the request or its caching changes
+def _usage_fields(provider: str, usage) -> dict:
+    """A response's token counts, under one set of names for both providers."""
+    if usage is None:
+        return {}
+
+    def get(obj, *names):
+        for n in names:
+            v = getattr(obj, n, None) if obj is not None else None
+            if v is not None:
+                return v
+        return None
+
+    def plain(obj):
+        try:
+            return obj.model_dump(exclude_none=True) if obj is not None else None
+        except Exception:
+            return None
+
+    if provider == "openai":
+        inp = get(usage, "input_tokens_details")
+        out = get(usage, "output_tokens_details")
+        return {
+            "input": get(usage, "input_tokens"),
+            "cachedInput": get(inp, "cached_tokens"),
+            # not reported by the Responses API so far; kept if a version names it
+            "cacheWrite": get(
+                inp,
+                "cache_write_tokens",
+                "cache_creation_tokens",
+                "cache_creation_input_tokens",
+            ),
+            "output": get(usage, "output_tokens"),
+            "reasoning": get(out, "reasoning_tokens"),
+            "total": get(usage, "total_tokens"),
+            # every detail as sent, so a field not named above is not lost
+            "inputDetails": plain(inp),
+            "outputDetails": plain(out),
+        }
+    return {
+        "input": get(usage, "prompt_token_count"),
+        "cachedInput": get(usage, "cached_content_token_count"),
+        "cacheWrite": None,
+        "output": get(usage, "candidates_token_count"),
+        "reasoning": get(usage, "thoughts_token_count"),
+        "total": get(usage, "total_token_count"),
+    }
+
+
+def _record_usage(ctx: dict | None, provider: str, model: str, usage) -> None:
+    """One `usage` event in the participant's study log, and a line on stdout; never
+    in the way of the answer."""
+    if not ctx:
+        return
+    try:
+        fields = {
+            "call": ctx.get("call"),
+            "provider": provider,
+            "model": model,
+            "capture": ctx.get("capture"),
+            # a later question about the same capture, or the first one about it
+            "followUp": ctx.get("followUp"),
+            **_usage_fields(provider, usage),
+        }
+        print(f"[usage] {json.dumps(fields, default=str)}", flush=True)
+        _server_event(ctx.get("ids"), "usage", **fields)
+    except Exception as e:  # the log must never break an answer
+        print(f"[usage] not recorded: {e}", flush=True)
+
+
 PROVIDERS = {
     "openai": {
         "call": _call_openai,
@@ -1591,10 +1686,24 @@ PROVIDERS = {
 }
 
 
-def _run(kind: str, provider: str, **kw):
+def _usage_context(ids, call: str, cap_id: str, history: list) -> dict:
+    """What a call's token log says about it: who, which call, which capture, and
+    whether this capture was asked about before (its images and page are sent again)."""
+    return {
+        "ids": ids,
+        "call": call,
+        "capture": cap_id,
+        "followUp": any(
+            isinstance(h, dict) and h.get("capture_id") == cap_id for h in history
+        ),
+    }
+
+
+def _run(kind: str, provider: str, usage: dict | None = None, **kw):
+    """A model call; `usage` names the call for its token log (_record_usage)."""
     if provider not in PROVIDERS:
         raise ValueError(f"unknown provider: {provider}")
-    return PROVIDERS[provider][kind](**kw)
+    return PROVIDERS[provider][kind](usage=usage, **kw)
 
 
 def _images_sent(provider: str, viewport_b64: str | None) -> int:
@@ -2490,6 +2599,7 @@ def create_app():
         provider, model = choice["provider"], choice["model"]
         images_sent = _images_sent(provider, viewport_b64)
         study = _study_ids()
+        usage = _usage_context(study, "chat_stream", cap_id, history)
 
         def sse(obj):
             return f"data: {json.dumps(obj)}\n\n"
@@ -2501,6 +2611,7 @@ def create_app():
                 deltas = _run(
                     "stream",
                     provider,
+                    usage=usage,
                     png_b64=png_b64,
                     viewport_b64=viewport_b64,
                     meta=meta,
@@ -2590,6 +2701,7 @@ def create_app():
             reply = _run(
                 "call",
                 provider,
+                usage=_usage_context(_study_ids(), "chat", cap_id, history),
                 png_b64=png_b64,
                 viewport_b64=viewport_b64,
                 meta=meta,
@@ -2677,6 +2789,7 @@ def create_app():
             raw = _run(
                 "locate",
                 provider,
+                usage=_usage_context(_study_ids(), "locate", cap_id, history),
                 png_b64=png_b64,
                 viewport_b64=viewport_b64,
                 meta=meta,

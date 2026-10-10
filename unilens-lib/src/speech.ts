@@ -5,7 +5,7 @@
  */
 
 import { getSettings, nativeRate, TTS_SPEEDS } from "./settings";
-import { studyUrl } from "./studyLog";
+import { logEvent, studyUrl } from "./studyLog";
 
 /** ja if the text contains kana/kanji, else the browser locale */
 function guessLang(text: string): string {
@@ -39,11 +39,50 @@ function setState(s: SpeechState) {
     if (s === "idle") stateCb = null;
 }
 
-function speakNative(text: string, mine: number) {
+/** the browser's family, for the log (no version, nothing that tells one person's
+ *  browser from another's) */
+export function browserFamily(ua = navigator.userAgent): string {
+    if (/\bEdg\//.test(ua)) return "Edge";
+    if (/\bOPR\//.test(ua)) return "Opera";
+    if (/\bFirefox\//.test(ua)) return "Firefox";
+    if (/\b(Chrome|CriOS)\//.test(ua)) return "Chrome";
+    if (/\bSafari\//.test(ua)) return "Safari";
+    return "other";
+}
+
+/** why the backend's voice did not read, in a few words: its HTTP status, or what failed */
+function fallbackReason(err: unknown): string {
+    const m = String((err as Error)?.message ?? err ?? "");
+    const status = m.match(/\btts (\d{3})\b/)?.[1];
+    if (status) return `server ${status}`;
+    if ((err as Error)?.name === "TypeError") return "network";
+    return m.slice(0, 80) || "unknown";
+}
+
+function speakNative(text: string, mine: number, reason = "unknown") {
     const u = new SpeechSynthesisUtterance(toSpeakable(text));
     u.lang = guessLang(text);
     // the reading speed holds for the browser's voice too (Yotam, 2026-10-10)
     u.rate = nativeRate(getSettings().ttsSpeed);
+    // the study log notes each reading the browser's voice took over (Yotam,
+    // 2026-10-10); the participant sees nothing new
+    const lang = u.lang.slice(0, 2);
+    let voices: SpeechSynthesisVoice[] = [];
+    try {
+        voices = speechSynthesis.getVoices?.() ?? [];
+    } catch {
+        // no voice list: the log names none
+    }
+    const voice =
+        voices.find((v) => v.default && v.lang.startsWith(lang)) ??
+        voices.find((v) => v.lang.startsWith(lang)) ??
+        voices.find((v) => v.default);
+    logEvent("read_aloud_fallback", {
+        reason,
+        browser: browserFamily(),
+        voice: voice?.name ?? null,
+        rate: Math.round(u.rate * 100) / 100,
+    });
     // a cancelled utterance can report late: only the current reading's events count
     u.onstart = () => {
         if (mine === reading) setState("playing");
@@ -103,7 +142,7 @@ export async function speak(text: string, onState?: (s: SpeechState) => void) {
         ctx = new AudioContext();
         void ctx.resume().catch(() => undefined);
     } catch {
-        speakNative(text, mine);
+        speakNative(text, mine, "no audio context");
         return;
     }
     const me: Player = {
@@ -225,7 +264,7 @@ export async function speak(text: string, onState?: (s: SpeechState) => void) {
         // nothing heard yet: the browser's voice reads it; cut off midway: it ends
         if (!heard()) {
             console.warn("[UniLens] read aloud: browser voice", err);
-            speakNative(text, mine);
+            speakNative(text, mine, fallbackReason(err));
         } else setState("idle");
     }
 }
@@ -276,7 +315,7 @@ async function speakByAudio(plain: string, text: string, mine: number) {
     } catch (err) {
         if (mine === reading && (err as Error)?.name !== "AbortError") {
             audioEl = null;
-            speakNative(text, mine);
+            speakNative(text, mine, fallbackReason(err));
         }
     }
 }
