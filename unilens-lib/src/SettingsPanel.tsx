@@ -155,6 +155,7 @@ const PICKERS = new Set<Key>([
     "chatStyle",
     "hlOutline",
     "hlBackdrop",
+    "hlGlow",
     "mmOutline",
     "mmBackdrop",
     "offscreenCue",
@@ -174,8 +175,12 @@ const SHORT: Record<string, string> = {
     aurora: "Aurora",
     sonar: "Sonar",
     frame: "Frame",
+    small: "Small",
+    medium: "Medium",
+    large: "Large",
 };
 const SHORT_NONE = new Set<Key>([
+    "hlGlow",
     "hlOutline",
     "mmOutline",
     "hlBackdrop",
@@ -360,6 +365,9 @@ function Stage({
  *  at the page's size reads at a thumbnail's (arrows and click feedback need room) */
 const TIGHT = { w: 130, h: 52 };
 const ROOMY = { w: 170, h: 68 };
+/** the glow's tiles: room round a short sample, so each spread shows whole */
+const GLOWY = { w: 130, h: 92 };
+const GLOW_WORD = { left: 37, top: 35, width: 56, height: 22 };
 /** the sample source, centred on a stage */
 const wordOn = (st: { w: number; h: number }) => ({
     left: (st.w - 94) / 2,
@@ -512,6 +520,26 @@ function Thumb({ k, v, s, T }: { k: Key; v: string; s: Settings; T: Text }) {
             >
                 <span className="s-word" style={word}>
                     9:30–17:00
+                </span>
+            </Stage>
+        );
+    }
+    if (k === "hlGlow") {
+        // the glow's spread alone: the chosen outline, no backdrop
+        const look: HighlightLook = {
+            ...lookFrom({ ...s, hlGlow: v as Settings["hlGlow"] }),
+            backdrop: "none",
+        };
+        return (
+            <Stage
+                w={GLOWY.w}
+                h={GLOWY.h}
+                paint={(l) =>
+                    paintHighlight(l, look, GLOWY.w, GLOWY.h, GLOW_WORD)
+                }
+            >
+                <span className="s-word" style={GLOW_WORD}>
+                    9:30
                 </span>
             </Stage>
         );

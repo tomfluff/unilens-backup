@@ -507,6 +507,9 @@ export const CHOICES_JA: Partial<
 
 /** the look cards' short names in Japanese, by stored value (the full name is the tooltip) */
 export const SHORT_JA: Record<string, string> = {
+    small: "小",
+    medium: "中",
+    large: "大",
     band: "太い帯",
     ring: "黒と白の枠",
     brackets: "角のかっこ",
