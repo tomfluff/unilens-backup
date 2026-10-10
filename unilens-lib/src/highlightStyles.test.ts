@@ -20,6 +20,7 @@ const look = (over: Partial<HighlightLook>): HighlightLook => ({
     glowSize: "medium",
     badges: true,
     badgeSize: "small",
+    badgePos: "corner",
     color: "#ffd400",
     ...over,
 });
@@ -85,6 +86,7 @@ describe("minimapLook", () => {
             glowSize: "medium",
             badges: true,
             badgeSize: "small",
+            badgePos: "corner",
             color: "#00ff00",
         });
     });

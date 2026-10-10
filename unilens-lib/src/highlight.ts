@@ -391,7 +391,7 @@ function decorate(
     outline: string,
     w: number,
 ) {
-    const key = `${outline}|${look.badges}|${look.badgeSize}|${look.color}|${w}|${getSettings().chatStyle}`;
+    const key = `${outline}|${look.badges}|${look.badgeSize}|${look.badgePos}|${look.color}|${w}|${getSettings().chatStyle}`;
     if (entry.decoKey === key) return;
     entry.decoKey = key;
     entry.box.replaceChildren();
@@ -544,10 +544,33 @@ function placeBadge(
     origin: { x: number; y: number },
     /** a preview's own px to client px (the page's are client px already) */
     client = { x: 0, y: 0, k: 1 },
+    /** "corner": always the top-left corner, clear of the element (the default);
+     *  "beside": the adaptive placement below */
+    mode: "corner" | "beside" = "corner",
+    /** the room the outline leaves round the element, px */
+    pad = OUTLINE_OFFSET,
 ) {
     const w =
         badge.offsetWidth || Number.parseFloat(badge.style.minWidth) || 24;
     const h = Number.parseFloat(badge.style.height) || 24;
+    if (mode === "corner") {
+        // its bottom-right at the element's top-left: over the outline's room round
+        // the element, never the element's text; always there, slid in only at the
+        // screen's edge (Yotam, 2026-10-10)
+        const x = Math.min(
+            Math.max(b.left + pad - w, bounds.left + 1),
+            bounds.right - 1 - w,
+        );
+        const y = Math.min(
+            Math.max(b.top + pad - h, bounds.top + 1),
+            bounds.bottom - 1 - h,
+        );
+        entry.badgeSide = "corner";
+        badge.dataset.side = "corner";
+        badge.style.left = `${x - origin.x}px`;
+        badge.style.top = `${y - origin.y}px`;
+        return;
+    }
     /** beside the box on its side, slid along that side to stay in bounds */
     const at = (side: BadgeSide) => {
         const p = badgeAt(b, h, w, side);
@@ -690,6 +713,9 @@ function paintBox(
                 bottom: window.innerHeight,
             },
             { x: 0, y: 0 },
+            undefined,
+            look.badgePos,
+            pad,
         );
     } else {
         // a preview: inside the box, placed the same way within its stage
@@ -714,6 +740,8 @@ function paintBox(
                 { left: 0, top: 0, right: sr.width / k, bottom: sr.height / k },
                 { x: toLocal(br.left, sr.left), y: toLocal(br.top, sr.top) },
                 { x: sr.left, y: sr.top, k },
+                look.badgePos,
+                pad,
             );
         }
     }

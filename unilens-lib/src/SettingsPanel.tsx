@@ -157,6 +157,7 @@ const PICKERS = new Set<Key>([
     "hlBackdrop",
     "hlGlow",
     "hlBadges",
+    "hlBadgePos",
     "hlFill",
     "mmOutline",
     "mmBackdrop",
@@ -183,6 +184,8 @@ const SHORT: Record<string, string> = {
     large: "Large",
     light: "Light",
     heavy: "Heavy",
+    corner: "Top-left corner",
+    beside: "Beside, where it fits",
 };
 const SHORT_NONE = new Set<Key>([
     "hlFill",
@@ -539,6 +542,30 @@ function Thumb({ k, v, s, T }: { k: Key; v: string; s: Settings; T: Text }) {
             >
                 <span className="s-word" style={word}>
                     9:30–17:00
+                </span>
+            </Stage>
+        );
+    }
+    if (k === "hlBadgePos") {
+        // that position, at the chosen size (medium when none is shown, to see it)
+        const look: HighlightLook = {
+            ...lookFrom({
+                ...s,
+                hlBadgePos: v as Settings["hlBadgePos"],
+                hlBadges: s.hlBadges === "none" ? "medium" : s.hlBadges,
+            }),
+            backdrop: "none",
+        };
+        return (
+            <Stage
+                w={GLOWY.w}
+                h={GLOWY.h}
+                paint={(l) =>
+                    paintHighlight(l, look, GLOWY.w, GLOWY.h, BADGE_WORD, "1")
+                }
+            >
+                <span className="s-word" style={BADGE_WORD}>
+                    9:30
                 </span>
             </Stage>
         );

@@ -1342,13 +1342,21 @@ describe("a wrapped link", () => {
         const badge = document.querySelector(
             "#unilens-highlight-layer .unilens-hl-badge",
         ) as HTMLElement;
-        // beside the box, outside it, so it never covers the element's text
-        expect(parseFloat(badge.style.left) + 24).toBeLessThanOrEqual(
+        // at the top-left corner, its bottom-right at the element's top-left (300,
+        // 100): over the outline's room, not the element's text
+        expect(parseFloat(badge.style.left) + 24).toBeLessThanOrEqual(300);
+        expect(parseFloat(badge.style.top) + 24).toBeLessThanOrEqual(100);
+        expect(badge.dataset.side).toBe("corner");
+        // beside, where it fits: wholly outside the box, on its left here
+        updateSetting("hlBadgePos", "beside");
+        relayNow();
+        const beside = document.querySelector(
+            "#unilens-highlight-layer .unilens-hl-badge",
+        ) as HTMLElement;
+        expect(parseFloat(beside.style.left) + 24).toBeLessThanOrEqual(
             parseFloat(boxes[0].style.left),
         );
-        expect(parseFloat(badge.style.top)).toBe(
-            parseFloat(boxes[0].style.top),
-        );
+        updateSetting("hlBadgePos", "corner");
         // each box hugs its line, not the 400 px wide union of both
         expect(parseFloat(boxes[0].style.width)).toBeLessThan(200);
         expect(parseFloat(boxes[1].style.left)).toBeLessThan(

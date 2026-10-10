@@ -32,6 +32,7 @@ export type Outline = keyof typeof OUTLINES;
 export type GlowSize = "small" | "medium" | "large";
 /** the number badge's size on the page (Yotam, 2026-10-10; small is the one there was) */
 export type BadgeSize = "small" | "medium" | "large";
+export type BadgePos = "corner" | "beside";
 /** each glow's box-shadow: blur and spread, px (medium is the glow there was before) */
 export const GLOW_SHADOW: Record<GlowSize, string> = {
     small: "0 0 10px 3px",
@@ -51,6 +52,8 @@ export interface HighlightLook {
     badges: boolean;
     /** its size, when there is one */
     badgeSize: BadgeSize;
+    /** at the top-left corner, or beside where it fits */
+    badgePos: BadgePos;
     color: string;
 }
 
@@ -86,6 +89,7 @@ export function lookFrom(s: {
     hlFill: FillStrength | "none" | boolean;
     hlGlow: GlowSize | "none" | boolean;
     hlBadges: BadgeSize | "none" | boolean;
+    hlBadgePos?: BadgePos;
     hlColor: string;
 }): HighlightLook {
     return {
@@ -106,6 +110,7 @@ export function lookFrom(s: {
             typeof s.hlBadges === "string" && s.hlBadges !== "none"
                 ? s.hlBadges
                 : "small",
+        badgePos: s.hlBadgePos === "beside" ? "beside" : "corner",
         color: isHexColor(s.hlColor) ? s.hlColor : "#ffd400",
     };
 }

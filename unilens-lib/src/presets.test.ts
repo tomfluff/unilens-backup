@@ -149,6 +149,7 @@ describe("session 2 (2026-10-09)", () => {
                 "sourceStyle",
                 "ttsSpeed",
                 "chatMovesAside",
+                "hlBadgePos",
             ]),
         );
         for (const k of [

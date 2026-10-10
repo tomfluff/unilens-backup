@@ -153,6 +153,7 @@ export const PRESETS = {
             "hlColor",
             "hlOutline",
             "hlBadges",
+            "hlBadgePos",
             "hlBackdrop",
             "hlGlow",
             "hlFill",

@@ -97,6 +97,9 @@ export interface Settings {
     /** the number on each source on the page, by size (Yotam, 2026-10-10; small is
      *  the one there was); none hides it, the answer's numbers still work */
     hlBadges: "none" | "small" | "medium" | "large";
+    /** where the number sits (Yotam, 2026-10-10): always at the highlight's top-left
+     *  corner, clear of the element's text; or beside it, wherever there is room */
+    hlBadgePos: "corner" | "beside";
     /** the highlight colour, #rgb or #rrggbb; the two-band ring stays black and white */
     hlColor: string;
     /** how an outlined element outside the screen is pointed at */
@@ -279,6 +282,7 @@ const DEFAULTS: Settings = {
     hlFill: "none",
     hlGlow: "medium",
     hlBadges: "small",
+    hlBadgePos: "corner",
     hlColor: "#ffef26",
     offscreenCue: "edge",
     cueRadius: 60,
@@ -631,6 +635,13 @@ export const ENUM_CHOICES = {
         label: "Fill",
         choices: { none: "None", light: "Light", heavy: "Heavy" },
     },
+    hlBadgePos: {
+        label: "Number position",
+        choices: {
+            corner: "Top-left corner",
+            beside: "Beside, where it fits",
+        },
+    },
     hlGlow: {
         label: "Glow",
         choices: {
@@ -790,6 +801,7 @@ export const PANEL_TABS: { id: PanelTabId; groups: PanelGroup[] }[] = [
                     "hlColor",
                     "hlOutline",
                     "hlBadges",
+                    "hlBadgePos",
                     "hlBackdrop",
                     "hlGlow",
                     "hlFill",

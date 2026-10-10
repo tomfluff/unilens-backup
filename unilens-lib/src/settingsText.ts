@@ -318,6 +318,7 @@ export const NAMES_JA: Partial<Record<keyof Settings, string>> = {
     hlFill: "塗り",
     hlGlow: "光彩",
     hlBadges: "ページの番号",
+    hlBadgePos: "番号の位置",
     mmFollowHighlight: "ハイライトと同じ見た目",
     mmFill: "色で塗る（半透明）",
     mmGlow: "対象のまわりを光らせる",
@@ -461,6 +462,10 @@ export const CHOICES_JA: Partial<
         light: "薄く",
         heavy: "濃く",
     },
+    hlBadgePos: {
+        corner: "左上の角",
+        beside: "空いている横",
+    },
     hlBadges: {
         none: "なし",
         small: "小",
@@ -534,6 +539,8 @@ export const CHOICES_JA: Partial<
 
 /** the look cards' short names in Japanese, by stored value (the full name is the tooltip) */
 export const SHORT_JA: Record<string, string> = {
+    corner: "左上の角",
+    beside: "空いている横",
     light: "薄く",
     heavy: "濃く",
     thin: "細い枠",
