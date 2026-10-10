@@ -157,6 +157,7 @@ const PICKERS = new Set<Key>([
     "hlBackdrop",
     "hlGlow",
     "hlBadges",
+    "hlFill",
     "mmOutline",
     "mmBackdrop",
     "offscreenCue",
@@ -180,8 +181,11 @@ const SHORT: Record<string, string> = {
     small: "Small",
     medium: "Medium",
     large: "Large",
+    light: "Light",
+    heavy: "Heavy",
 };
 const SHORT_NONE = new Set<Key>([
+    "hlFill",
     "hlGlow",
     "hlBadges",
     "hlOutline",
@@ -557,10 +561,10 @@ function Thumb({ k, v, s, T }: { k: Key; v: string; s: Settings; T: Text }) {
             </Stage>
         );
     }
-    if (k === "hlGlow") {
-        // the glow's spread alone: the chosen outline, no backdrop
+    if (k === "hlGlow" || k === "hlFill") {
+        // that glow's spread, or that fill, on the chosen outline, no backdrop
         const look: HighlightLook = {
-            ...lookFrom({ ...s, hlGlow: v as Settings["hlGlow"] }),
+            ...lookFrom({ ...s, [k]: v } as Settings),
             backdrop: "none",
         };
         return (

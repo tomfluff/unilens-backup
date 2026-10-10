@@ -87,7 +87,9 @@ export interface Settings {
     /** highlight look, in layers (highlightStyles.ts): one backdrop, one outline, additions */
     hlBackdrop: Backdrop;
     hlOutline: Outline;
-    hlFill: boolean;
+    /** the colour laid over each source (Yotam, 2026-10-10; heavy is the fill there
+     *  was) */
+    hlFill: "none" | "light" | "heavy";
     /** the glow around a highlight, by its spread (Yotam, 2026-10-10; medium is the
      *  glow there was before) */
     hlGlow: "none" | "small" | "medium" | "large";
@@ -271,7 +273,7 @@ const DEFAULTS: Settings = {
     minimapMarkerSize: 32,
     hlBackdrop: "none",
     hlOutline: "ring",
-    hlFill: false,
+    hlFill: "none",
     hlGlow: "medium",
     hlBadges: "small",
     hlColor: "#ffef26",
@@ -374,7 +376,6 @@ export const TOGGLE_LABELS: Record<BoolSettingKey, string> = {
     debugView: "Debug view (ctrl+shift+D)",
     inventory: "Send page inventory with captures",
     ringScale: "Outline grows with the zoom",
-    hlFill: "Colour fill",
     mmFollowHighlight: "Same look as the highlights",
     mmFill: "Colour fill (see-through)",
     mmGlow: "Glow around targets",
@@ -621,6 +622,10 @@ export const ENUM_CHOICES = {
             large: "Large",
         },
     },
+    hlFill: {
+        label: "Fill",
+        choices: { none: "None", light: "Light", heavy: "Heavy" },
+    },
     hlGlow: {
         label: "Glow",
         choices: {
@@ -782,8 +787,9 @@ export const PANEL_TABS: { id: PanelTabId; groups: PanelGroup[] }[] = [
                     "hlBadges",
                     "hlBackdrop",
                     "hlGlow",
+                    "hlFill",
                 ],
-                more: ["hlFill", "ringWidth", "ringScale"],
+                more: ["ringWidth", "ringScale"],
             },
             {
                 id: "cues",
@@ -1022,6 +1028,9 @@ export function clampSetting<K extends keyof Settings>(
     // the glow was on or off before it had sizes
     if (key === "hlGlow" && typeof value === "boolean")
         return (value ? "medium" : "none") as Settings[K];
+    // the fill was on or off before it had strengths
+    if (key === "hlFill" && typeof value === "boolean")
+        return (value ? "heavy" : "none") as Settings[K];
     // the badges were on or off before they had sizes
     if (key === "hlBadges" && typeof value === "boolean")
         return (value ? "small" : "none") as Settings[K];

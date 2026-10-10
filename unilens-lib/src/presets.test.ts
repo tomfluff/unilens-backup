@@ -88,7 +88,7 @@ describe("every preset", () => {
             // must not change the initial prototype)
             hlOutline: "ring",
             hlBackdrop: "none",
-            hlFill: false,
+            hlFill: "none",
             hlGlow: "medium",
             hlBadges: "small",
             hlColor: "#ffef26",

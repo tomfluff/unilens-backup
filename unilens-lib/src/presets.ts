@@ -72,7 +72,7 @@ const INITIAL = {
     // one fixed look, every part of it named here
     hlOutline: "ring",
     hlBackdrop: "none",
-    hlFill: false,
+    hlFill: "none",
     hlGlow: "medium",
     hlBadges: "small",
     hlColor: "#ffef26",
@@ -147,6 +147,7 @@ export const PRESETS = {
             "hlBadges",
             "hlBackdrop",
             "hlGlow",
+            "hlFill",
             "zoom",
             "zoomKeys",
             "offscreenCue",

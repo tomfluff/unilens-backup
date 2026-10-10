@@ -15,6 +15,7 @@ const look = (over: Partial<HighlightLook>): HighlightLook => ({
     backdrop: "none",
     outline: "band",
     fill: false,
+    fillAlpha: 0.3,
     glow: false,
     glowSize: "medium",
     badges: true,
@@ -64,7 +65,7 @@ describe("minimapLook", () => {
         ...getSettings(),
         hlBackdrop: "spotlight" as const,
         hlOutline: "brackets" as const,
-        hlFill: false,
+        hlFill: "none" as const,
         hlGlow: "medium" as const,
         hlBadges: "none" as const,
         hlColor: "#00ff00",
@@ -79,6 +80,7 @@ describe("minimapLook", () => {
             backdrop: "dim",
             outline: "none",
             fill: true,
+            fillAlpha: 0.3,
             glow: false,
             glowSize: "medium",
             badges: true,
@@ -102,5 +104,11 @@ describe("the glow's size (Yotam, 2026-10-10)", () => {
         expect(clampSetting("hlGlow", false)).toBe("none");
         expect(clampSetting("hlGlow", "large")).toBe("large");
         expect(clampSetting("hlGlow", "huge")).toBe("medium");
+        // the fill too (heavy is the fill there was)
+        expect(clampSetting("hlFill", true)).toBe("heavy");
+        expect(clampSetting("hlFill", false)).toBe("none");
+        expect(lookFrom({ ...getSettings(), hlFill: "light" }).fillAlpha).toBe(
+            0.15,
+        );
     });
 });

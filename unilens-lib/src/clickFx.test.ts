@@ -58,14 +58,14 @@ describe("click feedback", () => {
         for (const el of document.querySelectorAll(".ul-fx")) el.remove();
         // no outline: its fill shows; nothing at all: the ring
         updateSetting("hlOutline", "none");
-        updateSetting("hlFill", true);
+        updateSetting("hlFill", "heavy");
         clickFeedback(110, 65, box);
         expect(
             document.querySelector<HTMLElement>(".ul-fx-frame")?.dataset
                 .outline,
         ).toBe("none");
         for (const el of document.querySelectorAll(".ul-fx")) el.remove();
-        updateSetting("hlFill", false);
+        updateSetting("hlFill", "none");
         clickFeedback(110, 65, box);
         expect(
             document.querySelector<HTMLElement>(".ul-fx-frame")?.dataset

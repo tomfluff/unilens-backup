@@ -60,7 +60,7 @@ beforeEach(() => {
     updateSetting("escapeOrder", "highlight");
     updateSetting("hlOutline", "ring");
     updateSetting("hlBackdrop", "none");
-    updateSetting("hlFill", false);
+    updateSetting("hlFill", "none");
     updateSetting("hlGlow", "none");
     updateSetting("hlBadges", "small");
     updateSetting("hlColor", "#ffd400");
@@ -212,7 +212,7 @@ describe("showHighlights", () => {
     });
 
     it("stacks fill and glow in the chosen colour over a dim backdrop", () => {
-        updateSetting("hlFill", true);
+        updateSetting("hlFill", "heavy");
         updateSetting("hlGlow", "medium");
         updateSetting("hlBackdrop", "dim");
         updateSetting("hlColor", "#ffe600");
@@ -965,7 +965,7 @@ describe("off-screen cues", () => {
 
     it("marks an outline-less box, so forced colours can give it a ring", () => {
         updateSetting("hlOutline", "none");
-        updateSetting("hlFill", true);
+        updateSetting("hlFill", "heavy");
         const { registry } = mount();
         show(registry);
         expect((layerBoxes()[0] as HTMLElement).dataset.outline).toBe("none");

@@ -43,6 +43,8 @@ export interface HighlightLook {
     backdrop: Backdrop;
     outline: Outline;
     fill: boolean;
+    /** how much of the colour the fill lays on, when there is one */
+    fillAlpha: number;
     glow: boolean;
     /** its spread, when there is one */
     glowSize: GlowSize;
@@ -63,6 +65,12 @@ export const SPOTLIGHT_FEATHER = 14;
  *  (1.5 feathers: under 5% of the shade reaches the element's edge) */
 export const SPOTLIGHT_ROOM = 1.5;
 export const FILL_ALPHA = 0.3;
+/** the fill's strength (Yotam, 2026-10-10): heavy is the fill there was, light half */
+export type FillStrength = "light" | "heavy";
+export const FILL_ALPHAS: Record<FillStrength, number> = {
+    light: FILL_ALPHA / 2,
+    heavy: FILL_ALPHA,
+};
 export const RING = { inner: "#000", outer: "#fff" };
 /** dark edge drawn around coloured strokes so a yellow band still reads on white */
 export const EDGE = "#000";
@@ -75,7 +83,7 @@ export const isHexColor = (s: unknown): s is string =>
 export function lookFrom(s: {
     hlBackdrop: Backdrop;
     hlOutline: Outline;
-    hlFill: boolean;
+    hlFill: FillStrength | "none" | boolean;
     hlGlow: GlowSize | "none" | boolean;
     hlBadges: BadgeSize | "none" | boolean;
     hlColor: string;
@@ -83,7 +91,11 @@ export function lookFrom(s: {
     return {
         backdrop: s.hlBackdrop,
         outline: s.hlOutline,
-        fill: s.hlFill,
+        fill: s.hlFill !== "none" && s.hlFill !== false,
+        fillAlpha:
+            typeof s.hlFill === "string" && s.hlFill !== "none"
+                ? FILL_ALPHAS[s.hlFill]
+                : FILL_ALPHA,
         glow: s.hlGlow !== "none" && s.hlGlow !== false,
         glowSize:
             typeof s.hlGlow === "string" && s.hlGlow !== "none"
@@ -108,7 +120,7 @@ export function minimapLook(s: {
     mmNumbers: boolean;
     hlBackdrop: Backdrop;
     hlOutline: Outline;
-    hlFill: boolean;
+    hlFill: FillStrength | "none" | boolean;
     hlGlow: GlowSize | "none" | boolean;
     hlBadges: BadgeSize | "none" | boolean;
     hlColor: string;

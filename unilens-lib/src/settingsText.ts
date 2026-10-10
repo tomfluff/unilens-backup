@@ -303,7 +303,7 @@ export const NAMES_JA: Partial<Record<keyof Settings, string>> = {
     debugView: "デバッグ表示（Ctrl＋Shift＋D）",
     inventory: "キャプチャと一緒にページの構造を送る",
     ringScale: "拡大に合わせて枠を太くする",
-    hlFill: "色で塗る",
+    hlFill: "塗り",
     hlGlow: "光彩",
     hlBadges: "ページの番号",
     mmFollowHighlight: "ハイライトと同じ見た目",
@@ -443,6 +443,11 @@ export const CHOICES_JA: Partial<
         always: "いつも中央に",
         never: "動かさない（矢印だけ）",
     },
+    hlFill: {
+        none: "なし",
+        light: "薄く",
+        heavy: "濃く",
+    },
     hlBadges: {
         none: "なし",
         small: "小",
@@ -516,6 +521,8 @@ export const CHOICES_JA: Partial<
 
 /** the look cards' short names in Japanese, by stored value (the full name is the tooltip) */
 export const SHORT_JA: Record<string, string> = {
+    light: "薄く",
+    heavy: "濃く",
     thin: "細い枠",
     small: "小",
     medium: "中",

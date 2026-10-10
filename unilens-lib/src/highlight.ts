@@ -16,7 +16,6 @@ import {
     colorWithAlpha,
     drawnOutline,
     EDGE,
-    FILL_ALPHA,
     GLOW_SHADOW,
     type HighlightLook,
     lookFrom,
@@ -334,8 +333,9 @@ const BADGE_LOOK: Record<string, Partial<CSSStyleDeclaration>> = {
 /** the thick band: how much of its colour covers what is under it, and its edges
  *  (dark enough to show a light colour on white, light enough to read text under) */
 const BAND_ALPHA = 0.6;
-/** the glow's colour over what is next to the source */
-const GLOW_ALPHA = 0.55;
+/** the glow's colour over what is next to the source: dark text under it keeps 5:1
+ *  (0.35 over white with #ffd400; 0.55 gave 2.9:1) */
+const GLOW_ALPHA = 0.35;
 const BAND_EDGE = "rgba(0, 0, 0, 0.7)";
 /** the thin border's width, px (a dark line with a light edge, on any page) */
 const THIN = 2;
@@ -495,7 +495,7 @@ function paintBox(
                     : "none",
         outlineOffset: "0",
         background: look.fill
-            ? colorWithAlpha(look.color, FILL_ALPHA)
+            ? colorWithAlpha(look.color, look.fillAlpha)
             : "transparent",
         boxShadow: shadows.length ? shadows.join(", ") : "none",
     });
