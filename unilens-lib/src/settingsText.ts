@@ -239,17 +239,29 @@ export const OWN_SETTINGS: Partial<
         label: { en: "Double-click to fit", ja: "ダブルクリックで合わせる" },
     },
     voiceInput: {
-        label: { en: "Speak your question", ja: "声で質問する" },
-        hint: { en: "The microphone button", ja: "マイクのボタン" },
-    },
-    liveTalk: {
-        label: { en: "Talk live", ja: "ライブで話す" },
+        label: { en: "Show microphone button", ja: "マイクのボタンを表示" },
         hint: {
-            en: "The Live button: a spoken conversation",
-            ja: "ライブのボタン：声で会話する",
+            en: "Ask by speaking: press it, speak, pause",
+            ja: "押して話すと質問になります",
         },
     },
-    autoRead: { label: { en: "Read answers aloud", ja: "回答を読み上げる" } },
+    liveTalk: {
+        label: {
+            en: "Show live interaction button",
+            ja: "ライブ会話のボタンを表示",
+        },
+        hint: {
+            en: "A spoken conversation with the assistant",
+            ja: "アシスタントと声で会話する",
+        },
+    },
+    autoRead: {
+        label: { en: "Autoplay responses", ja: "回答を自動で再生" },
+        hint: {
+            en: "Each answer is read aloud as it arrives",
+            ja: "回答が届くと読み上げます",
+        },
+    },
     sounds: {
         label: { en: "A sound for every action", ja: "操作ごとの音" },
     },

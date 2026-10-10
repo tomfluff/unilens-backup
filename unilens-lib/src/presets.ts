@@ -128,6 +128,10 @@ export const PRESETS = {
             ttsVoice: "marin",
             // Yotam, 2026-10-10: drawing a box (Alt+drag) on, and not in the panel
             regionSelect: true,
+            // Yotam, 2026-10-10: page zoom, its keys, and the page map while zoomed
+            zoom: true,
+            zoomKeys: true,
+            minimap: "zoomed",
             // Yotam, 2026-10-10 (P05): the chat steps aside from a highlight (a row in
             // the panel), and what was Alt+clicked is outlined
             chatMovesAside: true,

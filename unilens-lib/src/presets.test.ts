@@ -115,6 +115,9 @@ describe("session 2 (2026-10-09)", () => {
             regionSelect: true,
             chatMovesAside: true,
             outlineClicked: true,
+            zoom: true,
+            zoomKeys: true,
+            minimap: "zoomed",
             voicePauseMs: 2000,
             // the gear opens the participant's panel; the model may take them places
             settingsButton: true,
@@ -160,6 +163,12 @@ describe("session 2 (2026-10-09)", () => {
             "settingsButton",
         ])
             expect(panel, k).not.toContain(k);
+        // session 1 sets its zoom and map itself, so a changed default never reaches it
+        expect(PRESETS.initial.values).toMatchObject({
+            zoom: false,
+            zoomKeys: false,
+            minimap: "off",
+        });
         // session 1 keeps the chat still and outlines no click
         expect(PRESETS.initial.values.chatMovesAside).toBe(false);
         expect("outlineClicked" in PRESETS.initial.values).toBe(false);
