@@ -375,6 +375,8 @@ const ROOMY = { w: 170, h: 68 };
 /** the glow's tiles: room round a short sample, so each spread shows whole */
 const GLOWY = { w: 130, h: 92 };
 const GLOW_WORD = { left: 37, top: 35, width: 56, height: 22 };
+/** the number tiles: room above and to the left for the largest number */
+const BADGE_WORD = { left: 58, top: 48, width: 56, height: 22 };
 /** the sample source, centred on a stage */
 const wordOn = (st: { w: number; h: number }) => ({
     left: (st.w - 94) / 2,
@@ -552,10 +554,10 @@ function Thumb({ k, v, s, T }: { k: Key; v: string; s: Settings; T: Text }) {
                 w={GLOWY.w}
                 h={GLOWY.h}
                 paint={(l) =>
-                    paintHighlight(l, look, GLOWY.w, GLOWY.h, GLOW_WORD, "1")
+                    paintHighlight(l, look, GLOWY.w, GLOWY.h, BADGE_WORD, "1")
                 }
             >
-                <span className="s-word" style={GLOW_WORD}>
+                <span className="s-word" style={BADGE_WORD}>
                     9:30
                 </span>
             </Stage>

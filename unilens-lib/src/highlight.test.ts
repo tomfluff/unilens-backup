@@ -1342,10 +1342,11 @@ describe("a wrapped link", () => {
         const badge = document.querySelector(
             "#unilens-highlight-layer .unilens-hl-badge",
         ) as HTMLElement;
-        expect(parseFloat(badge.style.left)).toBeLessThan(
+        // beside the box, outside it, so it never covers the element's text
+        expect(parseFloat(badge.style.left) + 24).toBeLessThanOrEqual(
             parseFloat(boxes[0].style.left),
         );
-        expect(parseFloat(badge.style.top)).toBeLessThan(
+        expect(parseFloat(badge.style.top)).toBe(
             parseFloat(boxes[0].style.top),
         );
         // each box hugs its line, not the 400 px wide union of both

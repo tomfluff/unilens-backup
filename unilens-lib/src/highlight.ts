@@ -105,6 +105,8 @@ interface Drawn {
     /** on the page, the number sits in the layer above every outline (a box is its
      *  own layer, so a number inside it would sit under a neighbour's band) */
     badgeEl?: HTMLDivElement;
+    /** where its number sits beside the box, chosen once where it covers no text */
+    badgeSide?: BadgeSide;
     /** a wrapped inline element's lines after the first (`box` outlines the first
      *  and carries the badge); empty for anything drawn as one box */
     lines: { box: HTMLDivElement; decoKey?: string }[];
@@ -395,6 +397,7 @@ function decorate(
     entry.box.replaceChildren();
     entry.badgeEl?.remove();
     entry.badgeEl = undefined;
+    (entry as { badgeSide?: BadgeSide }).badgeSide = undefined;
     if (look.badges && entry.badge) {
         const badge = makeBadge(entry.badge, look.badgeSize);
         const layer = entry.box.parentElement;
@@ -452,8 +455,176 @@ function decorate(
  * One outline box around `r` (client px) in `look`: the drawing every highlight uses,
  * and the only one, so anything that should look like a highlight borrows it.
  */
+type BadgeSide = "left" | "above" | "right" | "below" | "inside" | "corner";
+/** in this order; "inside" (the element's own top-right corner) when every side has
+ *  text, and only where the element has none there either */
+const BADGE_SIDES: BadgeSide[] = ["left", "above", "right", "below", "inside"];
+/** the gap between a number and its box, px */
+const BADGE_GAP = 2;
+
+/** the number's top-left, for a box (client px) and a side: outside the box, so it
+ *  never covers the element's own text (Yotam, 2026-10-10: at medium and large the
+ *  corner badge reached into it) */
+function badgeAt(
+    b: { left: number; top: number; right: number; bottom: number },
+    h: number,
+    w: number,
+    side: BadgeSide,
+): { x: number; y: number } {
+    if (side === "left") return { x: b.left - BADGE_GAP - w, y: b.top };
+    if (side === "above") return { x: b.left, y: b.top - BADGE_GAP - h };
+    if (side === "right") return { x: b.right + BADGE_GAP, y: b.top };
+    if (side === "below") return { x: b.left, y: b.bottom + BADGE_GAP };
+    if (side === "inside")
+        return {
+            x: b.right - OUTLINE_OFFSET - w,
+            y: b.top + OUTLINE_OFFSET,
+        };
+    // nowhere free: outside the box's corner, overlapping only its margin
+    return { x: b.left - w + OUTLINE_OFFSET, y: b.top - h + OUTLINE_OFFSET };
+}
+
+/** page text under a rectangle (client px): a 3×3 grid of points, each asked of the
+ *  page; a point counts when a letter is at it or within a few px on its line (so a
+ *  point on a space between words counts too) */
+function textHits(x: number, y: number, w: number, h: number): number {
+    const doc = document as Document & {
+        caretRangeFromPoint?: (x: number, y: number) => Range | null;
+    };
+    if (!doc.caretRangeFromPoint) return 0;
+    const NEAR = 4;
+    let hits = 0;
+    for (const fx of [0.2, 0.5, 0.8])
+        for (const fy of [0.25, 0.5, 0.75]) {
+            const px = x + w * fx;
+            const py = y + h * fy;
+            const r = doc.caretRangeFromPoint(px, py);
+            const node = r?.startContainer;
+            if (!r || !node || node.nodeType !== Node.TEXT_NODE) continue;
+            if (node.parentElement?.closest("[data-unilens-layer], .ul-chat"))
+                continue;
+            const text = node.textContent ?? "";
+            for (const k of [
+                r.startOffset - 1,
+                r.startOffset,
+                r.startOffset + 1,
+            ]) {
+                if (k < 0 || k >= text.length || !text[k].trim()) continue;
+                const ch = document.createRange();
+                ch.setStart(node, k);
+                ch.setEnd(node, k + 1);
+                const c = ch.getBoundingClientRect();
+                if (
+                    py >= c.top &&
+                    py <= c.bottom &&
+                    px >= c.left - NEAR &&
+                    px <= c.right + NEAR
+                ) {
+                    hits++;
+                    break;
+                }
+            }
+        }
+    return hits;
+}
+
+/** where each number on the page sits now (client px), so the next avoids them */
+const badgeRects = new Map<
+    object,
+    { x: number; y: number; w: number; h: number }
+>();
+
+/** place a number beside its box: the first side that is in bounds and covers no
+ *  text, kept while it stays in bounds; `origin` turns client px into its parent's */
+function placeBadge(
+    badge: HTMLElement,
+    entry: { badgeSide?: BadgeSide },
+    b: { left: number; top: number; right: number; bottom: number },
+    bounds: { left: number; top: number; right: number; bottom: number },
+    origin: { x: number; y: number },
+    /** a preview's own px to client px (the page's are client px already) */
+    client = { x: 0, y: 0, k: 1 },
+) {
+    const w =
+        badge.offsetWidth || Number.parseFloat(badge.style.minWidth) || 24;
+    const h = Number.parseFloat(badge.style.height) || 24;
+    /** beside the box on its side, slid along that side to stay in bounds */
+    const at = (side: BadgeSide) => {
+        const p = badgeAt(b, h, w, side);
+        if (side === "left" || side === "right")
+            p.y = Math.min(
+                Math.max(p.y, bounds.top + 1),
+                bounds.bottom - 1 - h,
+            );
+        else if (side === "above" || side === "below")
+            p.x = Math.min(
+                Math.max(p.x, bounds.left + 1),
+                bounds.right - 1 - w,
+            );
+        return p;
+    };
+    const fits = (side: BadgeSide) => {
+        const p = at(side);
+        return (
+            p.x >= bounds.left + 1 &&
+            p.y >= bounds.top + 1 &&
+            p.x + w <= bounds.right - 1 &&
+            p.y + h <= bounds.bottom - 1
+        );
+    };
+    /** another number already there (page numbers only: previews have one each) */
+    const onAnother = (side: BadgeSide) => {
+        if (origin.x || origin.y) return false;
+        const p = at(side);
+        for (const [other, o] of badgeRects)
+            if (
+                other !== entry &&
+                p.x < o.x + o.w &&
+                p.x + w > o.x &&
+                p.y < o.y + o.h &&
+                p.y + h > o.y
+            )
+                return true;
+        return false;
+    };
+    // the corner is a stopgap (off-screen, or no room): chosen again each time
+    if (
+        !entry.badgeSide ||
+        entry.badgeSide === "corner" ||
+        !fits(entry.badgeSide)
+    ) {
+        // the first side that covers no text and no other number; else the one that
+        // covers the least text (the box's corner too), never another number
+        let best: BadgeSide = "corner";
+        let bestScore = Number.POSITIVE_INFINITY;
+        for (const side of [...BADGE_SIDES, "corner"] as BadgeSide[]) {
+            if (!fits(side)) continue;
+            const p = at(side);
+            const score =
+                (onAnother(side) ? 100 : 0) +
+                textHits(
+                    client.x + p.x * client.k,
+                    client.y + p.y * client.k,
+                    w * client.k,
+                    h * client.k,
+                );
+            if (score < bestScore) {
+                best = side;
+                bestScore = score;
+            }
+            if (score === 0) break;
+        }
+        entry.badgeSide = best;
+    }
+    const p = at(entry.badgeSide);
+    if (!origin.x && !origin.y) badgeRects.set(entry, { x: p.x, y: p.y, w, h });
+    badge.dataset.side = entry.badgeSide;
+    badge.style.left = `${p.x - origin.x}px`;
+    badge.style.top = `${p.y - origin.y}px`;
+}
+
 function paintBox(
-    entry: Pick<Drawn, "box" | "badge" | "decoKey" | "badgeEl">,
+    entry: Pick<Drawn, "box" | "badge" | "decoKey" | "badgeEl" | "badgeSide">,
     r: { left: number; top: number; width: number; height: number },
     look: HighlightLook,
     outline: string,
@@ -499,11 +670,52 @@ function paintBox(
             : "transparent",
         boxShadow: shadows.length ? shadows.join(", ") : "none",
     });
+    const outer = {
+        left: r.left - pad,
+        top: r.top - pad,
+        right: r.left + r.width + pad,
+        bottom: r.top + r.height + pad,
+    };
     if (entry.badgeEl) {
-        const off = BADGE_SIZE[look.badgeSize].off;
-        entry.badgeEl.style.left = `${r.left - pad - off}px`;
-        entry.badgeEl.style.top = `${r.top - pad - off}px`;
+        // on the page: fixed, beside the box, on-screen
         entry.badgeEl.style.display = box.style.display;
+        placeBadge(
+            entry.badgeEl,
+            entry,
+            outer,
+            {
+                left: 0,
+                top: 0,
+                right: window.innerWidth,
+                bottom: window.innerHeight,
+            },
+            { x: 0, y: 0 },
+        );
+    } else {
+        // a preview: inside the box, placed the same way within its stage
+        const inBox = box.querySelector<HTMLElement>(`.${CLASS}-badge`);
+        const stage = box.closest(".s-stage") ?? box.parentElement;
+        if (inBox && stage) {
+            const sr = stage.getBoundingClientRect();
+            const br = box.getBoundingClientRect();
+            // the box's rect in client px may be scaled (a thumbnail); work in its own px
+            const k =
+                br.width && box.offsetWidth ? br.width / box.offsetWidth : 1;
+            const toLocal = (v: number, o: number) => (v - o) / k;
+            placeBadge(
+                inBox,
+                entry,
+                {
+                    left: toLocal(br.left, sr.left),
+                    top: toLocal(br.top, sr.top),
+                    right: toLocal(br.right, sr.left),
+                    bottom: toLocal(br.bottom, sr.top),
+                },
+                { left: 0, top: 0, right: sr.width / k, bottom: sr.height / k },
+                { x: toLocal(br.left, sr.left), y: toLocal(br.top, sr.top) },
+                { x: sr.left, y: sr.top, k },
+            );
+        }
     }
     for (const path of box.querySelectorAll("path"))
         path.setAttribute(
@@ -573,6 +785,7 @@ function render() {
     for (const g of gone) {
         g.box.remove();
         g.badgeEl?.remove();
+        badgeRects.delete(g);
         for (const l of g.lines) l.box.remove();
         boxes.splice(boxes.indexOf(g), 1);
         lastRects.delete(g);
@@ -1382,6 +1595,7 @@ export function clearHighlights() {
     for (const b of boxes) {
         b.box.remove();
         b.badgeEl?.remove();
+        badgeRects.delete(b);
         for (const l of b.lines) l.box.remove();
     }
     boxes = [];
