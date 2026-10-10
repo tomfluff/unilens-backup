@@ -298,3 +298,22 @@ describe("settings files", () => {
         expect(getSettings()).toEqual(before);
     });
 });
+
+describe("the reading speed on the browser's own voice (Yotam, 2026-10-10)", () => {
+    it("has a rate per browser, as each maps it", async () => {
+        const { nativeRate } = await import("./settings");
+        const chrome =
+            "Mozilla/5.0 (Windows NT 10.0) Chrome/131.0 Safari/537.36";
+        const edge = `${chrome} Edg/131.0`;
+        expect(
+            ["slow", "normal", "fast", "fastest"].map((s) =>
+                nativeRate(s as "slow", chrome),
+            ),
+        ).toEqual([0.5, 1, 2, 4]);
+        expect(
+            ["slow", "normal", "fast", "fastest"].map((s) =>
+                nativeRate(s as "slow", edge),
+            ),
+        ).toEqual([0.6, 1, 1.7, 2.2]);
+    });
+});

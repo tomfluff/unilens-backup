@@ -4,7 +4,7 @@
  * API-based backend (assets26 pattern) can replace this later without UI change.
  */
 
-import { getSettings, TTS_SPEEDS } from "./settings";
+import { getSettings, nativeRate, TTS_SPEEDS } from "./settings";
 import { studyUrl } from "./studyLog";
 
 /** ja if the text contains kana/kanji, else the browser locale */
@@ -42,6 +42,8 @@ function setState(s: SpeechState) {
 function speakNative(text: string, mine: number) {
     const u = new SpeechSynthesisUtterance(toSpeakable(text));
     u.lang = guessLang(text);
+    // the reading speed holds for the browser's voice too (Yotam, 2026-10-10)
+    u.rate = nativeRate(getSettings().ttsSpeed);
     // a cancelled utterance can report late: only the current reading's events count
     u.onstart = () => {
         if (mine === reading) setState("playing");

@@ -967,6 +967,24 @@ export const TTS_SPEEDS: Record<Settings["ttsSpeed"], number> = {
     fastest: 2,
 };
 
+/** the same speeds for the browser's own voice (SpeechSynthesisUtterance.rate), when
+ *  the backend's cannot read. Browsers map the rate differently, so each has its
+ *  own: timed on Windows' default voice (Microsoft David), each gives 1.36, 1, 0.69
+ *  and 0.5 times the normal length, as OpenAI's speeds do (2026-10-10) */
+const NATIVE_RATES = {
+    chrome: { slow: 0.5, normal: 1, fast: 2, fastest: 4 },
+    edge: { slow: 0.6, normal: 1, fast: 1.7, fastest: 2.2 },
+} satisfies Record<string, Record<Settings["ttsSpeed"], number>>;
+export function nativeRate(
+    speed: Settings["ttsSpeed"],
+    userAgent = typeof navigator === "undefined" ? "" : navigator.userAgent,
+): number {
+    const table = /\bEdg\//.test(userAgent)
+        ? NATIVE_RATES.edge
+        : NATIVE_RATES.chrome;
+    return table[speed] ?? 1;
+}
+
 export type SourceStyle = Settings["sourceStyle"];
 export const SOURCE_STYLES: SourceStyle[] = ["inline", "underline", "end"];
 export function sourceStyleOf(s: Settings): SourceStyle {
