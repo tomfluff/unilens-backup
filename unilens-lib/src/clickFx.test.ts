@@ -45,7 +45,7 @@ describe("click feedback", () => {
         updateSetting("clickFx", "frame");
         updateSetting("fxFrameShape", "highlight");
         // the highlight look this test walks through: no glow, so "nothing at all" is
-        updateSetting("hlGlow", false);
+        updateSetting("hlGlow", "none");
         updateSetting("hlOutline", "band");
         updateSetting("ringWidth", 3);
         const box = { left: 50, top: 50, width: 120, height: 30 };

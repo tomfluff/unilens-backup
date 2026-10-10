@@ -89,7 +89,7 @@ describe("every preset", () => {
             hlOutline: "ring",
             hlBackdrop: "none",
             hlFill: false,
-            hlGlow: true,
+            hlGlow: "medium",
             hlBadges: true,
             hlColor: "#ffef26",
             ringWidth: 2,
@@ -108,8 +108,10 @@ describe("session 2 (2026-10-09)", () => {
         expect(b).toMatchObject({
             ...PRESETS.initial.values,
             citePlacement: "inline",
+            sourceStyle: "inline",
             associateText: false,
             sourceStyleButton: true,
+            ttsVoice: "marin",
             voicePauseMs: 2000,
             // the gear opens the participant's panel; the model may take them places
             settingsButton: true,
@@ -138,12 +140,15 @@ describe("session 2 (2026-10-09)", () => {
                 // Yotam, 2026-10-10
                 "chatFontSize",
                 "chatTheme",
-                "associateText",
+                "sourceStyle",
+                "ttsSpeed",
             ]),
         );
         for (const k of [
             "sourceStyleButton",
             "citePlacement",
+            "associateText",
+            "ttsVoice",
             "voicePauseMs",
             "voiceAutoSend",
             "assistantGoTo",
@@ -218,7 +223,11 @@ describe("session 2 keeps a participant's changes across tabs", () => {
             JSON.parse(
                 localStorage.getItem("unilens-settings:session2:P03") as string,
             ).state,
-        ).toEqual({ chatTextScale: 160, citePlacement: "end" });
+        ).toEqual({
+            chatTextScale: 160,
+            citePlacement: "end",
+            sourceStyle: "end",
+        });
 
         // the next task link opens a new tab (no sessionStorage), the pid remembered
         sessionStorage.clear();
@@ -313,5 +322,31 @@ describe("?sources= in the facilitator's link", () => {
         setSourceStyle("end");
         applySourcesParam(location.href); // the reload
         expect(sourceStyleOf(getSettings())).toBe("end");
+    });
+});
+
+describe("the sources' style, as one setting (Yotam, 2026-10-10)", () => {
+    it("sets the two settings it stands for, and follows them", () => {
+        localStorage.clear();
+        sessionStorage.clear();
+        history.replaceState(null, "", "/en/?unilens-preset=session2");
+        startChosenPreset();
+        expect(getSettings().sourceStyle).toBe("inline");
+        updateSetting("sourceStyle", "underline");
+        expect(getSettings()).toMatchObject({
+            citePlacement: "inline",
+            associateText: true,
+        });
+        updateSetting("sourceStyle", "end");
+        expect(getSettings().citePlacement).toBe("end");
+        // the full panel's own settings name the style back
+        updateSetting("citePlacement", "inline");
+        expect(getSettings().sourceStyle).toBe("inline");
+        updateSetting("associateText", true);
+        expect(getSettings().sourceStyle).toBe("underline");
+        // session 1: numbers after the answer
+        history.replaceState(null, "", "/en/?unilens-preset=initial");
+        startChosenPreset();
+        expect(getSettings().sourceStyle).toBe("end");
     });
 });

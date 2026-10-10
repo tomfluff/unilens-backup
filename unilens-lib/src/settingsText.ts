@@ -321,6 +321,7 @@ export const NAMES_JA: Partial<Record<keyof Settings, string>> = {
     citePlacement: "根拠の番号の位置",
     chatTheme: "テーマ",
     ttsSpeed: "読み上げの速さ",
+    sourceStyle: "回答の中の根拠",
     refreshView: "続けて質問するとき今の画面を送る",
     fxCore: "オーブ：光沢のある芯",
     fxSwirl: "オーブ：2色の渦",
@@ -438,6 +439,17 @@ export const CHOICES_JA: Partial<
         offscreen: "画面の外にあるときだけ",
         always: "いつも中央に",
         never: "動かさない（矢印だけ）",
+    },
+    hlGlow: {
+        none: "なし",
+        small: "小",
+        medium: "中",
+        large: "大",
+    },
+    sourceStyle: {
+        inline: "文中に番号",
+        underline: "文中に番号、語句に下線",
+        end: "回答の後に番号をまとめて",
     },
     ttsSpeed: {
         slow: "ゆっくり",

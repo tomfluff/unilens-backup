@@ -142,7 +142,7 @@ ${A} .ulc-title small { color: var(--muted); }
 ${A} .ulc-ib { width: 2.3em; height: 2.3em; border: 1.5px solid var(--ctl); border-radius: 10px; background: var(--bg); color: var(--fg); }
 ${A}${HC} .ulc-ib { border-width: 2px; }
 ${A} .ulc-ib:hover { background: var(--soft); }
-${A} .ulc-ib[aria-pressed="true"] { background: var(--acc); color: var(--acc-fg); border-color: var(--acc); }
+${A} .ulc-ib[aria-pressed="true"], ${A} .ulc-ground[data-style="underline"] { background: var(--acc); color: var(--acc-fg); border-color: var(--acc); }
 ${A} .ulc-log { padding: .6em .85em .4em; gap: .55em; }
 ${A} .ulc-me { background: var(--acc); color: var(--acc-fg); padding: .55em .85em; border-radius: 14px 14px 4px 14px; }
 ${A} .ulc-bot { background: var(--soft); padding: .65em .85em; border-radius: 14px 14px 14px 4px; line-height: 1.6; }

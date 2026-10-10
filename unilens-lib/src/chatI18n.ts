@@ -94,10 +94,6 @@ const EN = {
         end: "numbers after the answer",
     } as Record<"inline" | "underline" | "end", string>,
     sSources: (now: string) => `Sources now: ${now}.`,
-    /** the grounding toggle in the header: underline the words each source supports */
-    groundingButton: "Underline what each source supports",
-    sGrounding: (on: boolean): string =>
-        on ? "Underlines on." : "Underlines off.",
     /** the read-aloud pill's visible words (its full name stays the label) */
     readShort: "Listen",
     pauseShort: "Pause",
@@ -255,8 +251,6 @@ const JA: Strings = {
         end: "回答の後に番号",
     },
     sSources: (now: string) => `根拠の表示：${now}。`,
-    groundingButton: "各根拠が支える語句に下線を引く",
-    sGrounding: (on) => (on ? "下線をつけました。" : "下線を消しました。"),
     readShort: "聞く",
     pauseShort: "一時停止",
     resumeShort: "再開",

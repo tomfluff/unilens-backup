@@ -68,11 +68,12 @@ const INITIAL = {
     moveToEvidence: "offscreen",
     associateText: false,
     citePlacement: "end",
+    sourceStyle: "end",
     // one fixed look, every part of it named here
     hlOutline: "ring",
     hlBackdrop: "none",
     hlFill: false,
-    hlGlow: true,
+    hlGlow: "medium",
     hlBadges: true,
     hlColor: "#ffef26",
     ringWidth: 2,
@@ -120,8 +121,11 @@ export const PRESETS = {
         values: {
             ...INITIAL,
             citePlacement: "inline",
+            sourceStyle: "inline",
             associateText: false,
             sourceStyleButton: true,
+            // Yotam, 2026-10-10: Marin reads, and the voice is not offered
+            ttsVoice: "marin",
             voicePauseMs: 2000,
             // the gear shows, and opens the participant's panel below
             settingsButton: true,
@@ -132,12 +136,13 @@ export const PRESETS = {
         /** what a participant may change in session 2 (session-lead's list,
          *  2026-10-09): the highlight's look, page zoom, arrows, the page map, Live,
          *  drawing a box, voice, sounds, the chat's text size and high contrast; then
-         *  (Yotam, 2026-10-10) the chat's scale and theme and the underlines. Not
-         *  where the numbers go or the voice pause */
+         *  (Yotam, 2026-10-10) the interface size, the theme, the sources' style (the
+         *  button's three) and the reading speed; not the voice (Marin) or the pause */
         panel: [
             "hlColor",
             "hlOutline",
             "hlBackdrop",
+            "hlGlow",
             "zoom",
             "zoomKeys",
             "offscreenCue",
@@ -146,14 +151,14 @@ export const PRESETS = {
             "regionSelect",
             "voiceInput",
             "autoRead",
-            "ttsVoice",
+            "ttsSpeed",
             "sounds",
             "chatTextScale",
             "highContrast",
-            // Yotam, 2026-10-10: the chat's scale and theme, and the underlines
+            // Yotam, 2026-10-10
             "chatFontSize",
             "chatTheme",
-            "associateText",
+            "sourceStyle",
         ],
         // each task link opens a new tab (session lead, 2026-10-09)
         keepPerParticipant: true,

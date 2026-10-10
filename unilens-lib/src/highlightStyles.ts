@@ -28,11 +28,21 @@ export const OUTLINES = {
 } as const;
 export type Outline = keyof typeof OUTLINES;
 
+export type GlowSize = "small" | "medium" | "large";
+/** each glow's box-shadow: blur and spread, px (medium is the glow there was before) */
+export const GLOW_SHADOW: Record<GlowSize, string> = {
+    small: "0 0 10px 3px",
+    medium: "0 0 18px 6px",
+    large: "0 0 30px 12px",
+};
+
 export interface HighlightLook {
     backdrop: Backdrop;
     outline: Outline;
     fill: boolean;
     glow: boolean;
+    /** its spread, when there is one */
+    glowSize: GlowSize;
     badges: boolean;
     color: string;
 }
@@ -61,7 +71,7 @@ export function lookFrom(s: {
     hlBackdrop: Backdrop;
     hlOutline: Outline;
     hlFill: boolean;
-    hlGlow: boolean;
+    hlGlow: GlowSize | "none" | boolean;
     hlBadges: boolean;
     hlColor: string;
 }): HighlightLook {
@@ -69,7 +79,11 @@ export function lookFrom(s: {
         backdrop: s.hlBackdrop,
         outline: s.hlOutline,
         fill: s.hlFill,
-        glow: s.hlGlow,
+        glow: s.hlGlow !== "none" && s.hlGlow !== false,
+        glowSize:
+            typeof s.hlGlow === "string" && s.hlGlow !== "none"
+                ? s.hlGlow
+                : "medium",
         badges: s.hlBadges,
         color: isHexColor(s.hlColor) ? s.hlColor : "#ffd400",
     };
@@ -86,7 +100,7 @@ export function minimapLook(s: {
     hlBackdrop: Backdrop;
     hlOutline: Outline;
     hlFill: boolean;
-    hlGlow: boolean;
+    hlGlow: GlowSize | "none" | boolean;
     hlBadges: boolean;
     hlColor: string;
 }): HighlightLook {

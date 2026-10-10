@@ -536,7 +536,7 @@ function DebugPanel({ sources }: { sources: DebugSources }) {
                                 : "none yet") +
                                 (() => {
                                     const st = getSettings();
-                                    return `\nhighlight ${st.hlOutline} · ${st.hlBackdrop}${st.hlFill ? " · fill" : ""}${st.hlGlow ? " · glow" : ""}${st.hlBadges ? " · badges" : ""} · ${st.hlColor} · cue ${st.offscreenCue}`;
+                                    return `\nhighlight ${st.hlOutline} · ${st.hlBackdrop}${st.hlFill ? " · fill" : ""}${st.hlGlow !== "none" ? ` · glow ${st.hlGlow}` : ""}${st.hlBadges ? " · badges" : ""} · ${st.hlColor} · cue ${st.offscreenCue}`;
                                 })()}
                         </RowText>
                     </Section>

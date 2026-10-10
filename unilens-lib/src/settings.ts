@@ -88,7 +88,9 @@ export interface Settings {
     hlBackdrop: Backdrop;
     hlOutline: Outline;
     hlFill: boolean;
-    hlGlow: boolean;
+    /** the glow around a highlight, by its spread (Yotam, 2026-10-10; medium is the
+     *  glow there was before) */
+    hlGlow: "none" | "small" | "medium" | "large";
     /** numbers on the outlines, matching the chips in the chat */
     hlBadges: boolean;
     /** the highlight colour, #rgb or #rrggbb; the two-band ring stays black and white */
@@ -172,6 +174,9 @@ export interface Settings {
     /** where an answer's source numbers go: where the model put them, at the end of
      *  each sentence, or all after the answer (underlines need them in the sentence) */
     citePlacement: "inline" | "sentence" | "end";
+    /** the Sources button's three styles as one setting (Yotam, 2026-10-10): kept in
+     *  step with citePlacement and associateText, both ways */
+    sourceStyle: "inline" | "underline" | "end";
     /** the settings gear on the page; hidden, Ctrl+Alt+Shift+S still opens settings */
     settingsButton: boolean;
     /** a button in the chat's header that switches where the source numbers go: in the
@@ -265,7 +270,7 @@ const DEFAULTS: Settings = {
     hlBackdrop: "none",
     hlOutline: "ring",
     hlFill: false,
-    hlGlow: true,
+    hlGlow: "medium",
     hlBadges: true,
     hlColor: "#ffef26",
     offscreenCue: "edge",
@@ -311,6 +316,7 @@ const DEFAULTS: Settings = {
     assistantGoTo: false,
     associateText: false,
     citePlacement: "inline",
+    sourceStyle: "inline",
     settingsButton: true,
     sourceStyleButton: false,
     aiProvider: "auto",
@@ -367,7 +373,6 @@ export const TOGGLE_LABELS: Record<BoolSettingKey, string> = {
     inventory: "Send page inventory with captures",
     ringScale: "Outline grows with the zoom",
     hlFill: "Colour fill",
-    hlGlow: "Glow",
     hlBadges: "Numbered badges",
     mmFollowHighlight: "Same look as the highlights",
     mmFill: "Colour fill (see-through)",
@@ -606,6 +611,23 @@ export const ENUM_CHOICES = {
             system: "As the computer is set",
         },
     },
+    hlGlow: {
+        label: "Glow",
+        choices: {
+            none: "None",
+            small: "Small",
+            medium: "Medium",
+            large: "Large",
+        },
+    },
+    sourceStyle: {
+        label: "Sources in the answer",
+        choices: {
+            inline: "Numbers in the text",
+            underline: "Numbers in the text, words underlined",
+            end: "All numbers after the answer",
+        },
+    },
     ttsSpeed: {
         label: "Reading speed",
         choices: {
@@ -744,14 +766,8 @@ export const PANEL_TABS: { id: PanelTabId; groups: PanelGroup[] }[] = [
         groups: [
             {
                 id: "highlight",
-                first: ["hlColor", "hlOutline", "hlBackdrop"],
-                more: [
-                    "hlFill",
-                    "hlGlow",
-                    "hlBadges",
-                    "ringWidth",
-                    "ringScale",
-                ],
+                first: ["hlColor", "hlOutline", "hlBackdrop", "hlGlow"],
+                more: ["hlFill", "hlBadges", "ringWidth", "ringScale"],
             },
             {
                 id: "cues",
@@ -801,6 +817,7 @@ export const PANEL_TABS: { id: PanelTabId; groups: PanelGroup[] }[] = [
                 more: [
                     "streamReplies",
                     "citeEvidence",
+                    "sourceStyle",
                     "citePlacement",
                     "associateText",
                     "sourceStyleButton",
@@ -922,7 +939,7 @@ export const TTS_SPEEDS: Record<Settings["ttsSpeed"], number> = {
     fastest: 2,
 };
 
-export type SourceStyle = "inline" | "underline" | "end";
+export type SourceStyle = Settings["sourceStyle"];
 export const SOURCE_STYLES: SourceStyle[] = ["inline", "underline", "end"];
 export function sourceStyleOf(s: Settings): SourceStyle {
     if (s.citePlacement !== "inline") return "end";
@@ -933,6 +950,7 @@ export function setSourceStyle(style: SourceStyle) {
     useSettings.setState({
         citePlacement: style === "end" ? "end" : "inline",
         associateText: style === "underline",
+        sourceStyle: style,
     });
 }
 
@@ -979,6 +997,9 @@ export function clampSetting<K extends keyof Settings>(
         const { min, max } = NUMBER_KNOBS[key as NumSettingKey];
         return Math.min(max, Math.max(min, n)) as Settings[K];
     }
+    // the glow was on or off before it had sizes
+    if (key === "hlGlow" && typeof value === "boolean")
+        return (value ? "medium" : "none") as Settings[K];
     if (Object.hasOwn(ENUM_CHOICES, key)) {
         const { choices } = ENUM_CHOICES[key as EnumKey];
         return Object.hasOwn(choices, String(value))
@@ -1109,6 +1130,15 @@ export const useSettings = create<Settings>()(
         partialize,
     }),
 );
+
+// the source style and the two settings it stands for stay in step: one chosen in the
+// panel sets them; either of them changed (the full panel, a preset) names the style
+useSettings.subscribe((s, prev) => {
+    const now = sourceStyleOf(s);
+    if (s.sourceStyle === now) return;
+    if (s.sourceStyle !== prev.sourceStyle) setSourceStyle(s.sourceStyle);
+    else useSettings.setState({ sourceStyle: now });
+});
 
 /**
  * Put a preset in effect for this page (presets.ts decides which): the settings

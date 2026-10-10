@@ -37,19 +37,33 @@ export const SourcesIcon = () => (
         <circle cx="18" cy="12" r="2.5" />
     </Icon>
 );
-/** lines of text, the first underlined: the words a source supports, underlined */
-export const GroundingIcon = ({ on }: { on: boolean }) => (
+/** the sources' style, one shape each: numbers in the text, words underlined too,
+ *  or the numbers after the answer */
+export const SourceStyleIcon = ({
+    style,
+}: {
+    style: "inline" | "underline" | "end";
+}) => (
     <Icon>
-        {on ? (
+        {style === "inline" && (
             <>
-                <path d="M4 6h11M4 12h8M4 18h11" />
-                <path d="M4 8.5h11" strokeWidth="3" />
-                <circle cx="19" cy="6.5" r="2.2" />
+                <path d="M3 7h8M3 12h5M14 12h7M3 17h8" />
+                <circle cx="15" cy="7" r="2" />
             </>
-        ) : (
+        )}
+        {style === "underline" && (
             <>
-                <path d="M4 7h9M4 12h7M4 17h9" />
-                <circle cx="18" cy="12" r="2.5" />
+                <path d="M3 6h9M3 12h6M3 18h9" />
+                <path d="M3 9h9" strokeWidth="3" />
+                <circle cx="17" cy="7" r="2.2" />
+            </>
+        )}
+        {style === "end" && (
+            <>
+                <path d="M3 5h15M3 10h15M3 15h9" />
+                <circle cx="8" cy="20" r="1.6" />
+                <circle cx="14" cy="20" r="1.6" />
+                <circle cx="20" cy="20" r="1.6" />
             </>
         )}
     </Icon>

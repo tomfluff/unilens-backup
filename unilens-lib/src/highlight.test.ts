@@ -61,7 +61,7 @@ beforeEach(() => {
     updateSetting("hlOutline", "ring");
     updateSetting("hlBackdrop", "none");
     updateSetting("hlFill", false);
-    updateSetting("hlGlow", false);
+    updateSetting("hlGlow", "none");
     updateSetting("hlBadges", true);
     updateSetting("hlColor", "#ffd400");
     updateSetting("offscreenCue", "none");
@@ -213,7 +213,7 @@ describe("showHighlights", () => {
 
     it("stacks fill and glow in the chosen colour over a dim backdrop", () => {
         updateSetting("hlFill", true);
-        updateSetting("hlGlow", true);
+        updateSetting("hlGlow", "medium");
         updateSetting("hlBackdrop", "dim");
         updateSetting("hlColor", "#ffe600");
         const { registry } = mount();

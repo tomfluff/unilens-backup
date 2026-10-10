@@ -53,7 +53,7 @@ import {
     PlayIcon,
     PrevIcon,
     SendIcon,
-    GroundingIcon,
+    SourceStyleIcon,
     StopIcon,
     WaitIcon,
 } from "./icons";
@@ -78,8 +78,9 @@ import { recordAsk, type SentAsk } from "./sentLog";
 import {
     getSettings,
     motionMs,
+    SOURCE_STYLES,
+    setSourceStyle,
     sourceStyleOf,
-    updateSetting,
     useSettings,
 } from "./settings";
 import {
@@ -2666,25 +2667,32 @@ export default function ChatPopover({
                     {style === "station" && <small>{T.otherName}</small>}
                 </div>
                 {!mini && settings.sourceStyleButton && (
-                    // a toggle (Yotam, 2026-10-10): the words each source supports,
-                    // underlined or not; pressed, it looks and reads as on
+                    // the three source styles, in turn; each has its own icon, and
+                    // the button is lit while the words are underlined (Yotam,
+                    // 2026-10-10: it must show that it did something)
                     <button
                         type="button"
                         className="ulc-ib ulc-ground"
-                        aria-pressed={settings.associateText}
-                        aria-label={T.groundingButton}
-                        title={T.groundingButton}
+                        data-style={settings.sourceStyle}
+                        aria-label={T.sourcesButton(
+                            T.sourceStyle[settings.sourceStyle],
+                        )}
+                        title={T.sourcesButton(
+                            T.sourceStyle[settings.sourceStyle],
+                        )}
                         onClick={() => {
-                            const on = !getSettings().associateText;
-                            updateSetting("associateText", on);
-                            logEvent("sources_style", {
-                                style: sourceStyleOf(getSettings()),
-                                underline: on,
-                            });
-                            act(on ? "readOn" : "readOff", T.sGrounding(on));
+                            const now = sourceStyleOf(getSettings());
+                            const next =
+                                SOURCE_STYLES[
+                                    (SOURCE_STYLES.indexOf(now) + 1) %
+                                        SOURCE_STYLES.length
+                                ];
+                            setSourceStyle(next);
+                            logEvent("sources_style", { style: next });
+                            act("press", T.sSources(T.sourceStyle[next]));
                         }}
                     >
-                        <GroundingIcon on={settings.associateText} />
+                        <SourceStyleIcon style={settings.sourceStyle} />
                     </button>
                 )}
                 {!mini && onNewConversation && (

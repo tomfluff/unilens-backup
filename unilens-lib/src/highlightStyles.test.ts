@@ -16,6 +16,7 @@ const look = (over: Partial<HighlightLook>): HighlightLook => ({
     outline: "band",
     fill: false,
     glow: false,
+    glowSize: "medium",
     badges: true,
     color: "#ffd400",
     ...over,
@@ -58,7 +59,7 @@ describe("minimapLook", () => {
         hlBackdrop: "spotlight" as const,
         hlOutline: "brackets" as const,
         hlFill: false,
-        hlGlow: true,
+        hlGlow: "medium" as const,
         hlBadges: false,
         hlColor: "#00ff00",
         mmBackdrop: "dim" as const,
@@ -73,6 +74,7 @@ describe("minimapLook", () => {
             outline: "none",
             fill: true,
             glow: false,
+            glowSize: "medium",
             badges: true,
             color: "#00ff00",
         });
@@ -81,5 +83,17 @@ describe("minimapLook", () => {
         expect(minimapLook({ ...base, mmFollowHighlight: true })).toEqual(
             lookFrom(base),
         );
+    });
+});
+
+describe("the glow's size (Yotam, 2026-10-10)", () => {
+    it("is none, small, medium or large; an old on or off still reads", async () => {
+        const { clampSetting } = await import("./settings");
+        const { GLOW_SHADOW } = await import("./highlightStyles");
+        expect(GLOW_SHADOW.medium).toBe("0 0 18px 6px"); // the glow there was
+        expect(clampSetting("hlGlow", true)).toBe("medium");
+        expect(clampSetting("hlGlow", false)).toBe("none");
+        expect(clampSetting("hlGlow", "large")).toBe("large");
+        expect(clampSetting("hlGlow", "huge")).toBe("medium");
     });
 });

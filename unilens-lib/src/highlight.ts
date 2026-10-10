@@ -17,6 +17,7 @@ import {
     drawnOutline,
     EDGE,
     FILL_ALPHA,
+    GLOW_SHADOW,
     type HighlightLook,
     lookFrom,
     OUTLINE_OFFSET,
@@ -426,7 +427,7 @@ function paintBox(
     const band = outline === "band" ? 3 * w : outline === "ring" ? w : 0;
     const shadows = [
         outline === "band" ? `inset 0 0 0 2px ${EDGE}` : "",
-        look.glow ? `0 0 18px 6px ${look.color}` : "",
+        look.glow ? `${GLOW_SHADOW[look.glowSize]} ${look.color}` : "",
     ].filter(Boolean);
     Object.assign(box.style, {
         left: `${r.left - pad}px`,
