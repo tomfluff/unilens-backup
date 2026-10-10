@@ -1885,7 +1885,6 @@ export default function ChatPopover({
 
     // what was just Alt+clicked, outlined as its place entry outlines it, until the
     // answer's sources replace it (Yotam, 2026-10-10, session 2)
-    // biome-ignore lint/correctness/useExhaustiveDependencies: once per capture
     useEffect(() => {
         if (!getSettings().outlineClicked) return;
         const p = placeOf(captureId);
