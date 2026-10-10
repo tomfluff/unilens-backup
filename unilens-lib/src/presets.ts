@@ -126,6 +126,8 @@ export const PRESETS = {
             sourceStyleButton: true,
             // Yotam, 2026-10-10: Marin reads, and the voice is not offered
             ttsVoice: "marin",
+            // Yotam, 2026-10-10: drawing a box (Alt+drag) on, and not in the panel
+            regionSelect: true,
             voicePauseMs: 2000,
             // the gear shows, and opens the participant's panel below
             settingsButton: true,
@@ -135,7 +137,8 @@ export const PRESETS = {
         },
         /** what a participant may change in session 2 (session-lead's list,
          *  2026-10-09): the highlight's look, page zoom, arrows, the page map, Live,
-         *  drawing a box, voice, sounds, the chat's text size and high contrast; then
+         *  voice, sounds, the chat's text size and high contrast (drawing a box is on,
+         *  not offered: Yotam, 2026-10-10); then
          *  (Yotam, 2026-10-10) the interface size, the theme, the sources' style (the
          *  button's three) and the reading speed; not the voice (Marin) or the pause */
         panel: [
@@ -148,7 +151,6 @@ export const PRESETS = {
             "offscreenCue",
             "minimap",
             "liveTalk",
-            "regionSelect",
             "voiceInput",
             "autoRead",
             "ttsSpeed",

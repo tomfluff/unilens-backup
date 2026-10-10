@@ -112,6 +112,7 @@ describe("session 2 (2026-10-09)", () => {
             associateText: false,
             sourceStyleButton: true,
             ttsVoice: "marin",
+            regionSelect: true,
             voicePauseMs: 2000,
             // the gear opens the participant's panel; the model may take them places
             settingsButton: true,
@@ -149,12 +150,15 @@ describe("session 2 (2026-10-09)", () => {
             "citePlacement",
             "associateText",
             "ttsVoice",
+            "regionSelect",
             "voicePauseMs",
             "voiceAutoSend",
             "assistantGoTo",
             "settingsButton",
         ])
             expect(panel, k).not.toContain(k);
+        // session 1 still has no box drawing (Alt+drag), and no participant panel
+        expect(PRESETS.initial.values.regionSelect).toBe(false);
         // session 1 has no participant panel
         expect("panel" in PRESETS.initial).toBe(false);
     });
