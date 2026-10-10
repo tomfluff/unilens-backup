@@ -103,6 +103,9 @@ interface Drawn {
     badge?: string;
     /** the look the box's decorations were built for; rebuilt when it changes */
     decoKey?: string;
+    /** on the page, the number sits in the layer above every outline (a box is its
+     *  own layer, so a number inside it would sit under a neighbour's band) */
+    badgeEl?: HTMLDivElement;
     /** a wrapped inline element's lines after the first (`box` outlines the first
      *  and carries the badge); empty for anything drawn as one box */
     lines: { box: HTMLDivElement; decoKey?: string }[];
@@ -328,6 +331,12 @@ const BADGE_LOOK: Record<string, Partial<CSSStyleDeclaration>> = {
     },
 };
 
+/** the thick band: how much of its colour covers what is under it, and its edges
+ *  (dark enough to show a light colour on white, light enough to read text under) */
+const BAND_ALPHA = 0.6;
+/** the glow's colour over what is next to the source */
+const GLOW_ALPHA = 0.55;
+const BAND_EDGE = "rgba(0, 0, 0, 0.7)";
 /** the thin border's width, px (a dark line with a light edge, on any page) */
 const THIN = 2;
 /** the badge at each size: its height, font size and how far it sits out, px */
@@ -362,6 +371,8 @@ function makeBadge(
             boxSizing: "border-box",
             font: `700 ${z.font}px/${z.h - 4}px system-ui, sans-serif`,
             textAlign: "center",
+            // above every outline, also a neighbour's drawn after it
+            zIndex: "1",
         },
         BADGE_LOOK[style] ?? BADGE_LOOK.assistant,
     );
@@ -373,7 +384,7 @@ function makeBadge(
 
 /** (re)build a box's children for the current look: badge, brackets, underline bar */
 function decorate(
-    entry: Pick<Drawn, "box" | "badge" | "decoKey">,
+    entry: Pick<Drawn, "box" | "badge" | "decoKey" | "badgeEl">,
     look: HighlightLook,
     outline: string,
     w: number,
@@ -382,8 +393,20 @@ function decorate(
     if (entry.decoKey === key) return;
     entry.decoKey = key;
     entry.box.replaceChildren();
-    if (look.badges && entry.badge)
-        entry.box.appendChild(makeBadge(entry.badge, look.badgeSize));
+    entry.badgeEl?.remove();
+    entry.badgeEl = undefined;
+    if (look.badges && entry.badge) {
+        const badge = makeBadge(entry.badge, look.badgeSize);
+        const layer = entry.box.parentElement;
+        if (layer?.hasAttribute("data-unilens-layer")) {
+            // placed by paintBox, above every box
+            badge.style.position = "fixed";
+            badge.style.zIndex = "1";
+            badge.style.pointerEvents = "none";
+            layer.appendChild(badge);
+            entry.badgeEl = badge;
+        } else entry.box.appendChild(badge);
+    }
     if (outline === "brackets") {
         const svg = document.createElementNS(SVG_NS, "svg");
         svg.setAttribute("class", `${CLASS}-brackets`);
@@ -430,7 +453,7 @@ function decorate(
  * and the only one, so anything that should look like a highlight borrows it.
  */
 function paintBox(
-    entry: Pick<Drawn, "box" | "badge" | "decoKey">,
+    entry: Pick<Drawn, "box" | "badge" | "decoKey" | "badgeEl">,
     r: { left: number; top: number; width: number; height: number },
     look: HighlightLook,
     outline: string,
@@ -443,8 +466,11 @@ function paintBox(
     decorate(entry, look, outline, w);
     const band = outline === "band" ? 3 * w : outline === "ring" ? w : 0;
     const shadows = [
-        outline === "band" ? `inset 0 0 0 2px ${EDGE}` : "",
-        look.glow ? `${GLOW_SHADOW[look.glowSize]} ${look.color}` : "",
+        outline === "band" ? `inset 0 0 0 1px ${BAND_EDGE}` : "",
+        // see-through too: text next to a source stays readable under its glow
+        look.glow
+            ? `${GLOW_SHADOW[look.glowSize]} ${colorWithAlpha(look.color, GLOW_ALPHA)}`
+            : "",
     ].filter(Boolean);
     Object.assign(box.style, {
         left: `${r.left - pad}px`,
@@ -452,8 +478,9 @@ function paintBox(
         width: `${r.width + 2 * pad}px`,
         height: `${r.height + 2 * pad}px`,
         // real strokes, not shadows, so forced colours keep them
+        // the band is see-through, so text it crosses (a neighbour's) still shows
         border: band
-            ? `${band}px solid ${outline === "ring" ? RING.inner : look.color}`
+            ? `${band}px solid ${outline === "ring" ? RING.inner : colorWithAlpha(look.color, BAND_ALPHA)}`
             : outline === "thin"
               ? `${THIN}px solid ${EDGE}`
               : "0",
@@ -461,7 +488,8 @@ function paintBox(
             outline === "ring"
                 ? `${w}px solid ${RING.outer}`
                 : outline === "band"
-                  ? `2px solid ${EDGE}`
+                  ? // no outer edge: a dark line there would cross a neighbour's text
+                    "none"
                   : outline === "thin"
                     ? `1px solid ${RING.outer}`
                     : "none",
@@ -471,6 +499,12 @@ function paintBox(
             : "transparent",
         boxShadow: shadows.length ? shadows.join(", ") : "none",
     });
+    if (entry.badgeEl) {
+        const off = BADGE_SIZE[look.badgeSize].off;
+        entry.badgeEl.style.left = `${r.left - pad - off}px`;
+        entry.badgeEl.style.top = `${r.top - pad - off}px`;
+        entry.badgeEl.style.display = box.style.display;
+    }
     for (const path of box.querySelectorAll("path"))
         path.setAttribute(
             "d",
@@ -523,17 +557,22 @@ function render() {
         lastRects.set(entry, r);
         // collapsed since it was drawn (an accordion closed): hide, never park at (0, 0)
         box.style.display = isEmptyBox(r) ? "none" : "";
-        const parts = (!isEmptyBox(r) && measureLines(el)) || [r];
-        lastParts.set(entry, parts);
-        syncLines(entry, parts.length - 1);
         // "None" leaves only the number; one without a number keeps the ring
         const outline = drawnOutline(look, Boolean(entry.badge));
+        // the thick band goes round the whole element, never between its lines,
+        // where it would cross its own text (Yotam, 2026-10-10)
+        const parts = (!isEmptyBox(r) &&
+            outline !== "band" &&
+            measureLines(el)) || [r];
+        lastParts.set(entry, parts);
+        syncLines(entry, parts.length - 1);
         paintBox(entry, parts[0], look, outline, w);
         for (const [i, l] of entry.lines.entries())
             paintBox(l, parts[i + 1], look, outline, w);
     }
     for (const g of gone) {
         g.box.remove();
+        g.badgeEl?.remove();
         for (const l of g.lines) l.box.remove();
         boxes.splice(boxes.indexOf(g), 1);
         lastRects.delete(g);
@@ -1342,6 +1381,7 @@ export function clearHighlights() {
     if (had) logEvent("highlights_cleared", { count: boxes.length });
     for (const b of boxes) {
         b.box.remove();
+        b.badgeEl?.remove();
         for (const l of b.lines) l.box.remove();
     }
     boxes = [];

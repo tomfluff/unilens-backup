@@ -2373,7 +2373,8 @@ export default function ChatPopover({
                     (style === "assistant" ? (
                         // the status line announces the position; this is its visible copy
                         <span className="ulc-of" aria-hidden="true">
-                            {at >= 0 ? at + 1 : "–"}/{n}
+                            {/* one chosen: "2/5"; none or all: how many there are */}
+                            {at >= 0 ? `${at + 1}/${n}` : n}
                         </span>
                     ) : (
                         keys.map(({ id, k }) => (

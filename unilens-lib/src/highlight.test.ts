@@ -468,13 +468,15 @@ describe("layered look", () => {
         return layerBoxes()[0] as HTMLElement;
     };
 
-    it("band: a thick stroke in the colour between two dark edges", () => {
+    it("band: a thick see-through stroke in the colour, with a dark inner edge", () => {
         updateSetting("hlOutline", "band");
         updateSetting("hlColor", "#ff00aa");
         const box = one();
-        expect(box.style.border).toBe("6px solid rgb(255, 0, 170)");
-        expect(box.style.outline).toMatch(/^2px solid (#000|rgb\(0, 0, 0\))$/);
-        expect(box.style.boxShadow).toMatch(/^inset 0(px)? 0(px)? 0(px)? 2px/);
+        // see-through, so a neighbour's text under it still shows (Yotam, 2026-10-10)
+        expect(box.style.border).toBe("6px solid rgba(255, 0, 170, 0.6)");
+        // its inner edge only: an outer one would cross a neighbour's text
+        expect(box.style.outline).toMatch(/^(none|)$/);
+        expect(box.style.boxShadow).toMatch(/^inset 0(px)? 0(px)? 0(px)? 1px/);
     });
 
     it("brackets and underline draw decorations instead of a border", () => {
@@ -1324,16 +1326,28 @@ describe("a wrapped link", () => {
             { measure: () => rect(40, 100, 400, 48), lines },
         );
     }
+    // the number sits in the layer above every box, at its first line's corner
     const badges = () =>
-        [...layerBoxes()].map(
-            (b) => b.querySelector(".unilens-hl-badge")?.textContent ?? "",
-        );
+        [
+            ...document.querySelectorAll(
+                "#unilens-highlight-layer .unilens-hl-badge",
+            ),
+        ].map((b) => b.textContent ?? "");
 
     it("is outlined line by line, with its number on the first", () => {
         showWrapped(() => [rect(300, 100, 140, 20), rect(40, 128, 60, 20)]);
         const boxes = [...layerBoxes()] as HTMLElement[];
         expect(boxes).toHaveLength(2);
-        expect(badges()).toEqual(["1", ""]);
+        expect(badges()).toEqual(["1"]);
+        const badge = document.querySelector(
+            "#unilens-highlight-layer .unilens-hl-badge",
+        ) as HTMLElement;
+        expect(parseFloat(badge.style.left)).toBeLessThan(
+            parseFloat(boxes[0].style.left),
+        );
+        expect(parseFloat(badge.style.top)).toBeLessThan(
+            parseFloat(boxes[0].style.top),
+        );
         // each box hugs its line, not the 400 px wide union of both
         expect(parseFloat(boxes[0].style.width)).toBeLessThan(200);
         expect(parseFloat(boxes[1].style.left)).toBeLessThan(
