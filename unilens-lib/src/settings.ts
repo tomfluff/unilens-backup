@@ -829,6 +829,12 @@ export const PANEL_TABS: { id: PanelTabId; groups: PanelGroup[] }[] = [
                     "refreshView",
                 ],
             },
+            {
+                // asking and hearing by voice, beside the asking (Yotam, 2026-10-10)
+                id: "talk",
+                first: ["voiceInput", "liveTalk", "autoRead"],
+                more: ["voiceAutoSend", "voicePauseMs"],
+            },
         ],
     },
     {
@@ -859,8 +865,8 @@ export const PANEL_TABS: { id: PanelTabId; groups: PanelGroup[] }[] = [
         groups: [
             {
                 id: "voiceSound",
-                first: ["voiceInput", "liveTalk", "autoRead", "sounds"],
-                more: ["voiceAutoSend", "voicePauseMs", "ttsVoice", "ttsSpeed"],
+                first: ["sounds", "ttsSpeed"],
+                more: ["ttsVoice"],
             },
             {
                 id: "live",
