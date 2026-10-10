@@ -25,6 +25,7 @@ import {
 } from "./ai";
 import { chatLang, chatText } from "./chatI18n";
 import { ensureChatStyles } from "./chatStyles";
+import { useChatTheme } from "./chatTheme";
 import { clickFeedback, fxStill } from "./clickFx";
 import { earcon } from "./earcons";
 import { renderCited } from "./evidence";
@@ -37,6 +38,7 @@ import {
 } from "./highlight";
 import { type HighlightLook, lookFrom, minimapLook } from "./highlightStyles";
 import {
+    BackIcon,
     CheckIcon,
     ChevronIcon,
     CloseIcon,
@@ -54,6 +56,7 @@ import {
     SearchIcon,
     SendIcon,
     SettingsIcon,
+    SourceStyleIcon,
 } from "./icons";
 import { boxStyles, lensStyles, MAP_INK, paintMapTargets } from "./minimap";
 import {
@@ -1074,6 +1077,7 @@ function ChatSpecimen({ s, T }: { s: Settings; T: Text }) {
     useEffect(() => ensureChatStyles(), []);
     const C = chatText();
     const station = s.chatStyle === "station";
+    const theme = useChatTheme(s.chatTheme);
     const cite = renderCited(
         T.sampleCited,
         (id) => id === "n1",
@@ -1090,6 +1094,9 @@ function ChatSpecimen({ s, T }: { s: Settings; T: Text }) {
                 <HighlightIcon />
                 <span>{C.highlightAll(1)}</span>
             </button>
+            <button type="button" className="ulc-c ulc-back" disabled>
+                <BackIcon />
+            </button>
         </div>
     );
     return (
@@ -1097,6 +1104,7 @@ function ChatSpecimen({ s, T }: { s: Settings; T: Text }) {
             className="ul-chat s-chat"
             data-style={s.chatStyle}
             data-hc={s.highContrast ? "true" : "false"}
+            data-theme={theme}
             inert
             style={
                 {
@@ -1112,6 +1120,16 @@ function ChatSpecimen({ s, T }: { s: Settings; T: Text }) {
                     <b>{station ? C.stationName : C.title}</b>
                     {station && <small>{C.otherName}</small>}
                 </div>
+                {/* as the chat draws them: the Sources button first, when it shows */}
+                {s.sourceStyleButton && (
+                    <button
+                        type="button"
+                        className="ulc-ib ulc-ground"
+                        data-style={s.sourceStyle}
+                    >
+                        <SourceStyleIcon style={s.sourceStyle} />
+                    </button>
+                )}
                 <button type="button" className="ulc-ib">
                     <NewChatIcon />
                 </button>
@@ -1140,8 +1158,12 @@ function ChatSpecimen({ s, T }: { s: Settings; T: Text }) {
                             dangerouslySetInnerHTML={{ __html: cite.html }}
                         />
                         <span className="ulc-read">
-                            <button type="button" className="ulc-speak">
+                            <button
+                                type="button"
+                                className="ulc-speak has-label"
+                            >
                                 <PlayIcon />
+                                <span>{C.readShort}</span>
                             </button>
                         </span>
                         {s.chatStyle === "assistant" && controls}

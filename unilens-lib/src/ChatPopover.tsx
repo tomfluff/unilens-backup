@@ -10,6 +10,7 @@ import {
 } from "./capture";
 import { chatLang, chatText, speechLang } from "./chatI18n";
 import { ensureChatStyles } from "./chatStyles";
+import { useChatTheme } from "./chatTheme";
 import { type Earcon, earcon, releaseAudio } from "./earcons";
 import {
     asksToLocate,
@@ -183,14 +184,6 @@ const phrasesOn = () =>
     getSettings().associateText && getSettings().citePlacement === "inline";
 /** ...and asked for; with the Sources button always, so a switch to underlines is
  *  exact for every answer at once */
-/** the computer's dark-mode setting, where the browser can tell */
-const prefersDark = (): MediaQueryList | null => {
-    try {
-        return window.matchMedia?.("(prefers-color-scheme: dark)") ?? null;
-    } catch {
-        return null;
-    }
-};
 const phrasesAsked = () => phrasesOn() || getSettings().sourceStyleButton;
 
 /** station signs number their sources like station codes */
@@ -381,23 +374,7 @@ export default function ChatPopover({
 
     const fs = settings.chatFontSize;
     const hc = settings.highContrast;
-    // the theme: light, dark, or the computer's, followed live
-    const [sysDark, setSysDark] = useState(
-        () => prefersDark()?.matches ?? false,
-    );
-    useEffect(() => {
-        const q = prefersDark();
-        if (!q) return;
-        const on = () => setSysDark(q.matches);
-        q.addEventListener("change", on);
-        return () => q.removeEventListener("change", on);
-    }, []);
-    const theme =
-        settings.chatTheme === "system"
-            ? sysDark
-                ? "dark"
-                : "light"
-            : settings.chatTheme;
+    const theme = useChatTheme(settings.chatTheme);
     const style = settings.chatStyle;
     const T = chatText();
     // on a phone-width screen the chat docks as a bottom sheet over half the height,
