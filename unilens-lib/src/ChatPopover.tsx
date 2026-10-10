@@ -1325,7 +1325,8 @@ export default function ChatPopover({
         cur.current = { id: captureId, cap: capture };
         setActive(null);
         setReturnable(canReturn());
-        setMini(false);
+        // a folded chat stays folded: it goes to the new place, but the user folded it
+        // (P05, 2026-10-10; it used to open out again)
         if (!pinned)
             setPos(
                 settle(
@@ -1580,6 +1581,61 @@ export default function ChatPopover({
                   ? "number in the answer"
                   : "controls";
     /** outline a reply's evidence (all, or item `index`), on the user's click or command */
+    /**
+     * Once the page settles, a chat covering these elements steps aside to the nearer
+     * side (a setting; a pinned chat stays), and at high zoom with no room either side
+     * it folds to its header. Only for a source the user presses: an answer's own
+     * outlines leave the chat where it is (Yotam, 2026-10-10).
+     */
+    function stepAsideFrom(shown: Element[], still = false) {
+        // chatMovesAside off: the chat stays where it is, unfolded (co-design
+        // initial prototype, Yotam 2026-10-07: stepping aside is an advanced feature)
+        if (!shown.length || mini || still || !getSettings().chatMovesAside)
+            return;
+        window.clearTimeout(stepAside.current);
+        const T = chatText();
+        stepAside.current = window.setTimeout(() => {
+            const boxes = shown.map((e) => e.getBoundingClientRect());
+            const a = {
+                left: Math.min(...boxes.map((r) => r.left)),
+                top: Math.min(...boxes.map((r) => r.top)),
+                right: Math.max(...boxes.map((r) => r.right)),
+                bottom: Math.max(...boxes.map((r) => r.bottom)),
+            };
+            const b = rootRef.current?.getBoundingClientRect();
+            if (!b || dragRef.current) return;
+            const w = Math.min(a.right, b.right) - Math.max(a.left, b.left);
+            const h = Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top);
+            if (w <= 0 || h <= 0) return;
+            // turned off while this waited: the chat stays
+            if (!getSettings().chatMovesAside) return;
+            const aside = !pinnedNow.current;
+            if (aside) {
+                const left = besideTarget(a, b, window.innerWidth);
+                if (left != null) {
+                    setPos((p) => ({ ...p, left }));
+                    return;
+                }
+            }
+            const area = Math.max(1, (a.right - a.left) * (a.bottom - a.top));
+            // no room beside it (high zoom, or a phone's bottom sheet): a chat still
+            // covering the source folds to its header, if it may move at all
+            if ((short || aside) && (w * h) / area > 0.2) {
+                // folding removes the control that has focus: the keyboard moves
+                // to the unfold button, not to the page
+                const hadFocus = rootRef.current?.contains(
+                    document.activeElement,
+                );
+                setMini(true);
+                if (hadFocus)
+                    requestAnimationFrame(() =>
+                        foldRef.current?.focus({ preventScroll: true }),
+                    );
+                act("press", T.sCovered);
+            }
+        }, motionMs() + 80);
+    }
+
     function point(
         m: Msg,
         index: number | "all",
@@ -1665,50 +1721,7 @@ export default function ChatPopover({
             .filter((e): e is Element => e != null);
         // chatMovesAside off: the chat stays where it is, unfolded (co-design
         // initial prototype, Yotam 2026-10-07: stepping aside is an advanced feature)
-        if (shown.length && !mini && !still && getSettings().chatMovesAside)
-            stepAside.current = window.setTimeout(() => {
-                const boxes = shown.map((e) => e.getBoundingClientRect());
-                const a = {
-                    left: Math.min(...boxes.map((r) => r.left)),
-                    top: Math.min(...boxes.map((r) => r.top)),
-                    right: Math.max(...boxes.map((r) => r.right)),
-                    bottom: Math.max(...boxes.map((r) => r.bottom)),
-                };
-                const b = rootRef.current?.getBoundingClientRect();
-                if (!b || dragRef.current) return;
-                const w = Math.min(a.right, b.right) - Math.max(a.left, b.left);
-                const h = Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top);
-                if (w <= 0 || h <= 0) return;
-                // turned off while this waited: the chat stays
-                if (!getSettings().chatMovesAside) return;
-                const aside = !pinnedNow.current;
-                if (aside) {
-                    const left = besideTarget(a, b, window.innerWidth);
-                    if (left != null) {
-                        setPos((p) => ({ ...p, left }));
-                        return;
-                    }
-                }
-                const area = Math.max(
-                    1,
-                    (a.right - a.left) * (a.bottom - a.top),
-                );
-                // no room beside it (high zoom, or a phone's bottom sheet): a chat still
-                // covering the source folds to its header, if it may move at all
-                if ((short || aside) && (w * h) / area > 0.2) {
-                    // folding removes the control that has focus: the keyboard moves
-                    // to the unfold button, not to the page
-                    const hadFocus = rootRef.current?.contains(
-                        document.activeElement,
-                    );
-                    setMini(true);
-                    if (hadFocus)
-                        requestAnimationFrame(() =>
-                            foldRef.current?.focus({ preventScroll: true }),
-                        );
-                    act("press", T.sCovered);
-                }
-            }, motionMs() + 80);
+        stepAsideFrom(shown, still);
         if (hasHighlight()) {
             const said =
                 index === "all"
@@ -1860,6 +1873,8 @@ export default function ChatPopover({
             token,
         );
         if (drawn && hasHighlight()) {
+            // the chat stays put for the answer's own outlines: it steps aside only
+            // for a source the user presses (Yotam, 2026-10-10)
             setActive({ msgId: m.id, index: "all" });
             said += ` ${chatText().hFound(
                 c.ids.map((id) => labelOfWire(id, src.inventory)).join(", "),
@@ -1867,6 +1882,31 @@ export default function ChatPopover({
         }
         done();
     }
+
+    // what was just Alt+clicked, outlined as its place entry outlines it, until the
+    // answer's sources replace it (Yotam, 2026-10-10, session 2)
+    // biome-ignore lint/correctness/useExhaustiveDependencies: once per capture
+    useEffect(() => {
+        if (!getSettings().outlineClicked) return;
+        const p = placeOf(captureId);
+        const box = p?.el?.isConnected ? p.el.getBoundingClientRect() : null;
+        // a thing, not a whole section (as the place entry decides)
+        if (
+            !p?.el ||
+            !box ||
+            box.width > window.innerWidth ||
+            box.height > window.innerHeight / 2
+        )
+            return;
+        const drawn = showHighlights(
+            [{ id: "click", role: "anchor" }],
+            new Map([["click", p.el]]),
+            captureId,
+            nextToken(),
+            { userInitiated: true },
+        );
+        if (drawn && hasHighlight()) setPlaceOn(p);
+    }, [captureId]);
 
     /** "next", "show all", "the second one": steer the last cited reply without a model call */
     /** take the user back to where they clicked, and outline what they clicked on */

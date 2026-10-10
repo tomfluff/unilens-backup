@@ -128,6 +128,10 @@ export const PRESETS = {
             ttsVoice: "marin",
             // Yotam, 2026-10-10: drawing a box (Alt+drag) on, and not in the panel
             regionSelect: true,
+            // Yotam, 2026-10-10 (P05): the chat steps aside from a highlight (a row in
+            // the panel), and what was Alt+clicked is outlined
+            chatMovesAside: true,
+            outlineClicked: true,
             voicePauseMs: 2000,
             // the gear shows, and opens the participant's panel below
             settingsButton: true,
@@ -163,6 +167,7 @@ export const PRESETS = {
             "chatFontSize",
             "chatTheme",
             "sourceStyle",
+            "chatMovesAside",
         ],
         // each task link opens a new tab (session lead, 2026-10-09)
         keepPerParticipant: true,

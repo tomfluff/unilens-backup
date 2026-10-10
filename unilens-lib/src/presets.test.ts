@@ -113,6 +113,8 @@ describe("session 2 (2026-10-09)", () => {
             sourceStyleButton: true,
             ttsVoice: "marin",
             regionSelect: true,
+            chatMovesAside: true,
+            outlineClicked: true,
             voicePauseMs: 2000,
             // the gear opens the participant's panel; the model may take them places
             settingsButton: true,
@@ -143,6 +145,7 @@ describe("session 2 (2026-10-09)", () => {
                 "chatTheme",
                 "sourceStyle",
                 "ttsSpeed",
+                "chatMovesAside",
             ]),
         );
         for (const k of [
@@ -157,6 +160,9 @@ describe("session 2 (2026-10-09)", () => {
             "settingsButton",
         ])
             expect(panel, k).not.toContain(k);
+        // session 1 keeps the chat still and outlines no click
+        expect(PRESETS.initial.values.chatMovesAside).toBe(false);
+        expect("outlineClicked" in PRESETS.initial.values).toBe(false);
         // session 1 still has no box drawing (Alt+drag), and no participant panel
         expect(PRESETS.initial.values.regionSelect).toBe(false);
         // session 1 has no participant panel

@@ -163,6 +163,9 @@ export interface Settings {
     /** a chat covering a chosen source steps aside, to the nearer side, or folds to
      *  its header when there is no room (a pinned chat only folds); off, it stays */
     chatMovesAside: boolean;
+    /** outline the element just Alt+clicked, until the answer's sources replace it
+     *  (Yotam, 2026-10-10, session 2) */
+    outlineClicked: boolean;
     /** the line above the field saying what the next question is about (the outlined
      *  sources or place); hidden, they still go with the question */
     aboutLine: boolean;
@@ -314,6 +317,7 @@ const DEFAULTS: Settings = {
     sounds: true,
     citeEvidence: true,
     chatMovesAside: true,
+    outlineClicked: false,
     aboutLine: true,
     debugShortcut: true,
     assistantZoom: true,
@@ -382,6 +386,7 @@ export const TOGGLE_LABELS: Record<BoolSettingKey, string> = {
     mmNumbers: "Numbers on targets",
     citeEvidence: "Answers cite page elements",
     chatMovesAside: "Move the chat out of the way of sources",
+    outlineClicked: "Outline what I Alt+click",
     aboutLine: "Show what the next question is about, above the field",
     debugShortcut: "Ctrl+Shift+D opens the debug view",
     assistantZoom: "The assistant can zoom the page when asked",
@@ -844,6 +849,7 @@ export const PANEL_TABS: { id: PanelTabId; groups: PanelGroup[] }[] = [
                     "associateText",
                     "sourceStyleButton",
                     "chatMovesAside",
+                    "outlineClicked",
                     "assistantGoTo",
                     "aboutLine",
                     "regionSelect",
