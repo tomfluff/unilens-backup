@@ -641,9 +641,9 @@ export const ENUM_CHOICES = {
         },
     },
     hlColorMode: {
-        label: "Color on the page",
+        label: "Adaptive color",
         choices: {
-            fixed: "Always this color",
+            fixed: "Off",
             invert: "Invert what is under it",
             contrast: "Best contrast with what is under it",
             near: "Near this color, with enough contrast",

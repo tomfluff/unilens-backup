@@ -315,7 +315,7 @@ export const NAMES_JA: Partial<Record<keyof Settings, string>> = {
     debugView: "デバッグ表示（Ctrl＋Shift＋D）",
     inventory: "キャプチャと一緒にページの構造を送る",
     ringScale: "拡大に合わせて枠を太くする",
-    hlColorMode: "ページ上での色",
+    hlColorMode: "色の自動調整",
     hlColorRange: "色を変えてよい幅",
     hlFill: "塗り",
     hlGlow: "光彩",
@@ -465,7 +465,7 @@ export const CHOICES_JA: Partial<
         heavy: "濃く",
     },
     hlColorMode: {
-        fixed: "いつもこの色",
+        fixed: "オフ",
         invert: "下の色を反転",
         contrast: "下の色といちばん見分けやすい色",
         near: "この色に近く、見分けやすく",
@@ -552,7 +552,7 @@ export const CHOICES_JA: Partial<
 
 /** the look cards' short names in Japanese, by stored value (the full name is the tooltip) */
 export const SHORT_JA: Record<string, string> = {
-    fixed: "この色",
+    fixed: "オフ",
     invert: "反転",
     contrast: "見分けやすさ優先",
     near: "この色に近く",

@@ -188,7 +188,7 @@ const SHORT: Record<string, string> = {
     heavy: "Heavy",
     corner: "Top-left corner",
     beside: "Beside, where it fits",
-    fixed: "This color",
+    fixed: "Off",
     invert: "Invert",
     contrast: "Best contrast",
     near: "Near this color",
