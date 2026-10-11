@@ -123,8 +123,8 @@ describe("session 2 (2026-10-09)", () => {
             // the gear opens the participant's panel; the model may take them places
             settingsButton: true,
             assistantGoTo: true,
-            // #26: the yellow, turned only where it would vanish
-            hlColorMode: "near",
+            // #26: the fixed color (Yotam, 2026-10-12)
+            hlColorMode: "fixed",
             hlColorRange: "some",
         });
     });

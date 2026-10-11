@@ -143,9 +143,9 @@ export const PRESETS = {
             // "take me to …": the model decides, and the page goes there (no guard:
             // Yotam wants to see how participants take the model deciding)
             assistantGoTo: true,
-            // #26 (Yotam, 2026-10-12): the yellow stays wherever it shows, and turns
-            // only where it would vanish into the background
-            hlColorMode: "near",
+            // #26 (Yotam, 2026-10-12): the fixed color, as before; the other three
+            // choices are in the participant's panel
+            hlColorMode: "fixed",
             hlColorRange: "some",
         },
         /** what a participant may change in session 2 (session-lead's list,

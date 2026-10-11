@@ -38,7 +38,7 @@ Session 1 of the co-design study (P01–P06) used the initial prototype. Two thi
   - **Near this colour** (`near`): the chosen colour, its OKLCH lightness moved only as far as 3:1 over every background needs, within "How far the colour may change" (`hlColorRange`): a little (0.15), some (0.3), or as far as needed.
   - The backgrounds are read where the highlight is drawn: eight points just outside the element and five inside, each the stack of page elements under it, blended top-down. Gradients count each stop; same-origin images are sampled; anything unreadable counts as both black and white. A highlight across two backgrounds is judged by the worse. UniLens's own layers, chat and panels are never read. A colour whose fill or glow would push the element's text below 4.5:1 is left out.
   - Each box is re-read when it is drawn, at most every 200 ms while the page scrolls or changes, once more after it stops, and when an image loads.
-  - Session 2 starts on Near this colour, some: the yellow stays wherever it shows and darkens only where it would vanish. Yotam has the final say.
+  - The default is Always this color, in session 2 too (Yotam, 2026-10-12); the other three are in the participant panel. The UI spells it "color" (US spelling throughout).
 - **The `session2` preset**: the initial prototype, plus numbers in the text, the Sources button, the 2 s pause, go-to and the gear with the participant panel. Ctrl+Alt+Shift+B now steps off → initial → session 2. `PRESET=session2 tunnel.sh` builds it into the tunnelled copy and its links.
 
 ## Consequences
