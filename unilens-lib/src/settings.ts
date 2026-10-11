@@ -618,7 +618,7 @@ export const ENUM_CHOICES = {
         label: "Move the page to evidence",
         choices: {
             offscreen: "Only when it is off-screen",
-            always: "Always centre it",
+            always: "Always center it",
             never: "Never (cues only)",
         },
     },
