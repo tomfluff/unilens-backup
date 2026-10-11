@@ -145,6 +145,7 @@ function relevant(key: Key, s: Settings): boolean {
     if (key === "voicePauseMs" && !(s.voiceInput && s.voiceAutoSend))
         return false;
     if (key === "associateText" && s.citePlacement !== "inline") return false;
+    if (key === "hlColorRange" && s.hlColorMode !== "near") return false;
     if (MM_ALL.has(key) && s.minimap === "off") return false;
     const own = FX_OWN[key];
     return !own || own.includes(s.clickFx);
@@ -153,6 +154,7 @@ function relevant(key: Key, s: Settings): boolean {
 /** looks chosen by sight: a thumbnail card per choice */
 const PICKERS = new Set<Key>([
     "chatStyle",
+    "hlColorMode",
     "hlOutline",
     "hlBackdrop",
     "hlGlow",
@@ -186,6 +188,10 @@ const SHORT: Record<string, string> = {
     heavy: "Heavy",
     corner: "Top-left corner",
     beside: "Beside, where it fits",
+    fixed: "This colour",
+    invert: "Invert",
+    contrast: "Best contrast",
+    near: "Near this colour",
 };
 const SHORT_NONE = new Set<Key>([
     "hlFill",
@@ -207,6 +213,7 @@ function shortName(k: Key, v: string, full: string, lang: PanelLang): string {
 
 /** a few short choices in a row */
 const SEGMENTS = new Set<Key>([
+    "hlColorRange",
     "chatLanguage",
     "chatFontSize",
     "motion",
@@ -377,6 +384,29 @@ const TIGHT = { w: 130, h: 52 };
 const ROOMY = { w: 170, h: 68 };
 /** the glow's tiles: room round a short sample, so each spread shows whole */
 const GLOWY = { w: 130, h: 92 };
+/** the colour tiles: a light section and a dark one, a source on each */
+const SPLIT_HALF = {
+    light: {
+        position: "absolute",
+        left: 0,
+        top: 0,
+        width: GLOWY.w / 2,
+        height: GLOWY.h,
+        background: "#ffffff",
+    },
+    dark: {
+        position: "absolute",
+        left: GLOWY.w / 2,
+        top: 0,
+        width: GLOWY.w / 2,
+        height: GLOWY.h,
+        background: "#1f2a44",
+    },
+} as const;
+const SPLIT_WORDS = [
+    { left: 14, top: 35, width: 37, height: 22 },
+    { left: 76, top: 35, width: 42, height: 22 },
+];
 const GLOW_WORD = { left: 37, top: 35, width: 56, height: 22 };
 /** the number tiles: room above and to the left for the largest number */
 const BADGE_WORD = { left: 58, top: 48, width: 56, height: 22 };
@@ -542,6 +572,49 @@ function Thumb({ k, v, s, T }: { k: Key; v: string; s: Settings; T: Text }) {
             >
                 <span className="s-word" style={word}>
                     9:30–17:00
+                </span>
+            </Stage>
+        );
+    }
+    if (k === "hlColorMode") {
+        // that way of meeting the page, on a light and a dark section side by side
+        // (the badges off: the colour is what differs)
+        const look: HighlightLook = {
+            ...lookFrom({
+                ...s,
+                hlColorMode: v as Settings["hlColorMode"],
+            }),
+            backdrop: "none",
+            badges: false,
+        };
+        return (
+            <Stage
+                w={GLOWY.w}
+                h={GLOWY.h}
+                page={false}
+                paint={(l) => {
+                    l.replaceChildren();
+                    for (const r of SPLIT_WORDS) {
+                        const box = document.createElement("div");
+                        box.className = "s-box";
+                        l.appendChild(box);
+                        paintOutline(box, r, { look });
+                    }
+                }}
+            >
+                <span className="s-half" style={SPLIT_HALF.light} />
+                <span className="s-half" style={SPLIT_HALF.dark} />
+                <span
+                    className="s-word"
+                    style={{ ...SPLIT_WORDS[0], color: "#111" }}
+                >
+                    9:30
+                </span>
+                <span
+                    className="s-word"
+                    style={{ ...SPLIT_WORDS[1], color: "#fff" }}
+                >
+                    17:00
                 </span>
             </Stage>
         );

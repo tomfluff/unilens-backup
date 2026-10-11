@@ -12,6 +12,8 @@
  * W3C Technique C40: black and white bands, so one of them always clears 3:1.
  */
 
+import type { ColorMode, ColorRange } from "./adaptiveColor";
+
 export const BACKDROPS = {
     none: "No backdrop",
     dim: "Dim the rest of the page",
@@ -54,7 +56,11 @@ export interface HighlightLook {
     badgeSize: BadgeSize;
     /** at the top-left corner, or beside where it fits */
     badgePos: BadgePos;
+    /** the base colour; an adaptive mode draws each box in its own (highlight.ts) */
     color: string;
+    /** how the colour meets the page under it (adaptiveColor.ts) */
+    colorMode: ColorMode;
+    colorRange: ColorRange;
 }
 
 export const BACKDROP_ALPHA: Record<Exclude<Backdrop, "none">, number> = {
@@ -91,6 +97,8 @@ export function lookFrom(s: {
     hlBadges: BadgeSize | "none" | boolean;
     hlBadgePos?: BadgePos;
     hlColor: string;
+    hlColorMode?: ColorMode;
+    hlColorRange?: ColorRange;
 }): HighlightLook {
     return {
         backdrop: s.hlBackdrop,
@@ -112,6 +120,8 @@ export function lookFrom(s: {
                 : "small",
         badgePos: s.hlBadgePos === "beside" ? "beside" : "corner",
         color: isHexColor(s.hlColor) ? s.hlColor : "#ffd400",
+        colorMode: s.hlColorMode ?? "fixed",
+        colorRange: s.hlColorRange ?? "some",
     };
 }
 

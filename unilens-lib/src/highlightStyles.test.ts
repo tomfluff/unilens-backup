@@ -22,6 +22,8 @@ const look = (over: Partial<HighlightLook>): HighlightLook => ({
     badgeSize: "small",
     badgePos: "corner",
     color: "#ffd400",
+    colorMode: "fixed",
+    colorRange: "some",
     ...over,
 });
 
@@ -88,6 +90,8 @@ describe("minimapLook", () => {
             badgeSize: "small",
             badgePos: "corner",
             color: "#00ff00",
+            colorMode: "fixed",
+            colorRange: "some",
         });
     });
     it("takes the highlight look whole when it follows it", () => {

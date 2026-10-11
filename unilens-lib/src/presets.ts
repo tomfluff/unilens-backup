@@ -76,6 +76,7 @@ const INITIAL = {
     hlGlow: "medium",
     hlBadges: "small",
     hlColor: "#ffef26",
+    hlColorMode: "fixed",
     ringWidth: 2,
     ringScale: false,
     // the chat stays where it opened: stepping aside (or folding) to uncover
@@ -142,6 +143,10 @@ export const PRESETS = {
             // "take me to …": the model decides, and the page goes there (no guard:
             // Yotam wants to see how participants take the model deciding)
             assistantGoTo: true,
+            // #26 (Yotam, 2026-10-12): the yellow stays wherever it shows, and turns
+            // only where it would vanish into the background
+            hlColorMode: "near",
+            hlColorRange: "some",
         },
         /** what a participant may change in session 2 (session-lead's list,
          *  2026-10-09): the highlight's look, page zoom, arrows, the page map, Live,
@@ -151,6 +156,8 @@ export const PRESETS = {
          *  button's three) and the reading speed; not the voice (Marin) or the pause */
         panel: [
             "hlColor",
+            "hlColorMode",
+            "hlColorRange",
             "hlOutline",
             "hlBadges",
             "hlBadgePos",

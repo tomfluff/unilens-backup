@@ -102,6 +102,13 @@ export interface Settings {
     hlBadgePos: "corner" | "beside";
     /** the highlight colour, #rgb or #rrggbb; the two-band ring stays black and white */
     hlColor: string;
+    /** how the colour meets the page under it (#26, Yotam 2026-10-12): always the
+     *  colour; inverting what is under it; the palette colour with the best contrast
+     *  there; or the colour, its lightness moved only as far as contrast needs
+     *  (adaptiveColor.ts) */
+    hlColorMode: "fixed" | "invert" | "contrast" | "near";
+    /** how far "near" may move the colour */
+    hlColorRange: "little" | "some" | "any";
     /** how an outlined element outside the screen is pointed at */
     offscreenCue: "none" | "edge" | "pointer";
     /** radius of the pointer cue circle, px */
@@ -284,6 +291,8 @@ const DEFAULTS: Settings = {
     hlBadges: "small",
     hlBadgePos: "corner",
     hlColor: "#ffef26",
+    hlColorMode: "fixed",
+    hlColorRange: "some",
     offscreenCue: "edge",
     cueRadius: 60,
     cueSize: 48,
@@ -631,6 +640,19 @@ export const ENUM_CHOICES = {
             large: "Large",
         },
     },
+    hlColorMode: {
+        label: "Colour on the page",
+        choices: {
+            fixed: "Always this colour",
+            invert: "Invert what is under it",
+            contrast: "Best contrast with what is under it",
+            near: "Near this colour, with enough contrast",
+        },
+    },
+    hlColorRange: {
+        label: "How far the colour may change",
+        choices: { little: "A little", some: "Some", any: "As far as needed" },
+    },
     hlFill: {
         label: "Fill",
         choices: { none: "None", light: "Light", heavy: "Heavy" },
@@ -799,6 +821,8 @@ export const PANEL_TABS: { id: PanelTabId; groups: PanelGroup[] }[] = [
                 id: "highlight",
                 first: [
                     "hlColor",
+                    "hlColorMode",
+                    "hlColorRange",
                     "hlOutline",
                     "hlBadges",
                     "hlBadgePos",

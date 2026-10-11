@@ -10,6 +10,12 @@
  * and the ARIA live region. Nothing here touches the host page's DOM.
  */
 
+import {
+    chooseColor,
+    isPageElement,
+    sampleBackgrounds,
+    setImageLoadListener,
+} from "./adaptiveColor";
 import { chatText } from "./chatI18n";
 import {
     BACKDROP_ALPHA,
@@ -93,6 +99,10 @@ const POINTER_CUE_Z = "2147483646";
 const CLASS = "unilens-hl";
 
 let layer: HTMLDivElement | null = null;
+/** "Invert": white drawn here is blended by difference with the page under it; a
+ *  layer of its own, under the main one (so the numbers stay as they are), because
+ *  the main layer is a stacking context and would blend only with itself */
+let invertLayer: HTMLDivElement | null = null;
 let styleEl: HTMLStyleElement | null = null;
 let liveRegion: HTMLDivElement | null = null;
 interface Drawn {
@@ -272,10 +282,32 @@ function ensureLayer() {
   [data-unilens-layer] .${CLASS} { forced-color-adjust: none; border-color: Canvas !important; outline-color: CanvasText !important; background: transparent !important; box-shadow: none !important }
   [data-unilens-layer] .${CLASS}-dim { display: none !important }
   [data-unilens-layer] .${CLASS}-badge { forced-color-adjust: none; background: CanvasText !important; color: Canvas !important; border-color: Canvas !important }
+  [data-unilens-invert] { display: none !important }
+  [data-unilens-layer] .${CLASS}[data-plain] { outline: 3px solid CanvasText !important }
 }`;
         document.head.appendChild(styleEl);
     }
     return layer;
+}
+
+function ensureInvertLayer() {
+    const main = ensureLayer();
+    if (invertLayer?.isConnected) return invertLayer;
+    invertLayer = document.createElement("div");
+    invertLayer.id = "unilens-highlight-invert";
+    Object.assign(invertLayer.style, {
+        position: "fixed",
+        left: "0",
+        top: "0",
+        width: "0",
+        height: "0",
+        pointerEvents: "none",
+        zIndex: LAYER_Z,
+        mixBlendMode: "difference",
+    });
+    invertLayer.setAttribute("data-unilens-invert", "");
+    main.before(invertLayer);
+    return invertLayer;
 }
 
 /** ring width per band in screen px: constant, or clamped to the zoom (research probe 2) */
@@ -390,15 +422,16 @@ function decorate(
     look: HighlightLook,
     outline: string,
     w: number,
+    part: Part = "all",
 ) {
-    const key = `${outline}|${look.badges}|${look.badgeSize}|${look.badgePos}|${look.color}|${w}|${getSettings().chatStyle}`;
+    const key = `${outline}|${look.badges}|${look.badgeSize}|${look.badgePos}|${look.color}|${w}|${getSettings().chatStyle}|${part}`;
     if (entry.decoKey === key) return;
     entry.decoKey = key;
     entry.box.replaceChildren();
     entry.badgeEl?.remove();
     entry.badgeEl = undefined;
     (entry as { badgeSide?: BadgeSide }).badgeSide = undefined;
-    if (look.badges && entry.badge) {
+    if (look.badges && entry.badge && part !== "tint") {
         const badge = makeBadge(entry.badge, look.badgeSize);
         const layer = entry.box.parentElement;
         if (layer?.hasAttribute("data-unilens-layer")) {
@@ -410,6 +443,9 @@ function decorate(
             entry.badgeEl = badge;
         } else entry.box.appendChild(badge);
     }
+    // inverted, the strokes are drawn in the twin alone, white and without the edge
+    if (part === "plain") return;
+    const tint = part === "tint";
     if (outline === "brackets") {
         const svg = document.createElementNS(SVG_NS, "svg");
         svg.setAttribute("class", `${CLASS}-brackets`);
@@ -421,10 +457,13 @@ function decorate(
             height: "100%",
             overflow: "visible",
         });
-        for (const [stroke, width] of [
-            [EDGE, 2 * w + 2],
-            [look.color, 2 * w],
-        ] as const) {
+        const strokes: [string, number][] = tint
+            ? [["#fff", 2 * w]]
+            : [
+                  [EDGE, 2 * w + 2],
+                  [look.color, 2 * w],
+              ];
+        for (const [stroke, width] of strokes) {
             const path = document.createElementNS(SVG_NS, "path");
             path.setAttribute("class", `${CLASS}-deco`);
             path.setAttribute("fill", "none");
@@ -444,8 +483,8 @@ function decorate(
             right: "0",
             top: "100%",
             height: `${2 * w + 2}px`,
-            background: look.color,
-            outline: `1px solid ${EDGE}`,
+            background: tint ? "#fff" : look.color,
+            outline: tint ? "none" : `1px solid ${EDGE}`,
         });
         entry.box.appendChild(bar);
     }
@@ -646,26 +685,137 @@ function placeBadge(
     badge.style.top = `${p.y - origin.y}px`;
 }
 
-function paintBox(
+/** a box drawn whole; or, inverted, split in two: "plain" keeps what is not in the
+ *  colour (the black and white ring or border, the number) and "tint" draws the
+ *  coloured parts in white in the difference layer, at the same place */
+type Part = "all" | "plain" | "tint";
+
+/** inverted, how much of the page under the fill and glow is inverted: a full
+ *  inversion keeps text readable, a partial one greys it, so these stay low enough
+ *  for black text on white to keep 5:1 (0.3 would leave 4:1) */
+const INVERT_FILL_MAX = 0.25;
+const INVERT_GLOW = 0.25;
+
+/** each box's twin in the difference layer, while the look inverts */
+const twins = new WeakMap<
+    HTMLElement,
+    { box: HTMLDivElement; decoKey?: string }
+>();
+/** a preview's twins sit beside its paint layer; each knows its box, so the twins of
+ *  boxes a repaint threw away are swept */
+const twinOwner = new WeakMap<HTMLElement, HTMLElement>();
+
+/** a preview's twins whose boxes a repaint threw away */
+function sweepTwins(paint: Element | null) {
+    for (const t of paint?.parentElement?.querySelectorAll<HTMLElement>(
+        ":scope > [data-tint]",
+    ) ?? [])
+        if (!twinOwner.get(t)?.isConnected) t.remove();
+}
+
+/** `box`'s twin, made where the difference blends with what is under it; null for a
+ *  box drawn on its own (the click feedback's frame, animated and removed by its
+ *  owner, which would leave a twin behind): that one keeps the colour */
+function twinOf(box: HTMLDivElement) {
+    const had = twins.get(box);
+    if (had?.box.isConnected) return had;
+    const paint = box.closest(".s-paint");
+    if (!paint && box.parentElement !== layer) return null;
+    const twin = document.createElement("div");
+    twin.className = box.className;
+    twin.dataset.tint = "";
+    Object.assign(twin.style, {
+        position: box.style.position || "absolute",
+        boxSizing: "border-box",
+        pointerEvents: "none",
+        borderRadius: box.style.borderRadius || "4px",
+    });
+    if (paint) {
+        // a preview: the paint layer is a stacking context, so the twin goes beside
+        // it, over the sketch (and over its sample word, which sits at z-index 1)
+        sweepTwins(paint);
+        twin.style.mixBlendMode = "difference";
+        twin.style.zIndex = "1";
+        paint.before(twin);
+    } else {
+        twin.style.position = "fixed";
+        ensureInvertLayer().appendChild(twin);
+    }
+    twinOwner.set(twin, box);
+    const entry = { box: twin };
+    twins.set(box, entry);
+    return entry;
+}
+
+function dropTwin(box: HTMLElement) {
+    twins.get(box)?.box.remove();
+    twins.delete(box);
+}
+
+/** remove a box and its twin */
+function removeBox(box: HTMLElement) {
+    box.remove();
+    dropTwin(box);
+}
+
+/** a box in `look`: whole, or split into its plain part and its inverted twin */
+function paintParts(
     entry: Pick<Drawn, "box" | "badge" | "decoKey" | "badgeEl" | "badgeSide">,
     r: { left: number; top: number; width: number; height: number },
     look: HighlightLook,
     outline: string,
     w: number,
 ) {
+    const twin = look.colorMode === "invert" ? twinOf(entry.box) : null;
+    if (!twin) {
+        dropTwin(entry.box);
+        paintBox(entry, r, look, outline, w);
+        return;
+    }
+    paintBox(entry, r, look, outline, w, "plain");
+    twin.box.style.display = entry.box.style.display;
+    paintBox(twin, r, look, outline, w, "tint");
+}
+
+function paintBox(
+    entry: Pick<Drawn, "box" | "badge" | "decoKey" | "badgeEl" | "badgeSide">,
+    r: { left: number; top: number; width: number; height: number },
+    look: HighlightLook,
+    outline: string,
+    w: number,
+    part: Part = "all",
+) {
     const box = entry.box;
     const pad = padFor(outline, w);
     // forced colours drop fill, glow and backdrop: an outline-less look needs a ring there
     box.dataset.outline = outline;
-    decorate(entry, look, outline, w);
+    decorate(entry, look, outline, w, part);
     const band = outline === "band" ? 3 * w : outline === "ring" ? w : 0;
+    const tint = part === "tint";
+    const plain = part === "plain";
+    // inverted, the coloured parts are in the twin, which forced colours hide: this
+    // box then draws an outline of its own (the forced-colours styles)
+    if (plain) box.dataset.plain = "";
+    else delete box.dataset.plain;
     const shadows = [
-        outline === "band" ? `inset 0 0 0 1px ${BAND_EDGE}` : "",
+        outline === "band" && part === "all"
+            ? `inset 0 0 0 1px ${BAND_EDGE}`
+            : "",
         // see-through too: text next to a source stays readable under its glow
-        look.glow
-            ? `${GLOW_SHADOW[look.glowSize]} ${colorWithAlpha(look.color, GLOW_ALPHA)}`
+        look.glow && !plain
+            ? `${GLOW_SHADOW[look.glowSize]} ${tint ? `rgba(255,255,255,${INVERT_GLOW})` : colorWithAlpha(look.color, GLOW_ALPHA)}`
             : "",
     ].filter(Boolean);
+    // inverted: the twin keeps the ring's and border's room, unpainted
+    const bandColor = tint
+        ? outline === "ring"
+            ? "transparent"
+            : "#fff"
+        : plain && outline === "band"
+          ? "transparent"
+          : outline === "ring"
+            ? RING.inner
+            : colorWithAlpha(look.color, BAND_ALPHA);
     Object.assign(box.style, {
         left: `${r.left - pad}px`,
         top: `${r.top - pad}px`,
@@ -674,23 +824,27 @@ function paintBox(
         // real strokes, not shadows, so forced colours keep them
         // the band is see-through, so text it crosses (a neighbour's) still shows
         border: band
-            ? `${band}px solid ${outline === "ring" ? RING.inner : colorWithAlpha(look.color, BAND_ALPHA)}`
+            ? `${band}px solid ${bandColor}`
             : outline === "thin"
-              ? `${THIN}px solid ${EDGE}`
+              ? `${THIN}px solid ${tint ? "transparent" : EDGE}`
               : "0",
-        outline:
-            outline === "ring"
-                ? `${w}px solid ${RING.outer}`
-                : outline === "band"
-                  ? // no outer edge: a dark line there would cross a neighbour's text
-                    "none"
-                  : outline === "thin"
-                    ? `1px solid ${RING.outer}`
-                    : "none",
+        outline: tint
+            ? "none"
+            : outline === "ring"
+              ? `${w}px solid ${RING.outer}`
+              : outline === "band"
+                ? // no outer edge: a dark line there would cross a neighbour's text
+                  "none"
+                : outline === "thin"
+                  ? `1px solid ${RING.outer}`
+                  : "none",
         outlineOffset: "0",
-        background: look.fill
-            ? colorWithAlpha(look.color, look.fillAlpha)
-            : "transparent",
+        background:
+            look.fill && !plain
+                ? tint
+                    ? `rgba(255,255,255,${Math.min(INVERT_FILL_MAX, look.fillAlpha)})`
+                    : colorWithAlpha(look.color, look.fillAlpha)
+                : "transparent",
         boxShadow: shadows.length ? shadows.join(", ") : "none",
     });
     const outer = {
@@ -780,7 +934,116 @@ export function paintOutline(
         outline = "ring";
     box.style.boxSizing = "border-box";
     box.style.borderRadius = "4px";
-    paintBox({ box, badge }, r, look, outline, bandWidth());
+    box.style.pointerEvents = "none";
+    // a repaint threw the last boxes away: their twins go too, whatever the look now
+    sweepTwins(box.closest(".s-paint"));
+    const w = bandWidth();
+    const entry = { box, badge };
+    paintParts(entry, r, look, outline, w);
+    if (!adapts(look)) return;
+    // the colour for what is under it: measured where the box now is on screen (a
+    // preview may be scaled), then drawn again in it
+    const b = box.getBoundingClientRect();
+    if (!b.width || !box.offsetWidth) return;
+    const k = b.width / box.offsetWidth;
+    const pad = padFor(outline, w) * k;
+    const root = box.getRootNode();
+    const inner = {
+        left: b.left + pad,
+        top: b.top + pad,
+        width: b.width - 2 * pad,
+        height: b.height - 2 * pad,
+    };
+    const where = root instanceof ShadowRoot ? root : document;
+    // a preview (the settings panel hangs off <html> too) reads its own stage; its
+    // boxes let the pointer through, so they are never found
+    const stage = box.closest(".s-stage, .s-page");
+    const skip = stage
+        ? (e: Element) => !stage.contains(e)
+        : (e: Element) => !isPageElement(e);
+    // the text it outlines: the innermost element with text at its middle
+    const el = where
+        .elementsFromPoint(
+            inner.left + inner.width / 2,
+            inner.top + inner.height / 2,
+        )
+        .find(
+            (e) =>
+                !skip(e) &&
+                e !== document.body &&
+                e !== document.documentElement &&
+                Boolean(e.textContent?.trim()),
+        );
+    const color = colorUnder(inner, look, outline, w * k, {
+        root: where,
+        skip,
+        el,
+    });
+    if (color && color !== look.color)
+        paintParts(entry, r, { ...look, color }, outline, w);
+}
+
+/** whether the look's colour depends on what is under each box */
+const adapts = (look: HighlightLook) =>
+    look.colorMode === "contrast" || look.colorMode === "near";
+
+/** the colour to draw a box round `r` (client px) in, for what is under it; null
+ *  when nothing under it could be seen (off-screen) */
+function colorUnder(
+    r: Rect,
+    look: HighlightLook,
+    outline: string,
+    w: number,
+    opts: Parameters<typeof sampleBackgrounds>[2] = {},
+): string | null {
+    if (look.colorMode !== "contrast" && look.colorMode !== "near") return null;
+    // under the band, or just beyond the element where a glow or ring would be
+    const band = outline === "band" ? 3 * w : 2 * w;
+    const bg = sampleBackgrounds(r, OUTLINE_OFFSET + band / 2, opts);
+    if (!bg.edge.length && !bg.inside.length) return null;
+    return chooseColor(bg, {
+        base: look.color,
+        mode: look.colorMode,
+        range: look.colorRange,
+        fillAlpha: look.fill ? look.fillAlpha : 0,
+        glowAlpha: look.glow ? GLOW_ALPHA : 0,
+    });
+}
+
+/** each outlined element's colour as last measured, and when: re-measured at most
+ *  every RESAMPLE_MS while the page moves, and once more after it stops, so a
+ *  section scrolling under it, a carousel turning or an image loading is caught */
+const RESAMPLE_MS = 200;
+const sampled = new WeakMap<
+    Drawn,
+    { color: string; at: number; key: string }
+>();
+let resampleTimer = 0;
+
+function colorFor(
+    entry: Drawn,
+    r: Rect,
+    look: HighlightLook,
+    outline: string,
+    w: number,
+): string {
+    const had = sampled.get(entry);
+    const key = `${look.colorMode}|${look.colorRange}|${look.color}|${outline}|${look.fill}|${look.fillAlpha}|${look.glow}`;
+    const now = performance.now();
+    if (had && had.key === key && now - had.at < RESAMPLE_MS) {
+        // a frame inside the interval: measure once more when it ends
+        if (!resampleTimer)
+            resampleTimer = window.setTimeout(() => {
+                resampleTimer = 0;
+                scheduleRelay();
+            }, RESAMPLE_MS);
+        return had.color;
+    }
+    const color =
+        colorUnder(r, look, outline, w, { el: entry.el }) ??
+        (had?.key === key ? had.color : look.color);
+    sampled.set(entry, { color, at: now, key });
+    return color;
 }
 
 function render() {
@@ -806,15 +1069,20 @@ function render() {
             measureLines(el)) || [r];
         lastParts.set(entry, parts);
         syncLines(entry, parts.length - 1);
-        paintBox(entry, parts[0], look, outline, w);
+        // an adaptive colour is the element's own, for what is under it now
+        const lk =
+            adapts(look) && !isEmptyBox(r)
+                ? { ...look, color: colorFor(entry, r, look, outline, w) }
+                : look;
+        paintParts(entry, parts[0], lk, outline, w);
         for (const [i, l] of entry.lines.entries())
-            paintBox(l, parts[i + 1], look, outline, w);
+            paintParts(l, parts[i + 1], lk, outline, w);
     }
     for (const g of gone) {
-        g.box.remove();
+        removeBox(g.box);
         g.badgeEl?.remove();
         badgeRects.delete(g);
-        for (const l of g.lines) l.box.remove();
+        for (const l of g.lines) removeBox(l.box);
         boxes.splice(boxes.indexOf(g), 1);
         lastRects.delete(g);
         lastParts.delete(g);
@@ -1414,6 +1682,9 @@ function setupSubscriptions() {
         capture: true,
     });
     window.addEventListener("resize", scheduleRelay);
+    // a lazy image arriving changes what is under an adaptive colour
+    document.addEventListener("load", scheduleRelay, true);
+    setImageLoadListener(scheduleRelay);
     const onPointer = () => {
         if (getSettings().offscreenCue === "pointer") scheduleCueRelay();
     };
@@ -1432,11 +1703,24 @@ function setupSubscriptions() {
                 capture: true,
             }),
         () => window.removeEventListener("resize", scheduleRelay),
+        () => document.removeEventListener("load", scheduleRelay, true),
+        () => setImageLoadListener(null),
         onViewChange(scheduleRelay),
         onZoomChange(scheduleRelay),
     ];
+    // a page's own theme switch (a class on <body> or <html>) changes what is under
+    // an adaptive colour; UniLens writes only their style
+    const themed = (r: MutationRecord) =>
+        r.type === "attributes" &&
+        r.attributeName === "class" &&
+        (r.target === document.body || r.target === document.documentElement);
     watcher = new MutationObserver((records) => {
-        if (records.some((r) => !isOwnMutation(r))) scheduleRelay();
+        if (records.some((r) => !isOwnMutation(r) || themed(r)))
+            scheduleRelay();
+    });
+    watcher.observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ["class"],
     });
     watcher.observe(document.body, {
         subtree: true,
@@ -1456,6 +1740,8 @@ function teardownSubscriptions() {
     raf = 0;
     if (cueRaf) cancelAnimationFrame(cueRaf);
     cueRaf = 0;
+    clearTimeout(resampleTimer);
+    resampleTimer = 0;
 }
 
 // ── public lifecycle ─────────────────────────────────────────────────────────
@@ -1489,7 +1775,10 @@ function newBox(role: HighlightRole): HTMLDivElement {
 /** as many extra line boxes as the element has lines after its first, right after
  *  its own box (a reflow can add or drop a line) */
 function syncLines(entry: Drawn, n: number) {
-    while (entry.lines.length > n) entry.lines.pop()?.box.remove();
+    while (entry.lines.length > n) {
+        const l = entry.lines.pop();
+        if (l) removeBox(l.box);
+    }
     while (entry.lines.length < n) {
         const box = newBox(entry.role);
         box.dataset.line = String(entry.lines.length + 2);
@@ -1621,10 +1910,10 @@ export function clearHighlights() {
     const had = boxes.length > 0;
     if (had) logEvent("highlights_cleared", { count: boxes.length });
     for (const b of boxes) {
-        b.box.remove();
+        removeBox(b.box);
         b.badgeEl?.remove();
         badgeRects.delete(b);
-        for (const l of b.lines) l.box.remove();
+        for (const l of b.lines) removeBox(l.box);
     }
     boxes = [];
     dimBox?.remove();

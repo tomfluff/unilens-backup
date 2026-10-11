@@ -92,6 +92,7 @@ describe("every preset", () => {
             hlGlow: "medium",
             hlBadges: "small",
             hlColor: "#ffef26",
+            hlColorMode: "fixed",
             ringWidth: 2,
             ringScale: false,
             chatMovesAside: false,
@@ -122,6 +123,9 @@ describe("session 2 (2026-10-09)", () => {
             // the gear opens the participant's panel; the model may take them places
             settingsButton: true,
             assistantGoTo: true,
+            // #26: the yellow, turned only where it would vanish
+            hlColorMode: "near",
+            hlColorRange: "some",
         });
     });
 
