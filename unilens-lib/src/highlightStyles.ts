@@ -22,7 +22,7 @@ export const BACKDROPS = {
 export type Backdrop = keyof typeof BACKDROPS;
 
 export const OUTLINES = {
-    band: "Thick band in the colour",
+    band: "Thick band in the color",
     ring: "Two-band ring (black and white)",
     thin: "Thin border",
     brackets: "Corner brackets",

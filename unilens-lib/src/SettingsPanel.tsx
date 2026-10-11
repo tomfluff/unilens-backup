@@ -188,10 +188,10 @@ const SHORT: Record<string, string> = {
     heavy: "Heavy",
     corner: "Top-left corner",
     beside: "Beside, where it fits",
-    fixed: "This colour",
+    fixed: "This color",
     invert: "Invert",
     contrast: "Best contrast",
-    near: "Near this colour",
+    near: "Near this color",
 };
 const SHORT_NONE = new Set<Key>([
     "hlFill",
@@ -260,7 +260,7 @@ function nameOf(key: Key, lang: PanelLang): { name: string; unit?: string } {
         (NUMBER_KNOBS as Record<string, { label: string }>)[key]?.label ??
         (key === "aiReasoning" ? "Reasoning" : undefined) ??
         (CATALOGUE_LABELS as Record<string, string>)[key] ??
-        (key === "hlColor" ? "Colour" : key);
+        (key === "hlColor" ? "Color" : key);
     const m = raw.match(/^(.*?)\s*\((px|%|ms|chars)\)$/);
     if (m) return { name: m[1], unit: m[2] === "chars" ? "" : m[2] };
     const pct = raw.match(/^(.*?)\s*\(%, (.*)\)$/);

@@ -394,7 +394,7 @@ export const TOGGLE_LABELS: Record<BoolSettingKey, string> = {
     inventory: "Send page inventory with captures",
     ringScale: "Outline grows with the zoom",
     mmFollowHighlight: "Same look as the highlights",
-    mmFill: "Colour fill (see-through)",
+    mmFill: "Color fill (see-through)",
     mmGlow: "Glow around targets",
     mmNumbers: "Numbers on targets",
     citeEvidence: "Answers cite page elements",
@@ -416,7 +416,7 @@ export const TOGGLE_LABELS: Record<BoolSettingKey, string> = {
     fxRipple: "Ripple on the click",
     fxHalo: "Orb: halo",
     fxDot: "Aurora: dot on the exact point",
-    fxThirdTone: "Third colour (coral)",
+    fxThirdTone: "Third color (coral)",
     fxSheen: "Frame: scanning sheen",
     fxHug: "Frame: breathing",
     fxEdgeGradient: "Edge: moving gradient",
@@ -582,8 +582,8 @@ export const ENUM_CHOICES = {
     fxRippleLook: {
         label: "Ripple look",
         choices: {
-            rimmed: "Highlight colour with black rims",
-            taper: "Highlight colour, thick to thin",
+            rimmed: "Highlight color with black rims",
+            taper: "Highlight color, thick to thin",
         },
     },
     fxSpeed: {
@@ -641,16 +641,16 @@ export const ENUM_CHOICES = {
         },
     },
     hlColorMode: {
-        label: "Colour on the page",
+        label: "Color on the page",
         choices: {
-            fixed: "Always this colour",
+            fixed: "Always this color",
             invert: "Invert what is under it",
             contrast: "Best contrast with what is under it",
-            near: "Near this colour, with enough contrast",
+            near: "Near this color, with enough contrast",
         },
     },
     hlColorRange: {
-        label: "How far the colour may change",
+        label: "How far the color may change",
         choices: { little: "A little", some: "Some", any: "As far as needed" },
     },
     hlFill: {
@@ -707,7 +707,7 @@ export const ENUM_CHOICES = {
         },
     },
     trailColor: {
-        label: "Pointer trail colour (in the assistant's pictures)",
+        label: "Pointer trail color (in the assistant's pictures)",
         choices: { orange: "Orange", lime: "Lime" },
     },
     ttsProvider: {

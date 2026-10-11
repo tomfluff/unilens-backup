@@ -56,7 +56,7 @@ const EN = {
     sampleSource: "Open 9:30–17:00 (sample)",
     hearSound: "Hear the action sound",
     tryFx: "Try the click feedback",
-    custom: "Other colour",
+    custom: "Other color",
     search: "Find a setting",
     noMatch: (q: string) => `No setting matches “${q}”.`,
     hiddenNow: "Shown only with another setting on",
@@ -181,7 +181,7 @@ export const OWN_SETTINGS: Partial<
     highContrast: {
         label: { en: "High contrast", ja: "ハイコントラスト" },
         hint: {
-            en: "Stronger colours and borders, light or dark with the theme",
+            en: "Stronger colors and borders, light or dark with the theme",
             ja: "色と枠を強く（テーマに合わせて明るく・暗く）",
         },
     },
@@ -208,7 +208,7 @@ export const OWN_SETTINGS: Partial<
         },
     },
     hlColor: {
-        label: { en: "Highlight colour", ja: "ハイライトの色" },
+        label: { en: "Highlight color", ja: "ハイライトの色" },
         hint: {
             en: "Around the sources on the page",
             ja: "ページ上の根拠を囲む色",
