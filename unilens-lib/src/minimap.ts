@@ -298,15 +298,17 @@ function build() {
     document.documentElement.appendChild(box);
 }
 
-/** move the lens so it centres on the point clicked in the minimap */
+/** move the lens so it centres on the point clicked in the minimap, at once */
 function panTo(e: PointerEvent) {
     const r = canvas.getBoundingClientRect();
     const { scale } = getZoom();
     const contentX = (e.clientX - r.left) / mapScale;
     const contentY = (e.clientY - r.top) / mapScale;
+    // a move the user aims themselves: at once, no glide (Yotam, 2026-10-12)
     setView(
         contentX * scale - window.innerWidth / 2,
         contentY * scale - window.innerHeight / 2,
+        true,
     );
 }
 

@@ -811,11 +811,15 @@ function clampView(x: number, y: number): { x: number; y: number } {
 /**
  * Move the view, gliding when motion allows. A new move cancels a running glide and
  * starts from wherever it had got to; a drag follows the pointer directly.
+ *
+ * Yotam's rule (2026-10-12): moves to highlights glide (a source pressed, the stepper,
+ * a highlight or cue clicked) and so do the assistant's own moves (go-to); a move the
+ * user aims themselves (a click or drag on the minimap) is `instant`.
  */
-export function setView(x: number, y: number) {
+export function setView(x: number, y: number, instant = false) {
     watchInput();
     cancelTween();
-    const ms = dragging ? 0 : motionMs();
+    const ms = dragging || instant ? 0 : motionMs();
     const from = getView();
     const to = clampView(x, y);
     if (!ms || (to.x === from.x && to.y === from.y)) {
@@ -837,7 +841,7 @@ function glide(now: number) {
     const t = Math.min(1, Math.max(0, (now - tw.start) / tw.ms));
     if (t >= 1) {
         tween = null;
-        jumpView(tw.to.x, tw.to.y, true);
+        jumpView(tw.to.x, tw.to.y);
         return;
     }
     // ask for the next frame before moving: listeners that redraw on a frame of their
@@ -850,27 +854,31 @@ function glide(now: number) {
     jumpView(
         tw.from.x + (tw.to.x - tw.from.x) * e,
         tw.from.y + (tw.to.y - tw.from.y) * e,
-        true,
     );
 }
 
 /**
  * Put the view there now, under either engine, and tell the view listeners
- * (outline, cues, minimap). `frame`: one step of a glide, which must not be turned
- * into a smooth scroll of its own by the page's CSS scroll-behavior.
+ * (outline, cues, minimap). Always at once: UniLens' own moves never take the page's
+ * CSS scroll-behavior (the study sites, like many, scroll smoothly), which would
+ * otherwise turn a zoom's anchoring, a pan or one step of a glide into a slide of its
+ * own after the fact (Yotam, 2026-10-12: zooming came in two stages)
  */
-function jumpView(x: number, y: number, frame = false) {
+function jumpView(x: number, y: number) {
     if (frozen) {
         pan = clampView(x, y);
         paint();
         applyPins();
-    } else if (frame) {
-        window.scrollTo({ left: x, top: y, behavior: "instant" });
     } else {
-        window.scrollTo(x, y);
+        instantScroll(x, y);
     }
     const v = getView();
     for (const cb of viewListeners) cb(v.x, v.y);
+}
+
+/** the window scrolled there at once, whatever the page's CSS scroll-behavior */
+function instantScroll(x: number, y: number) {
+    window.scrollTo({ left: x, top: y, behavior: "instant" });
 }
 
 function paint() {
@@ -889,7 +897,7 @@ function paint() {
 function freeze() {
     if (frozen) return;
     pan = { x: window.scrollX, y: window.scrollY }; // both are the same client-px offset
-    window.scrollTo(0, 0);
+    instantScroll(0, 0);
     prevOverflow = document.documentElement.style.overflow;
     document.documentElement.style.overflow = "hidden";
     frozen = true;
@@ -902,7 +910,7 @@ function unfreeze() {
     document.documentElement.style.overflow = prevOverflow;
     frozen = false;
     pan = { x: 0, y: 0 };
-    window.scrollTo(x, y); // land where the lens was looking
+    instantScroll(x, y); // land where the lens was looking
 }
 
 // ── Animated zoom state ────────────────────────────────────────────────────

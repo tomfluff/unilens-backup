@@ -42,7 +42,11 @@ describe("places", () => {
         const far = { captureId: "a", at: 1, x: 100, y: 3000, label: "x" };
         expect(goToPlace(far)).toBe("moved");
         // jsdom: 1024x768 viewport, zoom 1, view at (0, 0)
-        expect(window.scrollTo).toHaveBeenLastCalledWith(100 - 512, 3000 - 384);
+        expect(window.scrollTo).toHaveBeenLastCalledWith({
+            left: 100 - 512,
+            top: 3000 - 384,
+            behavior: "instant",
+        });
         const near = { captureId: "b", at: 2, x: 100, y: 300, label: "y" };
         expect(goToPlace(near)).toBe("in-view");
     });
