@@ -113,12 +113,16 @@ describe("session 2 (2026-10-09)", () => {
             associateText: false,
             sourceStyleButton: true,
             ttsVoice: "marin",
-            regionSelect: true,
+            // only the default ways to ask (Yotam, 2026-10-12): no box, no Live, no
+            // edge arrows; the page map off, found in the panel
+            regionSelect: false,
+            liveTalk: false,
+            offscreenCue: "none",
             chatMovesAside: true,
             outlineClicked: true,
             zoom: true,
             zoomKeys: true,
-            minimap: "zoomed",
+            minimap: "off",
             voicePauseMs: 2000,
             // the gear opens the participant's panel; the model may take them places
             settingsButton: true,
@@ -146,7 +150,7 @@ describe("session 2 (2026-10-09)", () => {
             expect.arrayContaining([
                 "chatTextScale",
                 "highContrast",
-                "liveTalk",
+                "minimap",
                 // Yotam, 2026-10-10
                 "chatFontSize",
                 "chatTheme",
@@ -162,6 +166,9 @@ describe("session 2 (2026-10-09)", () => {
             "associateText",
             "ttsVoice",
             "regionSelect",
+            // only discussed in the gallery (Yotam, 2026-10-12)
+            "liveTalk",
+            "offscreenCue",
             "voicePauseMs",
             "voiceAutoSend",
             "assistantGoTo",
