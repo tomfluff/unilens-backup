@@ -89,6 +89,8 @@ const INITIAL = {
     // the log follows an answer's text, and Listen is at its end (#30 changed both
     // for session 2)
     answerFromStart: false,
+    // an answer to "where …?" that points at nothing looks like a note (dotted)
+    quietNotFound: true,
     // no marks where the user clicked (a session-2 idea)
     clickMark: "none",
     clickMarkStyle: "tag",
@@ -172,6 +174,9 @@ export const PRESETS = {
             // numbers stay by their places, off screen with them (Yotam's try-out,
             // 2026-10-12). Not in the panel
             hlBadgeClamp: false,
+            // every answer looks like an answer; notes and errors alone are dotted
+            // (Yotam's try-out, 2026-10-12). Not in the panel
+            quietNotFound: false,
         },
         /** what a participant may change in session 2 (session-lead's list,
          *  2026-10-09): the highlight's look, page zoom, the page map, voice, sounds,

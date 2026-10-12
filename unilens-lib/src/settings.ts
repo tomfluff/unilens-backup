@@ -194,6 +194,10 @@ export interface Settings {
      *  a long answer jumps back to its start when it ends; Listen at the end. A preset
      *  value, not a participant's setting */
     answerFromStart: boolean;
+    /** session 1: an answer to "where …?" that points at nothing is styled as a note
+     *  (dotted). Off (Yotam's try-out, 2026-10-12): every answer is styled as one;
+     *  only notes and errors look apart. A preset value, not a participant's setting */
+    quietNotFound: boolean;
     /** a numbered mark (P1, P2, … as in the chat) where an Alt+click landed (P02,
      *  P03, session 1), and what it marks (Yotam, 2026-10-12): none, the spot clicked,
      *  what was clicked (outlined as its P entry in the chat outlines it), or both.
@@ -371,6 +375,7 @@ const DEFAULTS: Settings = {
     chatMovesAside: true,
     outlineClicked: false,
     answerFromStart: true,
+    quietNotFound: false,
     clickMark: "none",
     clickMarkStyle: "tag",
     aboutLine: true,
@@ -448,6 +453,7 @@ export const TOGGLE_LABELS: Record<BoolSettingKey, string> = {
     chatMovesAside: "Move the chat out of the way of sources",
     outlineClicked: "Outline what I Alt+click",
     answerFromStart: "New answers show from their start, Listen first",
+    quietNotFound: "An answer that points at nothing looks like a note",
     aboutLine: "Show what the next question is about, above the field",
     debugShortcut: "Ctrl+Shift+D opens the debug view",
     assistantZoom: "The assistant can zoom the page when asked",
@@ -988,6 +994,7 @@ export const PANEL_TABS: { id: PanelTabId; groups: PanelGroup[] }[] = [
                     "chatMovesAside",
                     "outlineClicked",
                     "answerFromStart",
+                    "quietNotFound",
                     "clickMark",
                     "clickMarkStyle",
                     "assistantGoTo",

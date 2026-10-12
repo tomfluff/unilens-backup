@@ -375,6 +375,7 @@ export const NAMES_JA: Partial<Record<keyof Settings, string>> = {
     outlineClicked: "Alt＋クリックしたものを囲む",
     clickMark: "印をつけるもの",
     answerFromStart: "新しい回答を先頭から表示（読み上げは先頭に）",
+    quietNotFound: "何も指さない回答をメモの見た目に",
     clickMarkStyle: "クリックした点の印",
     aboutLine: "次の質問の対象を入力欄の上に表示",
     debugShortcut: "Ctrl＋Shift＋D でデバッグ表示を開く",

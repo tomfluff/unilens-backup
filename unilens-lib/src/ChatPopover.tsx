@@ -2043,7 +2043,14 @@ export default function ChatPopover({
         // shown from its start as it began (#30): no jump now
         if (!getSettings().answerFromStart) showAnswerStart(m.id);
         // asked where, pointed nowhere: "nothing found", styled apart from an answer
-        if (c && !c.ids.length && asksToLocate(question))
+        // (session 1; in session 2 every answer looks like one, notes and errors
+        // alone are styled apart: Yotam's try-out, 2026-10-12)
+        if (
+            getSettings().quietNotFound &&
+            c &&
+            !c.ids.length &&
+            asksToLocate(question)
+        )
             setMessages((ms) =>
                 ms.map((x) => (x.id === m.id ? { ...x, quiet: true } : x)),
             );
