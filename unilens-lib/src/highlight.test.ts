@@ -69,6 +69,7 @@ beforeEach(() => {
     updateSetting("cueSize", 72);
     updateSetting("ringWidth", 2);
     updateSetting("ringScale", false);
+    updateSetting("hlPulse", "off");
 });
 
 describe("showHighlights", () => {
@@ -451,6 +452,24 @@ describe("clearHighlights", () => {
         expect(names).toContain("scroll");
         expect(names).toContain("resize");
         removed.mockRestore();
+    });
+});
+
+describe("the pulse", () => {
+    it("marks each box to pulse in its colour, and none when off", () => {
+        updateSetting("hlPulse", "few");
+        const { registry } = mount();
+        show(registry);
+        const box = layerBoxes()[0] as HTMLElement;
+        expect(box.dataset.pulse).toBe("few");
+        expect(box.style.getPropertyValue("--ul-pulse")).toBe("#ffd400");
+        // a change applies to the highlight already on screen
+        updateSetting("hlPulse", "always");
+        relayNow();
+        expect(box.dataset.pulse).toBe("always");
+        updateSetting("hlPulse", "off");
+        relayNow();
+        expect(box.dataset.pulse).toBeUndefined();
     });
 });
 

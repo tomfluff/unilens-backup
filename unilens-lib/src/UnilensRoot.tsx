@@ -24,7 +24,13 @@ import { initDebug } from "./DebugPanel";
 import { earcon } from "./earcons";
 import { announce, clearHighlights, setCurrentCapture } from "./highlight";
 import { initHint } from "./hint";
-import { aliasPlace, clearPlaces, placeOf, recordPlace } from "./places";
+import {
+    aliasPlace,
+    clearPlaces,
+    clickOffset,
+    placeOf,
+    recordPlace,
+} from "./places";
 import {
     forgetSnapshot,
     loadSnapshot,
@@ -449,6 +455,8 @@ export function UnilensRoot({
             // (pointX, pointY) is the client point being asked about — the click, or the
             // centre of a drag. clientToContent handles both pan engines.
             const p = clientToContent(pointX, pointY);
+            // where in what was clicked, now, before the page can move
+            const offset = clickOffset(el, pointX, pointY);
             const t0 = performance.now();
             // pairs the click with its capture in the study's log, whatever overlaps
             const click = ++clicks;
@@ -558,6 +566,7 @@ export function UnilensRoot({
                 x: cap.meta.clickX,
                 y: cap.meta.clickY,
                 el,
+                offset,
                 label: placeLabel(cap),
             });
             recordCapture(id, cap);

@@ -78,11 +78,14 @@ const INITIAL = {
     hlBadges: "small",
     hlColor: "#ffef26",
     hlColorMode: "fixed",
+    hlPulse: "off",
     ringWidth: 2,
     ringScale: false,
     // the chat stays where it opened: stepping aside (or folding) to uncover
     // a source is a later feature (Yotam, 2026-10-07)
     chatMovesAside: false,
+    // no lasting marks where the user clicked (a session-2 idea)
+    clickMarks: false,
     // no "About all 3 sources" line above the field (not decided for good)
     aboutLine: false,
     // nothing else moves or zooms the page
@@ -165,6 +168,8 @@ export const PRESETS = {
             "hlBackdrop",
             "hlGlow",
             "hlFill",
+            // the pulse (P02, session 1): off, offered here
+            "hlPulse",
             "zoom",
             "zoomKeys",
             "offscreenCue",
@@ -182,6 +187,8 @@ export const PRESETS = {
             "chatTheme",
             "sourceStyle",
             "chatMovesAside",
+            // the lasting click marks (P02, P03, session 1): off, offered here
+            "clickMarks",
         ],
         // each task link opens a new tab (session lead, 2026-10-09)
         keepPerParticipant: true,

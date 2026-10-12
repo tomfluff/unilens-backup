@@ -112,6 +112,10 @@ export interface Settings {
     hlColorMode: "fixed" | "invert" | "contrast" | "near";
     /** how far "near" may move the colour */
     hlColorRange: "little" | "some" | "any";
+    /** a ring that pulses out from each highlight as it is shown, to catch the eye
+     *  (P02, session 1): a few times then still, or for as long as it shows; never
+     *  under reduced motion */
+    hlPulse: "off" | "few" | "always";
     /** how an outlined element outside the screen is pointed at */
     offscreenCue: "none" | "edge" | "pointer";
     /** radius of the pointer cue circle, px */
@@ -179,6 +183,9 @@ export interface Settings {
     /** outline the element just Alt+clicked, until the answer's sources replace it
      *  (Yotam, 2026-10-10, session 2) */
     outlineClicked: boolean;
+    /** a numbered mark (P1, P2, … as in the chat) stays where each Alt+click landed,
+     *  until the conversation starts over (P02, P03, session 1) */
+    clickMarks: boolean;
     /** the line above the field saying what the next question is about (the outlined
      *  sources or place); hidden, they still go with the question */
     aboutLine: boolean;
@@ -298,6 +305,7 @@ const DEFAULTS: Settings = {
     hlColor: "#ffef26",
     hlColorMode: "fixed",
     hlColorRange: "some",
+    hlPulse: "off",
     offscreenCue: "edge",
     cueRadius: 60,
     cueSize: 48,
@@ -336,6 +344,7 @@ const DEFAULTS: Settings = {
     citeEvidence: true,
     chatMovesAside: true,
     outlineClicked: false,
+    clickMarks: false,
     aboutLine: true,
     debugShortcut: true,
     assistantZoom: true,
@@ -406,6 +415,7 @@ export const TOGGLE_LABELS: Record<BoolSettingKey, string> = {
     citeEvidence: "Answers cite page elements",
     chatMovesAside: "Move the chat out of the way of sources",
     outlineClicked: "Outline what I Alt+click",
+    clickMarks: "Keep a numbered mark where I clicked",
     aboutLine: "Show what the next question is about, above the field",
     debugShortcut: "Ctrl+Shift+D opens the debug view",
     assistantZoom: "The assistant can zoom the page when asked",
@@ -670,6 +680,14 @@ export const ENUM_CHOICES = {
             beside: "Beside, where it fits",
         },
     },
+    hlPulse: {
+        label: "Pulse",
+        choices: {
+            off: "Off",
+            few: "A few times, then still",
+            always: "For as long as it shows",
+        },
+    },
     hlGlow: {
         label: "Glow",
         choices: {
@@ -837,6 +855,7 @@ export const PANEL_TABS: { id: PanelTabId; groups: PanelGroup[] }[] = [
                     "hlBackdrop",
                     "hlGlow",
                     "hlFill",
+                    "hlPulse",
                 ],
                 more: ["ringWidth", "ringScale"],
             },
@@ -894,6 +913,7 @@ export const PANEL_TABS: { id: PanelTabId; groups: PanelGroup[] }[] = [
                     "sourceStyleButton",
                     "chatMovesAside",
                     "outlineClicked",
+                    "clickMarks",
                     "assistantGoTo",
                     "aboutLine",
                     "regionSelect",

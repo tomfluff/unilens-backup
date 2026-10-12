@@ -32,7 +32,7 @@ import {
 } from "./highlightStyles";
 import { roleOf } from "./inventory";
 import { setTargets } from "./minimap";
-import { getSettings, onSettingsChange } from "./settings";
+import { getSettings, onSettingsChange, type Settings } from "./settings";
 import { logEvent } from "./studyLog";
 import {
     boxOf,
@@ -274,7 +274,14 @@ function ensureLayer() {
     if (!styleEl) {
         styleEl = document.createElement("style");
         styleEl.textContent = `
+/* the pulse (hlPulse): a ring between black rims, so it reads on any page, growing
+   out from the highlight and fading; a few times, or for as long as it shows */
+[data-unilens-layer] .${CLASS}[data-pulse]::after { content: ""; position: absolute; inset: -4px; border-radius: 8px; border: 4px solid var(--ul-pulse, #ffef26); box-shadow: 0 0 0 2px #000, inset 0 0 0 2px #000; opacity: 0; pointer-events: none; animation: ${CLASS}-pulse 1.6s ease-out ${PULSES}; }
+[data-unilens-layer] .${CLASS}[data-pulse="always"]::after { animation-iteration-count: infinite; }
+@keyframes ${CLASS}-pulse { from { inset: -4px; opacity: 1; } 55% { opacity: 1; } to { inset: -${PULSE_REACH}px; opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { [data-unilens-layer] .${CLASS}[data-pulse]::after { animation: none; } }
 @media (forced-colors: active) {
+  [data-unilens-layer] .${CLASS}[data-pulse]::after { forced-color-adjust: none; border-color: CanvasText; box-shadow: none }
   [data-unilens-layer] .${CLASS}-deco { forced-color-adjust: none; background: CanvasText !important; stroke: CanvasText !important }
   [data-unilens-layer] .${CLASS}-deco path { stroke: CanvasText !important }
   [data-unilens-layer] .${CLASS}-cue { forced-color-adjust: none }
@@ -318,6 +325,20 @@ function bandWidth(): number {
 }
 
 const currentLook = (): HighlightLook => lookFrom(getSettings());
+
+/** the pulse: how many times "a few" is, and how far out the ring grows, px */
+const PULSES = 3;
+const PULSE_REACH = 28;
+/** mark a drawn box to pulse (hlPulse), in the colour it is drawn in. The same
+ *  value again leaves a running pulse alone; a new box pulses from the start */
+function setPulse(box: HTMLElement, pulse: Settings["hlPulse"], color: string) {
+    if (pulse === "off") {
+        delete box.dataset.pulse;
+        return;
+    }
+    box.dataset.pulse = pulse;
+    box.style.setProperty("--ul-pulse", color);
+}
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 
@@ -1049,6 +1070,7 @@ function colorFor(
 function render() {
     const look = currentLook();
     const w = bandWidth();
+    const pulse = getSettings().hlPulse;
     const gone: typeof boxes = [];
     for (const entry of boxes) {
         const { el, box } = entry;
@@ -1077,6 +1099,8 @@ function render() {
         paintParts(entry, parts[0], lk, outline, w);
         for (const [i, l] of entry.lines.entries())
             paintParts(l, parts[i + 1], lk, outline, w);
+        for (const b of [entry.box, ...entry.lines.map((l) => l.box)])
+            setPulse(b, pulse, lk.color);
     }
     for (const g of gone) {
         removeBox(g.box);

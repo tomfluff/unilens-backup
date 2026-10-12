@@ -278,6 +278,23 @@ export const OWN_SETTINGS: Partial<
     sounds: {
         label: { en: "A sound for every action", ja: "操作ごとの音" },
     },
+    hlPulse: {
+        label: { en: "Pulse", ja: "脈打つ輪" },
+        hint: {
+            en: "A ring pulses out from each highlight as it appears",
+            ja: "ハイライトが出るとき、輪が外へ広がります",
+        },
+    },
+    clickMarks: {
+        label: {
+            en: "Keep a numbered mark where I clicked",
+            ja: "クリックした場所に番号の印を残す",
+        },
+        hint: {
+            en: "P1, P2 as in the chat, whose P buttons take you back there",
+            ja: "チャットと同じP1・P2。チャットのPボタンでそこへ戻れます",
+        },
+    },
     voiceAutoSend: {
         label: { en: "Send when I pause", ja: "話し終えたら送信" },
     },
@@ -503,6 +520,11 @@ export const CHOICES_JA: Partial<
         small: "小",
         medium: "中",
         large: "大",
+    },
+    hlPulse: {
+        off: "オフ",
+        few: "数回だけ",
+        always: "表示中ずっと",
     },
     sourceStyle: {
         inline: "文中に番号",

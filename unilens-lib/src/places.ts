@@ -13,6 +13,9 @@ export interface Place {
     y: number;
     /** the element clicked, while it is still on the page */
     el?: Element;
+    /** where in that element, content px from its top-left, measured at the click
+     *  (before the capture, which can take a while, so the page may move first) */
+    offset?: { x: number; y: number };
     /** short description for buttons and speech */
     label: string;
 }
@@ -21,11 +24,38 @@ const places = new Map<string, Place>();
 /** places in the order they were made: P1, P2, … in the chat */
 const order: Place[] = [];
 let latest: Place | null = null;
+const listeners = new Set<() => void>();
+const changed = () => {
+    for (const cb of listeners) cb();
+};
+
+/** told when a place is added or the places start over (the lasting click marks) */
+export function onPlacesChange(cb: () => void): () => void {
+    listeners.add(cb);
+    return () => listeners.delete(cb);
+}
+
+/** where a client point falls within `el`, content px from its top-left; none when
+ *  it falls outside (a region's centre on another element) */
+export function clickOffset(
+    el: Element | undefined,
+    clientX: number,
+    clientY: number,
+): { x: number; y: number } | undefined {
+    const r = el?.getBoundingClientRect();
+    if (!r?.width || !r.height) return undefined;
+    const x = clientX - r.left;
+    const y = clientY - r.top;
+    if (x < 0 || y < 0 || x > r.width || y > r.height) return undefined;
+    const { scale } = getZoom();
+    return { x: x / scale, y: y / scale };
+}
 
 export function recordPlace(p: Place) {
     places.set(p.captureId, p);
     order.push(p);
     latest = p;
+    changed();
 }
 
 /** a re-capture of the same view (a follow-up after the user moved) is the same place */
@@ -72,4 +102,5 @@ export function clearPlaces() {
     places.clear();
     order.length = 0;
     latest = null;
+    changed();
 }
