@@ -77,6 +77,7 @@ Session 1 of the co-design study (P01–P06) used the initial prototype. Two thi
   - Once it moves, it goes fully to the middle. A highlight larger than the zone on an axis counts as in view there when its start is inside the zone, and otherwise brings its start (top-left) to the zone's start.
   - All judges the group's combined box, and brings the first one when the group does not fit the zone.
   - Every move to a highlight uses it: a number in the answer, the stepper, All, a P chip (by its point), the edge cue and the assistant's go-to. Alt+click never moves the page. The moves glide and count as a run, so Back returns.
+- **The "A few times" pulse tile loops (item 17 of Yotam's try-out, 2026-10-13)**: in the settings previews (the gallery tile and the larger preview) it pulses twice, pauses 3 s and repeats, so it never looks like Off once it has played. On the page it still plays a few times and stops.
 - **The `session2` preset**: the initial prototype, plus numbers in the text, the Sources button, the 2 s pause, go-to and the gear with the participant panel. Ctrl+Alt+Shift+B now steps off → initial → session 2. `PRESET=session2 tunnel.sh` builds it into the tunnelled copy and its links.
 
 ## Consequences

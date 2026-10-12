@@ -132,7 +132,12 @@ ${P} .s-paint .s-box, ${P} .s-paint .s-cue, ${P} .s-paint .s-cursor { position: 
    stay in a tile */
 ${P} .s-paint .s-box[data-pulse]::after { content: ""; position: absolute; inset: -4px; border-radius: 8px; border: 4px solid var(--ul-pulse, #ffef26); box-shadow: 0 0 0 2px #000, inset 0 0 0 2px #000; opacity: 0; pointer-events: none; animation: s-pulse 1.6s ease-out var(--s-pulse-delay, 0ms) 3; }
 ${P} .s-paint .s-box[data-pulse="always"]::after { animation-iteration-count: infinite; }
+/* "a few times" loops in the preview, so it never looks like Off once it has played
+   (item 17 of Yotam's try-out, 2026-10-13): two pulses, a 3 s pause, again. On the
+   page it plays a few times and stops */
+${P} .s-paint .s-box[data-pulse="few"]::after { animation: s-pulse-few 6.2s linear var(--s-pulse-delay, 0ms) infinite; }
 @keyframes s-pulse { from { inset: -4px; opacity: 1; } 55% { opacity: 1; } to { inset: -18px; opacity: 0; } }
+@keyframes s-pulse-few { 0% { inset: -4px; opacity: 1; } 14.2% { inset: -14.6px; opacity: 1; } 25.8% { inset: -18px; opacity: 0; } 25.81% { inset: -4px; opacity: 1; } 40% { inset: -14.6px; opacity: 1; } 51.6% { inset: -18px; opacity: 0; } 100% { inset: -18px; opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { ${P} .s-paint .s-box[data-pulse]::after { animation: none; } }
 ${P} .s-paint .s-cursor svg { display: block; }
 ${P} .s-paint .s-map { display: block; }

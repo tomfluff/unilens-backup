@@ -532,7 +532,8 @@ function paintHighlight(
         return;
     }
     // drawn again with nothing that shows changed (any setting re-renders the panel):
-    // the pulse goes on where it was, so "a few times" settles; a change plays it anew
+    // the pulse goes on where it was, never restarting at each render; a change plays
+    // it anew. "A few times" loops here (two pulses, a pause), unlike on the page
     const key = `${pulse}|${JSON.stringify(look)}|${keys.join(";")}`;
     const was = pulsing.get(layer);
     const now = performance.now();
