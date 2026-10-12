@@ -407,6 +407,67 @@ export const speakable = (text: string) =>
         .replace(MARKER, "")
         .replace(/\{\{|\}\}/g, "");
 
+/** a run of source numbers as said aloud: "1", "1 and 2", "1, 2 and 3" (Japanese
+ *  「1、2と3」) */
+function sayList(ns: number[], ja: boolean): string {
+    if (ns.length === 1) return String(ns[0]);
+    const head = ns.slice(0, -1).join(ja ? "、" : ", ");
+    return `${head}${ja ? "と" : " and "}${ns[ns.length - 1]}`;
+}
+
+/**
+ * The reply as read aloud with its source numbers said (#28): each number where the
+ * chat shows it, by the same rules (unknown ids dropped, numbered in first-citation
+ * order, moved to the sentence's end or after the answer with the placement). In the
+ * text it is "(source 2)", "(sources 1 and 2)"; a row of its own after the answer is
+ * "Sources: 1 and 2." Japanese: 「（根拠2）」, 「根拠：1と2。」. "both" says them
+ * once, in the text: the row after the answer would repeat them.
+ */
+export function speakableWithSources(
+    text: string,
+    known: (id: string) => boolean,
+    placement: CitePlacement = "inline",
+): string {
+    // the slot characters are the renderer's own: none may come from the reply
+    let t = unjoin(ungoto(unzoom(text.replace(/[\uE0FC-\uE0FF]/g, ""))));
+    // Japanese words by kana or kanji, as the reading voice is chosen (speech.ts), not
+    // by full-width signs an English answer may hold (￥4,378)
+    const ja = /[\u3040-\u30ff\u4e00-\u9fff]/.test(t);
+    const ids: string[] = [];
+    t = t.replace(MARKER, (m, id: string) => {
+        if (!known(id)) return "";
+        let n = ids.indexOf(id) + 1;
+        if (!n) n = ids.push(id);
+        return `${m.startsWith("[") ? "" : " "}\uE0FF${n}\uE0FF`;
+    });
+    // the braces go once the markers are read, as in the chat (one inside a marker
+    // never makes it one)
+    t = t.replace(/\{\{|\}\}/g, "");
+    if (placement === "sentence" || placement === "end")
+        t = placeSlots(t, placement);
+    return t.replace(
+        /([^\S\n]*)(\uE0FF\d+\uE0FF(?:[^\S\n]*\uE0FF\d+\uE0FF)*)/g,
+        (all: string, lead: string, run: string, at: number, whole: string) => {
+            const ns = [
+                ...new Set([...run.matchAll(SLOT)].map((m) => Number(m[1]))),
+            ];
+            const before = whole.slice(0, at);
+            const after = whole.slice(at + all.length);
+            // a row of its own: a sentence
+            if (/(^|\n)$/.test(before) && /^[^\S\n]*(\n|$)/.test(after))
+                return ja
+                    ? `根拠：${sayList(ns, true)}。`
+                    : `${ns.length > 1 ? "Sources" : "Source"}: ${sayList(ns, false)}.`;
+            // Japanese takes no space before the brackets
+            if (ja) return `（根拠${sayList(ns, true)}）`;
+            const word = ns.length > 1 ? "sources" : "source";
+            // after a full stop the chip has no space before it: the words need one
+            const gap = lead || /\S$/.test(before) ? " " : "";
+            return `${gap}(${word} ${sayList(ns, false)})`;
+        },
+    );
+}
+
 export type NavCommand =
     | { kind: "next" }
     | { kind: "prev" }

@@ -12,6 +12,7 @@ import {
     renderCited,
     sourcesIn,
     speakable,
+    speakableWithSources,
     zoomAsked,
 } from "./evidence";
 
@@ -724,5 +725,61 @@ describe("the go-to marker (co-design study, 2026-10-09)", () => {
     it("never shows half a marker while the answer streams", () => {
         const r = renderCited("The centre is here [[got", known, label, true);
         expect(r.html).toBe("The centre is here");
+    });
+});
+
+describe("speakableWithSources (#28: read aloud says the numbers)", () => {
+    const say = (t: string, p?: "inline" | "sentence" | "end" | "both") =>
+        speakableWithSources(t, known, p);
+    it("says each number where the chat shows it, numbered as the chips", () => {
+        expect(say("Starter is {{$9}} [[n12]] and Team $29 [[n40]].")).toBe(
+            "Starter is $9 (source 1) and Team $29 (source 2).",
+        );
+        // side by side, again, and an unknown id dropped
+        expect(say("Both [[n12]] [[n40]]. Again [[n12]][[n99]].")).toBe(
+            "Both (sources 1 and 2). Again (source 1).",
+        );
+    });
+    it("after a sentence, and as a row of its own after the answer", () => {
+        expect(say("Opens at 9:30 [[n12]]. Closes late.", "sentence")).toBe(
+            "Opens at 9:30. (source 1) Closes late.",
+        );
+        expect(say("A [[n12]], B [[n40]], C [[n3]].", "end")).toBe(
+            "A, B, C.\n\nSources: 1, 2 and 3.",
+        );
+        expect(say("Only A [[n12]].", "end")).toBe("Only A.\n\nSource: 1.");
+    });
+    it("both: once, in the text", () => {
+        expect(say("A [[n12]] and B [[n40]].", "both")).toBe(
+            "A (source 1) and B (source 2).",
+        );
+    });
+    it("in Japanese", () => {
+        expect(say("開館は{{9時30分}} [[n12]]です。")).toBe(
+            "開館は9時30分（根拠1）です。",
+        );
+        expect(say("開館は9時 [[n12]]、閉館は5時 [[n40]]です。", "end")).toBe(
+            "開館は9時、閉館は5時です。\n\n根拠：1と2。",
+        );
+    });
+    it("never takes a slot character from the reply", () => {
+        expect(say("Price $9 \uE0FF9\uE0FF [[n12]].")).toBe(
+            "Price $9 9 (source 1).",
+        );
+    });
+    it("numbers only the markers the chat shows", () => {
+        expect(say("Price [[{{n12}}]]. Team [[n40]].")).toBe(
+            "Price [[n12]]. Team (source 1).",
+        );
+    });
+    it("an English answer with a full-width sign stays English", () => {
+        expect(say("The price is ￥4,378 [[n12]].")).toBe(
+            "The price is ￥4,378 (source 1).",
+        );
+    });
+    it("no sources: as speakable", () => {
+        expect(say("Nothing cited [[n99]].")).toBe(
+            speakable("Nothing cited [[n99]]."),
+        );
     });
 });

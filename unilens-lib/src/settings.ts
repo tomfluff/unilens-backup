@@ -39,6 +39,9 @@ export interface Settings {
     /** after a reload, the conversation on this site comes back (UniLens's own store) */
     restoreAfterReload: boolean;
     autoRead: boolean;
+    /** reading an answer aloud says its source numbers, "(source 2)", where the
+     *  chat shows them (#28, Yotam 2026-10-12) */
+    readSources: boolean;
     voiceInput: boolean;
     /** the Live button: a spoken conversation with the assistant */
     liveTalk: boolean;
@@ -263,6 +266,7 @@ const DEFAULTS: Settings = {
     continuity: true,
     restoreAfterReload: true,
     autoRead: false,
+    readSources: false,
     voiceInput: false,
     liveTalk: true,
     voiceAutoSend: true,
@@ -386,6 +390,7 @@ export const TOGGLE_LABELS: Record<BoolSettingKey, string> = {
     continuity: "Conversation continuity",
     restoreAfterReload: "Keep the conversation across reloads",
     autoRead: "Autoplay responses",
+    readSources: "Say the source numbers when reading aloud",
     voiceInput: "Show microphone button",
     liveTalk: "Show live interaction button",
     voiceAutoSend: "Send what I say when I pause",
@@ -899,7 +904,7 @@ export const PANEL_TABS: { id: PanelTabId; groups: PanelGroup[] }[] = [
             {
                 // asking and hearing by voice, beside the asking (Yotam, 2026-10-10)
                 id: "talk",
-                first: ["voiceInput", "liveTalk", "autoRead"],
+                first: ["voiceInput", "liveTalk", "autoRead", "readSources"],
                 more: ["voiceAutoSend", "voicePauseMs"],
             },
         ],

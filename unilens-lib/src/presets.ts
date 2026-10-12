@@ -59,6 +59,7 @@ const INITIAL = {
     liveTalk: false,
     // hearing: read aloud on request (the button on each answer), action sounds
     autoRead: false,
+    readSources: false,
     ttsProvider: "openai",
     sounds: true,
     // answers point at the page: every answer outlines its sources, numbered
@@ -171,6 +172,7 @@ export const PRESETS = {
             "liveTalk",
             "voiceInput",
             "autoRead",
+            "readSources",
             "ttsSpeed",
             "sounds",
             "chatTextScale",

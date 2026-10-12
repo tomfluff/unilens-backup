@@ -25,6 +25,7 @@ import {
     renderCited,
     sourcesIn,
     speakable,
+    speakableWithSources,
     zoomAsked,
 } from "./evidence";
 import {
@@ -185,6 +186,19 @@ const phrasesOn = () =>
 /** ...and asked for; with the Sources button always, so a switch to underlines is
  *  exact for every answer at once */
 const phrasesAsked = () => phrasesOn() || getSettings().sourceStyleButton;
+
+/** an answer as read aloud: its source numbers said where the chat shows them, with
+ *  "Say the source numbers" on (#28); a failed answer shows none, so says none */
+function readText(text: string, src: Msg["cite"], failed = false): string {
+    const s = getSettings();
+    return s.readSources && src && !failed
+        ? speakableWithSources(
+              text,
+              (id) => src.registry.has(id),
+              s.citePlacement,
+          )
+        : speakable(text);
+}
 
 /** station signs number their sources like station codes */
 const chipText = (n: number) =>
@@ -2117,7 +2131,7 @@ export default function ChatPopover({
                             chars: full.length,
                         });
                         readCue();
-                        speak(speakable(full), (s) =>
+                        speak(readText(full, cite), (s) =>
                             setSpeaking(
                                 s === "idle" ? null : { idx, phase: s },
                             ),
@@ -2182,7 +2196,7 @@ export default function ChatPopover({
                 chars: data.reply.length,
             });
             readCue();
-            speak(speakable(data.reply));
+            speak(readText(data.reply, cite));
         }
     }
 
@@ -2531,7 +2545,7 @@ export default function ChatPopover({
                         <span className="ulc-read">
                             {readControls(
                                 i,
-                                speakable(m.text),
+                                readText(m.text, m.cite, m.error),
                                 "ulc-speak has-label",
                                 T.readAloud,
                                 true,
@@ -2733,7 +2747,11 @@ export default function ChatPopover({
                     lastAnswer >= 0 &&
                     readControls(
                         lastAnswer,
-                        speakable(messages[lastAnswer].text),
+                        readText(
+                            messages[lastAnswer].text,
+                            messages[lastAnswer].cite,
+                            messages[lastAnswer].error,
+                        ),
                         "ulc-ib",
                         T.readLast,
                     )}

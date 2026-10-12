@@ -265,6 +265,16 @@ export const OWN_SETTINGS: Partial<
             ja: "回答が届くと読み上げます",
         },
     },
+    readSources: {
+        label: {
+            en: "Say the source numbers when reading aloud",
+            ja: "読み上げで根拠の番号も読む",
+        },
+        hint: {
+            en: "For example “(source 2)”, where the chat shows the number",
+            ja: "たとえば「（根拠2）」。チャットで番号がある位置で読みます",
+        },
+    },
     sounds: {
         label: { en: "A sound for every action", ja: "操作ごとの音" },
     },
