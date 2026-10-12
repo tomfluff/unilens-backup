@@ -391,7 +391,8 @@ function draw(
         const gap = NUM_GAP / 2;
         const below = top - gap - h < 0;
         Object.assign(num.style, {
-            left: `${Math.min(right, window.innerWidth)}px`,
+            // by its place, never held at the screen's edge (Yotam, 2026-10-12)
+            left: `${right}px`,
             top: `${below ? bottom + gap : top - gap}px`,
             translate: `-100% ${below ? "0" : "-100%"}`,
         });

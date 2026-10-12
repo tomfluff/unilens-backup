@@ -455,6 +455,33 @@ describe("clearHighlights", () => {
     });
 });
 
+describe("a number by a place partly off screen", () => {
+    it("stays by its place (session 2), or slides in at the edge (session 1)", () => {
+        updateSetting("hlBadgePos", "corner");
+        const { registry } = mount();
+        const off = () => rect(100, -200, 50, 20);
+        const badge = () =>
+            document.querySelector(
+                "#unilens-highlight-layer .unilens-hl-badge",
+            ) as HTMLElement;
+        updateSetting("hlBadgeClamp", false);
+        setCurrentCapture("c1");
+        showHighlights(
+            [{ id: "n1", role: "target", badge: "7" }],
+            registry,
+            "c1",
+            nextToken(),
+            { measure: off },
+        );
+        // above the screen with its place, not held at its top edge
+        expect(parseFloat(badge().style.top)).toBeLessThan(-150);
+        updateSetting("hlBadgeClamp", true);
+        relayNow();
+        expect(parseFloat(badge().style.top)).toBeGreaterThanOrEqual(0);
+        updateSetting("hlBadgeClamp", false);
+    });
+});
+
 describe("the pulse", () => {
     it("marks each box to pulse in its colour, and none when off", () => {
         updateSetting("hlPulse", "few");

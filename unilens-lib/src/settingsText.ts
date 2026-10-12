@@ -359,6 +359,7 @@ export const NAMES_JA: Partial<Record<keyof Settings, string>> = {
     debugView: "デバッグ表示（Ctrl＋Shift＋D）",
     inventory: "キャプチャと一緒にページの構造を送る",
     ringScale: "拡大に合わせて枠を太くする",
+    hlBadgeClamp: "番号を画面の端にとどめる",
     hlColorMode: "色の自動調整",
     hlColorRange: "色を変えてよい幅",
     hlFill: "塗り",

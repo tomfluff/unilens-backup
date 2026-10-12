@@ -79,6 +79,8 @@ const INITIAL = {
     hlColor: "#ffef26",
     hlColorMode: "fixed",
     hlPulse: "off",
+    // a number partly off screen slid in at the screen's edge (session 1)
+    hlBadgeClamp: true,
     ringWidth: 2,
     ringScale: false,
     // the chat stays where it opened: stepping aside (or folding) to uncover
@@ -168,6 +170,9 @@ export const PRESETS = {
             // #30 (Yotam, 2026-10-12; P01, P06): a new answer shows from its start and
             // stays put; Listen at its start. Not in the panel
             answerFromStart: true,
+            // numbers stay by their places, off screen with them (Yotam's try-out,
+            // 2026-10-12). Not in the panel
+            hlBadgeClamp: false,
         },
         /** what a participant may change in session 2 (session-lead's list,
          *  2026-10-09): the highlight's look, page zoom, the page map, voice, sounds,

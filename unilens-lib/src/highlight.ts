@@ -633,18 +633,23 @@ function placeBadge(
     const w =
         badge.offsetWidth || Number.parseFloat(badge.style.minWidth) || 24;
     const h = Number.parseFloat(badge.style.height) || 24;
+    // on the page, a number stays on its spot by its place and leaves the screen with
+    // it (Yotam's try-out, 2026-10-12: numbers held at the screen's top edge while their
+    // places were cut off there); session 1 slid it in at the edge (hlBadgeClamp).
+    // A preview keeps its number inside its stage
+    const page = !origin.x && !origin.y;
+    const clamp = !page || getSettings().hlBadgeClamp;
+    const slide = (v: number, lo: number, hi: number) =>
+        clamp ? Math.min(Math.max(v, lo), hi) : v;
     if (mode === "corner") {
         // its bottom-right at the element's top-left: over the outline's room round
-        // the element, never the element's text; always there, slid in only at the
-        // screen's edge (Yotam, 2026-10-10)
-        const x = Math.min(
-            Math.max(b.left + pad - w, bounds.left + 1),
+        // the element, never the element's text (Yotam, 2026-10-10)
+        const x = slide(
+            b.left + pad - w,
+            bounds.left + 1,
             bounds.right - 1 - w,
         );
-        const y = Math.min(
-            Math.max(b.top + pad - h, bounds.top + 1),
-            bounds.bottom - 1 - h,
-        );
+        const y = slide(b.top + pad - h, bounds.top + 1, bounds.bottom - 1 - h);
         entry.badgeSide = "corner";
         badge.dataset.side = "corner";
         badge.style.left = `${x - origin.x}px`;
@@ -655,15 +660,9 @@ function placeBadge(
     const at = (side: BadgeSide) => {
         const p = badgeAt(b, h, w, side);
         if (side === "left" || side === "right")
-            p.y = Math.min(
-                Math.max(p.y, bounds.top + 1),
-                bounds.bottom - 1 - h,
-            );
+            p.y = slide(p.y, bounds.top + 1, bounds.bottom - 1 - h);
         else if (side === "above" || side === "below")
-            p.x = Math.min(
-                Math.max(p.x, bounds.left + 1),
-                bounds.right - 1 - w,
-            );
+            p.x = slide(p.x, bounds.left + 1, bounds.right - 1 - w);
         return p;
     };
     const fits = (side: BadgeSide) => {
@@ -690,11 +689,18 @@ function placeBadge(
                 return true;
         return false;
     };
-    // the corner is a stopgap (off-screen, or no room): chosen again each time
+    // the corner is a stopgap (off-screen, or no room): chosen again each time.
+    // Unclamped, a side chosen stays as its place leaves the screen: it is chosen
+    // again only when the place is back and the side has no room
+    const onScreen =
+        b.right > bounds.left &&
+        b.left < bounds.right &&
+        b.bottom > bounds.top &&
+        b.top < bounds.bottom;
     if (
         !entry.badgeSide ||
         entry.badgeSide === "corner" ||
-        !fits(entry.badgeSide)
+        (!fits(entry.badgeSide) && (clamp || onScreen))
     ) {
         // the first side that covers no text and no other number; else the one that
         // covers the least text (the box's corner too), never another number

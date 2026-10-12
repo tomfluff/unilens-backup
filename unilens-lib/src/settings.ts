@@ -103,6 +103,10 @@ export interface Settings {
     /** where the number sits (Yotam, 2026-10-10): always at the highlight's top-left
      *  corner, clear of the element's text; or beside it, wherever there is room */
     hlBadgePos: "corner" | "beside";
+    /** session 1: a number whose place is partly off screen slides in to stay at the
+     *  screen's edge. Off (Yotam's try-out, 2026-10-12): it stays by its place and
+     *  leaves the screen with it. A preset value, not a participant's setting */
+    hlBadgeClamp: boolean;
     /** the highlight colour, #rgb or #rrggbb; the two-band ring stays black and white */
     hlColor: string;
     /** how the colour meets the page under it (#26, Yotam 2026-10-12): always the
@@ -325,6 +329,7 @@ const DEFAULTS: Settings = {
     hlGlow: "medium",
     hlBadges: "small",
     hlBadgePos: "corner",
+    hlBadgeClamp: false,
     hlColor: "#ffef26",
     hlColorMode: "fixed",
     hlColorRange: "some",
@@ -436,6 +441,7 @@ export const TOGGLE_LABELS: Record<BoolSettingKey, string> = {
     lensPan: "Lens panning (freeze page while zoomed)",
     debugView: "Debug view (ctrl+shift+D)",
     inventory: "Send page inventory with captures",
+    hlBadgeClamp: "Slide a number in at the screen's edge",
     ringScale: "Outline grows with the zoom",
     mmFollowHighlight: "Same look as the highlights",
     mmFill: "Color fill (see-through)",
@@ -928,7 +934,7 @@ export const PANEL_TABS: { id: PanelTabId; groups: PanelGroup[] }[] = [
                     "hlFill",
                     "hlPulse",
                 ],
-                more: ["ringWidth", "ringScale"],
+                more: ["ringWidth", "ringScale", "hlBadgeClamp"],
             },
             {
                 id: "cues",
