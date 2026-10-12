@@ -13,6 +13,7 @@
 import {
     chooseColor,
     isPageElement,
+    luminance,
     sampleBackgrounds,
     setImageLoadListener,
 } from "./adaptiveColor";
@@ -347,13 +348,21 @@ function setPulse(box: HTMLElement, pulse: Settings["hlPulse"], color: string) {
 const SVG_NS = "http://www.w3.org/2000/svg";
 
 /** px from the element's edge to the box's edge, for the outline drawn */
-function padFor(outline: string, w: number): number {
+function padFor(outline: string, w: number, look?: HighlightLook): number {
     if (outline === "ring") return OUTLINE_OFFSET + w;
     if (outline === "band") return OUTLINE_OFFSET + 3 * w;
     if (outline === "brackets") return OUTLINE_OFFSET + 2 * w;
-    if (outline === "thin") return OUTLINE_OFFSET + THIN;
+    if (outline === "thin")
+        return (
+            OUTLINE_OFFSET + (look && linesAdapt(look) ? THIN_ADAPTED : THIN)
+        );
     return OUTLINE_OFFSET;
 }
+
+/** the thin border and the ring's inner band take the adapted colour (hlAdaptLine) */
+const linesAdapt = (look: HighlightLook) =>
+    (look.colorMode === "near" || look.colorMode === "contrast") &&
+    getSettings().hlAdaptLine;
 
 /** bracket corners as one path, inset by half the stroke so it stays inside the box */
 function bracketPath(W: number, H: number, t: number): string {
@@ -398,6 +407,8 @@ const GLOW_ALPHA = 0.35;
 const BAND_EDGE = "rgba(0, 0, 0, 0.7)";
 /** the thin border's width, px (a dark line with a light edge, on any page) */
 const THIN = 2;
+/** the thin border drawn in the adapted colour (hlAdaptLine): wider, to carry it */
+const THIN_ADAPTED = 3;
 /** the badge at each size: its height, font size and how far it sits out, px */
 const BADGE_SIZE = {
     small: { h: 24, font: 14, off: 14 },
@@ -833,7 +844,7 @@ function paintBox(
     part: Part = "all",
 ) {
     const box = entry.box;
-    const pad = padFor(outline, w);
+    const pad = padFor(outline, w, look);
     // forced colours drop fill, glow and backdrop: an outline-less look needs a ring there
     box.dataset.outline = outline;
     decorate(entry, look, outline, w, part);
@@ -850,9 +861,14 @@ function paintBox(
             : "",
         // see-through too: text next to a source stays readable under its glow
         look.glow && !plain
-            ? `${GLOW_SHADOW[look.glowSize]} ${tint ? `rgba(255,255,255,${INVERT_GLOW})` : colorWithAlpha(look.color, GLOW_ALPHA)}`
+            ? `${GLOW_SHADOW[look.glowSize]} ${tint ? `rgba(255,255,255,${INVERT_GLOW})` : colorWithAlpha(look.color, look.glowAlpha ?? GLOW_ALPHA)}`
             : "",
     ].filter(Boolean);
+    // with Adaptive color on, the thin border and the ring's inner band are drawn
+    // in the adapted colour with a black edge, so the colour shows on any background
+    // (Yotam's try-out, 2026-10-12: on a dark section they were black, and only the
+    // faint glow carried the colour). Session 1 kept them black and white
+    const lineColor = !tint && !plain && linesAdapt(look) ? look.color : null;
     // inverted: the twin keeps the ring's and border's room, unpainted
     const bandColor = tint
         ? outline === "ring"
@@ -861,7 +877,7 @@ function paintBox(
         : plain && outline === "band"
           ? "transparent"
           : outline === "ring"
-            ? RING.inner
+            ? (lineColor ?? RING.inner)
             : colorWithAlpha(look.color, BAND_ALPHA);
     Object.assign(box.style, {
         left: `${r.left - pad}px`,
@@ -873,17 +889,21 @@ function paintBox(
         border: band
             ? `${band}px solid ${bandColor}`
             : outline === "thin"
-              ? `${THIN}px solid ${tint ? "transparent" : EDGE}`
+              ? lineColor
+                  ? `${THIN_ADAPTED}px solid ${lineColor}`
+                  : `${THIN}px solid ${tint ? "transparent" : EDGE}`
               : "0",
         outline: tint
             ? "none"
             : outline === "ring"
-              ? `${w}px solid ${RING.outer}`
+              ? `${w}px solid ${lineColor ? EDGE : RING.outer}`
               : outline === "band"
                 ? // no outer edge: a dark line there would cross a neighbour's text
                   "none"
                 : outline === "thin"
-                  ? `1px solid ${RING.outer}`
+                  ? lineColor
+                      ? `1.5px solid ${EDGE}`
+                      : `1px solid ${RING.outer}`
                   : "none",
         outlineOffset: "0",
         background:
@@ -994,7 +1014,7 @@ export function paintOutline(
     const b = box.getBoundingClientRect();
     if (!b.width || !box.offsetWidth) return look.color;
     const k = b.width / box.offsetWidth;
-    const pad = padFor(outline, w) * k;
+    const pad = padFor(outline, w, look) * k;
     const root = box.getRootNode();
     const inner = {
         left: b.left + pad,
@@ -1022,14 +1042,16 @@ export function paintOutline(
                 e !== document.documentElement &&
                 Boolean(e.textContent?.trim()),
         );
-    const color = colorUnder(inner, look, outline, w * k, {
+    const got = colorUnder(inner, look, outline, w * k, {
         root: where,
         skip,
         el,
     });
-    if (color && color !== look.color)
-        paintParts(entry, r, { ...look, color }, outline, w);
-    return color ?? look.color;
+    if (!got) return look.color;
+    const lk = adaptedLook(look, got);
+    if (lk.color !== look.color || lk.glowAlpha !== look.glowAlpha)
+        paintParts(entry, r, lk, outline, w);
+    return got.color;
 }
 
 /** whether the look's colour depends on what is under each box */
@@ -1044,29 +1066,57 @@ function colorUnder(
     outline: string,
     w: number,
     opts: Parameters<typeof sampleBackgrounds>[2] = {},
-): string | null {
+): Adapted | null {
     if (look.colorMode !== "contrast" && look.colorMode !== "near") return null;
     // under the band, or just beyond the element where a glow or ring would be
     const band = outline === "band" ? 3 * w : 2 * w;
     const bg = sampleBackgrounds(r, OUTLINE_OFFSET + band / 2, opts);
-    if (!bg.edge.length && !bg.inside.length) return null;
-    return chooseColor(bg, {
-        base: look.color,
-        mode: look.colorMode,
-        range: look.colorRange,
-        fillAlpha: look.fill ? look.fillAlpha : 0,
-        glowAlpha: look.glow ? GLOW_ALPHA : 0,
-    });
+    const all = [...bg.edge, ...bg.inside];
+    if (!all.length) return null;
+    // what is round it is dark: a glow there may be stronger, and the colour is
+    // chosen for the glow as it will be drawn (the text under it stays readable)
+    const dark =
+        all.reduce((n, c) => n + luminance(c), 0) / all.length < DARK_LUMINANCE;
+    return {
+        color: chooseColor(bg, {
+            base: look.color,
+            mode: look.colorMode,
+            range: look.colorRange,
+            fillAlpha: look.fill ? look.fillAlpha : 0,
+            glowAlpha: look.glow ? glowAlphaOver(dark) : 0,
+        }),
+        dark,
+    };
 }
+
+/** an adapted colour, and whether what is round it is dark */
+type Adapted = { color: string; dark: boolean };
+/** below this mean relative luminance a background counts as dark (navy, charcoal) */
+const DARK_LUMINANCE = 0.2;
+/** the glow over a dark background (Yotam's try-out, 2026-10-12): stronger than over
+ *  a light one, where it must leave dark text readable */
+const DARK_GLOW_ALPHA = 0.6;
+
+/** the look in its adapted colour, with the stronger glow on a dark background when
+ *  the line follows the adaptation (hlAdaptLine) */
+function adaptedLook(look: HighlightLook, got: Adapted): HighlightLook {
+    const a = glowAlphaOver(got.dark);
+    return {
+        ...look,
+        color: got.color,
+        glowAlpha: a === GLOW_ALPHA ? undefined : a,
+    };
+}
+
+/** the glow's strength over a background, dark or light */
+const glowAlphaOver = (dark: boolean) =>
+    dark && getSettings().hlAdaptLine ? DARK_GLOW_ALPHA : GLOW_ALPHA;
 
 /** each outlined element's colour as last measured, and when: re-measured at most
  *  every RESAMPLE_MS while the page moves, and once more after it stops, so a
  *  section scrolling under it, a carousel turning or an image loading is caught */
 const RESAMPLE_MS = 200;
-const sampled = new WeakMap<
-    Drawn,
-    { color: string; at: number; key: string }
->();
+const sampled = new WeakMap<Drawn, { got: Adapted; at: number; key: string }>();
 let resampleTimer = 0;
 
 function colorFor(
@@ -1075,7 +1125,7 @@ function colorFor(
     look: HighlightLook,
     outline: string,
     w: number,
-): string {
+): Adapted {
     const had = sampled.get(entry);
     const key = `${look.colorMode}|${look.colorRange}|${look.color}|${outline}|${look.fill}|${look.fillAlpha}|${look.glow}`;
     const now = performance.now();
@@ -1086,13 +1136,13 @@ function colorFor(
                 resampleTimer = 0;
                 scheduleRelay();
             }, RESAMPLE_MS);
-        return had.color;
+        return had.got;
     }
-    const color =
+    const got =
         colorUnder(r, look, outline, w, { el: entry.el }) ??
-        (had?.key === key ? had.color : look.color);
-    sampled.set(entry, { color, at: now, key });
-    return color;
+        (had?.key === key ? had.got : { color: look.color, dark: false });
+    sampled.set(entry, { got, at: now, key });
+    return got;
 }
 
 function render() {
@@ -1122,7 +1172,7 @@ function render() {
         // an adaptive colour is the element's own, for what is under it now
         const lk =
             adapts(look) && !isEmptyBox(r)
-                ? { ...look, color: colorFor(entry, r, look, outline, w) }
+                ? adaptedLook(look, colorFor(entry, r, look, outline, w))
                 : look;
         paintParts(entry, parts[0], lk, outline, w);
         for (const [i, l] of entry.lines.entries())

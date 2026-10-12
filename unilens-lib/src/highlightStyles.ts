@@ -51,6 +51,9 @@ export interface HighlightLook {
     glow: boolean;
     /** its spread, when there is one */
     glowSize: GlowSize;
+    /** how much of the colour the glow lays over the page; unset: the standard (light
+     *  backgrounds' text stays readable), stronger on a dark one (hlAdaptLine) */
+    glowAlpha?: number;
     badges: boolean;
     /** its size, when there is one */
     badgeSize: BadgeSize;

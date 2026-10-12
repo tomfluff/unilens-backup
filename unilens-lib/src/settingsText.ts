@@ -298,6 +298,13 @@ export const OWN_SETTINGS: Partial<
             ja: "しばらく質問がないと、丸いボタンの横に「このページについて聞いてください」",
         },
     },
+    hlColorMode: {
+        label: { en: "Adaptive color", ja: "色の自動調整" },
+        hint: {
+            en: "Changes the highlight's color where it would not stand out, or would make the text hard to read. Where yellow already works, as on many dark sections, it stays yellow",
+            ja: "目立たない場所や、文字が読みにくくなる場所ではハイライトの色を変えます。黄色で十分な場所（暗い場所の多く）では黄色のままです",
+        },
+    },
     hlPulse: {
         label: { en: "Pulse", ja: "脈打つ輪" },
         hint: {
@@ -366,6 +373,7 @@ export const NAMES_JA: Partial<Record<keyof Settings, string>> = {
     inventory: "キャプチャと一緒にページの構造を送る",
     ringScale: "拡大に合わせて枠を太くする",
     hlBadgeClamp: "番号を画面の端にとどめる",
+    hlAdaptLine: "色の自動調整で線にも色をつける（暗い背景では光彩を強く）",
     hlColorMode: "色の自動調整",
     hlColorRange: "色を変えてよい幅",
     hlFill: "塗り",

@@ -81,6 +81,8 @@ const INITIAL = {
     hlPulse: "off",
     // a number partly off screen slid in at the screen's edge (session 1)
     hlBadgeClamp: true,
+    // the ring and thin border black and white whatever the colour (session 1)
+    hlAdaptLine: false,
     ringWidth: 2,
     ringScale: false,
     // the chat stays where it opened: stepping aside (or folding) to uncover
@@ -177,6 +179,9 @@ export const PRESETS = {
             // every answer looks like an answer; notes and errors alone are dotted
             // (Yotam's try-out, 2026-10-12). Not in the panel
             quietNotFound: false,
+            // Adaptive color colors the line too, with a stronger glow on dark (Yotam's
+            // try-out, 2026-10-12). Not in the panel
+            hlAdaptLine: true,
         },
         /** what a participant may change in session 2 (session-lead's list,
          *  2026-10-09): the highlight's look, page zoom, the page map, voice, sounds,

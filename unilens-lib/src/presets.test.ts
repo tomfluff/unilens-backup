@@ -136,7 +136,9 @@ describe("session 2 (2026-10-09)", () => {
             // numbers by their places, not slid in at the screen's edge
             hlBadgeClamp: false,
             quietNotFound: false,
+            hlAdaptLine: true,
         });
+        expect(PRESETS.initial.values.hlAdaptLine).toBe(false);
         expect(PRESETS.initial.values.quietNotFound).toBe(true);
         expect(PRESETS.initial.values.hlBadgeClamp).toBe(true);
         expect(PRESETS.initial.values.answerFromStart).toBe(false);
