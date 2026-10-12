@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import { aiCatalogue, aiChoice, liveProvider } from "./ai";
 import {
     type CaptureResult,
@@ -243,6 +243,8 @@ interface Props {
 /** width and height in em of the chat's font size (chatStyles.ts sizes the panel in em) */
 const PANEL_W_EM = 24.3;
 const PANEL_H_EM = 30;
+/** #30: the gap kept above an answer's question at the top of the log, px */
+const LAND_GAP = 8;
 /** the least a chat can be and still work: header, three lines of log, input, status */
 const MIN_H_EM = 16;
 
@@ -488,6 +490,8 @@ export default function ChatPopover({
         playLabel = T.readAloud,
         /** visible words beside the icon (the answer's pill; not the folded header) */
         labelled = false,
+        /** the answer is still arriving: shown in its place, not yet pressable */
+        disabled = false,
     ) => {
         const phase = speaking?.idx === idx ? speaking.phase : null;
         const main =
@@ -537,6 +541,7 @@ export default function ChatPopover({
                     aria-label={main.label}
                     title={main.label}
                     onClick={main.run}
+                    disabled={disabled}
                 >
                     {main.icon}
                     {labelled && <span>{main.short}</span>}
@@ -1111,6 +1116,8 @@ export default function ChatPopover({
                         // captions off: the words show once the turn is complete
                         const shown =
                             final || getSettings().liveCaptions ? words : "";
+                        // a talk follows its words, as before (#30 is for answers asked)
+                        if (landAt.current) unland();
                         stick.current = true;
                         if (role === "user") {
                             if (!words.trim() && !final) {
@@ -1357,6 +1364,7 @@ export default function ChatPopover({
         livePage.current?.();
         // the new place is the latest entry: follow it
         stick.current = true;
+        unland();
         requestAnimationFrame(() => {
             logScroll({ top: scrollRef.current?.scrollHeight ?? 0 });
             // the next thing typed is about the new place: the field takes the
@@ -1423,6 +1431,94 @@ export default function ChatPopover({
     // controls that appear when an answer ends) while the user is at the bottom; once
     // they scroll up to read, it stays put until they send again.
     const stick = useRef(true);
+    /** #30: the row a new answer was landed at (its question, or the answer), kept
+     *  at the top of the log while the answer streams; the spacer after the last row
+     *  is the room that lets it get there, shrinking as the answer fills it */
+    const landAt = useRef<string | null>(null);
+    /** an answer that began but is not placed yet (the log is folded away, or not
+     *  drawn yet): its row is chosen once the log is there */
+    const landFresh = useRef<{ answer: string; asked: string | null } | null>(
+        null,
+    );
+    /** where the landed row sits in the log's view, so rows added above it (history
+     *  arriving late) do not move what the reader sees */
+    const landedTop = useRef<number | null>(null);
+    /** the log's scroll while an answer is landed, for a log made again (unfolded) */
+    const landedScroll = useRef(0);
+    /** the question the answer on its way answers (a queued one included) */
+    const askedRow = useRef<string | null>(null);
+    const spacerRef = useRef<HTMLDivElement>(null);
+    const rowOf = (log: HTMLElement, id: string) =>
+        log.querySelector<HTMLElement>(
+            `[data-msg="${CSS.escape(id)}"], [data-turn="${CSS.escape(id)}"]`,
+        );
+    /** the spacer's height: enough for the landed row to scroll to the log's top */
+    const fitSpacer = () => {
+        const log = scrollRef.current;
+        const sp = spacerRef.current;
+        if (!log || !sp) return;
+        const row = landAt.current ? rowOf(log, landAt.current) : null;
+        if (!row || landFresh.current) {
+            sp.style.height = "0px";
+            return;
+        }
+        const lr = log.getBoundingClientRect();
+        const at = (e: Element) =>
+            e.getBoundingClientRect().top - lr.top + log.scrollTop;
+        const pad = Number.parseFloat(getComputedStyle(log).paddingBottom) || 0;
+        // the farthest the log scrolls is the spacer's end and its padding, less the
+        // view; that must reach the row
+        const need = log.clientHeight + at(row) - LAND_GAP - at(sp) - pad;
+        sp.style.height = `${Math.max(0, Math.ceil(need))}px`;
+    };
+    /** no answer is held at the top any more (a new question, a new place) */
+    const unland = () => {
+        landAt.current = null;
+        landFresh.current = null;
+        landedTop.current = null;
+        fitSpacer();
+    };
+    /** scroll the log so the landed row is at its top; a fresh answer first chooses
+     *  that row: its question, unless the question would take too much of the log */
+    const placeLanded = () => {
+        const log = scrollRef.current;
+        if (!log) return;
+        const fresh = landFresh.current;
+        if (fresh) {
+            const turn = rowOf(log, fresh.answer);
+            if (!turn) return;
+            const asked = fresh.asked ? rowOf(log, fresh.asked) : null;
+            const h = log.getBoundingClientRect().height;
+            landAt.current =
+                asked &&
+                fresh.asked &&
+                asked.getBoundingClientRect().height < h * 0.4
+                    ? fresh.asked
+                    : fresh.answer;
+            landFresh.current = null;
+        }
+        const row = landAt.current ? rowOf(log, landAt.current) : null;
+        if (!row) return;
+        fitSpacer();
+        const lr = log.getBoundingClientRect();
+        const top =
+            log.scrollTop + row.getBoundingClientRect().top - lr.top - LAND_GAP;
+        landedTop.current = LAND_GAP;
+        landedScroll.current = top;
+        logScroll({ top });
+    };
+    /**
+     * #30: an answer has begun. The log scrolls once, so the question above it is at
+     * the top (or the answer, when the question would take too much of the log), and
+     * then stays: it does not follow the text, nor jump when the answer ends.
+     */
+    const landAnswer = (id: string) => {
+        if (!getSettings().answerFromStart) return;
+        stick.current = false;
+        landAt.current = id;
+        landFresh.current = { answer: id, asked: askedRow.current };
+        requestAnimationFrame(placeLanded);
+    };
     /** until when the log's scroll events are our own eased scroll, not the user's */
     const ownScroll = useRef(0);
     const logScroll = (opts: ScrollToOptions, by = false) => {
@@ -1467,9 +1563,18 @@ export default function ChatPopover({
         const log = scrollRef.current;
         if (!log || typeof ResizeObserver === "undefined") return;
         const ro = new ResizeObserver(() => {
+            fitSpacer();
             if (stick.current) log.scrollTop = log.scrollHeight;
         });
         ro.observe(log);
+        // made again (unfolded) with an answer landed: placed now if it began while
+        // folded, else back where the reader was
+        if (landAt.current)
+            requestAnimationFrame(() => {
+                if (landFresh.current) return placeLanded();
+                fitSpacer();
+                log.scrollTop = landedScroll.current;
+            });
         return () => ro.disconnect();
     }, [mini]);
     /** a finished answer taller than the log opens at its first line, not its last:
@@ -1490,6 +1595,27 @@ export default function ChatPopover({
                 logScroll({ top: log.scrollTop + tr.top - lr.top - 8 });
             }),
         );
+    // the landed answer grows into its room, so the log's length stays; and rows added
+    // above it (history arriving) leave what the reader sees where it was (#30)
+    // biome-ignore lint/correctness/useExhaustiveDependencies: follows every message change
+    useLayoutEffect(() => {
+        fitSpacer();
+        const log = scrollRef.current;
+        const row = log && landAt.current ? rowOf(log, landAt.current) : null;
+        if (
+            !log ||
+            !row ||
+            landedTop.current == null ||
+            performance.now() < ownScroll.current
+        )
+            return;
+        const now =
+            row.getBoundingClientRect().top - log.getBoundingClientRect().top;
+        if (Math.abs(now - landedTop.current) > 0.5) {
+            log.scrollTop += now - landedTop.current;
+            landedScroll.current = log.scrollTop;
+        }
+    }, [messages]);
     // biome-ignore lint/correctness/useExhaustiveDependencies: follows every message change
     useEffect(() => {
         if (stick.current)
@@ -1754,7 +1880,14 @@ export default function ChatPopover({
         // the controls row sits at the answer's end: keep it in view for a press there,
         // but a source pressed in the text is where the reader is reading
         // Live pointing as it speaks leaves the log where the reader is
-        if (!fromText && !still) revealTurn(m.id);
+        // the assistant's go-to, as an answer shown from its start ends, leaves the log
+        // where the reader is (#30)
+        if (
+            !fromText &&
+            !still &&
+            !(byGoto.current && getSettings().answerFromStart)
+        )
+            revealTurn(m.id);
         return moved;
     }
 
@@ -1863,7 +1996,8 @@ export default function ChatPopover({
             // after the answer's own status, so the move is the last thing said
             gotoNow(latest);
         };
-        showAnswerStart(m.id);
+        // shown from its start as it began (#30): no jump now
+        if (!getSettings().answerFromStart) showAnswerStart(m.id);
         // asked where, pointed nowhere: "nothing found", styled apart from an answer
         if (c && !c.ids.length && asksToLocate(question))
             setMessages((ms) =>
@@ -1958,6 +2092,11 @@ export default function ChatPopover({
     /** the assistant's go-to is choosing the source (the study's log) */
     const byGoto = useRef(false);
     function runNav(cmd: NavCommand, text: string): boolean {
+        // an answer landed (#30): a command's note is followed, as a new question is
+        if (landAt.current) {
+            unland();
+            stick.current = true;
+        }
         byCommand.current = true;
         try {
             return runNavNow(cmd, text);
@@ -2083,6 +2222,7 @@ export default function ChatPopover({
             ...m,
             { id: msgId, role: "assistant", text: "", cite, streaming: true },
         ]);
+        landAnswer(msgId);
         const reader = res.body.getReader();
         const decoder = new TextDecoder();
         let buffer = "";
@@ -2187,6 +2327,7 @@ export default function ChatPopover({
             cite: data.reply == null ? undefined : cite,
         };
         setMessages((m) => [...m, reply]);
+        landAnswer(reply.id);
         if (data.reply != null) onReplyDone(reply, text, token, ask);
         // live read: the user may toggle auto-read while the request is in flight
         if (getSettings().autoRead && data.reply && !hiddenRef.current) {
@@ -2221,6 +2362,7 @@ export default function ChatPopover({
                     { id, role: "user", text, captureId: cur.current.id },
                 ]);
                 stick.current = true;
+                unland();
                 // about the new place being captured: it waits for it, as a typed
                 // question does
                 if (capturing) {
@@ -2264,15 +2406,19 @@ export default function ChatPopover({
             ]);
             // a new place is being captured: the question is about it, so it waits
             // for it (the capturing edge sends it) instead of going to the old one
+            askedRow.current = msgId;
             if (capturing) {
                 waiting.current = { text, msgId };
                 stick.current = true;
+                unland();
                 act("send", T.sAskQueued);
                 return;
             }
         }
+        if (queuedId) askedRow.current = queuedId;
         setBusy(true);
         stick.current = true;
+        unland();
         act("send", T.sAsking);
         // minted at ask time: an auto-highlight for this reply loses to anything newer
         const token = nextToken();
@@ -2476,6 +2622,7 @@ export default function ChatPopover({
 
     // the log: every click as its own entry, questions and answers, in order
     const rows: React.ReactNode[] = [];
+    const fromStart = settings.answerFromStart;
     messages.forEach((m, i) => {
         if (m.role === "place") {
             const p = placeOf(m.captureId);
@@ -2492,7 +2639,7 @@ export default function ChatPopover({
         }
         if (m.role === "user") {
             rows.push(
-                <div key={m.id} className="ulc-msg ulc-me">
+                <div key={m.id} className="ulc-msg ulc-me" data-msg={m.id}>
                     {m.text}
                 </div>,
             );
@@ -2515,6 +2662,19 @@ export default function ChatPopover({
                 <div
                     className={`ulc-msg ulc-bot${m.error ? " is-err" : ""}${m.quiet ? " is-quiet" : ""}`}
                 >
+                    {/* #30: read aloud at the answer's start, there from its first word */}
+                    {fromStart && (m.text || m.streaming) && (
+                        <span className="ulc-read is-first">
+                            {readControls(
+                                i,
+                                readText(m.text, m.cite, m.error),
+                                "ulc-speak has-label",
+                                T.readAloud,
+                                true,
+                                Boolean(m.streaming),
+                            )}
+                        </span>
+                    )}
                     {/* Chips are <button data-cite> inside escaped HTML; one delegated
                         click handler serves them (keyboard Enter/Space clicks too) */}
                     {/* biome-ignore lint/a11y/noStaticElementInteractions lint/a11y/useKeyWithClickEvents: delegation only; the targets are real <button> chips, which click on Enter and Space */}
@@ -2541,7 +2701,7 @@ export default function ChatPopover({
                         <span className="ulc-caret" aria-hidden="true" />
                     )}
                     {/* read aloud sits at the end of the answer, not on a row of its own */}
-                    {m.text && !m.streaming && (
+                    {!fromStart && m.text && !m.streaming && (
                         <span className="ulc-read">
                             {readControls(
                                 i,
@@ -2799,18 +2959,38 @@ export default function ChatPopover({
 
             {!mini && (
                 <div
-                    className="ulc-log"
+                    className={`ulc-log${fromStart ? " is-from-start" : ""}`}
                     ref={scrollRef}
                     onScroll={(e) => {
+                        const el = e.currentTarget;
+                        // an answer shown from its start (#30): where the log is now is
+                        // kept, whoever moved it (the last of our own eased scroll is
+                        // where it lands; a user's scroll is where they read)
+                        if (landAt.current && !landFresh.current) {
+                            landedScroll.current = el.scrollTop;
+                            const row = rowOf(el, landAt.current);
+                            if (row)
+                                landedTop.current =
+                                    row.getBoundingClientRect().top -
+                                    el.getBoundingClientRect().top;
+                        }
                         // our own eased scroll passes through positions the user never chose
                         if (performance.now() < ownScroll.current) return;
-                        const el = e.currentTarget;
+                        // where the user scrolls, they read: not followed again (#30)
                         stick.current =
+                            !landAt.current &&
                             el.scrollHeight - el.scrollTop - el.clientHeight <
-                            48;
+                                48;
                     }}
                 >
                     {rows}
+                    {fromStart && (
+                        <div
+                            className="ulc-spacer"
+                            ref={spacerRef}
+                            aria-hidden="true"
+                        />
+                    )}
                     {!talked && (
                         <p className="ulc-empty">
                             {settings.quickActions

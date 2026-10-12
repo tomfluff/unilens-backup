@@ -169,6 +169,15 @@ ${A} .ulc-read { display: flex; width: fit-content; margin: .55em 0 0; gap: .4em
 ${A} .ulc-speak { color: var(--muted); border-color: var(--ctl); }
 ${A} .ulc-speak.has-label { display: inline-flex; gap: .35em; width: auto; height: 2.3em; padding: 0 .85em 0 .7em; color: var(--acc); border: 1.5px solid var(--acc); background: var(--bg); font-weight: 600; }
 ${A}${HC} .ulc-speak, ${A}${HC} .ulc-speak.has-label { border-width: 2px; }
+/* #30: Listen at the answer's start, on a row of its own, so a Stop beside it (auto-read)
+   never re-wraps the text */
+${R} .ulc-read.is-first, ${A} .ulc-read.is-first { display: flex; width: fit-content; margin: 0 0 .5em; }
+${R} .ulc-read.is-first .ulc-speak[disabled] { opacity: .45; cursor: default; }
+/* room below the last answer, so its question can sit at the top of the log */
+${R} .ulc-spacer { flex: none; pointer-events: none; }
+/* nothing in the log is held in place by the browser as the answer grows (it would
+   follow the text's end, the caret, down) */
+${R} .ulc-log.is-from-start, ${R} .ulc-log.is-from-start * { overflow-anchor: none; }
 ${A} .ulc-quick { padding: .55em 1em 0; border-top: 1px solid var(--line); }
 ${A} .ulc-quick button { min-height: 2.3em; border: 1px solid var(--ctl); border-radius: 999px; background: var(--soft); color: var(--fg); font-size: 1em; }
 ${A}${HC} .ulc-quick button { border-width: 2px; }

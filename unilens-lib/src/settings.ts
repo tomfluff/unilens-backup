@@ -186,6 +186,13 @@ export interface Settings {
     /** a numbered mark (P1, P2, … as in the chat) stays where each Alt+click landed,
      *  until the conversation starts over (P02, P03, session 1) */
     clickMarks: boolean;
+    /** #30 (Yotam, 2026-10-12; P01 and P06): a new answer is shown from its start. When
+     *  it begins, the log scrolls once so the question above it (or the answer) is at
+     *  the top; it does not follow the text or jump when the answer ends; and Listen
+     *  sits at the answer's start. Off: as in session 1, the log follows the text and
+     *  a long answer jumps back to its start when it ends; Listen at the end. A preset
+     *  value, not a participant's setting */
+    answerFromStart: boolean;
     /** what a click mark marks (Yotam, 2026-10-12): the spot clicked (a ring and
      *  dot), what was clicked (outlined as its P entry in the chat outlines it, and
      *  lasting), or both */
@@ -361,6 +368,7 @@ const DEFAULTS: Settings = {
     chatMovesAside: true,
     outlineClicked: false,
     clickMarks: false,
+    answerFromStart: true,
     clickMarkTarget: "both",
     clickMarkStyle: "tag",
     aboutLine: true,
@@ -437,6 +445,7 @@ export const TOGGLE_LABELS: Record<BoolSettingKey, string> = {
     chatMovesAside: "Move the chat out of the way of sources",
     outlineClicked: "Outline what I Alt+click",
     clickMarks: "Keep a numbered mark where I clicked",
+    answerFromStart: "New answers show from their start, Listen first",
     aboutLine: "Show what the next question is about, above the field",
     debugShortcut: "Ctrl+Shift+D opens the debug view",
     assistantZoom: "The assistant can zoom the page when asked",
@@ -975,6 +984,7 @@ export const PANEL_TABS: { id: PanelTabId; groups: PanelGroup[] }[] = [
                     "sourceStyleButton",
                     "chatMovesAside",
                     "outlineClicked",
+                    "answerFromStart",
                     "clickMarks",
                     "clickMarkTarget",
                     "clickMarkStyle",

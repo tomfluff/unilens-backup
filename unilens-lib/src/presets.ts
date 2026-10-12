@@ -84,6 +84,9 @@ const INITIAL = {
     // the chat stays where it opened: stepping aside (or folding) to uncover
     // a source is a later feature (Yotam, 2026-10-07)
     chatMovesAside: false,
+    // the log follows an answer's text, and Listen is at its end (#30 changed both
+    // for session 2)
+    answerFromStart: false,
     // no lasting marks where the user clicked (a session-2 idea)
     clickMarks: false,
     clickMarkTarget: "both",
@@ -161,6 +164,9 @@ export const PRESETS = {
             // choices are in the participant's panel
             hlColorMode: "fixed",
             hlColorRange: "some",
+            // #30 (Yotam, 2026-10-12; P01, P06): a new answer shows from its start and
+            // stays put; Listen at its start. Not in the panel
+            answerFromStart: true,
         },
         /** what a participant may change in session 2 (session-lead's list,
          *  2026-10-09): the highlight's look, page zoom, the page map, voice, sounds,

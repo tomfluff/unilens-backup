@@ -130,7 +130,13 @@ describe("session 2 (2026-10-09)", () => {
             // #26: the fixed color (Yotam, 2026-10-12)
             hlColorMode: "fixed",
             hlColorRange: "some",
+            // #30: answers from their start, Listen first; session 1 kept as it was
+            answerFromStart: true,
         });
+        expect(PRESETS.initial.values.answerFromStart).toBe(false);
+        expect(PRESETS.session2.panel as readonly string[]).not.toContain(
+            "answerFromStart",
+        );
     });
 
     it("lists a participant's panel of real panel settings", async () => {
