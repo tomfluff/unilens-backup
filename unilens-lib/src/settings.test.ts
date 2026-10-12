@@ -29,8 +29,9 @@ const keys = Object.keys(defaults) as (keyof Settings)[];
 
 describe("settings tables", () => {
     it("bounds every numeric knob and its default lies within them", () => {
+        // edgeZone is a hidden preset value, with no panel row
         const numKeys = keys.filter(
-            (k) => typeof defaults[k] === "number",
+            (k) => typeof defaults[k] === "number" && k !== "edgeZone",
         ) as NumSettingKey[];
         expect(numKeys.length).toBeGreaterThan(0);
         for (const key of numKeys) {

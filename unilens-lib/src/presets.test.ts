@@ -139,7 +139,10 @@ describe("session 2 (2026-10-09)", () => {
             quietNotFound: false,
             hlAdaptLine: true,
             altDragInert: true,
+            // near the screen's edge or under the chat moves to the middle (item 16)
+            edgeZone: 0.2,
         });
+        expect(PRESETS.initial.values.edgeZone).toBe(0);
         // judged over everything under the ring in every preset, and in no panel
         // (Yotam, 2026-10-13, after the menu-bar comparison)
         for (const p of Object.values(PRESETS)) {

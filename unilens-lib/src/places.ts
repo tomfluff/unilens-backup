@@ -3,7 +3,7 @@
  * so the conversation can take them back there ("where I clicked"). Kept for this
  * page load; the element reference goes stale on reload, the content point does not.
  */
-import { getTargetView, getZoom, revealPoint } from "./zoom";
+import { getZoom, revealPlace } from "./zoom";
 
 export interface Place {
     captureId: string;
@@ -88,16 +88,10 @@ export const allPlaces = () => ({
  * clicked on, which can be a whole page section). No move when it is on screen.
  */
 export function goToPlace(p: Place): "moved" | "in-view" {
-    const { scale } = getZoom();
-    // mid-glide, judge from where the page is going, not where it is
-    const v = getTargetView();
-    const W = window.visualViewport?.width ?? window.innerWidth;
-    const H = window.visualViewport?.height ?? window.innerHeight;
-    const cx = p.x * scale - v.x;
-    const cy = p.y * scale - v.y;
-    if (cx >= 0 && cy >= 0 && cx <= W && cy <= H) return "in-view";
-    revealPoint(p.x, p.y);
-    return "moved";
+    // mid-glide, judged from where the page is going, not where it is; with an
+    // edge zone (session 2), near the screen's edge or under the chat counts as
+    // out of view
+    return revealPlace(p.x, p.y);
 }
 
 export function clearPlaces() {

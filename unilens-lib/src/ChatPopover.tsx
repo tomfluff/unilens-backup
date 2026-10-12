@@ -107,6 +107,8 @@ import {
     getZoom,
     returnToPreviousView,
     revealElement,
+    revealElements,
+    setScreenCover,
 } from "./zoom";
 
 interface Msg {
@@ -580,6 +582,16 @@ export default function ChatPopover({
     const inputRef = useRef<HTMLInputElement>(null);
     const aboutId = useId();
     const rootRef = useRef<HTMLDivElement>(null);
+    // what the chat covers counts as hidden to a move to a highlight (the edge zone,
+    // session 2): read at each move, where the chat is then
+    useEffect(() => {
+        setScreenCover(() => {
+            if (hiddenRef.current) return null;
+            const r = rootRef.current?.getBoundingClientRect();
+            return r?.width && r.height ? r : null;
+        });
+        return () => setScreenCover(null);
+    }, []);
     /** the header's fold button, where the keyboard goes when the chat folds itself */
     const foldRef = useRef<HTMLButtonElement>(null);
     /** a question asked while a new place is captured: it waits for that place */
@@ -1879,11 +1891,20 @@ export default function ChatPopover({
         // the moveToEvidence setting decides whether choosing an item moves the page;
         // "never" leaves finding it to the off-screen cues and the minimap
         const move = getSettings().moveToEvidence;
+        // All: the group's box when it fits the edge zone (session 2), else the first
         const moved =
             reveal && move !== "never" && el
-                ? revealElement(el, undefined, {
-                      always: move === "always",
-                  }) === "moved"
+                ? (index === "all"
+                      ? revealElements(
+                            picks
+                                .map(({ id }) => src.registry.get(id))
+                                .filter((e): e is Element => e != null),
+                            undefined,
+                            { always: move === "always" },
+                        )
+                      : revealElement(el, undefined, {
+                            always: move === "always",
+                        })) === "moved"
                 : false;
         setReturnable(canReturn());
         logEvent("source", {

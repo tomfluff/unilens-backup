@@ -121,6 +121,11 @@ export interface Settings {
      *  Yotam kept "under-ring" after comparing them on the navy menu bar
      *  (2026-10-13). A preset value, in no panel */
     adaptBg: "under-ring" | "main";
+    /** a move to a highlight counts it as in view only this fraction in from each
+     *  side of what the user sees, the chat's part hidden, and centres it in the
+     *  uncovered part (item 16 of Yotam's try-out, 2026-10-13); 0: session 1's rule,
+     *  fully on screen. A preset value, in no panel */
+    edgeZone: number;
     /** the highlight colour, #rgb or #rrggbb; the two-band ring stays black and white */
     hlColor: string;
     /** how the colour meets the page under it (#26, Yotam 2026-10-12): always the
@@ -349,6 +354,7 @@ const DEFAULTS: Settings = {
     hlAdaptLine: true,
     altDragInert: true,
     adaptBg: "under-ring",
+    edgeZone: 0,
     hlColor: "#ffef26",
     hlColorMode: "fixed",
     hlColorRange: "some",
@@ -503,8 +509,13 @@ export const TOGGLE_LABELS: Record<BoolSettingKey, string> = {
 };
 
 /** keys of Settings whose value is a number — the integer knob rows in the panel */
+/** the numeric settings with a panel row; a hidden preset value (edgeZone) has none */
 export type NumSettingKey = {
-    [K in keyof Settings]: Settings[K] extends number ? K : never;
+    [K in keyof Settings]: Settings[K] extends number
+        ? K extends "edgeZone"
+            ? never
+            : K
+        : never;
 }[keyof Settings];
 
 /**
@@ -1242,6 +1253,12 @@ export function clampSetting<K extends keyof Settings>(
     }
     if (key === "hlColor") {
         return isHexColor(value) ? (value as Settings[K]) : fallback;
+    }
+    if (key === "edgeZone") {
+        const n = Number(value);
+        return (
+            Number.isFinite(n) ? Math.min(0.45, Math.max(0, n)) : fallback
+        ) as Settings[K];
     }
     if (key === "adaptBg")
         return value === "under-ring" || value === "main"

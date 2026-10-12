@@ -87,6 +87,8 @@ const INITIAL = {
     altDragInert: false,
     // an adaptive colour judged over everything under the ring (every preset)
     adaptBg: "under-ring",
+    // a move to a highlight only when it is not fully on screen (session 1)
+    edgeZone: 0,
     ringWidth: 2,
     ringScale: false,
     // the chat stays where it opened: stepping aside (or folding) to uncover
@@ -191,6 +193,10 @@ export const PRESETS = {
             // judged over everything under the ring, not the main background alone
             // (Yotam, 2026-10-13, after the menu-bar comparison). Not in the panel
             adaptBg: "under-ring",
+            // a highlight near the screen's edge, or under the chat, moves to the
+            // middle of the uncovered part: 20% in from each side (item 16 of
+            // Yotam's try-out, 2026-10-13). Not in the panel
+            edgeZone: 0.2,
         },
         /** what a participant may change in session 2 (session-lead's list,
          *  2026-10-09): the highlight's look, page zoom, the page map, voice, sounds,

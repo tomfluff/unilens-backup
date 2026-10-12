@@ -469,13 +469,189 @@ function atDestination(r: ClientRect): ClientRect {
     };
 }
 
+// ── the edge zone (session 2, item 16 of Yotam's try-out, 2026-10-13) ─────────
+// Session 1 showed that highlights at the screen's edges go unnoticed: with
+// edgeZone above 0 a highlight counts as in view only inside an inner zone of what
+// the user sees, that fraction in from each side, and the part of the screen the
+// chat covers counts as hidden. Once it moves, it goes to the middle of the
+// uncovered part. 0: session 1's rule (fully on screen, the screen's middle).
+
+type Area = { left: number; top: number; width: number; height: number };
+
+/** the chat panel's box on screen, or null when it is not shown (ChatPopover) */
+let screenCover: (() => Area | null) | null = null;
+export function setScreenCover(fn: (() => Area | null) | null) {
+    screenCover = fn;
+}
+
+/** below this share of the screen left uncovered (a chat over nearly all of it, at
+ *  high zoom), the chat is not counted: the whole screen, as without it */
+const MIN_OPEN = 0.25;
+
+/**
+ * What the user sees of `view` with `cover` (the chat) over it: the largest of the
+ * four bands beside the cover (left, right, above, below), or all of it when the
+ * cover misses it or leaves too little.
+ */
+export function openArea(view: Area, cover: Area | null): Area {
+    if (!cover) return view;
+    const R = view.left + view.width;
+    const B = view.top + view.height;
+    const cl = Math.max(view.left, cover.left);
+    const cr = Math.min(R, cover.left + cover.width);
+    const ct = Math.max(view.top, cover.top);
+    const cb = Math.min(B, cover.top + cover.height);
+    if (cr <= cl || cb <= ct) return view;
+    const sides: Area[] = [
+        {
+            left: view.left,
+            top: view.top,
+            width: cl - view.left,
+            height: view.height,
+        },
+        { left: cr, top: view.top, width: R - cr, height: view.height },
+        {
+            left: view.left,
+            top: view.top,
+            width: view.width,
+            height: ct - view.top,
+        },
+        { left: view.left, top: cb, width: view.width, height: B - cb },
+    ];
+    const best = sides.reduce((a, b) =>
+        b.width * b.height > a.width * a.height ? b : a,
+    );
+    return best.width * best.height >= MIN_OPEN * view.width * view.height
+        ? best
+        : view;
+}
+
+/**
+ * Whether `r` is inside the zone `edge` in from each side of `area`, and how far
+ * the page must move (client px) to put it right: its middle at the area's middle,
+ * or, on an axis where it is larger than the zone, its start (left, top) at the
+ * zone's start; on such an axis its start inside the zone counts as in view.
+ */
+export function aimInZone(
+    r: Area,
+    area: Area,
+    edge: number,
+): { inView: boolean; dx: number; dy: number } {
+    const axis = (
+        start: number,
+        size: number,
+        aStart: number,
+        aSize: number,
+    ) => {
+        const zs = aStart + aSize * edge;
+        const ze = aStart + aSize * (1 - edge);
+        if (size <= ze - zs)
+            return {
+                inView: start >= zs && start + size <= ze,
+                d: start + size / 2 - (aStart + aSize / 2),
+            };
+        return { inView: start >= zs && start <= ze, d: start - zs };
+    };
+    const x = axis(r.left, r.width, area.left, area.width);
+    const y = axis(r.top, r.height, area.top, area.height);
+    return { inView: x.inView && y.inView, dx: x.d, dy: y.d };
+}
+
+/** the edge zone in effect, as a fraction of each side (0: none) */
+function edgeZone(): number {
+    const e = Number(getSettings().edgeZone);
+    return Number.isFinite(e) ? Math.min(0.45, Math.max(0, e)) : 0;
+}
+
+/** what the user sees, in client px: the visual viewport (a window inside the layout
+ *  viewport under browser pinch zoom) */
+function visibleArea(): Area {
+    const vv = window.visualViewport;
+    return {
+        left: vv?.offsetLeft ?? 0,
+        top: vv?.offsetTop ?? 0,
+        width: vv?.width ?? window.innerWidth,
+        height: vv?.height ?? window.innerHeight,
+    };
+}
+
+/** a box moved into the zone (see aimInZone), as a run's move; edge above 0 */
+function revealInZone(
+    r: Area,
+    edge: number,
+    always = false,
+): "moved" | "in-view" {
+    const view = visibleArea();
+    const area = openArea(view, screenCover?.() ?? null);
+    const aim = aimInZone(r, area, edge);
+    if (aim.inView && !always) return "in-view";
+    const v = getTargetView();
+    rememberView(view.width, view.height);
+    setView(v.x + aim.dx, v.y + aim.dy);
+    endOfRun();
+    return "moved";
+}
+
+/**
+ * Bring several elements into view together ("All"): with an edge zone, their
+ * combined box when it fits the zone, else the first of them; without one (session
+ * 1), the first, as revealElement does.
+ */
+export function revealElements(
+    els: Element[],
+    measure?: (el: Element) => ClientRect,
+    opts: { always?: boolean } = {},
+): "moved" | "in-view" | "none" {
+    const boxes = els
+        .map((el) => boxOf(el, measure))
+        .filter((b) => !isEmptyBox(b))
+        .map(atDestination);
+    const edge = edgeZone();
+    // session 1: the first source, as it was, even when it shows nothing
+    if (!edge) return els[0] ? revealElement(els[0], measure, opts) : "none";
+    if (!boxes.length) return "none";
+    if (boxes.length === 1) return revealInZone(boxes[0], edge, opts.always);
+    const left = Math.min(...boxes.map((b) => b.left));
+    const top = Math.min(...boxes.map((b) => b.top));
+    const all = {
+        left,
+        top,
+        width: Math.max(...boxes.map((b) => b.left + b.width)) - left,
+        height: Math.max(...boxes.map((b) => b.top + b.height)) - top,
+    };
+    const area = openArea(visibleArea(), screenCover?.() ?? null);
+    const fits =
+        all.width <= area.width * (1 - 2 * edge) &&
+        all.height <= area.height * (1 - 2 * edge);
+    return revealInZone(fits ? all : boxes[0], edge, opts.always);
+}
+
+/**
+ * Centre a content-space point (a place the user clicked) when it is outside the
+ * edge zone, as a run's move; with no edge zone (session 1), when it is off screen.
+ */
+export function revealPlace(x: number, y: number): "moved" | "in-view" {
+    const v = getTargetView();
+    const cx = x * scale - v.x;
+    const cy = y * scale - v.y;
+    const edge = edgeZone();
+    if (edge)
+        return revealInZone({ left: cx, top: cy, width: 0, height: 0 }, edge);
+    const W = window.visualViewport?.width ?? window.innerWidth;
+    const H = window.visualViewport?.height ?? window.innerHeight;
+    if (cx >= 0 && cy >= 0 && cx <= W && cy <= H) return "in-view";
+    revealPoint(x, y);
+    return "moved";
+}
+
 /**
  * Bring an element to the middle of the screen under either pan engine. Leaves the
  * view alone when the element is already fully on screen, so the page never moves
  * without need, unless `always`. The first of a run of moves is bookmarked so the
  * user can return to where they were reading ("back" / "戻る"). Returns what happened.
  * A chat covering the element is the chat's to move (`besideTarget`), not the page's:
- * the element always goes to the middle, where the reader looks first.
+ * the element always goes to the middle, where the reader looks first. With an edge
+ * zone (session 2) it must be inside the zone, and the chat's part is hidden.
  */
 export function revealElement(
     el: Element,
@@ -486,6 +662,8 @@ export function revealElement(
     if (isEmptyBox(now)) return "none";
     // mid-move, judge from where the page is going, not where it is this frame
     const r = atDestination(now);
+    const edge = edgeZone();
+    if (edge) return revealInZone(r, edge, opts.always);
     // under browser pinch zoom the user sees the visual viewport, a window inside the
     // layout viewport that client rects are measured in
     const vv = window.visualViewport;
