@@ -86,6 +86,7 @@ const INITIAL = {
     chatMovesAside: false,
     // no lasting marks where the user clicked (a session-2 idea)
     clickMarks: false,
+    clickMarkTarget: "both",
     // no "About all 3 sources" line above the field (not decided for good)
     aboutLine: false,
     // nothing else moves or zooms the page
@@ -189,6 +190,7 @@ export const PRESETS = {
             "chatMovesAside",
             // the lasting click marks (P02, P03, session 1): off, offered here
             "clickMarks",
+            "clickMarkTarget",
         ],
         // each task link opens a new tab (session lead, 2026-10-09)
         keepPerParticipant: true,

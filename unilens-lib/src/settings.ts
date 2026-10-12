@@ -186,6 +186,10 @@ export interface Settings {
     /** a numbered mark (P1, P2, … as in the chat) stays where each Alt+click landed,
      *  until the conversation starts over (P02, P03, session 1) */
     clickMarks: boolean;
+    /** what a click mark marks (Yotam, 2026-10-12): the spot clicked (a ring and
+     *  dot), what was clicked (outlined as its P entry in the chat outlines it, and
+     *  lasting), or both */
+    clickMarkTarget: "spot" | "element" | "both";
     /** the line above the field saying what the next question is about (the outlined
      *  sources or place); hidden, they still go with the question */
     aboutLine: boolean;
@@ -345,6 +349,7 @@ const DEFAULTS: Settings = {
     chatMovesAside: true,
     outlineClicked: false,
     clickMarks: false,
+    clickMarkTarget: "both",
     aboutLine: true,
     debugShortcut: true,
     assistantZoom: true,
@@ -680,6 +685,14 @@ export const ENUM_CHOICES = {
             beside: "Beside, where it fits",
         },
     },
+    clickMarkTarget: {
+        label: "What to mark",
+        choices: {
+            spot: "The spot I clicked",
+            element: "What I clicked",
+            both: "Both",
+        },
+    },
     hlPulse: {
         label: "Pulse",
         choices: {
@@ -914,6 +927,7 @@ export const PANEL_TABS: { id: PanelTabId; groups: PanelGroup[] }[] = [
                     "chatMovesAside",
                     "outlineClicked",
                     "clickMarks",
+                    "clickMarkTarget",
                     "assistantGoTo",
                     "aboutLine",
                     "regionSelect",

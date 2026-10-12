@@ -405,15 +405,29 @@ function makeBadge(
     text: string,
     size: keyof typeof BADGE_SIZE = "small",
 ): HTMLDivElement {
+    const style = getSettings().chatStyle;
+    // station codes read "U1", like the chips; a folded pair reads "1·2" (or "U1·U2")
+    const badge = numberLike(
+        text
+            .split("·")
+            .map((t) => (style === "station" ? `U${t}` : t))
+            .join("·"),
+        size,
+    );
+    badge.className = `${CLASS}-badge`;
+    return badge;
+}
+
+/** a number in the page badges' look, at one of their sizes, with its text as given
+ *  (the click marks' "P1" wears it too, Yotam 2026-10-12) */
+export function numberLike(
+    text: string,
+    size: keyof typeof BADGE_SIZE = "small",
+): HTMLDivElement {
     const z = BADGE_SIZE[size];
     const style = getSettings().chatStyle;
     const badge = document.createElement("div");
-    badge.className = `${CLASS}-badge`;
-    // station codes read "U1", like the chips; a folded pair reads "1·2" (or "U1·U2")
-    badge.textContent = text
-        .split("·")
-        .map((t) => (style === "station" ? `U${t}` : t))
-        .join("·");
+    badge.textContent = text;
     Object.assign(
         badge.style,
         {

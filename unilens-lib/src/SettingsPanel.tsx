@@ -147,6 +147,7 @@ function relevant(key: Key, s: Settings): boolean {
         return false;
     if (key === "associateText" && s.citePlacement !== "inline") return false;
     if (key === "hlColorRange" && s.hlColorMode !== "near") return false;
+    if (key === "clickMarkTarget" && !s.clickMarks) return false;
     if (MM_ALL.has(key) && s.minimap === "off") return false;
     const own = FX_OWN[key];
     return !own || own.includes(s.clickFx);
