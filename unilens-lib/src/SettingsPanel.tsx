@@ -208,7 +208,7 @@ const SHORT: Record<string, string> = {
     fixed: "Off",
     invert: "Invert",
     contrast: "Best contrast",
-    near: "Near this color",
+    near: "Enhanced color",
 };
 const SHORT_NONE = new Set<Key>([
     "hlFill",

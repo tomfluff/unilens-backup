@@ -301,8 +301,8 @@ export const OWN_SETTINGS: Partial<
     hlColorMode: {
         label: { en: "Adaptive color", ja: "色の自動調整" },
         hint: {
-            en: "Changes the highlight's color where it would not stand out, or would make the text hard to read. Where yellow already works, as on many dark sections, it stays yellow",
-            ja: "目立たない場所や、文字が読みにくくなる場所ではハイライトの色を変えます。黄色で十分な場所（暗い場所の多く）では黄色のままです",
+            en: "Changes the highlight's color to fit the page behind it",
+            ja: "背景に合わせてハイライトの色を変えます",
         },
     },
     hlPulse: {
@@ -530,9 +530,9 @@ export const CHOICES_JA: Partial<
     },
     hlColorMode: {
         fixed: "オフ",
+        near: "色を強調（この色のまま、必要なところで見分けやすく）",
         invert: "下の色を反転",
         contrast: "下の色といちばん見分けやすい色",
-        near: "この色に近く、見分けやすく",
     },
     hlColorRange: {
         little: "少し",
@@ -644,7 +644,7 @@ export const SHORT_JA: Record<string, string> = {
     fixed: "オフ",
     invert: "反転",
     contrast: "見分けやすさ優先",
-    near: "この色に近く",
+    near: "色を強調",
     corner: "左上の角",
     beside: "空いている横",
     light: "薄く",

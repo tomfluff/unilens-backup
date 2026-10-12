@@ -712,10 +712,11 @@ export const ENUM_CHOICES = {
     hlColorMode: {
         label: "Adaptive color",
         choices: {
+            // in this order (Yotam, 2026-10-12); "near" keeps its stored value
             fixed: "Off",
+            near: "Enhanced color: this color, made to stand out where needed",
             invert: "Invert what is under it",
             contrast: "Best contrast with what is under it",
-            near: "Near this color, with enough contrast",
         },
     },
     hlColorRange: {
