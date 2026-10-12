@@ -14,12 +14,12 @@
  * zoom that re-wraps the text moves it with the element), and the content point
  * otherwise (a place brought back after a reload has no element).
  *
- * The marks are drawn over the highlights, so a source never hides one. Like the
- * highlights, they sit on <html>, outside <body>: no capture or inventory sees
- * them, they never take a click, and the zoom transform leaves them at their size
- * on screen.
+ * The marks are drawn in the highlights' layer, over their outlines and under the
+ * sources' numbers, so neither hides the other's number. Like the highlights,
+ * they sit on <html>, outside <body>: no capture or inventory sees them, they
+ * never take a click, and the zoom transform leaves them at their size on screen.
  */
-import { numberLike, paintOutline } from "./highlight";
+import { highlightLayer, numberLike, paintOutline } from "./highlight";
 import { lookFrom } from "./highlightStyles";
 import { allPlaces, onPlacesChange, type Place, placeNumber } from "./places";
 import { getSettings, onSettingsChange } from "./settings";
@@ -31,10 +31,14 @@ import {
     onZoomChange,
 } from "./zoom";
 
-/** the highlights' (…645), and after them on the page: drawn over every outline */
-const LAYER_Z = "2147483645";
+/**
+ * Inside the highlights' layer (Yotam, 2026-10-12), from the top: the sources'
+ * numbers (z-index 3 there) and the P numbers, the ring and dot, the lasting
+ * outline, then the highlights' outlines and glow (no z-index). The marks keep
+ * that order among themselves by their order in the mark.
+ */
+const LAYER_Z = "2";
 const CLASS = "unilens-mark";
-const HIGHLIGHTS = "unilens-highlight-layer";
 /** how far the number sits up and to the right of the spot, px */
 const NUM_GAP = 14;
 
@@ -85,7 +89,7 @@ function ensureLayer(): HTMLDivElement {
     layer.id = "unilens-click-marks";
     // the chat's place entries say the same, to a screen reader
     layer.setAttribute("aria-hidden", "true");
-    document.documentElement.appendChild(layer);
+    highlightLayer().appendChild(layer);
     return layer;
 }
 
@@ -165,13 +169,6 @@ function render() {
         return;
     }
     const host = ensureLayer();
-    // over the highlights: after their layer, which is made when first needed
-    const hl = document.getElementById(HIGHLIGHTS);
-    if (
-        hl &&
-        hl.compareDocumentPosition(host) & Node.DOCUMENT_POSITION_PRECEDING
-    )
-        document.documentElement.appendChild(host);
     // the source numbers' size; with them hidden, the smallest (the P still shows)
     const size: BadgeSize = s.hlBadges === "none" ? "small" : s.hlBadges;
     for (const p of list) {
@@ -313,9 +310,6 @@ function start() {
     // the page changing under a mark (a section opening above it) moves what was
     // clicked; the marks live outside <body>, so their own moves are not seen
     watcher = new MutationObserver(schedule);
-    // and the highlights' layer arriving on <html>, made when first needed: the marks
-    // go after it, over the highlights
-    watcher.observe(document.documentElement, { childList: true });
     watcher.observe(document.body, {
         subtree: true,
         childList: true,

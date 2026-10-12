@@ -146,15 +146,17 @@ describe("lasting click marks", () => {
         expect([shown("ring"), shown("box")]).toEqual([true, false]);
     });
 
-    it("is drawn over the highlights, made after it", async () => {
+    it("sits over the highlights' outlines and under their numbers", () => {
         recordPlace(place("a", 10, 20));
-        const hl = document.createElement("div");
-        hl.id = "unilens-highlight-layer";
-        document.documentElement.appendChild(hl);
-        await new Promise((r) => setTimeout(r, 50));
         const layer = document.getElementById("unilens-click-marks");
-        expect(hl.nextElementSibling).toBe(layer);
-        hl.remove();
+        // in the highlights' layer, at a level between their outlines (none) and
+        // their numbers (3)
+        expect(layer?.parentElement?.id).toBe("unilens-highlight-layer");
+        expect(getComputedStyle(layer as Element).zIndex).toBe("2");
+        // within a mark: the outline, the ring and dot, then the number on top
+        const kids = [...marks()[0].children].map((e) => e.className);
+        expect(kids.at(-1)).toContain("unilens-mark-num");
+        expect(kids[0]).toBe("unilens-mark-box");
     });
 
     it("goes when the conversation starts over, or the setting is off", () => {

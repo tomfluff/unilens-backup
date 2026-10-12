@@ -297,6 +297,10 @@ function ensureLayer() {
     return layer;
 }
 
+/** the layer the highlights are drawn in, made if need be: the lasting click marks
+ *  are drawn in it too, between the outlines and the numbers */
+export const highlightLayer = (): HTMLDivElement => ensureLayer();
+
 function ensureInvertLayer() {
     const main = ensureLayer();
     if (invertLayer?.isConnected) return invertLayer;
@@ -472,7 +476,9 @@ function decorate(
         if (layer?.hasAttribute("data-unilens-layer")) {
             // placed by paintBox, above every box
             badge.style.position = "fixed";
-            badge.style.zIndex = "1";
+            // over the lasting click marks too (z-index 2 here, clickMarks.ts): a
+            // source's number is never covered
+            badge.style.zIndex = "3";
             badge.style.pointerEvents = "none";
             layer.appendChild(badge);
             entry.badgeEl = badge;

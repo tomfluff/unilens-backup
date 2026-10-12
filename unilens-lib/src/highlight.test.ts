@@ -520,6 +520,11 @@ describe("layered look", () => {
         expect(document.querySelector(".unilens-hl-badge")?.textContent).toBe(
             "1",
         );
+        // over the lasting click marks (z-index 2) too
+        expect(
+            (document.querySelector(".unilens-hl-badge") as HTMLElement).style
+                .zIndex,
+        ).toBe("3");
     });
 
     it("spotlight feathers the holes and overshoots the screen edges", () => {
