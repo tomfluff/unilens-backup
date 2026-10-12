@@ -269,6 +269,104 @@ export async function speak(text: string, onState?: (s: SpeechState) => void) {
     }
 }
 
+/** samples of the reading voice, one per voice, speed and text: heard again, a
+ *  sample plays from here, with no new request (Yotam's try-out, 2026-10-12) */
+const samples = new Map<string, { bytes: Uint8Array; rate: number }>();
+
+/**
+ * A short sample of the reading voice at the chosen speed (the settings' "Hear the
+ * reading voice"), fetched whole and kept, then played with WebAudio. The browser's
+ * voice reads it when the backend's cannot.
+ */
+export async function speakSample(
+    text: string,
+    onState?: (s: SpeechState) => void,
+) {
+    stopSpeaking();
+    const mine = reading;
+    stateCb = onState ?? null;
+    setStateSafe("loading");
+    const s = getSettings();
+    const body = {
+        text: toSpeakable(text),
+        provider: s.ttsProvider === "auto" ? undefined : s.ttsProvider,
+        model: s.ttsModel || undefined,
+        voice: s.ttsVoice || undefined,
+        speed: TTS_SPEEDS[s.ttsSpeed] ?? 1,
+    };
+    const key = JSON.stringify(body);
+    let ctx: AudioContext;
+    try {
+        // made now, inside the press: browsers let audio start only from a gesture
+        ctx = new AudioContext();
+        void ctx.resume().catch(() => undefined);
+    } catch {
+        speakNative(text, mine, "no audio context");
+        return;
+    }
+    const me: Player = {
+        ctx,
+        abort: new AbortController(),
+        sources: new Set(),
+        done: true,
+    };
+    player = me;
+    try {
+        let got = samples.get(key);
+        if (!got) {
+            const res = await fetch(studyUrl(`${backendUrl}/api/tts/stream`), {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: key,
+                signal: me.abort.signal,
+            });
+            if (!res.ok) throw new Error(`tts ${res.status}`);
+            const rate =
+                Number(res.headers.get("X-Audio-Sample-Rate")) || 24000;
+            got = { bytes: new Uint8Array(await res.arrayBuffer()), rate };
+            if (got.bytes.length < 2) throw new Error("tts empty");
+            samples.set(key, got);
+        }
+        if (mine !== reading) return;
+        // a context the browser keeps suspended plays nothing: the browser's voice
+        // reads instead, as for an answer
+        if (ctx.state !== "running") {
+            await Promise.race([
+                ctx.resume().catch(() => undefined),
+                new Promise((r) => setTimeout(r, 500)),
+            ]);
+            if (mine !== reading) return;
+            if ((ctx.state as AudioContextState) !== "running")
+                throw new Error("audio blocked");
+        }
+        const n = got.bytes.length >> 1;
+        const buf = ctx.createBuffer(1, n, got.rate);
+        const ch = buf.getChannelData(0);
+        const view = new DataView(
+            got.bytes.buffer,
+            got.bytes.byteOffset,
+            n * 2,
+        );
+        for (let i = 0; i < n; i++) ch[i] = view.getInt16(i * 2, true) / 32768;
+        const src = ctx.createBufferSource();
+        src.buffer = buf;
+        src.connect(ctx.destination);
+        me.sources.add(src);
+        src.onended = () => {
+            me.sources.delete(src);
+            if (player !== me || mine !== reading) return;
+            closePlayer(me);
+            setState("idle");
+        };
+        src.start(ctx.currentTime + 0.02);
+        setState("playing");
+    } catch (err) {
+        if (mine !== reading || me.abort.signal.aborted) return;
+        closePlayer(me);
+        speakNative(text, mine, fallbackReason(err));
+    }
+}
+
 /** the reading through an <audio> element: for a backend without the streamed
  *  reading (before 2026-10-07). A quick tunnel delivers it only once complete */
 let audioEl: HTMLAudioElement | null = null;

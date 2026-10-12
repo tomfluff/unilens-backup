@@ -1,9 +1,11 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { updateSetting } from "./settings";
 import {
     listen,
     pauseSpeaking,
     resumeSpeaking,
     speak,
+    speakSample,
     stopSpeaking,
 } from "./speech";
 
@@ -114,6 +116,56 @@ const pcm = (...chunks: number[]) =>
         }),
         { headers: { "X-Audio-Sample-Rate": "24000" } },
     );
+
+describe("speakSample", () => {
+    afterEach(() => vi.unstubAllGlobals());
+    it("fetches each voice and speed once, then plays it from what it kept", async () => {
+        vi.stubGlobal("speechSynthesis", {
+            speak: vi.fn(),
+            cancel: vi.fn(),
+            pause: vi.fn(),
+        });
+        vi.stubGlobal("SpeechSynthesisUtterance", class {});
+        vi.stubGlobal("AudioContext", FakeAudioContext);
+        const fetcher = vi.fn(async () => pcm(4800));
+        vi.stubGlobal("fetch", fetcher);
+        updateSetting("ttsSpeed", "normal");
+        const states: string[] = [];
+        await speakSample("a sample", (s) => states.push(s));
+        await speakSample("a sample");
+        expect(fetcher).toHaveBeenCalledTimes(1);
+        expect(states).toEqual(["loading", "playing", "idle"]);
+        // another speed: its own sample
+        updateSetting("ttsSpeed", "fast");
+        await speakSample("a sample");
+        expect(fetcher).toHaveBeenCalledTimes(2);
+        await speakSample("a sample");
+        expect(fetcher).toHaveBeenCalledTimes(2);
+        updateSetting("ttsSpeed", "normal");
+    });
+});
+
+describe("speakSample, the browser holding the audio", () => {
+    afterEach(() => vi.unstubAllGlobals());
+    it("reads with the browser's voice instead of playing silence", async () => {
+        const synth = { speak: vi.fn(), cancel: vi.fn(), pause: vi.fn() };
+        vi.stubGlobal("speechSynthesis", synth);
+        vi.stubGlobal("SpeechSynthesisUtterance", class {});
+        class Held extends FakeAudioContext {
+            override resume = vi.fn(async () => {});
+            override state = "suspended" as AudioContextState;
+        }
+        vi.stubGlobal("AudioContext", Held);
+        vi.stubGlobal(
+            "fetch",
+            vi.fn(async () => pcm(4800)),
+        );
+        updateSetting("ttsSpeed", "slow");
+        await speakSample("held");
+        expect(synth.speak).toHaveBeenCalled();
+        updateSetting("ttsSpeed", "normal");
+    });
+});
 
 describe("speak", () => {
     afterEach(() => vi.unstubAllGlobals());

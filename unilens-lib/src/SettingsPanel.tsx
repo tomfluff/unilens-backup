@@ -58,6 +58,7 @@ import {
     SendIcon,
     SettingsIcon,
     SourceStyleIcon,
+    StopIcon,
 } from "./icons";
 import { boxStyles, lensStyles, MAP_INK, paintMapTargets } from "./minimap";
 import {
@@ -93,6 +94,7 @@ import {
     type PanelLang,
     SHORT_JA,
 } from "./settingsText";
+import { type SpeechState, speakSample, stopSpeaking } from "./speech";
 import { resetHostStyles } from "./uiReset";
 import {
     getTargetZoom,
@@ -1578,6 +1580,46 @@ function ChatSpecimen({ s, T }: { s: Settings; T: Text }) {
     );
 }
 
+/** the reading voice at the chosen speed, so the speeds can be compared; each
+ *  voice and speed is fetched once (speakSample keeps it) */
+function HearVoice({ T }: { T: Text }) {
+    const [phase, setPhase] = useState<SpeechState>("idle");
+    const on = phase === "loading" || phase === "playing";
+    // the panel closing, or this tab left: a sample still playing stops (never the
+    // chat's own reading)
+    const playing = useRef(false);
+    // set as the state changes, not on the next render: a reading that takes over
+    // ends the sample at once
+    const track = (st: SpeechState) => {
+        playing.current = st === "loading" || st === "playing";
+        setPhase(st);
+    };
+    useEffect(
+        () => () => {
+            if (playing.current) stopSpeaking();
+        },
+        [],
+    );
+    return (
+        <button
+            type="button"
+            className="s-btn s-try"
+            aria-pressed={on}
+            onClick={() => {
+                if (on) {
+                    stopSpeaking();
+                    track("idle");
+                    return;
+                }
+                void speakSample(T.sampleRead, track);
+            }}
+        >
+            {on ? <StopIcon /> : <PlayIcon />}
+            {on ? T.stopVoice : T.hearVoice}
+        </button>
+    );
+}
+
 /** the minimap preview's sketch: real px, scaled as the page's minimap is to the page */
 const MAP = { w: 140, h: 180 };
 
@@ -2233,6 +2275,7 @@ function Panel({
                                 <PlayIcon />
                                 {T.hearSound}
                             </button>
+                            <HearVoice T={T} />
                         </div>
                     )}
                     {shown && (tab === "look" || tab === "zoom") && (
