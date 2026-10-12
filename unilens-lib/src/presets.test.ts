@@ -6,6 +6,7 @@ import {
     clearPresetChanges,
     defaultOf,
     getSettings,
+    SETTINGS_GEN,
     type Settings,
     updateSetting,
 } from "./settings";
@@ -229,7 +230,8 @@ describe("a preset in effect", () => {
         const kept = JSON.parse(
             sessionStorage.getItem("unilens-settings:initial") as string,
         );
-        expect(kept.state).toEqual({ chatTextScale: 150 });
+        // what differs, and the settings' generation that wrote it
+        expect(kept.state).toEqual({ chatTextScale: 150, _gen: SETTINGS_GEN });
 
         // "Reset this tab" and "changed" measure from the preset
         expect(defaultOf("minimap")).toBe("off");
@@ -247,7 +249,7 @@ describe("a preset in effect", () => {
             JSON.parse(
                 sessionStorage.getItem("unilens-settings:initial") as string,
             ).state,
-        ).toEqual({});
+        ).toEqual({ _gen: SETTINGS_GEN });
     });
 });
 
@@ -272,7 +274,40 @@ describe("session 2 keeps a participant's changes across tabs", () => {
             chatTextScale: 160,
             citePlacement: "end",
             sourceStyle: "end",
+            _gen: SETTINGS_GEN,
         });
+
+        // a tab of an older build saving its record (without what it does not know)
+        // is not taken up: it would undo the newer settings
+        const key = "unilens-settings:session2:P03";
+        const older = JSON.stringify({
+            state: { chatTextScale: 100 },
+            version: 0,
+        });
+        window.dispatchEvent(
+            new StorageEvent("storage", {
+                key,
+                newValue: older,
+                storageArea: localStorage,
+            }),
+        );
+        expect(getSettings().chatTextScale).toBe(160);
+        // one of this generation is
+        const now = JSON.parse(localStorage.getItem(key) as string);
+        const newer = JSON.stringify({
+            ...now,
+            state: { ...now.state, chatTextScale: 140 },
+        });
+        localStorage.setItem(key, newer);
+        window.dispatchEvent(
+            new StorageEvent("storage", {
+                key,
+                newValue: newer,
+                storageArea: localStorage,
+            }),
+        );
+        expect(getSettings().chatTextScale).toBe(140);
+        updateSetting("chatTextScale", 160);
 
         // the next task link opens a new tab (no sessionStorage), the pid remembered
         sessionStorage.clear();
@@ -299,20 +334,22 @@ describe("session 2 keeps a participant's changes across tabs", () => {
             JSON.parse(
                 localStorage.getItem("unilens-settings:session2:P03") as string,
             ).state,
-        ).toEqual({});
+        ).toEqual({ _gen: SETTINGS_GEN });
 
         // an older P03 tab still open takes up a newer tab's change (storage event)
         updateSetting("chatTextScale", 140);
         const kept = localStorage.getItem("unilens-settings:session2:P03");
-        localStorage.setItem(
-            "unilens-settings:session2:P03",
-            JSON.stringify({ state: { sounds: false }, version: 0 }),
-        );
+        const theirs = JSON.stringify({
+            state: { sounds: false, _gen: SETTINGS_GEN },
+            version: 0,
+        });
+        localStorage.setItem("unilens-settings:session2:P03", theirs);
         window.dispatchEvent(
             new StorageEvent("storage", {
                 key: "unilens-settings:session2:P03",
                 storageArea: localStorage,
                 oldValue: kept,
+                newValue: theirs,
             }),
         );
         expect(getSettings().sounds).toBe(false);

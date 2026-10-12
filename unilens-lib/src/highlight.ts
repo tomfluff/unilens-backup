@@ -12,6 +12,7 @@
 
 import {
     chooseColor,
+    glowFor,
     isPageElement,
     luminance,
     sampleBackgrounds,
@@ -1077,20 +1078,30 @@ function colorUnder(
     // chosen for the glow as it will be drawn (the text under it stays readable)
     const dark =
         all.reduce((n, c) => n + luminance(c), 0) / all.length < DARK_LUMINANCE;
+    const fillAlpha = look.fill ? look.fillAlpha : 0;
+    // the line carries the colour (hlAdaptLine): the colour is chosen for the page
+    // behind it, and the glow then gives way as far as the text next to it needs.
+    // Session 1: the colour itself gave way to the glow's 35%
+    const lines = getSettings().hlAdaptLine;
+    const color = chooseColor(bg, {
+        base: look.color,
+        mode: look.colorMode,
+        range: look.colorRange,
+        fillAlpha,
+        glowAlpha: look.glow && !lines ? GLOW_ALPHA : 0,
+    });
     return {
-        color: chooseColor(bg, {
-            base: look.color,
-            mode: look.colorMode,
-            range: look.colorRange,
-            fillAlpha: look.fill ? look.fillAlpha : 0,
-            glowAlpha: look.glow ? glowAlphaOver(dark) : 0,
-        }),
+        color,
         dark,
+        glowAlpha:
+            look.glow && lines
+                ? glowFor(bg, color, glowAlphaOver(dark), fillAlpha)
+                : GLOW_ALPHA,
     };
 }
 
-/** an adapted colour, and whether what is round it is dark */
-type Adapted = { color: string; dark: boolean };
+/** an adapted colour, whether what is round it is dark, and the glow's strength */
+type Adapted = { color: string; dark: boolean; glowAlpha: number };
 /** below this mean relative luminance a background counts as dark (navy, charcoal) */
 const DARK_LUMINANCE = 0.2;
 /** the glow over a dark background (Yotam's try-out, 2026-10-12): stronger than over
@@ -1100,11 +1111,10 @@ const DARK_GLOW_ALPHA = 0.6;
 /** the look in its adapted colour, with the stronger glow on a dark background when
  *  the line follows the adaptation (hlAdaptLine) */
 function adaptedLook(look: HighlightLook, got: Adapted): HighlightLook {
-    const a = glowAlphaOver(got.dark);
     return {
         ...look,
         color: got.color,
-        glowAlpha: a === GLOW_ALPHA ? undefined : a,
+        glowAlpha: got.glowAlpha === GLOW_ALPHA ? undefined : got.glowAlpha,
     };
 }
 
@@ -1140,7 +1150,9 @@ function colorFor(
     }
     const got =
         colorUnder(r, look, outline, w, { el: entry.el }) ??
-        (had?.key === key ? had.got : { color: look.color, dark: false });
+        (had?.key === key
+            ? had.got
+            : { color: look.color, dark: false, glowAlpha: GLOW_ALPHA });
     sampled.set(entry, { got, at: now, key });
     return got;
 }

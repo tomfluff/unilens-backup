@@ -150,8 +150,7 @@ function relevant(key: Key, s: Settings): boolean {
         return false;
     if (key === "associateText" && s.citePlacement !== "inline") return false;
     if (key === "hlColorRange" && s.hlColorMode !== "near") return false;
-    // also for "What I clicked" alone: a thing too big to outline is marked by its spot
-    if (key === "clickMarkStyle" && s.clickMark === "none") return false;
+    // "How it's marked" shows whatever "What to mark" is (Yotam's try-out, 2026-10-12)
     if (
         (key === "fabReminder" || key === "fabReminderSec") &&
         s.floatingButton !== "round"
@@ -488,41 +487,52 @@ function paintHighlight(
     look: HighlightLook,
     w: number,
     h: number,
-    r: Rect,
+    r: Rect | Rect[],
     badge?: string,
     feather?: number,
     /** the pulse, as the page shows it round a highlight that appears */
     pulse: Settings["hlPulse"] = "off",
 ) {
+    const rects = Array.isArray(r) ? r : [r];
     layer.replaceChildren();
     if (look.backdrop !== "none") {
         const dim = document.createElement("div");
         dim.className = "s-dim";
         layer.appendChild(dim);
-        paintBackdrop(dim, look.backdrop, [r], w, h, feather);
+        paintBackdrop(dim, look.backdrop, rects, w, h, feather);
     }
-    const box = document.createElement("div");
-    box.className = "s-box";
-    layer.appendChild(box);
-    const color = paintOutline(box, r, {
-        look,
-        badge,
-        withBackdrop: look.backdrop !== "none",
+    const keys: string[] = [];
+    const boxes = rects.map((rect, i) => {
+        const box = document.createElement("div");
+        box.className = "s-box";
+        layer.appendChild(box);
+        // several places: numbered as the page numbers them
+        const color = paintOutline(box, rect, {
+            look,
+            badge: badge && rects.length > 1 ? String(i + 1) : badge,
+            withBackdrop: look.backdrop !== "none",
+        });
+        keys.push(
+            `${color}|${rect.left},${rect.top},${rect.width},${rect.height}`,
+        );
+        return { box, color };
     });
     if (pulse === "off") {
         pulsing.delete(layer);
         return;
     }
-    box.dataset.pulse = pulse;
-    box.style.setProperty("--ul-pulse", color);
     // drawn again with nothing that shows changed (any setting re-renders the panel):
     // the pulse goes on where it was, so "a few times" settles; a change plays it anew
-    const key = `${pulse}|${color}|${JSON.stringify(look)}|${r.left},${r.top},${r.width},${r.height}`;
+    const key = `${pulse}|${JSON.stringify(look)}|${keys.join(";")}`;
     const was = pulsing.get(layer);
     const now = performance.now();
-    if (was?.key === key)
-        box.style.setProperty("--s-pulse-delay", `${was.at - now}ms`);
-    else pulsing.set(layer, { key, at: now });
+    if (was?.key !== key) pulsing.set(layer, { key, at: now });
+    for (const { box, color } of boxes) {
+        box.dataset.pulse = pulse;
+        box.style.setProperty("--ul-pulse", color);
+        if (was?.key === key)
+            box.style.setProperty("--s-pulse-delay", `${was.at - now}ms`);
+    }
 }
 /** each preview's pulse: what it shows, and when it began */
 const pulsing = new WeakMap<HTMLElement, { key: string; at: number }>();
@@ -619,11 +629,112 @@ const MARKY = { w: 150, h: 124 };
 const MARK_WORD = { left: 26, top: 86, width: 74, height: 22 };
 const MARK_SPOT = { x: 44, y: 97 };
 
+/** the galleries that show a highlight: each tile is the page's highlight with that
+ *  one choice, and every other look setting as it is now (Yotam, 2026-10-12): the
+ *  colour and its adaptation, the outline, the number's size and position, the
+ *  backdrop, the glow, the fill and the pulse */
+const HIGHLIGHT_TILES = new Set<Key>([
+    "hlOutline",
+    "hlBackdrop",
+    "hlColorMode",
+    "hlBadges",
+    "hlBadgePos",
+    "hlGlow",
+    "hlFill",
+    "hlPulse",
+]);
+
+function HighlightTile({ k, v, s }: { k: Key; v: string; s: Settings }) {
+    // a number's position shows only where there is a number: medium when none is
+    // drawn, or its tiles could not differ
+    const t = {
+        ...s,
+        [k]: v,
+        ...(k === "hlBadgePos" && s.hlBadges === "none"
+            ? { hlBadges: "medium" }
+            : {}),
+    } as Settings;
+    const look = lookFrom(t);
+    const badge = look.badges ? "1" : undefined;
+    if (k === "hlColorMode")
+        // that way of meeting the page, on a light and a dark section side by side
+        return (
+            <Stage
+                w={GLOWY.w}
+                h={GLOWY.h}
+                page={false}
+                paint={(l) =>
+                    paintHighlight(
+                        l,
+                        look,
+                        GLOWY.w,
+                        GLOWY.h,
+                        SPLIT_WORDS,
+                        badge,
+                        undefined,
+                        t.hlPulse,
+                    )
+                }
+            >
+                <span className="s-half" style={SPLIT_HALF.light} />
+                <span className="s-half" style={SPLIT_HALF.dark} />
+                <span
+                    className="s-word"
+                    style={{ ...SPLIT_WORDS[0], color: "#111" }}
+                >
+                    9:30
+                </span>
+                <span
+                    className="s-word"
+                    style={{ ...SPLIT_WORDS[1], color: "#fff" }}
+                >
+                    17:00
+                </span>
+            </Stage>
+        );
+    // the outline and backdrop on a wide sample; the number's tiles with room above
+    // and to the left for the largest; the rest on a short one
+    const wide = k === "hlOutline" || k === "hlBackdrop";
+    const stage = wide ? TIGHT : GLOWY;
+    const word = wide
+        ? wordOn(TIGHT)
+        : k === "hlBadges" || k === "hlBadgePos"
+          ? BADGE_WORD
+          : GLOW_WORD;
+    return (
+        <Stage
+            w={stage.w}
+            h={stage.h}
+            paint={(l) =>
+                paintHighlight(
+                    l,
+                    look,
+                    stage.w,
+                    stage.h,
+                    word,
+                    badge,
+                    undefined,
+                    t.hlPulse,
+                )
+            }
+        >
+            <span className="s-word" style={word}>
+                {wide ? "9:30–17:00" : "9:30"}
+            </span>
+        </Stage>
+    );
+}
+
 function Thumb({ k, v, s, T }: { k: Key; v: string; s: Settings; T: Text }) {
     if (k === "clickMark" || k === "clickMarkStyle") {
         // what to mark, drawn with the chosen look; each look, drawn on the spot
+        // each look with what is marked now (the spot alone while that is None)
         const target = (
-            k === "clickMark" ? v : "spot"
+            k === "clickMark"
+                ? v
+                : s.clickMark === "none"
+                  ? "spot"
+                  : s.clickMark
         ) as Settings["clickMark"];
         const style = (
             k === "clickMarkStyle" ? v : s.clickMarkStyle
@@ -668,174 +779,7 @@ function Thumb({ k, v, s, T }: { k: Key; v: string; s: Settings; T: Text }) {
                 />
             </Stage>
         );
-    if (k === "hlOutline" || k === "hlBackdrop") {
-        const look = {
-            ...lookFrom(s),
-            [k === "hlOutline" ? "outline" : "backdrop"]: v,
-        } as HighlightLook;
-        const word = wordOn(TIGHT);
-        return (
-            <Stage
-                w={TIGHT.w}
-                h={TIGHT.h}
-                // with its number, as on the page (so "None" shows the number alone)
-                paint={(l) =>
-                    paintHighlight(
-                        l,
-                        look,
-                        TIGHT.w,
-                        TIGHT.h,
-                        word,
-                        look.badges ? "1" : undefined,
-                    )
-                }
-            >
-                <span className="s-word" style={word}>
-                    9:30–17:00
-                </span>
-            </Stage>
-        );
-    }
-    if (k === "hlColorMode") {
-        // that way of meeting the page, on a light and a dark section side by side
-        // (the badges off: the colour is what differs)
-        const look: HighlightLook = {
-            ...lookFrom({
-                ...s,
-                hlColorMode: v as Settings["hlColorMode"],
-            }),
-            backdrop: "none",
-            badges: false,
-        };
-        return (
-            <Stage
-                w={GLOWY.w}
-                h={GLOWY.h}
-                page={false}
-                paint={(l) => {
-                    l.replaceChildren();
-                    for (const r of SPLIT_WORDS) {
-                        const box = document.createElement("div");
-                        box.className = "s-box";
-                        l.appendChild(box);
-                        paintOutline(box, r, { look });
-                    }
-                }}
-            >
-                <span className="s-half" style={SPLIT_HALF.light} />
-                <span className="s-half" style={SPLIT_HALF.dark} />
-                <span
-                    className="s-word"
-                    style={{ ...SPLIT_WORDS[0], color: "#111" }}
-                >
-                    9:30
-                </span>
-                <span
-                    className="s-word"
-                    style={{ ...SPLIT_WORDS[1], color: "#fff" }}
-                >
-                    17:00
-                </span>
-            </Stage>
-        );
-    }
-    if (k === "hlBadgePos") {
-        // that position, at the chosen size (medium when none is shown, to see it)
-        const look: HighlightLook = {
-            ...lookFrom({
-                ...s,
-                hlBadgePos: v as Settings["hlBadgePos"],
-                hlBadges: s.hlBadges === "none" ? "medium" : s.hlBadges,
-            }),
-            backdrop: "none",
-        };
-        return (
-            <Stage
-                w={GLOWY.w}
-                h={GLOWY.h}
-                paint={(l) =>
-                    paintHighlight(l, look, GLOWY.w, GLOWY.h, BADGE_WORD, "1")
-                }
-            >
-                <span className="s-word" style={BADGE_WORD}>
-                    9:30
-                </span>
-            </Stage>
-        );
-    }
-    if (k === "hlBadges") {
-        // the number at that size on the chosen outline, no backdrop
-        const look: HighlightLook = {
-            ...lookFrom({ ...s, hlBadges: v as Settings["hlBadges"] }),
-            backdrop: "none",
-        };
-        return (
-            <Stage
-                w={GLOWY.w}
-                h={GLOWY.h}
-                paint={(l) =>
-                    paintHighlight(l, look, GLOWY.w, GLOWY.h, BADGE_WORD, "1")
-                }
-            >
-                <span className="s-word" style={BADGE_WORD}>
-                    9:30
-                </span>
-            </Stage>
-        );
-    }
-    if (k === "hlPulse") {
-        // the pulse round the chosen look, played each time the tile is drawn
-        const look: HighlightLook = { ...lookFrom(s), backdrop: "none" };
-        return (
-            <Stage
-                w={GLOWY.w}
-                h={GLOWY.h}
-                paint={(l) =>
-                    paintHighlight(
-                        l,
-                        look,
-                        GLOWY.w,
-                        GLOWY.h,
-                        GLOW_WORD,
-                        look.badges ? "1" : undefined,
-                        undefined,
-                        v as Settings["hlPulse"],
-                    )
-                }
-            >
-                <span className="s-word" style={GLOW_WORD}>
-                    9:30
-                </span>
-            </Stage>
-        );
-    }
-    if (k === "hlGlow" || k === "hlFill") {
-        // that glow's spread, or that fill, on the chosen outline, no backdrop
-        const look: HighlightLook = {
-            ...lookFrom({ ...s, [k]: v } as Settings),
-            backdrop: "none",
-        };
-        return (
-            <Stage
-                w={GLOWY.w}
-                h={GLOWY.h}
-                paint={(l) =>
-                    paintHighlight(
-                        l,
-                        look,
-                        GLOWY.w,
-                        GLOWY.h,
-                        GLOW_WORD,
-                        look.badges ? "1" : undefined,
-                    )
-                }
-            >
-                <span className="s-word" style={GLOW_WORD}>
-                    9:30
-                </span>
-            </Stage>
-        );
-    }
+    if (HIGHLIGHT_TILES.has(k)) return <HighlightTile k={k} v={v} s={s} />;
     if (k === "mmOutline" || k === "mmBackdrop") {
         const look = minimapLook({
             ...s,

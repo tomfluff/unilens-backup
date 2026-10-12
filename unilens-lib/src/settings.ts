@@ -1339,15 +1339,44 @@ const settingsStorage: StateStorage = {
     },
 };
 
-/** what is written: everything, or under a preset only what differs from it */
+/**
+ * The settings' generation, written into every record: raised when a setting is
+ * added, renamed or removed in a way an older build would undo. A tab running an
+ * older build (still open from before) writes its whole record without the settings
+ * it does not know; a newer tab ignores that write rather than lose them (Yotam's
+ * try-out, 2026-10-12: "What to mark" snapped back to None). Older records still
+ * load as they always did (mergePersisted ignores the marker).
+ */
+export const SETTINGS_GEN = 2;
+const GEN_KEY = "_gen";
+
+/** what is written: everything, or under a preset only what differs from it; and
+ *  the generation that wrote it */
 function partialize(s: Settings): Partial<Settings> {
-    if (!preset) return s;
-    const base = { ...DEFAULTS, ...preset.values };
-    return Object.fromEntries(
-        (Object.keys(DEFAULTS) as (keyof Settings)[])
-            .filter((k) => JSON.stringify(s[k]) !== JSON.stringify(base[k]))
-            .map((k) => [k, s[k]]),
-    );
+    const out: Partial<Settings> = !preset
+        ? { ...s }
+        : Object.fromEntries(
+              (Object.keys(DEFAULTS) as (keyof Settings)[])
+                  .filter(
+                      (k) =>
+                          JSON.stringify(s[k]) !==
+                          JSON.stringify({ ...DEFAULTS, ...preset?.values }[k]),
+                  )
+                  .map((k) => [k, s[k]]),
+          );
+    (out as Record<string, unknown>)[GEN_KEY] = SETTINGS_GEN;
+    return out;
+}
+
+/** the generation a stored record was written by (0: before generations) */
+export function recordGen(raw: string): number {
+    try {
+        const g = (JSON.parse(raw) as { state?: Record<string, unknown> })
+            ?.state?.[GEN_KEY];
+        return typeof g === "number" ? g : 0;
+    } catch {
+        return 0;
+    }
 }
 
 export const useSettings = create<Settings>()(
@@ -1389,20 +1418,29 @@ export function startPreset(
         following = true;
         window.addEventListener("storage", (e) => {
             const at = presetStore(STORE_NAME);
-            if (at && e.storageArea === at[0] && e.key === at[1])
-                loadPresetChanges();
+            if (!at || e.storageArea !== at[0] || e.key !== at[1]) return;
+            // the record as it is now (never a stale event's copy: tabs converge on
+            // the latest), unless an older build's tab wrote it: that one would drop
+            // newer settings. What is checked is what is taken up. An older tab's
+            // record stays in storage until this tab's next change: older tabs are
+            // best closed once (the study's fresh links have none)
+            const raw = at[0].getItem(at[1]);
+            if (raw && recordGen(raw) < SETTINGS_GEN) return;
+            loadPresetChanges(raw);
         });
     }
 }
 let following = false;
 
 /** the preset's values plus the changes kept for it */
-function loadPresetChanges() {
+function loadPresetChanges(raw?: string | null) {
     if (!preset) return;
     let stored: unknown;
     try {
         stored = JSON.parse(
-            settingsStorage.getItem(STORE_NAME) as string,
+            (raw === undefined
+                ? settingsStorage.getItem(STORE_NAME)
+                : raw) as string,
         )?.state;
     } catch {
         stored = undefined;

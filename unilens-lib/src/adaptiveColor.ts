@@ -589,6 +589,27 @@ function textMargin(c: RGBA, bg: Backgrounds, k: Choice): number {
     return margin;
 }
 
+/**
+ * The strongest glow, up to `max`, that leaves the text next to the highlight
+ * readable in this colour (the line carries the colour, so the glow gives way, not
+ * the colour: Yotam's try-out, 2026-10-12). 0 when none does.
+ */
+export function glowFor(
+    bg: Backgrounds,
+    hex: string,
+    max: number,
+    fillAlpha: number,
+): number {
+    const c = hexToRgba(hex) ?? YELLOW;
+    const k = { fillAlpha: 0, glowAlpha: 0 } as Choice;
+    for (let a = max; a > 0.001; a -= 0.05) {
+        k.glowAlpha = a;
+        k.fillAlpha = fillAlpha;
+        if (textMargin(c, bg, k) >= 1) return Math.round(a * 100) / 100;
+    }
+    return 0;
+}
+
 /** the colour to draw in, for these backgrounds; the base when nothing was sampled */
 export function chooseColor(bg: Backgrounds, k: Choice): string {
     const all = [...bg.edge, ...bg.inside];
