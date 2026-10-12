@@ -388,6 +388,9 @@ export interface SampleOptions {
     base?: RGBA;
     /** shared across the points of one read, so ancestors are read once */
     opacity?: OpacityReader;
+    /** what is at a point, topmost first, instead of asking the screen: a settings
+     *  tile knows its own parts, and must look the same scrolled out of view */
+    stack?: (x: number, y: number) => Element[];
 }
 
 /** the page's own elements only: everything UniLens draws hangs off <html>, outside
@@ -410,9 +413,12 @@ export function backgroundsAt(
 ): RGBA[] {
     const root = opts.root ?? document;
     const doc = root instanceof Document ? root : root.ownerDocument;
-    if (x < 0 || y < 0 || x >= innerWidth || y >= innerHeight) return [];
+    if (!opts.stack && (x < 0 || y < 0 || x >= innerWidth || y >= innerHeight))
+        return [];
     const skip = opts.skip ?? ((el: Element) => !isPageElement(el));
-    const stack = root.elementsFromPoint(x, y).filter((el) => !skip(el));
+    const stack = (
+        opts.stack ? opts.stack(x, y) : root.elementsFromPoint(x, y)
+    ).filter((el) => !skip(el));
     const opacity = opts.opacity ?? opacityReader();
     // top-down until a layer covers what is under it (and nothing over it is
     // see-through)

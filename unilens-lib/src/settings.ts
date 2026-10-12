@@ -112,6 +112,10 @@ export interface Settings {
      *  background (Yotam's try-out, 2026-10-12). Off: session 1's black and white
      *  lines. A preset value, not a participant's setting */
     hlAdaptLine: boolean;
+    /** an Alt+drag with box drawing off does nothing (the QA check, 2026-10-12);
+     *  session 1 took its release as an Alt+click on what the drag crossed. A preset
+     *  value, not a participant's setting */
+    altDragInert: boolean;
     /** the highlight colour, #rgb or #rrggbb; the two-band ring stays black and white */
     hlColor: string;
     /** how the colour meets the page under it (#26, Yotam 2026-10-12): always the
@@ -338,6 +342,7 @@ const DEFAULTS: Settings = {
     hlBadgePos: "corner",
     hlBadgeClamp: false,
     hlAdaptLine: true,
+    altDragInert: true,
     hlColor: "#ffef26",
     hlColorMode: "fixed",
     hlColorRange: "some",
@@ -452,6 +457,7 @@ export const TOGGLE_LABELS: Record<BoolSettingKey, string> = {
     hlBadgeClamp: "Slide a number in at the screen's edge",
     hlAdaptLine:
         "Adaptive color also colors the line (and a stronger glow on dark)",
+    altDragInert: "An Alt+drag does nothing when box drawing is off",
     ringScale: "Outline grows with the zoom",
     mmFollowHighlight: "Same look as the highlights",
     mmFill: "Color fill (see-through)",
@@ -1009,6 +1015,7 @@ export const PANEL_TABS: { id: PanelTabId; groups: PanelGroup[] }[] = [
                     "assistantGoTo",
                     "aboutLine",
                     "regionSelect",
+                    "altDragInert",
                     "elementContext",
                     "refreshView",
                 ],

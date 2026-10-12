@@ -83,6 +83,8 @@ const INITIAL = {
     hlBadgeClamp: true,
     // the ring and thin border black and white whatever the colour (session 1)
     hlAdaptLine: false,
+    // an Alt+drag's release counted as an Alt+click (session 1)
+    altDragInert: false,
     ringWidth: 2,
     ringScale: false,
     // the chat stays where it opened: stepping aside (or folding) to uncover
@@ -182,6 +184,8 @@ export const PRESETS = {
             // Adaptive color colors the line too, with a stronger glow on dark (Yotam's
             // try-out, 2026-10-12). Not in the panel
             hlAdaptLine: true,
+            // an Alt+drag does nothing (the QA check, 2026-10-12). Not in the panel
+            altDragInert: true,
         },
         /** what a participant may change in session 2 (session-lead's list,
          *  2026-10-09): the highlight's look, page zoom, the page map, voice, sounds,

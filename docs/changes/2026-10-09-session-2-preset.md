@@ -59,6 +59,10 @@ Session 1 of the co-design study (P01–P06) used the initial prototype. Two thi
   - "How it's marked" shows whatever "What to mark" is, and its tiles draw each look with what is marked now (the spot alone while that is None).
   - Every highlight gallery's tiles (Adaptive color, Outline, Number on the page, Number position, Backdrop, Glow, Fill, Pulse) draw the page's highlight with that one choice and every other look setting as it is, numbers, backdrop and pulse included; before, several dropped the numbers, the backdrop or the pulse, so changing those left them as they were. A browser check changes each look setting by clicking in the panel and confirms every gallery redraws.
   - "Best contrast" picks the colour with the most contrast against the page behind it. With the line carrying the colour, the text next to the highlight is protected by turning the glow down, no longer by choosing a darker colour (which made it blue on dark navy).
+- **The independent check of the session-2 build (2026-10-12)**:
+  - Tiles read what lies under them from their own parts (each section, the sample), by their boxes, never by asking the screen, so a gallery repainted while it is scrolled out of the panel's view looks as it does in view; the number's "beside" placement counts the sample's text the same way.
+  - The highlight tiles leave room above and to the left of the sample for the largest number, so a number placed beside never covers the sample's text (task #24).
+  - In `session2` an Alt+drag does nothing (box drawing is off): its release was taken as an Alt+click on what the drag crossed. `altDragInert`, a preset value, keeps session 1's behavior in `initial`.
 - **The `session2` preset**: the initial prototype, plus numbers in the text, the Sources button, the 2 s pause, go-to and the gear with the participant panel. Ctrl+Alt+Shift+B now steps off → initial → session 2. `PRESET=session2 tunnel.sh` builds it into the tunnelled copy and its links.
 
 ## Consequences

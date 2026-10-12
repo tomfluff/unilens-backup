@@ -367,6 +367,7 @@ export const NAMES_JA: Partial<Record<keyof Settings, string>> = {
     streamReplies: "回答を少しずつ表示",
     elementContext: "クリックした要素のまわりも送る",
     regionSelect: "Alt＋ドラッグで範囲を選ぶ",
+    altDragInert: "範囲選択がオフのとき、Alt＋ドラッグは何もしない",
     hints: "先回りのヒント",
     lensPan: "レンズ移動（拡大中はページを固定）",
     debugView: "デバッグ表示（Ctrl＋Shift＋D）",

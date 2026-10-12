@@ -443,36 +443,44 @@ function Stage({
 
 /** a thumbnail's stage, px: a close crop round the sample source, so what is drawn
  *  at the page's size reads at a thumbnail's (arrows and click feedback need room) */
-const TIGHT = { w: 130, h: 52 };
+const _TIGHT = { w: 130, h: 52 };
 const ROOMY = { w: 170, h: 68 };
 /** the glow's tiles: room round a short sample, so each spread shows whole */
-const GLOWY = { w: 130, h: 92 };
+const _GLOWY = { w: 130, h: 92 };
+/** the highlight tiles (HighlightTile): room above and to the left of the sample for
+ *  the largest number, wherever it is placed, so it never covers the sample's text
+ *  (task #24; the QA check, 2026-10-12), and room round it for the largest glow */
+const SAMPLE = { w: 150, h: 104 };
+const SAMPLE_WORD = { left: 62, top: 54, width: 56, height: 22 };
+const WIDE = { w: 200, h: 100 };
+const WIDE_WORD = { left: 66, top: 54, width: 94, height: 22 };
 /** the colour tiles: a light section and a dark one, a source on each */
+const SPLIT = { w: 210, h: 104 };
 const SPLIT_HALF = {
     light: {
         position: "absolute",
         left: 0,
         top: 0,
-        width: GLOWY.w / 2,
-        height: GLOWY.h,
+        width: SPLIT.w / 2,
+        height: SPLIT.h,
         background: "#ffffff",
     },
     dark: {
         position: "absolute",
-        left: GLOWY.w / 2,
+        left: SPLIT.w / 2,
         top: 0,
-        width: GLOWY.w / 2,
-        height: GLOWY.h,
+        width: SPLIT.w / 2,
+        height: SPLIT.h,
         background: "#1f2a44",
     },
 } as const;
 const SPLIT_WORDS = [
-    { left: 14, top: 35, width: 37, height: 22 },
-    { left: 76, top: 35, width: 42, height: 22 },
+    { left: 52, top: 54, width: 40, height: 22 },
+    { left: 157, top: 54, width: 42, height: 22 },
 ];
-const GLOW_WORD = { left: 37, top: 35, width: 56, height: 22 };
+const _GLOW_WORD = { left: 37, top: 35, width: 56, height: 22 };
 /** the number tiles: room above and to the left for the largest number */
-const BADGE_WORD = { left: 58, top: 48, width: 56, height: 22 };
+const _BADGE_WORD = { left: 58, top: 48, width: 56, height: 22 };
 /** the sample source, centred on a stage */
 const wordOn = (st: { w: number; h: number }) => ({
     left: (st.w - 94) / 2,
@@ -660,15 +668,15 @@ function HighlightTile({ k, v, s }: { k: Key; v: string; s: Settings }) {
         // that way of meeting the page, on a light and a dark section side by side
         return (
             <Stage
-                w={GLOWY.w}
-                h={GLOWY.h}
+                w={SPLIT.w}
+                h={SPLIT.h}
                 page={false}
                 paint={(l) =>
                     paintHighlight(
                         l,
                         look,
-                        GLOWY.w,
-                        GLOWY.h,
+                        SPLIT.w,
+                        SPLIT.h,
                         SPLIT_WORDS,
                         badge,
                         undefined,
@@ -692,15 +700,10 @@ function HighlightTile({ k, v, s }: { k: Key; v: string; s: Settings }) {
                 </span>
             </Stage>
         );
-    // the outline and backdrop on a wide sample; the number's tiles with room above
-    // and to the left for the largest; the rest on a short one
+    // the outline and backdrop on a wide sample, the rest on a short one
     const wide = k === "hlOutline" || k === "hlBackdrop";
-    const stage = wide ? TIGHT : GLOWY;
-    const word = wide
-        ? wordOn(TIGHT)
-        : k === "hlBadges" || k === "hlBadgePos"
-          ? BADGE_WORD
-          : GLOW_WORD;
+    const stage = wide ? WIDE : SAMPLE;
+    const word = wide ? WIDE_WORD : SAMPLE_WORD;
     return (
         <Stage
             w={stage.w}

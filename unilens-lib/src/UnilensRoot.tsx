@@ -115,6 +115,9 @@ export function UnilensRoot({
             click: (e) => !isOwnUI(e.target) && trigger(e),
             drag: (e) =>
                 getSettings().regionSelect && trigger(e) && !isOwnUI(e.target),
+            // session 2: an Alt+drag (box drawing off) does nothing; session 1 took
+            // its release as an Alt+click on what the drag crossed
+            dragIsNoClick: () => getSettings().altDragInert,
         };
     }, [unilens]);
     const clickActionEmitter = useClickOrDragBox(document, triggers);

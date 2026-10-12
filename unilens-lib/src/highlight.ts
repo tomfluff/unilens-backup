@@ -15,6 +15,8 @@ import {
     glowFor,
     isPageElement,
     luminance,
+    parseColor,
+    type RGBA,
     sampleBackgrounds,
     setImageLoadListener,
 } from "./adaptiveColor";
@@ -620,6 +622,38 @@ function textHits(x: number, y: number, w: number, h: number): number {
     return hits;
 }
 
+/** textHits for a settings tile: the points of the same grid that fall on its own
+ *  sample words, by their boxes (a tile out of view must place its number as in
+ *  view) */
+function stageTextHits(
+    stage: Element,
+    x: number,
+    y: number,
+    w: number,
+    h: number,
+): number {
+    const words = [...stage.querySelectorAll(".s-word")]
+        .filter((e) => !e.closest(".s-paint"))
+        .map((e) => e.getBoundingClientRect());
+    let hits = 0;
+    for (const fx of [0.2, 0.5, 0.8])
+        for (const fy of [0.25, 0.5, 0.75]) {
+            const px = x + w * fx;
+            const py = y + h * fy;
+            if (
+                words.some(
+                    (r) =>
+                        px >= r.left - 4 &&
+                        px <= r.right + 4 &&
+                        py >= r.top &&
+                        py <= r.bottom,
+                )
+            )
+                hits++;
+        }
+    return hits;
+}
+
 /** where each number on the page sits now (client px), so the next avoids them */
 const badgeRects = new Map<
     object,
@@ -650,6 +684,7 @@ function placeBadge(
     // places were cut off there); session 1 slid it in at the edge (hlBadgeClamp).
     // A preview keeps its number inside its stage
     const page = !origin.x && !origin.y;
+    const previewStage = page ? null : badge.closest(".s-stage, .s-page");
     const clamp = !page || getSettings().hlBadgeClamp;
     const slide = (v: number, lo: number, hi: number) =>
         clamp ? Math.min(Math.max(v, lo), hi) : v;
@@ -721,9 +756,14 @@ function placeBadge(
         for (const side of [...BADGE_SIDES, "corner"] as BadgeSide[]) {
             if (!fits(side)) continue;
             const p = at(side);
+            // a preview counts its own sample's text, never the screen's (it may be
+            // scrolled out of the panel's view: the QA check, 2026-10-12)
+            const hit = previewStage
+                ? stageTextHits.bind(null, previewStage)
+                : textHits;
             const score =
                 (onAnother(side) ? 100 : 0) +
-                textHits(
+                hit(
                     client.x + p.x * client.k,
                     client.y + p.y * client.k,
                     w * client.k,
@@ -1024,35 +1064,60 @@ export function paintOutline(
         height: b.height - 2 * pad,
     };
     const where = root instanceof ShadowRoot ? root : document;
-    // a preview (the settings panel hangs off <html> too) reads its own stage; its
-    // boxes let the pointer through, so they are never found
+    // a preview (the settings panel hangs off <html> too) reads its own stage, by
+    // the geometry of its own parts, never the screen: a tile scrolled out of the
+    // panel's view must look as it does in view (the QA check, 2026-10-12)
     const stage = box.closest(".s-stage, .s-page");
     const skip = stage
         ? (e: Element) => !stage.contains(e)
         : (e: Element) => !isPageElement(e);
+    const stack = stage
+        ? (x: number, y: number) => stagePartsAt(stage, x, y)
+        : (x: number, y: number) => where.elementsFromPoint(x, y);
     // the text it outlines: the innermost element with text at its middle
-    const el = where
-        .elementsFromPoint(
-            inner.left + inner.width / 2,
-            inner.top + inner.height / 2,
-        )
-        .find(
-            (e) =>
-                !skip(e) &&
-                e !== document.body &&
-                e !== document.documentElement &&
-                Boolean(e.textContent?.trim()),
-        );
+    const el = stack(
+        inner.left + inner.width / 2,
+        inner.top + inner.height / 2,
+    ).find(
+        (e) =>
+            !skip(e) &&
+            e !== document.body &&
+            e !== document.documentElement &&
+            Boolean(e.textContent?.trim()),
+    );
     const got = colorUnder(inner, look, outline, w * k, {
         root: where,
         skip,
         el,
+        ...(stage ? { stack, base: stageBase(stage) } : {}),
     });
     if (!got) return look.color;
     const lk = adaptedLook(look, got);
     if (lk.color !== look.color || lk.glowAlpha !== look.glowAlpha)
         paintParts(entry, r, lk, outline, w);
     return got.color;
+}
+
+/** a preview stage's parts at a client point, topmost first (later in the DOM is
+ *  drawn over earlier), the stage itself last; never the painter's own boxes */
+function stagePartsAt(stage: Element, x: number, y: number): Element[] {
+    const hits: Element[] = [];
+    for (const e of [stage, ...stage.querySelectorAll("*")]) {
+        if (e.closest(".s-paint")) continue;
+        const r = e.getBoundingClientRect();
+        if (x >= r.left && x < r.right && y >= r.top && y < r.bottom)
+            hits.push(e);
+    }
+    return hits.reverse();
+}
+
+/** what a preview stage lies on: the first opaque background round it */
+function stageBase(stage: Element): RGBA {
+    for (let e: Element | null = stage; e; e = e.parentElement) {
+        const c = parseColor(getComputedStyle(e).backgroundColor);
+        if (c && c.a >= 0.999) return c;
+    }
+    return { r: 255, g: 255, b: 255, a: 1 };
 }
 
 /** whether the look's colour depends on what is under each box */

@@ -138,7 +138,9 @@ describe("session 2 (2026-10-09)", () => {
             hlBadgeClamp: false,
             quietNotFound: false,
             hlAdaptLine: true,
+            altDragInert: true,
         });
+        expect(PRESETS.initial.values.altDragInert).toBe(false);
         expect(PRESETS.initial.values.hlAdaptLine).toBe(false);
         expect(PRESETS.initial.values.quietNotFound).toBe(true);
         expect(PRESETS.initial.values.hlBadgeClamp).toBe(true);
