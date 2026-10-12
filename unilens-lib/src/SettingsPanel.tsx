@@ -27,6 +27,7 @@ import { chatLang, chatText } from "./chatI18n";
 import { ensureChatStyles } from "./chatStyles";
 import { useChatTheme } from "./chatTheme";
 import { clickFeedback, fxStill } from "./clickFx";
+import { paintMarkPreview } from "./clickMarks";
 import { earcon } from "./earcons";
 import { renderCited } from "./evidence";
 import {
@@ -147,9 +148,8 @@ function relevant(key: Key, s: Settings): boolean {
         return false;
     if (key === "associateText" && s.citePlacement !== "inline") return false;
     if (key === "hlColorRange" && s.hlColorMode !== "near") return false;
-    if (key === "clickMarkTarget" && !s.clickMarks) return false;
     // also for "What I clicked" alone: a thing too big to outline is marked by its spot
-    if (key === "clickMarkStyle" && !s.clickMarks) return false;
+    if (key === "clickMarkStyle" && s.clickMark === "none") return false;
     if (
         (key === "fabReminder" || key === "fabReminderSec") &&
         s.floatingButton !== "round"
@@ -176,6 +176,9 @@ const PICKERS = new Set<Key>([
     "mmBackdrop",
     "offscreenCue",
     "clickFx",
+    // the click marks (Yotam's try-out, 2026-10-12: galleries, as the highlight's look)
+    "clickMark",
+    "clickMarkStyle",
 ]);
 /** the pickers' cards name a look in a word or two; the full name is its tooltip */
 const SHORT: Record<string, string> = {
@@ -230,10 +233,38 @@ function shortName(k: Key, v: string, full: string, lang: PanelLang): string {
     const ja = lang === "ja";
     if (k === "sourceStyle")
         return SOURCE_SHORT[lang][v as SourceStyle] ?? full;
+    if (k === "clickMark" || k === "clickMarkStyle")
+        return MARK_SHORT[lang][v] ?? full;
     if (v === "none" && SHORT_NONE.has(k)) return ja ? SHORT_JA.none : "None";
     if (k === "clickFx" && v === "edge") return PANEL_TEXT[lang].edgeGlow;
     return (ja ? SHORT_JA[v] : SHORT[v]) ?? full;
 }
+
+/** the click-mark cards' names (their values are words other looks use too) */
+const MARK_SHORT: Record<PanelLang, Record<string, string>> = {
+    en: {
+        none: "None",
+        spot: "The spot",
+        element: "What I clicked",
+        both: "Both",
+        pin: "Pin",
+        tag: "Dot and line",
+        tagClear: "See-through dot",
+        halo: "Glow and line",
+        line: "Line only",
+    },
+    ja: {
+        none: "なし",
+        spot: "クリックした点",
+        element: "クリックしたもの",
+        both: "両方",
+        pin: "ピン",
+        tag: "点と線",
+        tagClear: "透ける点",
+        halo: "光と線",
+        line: "線だけ",
+    },
+};
 
 /** a few short choices in a row */
 const SEGMENTS = new Set<Key>([
@@ -556,7 +587,39 @@ function paintMap(
     );
 }
 
+/** the click-mark tiles: room up and to the right of the spot for its number */
+const MARKY = { w: 150, h: 124 };
+const MARK_WORD = { left: 26, top: 86, width: 74, height: 22 };
+const MARK_SPOT = { x: 44, y: 97 };
+
 function Thumb({ k, v, s, T }: { k: Key; v: string; s: Settings; T: Text }) {
+    if (k === "clickMark" || k === "clickMarkStyle") {
+        // what to mark, drawn with the chosen look; each look, drawn on the spot
+        const target = (
+            k === "clickMark" ? v : "spot"
+        ) as Settings["clickMark"];
+        const style = (
+            k === "clickMarkStyle" ? v : s.clickMarkStyle
+        ) as Settings["clickMarkStyle"];
+        return (
+            <Stage
+                w={MARKY.w}
+                h={MARKY.h}
+                paint={(l) =>
+                    paintMarkPreview(l, {
+                        target,
+                        style,
+                        word: MARK_WORD,
+                        spot: MARK_SPOT,
+                    })
+                }
+            >
+                <span className="s-word" style={MARK_WORD}>
+                    9:30
+                </span>
+            </Stage>
+        );
+    }
     if (k === "sourceStyle")
         return (
             <Stage w={190} h={108} page={false}>

@@ -1,10 +1,11 @@
 /**
- * Lasting click marks (P02 and P03, session 1; the setting `clickMarks`): a mark
- * stays where each Alt+click landed, numbered P1, P2, … as the chat's place entries
- * are, until the conversation starts over. The chat's entries take the user back
- * to each place; the marks show where those places are on the page.
+ * Click marks (P02 and P03, session 1): a mark where an Alt+click landed, numbered
+ * P1, P2, … as the chat's place entries are. One at a time (Yotam's try-out,
+ * 2026-10-12): a new click's mark shows and the others hide; pressing a P entry in
+ * the chat shows that place's mark, and pressing it again hides it. "None" in
+ * `clickMark` shows no marks.
  *
- * A mark is the spot clicked, what was clicked, or both (`clickMarkTarget`). The
+ * A mark is the spot clicked, what was clicked, or both (`clickMark`). The
  * spot is marked in one of five ways (`clickMarkStyle`, Yotam 2026-10-12, from the
  * options page): a map pin with the number in it; a dot with a line to its number
  * (the dot solid, or see-through so the text under it shows); a soft halo with a
@@ -24,7 +25,13 @@
  */
 import { highlightLayer, numberLike, paintOutline } from "./highlight";
 import { lookFrom } from "./highlightStyles";
-import { allPlaces, onPlacesChange, type Place, placeNumber } from "./places";
+import {
+    allPlaces,
+    latestPlace,
+    onPlacesChange,
+    type Place,
+    placeNumber,
+} from "./places";
 import { getSettings, onSettingsChange, type Settings } from "./settings";
 import {
     clientToContent,
@@ -236,12 +243,43 @@ function build(
     el.append(box, halo, dot, line, pin, num);
 }
 
+/**
+ * The one place marked now (Yotam's try-out, 2026-10-12): a new Alt+click marks its
+ * place and unmarks the others; pressing a P entry in the chat marks that place, and
+ * pressing it again marks none. The floating button asks about the window, not a
+ * spot: its place is never marked.
+ */
+let marked: Place | null = null;
+/** the latest place seen, to tell a new click from the places starting over */
+let seen: Place | null = null;
+
+const markListeners = new Set<() => void>();
+function setMarked(p: Place | null) {
+    const next = p && !p.byButton ? p : null;
+    if (next === marked) return;
+    marked = next;
+    for (const cb of markListeners) cb();
+}
+/** told when the marked place changes (the chat shows its P entry pressed) */
+export function onMarkChange(cb: () => void): () => void {
+    markListeners.add(cb);
+    return () => markListeners.delete(cb);
+}
+
+/** mark this place (a P entry pressed), or none */
+export function markPlace(p: Place | null) {
+    setMarked(p);
+    schedule();
+}
+
+/** the place marked now, while marks are shown at all */
+export const markedPlace = () =>
+    getSettings().clickMark === "none" ? null : marked;
+
 function render() {
     const s = getSettings();
-    // the floating button asks about the window, not a spot: nothing to mark
-    const list = s.clickMarks
-        ? allPlaces().order.filter((p) => !p.byButton)
-        : [];
+    if (marked && !allPlaces().order.includes(marked)) setMarked(null);
+    const list = s.clickMark !== "none" && marked ? [marked] : [];
     for (const [p, el] of marks)
         if (!list.includes(p)) {
             el.remove();
@@ -271,7 +309,12 @@ function render() {
             s.clickMarkStyle,
         );
         el.style.setProperty("--ul-mark", s.hlColor);
-        draw(el, p, s.clickMarkTarget, s.clickMarkStyle);
+        draw(
+            el,
+            p,
+            s.clickMark === "none" ? "spot" : s.clickMark,
+            s.clickMarkStyle,
+        );
     }
     start();
 }
@@ -461,9 +504,143 @@ export function initClickMarks() {
     onPlacesChange(() => {
         // measured now, while what was clicked is where it was clicked
         for (const p of allPlaces().order) anchorOf(p);
+        // a new click is the one marked; the places starting over mark none (the
+        // place carried into a new conversation is marked again)
+        const latest = latestPlace();
+        if (latest !== seen) setMarked(latest);
+        seen = latest;
         render();
     });
     onSettingsChange(schedule);
+}
+
+/**
+ * A mark drawn in a settings tile (the two galleries), as the page draws it: in the
+ * tile's own px, `word` standing for what was clicked and `spot` for where.
+ */
+export function paintMarkPreview(
+    layer: HTMLElement,
+    o: {
+        target: Settings["clickMark"];
+        style: MarkStyle;
+        word: { left: number; top: number; width: number; height: number };
+        spot: { x: number; y: number };
+    },
+) {
+    layer.replaceChildren();
+    if (o.target === "none") return;
+    const s = getSettings();
+    const size: BadgeSize = s.hlBadges === "none" ? "small" : s.hlBadges;
+    const color = s.hlColor;
+    const at = (e: HTMLElement | SVGElement, x: number, y: number) =>
+        Object.assign(e.style, {
+            position: "absolute",
+            left: `${x}px`,
+            top: `${y}px`,
+        });
+    if (o.target !== "spot") {
+        const box = document.createElement("div");
+        box.className = "s-box";
+        layer.append(box);
+        paintOutline(box, o.word, {
+            look: { ...lookFrom(s), colorMode: "fixed" },
+        });
+    }
+    const num = numberLike("P1", size);
+    num.style.whiteSpace = "nowrap";
+    const spot = o.target !== "element";
+    const { x, y } = o.spot;
+    if (spot && o.style === "halo") {
+        const halo = document.createElement("span");
+        at(halo, x - 30, y - 30);
+        Object.assign(halo.style, {
+            width: "60px",
+            height: "60px",
+            borderRadius: "50%",
+            background: `radial-gradient(closest-side, color-mix(in srgb, ${color} 75%, transparent), color-mix(in srgb, ${color} 35%, transparent) 60%, transparent)`,
+        });
+        layer.append(halo);
+    }
+    if (spot && (o.style === "tag" || o.style === "tagClear")) {
+        const dot = document.createElement("span");
+        at(dot, x - 7, y - 7);
+        Object.assign(dot.style, {
+            width: "14px",
+            height: "14px",
+            borderRadius: "50%",
+            background:
+                o.style === "tag"
+                    ? color
+                    : `color-mix(in srgb, ${color} 50%, transparent)`,
+            boxShadow: `0 0 0 2.5px ${o.style === "tag" ? "#000" : "rgba(0, 0, 0, .45)"}`,
+        });
+        layer.append(dot);
+    }
+    if (spot && o.style === "pin") {
+        const k = PIN_SCALE[size];
+        const pin = document.createElementNS(SVG, "svg");
+        pin.setAttribute("viewBox", "0 0 40 52");
+        pin.setAttribute("width", String(40 * k));
+        pin.setAttribute("height", String(52 * k));
+        at(pin, x - 20 * k, y - 52 * k);
+        pin.innerHTML = `<path d="${PIN_DOWN}" stroke-width="2.5"/><text x="20" y="24" text-anchor="middle" font-family="system-ui, sans-serif" font-weight="700" font-size="14"></text>`;
+        pin.querySelector("path")?.setAttribute(
+            "fill",
+            num.style.backgroundColor || "#2563eb",
+        );
+        pin.querySelector("path")?.setAttribute(
+            "stroke",
+            num.style.borderTopColor || "#fff",
+        );
+        const text = pin.querySelector("text");
+        text?.setAttribute("fill", num.style.color || "#fff");
+        if (text) text.textContent = "P1";
+        layer.append(pin);
+        return;
+    }
+    if (spot) {
+        const d = LEAD[o.style];
+        const stop = STOP[o.style] / Math.SQRT2;
+        const line = document.createElementNS(SVG, "svg");
+        line.setAttribute("width", "1");
+        line.setAttribute("height", "1");
+        at(line, 0, 0);
+        line.style.overflow = "visible";
+        for (const [c, w] of [
+            ["#fff", 5.5],
+            ["#000", 2.5],
+        ] as const) {
+            const l = document.createElementNS(SVG, "line");
+            l.setAttribute("x1", String(x + d + 6));
+            l.setAttribute("y1", String(y - d - 6));
+            l.setAttribute("x2", String(x + stop));
+            l.setAttribute("y2", String(y - stop));
+            l.setAttribute("stroke", c);
+            l.setAttribute("stroke-width", String(w));
+            l.setAttribute("stroke-linecap", "round");
+            line.append(l);
+        }
+        layer.append(line);
+        at(num, x + d, y - d);
+        num.style.translate = "0 -100%";
+        layer.append(num);
+        return;
+    }
+    // what was clicked alone: the number above the outline's right end, clear of the
+    // outline as drawn (its box and the ring's outer band), as on the page
+    const box = layer.querySelector<HTMLElement>(".s-box");
+    const ow = box
+        ? Number.parseFloat(box.style.outlineWidth || box.style.outline) || 0
+        : 0;
+    const top = box ? Number.parseFloat(box.style.top) - ow : o.word.top;
+    const right = box
+        ? Number.parseFloat(box.style.left) +
+          Number.parseFloat(box.style.width) +
+          ow
+        : o.word.left + o.word.width;
+    at(num, right, top - NUM_GAP / 2);
+    num.style.translate = "-100% -100%";
+    layer.append(num);
 }
 
 /** synchronous redraw, for tests */

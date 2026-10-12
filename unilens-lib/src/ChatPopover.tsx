@@ -11,6 +11,7 @@ import {
 import { chatLang, chatText, speechLang } from "./chatI18n";
 import { ensureChatStyles } from "./chatStyles";
 import { useChatTheme } from "./chatTheme";
+import { markedPlace, markPlace, onMarkChange } from "./clickMarks";
 import { type Earcon, earcon, releaseAudio } from "./earcons";
 import {
     asksToLocate,
@@ -1658,6 +1659,9 @@ export default function ChatPopover({
     const [returnable, setReturnable] = useState(false);
     /** the place whose clicked element is outlined, so its entry shows pressed */
     const [placeOn, setPlaceOn] = useState<Place | null>(null);
+    // the marked place's entry shows pressed: drawn again when the mark moves
+    const [, setMarkTick] = useState(0);
+    useEffect(() => onMarkChange(() => setMarkTick((t) => t + 1)), []);
     /**
      * What "this" means right now: the sources outlined from an answer, or the
      * element of an outlined place. It goes with the question, so the model answers
@@ -2099,12 +2103,17 @@ export default function ChatPopover({
     /** take the user back to where they clicked, and outline what they clicked on */
     function goPlace(p: Place, toggle = false): string {
         const T = chatText();
-        // its entry is a toggle: pressed again, the outline goes and the page stays
-        if (toggle && placeOn === p && hasHighlight()) {
-            clearHighlights();
+        // its entry is a toggle: pressed again, the outline and the place's mark go,
+        // and the page stays
+        const lit = placeOn === p && hasHighlight();
+        if (toggle && (lit || markedPlace() === p)) {
+            if (lit) clearHighlights();
+            markPlace(null);
             act("clear", T.sCleared);
             return T.sCleared;
         }
+        // its mark shows, the others' hide (Yotam's try-out, 2026-10-12)
+        markPlace(p);
         const r = goToPlace(p);
         // outline what was clicked only when it is a thing, not a whole section
         const box = p.el?.isConnected ? p.el.getBoundingClientRect() : null;
@@ -2572,7 +2581,7 @@ export default function ChatPopover({
             type="button"
             className="ulc-where"
             onClick={() => goPlace(p, true)}
-            aria-pressed={placeOn === p}
+            aria-pressed={placeOn === p || markedPlace() === p}
             aria-label={T.placeEntry(placeNumber(p), p.label)}
             title={T.placeEntry(placeNumber(p), p.label)}
         >

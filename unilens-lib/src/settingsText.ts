@@ -299,15 +299,15 @@ export const OWN_SETTINGS: Partial<
             ja: "ハイライトが出るとき、輪が外へ広がります",
         },
     },
-    clickMarks: {
-        label: {
-            en: "Keep a numbered mark where I clicked",
-            ja: "クリックした場所に番号の印を残す",
-        },
+    clickMark: {
+        label: { en: "What to mark", ja: "印をつけるもの" },
         hint: {
-            en: "P1, P2 as in the chat, whose P buttons take you back there",
-            ja: "チャットと同じP1・P2。チャットのPボタンでそこへ戻れます",
+            en: "A numbered mark where you Alt+clicked, P1 and P2 as in the chat; press a P in the chat to show or hide its mark",
+            ja: "Alt＋クリックした場所に番号の印（チャットと同じP1・P2）。チャットのPを押すと、その印を表示・非表示",
         },
+    },
+    clickMarkStyle: {
+        label: { en: "How it's marked", ja: "印の形" },
     },
     voiceAutoSend: {
         label: { en: "Send when I pause", ja: "話し終えたら送信" },
@@ -373,7 +373,7 @@ export const NAMES_JA: Partial<Record<keyof Settings, string>> = {
     citeEvidence: "回答にページ上の根拠を示す",
     chatMovesAside: "根拠に重ならないようチャットをずらす",
     outlineClicked: "Alt＋クリックしたものを囲む",
-    clickMarkTarget: "印をつけるもの",
+    clickMark: "印をつけるもの",
     answerFromStart: "新しい回答を先頭から表示（読み上げは先頭に）",
     clickMarkStyle: "クリックした点の印",
     aboutLine: "次の質問の対象を入力欄の上に表示",
@@ -540,7 +540,8 @@ export const CHOICES_JA: Partial<
         medium: "中",
         large: "大",
     },
-    clickMarkTarget: {
+    clickMark: {
+        none: "なし",
         spot: "クリックした点",
         element: "クリックしたもの",
         both: "両方",

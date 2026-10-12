@@ -187,9 +187,6 @@ export interface Settings {
     /** outline the element just Alt+clicked, until the answer's sources replace it
      *  (Yotam, 2026-10-10, session 2) */
     outlineClicked: boolean;
-    /** a numbered mark (P1, P2, … as in the chat) stays where each Alt+click landed,
-     *  until the conversation starts over (P02, P03, session 1) */
-    clickMarks: boolean;
     /** #30 (Yotam, 2026-10-12; P01 and P06): a new answer is shown from its start. When
      *  it begins, the log scrolls once so the question above it (or the answer) is at
      *  the top; it does not follow the text or jump when the answer ends; and Listen
@@ -197,10 +194,11 @@ export interface Settings {
      *  a long answer jumps back to its start when it ends; Listen at the end. A preset
      *  value, not a participant's setting */
     answerFromStart: boolean;
-    /** what a click mark marks (Yotam, 2026-10-12): the spot clicked (a ring and
-     *  dot), what was clicked (outlined as its P entry in the chat outlines it, and
-     *  lasting), or both */
-    clickMarkTarget: "spot" | "element" | "both";
+    /** a numbered mark (P1, P2, … as in the chat) where an Alt+click landed (P02,
+     *  P03, session 1), and what it marks (Yotam, 2026-10-12): none, the spot clicked,
+     *  what was clicked (outlined as its P entry in the chat outlines it), or both.
+     *  One at a time: the latest click's, or the place whose P entry is pressed */
+    clickMark: "none" | "spot" | "element" | "both";
     /** how the spot is marked (Yotam, 2026-10-12): a map pin with its number; a dot
      *  with a line to its number, solid or see-through; a halo with a line stopping
      *  short of the spot; or the line alone */
@@ -372,9 +370,8 @@ const DEFAULTS: Settings = {
     citeEvidence: true,
     chatMovesAside: true,
     outlineClicked: false,
-    clickMarks: false,
     answerFromStart: true,
-    clickMarkTarget: "both",
+    clickMark: "none",
     clickMarkStyle: "tag",
     aboutLine: true,
     debugShortcut: true,
@@ -450,7 +447,6 @@ export const TOGGLE_LABELS: Record<BoolSettingKey, string> = {
     citeEvidence: "Answers cite page elements",
     chatMovesAside: "Move the chat out of the way of sources",
     outlineClicked: "Outline what I Alt+click",
-    clickMarks: "Keep a numbered mark where I clicked",
     answerFromStart: "New answers show from their start, Listen first",
     aboutLine: "Show what the next question is about, above the field",
     debugShortcut: "Ctrl+Shift+D opens the debug view",
@@ -723,9 +719,10 @@ export const ENUM_CHOICES = {
             beside: "Beside, where it fits",
         },
     },
-    clickMarkTarget: {
+    clickMark: {
         label: "What to mark",
         choices: {
+            none: "None",
             spot: "The spot I clicked",
             element: "What I clicked",
             both: "Both",
@@ -740,7 +737,7 @@ export const ENUM_CHOICES = {
         },
     },
     clickMarkStyle: {
-        label: "How the spot is marked",
+        label: "How it's marked",
         choices: {
             pin: "A map pin with its number",
             tag: "A dot with a line to its number",
@@ -991,8 +988,7 @@ export const PANEL_TABS: { id: PanelTabId; groups: PanelGroup[] }[] = [
                     "chatMovesAside",
                     "outlineClicked",
                     "answerFromStart",
-                    "clickMarks",
-                    "clickMarkTarget",
+                    "clickMark",
                     "clickMarkStyle",
                     "assistantGoTo",
                     "aboutLine",
@@ -1248,8 +1244,15 @@ function mergePersisted(persisted: unknown, current: Settings): Settings {
     // and the minimap as a switch (on: while zoomed)
     if (typeof stored.minimap === "boolean")
         next.minimap = stored.minimap ? "zoomed" : "off";
+    // the click marks' old switch (clickMarks) and its choice (clickMarkTarget) are
+    // not read: what they marked starts again at "None" (2026-10-12; only test
+    // browsers had them)
     return next;
 }
+
+/** stored values as they are read back, over the defaults (tests) */
+export const mergeForTest = (stored: unknown) =>
+    mergePersisted(stored, { ...DEFAULTS });
 
 /** the preset in effect (presets.ts), or null: set once, at init, before anything
  *  reads the settings */

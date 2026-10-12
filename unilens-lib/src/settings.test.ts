@@ -100,6 +100,17 @@ describe("the panel in Japanese", () => {
     });
 });
 
+describe("the click marks' old settings", () => {
+    it("are not read: what they marked starts at None", async () => {
+        const { mergeForTest } = await import("./settings");
+        expect(
+            mergeForTest({ clickMarks: true, clickMarkTarget: "spot" })
+                .clickMark,
+        ).toBe("none");
+        expect(mergeForTest({ clickMark: "both" }).clickMark).toBe("both");
+    });
+});
+
 describe("clampSetting", () => {
     it("clamps numbers into their NUMBER_KNOBS bounds", () => {
         const { min, max } = NUMBER_KNOBS.ringWidth;

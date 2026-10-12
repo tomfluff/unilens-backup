@@ -1,5 +1,11 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { initClickMarks, markPoint, relayMarks } from "./clickMarks";
+import {
+    initClickMarks,
+    markedPlace,
+    markPlace,
+    markPoint,
+    relayMarks,
+} from "./clickMarks";
 import { clearPlaces, clickOffset, type Place, recordPlace } from "./places";
 import { updateSetting } from "./settings";
 
@@ -21,10 +27,9 @@ const place = (id: string, x: number, y: number, el?: Element): Place => ({
 
 beforeEach(() => {
     initClickMarks();
-    updateSetting("clickMarks", true);
     updateSetting("hlColor", "#ffd400");
     updateSetting("hlBadges", "small");
-    updateSetting("clickMarkTarget", "spot");
+    updateSetting("clickMark", "spot");
     updateSetting("clickMarkStyle", "tag");
     updateSetting("hlOutline", "ring");
     updateSetting("ringWidth", 2);
@@ -34,16 +39,42 @@ beforeEach(() => {
 });
 
 describe("lasting click marks", () => {
-    it("marks each click with its number, as the chat does", () => {
+    it("marks the latest click only, with its number as the chat has it", () => {
         recordPlace(place("a", 10, 20));
         recordPlace(place("b", 30, 40));
+        // one at a time: the new click's mark shows, the earlier one hides
         expect(marks().map((_, i) => part(i, "num").textContent)).toEqual([
-            "P1",
             "P2",
         ]);
-        expect(part(1, "dot").style.left).toBe("30px");
-        expect(part(1, "dot").style.top).toBe("40px");
+        expect(part(0, "dot").style.left).toBe("30px");
+        expect(part(0, "dot").style.top).toBe("40px");
         expect(marks()[0].style.getPropertyValue("--ul-mark")).toBe("#ffd400");
+    });
+
+    it("shows the place whose P entry is pressed, and none when pressed again", () => {
+        const a = place("a", 10, 20);
+        recordPlace(a);
+        recordPlace(place("b", 30, 40));
+        markPlace(a);
+        relayMarks();
+        expect(marks().map((_, i) => part(i, "num").textContent)).toEqual([
+            "P1",
+        ]);
+        expect(markedPlace()).toBe(a);
+        markPlace(null);
+        relayMarks();
+        expect(marks()).toHaveLength(0);
+        // "None": no marks, and none is marked
+        markPlace(a);
+        updateSetting("clickMark", "none");
+        relayMarks();
+        expect(marks()).toHaveLength(0);
+        expect(markedPlace()).toBeNull();
+    });
+
+    it("never marks the floating button's place", () => {
+        recordPlace({ ...place("a", 10, 20), byButton: true });
+        expect(marks()).toHaveLength(0);
     });
 
     it("wears the source numbers' look and size, with its P", () => {
@@ -74,7 +105,7 @@ describe("lasting click marks", () => {
         recordPlace(place("a", 20, 110, el));
         const shown = (c: string) => part(0, c).style.display !== "none";
         expect([shown("dot"), shown("box")]).toEqual([true, false]);
-        updateSetting("clickMarkTarget", "element");
+        updateSetting("clickMark", "element");
         relayMarks();
         expect([shown("dot"), shown("box")]).toEqual([false, true]);
         // outlined as a highlight is: the ring's black outer band
@@ -132,7 +163,7 @@ describe("lasting click marks", () => {
         expect(Number.parseFloat(part(0, "box").style.top)).toBeCloseTo(
             top - 60,
         );
-        updateSetting("clickMarkTarget", "both");
+        updateSetting("clickMark", "both");
         relayMarks();
         expect([shown("dot"), shown("box")]).toEqual([true, true]);
         // a whole section is not outlined: its spot is marked instead
@@ -145,7 +176,7 @@ describe("lasting click marks", () => {
                 right: 2000,
                 bottom: 3000,
             }) as DOMRect;
-        updateSetting("clickMarkTarget", "element");
+        updateSetting("clickMark", "element");
         relayMarks();
         expect([shown("dot"), shown("box")]).toEqual([true, false]);
     });
@@ -169,7 +200,7 @@ describe("lasting click marks", () => {
         expect(marks()).toHaveLength(0);
         recordPlace(place("b", 10, 20));
         expect(marks()).toHaveLength(1);
-        updateSetting("clickMarks", false);
+        updateSetting("clickMark", "none");
         relayMarks();
         expect(marks()).toHaveLength(0);
         expect(document.getElementById("unilens-click-marks")).toBeNull();

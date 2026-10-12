@@ -89,9 +89,8 @@ const INITIAL = {
     // the log follows an answer's text, and Listen is at its end (#30 changed both
     // for session 2)
     answerFromStart: false,
-    // no lasting marks where the user clicked (a session-2 idea)
-    clickMarks: false,
-    clickMarkTarget: "both",
+    // no marks where the user clicked (a session-2 idea)
+    clickMark: "none",
     clickMarkStyle: "tag",
     // no "About all 3 sources" line above the field (not decided for good)
     aboutLine: false,
@@ -207,9 +206,8 @@ export const PRESETS = {
             "chatTheme",
             "sourceStyle",
             "chatMovesAside",
-            // the lasting click marks (P02, P03, session 1): off, offered here
-            "clickMarks",
-            "clickMarkTarget",
+            // the click marks (P02, P03, session 1): none, offered here
+            "clickMark",
             "clickMarkStyle",
             // the floating button (#29, Yotam 2026-10-12): off, offered here
             "floatingButton",
