@@ -4,13 +4,16 @@
  * are, until the conversation starts over. The chat's entries take the user back
  * to each place; the marks show where those places are on the page.
  *
- * A mark is the spot clicked (a ring and dot on it), what was clicked, or both
- * (`clickMarkTarget`). What was clicked is outlined in the highlight's look, as
- * pressing its P entry in the chat outlines it, but lasting (Yotam, 2026-10-12);
- * a thing too big to outline (a whole section) or gone from the page is marked by
- * its spot. Its number wears the
- * source numbers' look and size (Yotam, 2026-10-12), with the P that tells it from
- * them. The spot follows what was clicked while it is on the page (a reflow or a
+ * A mark is the spot clicked, what was clicked, or both (`clickMarkTarget`). The
+ * spot is marked in one of five ways (`clickMarkStyle`, Yotam 2026-10-12, from the
+ * options page): a map pin with the number in it; a dot with a line to its number
+ * (the dot solid, or see-through so the text under it shows); a soft halo with a
+ * line from the number stopping short of the spot; or that line alone. Every line
+ * is a dark core with a white edge, so it shows on any background. What was
+ * clicked is outlined in the highlight's look, as pressing its P entry in the chat
+ * outlines it, but lasting; a thing too big to outline (a whole section) or gone
+ * from the page is marked by its spot. The number wears the source numbers' look
+ * and size, with the P that tells it from them. The spot follows what was clicked while it is on the page (a reflow or a
  * zoom that re-wraps the text moves it with the element), and the content point
  * otherwise (a place brought back after a reload has no element).
  *
@@ -22,7 +25,7 @@
 import { highlightLayer, numberLike, paintOutline } from "./highlight";
 import { lookFrom } from "./highlightStyles";
 import { allPlaces, onPlacesChange, type Place, placeNumber } from "./places";
-import { getSettings, onSettingsChange } from "./settings";
+import { getSettings, onSettingsChange, type Settings } from "./settings";
 import {
     clientToContent,
     getView,
@@ -33,7 +36,7 @@ import {
 
 /**
  * Inside the highlights' layer (Yotam, 2026-10-12), from the top: the sources'
- * numbers (z-index 3 there) and the P numbers, the ring and dot, the lasting
+ * numbers (z-index 3 there) and the P numbers, the spot's mark, the lasting
  * outline, then the highlights' outlines and glow (no z-index). The marks keep
  * that order among themselves by their order in the mark.
  */
@@ -47,17 +50,31 @@ const CSS = `
 .${CLASS} { position: absolute; left: 0; top: 0; pointer-events: none; }
 /* the page's own styles never reach them: prefixed names, and nothing inherited */
 .${CLASS} > * { position: fixed; box-sizing: border-box; margin: 0; }
-/* a ring and a dot in the highlight colour between black rims: it reads on any page */
-.${CLASS}-ring { background: none; width: 34px; height: 34px; translate: -50% -50%; border-radius: 50%; border: 4px solid var(--ul-mark); box-shadow: 0 0 0 2px #000, inset 0 0 0 2px #000; }
-.${CLASS}-dot { width: 10px; height: 10px; translate: -50% -50%; border-radius: 50%; background: var(--ul-mark); box-shadow: 0 0 0 2px #000; }
+/* the spot (clickMarkStyle, Yotam 2026-10-12). A dot in the highlight colour with a
+   dark edge; see-through, the text under it shows */
+.${CLASS}-dot { width: 14px; height: 14px; translate: -50% -50%; border-radius: 50%; background: var(--ul-mark); box-shadow: 0 0 0 2.5px #000; }
+.${CLASS}-dot[data-clear] { background: color-mix(in srgb, var(--ul-mark) 50%, transparent); box-shadow: 0 0 0 2.5px rgba(0, 0, 0, .45); }
+/* a soft halo in the highlight colour, no hard edge */
+.${CLASS}-halo { width: 60px; height: 60px; translate: -50% -50%; border-radius: 50%; background: radial-gradient(closest-side, color-mix(in srgb, var(--ul-mark) 75%, transparent), color-mix(in srgb, var(--ul-mark) 35%, transparent) 60%, transparent); }
+/* the line from the number toward the spot: a dark core with a white edge, so it
+   shows on white, black or a busy picture */
+.${CLASS}-line { left: 0; top: 0; overflow: visible; }
+.${CLASS}-line .u { stroke: #fff; stroke-width: 5.5px; stroke-linecap: round; }
+.${CLASS}-line .c { stroke: #000; stroke-width: 2.5px; stroke-linecap: round; }
+/* a map pin, its tip on the spot, the number in it */
+.${CLASS}-pin { translate: -50% -100%; overflow: visible; }
 .${CLASS}-num { white-space: nowrap; z-index: 1; }
 @media (forced-colors: active) {
   .${CLASS} > * { forced-color-adjust: none; box-shadow: none !important; }
-  .${CLASS}-ring { border-color: CanvasText; }
+  .${CLASS}-halo { background: none; border: 2px solid CanvasText; }
+  .${CLASS}-line .u { stroke: Canvas; }
+  .${CLASS}-line .c { stroke: CanvasText; }
+  .${CLASS}-pin path { fill: CanvasText; stroke: Canvas; }
+  .${CLASS}-pin text { fill: Canvas; }
   .${CLASS}-box { background: transparent !important; outline: 3px solid CanvasText !important; }
   .${CLASS}-box .unilens-hl-deco { background: CanvasText !important; stroke: CanvasText !important; }
   .${CLASS}-box .unilens-hl-deco path { stroke: CanvasText !important; }
-  .${CLASS}-dot { background: CanvasText; }
+  .${CLASS}-dot, .${CLASS}-dot[data-clear] { background: CanvasText; }
   .${CLASS}-num { background: CanvasText !important; color: Canvas !important; border-color: Canvas !important; }
 }`;
 
@@ -136,25 +153,88 @@ export function markBox(p: Place): DOMRect | null {
     return r;
 }
 
+type BadgeSize = "small" | "medium" | "large";
+type MarkStyle = Settings["clickMarkStyle"];
+/** the pin's size by the number size, as the badges grow (24, 32, 42 px tall) */
+const PIN_SCALE: Record<BadgeSize, number> = {
+    small: 1,
+    medium: 4 / 3,
+    large: 1.75,
+};
+/** with a line: how far out the number's corner sits from the spot, on the
+ *  diagonal, and how near the spot the line stops (outside the dot; inside the
+ *  halo, short of the spot) */
+const LEAD: Record<MarkStyle, number> = {
+    pin: 0,
+    tag: 20,
+    tagClear: 20,
+    halo: 34,
+    line: 34,
+};
+const STOP: Record<MarkStyle, number> = {
+    pin: 0,
+    tag: 7,
+    tagClear: 7,
+    halo: 20,
+    line: 20,
+};
+const SVG = "http://www.w3.org/2000/svg";
+/** the pin, its tip down on the spot; and turned over, its tip up, where the
+ *  window's top edge would cut it (the number stays upright) */
+const PIN_DOWN =
+    "M20 50 C 20 50 3 31 3 19 A 17 17 0 0 1 37 19 C 37 31 20 50 20 50 Z";
+const PIN_UP = "M20 2 C 20 2 3 21 3 33 A 17 17 0 0 0 37 33 C 37 21 20 2 20 2 Z";
+
 /** one mark's parts, made again when the look or the number changes */
-function build(el: HTMLDivElement, key: string, n: string, size: BadgeSize) {
+function build(
+    el: HTMLDivElement,
+    key: string,
+    n: string,
+    size: BadgeSize,
+    style: MarkStyle,
+) {
     if (el.dataset.key === key) return;
     el.dataset.key = key;
     el.textContent = "";
-    for (const part of ["box", "ring", "dot"]) {
-        // the outline is drawn as a highlight's box is, so it is a div
-        const e = document.createElement(part === "box" ? "div" : "span");
-        e.className = `${CLASS}-${part}`;
-        el.append(e);
+    // the outline is drawn as a highlight's box is, so it is a div
+    const box = document.createElement("div");
+    box.className = `${CLASS}-box`;
+    const halo = document.createElement("span");
+    halo.className = `${CLASS}-halo`;
+    const dot = document.createElement("span");
+    dot.className = `${CLASS}-dot`;
+    if (style === "tagClear") dot.dataset.clear = "";
+    const line = document.createElementNS(SVG, "svg");
+    line.setAttribute("class", `${CLASS}-line`);
+    line.setAttribute("width", "1");
+    line.setAttribute("height", "1");
+    line.setAttribute("aria-hidden", "true");
+    for (const c of ["u", "c"]) {
+        const l = document.createElementNS(SVG, "line");
+        l.setAttribute("class", c);
+        line.append(l);
     }
     const num = numberLike(n, size);
     num.classList.add(`${CLASS}-num`);
     // placed by render
     Object.assign(num.style, { position: "fixed", left: "0", top: "0" });
-    el.append(num);
+    // the pin wears the number's colours
+    const k = PIN_SCALE[size];
+    const pin = document.createElementNS(SVG, "svg");
+    pin.setAttribute("class", `${CLASS}-pin`);
+    pin.setAttribute("viewBox", "0 0 40 52");
+    pin.setAttribute("width", String(40 * k));
+    pin.setAttribute("height", String(52 * k));
+    pin.setAttribute("aria-hidden", "true");
+    pin.innerHTML = `<path d="${PIN_DOWN}" stroke-width="2.5"/><text x="20" y="24" text-anchor="middle" font-family="system-ui, sans-serif" font-weight="700" font-size="${n.length > 2 ? 12 : 14}"></text>`;
+    const path = pin.querySelector("path");
+    const text = pin.querySelector("text");
+    path?.setAttribute("fill", num.style.backgroundColor || "#2563eb");
+    path?.setAttribute("stroke", num.style.borderTopColor || "#fff");
+    text?.setAttribute("fill", num.style.color || "#fff");
+    if (text) text.textContent = n;
+    el.append(box, halo, dot, line, pin, num);
 }
-
-type BadgeSize = "small" | "medium" | "large";
 
 function render() {
     const s = getSettings();
@@ -183,9 +263,15 @@ function render() {
             marks.set(p, el);
         }
         const n = `P${placeNumber(p)}`;
-        build(el, `${n}|${size}|${s.chatStyle}`, n, size);
+        build(
+            el,
+            `${n}|${size}|${s.chatStyle}|${s.clickMarkStyle}`,
+            n,
+            size,
+            s.clickMarkStyle,
+        );
         el.style.setProperty("--ul-mark", s.hlColor);
-        draw(el, p, s.clickMarkTarget);
+        draw(el, p, s.clickMarkTarget, s.clickMarkStyle);
     }
     start();
 }
@@ -195,10 +281,19 @@ function draw(
     el: HTMLDivElement,
     p: Place,
     target: "spot" | "element" | "both",
+    style: MarkStyle,
 ) {
-    const part = (c: string) => el.querySelector<HTMLElement>(`.${CLASS}-${c}`);
-    const [box, ring, dot, num] = ["box", "ring", "dot", "num"].map(part);
-    if (!box || !ring || !dot || !num) return;
+    const part = (c: string) =>
+        el.querySelector<HTMLElement | SVGElement>(`.${CLASS}-${c}`);
+    const [box, halo, dot, line, pin, num] = [
+        "box",
+        "halo",
+        "dot",
+        "line",
+        "pin",
+        "num",
+    ].map(part) as HTMLElement[];
+    if (!box || !halo || !dot || !line || !pin || !num) return;
     const r = target === "spot" ? null : markBox(p);
     // the spot, unless only what was clicked is asked for and it can be outlined
     const at = target === "element" && r ? null : markPoint(p);
@@ -228,27 +323,50 @@ function draw(
             });
         }
     }
-    for (const e of [ring, dot]) {
-        e.style.display = at ? "" : "none";
+    // the spot's mark, by its style
+    const show = (e: HTMLElement | SVGElement, on: boolean) => {
+        e.style.display = on ? "" : "none";
+    };
+    show(halo, Boolean(at) && style === "halo");
+    show(dot, Boolean(at) && (style === "tag" || style === "tagClear"));
+    show(pin, Boolean(at) && style === "pin");
+    show(line, Boolean(at) && style !== "pin");
+    // the number: in the pin; else at the end of the spot's line; else above the
+    // outline's right end (a source's number takes the left). Turned below or to
+    // the left where the screen's edge would cut it
+    show(num, !(at && style === "pin"));
+    for (const e of [halo, dot, pin])
         if (at) {
             e.style.left = `${at.x}px`;
             e.style.top = `${at.y}px`;
         }
+    if (at && style === "pin") {
+        const up = at.y - Number(pin.getAttribute("height")) < 0;
+        pin.querySelector("path")?.setAttribute("d", up ? PIN_UP : PIN_DOWN);
+        pin.querySelector("text")?.setAttribute("y", up ? "38" : "24");
+        pin.style.translate = up ? "-50% 0" : "-50% -100%";
     }
-    // the number: up and to the right of the spot, or above the outline's right end
-    // (a source's number takes the left); turned below or to the left where the
-    // screen's edge would cut it
     // shown before it is measured: a hidden number measures nothing
-    num.style.display = "";
     const w = num.offsetWidth;
     const h = num.offsetHeight;
-    if (at) {
-        const left = at.x + NUM_GAP + w > window.innerWidth;
-        const below = at.y - NUM_GAP - h < 0;
+    if (at && style !== "pin") {
+        const d = LEAD[style];
+        const sx = at.x + d + w > window.innerWidth ? -1 : 1;
+        const sy = at.y - d - h < 0 ? 1 : -1;
+        const end = { x: at.x + sx * d, y: at.y + sy * d };
+        const o = STOP[style] / Math.SQRT2;
+        // from under the pill, past its rounded corner, so the line meets it
+        const tuck = h * 0.3;
+        for (const l of line.querySelectorAll("line")) {
+            l.setAttribute("x1", String(end.x + sx * tuck));
+            l.setAttribute("y1", String(end.y + sy * tuck));
+            l.setAttribute("x2", String(at.x + sx * o));
+            l.setAttribute("y2", String(at.y + sy * o));
+        }
         Object.assign(num.style, {
-            left: `${left ? at.x - NUM_GAP : at.x + NUM_GAP}px`,
-            top: `${below ? at.y + NUM_GAP : at.y - NUM_GAP}px`,
-            translate: `${left ? "-100%" : "0"} ${below ? "0" : "-100%"}`,
+            left: `${end.x}px`,
+            top: `${end.y}px`,
+            translate: `${sx > 0 ? "0" : "-100%"} ${sy < 0 ? "-100%" : "0"}`,
         });
     } else if (r) {
         // what was clicked is off the screen: its number too, not held at the edge

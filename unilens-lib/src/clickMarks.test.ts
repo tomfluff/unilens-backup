@@ -25,6 +25,7 @@ beforeEach(() => {
     updateSetting("hlColor", "#ffd400");
     updateSetting("hlBadges", "small");
     updateSetting("clickMarkTarget", "spot");
+    updateSetting("clickMarkStyle", "tag");
     updateSetting("hlOutline", "ring");
     updateSetting("ringWidth", 2);
     updateSetting("chatStyle", "assistant");
@@ -36,9 +37,12 @@ describe("lasting click marks", () => {
     it("marks each click with its number, as the chat does", () => {
         recordPlace(place("a", 10, 20));
         recordPlace(place("b", 30, 40));
-        expect(marks().map((m) => m.textContent)).toEqual(["P1", "P2"]);
-        expect(part(1, "ring").style.left).toBe("30px");
-        expect(part(1, "ring").style.top).toBe("40px");
+        expect(marks().map((_, i) => part(i, "num").textContent)).toEqual([
+            "P1",
+            "P2",
+        ]);
+        expect(part(1, "dot").style.left).toBe("30px");
+        expect(part(1, "dot").style.top).toBe("40px");
         expect(marks()[0].style.getPropertyValue("--ul-mark")).toBe("#ffd400");
     });
 
@@ -69,10 +73,10 @@ describe("lasting click marks", () => {
             }) as DOMRect;
         recordPlace(place("a", 20, 110, el));
         const shown = (c: string) => part(0, c).style.display !== "none";
-        expect([shown("ring"), shown("box")]).toEqual([true, false]);
+        expect([shown("dot"), shown("box")]).toEqual([true, false]);
         updateSetting("clickMarkTarget", "element");
         relayMarks();
-        expect([shown("ring"), shown("box")]).toEqual([false, true]);
+        expect([shown("dot"), shown("box")]).toEqual([false, true]);
         // outlined as a highlight is: the ring's black outer band
         expect(part(0, "box").style.outline).toContain("solid");
         const top = Number.parseFloat(part(0, "box").style.top);
@@ -130,7 +134,7 @@ describe("lasting click marks", () => {
         );
         updateSetting("clickMarkTarget", "both");
         relayMarks();
-        expect([shown("ring"), shown("box")]).toEqual([true, true]);
+        expect([shown("dot"), shown("box")]).toEqual([true, true]);
         // a whole section is not outlined: its spot is marked instead
         el.getBoundingClientRect = () =>
             ({
@@ -143,7 +147,7 @@ describe("lasting click marks", () => {
             }) as DOMRect;
         updateSetting("clickMarkTarget", "element");
         relayMarks();
-        expect([shown("ring"), shown("box")]).toEqual([true, false]);
+        expect([shown("dot"), shown("box")]).toEqual([true, false]);
     });
 
     it("sits over the highlights' outlines and under their numbers", () => {
@@ -234,10 +238,56 @@ describe("lasting click marks", () => {
                 bottom: top + 50,
             }) as DOMRect;
         recordPlace(place("a", 20, 110, el));
-        expect(part(0, "ring").style.top).toBe("110px");
+        expect(part(0, "dot").style.top).toBe("110px");
         top = 300;
         (el.firstChild as Text).data = "a much longer text";
         await new Promise((r) => setTimeout(r, 50));
-        expect(part(0, "ring").style.top).toBe("310px");
+        expect(part(0, "dot").style.top).toBe("310px");
+    });
+
+    it("marks the spot in the style chosen", () => {
+        recordPlace(place("a", 100, 200));
+        const shown = (c: string) => part(0, c).style.display !== "none";
+        const parts = () =>
+            ["pin", "dot", "halo", "line", "num"].filter(shown).join(" ");
+        expect(parts()).toBe("dot line num");
+        // the line runs from the number's corner to the dot's edge
+        const l = part(0, "line").querySelector(".c") as SVGLineElement;
+        expect(l.getAttribute("x1")).toBe("120");
+        expect(l.getAttribute("y1")).toBe("180");
+        expect(Number(l.getAttribute("x2"))).toBeCloseTo(100 + 7 / Math.SQRT2);
+        // two-tone: a white edge under a dark core
+        expect(part(0, "line").querySelectorAll("line")).toHaveLength(2);
+        updateSetting("clickMarkStyle", "tagClear");
+        relayMarks();
+        expect(part(0, "dot").hasAttribute("data-clear")).toBe(true);
+        updateSetting("clickMarkStyle", "pin");
+        relayMarks();
+        // the number is in the pin
+        expect(parts()).toBe("pin");
+        expect(part(0, "pin").textContent).toBe("P1");
+        updateSetting("clickMarkStyle", "halo");
+        relayMarks();
+        expect(parts()).toBe("halo line num");
+        // the line stops short of the spot, inside the halo
+        const h = part(0, "line").querySelector(".c") as SVGLineElement;
+        expect(Number(h.getAttribute("x2"))).toBeCloseTo(100 + 20 / Math.SQRT2);
+        updateSetting("clickMarkStyle", "line");
+        relayMarks();
+        expect(parts()).toBe("line num");
+    });
+
+    it("turns the number away from the window's top edge", () => {
+        recordPlace(place("a", 100, 5));
+        const l = part(0, "line").querySelector(".c") as SVGLineElement;
+        // below the spot, not above it
+        expect(Number(l.getAttribute("y1"))).toBeGreaterThan(5);
+        // the pin turns over: its tip up on the spot, the number below
+        updateSetting("clickMarkStyle", "pin");
+        relayMarks();
+        expect(part(0, "pin").style.translate).toBe("-50% 0");
+        expect(part(0, "pin").querySelector("text")?.getAttribute("y")).toBe(
+            "38",
+        );
     });
 });

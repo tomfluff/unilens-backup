@@ -190,6 +190,10 @@ export interface Settings {
      *  dot), what was clicked (outlined as its P entry in the chat outlines it, and
      *  lasting), or both */
     clickMarkTarget: "spot" | "element" | "both";
+    /** how the spot is marked (Yotam, 2026-10-12): a map pin with its number; a dot
+     *  with a line to its number, solid or see-through; a halo with a line stopping
+     *  short of the spot; or the line alone */
+    clickMarkStyle: "pin" | "tag" | "tagClear" | "halo" | "line";
     /** the line above the field saying what the next question is about (the outlined
      *  sources or place); hidden, they still go with the question */
     aboutLine: boolean;
@@ -358,6 +362,7 @@ const DEFAULTS: Settings = {
     outlineClicked: false,
     clickMarks: false,
     clickMarkTarget: "both",
+    clickMarkStyle: "tag",
     aboutLine: true,
     debugShortcut: true,
     assistantZoom: true,
@@ -719,6 +724,16 @@ export const ENUM_CHOICES = {
             bar: "Bar with a microphone",
         },
     },
+    clickMarkStyle: {
+        label: "How the spot is marked",
+        choices: {
+            pin: "A map pin with its number",
+            tag: "A dot with a line to its number",
+            tagClear: "A see-through dot with a line to its number",
+            halo: "A soft glow, with a line pointing at the spot",
+            line: "Only a line pointing at the spot",
+        },
+    },
     hlPulse: {
         label: "Pulse",
         choices: {
@@ -962,6 +977,7 @@ export const PANEL_TABS: { id: PanelTabId; groups: PanelGroup[] }[] = [
                     "outlineClicked",
                     "clickMarks",
                     "clickMarkTarget",
+                    "clickMarkStyle",
                     "assistantGoTo",
                     "aboutLine",
                     "regionSelect",

@@ -87,6 +87,7 @@ const INITIAL = {
     // no lasting marks where the user clicked (a session-2 idea)
     clickMarks: false,
     clickMarkTarget: "both",
+    clickMarkStyle: "tag",
     // no "About all 3 sources" line above the field (not decided for good)
     aboutLine: false,
     // nothing else moves or zooms the page
@@ -194,6 +195,7 @@ export const PRESETS = {
             // the lasting click marks (P02, P03, session 1): off, offered here
             "clickMarks",
             "clickMarkTarget",
+            "clickMarkStyle",
             // the floating button (#29, Yotam 2026-10-12): off, offered here
             "floatingButton",
             "fabReminder",

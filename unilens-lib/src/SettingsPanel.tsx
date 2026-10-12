@@ -148,6 +148,8 @@ function relevant(key: Key, s: Settings): boolean {
     if (key === "associateText" && s.citePlacement !== "inline") return false;
     if (key === "hlColorRange" && s.hlColorMode !== "near") return false;
     if (key === "clickMarkTarget" && !s.clickMarks) return false;
+    // also for "What I clicked" alone: a thing too big to outline is marked by its spot
+    if (key === "clickMarkStyle" && !s.clickMarks) return false;
     if (
         (key === "fabReminder" || key === "fabReminderSec") &&
         s.floatingButton !== "round"

@@ -373,6 +373,7 @@ export const NAMES_JA: Partial<Record<keyof Settings, string>> = {
     chatMovesAside: "根拠に重ならないようチャットをずらす",
     outlineClicked: "Alt＋クリックしたものを囲む",
     clickMarkTarget: "印をつけるもの",
+    clickMarkStyle: "クリックした点の印",
     aboutLine: "次の質問の対象を入力欄の上に表示",
     debugShortcut: "Ctrl＋Shift＋D でデバッグ表示を開く",
     assistantZoom: "頼まれたらアシスタントがページを拡大する",
@@ -546,6 +547,13 @@ export const CHOICES_JA: Partial<
         off: "オフ",
         round: "丸いボタン",
         bar: "マイク付きのバー",
+    },
+    clickMarkStyle: {
+        pin: "番号入りのピン",
+        tag: "点と、番号への線",
+        tagClear: "透ける点と、番号への線",
+        halo: "やわらかい光と、その場所を指す線",
+        line: "その場所を指す線だけ",
     },
     hlPulse: {
         off: "オフ",
