@@ -158,7 +158,10 @@ type BadgeSize = "small" | "medium" | "large";
 
 function render() {
     const s = getSettings();
-    const list = s.clickMarks ? allPlaces().order : [];
+    // the floating button asks about the window, not a spot: nothing to mark
+    const list = s.clickMarks
+        ? allPlaces().order.filter((p) => !p.byButton)
+        : [];
     for (const [p, el] of marks)
         if (!list.includes(p)) {
             el.remove();

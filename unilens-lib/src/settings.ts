@@ -211,6 +211,14 @@ export interface Settings {
     sourceStyle: "inline" | "underline" | "end" | "both";
     /** the settings gear on the page; hidden, Ctrl+Alt+Shift+S still opens settings */
     settingsButton: boolean;
+    /** a button that stays on screen, a reminder and a way in (#29: P04 asked; P03
+     *  forgot the assistant): a round button above the settings gear at the bottom
+     *  left, or a bar at the bottom centre with a microphone (floatingButton.ts) */
+    floatingButton: "off" | "round" | "bar";
+    /** the round button says "Ask me about this page" now and then: after this many
+     *  seconds without a question, never while the chat is open */
+    fabReminder: boolean;
+    fabReminderSec: number;
     /** a button in the chat's header that switches where the source numbers go: in the
      *  text, with the words they support underlined, or after the answer */
     sourceStyleButton: boolean;
@@ -358,6 +366,9 @@ const DEFAULTS: Settings = {
     citePlacement: "inline",
     sourceStyle: "inline",
     settingsButton: true,
+    floatingButton: "off",
+    fabReminder: false,
+    fabReminderSec: 120,
     sourceStyleButton: false,
     aiProvider: "auto",
     aiModel: "",
@@ -428,6 +439,7 @@ export const TOGGLE_LABELS: Record<BoolSettingKey, string> = {
     associateText:
         "Associate response text (underline what each source supports)",
     settingsButton: "Settings button (hidden: Ctrl+Alt+Shift+S opens settings)",
+    fabReminder: "Remind me now and then",
     sourceStyleButton:
         "Sources button in the chat (in the text, underlined, after the answer)",
     sounds: "A sound for every action",
@@ -504,6 +516,12 @@ export const NUMBER_KNOBS: Record<
         step: 50,
     },
     ringWidth: { label: "Outline width (px)", min: 1, max: 6, step: 1 },
+    fabReminderSec: {
+        label: "Remind after (s without a question)",
+        min: 10,
+        max: 900,
+        step: 10,
+    },
     minimapMarkerSize: {
         label: "Smallest target on the map (px)",
         min: 8,
@@ -693,6 +711,14 @@ export const ENUM_CHOICES = {
             both: "Both",
         },
     },
+    floatingButton: {
+        label: "Floating button",
+        choices: {
+            off: "Off",
+            round: "Round button",
+            bar: "Bar with a microphone",
+        },
+    },
     hlPulse: {
         label: "Pulse",
         choices: {
@@ -848,8 +874,16 @@ export const PANEL_TABS: { id: PanelTabId; groups: PanelGroup[] }[] = [
                     "chatFontSize",
                     "chatTextScale",
                     "highContrast",
+                    "floatingButton",
+                    "fabReminder",
                 ],
-                more: ["dragPopover", "hints", "escapeOrder", "settingsButton"],
+                more: [
+                    "dragPopover",
+                    "hints",
+                    "escapeOrder",
+                    "settingsButton",
+                    "fabReminderSec",
+                ],
             },
         ],
     },

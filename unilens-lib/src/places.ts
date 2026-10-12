@@ -16,6 +16,8 @@ export interface Place {
     /** where in that element, content px from its top-left, measured at the click
      *  (before the capture, which can take a while, so the page may move first) */
     offset?: { x: number; y: number };
+    /** asked from the floating button: the middle of the window, not a click */
+    byButton?: boolean;
     /** short description for buttons and speech */
     label: string;
 }

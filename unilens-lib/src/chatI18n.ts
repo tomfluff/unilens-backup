@@ -32,6 +32,11 @@ const EN = {
     /** the station sign's main name; otherName is the other language below it */
     stationName: "UniLens",
     pin: "Keep the chat here for the next question",
+    // the floating button (#29)
+    fabAsk: "Ask UniLens about this page",
+    fabBar: "Ask about this page",
+    fabVoice: "Ask by voice",
+    fabRemind: "Ask me about this page",
     unpin: "Stop keeping the chat here",
     close: "Hide the chat. It keeps the conversation",
     minimize: "Minimize the chat",
@@ -193,6 +198,10 @@ const JA: Strings = {
     title: "UniLens",
     stationName: "ユニレンズ",
     pin: "次の質問でもチャットをこの位置に表示",
+    fabAsk: "このページについて UniLens に質問",
+    fabBar: "このページについて質問",
+    fabVoice: "声で質問",
+    fabRemind: "このページについて聞いてください",
     unpin: "位置の固定をやめる",
     close: "チャットを隠す（会話は残ります）",
     minimize: "チャットを最小化",

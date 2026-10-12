@@ -148,6 +148,12 @@ function relevant(key: Key, s: Settings): boolean {
     if (key === "associateText" && s.citePlacement !== "inline") return false;
     if (key === "hlColorRange" && s.hlColorMode !== "near") return false;
     if (key === "clickMarkTarget" && !s.clickMarks) return false;
+    if (
+        (key === "fabReminder" || key === "fabReminderSec") &&
+        s.floatingButton !== "round"
+    )
+        return false;
+    if (key === "fabReminderSec" && !s.fabReminder) return false;
     if (MM_ALL.has(key) && s.minimap === "off") return false;
     const own = FX_OWN[key];
     return !own || own.includes(s.clickFx);

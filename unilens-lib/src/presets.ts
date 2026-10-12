@@ -106,6 +106,9 @@ const INITIAL = {
     continuity: true,
     restoreAfterReload: true,
     settingsButton: false,
+    // no floating button (a session-2 idea, #29)
+    floatingButton: "off",
+    fabReminder: false,
     debugView: false,
     debugShortcut: false,
 } as const satisfies Partial<Settings>;
@@ -191,6 +194,9 @@ export const PRESETS = {
             // the lasting click marks (P02, P03, session 1): off, offered here
             "clickMarks",
             "clickMarkTarget",
+            // the floating button (#29, Yotam 2026-10-12): off, offered here
+            "floatingButton",
+            "fabReminder",
         ],
         // each task link opens a new tab (session lead, 2026-10-09)
         keepPerParticipant: true,

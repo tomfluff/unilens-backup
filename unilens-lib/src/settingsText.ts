@@ -278,6 +278,20 @@ export const OWN_SETTINGS: Partial<
     sounds: {
         label: { en: "A sound for every action", ja: "操作ごとの音" },
     },
+    floatingButton: {
+        label: { en: "Floating button", ja: "浮かぶボタン" },
+        hint: {
+            en: "Always on screen: press it to ask about the page",
+            ja: "いつも画面に表示。押すとページについて質問できます",
+        },
+    },
+    fabReminder: {
+        label: { en: "Remind me now and then", ja: "ときどき知らせる" },
+        hint: {
+            en: "“Ask me about this page” beside the round button, after a while without a question",
+            ja: "しばらく質問がないと、丸いボタンの横に「このページについて聞いてください」",
+        },
+    },
     hlPulse: {
         label: { en: "Pulse", ja: "脈打つ輪" },
         hint: {
@@ -395,6 +409,7 @@ export const NAMES_JA: Partial<Record<keyof Settings, string>> = {
     inventoryMaxNodes: "構造の要素数の上限",
     ringWidth: "枠の太さ (px)",
     minimapMarkerSize: "地図上の対象の最小サイズ (px)",
+    fabReminderSec: "知らせるまでの時間（質問のない秒数）",
     cueRadius: "ポインターからの距離 (px)",
     fxSize: "大きさ (%)",
     fxSoftness: "オーロラ：やわらかさ (px)",
@@ -526,6 +541,11 @@ export const CHOICES_JA: Partial<
         spot: "クリックした点",
         element: "クリックしたもの",
         both: "両方",
+    },
+    floatingButton: {
+        off: "オフ",
+        round: "丸いボタン",
+        bar: "マイク付きのバー",
     },
     hlPulse: {
         off: "オフ",
