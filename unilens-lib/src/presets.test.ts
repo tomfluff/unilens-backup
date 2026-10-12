@@ -140,6 +140,14 @@ describe("session 2 (2026-10-09)", () => {
             hlAdaptLine: true,
             altDragInert: true,
         });
+        // judged over everything under the ring in every preset, and in no panel
+        // (Yotam, 2026-10-13, after the menu-bar comparison)
+        for (const p of Object.values(PRESETS)) {
+            expect(p.values.adaptBg).toBe("under-ring");
+            expect(
+                ("panel" in p ? p.panel : []) as readonly string[],
+            ).not.toContain("adaptBg");
+        }
         expect(PRESETS.initial.values.altDragInert).toBe(false);
         expect(PRESETS.initial.values.hlAdaptLine).toBe(false);
         expect(PRESETS.initial.values.quietNotFound).toBe(true);

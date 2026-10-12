@@ -17,6 +17,7 @@ import {
     invertGlowFor,
     isPageElement,
     luminance,
+    mainBackground,
     parseColor,
     type RGBA,
     sampleBackgrounds,
@@ -1204,14 +1205,22 @@ function colorUnder(
         };
     // what is round it is dark: a glow there may be stronger, and the colour is
     // chosen for the glow as it will be drawn (the text under it stays readable)
+    // adaptBg "main": the colour is chosen for the element's main background alone,
+    // not the worst case under its ring; the glow is still judged by what is really
+    // next to it. Kept, not used: Yotam compared the two on the navy menu bar and
+    // kept "under-ring" (2026-10-13; .local/studies/01-guidance-codesign/
+    // session-2-screenshots/adaptive-dark/menu-bar-compare.png)
+    const judged = getSettings().adaptBg === "main" ? mainBackground(bg) : bg;
+    const seen = [...judged.edge, ...judged.inside];
     const dark =
-        all.reduce((n, c) => n + luminance(c), 0) / all.length < DARK_LUMINANCE;
+        seen.reduce((n, c) => n + luminance(c), 0) / seen.length <
+        DARK_LUMINANCE;
     const fillAlpha = look.fill ? look.fillAlpha : 0;
     // the line carries the colour (hlAdaptLine): the colour is chosen for the page
     // behind it, and the glow then gives way as far as the text next to it needs.
     // Session 1: the colour itself gave way to the glow's 35%
     const lines = getSettings().hlAdaptLine;
-    const color = chooseColor(bg, {
+    const color = chooseColor(judged, {
         base: look.color,
         mode: look.colorMode,
         range: look.colorRange,
@@ -1296,7 +1305,7 @@ function colorFor(
     w: number,
 ): Adapted {
     const had = sampled.get(entry);
-    const key = `${sampledGen}|${look.colorMode}|${look.colorRange}|${look.color}|${outline}|${look.fill}|${look.fillAlpha}|${look.glow}`;
+    const key = `${sampledGen}|${getSettings().adaptBg}|${look.colorMode}|${look.colorRange}|${look.color}|${outline}|${look.fill}|${look.fillAlpha}|${look.glow}`;
     const now = performance.now();
     if (had && had.key === key && now - had.at < RESAMPLE_MS) {
         // a frame inside the interval: measure once more when it ends

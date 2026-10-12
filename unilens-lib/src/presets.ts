@@ -85,6 +85,8 @@ const INITIAL = {
     hlAdaptLine: false,
     // an Alt+drag's release counted as an Alt+click (session 1)
     altDragInert: false,
+    // an adaptive colour judged over everything under the ring (every preset)
+    adaptBg: "under-ring",
     ringWidth: 2,
     ringScale: false,
     // the chat stays where it opened: stepping aside (or folding) to uncover
@@ -186,6 +188,9 @@ export const PRESETS = {
             hlAdaptLine: true,
             // an Alt+drag does nothing (the QA check, 2026-10-12). Not in the panel
             altDragInert: true,
+            // judged over everything under the ring, not the main background alone
+            // (Yotam, 2026-10-13, after the menu-bar comparison). Not in the panel
+            adaptBg: "under-ring",
         },
         /** what a participant may change in session 2 (session-lead's list,
          *  2026-10-09): the highlight's look, page zoom, the page map, voice, sounds,

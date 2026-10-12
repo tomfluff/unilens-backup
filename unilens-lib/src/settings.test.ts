@@ -112,6 +112,12 @@ describe("the click marks' old settings", () => {
 });
 
 describe("clampSetting", () => {
+    it("takes both of adaptBg's values and nothing else", () => {
+        expect(clampSetting("adaptBg", "main")).toBe("main");
+        expect(clampSetting("adaptBg", "under-ring")).toBe("under-ring");
+        expect(clampSetting("adaptBg", "ring")).toBe("under-ring");
+    });
+
     it("clamps numbers into their NUMBER_KNOBS bounds", () => {
         const { min, max } = NUMBER_KNOBS.ringWidth;
         expect(clampSetting("ringWidth", min - 5)).toBe(min);

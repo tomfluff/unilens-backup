@@ -116,6 +116,11 @@ export interface Settings {
      *  session 1 took its release as an Alt+click on what the drag crossed. A preset
      *  value, not a participant's setting */
     altDragInert: boolean;
+    /** what an adaptive colour is judged against: everything under the highlight and
+     *  its ring ("under-ring"), or only the element's main background ("main").
+     *  Yotam kept "under-ring" after comparing them on the navy menu bar
+     *  (2026-10-13). A preset value, in no panel */
+    adaptBg: "under-ring" | "main";
     /** the highlight colour, #rgb or #rrggbb; the two-band ring stays black and white */
     hlColor: string;
     /** how the colour meets the page under it (#26, Yotam 2026-10-12): always the
@@ -343,6 +348,7 @@ const DEFAULTS: Settings = {
     hlBadgeClamp: false,
     hlAdaptLine: true,
     altDragInert: true,
+    adaptBg: "under-ring",
     hlColor: "#ffef26",
     hlColorMode: "fixed",
     hlColorRange: "some",
@@ -1237,6 +1243,10 @@ export function clampSetting<K extends keyof Settings>(
     if (key === "hlColor") {
         return isHexColor(value) ? (value as Settings[K]) : fallback;
     }
+    if (key === "adaptBg")
+        return value === "under-ring" || value === "main"
+            ? (value as Settings[K])
+            : fallback;
     if ((CATALOGUE_KEYS as readonly string[]).includes(key)) {
         return typeof value === "string" && /^[\w.:-]{0,64}$/.test(value)
             ? (value as Settings[K])

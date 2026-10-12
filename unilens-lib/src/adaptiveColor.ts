@@ -549,6 +549,29 @@ export function sampleBackgrounds(
     };
 }
 
+/**
+ * Only the element's main background: the colour most of the samples inside its
+ * own box share (its rim and middle), as everything under it and round it. The
+ * text next to it, under the glow, is still judged by what is really there. For
+ * adaptBg "main"
+ */
+export function mainBackground(bg: Backgrounds): Backgrounds {
+    if (!bg.inside.length) return bg;
+    const counts = new Map<string, { c: RGBA; n: number }>();
+    for (const c of bg.inside) {
+        const key = `${Math.round(c.r)},${Math.round(c.g)},${Math.round(c.b)}`;
+        const had = counts.get(key);
+        counts.set(key, { c, n: (had?.n ?? 0) + 1 });
+    }
+    const main = [...counts.values()].reduce((a, b) => (b.n > a.n ? b : a)).c;
+    return {
+        edge: [main],
+        outside: bg.outside ?? bg.edge,
+        inside: [main],
+        text: bg.text,
+    };
+}
+
 // ── choosing ────────────────────────────────────────────────────────────────
 export interface Choice {
     /** the base colour (the person's, for "near") */

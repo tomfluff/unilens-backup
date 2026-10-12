@@ -8,6 +8,7 @@ import {
     gradientStops,
     hexToRgba,
     invertGlowFor,
+    mainBackground,
     parseColor,
     rgbaToHex,
     TARGET_CONTRAST,
@@ -126,6 +127,32 @@ describe("best contrast", () => {
         });
         expect(got).not.toBe("#ffef26");
         expect(chooseColor(bgs(["#767676"], ["#767676"]), k)).toBe("#ffef26");
+    });
+});
+
+describe("what an adaptive colour is judged against (adaptBg)", () => {
+    // a navy menu item whose ring reaches the white strip above it
+    const menu = bgs(
+        ["#ffffff", "#ffffff", "#123a63", "#123a63"],
+        ["#123a63", "#123a63", "#123a63", "#123a63", "#123a63"],
+        "#ffffff",
+    );
+    it("under-ring: the worst case over white and navy, never plain yellow", () => {
+        expect(chooseColor(menu, { ...near, mode: "contrast" })).not.toBe(
+            "#ffef26",
+        );
+        expect(chooseColor(menu, near)).not.toBe("#ffef26");
+    });
+    it("main: the navy alone, so yellow", () => {
+        const main = mainBackground(menu);
+        expect(main.edge).toEqual([c("#123a63")]);
+        expect(main.text).toEqual(c("#ffffff"));
+        // the glow is still judged by what is really next to it
+        expect(main.outside).toEqual(menu.edge);
+        expect(chooseColor(main, { ...near, mode: "contrast" })).toBe(
+            "#ffef26",
+        );
+        expect(chooseColor(main, near)).toBe("#ffef26");
     });
 });
 
