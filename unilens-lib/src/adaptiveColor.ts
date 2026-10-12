@@ -40,7 +40,7 @@ export const CONTRAST_PALETTE = [
     "#ff4fd8",
     "#36f26b",
     "#ff8a00",
-    "#1f5bff",
+    "#1a3fd6",
     "#8b2cff",
     "#d4001a",
 ];
@@ -415,6 +415,8 @@ export function backgroundsAt(
     const doc = root instanceof Document ? root : root.ownerDocument;
     if (!opts.stack && (x < 0 || y < 0 || x >= innerWidth || y >= innerHeight))
         return [];
+    // a page that cannot say what is under a point (no layout): nothing seen
+    if (!opts.stack && typeof root.elementsFromPoint !== "function") return [];
     const skip = opts.skip ?? ((el: Element) => !isPageElement(el));
     const stack = (
         opts.stack ? opts.stack(x, y) : root.elementsFromPoint(x, y)
@@ -612,6 +614,37 @@ export function glowFor(
         k.glowAlpha = a;
         k.fillAlpha = fillAlpha;
         if (textMargin(c, bg, k) >= 1) return Math.round(a * 100) / 100;
+    }
+    return 0;
+}
+
+/** `c` under white at `a`, blended by difference (the inverted glow) */
+const invertedUnder = (c: RGBA, a: number): RGBA => ({
+    r: (1 - a) * c.r + a * (255 - c.r),
+    g: (1 - a) * c.g + a * (255 - c.g),
+    b: (1 - a) * c.b + a * (255 - c.b),
+    a: 1,
+});
+
+/**
+ * The strongest inverted glow, up to `max`, that leaves the text next to the
+ * highlight readable: a partial inversion greys what is under it, which black text
+ * on white survives and grey text may not (the spec of 2026-10-12: the glow never
+ * makes the text under it hard to read). 0 when none does.
+ */
+export function invertGlowFor(bg: Backgrounds, max: number): number {
+    const t = bg.text;
+    if (!t) return max;
+    const unders = bg.outside ?? bg.edge;
+    for (let a = max; a > 0.001; a -= 0.05) {
+        const fits = unders.every((under) => {
+            const was = contrast(t, under);
+            const need = was >= TEXT_CONTRAST ? TEXT_CONTRAST : was * 0.9;
+            return (
+                contrast(invertedUnder(t, a), invertedUnder(under, a)) >= need
+            );
+        });
+        if (fits) return Math.round(a * 100) / 100;
     }
     return 0;
 }

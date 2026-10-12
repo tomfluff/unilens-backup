@@ -1432,12 +1432,48 @@ export function startPreset(
             // record stays in storage until this tab's next change: older tabs are
             // best closed once (the study's fresh links have none)
             const raw = at[0].getItem(at[1]);
-            if (raw && recordGen(raw) < SETTINGS_GEN) return;
+            if (raw && recordGen(raw) < SETTINGS_GEN) {
+                olderSeen = true;
+                return;
+            }
             loadPresetChanges(raw);
+        });
+        // an older tab's record replaced this one's in storage: this tab writes its
+        // own back as it is reloaded, left or hidden, so the next page load has it.
+        // Not at once: the older tab would take that up and write its own again,
+        // and the two would trade records for as long as both are open. A limit:
+        // the older tab still takes this write up and writes its own over it, so a
+        // setting it does not know can be lost on a reload while it stays open.
+        // Close tabs from before a new build (the study's fresh links have none)
+        const saveOwn = () => {
+            if (!olderSeen || !preset) return;
+            olderSeen = false;
+            // a tab of this build (or a newer one) wrote since: its record stands
+            const at = presetStore(STORE_NAME);
+            let now: string | null = null;
+            try {
+                now = at ? at[0].getItem(at[1]) : null;
+            } catch {
+                // storage blocked: nothing to keep
+            }
+            if (now && recordGen(now) >= SETTINGS_GEN) return;
+            settingsStorage.setItem(
+                STORE_NAME,
+                JSON.stringify({
+                    state: partialize(useSettings.getState()),
+                    version: 0,
+                }),
+            );
+        };
+        window.addEventListener("pagehide", saveOwn);
+        document.addEventListener("visibilitychange", () => {
+            if (document.visibilityState === "hidden") saveOwn();
         });
     }
 }
 let following = false;
+/** an older build's tab wrote the shared record since this tab last wrote its own */
+let olderSeen = false;
 
 /** the preset's values plus the changes kept for it */
 function loadPresetChanges(raw?: string | null) {

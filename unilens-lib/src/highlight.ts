@@ -11,8 +11,10 @@
  */
 
 import {
+    type Backgrounds,
     chooseColor,
     glowFor,
+    invertGlowFor,
     isPageElement,
     luminance,
     parseColor,
@@ -257,6 +259,38 @@ export function init() {
         },
         { passive: true, capture: true },
     );
+    // a dialog closing (the settings panel): what was sampled while it was open is
+    // measured again on the page as it is now (the QA re-run, 2026-10-12)
+    document.addEventListener("close", resampleHighlights, true);
+}
+
+/** everything outlined is measured again on the page as it is now: a dialog over it
+ *  closed (the settings panel unmounts its dialog without closing it, so it says so) */
+export function resampleHighlights() {
+    sampledGen++;
+    scheduleRelay();
+}
+
+/** what is under each outlined element now, noted just before a modal (the settings
+ *  panel) makes the page inert: a choice made in it is judged against the page,
+ *  whatever the mode was before (Off measures nothing) */
+export function noteWhatIsUnder() {
+    if (!boxes.length || modalOpen()) return;
+    const look = currentLook();
+    const w = bandWidth();
+    for (const entry of boxes) {
+        if (!entry.el.isConnected) continue;
+        const r = boxOf(entry.el, measure);
+        if (isEmptyBox(r)) continue;
+        const outline = drawnOutline(look, Boolean(entry.badge));
+        const band = outline === "band" ? 3 * w : 2 * w;
+        pageUnder.set(entry, {
+            bg: sampleBackgrounds(r, OUTLINE_OFFSET + band / 2, {
+                el: entry.el,
+            }),
+            r,
+        });
+    }
 }
 
 // ── rendering ────────────────────────────────────────────────────────────────
@@ -362,10 +396,10 @@ function padFor(outline: string, w: number, look?: HighlightLook): number {
     return OUTLINE_OFFSET;
 }
 
-/** the thin border and the ring's inner band take the adapted colour (hlAdaptLine) */
+/** the thin border and the ring's inner band take the adapted colour, or inverted
+ *  are drawn in the twin (hlAdaptLine) */
 const linesAdapt = (look: HighlightLook) =>
-    (look.colorMode === "near" || look.colorMode === "contrast") &&
-    getSettings().hlAdaptLine;
+    look.colorMode !== "fixed" && getSettings().hlAdaptLine;
 
 /** bracket corners as one path, inset by half the stroke so it stays inside the box */
 function bracketPath(W: number, H: number, t: number): string {
@@ -902,7 +936,7 @@ function paintBox(
             : "",
         // see-through too: text next to a source stays readable under its glow
         look.glow && !plain
-            ? `${GLOW_SHADOW[look.glowSize]} ${tint ? `rgba(255,255,255,${INVERT_GLOW})` : colorWithAlpha(look.color, look.glowAlpha ?? GLOW_ALPHA)}`
+            ? `${GLOW_SHADOW[look.glowSize]} ${tint ? `rgba(255,255,255,${look.glowAlpha ?? INVERT_GLOW})` : colorWithAlpha(look.color, look.glowAlpha ?? GLOW_ALPHA)}`
             : "",
     ].filter(Boolean);
     // with Adaptive color on, the thin border and the ring's inner band are drawn
@@ -910,12 +944,17 @@ function paintBox(
     // (Yotam's try-out, 2026-10-12: on a dark section they were black, and only the
     // faint glow carried the colour). Session 1 kept them black and white
     const lineColor = !tint && !plain && linesAdapt(look) ? look.color : null;
-    // inverted: the twin keeps the ring's and border's room, unpainted
+    // inverted, the lines too when they follow the adaptation (the spec of
+    // 2026-10-12: the opposite of what is behind, never the chosen colour): the twin
+    // draws them in white and this box keeps their black edge. Otherwise the twin
+    // keeps the ring's and border's room, unpainted
+    const invertLines = (tint || plain) && linesAdapt(look);
+    const edged = Boolean(lineColor) || (plain && invertLines);
     const bandColor = tint
-        ? outline === "ring"
+        ? outline === "ring" && !invertLines
             ? "transparent"
             : "#fff"
-        : plain && outline === "band"
+        : plain && (outline === "band" || invertLines)
           ? "transparent"
           : outline === "ring"
             ? (lineColor ?? RING.inner)
@@ -932,17 +971,19 @@ function paintBox(
             : outline === "thin"
               ? lineColor
                   ? `${THIN_ADAPTED}px solid ${lineColor}`
-                  : `${THIN}px solid ${tint ? "transparent" : EDGE}`
+                  : invertLines
+                    ? `${THIN_ADAPTED}px solid ${tint ? "#fff" : "transparent"}`
+                    : `${THIN}px solid ${tint ? "transparent" : EDGE}`
               : "0",
         outline: tint
             ? "none"
             : outline === "ring"
-              ? `${w}px solid ${lineColor ? EDGE : RING.outer}`
+              ? `${w}px solid ${edged ? EDGE : RING.outer}`
               : outline === "band"
                 ? // no outer edge: a dark line there would cross a neighbour's text
                   "none"
                 : outline === "thin"
-                  ? lineColor
+                  ? edged
                       ? `1.5px solid ${EDGE}`
                       : `1px solid ${RING.outer}`
                   : "none",
@@ -1049,7 +1090,7 @@ export function paintOutline(
     const entry = { box, badge };
     paintParts(entry, r, look, outline, w);
     // the colour it is drawn in: the look's, or the one adapted to what is under it
-    if (!adapts(look)) return look.color;
+    if (!measures(look)) return look.color;
     // the colour for what is under it: measured where the box now is on screen (a
     // preview may be scaled), then drawn again in it
     const b = box.getBoundingClientRect();
@@ -1099,11 +1140,11 @@ export function paintOutline(
 }
 
 /** a preview stage's parts at a client point, topmost first (later in the DOM is
- *  drawn over earlier), the stage itself last; never the painter's own boxes */
+ *  drawn over earlier), the stage itself last; never the painter's own boxes or their inverted twins */
 function stagePartsAt(stage: Element, x: number, y: number): Element[] {
     const hits: Element[] = [];
     for (const e of [stage, ...stage.querySelectorAll("*")]) {
-        if (e.closest(".s-paint")) continue;
+        if (e.closest(".s-paint, [data-tint]")) continue;
         const r = e.getBoundingClientRect();
         if (x >= r.left && x < r.right && y >= r.top && y < r.bottom)
             hits.push(e);
@@ -1123,6 +1164,11 @@ function stageBase(stage: Element): RGBA {
 /** whether the look's colour depends on what is under each box */
 const adapts = (look: HighlightLook) =>
     look.colorMode === "contrast" || look.colorMode === "near";
+/** whether what is under each box is measured: for an adaptive colour, or (with
+ *  hlAdaptLine) for a glow that must leave the text next to it readable in every
+ *  mode (the spec of 2026-10-12) */
+const measures = (look: HighlightLook) =>
+    adapts(look) || (look.glow && getSettings().hlAdaptLine);
 
 /** the colour to draw a box round `r` (client px) in, for what is under it; null
  *  when nothing under it could be seen (off-screen) */
@@ -1132,13 +1178,30 @@ function colorUnder(
     outline: string,
     w: number,
     opts: Parameters<typeof sampleBackgrounds>[2] = {},
-): Adapted | null {
-    if (look.colorMode !== "contrast" && look.colorMode !== "near") return null;
+    known?: Backgrounds,
+): (Adapted & { bg: Backgrounds }) | null {
+    if (!measures(look)) return null;
     // under the band, or just beyond the element where a glow or ring would be
     const band = outline === "band" ? 3 * w : 2 * w;
-    const bg = sampleBackgrounds(r, OUTLINE_OFFSET + band / 2, opts);
+    const bg = known ?? sampleBackgrounds(r, OUTLINE_OFFSET + band / 2, opts);
     const all = [...bg.edge, ...bg.inside];
     if (!all.length) return null;
+    // the chosen colour, or the inverted one, kept: only the glow gives way
+    if (look.colorMode === "fixed")
+        return {
+            bg,
+            color: look.color,
+            dark: false,
+            // the fill is the person's own: only the glow is judged
+            glowAlpha: glowFor(bg, look.color, GLOW_ALPHA, 0),
+        };
+    if (look.colorMode === "invert")
+        return {
+            bg,
+            color: look.color,
+            dark: false,
+            glowAlpha: invertGlowFor(bg, INVERT_GLOW),
+        };
     // what is round it is dark: a glow there may be stronger, and the colour is
     // chosen for the glow as it will be drawn (the text under it stays readable)
     const dark =
@@ -1156,6 +1219,7 @@ function colorUnder(
         glowAlpha: look.glow && !lines ? GLOW_ALPHA : 0,
     });
     return {
+        bg,
         color,
         dark,
         glowAlpha:
@@ -1193,6 +1257,36 @@ const glowAlphaOver = (dark: boolean) =>
 const RESAMPLE_MS = 200;
 const sampled = new WeakMap<Drawn, { got: Adapted; at: number; key: string }>();
 let resampleTimer = 0;
+/** what was under each outlined element when the page last answered for itself (no
+ *  modal over it), and where the element was then */
+const pageUnder = new WeakMap<Drawn, { bg: Backgrounds; r: Rect }>();
+
+/** raised when everything sampled must be measured again (a dialog closed) */
+let sampledGen = 0;
+
+/** a modal dialog is open over the page */
+function modalOpen(): boolean {
+    try {
+        return document.querySelector(":modal") !== null;
+    } catch {
+        return false;
+    }
+}
+
+/** `el` and its ancestors whose boxes hold a client point, innermost first: what is
+ *  under a point near it, without asking the screen */
+function ancestorsAt(el: Element, x: number, y: number): Element[] {
+    const hits: Element[] = [];
+    for (let e: Element | null = el; e; e = e.parentElement) {
+        const r = e.getBoundingClientRect();
+        if (x >= r.left && x < r.right && y >= r.top && y < r.bottom)
+            hits.push(e);
+    }
+    // the root holds everything: what lies under all of it
+    if (!hits.includes(document.documentElement))
+        hits.push(document.documentElement);
+    return hits;
+}
 
 function colorFor(
     entry: Drawn,
@@ -1202,7 +1296,7 @@ function colorFor(
     w: number,
 ): Adapted {
     const had = sampled.get(entry);
-    const key = `${look.colorMode}|${look.colorRange}|${look.color}|${outline}|${look.fill}|${look.fillAlpha}|${look.glow}`;
+    const key = `${sampledGen}|${look.colorMode}|${look.colorRange}|${look.color}|${outline}|${look.fill}|${look.fillAlpha}|${look.glow}`;
     const now = performance.now();
     if (had && had.key === key && now - had.at < RESAMPLE_MS) {
         // a frame inside the interval: measure once more when it ends
@@ -1213,11 +1307,44 @@ function colorFor(
             }, RESAMPLE_MS);
         return had.got;
     }
-    const got =
-        colorUnder(r, look, outline, w, { el: entry.el }) ??
-        (had?.key === key
-            ? had.got
-            : { color: look.color, dark: false, glowAlpha: GLOW_ALPHA });
+    // a modal open over the page (the settings panel) makes the page inert, and the
+    // screen then answers with the dialog alone (the QA re-run, 2026-10-12): what was
+    // under the element just before it opened, while it has not moved; otherwise its
+    // own ancestors, by their boxes (an overlay or a sibling's backdrop is missed)
+    const modal = modalOpen();
+    const before = modal ? pageUnder.get(entry) : undefined;
+    const still =
+        before &&
+        Math.abs(before.r.left - r.left) <= 1 &&
+        Math.abs(before.r.top - r.top) <= 1 &&
+        Math.abs(before.r.width - r.width) <= 1 &&
+        Math.abs(before.r.height - r.height) <= 1;
+    const measured = colorUnder(
+        r,
+        look,
+        outline,
+        w,
+        {
+            el: entry.el,
+            ...(modal
+                ? {
+                      stack: (x: number, y: number) =>
+                          ancestorsAt(entry.el, x, y),
+                  }
+                : {}),
+        },
+        still ? before.bg : undefined,
+    );
+    if (measured && !modal) pageUnder.set(entry, { bg: measured.bg, r });
+    const got: Adapted = measured
+        ? {
+              color: measured.color,
+              dark: measured.dark,
+              glowAlpha: measured.glowAlpha,
+          }
+        : had?.key === key
+          ? had.got
+          : { color: look.color, dark: false, glowAlpha: GLOW_ALPHA };
     sampled.set(entry, { got, at: now, key });
     return got;
 }
@@ -1248,7 +1375,7 @@ function render() {
         syncLines(entry, parts.length - 1);
         // an adaptive colour is the element's own, for what is under it now
         const lk =
-            adapts(look) && !isEmptyBox(r)
+            measures(look) && !isEmptyBox(r)
                 ? adaptedLook(look, colorFor(entry, r, look, outline, w))
                 : look;
         paintParts(entry, parts[0], lk, outline, w);

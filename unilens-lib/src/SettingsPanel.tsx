@@ -34,8 +34,10 @@ import {
     aimCue,
     claimEscape,
     cueSvg,
+    noteWhatIsUnder,
     paintBackdrop,
     paintOutline,
+    resampleHighlights,
 } from "./highlight";
 import { type HighlightLook, lookFrom, minimapLook } from "./highlightStyles";
 import {
@@ -2057,7 +2059,10 @@ function Panel({
     // modal: centred over the page, in the top layer above any host layer, with the
     // keyboard kept inside; laid out first, so the tab below can take the focus
     useLayoutEffect(() => {
-        if (!dialog.current?.open) dialog.current?.showModal();
+        if (dialog.current?.open) return;
+        // what is under the highlights, while the page still answers for itself
+        noteWhatIsUnder();
+        dialog.current?.showModal();
     }, []);
     // the active tab takes the keyboard as the panel opens
     useEffect(() => {
@@ -2255,6 +2260,8 @@ function SettingsLauncher() {
         requestAnimationFrame(() => {
             const back = before.current?.isConnected ? before.current : null;
             (back ?? launcher.current)?.focus();
+            // the page is no longer inert: adaptive colors are read from it again
+            resampleHighlights();
         });
     };
     /** opened from the gear under a preset with a participant's panel: that panel */

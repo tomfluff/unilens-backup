@@ -294,6 +294,19 @@ describe("session 2 keeps a participant's changes across tabs", () => {
             }),
         );
         expect(getSettings().chatTextScale).toBe(160);
+        // and this tab writes its own record back as the page goes (a reload)
+        localStorage.setItem(key, older);
+        window.dispatchEvent(
+            new StorageEvent("storage", {
+                key,
+                newValue: older,
+                storageArea: localStorage,
+            }),
+        );
+        window.dispatchEvent(new Event("pagehide"));
+        expect(
+            JSON.parse(localStorage.getItem(key) as string).state.chatTextScale,
+        ).toBe(160);
         // one of this generation is
         const now = JSON.parse(localStorage.getItem(key) as string);
         const newer = JSON.stringify({

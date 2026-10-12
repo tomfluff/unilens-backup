@@ -7,6 +7,7 @@ import {
     fromOklch,
     gradientStops,
     hexToRgba,
+    invertGlowFor,
     parseColor,
     rgbaToHex,
     TARGET_CONTRAST,
@@ -74,9 +75,10 @@ describe("near my colour", () => {
         );
         // the smallest move: just past the target, not far beyond it
         expect(contrast(c(got), c("#fff"))).toBeLessThan(3.4);
-        // still the yellow's hue
+        // still the yellow's hue: only the lightness moved (and the chroma, as far
+        // as the darker yellow fits the screen)
         const h0 = toOklch(c("#ffef26")).h;
-        expect(Math.abs(toOklch(c(got)).h - h0)).toBeLessThan(0.2);
+        expect(Math.abs(toOklch(c(got)).h - h0)).toBeLessThan(0.02);
     });
     it("stops at its limit", () => {
         const little = chooseColor(bgs(["#ffffff"]), {
@@ -110,6 +112,12 @@ describe("best contrast", () => {
         const onWhite = chooseColor(bgs(["#ffffff"]), k);
         expect(contrast(c(onWhite), c("#fff"))).toBeGreaterThan(5);
     });
+    it("takes the dark blue on white, clearly the strongest there", () => {
+        // the spec of 2026-10-12: dark blue on white, yellow on navy
+        const onWhite = chooseColor(bgs(["#ffffff"]), k);
+        expect(onWhite).toBe("#1a3fd6");
+        expect(contrast(c(onWhite), c("#fff"))).toBeGreaterThan(7);
+    });
     it("leaves out a colour whose fill would hide the text", () => {
         // white text on grey (4.5:1): a yellow fill at 0.3 would wash it out
         const got = chooseColor(bgs(["#767676"], ["#767676"], "#ffffff"), {
@@ -118,6 +126,21 @@ describe("best contrast", () => {
         });
         expect(got).not.toBe("#ffef26");
         expect(chooseColor(bgs(["#767676"], ["#767676"]), k)).toBe("#ffef26");
+    });
+});
+
+describe("inverted glow", () => {
+    it("stays whole by black text on white", () => {
+        expect(
+            invertGlowFor(bgs(["#ffffff"], ["#ffffff"], "#000000"), 0.25),
+        ).toBe(0.25);
+    });
+    it("gives way by grey text, which a partial inversion would wash out", () => {
+        const a = invertGlowFor(bgs(["#ffffff"], ["#ffffff"], "#767676"), 0.25);
+        expect(a).toBeLessThan(0.25);
+    });
+    it("stays whole with no text to protect", () => {
+        expect(invertGlowFor(bgs(["#767676"]), 0.25)).toBe(0.25);
     });
 });
 
