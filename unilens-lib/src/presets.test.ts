@@ -151,6 +151,12 @@ describe("session 2 (2026-10-09)", () => {
                 ("panel" in p ? p.panel : []) as readonly string[],
             ).not.toContain("adaptBg");
         }
+        // All moving the page: a switch, off in both, offered in session 2 (16b)
+        expect(PRESETS.initial.values.allMoves).toBe(false);
+        expect(PRESETS.session2.values.allMoves).toBe(false);
+        expect(PRESETS.session2.panel as readonly string[]).toContain(
+            "allMoves",
+        );
         expect(PRESETS.initial.values.altDragInert).toBe(false);
         expect(PRESETS.initial.values.hlAdaptLine).toBe(false);
         expect(PRESETS.initial.values.quietNotFound).toBe(true);

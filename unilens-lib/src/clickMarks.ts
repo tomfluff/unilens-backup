@@ -6,10 +6,10 @@
  * `clickMark` shows no marks.
  *
  * A mark is the spot clicked, what was clicked, or both (`clickMark`). The
- * spot is marked in one of five ways (`clickMarkStyle`, Yotam 2026-10-12, from the
- * options page): a map pin with the number in it; a dot with a line to its number
- * (the dot solid, or see-through so the text under it shows); a soft halo with a
- * line from the number stopping short of the spot; or that line alone. Every line
+ * spot is marked in one of four ways (`clickMarkStyle`, Yotam 2026-10-12 and 13):
+ * a map pin with the number in it; a see-through dot (the text under it shows)
+ * with a line to its number; a soft halo with its number beside it, no line; or a
+ * line alone, from the number stopping short of the spot. Every line
  * is a dark core with a white edge, so it shows on any background. What was
  * clicked is outlined in the highlight's look, as pressing its P entry in the chat
  * outlines it, but lasting; a thing too big to outline (a whole section) or gone
@@ -57,10 +57,9 @@ const CSS = `
 .${CLASS} { position: absolute; left: 0; top: 0; pointer-events: none; }
 /* the page's own styles never reach them: prefixed names, and nothing inherited */
 .${CLASS} > * { position: fixed; box-sizing: border-box; margin: 0; }
-/* the spot (clickMarkStyle, Yotam 2026-10-12). A dot in the highlight colour with a
-   dark edge; see-through, the text under it shows */
-.${CLASS}-dot { width: 14px; height: 14px; translate: -50% -50%; border-radius: 50%; background: var(--ul-mark); box-shadow: 0 0 0 2.5px #000; }
-.${CLASS}-dot[data-clear] { background: color-mix(in srgb, var(--ul-mark) 50%, transparent); box-shadow: 0 0 0 2.5px rgba(0, 0, 0, .45); }
+/* the spot (clickMarkStyle, Yotam 2026-10-12). A see-through dot in the highlight
+   colour, the text under it showing */
+.${CLASS}-dot { width: 14px; height: 14px; translate: -50% -50%; border-radius: 50%; background: color-mix(in srgb, var(--ul-mark) 50%, transparent); box-shadow: 0 0 0 2.5px rgba(0, 0, 0, .45); }
 /* a soft halo in the highlight colour, no hard edge */
 .${CLASS}-halo { width: 60px; height: 60px; translate: -50% -50%; border-radius: 50%; background: radial-gradient(closest-side, color-mix(in srgb, var(--ul-mark) 75%, transparent), color-mix(in srgb, var(--ul-mark) 35%, transparent) 60%, transparent); }
 /* the line from the number toward the spot: a dark core with a white edge, so it
@@ -81,7 +80,7 @@ const CSS = `
   .${CLASS}-box { background: transparent !important; outline: 3px solid CanvasText !important; }
   .${CLASS}-box .unilens-hl-deco { background: CanvasText !important; stroke: CanvasText !important; }
   .${CLASS}-box .unilens-hl-deco path { stroke: CanvasText !important; }
-  .${CLASS}-dot, .${CLASS}-dot[data-clear] { background: CanvasText; }
+  .${CLASS}-dot { background: CanvasText; }
   .${CLASS}-num { background: CanvasText !important; color: Canvas !important; border-color: Canvas !important; }
 }`;
 
@@ -168,22 +167,29 @@ const PIN_SCALE: Record<BadgeSize, number> = {
     medium: 4 / 3,
     large: 1.75,
 };
-/** with a line: how far out the number's corner sits from the spot, on the
- *  diagonal, and how near the spot the line stops (outside the dot; inside the
- *  halo, short of the spot) */
+/** how far out the number's corner sits from the spot, on the diagonal (by the
+ *  halo, at its soft edge), and how near the spot a line stops (outside the dot,
+ *  short of the spot) */
 const LEAD: Record<MarkStyle, number> = {
     pin: 0,
-    tag: 20,
     tagClear: 20,
-    halo: 34,
+    halo: 22,
     line: 34,
 };
 const STOP: Record<MarkStyle, number> = {
     pin: 0,
-    tag: 7,
     tagClear: 7,
-    halo: 20,
+    halo: 0,
     line: 20,
+};
+/** the styles drawn with a line from the number to the spot (the halo has none:
+ *  Yotam, 2026-10-13) */
+const LINED = new Set<MarkStyle>(["tagClear", "line"]);
+/** the number's height by its size, px (the source numbers' badges) */
+const NUM_HEIGHT: Record<BadgeSize, number> = {
+    small: 24,
+    medium: 32,
+    large: 42,
 };
 const SVG = "http://www.w3.org/2000/svg";
 /** the pin, its tip down on the spot; and turned over, its tip up, where the
@@ -198,7 +204,7 @@ function build(
     key: string,
     n: string,
     size: BadgeSize,
-    style: MarkStyle,
+    _style: MarkStyle,
 ) {
     if (el.dataset.key === key) return;
     el.dataset.key = key;
@@ -210,7 +216,6 @@ function build(
     halo.className = `${CLASS}-halo`;
     const dot = document.createElement("span");
     dot.className = `${CLASS}-dot`;
-    if (style === "tagClear") dot.dataset.clear = "";
     const line = document.createElementNS(SVG, "svg");
     line.setAttribute("class", `${CLASS}-line`);
     line.setAttribute("width", "1");
@@ -371,9 +376,9 @@ function draw(
         e.style.display = on ? "" : "none";
     };
     show(halo, Boolean(at) && style === "halo");
-    show(dot, Boolean(at) && (style === "tag" || style === "tagClear"));
+    show(dot, Boolean(at) && style === "tagClear");
     show(pin, Boolean(at) && style === "pin");
-    show(line, Boolean(at) && style !== "pin");
+    show(line, Boolean(at) && LINED.has(style));
     // the number: in the pin; else at the end of the spot's line; else above the
     // outline's right end (a source's number takes the left). Turned below or to
     // the left where the screen's edge would cut it
@@ -514,6 +519,26 @@ export function initClickMarks() {
     onSettingsChange(schedule);
 }
 
+/** how far above the spot (or what was clicked) a mark reaches, px: the room the
+ *  settings sample leaves above its word */
+export function markHeadroom(
+    target: Settings["clickMark"],
+    style: MarkStyle,
+    /** the clicked word's height: the spot is at its middle */
+    wordH: number,
+): number {
+    const s = getSettings();
+    const size: BadgeSize = s.hlBadges === "none" ? "small" : s.hlBadges;
+    if (target === "none") return 0;
+    // what was clicked: its number above the outline (the outline's reach, at most
+    // a thick band's, then the gap)
+    const outlined = wordH / 2 + 16 + NUM_GAP / 2 + NUM_HEIGHT[size];
+    if (target === "element") return outlined;
+    const spot =
+        style === "pin" ? 52 * PIN_SCALE[size] : LEAD[style] + NUM_HEIGHT[size];
+    return target === "both" ? Math.max(spot, outlined) : spot;
+}
+
 /**
  * A mark drawn in a settings tile (the two galleries), as the page draws it: in the
  * tile's own px, `word` standing for what was clicked and `spot` for where.
@@ -550,6 +575,9 @@ export function paintMarkPreview(
     num.style.whiteSpace = "nowrap";
     const spot = o.target !== "element";
     const { x, y } = o.spot;
+    // turned below the spot where the stage's top edge would cut it, as the page
+    // turns it from the window's (Codex, 2026-10-13: a large pin over the sample)
+    const numH = NUM_HEIGHT[size];
     if (spot && o.style === "halo") {
         const halo = document.createElement("span");
         at(halo, x - 30, y - 30);
@@ -561,18 +589,15 @@ export function paintMarkPreview(
         });
         layer.append(halo);
     }
-    if (spot && (o.style === "tag" || o.style === "tagClear")) {
+    if (spot && o.style === "tagClear") {
         const dot = document.createElement("span");
         at(dot, x - 7, y - 7);
         Object.assign(dot.style, {
             width: "14px",
             height: "14px",
             borderRadius: "50%",
-            background:
-                o.style === "tag"
-                    ? color
-                    : `color-mix(in srgb, ${color} 50%, transparent)`,
-            boxShadow: `0 0 0 2.5px ${o.style === "tag" ? "#000" : "rgba(0, 0, 0, .45)"}`,
+            background: `color-mix(in srgb, ${color} 50%, transparent)`,
+            boxShadow: "0 0 0 2.5px rgba(0, 0, 0, .45)",
         });
         layer.append(dot);
     }
@@ -582,8 +607,9 @@ export function paintMarkPreview(
         pin.setAttribute("viewBox", "0 0 40 52");
         pin.setAttribute("width", String(40 * k));
         pin.setAttribute("height", String(52 * k));
-        at(pin, x - 20 * k, y - 52 * k);
-        pin.innerHTML = `<path d="${PIN_DOWN}" stroke-width="2.5"/><text x="20" y="24" text-anchor="middle" font-family="system-ui, sans-serif" font-weight="700" font-size="14"></text>`;
+        const up = y - 52 * k < 0;
+        at(pin, x - 20 * k, up ? y : y - 52 * k);
+        pin.innerHTML = `<path d="${up ? PIN_UP : PIN_DOWN}" stroke-width="2.5"/><text x="20" y="${up ? 38 : 24}" text-anchor="middle" font-family="system-ui, sans-serif" font-weight="700" font-size="14"></text>`;
         pin.querySelector("path")?.setAttribute(
             "fill",
             num.style.backgroundColor || "#2563eb",
@@ -598,9 +624,19 @@ export function paintMarkPreview(
         layer.append(pin);
         return;
     }
+    if (spot && !LINED.has(o.style)) {
+        // the halo: its number at its edge, no line
+        const d = LEAD[o.style];
+        const sy = y - d - numH < 0 ? 1 : -1;
+        at(num, x + d, y + sy * d);
+        num.style.translate = sy < 0 ? "0 -100%" : "0 0";
+        layer.append(num);
+        return;
+    }
     if (spot) {
         const d = LEAD[o.style];
         const stop = STOP[o.style] / Math.SQRT2;
+        const sy = y - d - numH < 0 ? 1 : -1;
         const line = document.createElementNS(SVG, "svg");
         line.setAttribute("width", "1");
         line.setAttribute("height", "1");
@@ -612,17 +648,17 @@ export function paintMarkPreview(
         ] as const) {
             const l = document.createElementNS(SVG, "line");
             l.setAttribute("x1", String(x + d + 6));
-            l.setAttribute("y1", String(y - d - 6));
+            l.setAttribute("y1", String(y + sy * (d + 6)));
             l.setAttribute("x2", String(x + stop));
-            l.setAttribute("y2", String(y - stop));
+            l.setAttribute("y2", String(y + sy * stop));
             l.setAttribute("stroke", c);
             l.setAttribute("stroke-width", String(w));
             l.setAttribute("stroke-linecap", "round");
             line.append(l);
         }
         layer.append(line);
-        at(num, x + d, y - d);
-        num.style.translate = "0 -100%";
+        at(num, x + d, y + sy * d);
+        num.style.translate = sy < 0 ? "0 -100%" : "0 0";
         layer.append(num);
         return;
     }

@@ -1832,6 +1832,13 @@ export default function ChatPopover({
         );
     }
 
+    /** whether showing all the sources (the button, "show all") moves the page
+     *  (allMoves, a switch off by default: item 16b, Yotam 2026-10-13): to the group,
+     *  or its first source when the group does not fit the edge zone. Off, All only
+     *  outlines them where they are, as since 4707024: several places cannot all be
+     *  brought to the middle. An answer's own outlines as it arrives never move it */
+    const allMoves = () => getSettings().allMoves;
+
     function point(
         m: Msg,
         index: number | "all",
@@ -2216,7 +2223,7 @@ export default function ChatPopover({
             note = T.sCleared;
             act("clear", note);
         } else if (cmd.kind === "all") {
-            point(last, "all", false);
+            point(last, "all", allMoves());
             note = T.sAllNote(n);
         } else {
             const i =
@@ -2578,7 +2585,7 @@ export default function ChatPopover({
         if (pressed) {
             clearHighlights();
             act("clear", T.sCleared);
-        } else point(m, "all", false);
+        } else point(m, "all", allMoves());
     };
     const goBack = () => {
         const ok = returnToPreviousView();

@@ -27,7 +27,7 @@ import { chatLang, chatText } from "./chatI18n";
 import { ensureChatStyles } from "./chatStyles";
 import { useChatTheme } from "./chatTheme";
 import { clickFeedback, fxStill } from "./clickFx";
-import { paintMarkPreview } from "./clickMarks";
+import { markHeadroom, paintMarkPreview } from "./clickMarks";
 import { earcon } from "./earcons";
 import { renderCited } from "./evidence";
 import {
@@ -253,9 +253,8 @@ const MARK_SHORT: Record<PanelLang, Record<string, string>> = {
         element: "What I clicked",
         both: "Both",
         pin: "Pin",
-        tag: "Dot and line",
         tagClear: "See-through dot",
-        halo: "Glow and line",
+        halo: "Soft glow",
         line: "Line only",
     },
     ja: {
@@ -264,9 +263,8 @@ const MARK_SHORT: Record<PanelLang, Record<string, string>> = {
         element: "クリックしたもの",
         both: "両方",
         pin: "ピン",
-        tag: "点と線",
         tagClear: "透ける点",
-        halo: "光と線",
+        halo: "やわらかい光",
         line: "線だけ",
     },
 };
@@ -733,14 +731,17 @@ function HighlightTile({ k, v, s }: { k: Key; v: string; s: Settings }) {
 
 function Thumb({ k, v, s, T }: { k: Key; v: string; s: Settings; T: Text }) {
     if (k === "clickMark" || k === "clickMarkStyle") {
-        // what to mark, drawn with the chosen look; each look, drawn on the spot
-        // each look with what is marked now (the spot alone while that is None)
+        // what to mark, drawn with the chosen look; each look with what is marked
+        // now, and the spot always in it, or its tiles could not differ (the spot
+        // alone while that is None, with what was clicked while that is alone)
         const target = (
             k === "clickMark"
                 ? v
                 : s.clickMark === "none"
                   ? "spot"
-                  : s.clickMark
+                  : s.clickMark === "element"
+                    ? "both"
+                    : s.clickMark
         ) as Settings["clickMark"];
         const style = (
             k === "clickMarkStyle" ? v : s.clickMarkStyle
@@ -1591,6 +1592,11 @@ function PageSpecimen({
     const src = useRef<HTMLSpanElement>(null);
     const layer = useRef<HTMLDivElement>(null);
     const map = useRef<HTMLDivElement>(null);
+    /** the click mark (Yotam, 2026-10-13): a word beside the source stands for what
+     *  was Alt+clicked, marked as the page marks it; nothing with "What to mark" None */
+    const clicked = useRef<HTMLSpanElement>(null);
+    const marks = useRef<HTMLDivElement>(null);
+    const marking = show === "look" && s.clickMark !== "none";
     const [rect, setRect] = useState<Rect | null>(null);
     const [size, setSize] = useState({ w: 0, h: 0 });
     // laid out first: the outline goes where the words are
@@ -1615,35 +1621,65 @@ function PageSpecimen({
     useLayoutEffect(() => {
         const l = layer.current;
         if (!l || !rect) return;
-        paintHighlight(
-            l,
-            lookFrom(s),
-            size.w,
-            size.h,
-            rect,
-            "1",
-            undefined,
-            s.hlPulse,
-        );
+        // with room above the clicked word for its mark (a large pin), the sample
+        // growing as it needs; first, so all below is measured where it then is
+        const pg = page.current;
+        if (pg) pg.style.paddingTop = "";
+        let p = pg?.getBoundingClientRect();
+        let c = clicked.current?.getBoundingClientRect();
+        if (pg && p && c) {
+            const need =
+                markHeadroom(s.clickMark, s.clickMarkStyle, c.height) +
+                6 -
+                (c.top + c.height / 2 - p.top);
+            if (need > 0) {
+                pg.style.paddingTop = `calc(1.1em + ${need}px)`;
+                p = pg.getBoundingClientRect();
+                c = clicked.current?.getBoundingClientRect();
+            }
+        }
+        // the source as it now lies (the padding moves it, not always resizing
+        // what the observer watches)
+        const r = src.current?.getBoundingClientRect();
+        const at =
+            p && r
+                ? {
+                      left: r.left - p.left,
+                      top: r.top - p.top,
+                      width: r.width,
+                      height: r.height,
+                  }
+                : rect;
+        const w = p?.width ?? size.w;
+        const h = p?.height ?? size.h;
+        paintHighlight(l, lookFrom(s), w, h, at, "1", undefined, s.hlPulse);
         if (show === "look" && s.offscreenCue === "edge")
-            paintCue(
-                l,
-                s,
-                size.w / 2,
-                size.h - 8 - s.cueSize / 2,
-                Math.PI / 2,
-                "2",
-            );
+            paintCue(l, s, w / 2, h - 8 - s.cueSize / 2, Math.PI / 2, "2");
         if (show === "look" && s.offscreenCue === "pointer") {
-            const x = size.w * 0.25;
+            const x = w * 0.25;
             const y = 50;
             const a = Math.PI / 3;
-            const p = aroundPointer(s, x, y, a, s.cueRadius);
+            const q = aroundPointer(s, x, y, a, s.cueRadius);
             paintPointer(l, x, y);
-            paintCue(l, s, p.x, p.y, a, "2");
+            paintCue(l, s, q.x, q.y, a, "2");
         }
         if (map.current && show === "zoom" && s.minimap !== "off")
             paintMap(map.current, minimapLook(s), s, MAP.w, MAP.h);
+        if (marks.current && p && c)
+            paintMarkPreview(marks.current, {
+                target: s.clickMark,
+                style: s.clickMarkStyle,
+                word: {
+                    left: c.left - p.left,
+                    top: c.top - p.top,
+                    width: c.width,
+                    height: c.height,
+                },
+                spot: {
+                    x: c.left - p.left + c.width * 0.35,
+                    y: c.top - p.top + c.height / 2,
+                },
+            });
     });
     return (
         <div
@@ -1662,9 +1698,15 @@ function PageSpecimen({
             <span ref={src} className="s-src">
                 {T.sampleSource}
             </span>
+            {marking && (
+                <span ref={clicked} className="s-src s-clicked">
+                    {T.sampleClicked}
+                </span>
+            )}
             <span className="s-line" />
             <span className="s-line short" />
             <div ref={layer} className="s-paint" />
+            {marking && <div ref={marks} className="s-paint" />}
             {show === "zoom" && s.minimap !== "off" && (
                 <div
                     className="s-minimap"

@@ -30,7 +30,7 @@ beforeEach(() => {
     updateSetting("hlColor", "#ffd400");
     updateSetting("hlBadges", "small");
     updateSetting("clickMark", "spot");
-    updateSetting("clickMarkStyle", "tag");
+    updateSetting("clickMarkStyle", "tagClear");
     updateSetting("hlOutline", "ring");
     updateSetting("ringWidth", 2);
     updateSetting("chatStyle", "assistant");
@@ -289,9 +289,6 @@ describe("lasting click marks", () => {
         expect(Number(l.getAttribute("x2"))).toBeCloseTo(100 + 7 / Math.SQRT2);
         // two-tone: a white edge under a dark core
         expect(part(0, "line").querySelectorAll("line")).toHaveLength(2);
-        updateSetting("clickMarkStyle", "tagClear");
-        relayMarks();
-        expect(part(0, "dot").hasAttribute("data-clear")).toBe(true);
         updateSetting("clickMarkStyle", "pin");
         relayMarks();
         // the number is in the pin
@@ -299,10 +296,10 @@ describe("lasting click marks", () => {
         expect(part(0, "pin").textContent).toBe("P1");
         updateSetting("clickMarkStyle", "halo");
         relayMarks();
-        expect(parts()).toBe("halo line num");
-        // the line stops short of the spot, inside the halo
-        const h = part(0, "line").querySelector(".c") as SVGLineElement;
-        expect(Number(h.getAttribute("x2"))).toBeCloseTo(100 + 20 / Math.SQRT2);
+        // no line (Yotam, 2026-10-13): the number at the glow's edge
+        expect(parts()).toBe("halo num");
+        expect(part(0, "num").style.left).toBe("122px");
+        expect(part(0, "num").style.top).toBe("178px");
         updateSetting("clickMarkStyle", "line");
         relayMarks();
         expect(parts()).toBe("line num");

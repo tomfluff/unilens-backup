@@ -56,6 +56,8 @@ const EN = {
     sampleSources: "Opens at {{9:30}} [[n1]], closes at {{17:00}} [[n2]].",
     samplePlace: "Opening hours",
     sampleSource: "Open 9:30–17:00 (sample)",
+    /** what the sample's click mark marks, beside the source */
+    sampleClicked: "Tickets",
     hearSound: "Hear the action sound",
     hearVoice: "Hear the reading voice",
     stopVoice: "Stop",
@@ -133,6 +135,7 @@ const JA: typeof EN = {
     sampleSources: "開館は{{9:30}} [[n1]]、閉館は{{17:00}} [[n2]]です。",
     samplePlace: "開館時間",
     sampleSource: "開館 9:30〜17:00（見本）",
+    sampleClicked: "きっぷ",
     hearSound: "操作音を聞く",
     hearVoice: "読み上げの声を聞く",
     stopVoice: "止める",
@@ -387,6 +390,7 @@ export const NAMES_JA: Partial<Record<keyof Settings, string>> = {
     mmNumbers: "対象に番号を表示",
     citeEvidence: "回答にページ上の根拠を示す",
     chatMovesAside: "根拠に重ならないようチャットをずらす",
+    allMoves: "「すべて」でページをハイライトへ動かす",
     outlineClicked: "Alt＋クリックしたものを囲む",
     clickMark: "印をつけるもの",
     answerFromStart: "新しい回答を先頭から表示（読み上げは先頭に）",
@@ -569,9 +573,8 @@ export const CHOICES_JA: Partial<
     },
     clickMarkStyle: {
         pin: "番号入りのピン",
-        tag: "点と、番号への線",
         tagClear: "透ける点と、番号への線",
-        halo: "やわらかい光と、その場所を指す線",
+        halo: "やわらかい光と、そばの番号",
         line: "その場所を指す線だけ",
     },
     hlPulse: {

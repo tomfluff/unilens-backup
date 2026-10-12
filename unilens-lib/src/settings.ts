@@ -203,6 +203,11 @@ export interface Settings {
     /** a chat covering a chosen source steps aside, to the nearer side, or folds to
      *  its header when there is no room (a pinned chat only folds); off, it stays */
     chatMovesAside: boolean;
+    /** pressing All (or "show all") moves the page to the group of highlights, by
+     *  the edge zone's rule: the group to the middle when it fits, else number 1;
+     *  pressing it off, or an answer's own outlines, never move it. Off: All only
+     *  outlines them where they are (item 16b, Yotam 2026-10-13) */
+    allMoves: boolean;
     /** outline the element just Alt+clicked, until the answer's sources replace it
      *  (Yotam, 2026-10-10, session 2) */
     outlineClicked: boolean;
@@ -222,10 +227,10 @@ export interface Settings {
      *  what was clicked (outlined as its P entry in the chat outlines it), or both.
      *  One at a time: the latest click's, or the place whose P entry is pressed */
     clickMark: "none" | "spot" | "element" | "both";
-    /** how the spot is marked (Yotam, 2026-10-12): a map pin with its number; a dot
-     *  with a line to its number, solid or see-through; a halo with a line stopping
-     *  short of the spot; or the line alone */
-    clickMarkStyle: "pin" | "tag" | "tagClear" | "halo" | "line";
+    /** how the spot is marked (Yotam, 2026-10-12; four of them from 2026-10-13): a
+     *  map pin with its number; a see-through dot with a line to its number; a soft
+     *  glow with the number beside it; or a line alone pointing at the spot */
+    clickMarkStyle: "pin" | "tagClear" | "halo" | "line";
     /** the line above the field saying what the next question is about (the outlined
      *  sources or place); hidden, they still go with the question */
     aboutLine: boolean;
@@ -396,11 +401,12 @@ const DEFAULTS: Settings = {
     sounds: true,
     citeEvidence: true,
     chatMovesAside: true,
+    allMoves: false,
     outlineClicked: false,
     answerFromStart: true,
     quietNotFound: false,
     clickMark: "none",
-    clickMarkStyle: "tag",
+    clickMarkStyle: "tagClear",
     aboutLine: true,
     debugShortcut: true,
     assistantZoom: true,
@@ -477,6 +483,7 @@ export const TOGGLE_LABELS: Record<BoolSettingKey, string> = {
     mmNumbers: "Numbers on targets",
     citeEvidence: "Answers cite page elements",
     chatMovesAside: "Move the chat out of the way of sources",
+    allMoves: "All moves the page to the highlights",
     outlineClicked: "Outline what I Alt+click",
     answerFromStart: "New answers show from their start, Listen first",
     quietNotFound: "An answer that points at nothing looks like a note",
@@ -778,9 +785,8 @@ export const ENUM_CHOICES = {
         label: "How it's marked",
         choices: {
             pin: "A map pin with its number",
-            tag: "A dot with a line to its number",
             tagClear: "A see-through dot with a line to its number",
-            halo: "A soft glow, with a line pointing at the spot",
+            halo: "A soft glow, its number beside it",
             line: "Only a line pointing at the spot",
         },
     },
@@ -968,6 +974,10 @@ export const PANEL_TABS: { id: PanelTabId; groups: PanelGroup[] }[] = [
                     "hlGlow",
                     "hlFill",
                     "hlPulse",
+                    // drawn on the page too, beside the highlight's look, with the
+                    // mark on the sample (Yotam, 2026-10-13)
+                    "clickMark",
+                    "clickMarkStyle",
                 ],
                 more: ["ringWidth", "ringScale", "hlBadgeClamp", "hlAdaptLine"],
             },
@@ -1015,6 +1025,7 @@ export const PANEL_TABS: { id: PanelTabId; groups: PanelGroup[] }[] = [
                     "restoreAfterReload",
                     "autoHighlight",
                     "moveToEvidence",
+                    "allMoves",
                 ],
                 more: [
                     "streamReplies",
@@ -1027,8 +1038,6 @@ export const PANEL_TABS: { id: PanelTabId; groups: PanelGroup[] }[] = [
                     "outlineClicked",
                     "answerFromStart",
                     "quietNotFound",
-                    "clickMark",
-                    "clickMarkStyle",
                     "assistantGoTo",
                     "aboutLine",
                     "regionSelect",
@@ -1294,6 +1303,8 @@ function mergePersisted(persisted: unknown, current: Settings): Settings {
     // and the minimap as a switch (on: while zoomed)
     if (typeof stored.minimap === "boolean")
         next.minimap = stored.minimap ? "zoomed" : "off";
+    // the solid dot with a line (Yotam, 2026-10-13: four styles) is the see-through one
+    if (stored.clickMarkStyle === "tag") next.clickMarkStyle = "tagClear";
     // the click marks' old switch (clickMarks) and its choice (clickMarkTarget) are
     // not read: what they marked starts again at "None" (2026-10-12; only test
     // browsers had them)
@@ -1379,9 +1390,10 @@ const settingsStorage: StateStorage = {
  * older build (still open from before) writes its whole record without the settings
  * it does not know; a newer tab ignores that write rather than lose them (Yotam's
  * try-out, 2026-10-12: "What to mark" snapped back to None). Older records still
- * load as they always did (mergePersisted ignores the marker).
+ * load as they always did (mergePersisted ignores the marker). 3: allMoves and the
+ * four click-mark styles (2026-10-13).
  */
-export const SETTINGS_GEN = 2;
+export const SETTINGS_GEN = 3;
 const GEN_KEY = "_gen";
 
 /** what is written: everything, or under a preset only what differs from it; and

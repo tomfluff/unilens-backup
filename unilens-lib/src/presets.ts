@@ -94,6 +94,8 @@ const INITIAL = {
     // the chat stays where it opened: stepping aside (or folding) to uncover
     // a source is a later feature (Yotam, 2026-10-07)
     chatMovesAside: false,
+    // All outlines the sources where they are (session 1)
+    allMoves: false,
     // the log follows an answer's text, and Listen is at its end (#30 changed both
     // for session 2)
     answerFromStart: false,
@@ -101,7 +103,7 @@ const INITIAL = {
     quietNotFound: true,
     // no marks where the user clicked (a session-2 idea)
     clickMark: "none",
-    clickMarkStyle: "tag",
+    clickMarkStyle: "tagClear",
     // no "About all 3 sources" line above the field (not decided for good)
     aboutLine: false,
     // nothing else moves or zooms the page
@@ -231,6 +233,8 @@ export const PRESETS = {
             "chatTheme",
             "sourceStyle",
             "chatMovesAside",
+            // All moving the page (item 16b, Yotam 2026-10-13): off, offered here
+            "allMoves",
             // the click marks (P02, P03, session 1): none, offered here
             "clickMark",
             "clickMarkStyle",

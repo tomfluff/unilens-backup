@@ -124,6 +124,8 @@ ${P} .s-page.with-map { min-height: 12em; padding-right: calc(140px * .55 + 24px
 ${P} .s-page .s-line { display: block; height: .55em; margin: .5em 0; border-radius: 3px; background: #d6dae0; }
 ${P} .s-page .s-line.short { width: 62%; }
 ${P} .s-page .s-src { position: relative; z-index: 1; display: inline-block; padding: .1em .2em; font-weight: 600; color: #111; }
+/* what the click mark marks, on the source's line (Yotam, 2026-10-13) */
+${P} .s-page .s-src.s-clicked { margin-left: 2.2em; }
 /* what the page's own painters draw: outline, backdrop, arrows, click feedback, map */
 ${P} .s-paint { position: absolute; inset: 0; z-index: 2; pointer-events: none; }
 ${P} .s-paint .s-dim { position: absolute; inset: 0; }

@@ -7,6 +7,7 @@ import {
     exportSettings,
     getSettings,
     importSettings,
+    mergeForTest,
     NUMBER_KNOBS,
     type NumSettingKey,
     PANEL_TABS,
@@ -113,6 +114,16 @@ describe("the click marks' old settings", () => {
 });
 
 describe("clampSetting", () => {
+    it("reads a saved solid dot as the see-through one (four styles, 2026-10-13)", () => {
+        expect(mergeForTest({ clickMarkStyle: "tag" }).clickMarkStyle).toBe(
+            "tagClear",
+        );
+        expect(mergeForTest({ clickMarkStyle: "halo" }).clickMarkStyle).toBe(
+            "halo",
+        );
+        expect(mergeForTest({}).clickMarkStyle).toBe("tagClear");
+    });
+
     it("takes both of adaptBg's values and nothing else", () => {
         expect(clampSetting("adaptBg", "main")).toBe("main");
         expect(clampSetting("adaptBg", "under-ring")).toBe("under-ring");
