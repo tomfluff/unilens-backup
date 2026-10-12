@@ -52,6 +52,8 @@ const EN = {
     /** the answer as the model writes it: the words a source supports in {{ }}, then
      *  its marker; the chat's own renderer turns them into a chip and an underline */
     sampleCited: "It opens at {{9:30 on weekdays}} [[n1]].",
+    /** the source-style tiles' answer: two sources, so where the numbers go shows */
+    sampleSources: "Opens at {{9:30}} [[n1]], closes at {{17:00}} [[n2]].",
     samplePlace: "Opening hours",
     sampleSource: "Open 9:30–17:00 (sample)",
     hearSound: "Hear the action sound",
@@ -125,6 +127,7 @@ const JA: typeof EN = {
     previewPage: "この設定でのハイライトのプレビュー",
     sampleQuestion: "博物館は何時に開きますか？",
     sampleCited: "開館は{{平日の 9 時 30 分}} [[n1]]です。",
+    sampleSources: "開館は{{9:30}} [[n1]]、閉館は{{17:00}} [[n2]]です。",
     samplePlace: "開館時間",
     sampleSource: "開館 9:30〜17:00（見本）",
     hearSound: "操作音を聞く",
@@ -495,6 +498,7 @@ export const CHOICES_JA: Partial<
         inline: "文中に番号",
         underline: "文中に番号、語句に下線",
         end: "回答の後に番号をまとめて",
+        both: "文中に番号、回答の後にもまとめて",
     },
     ttsSpeed: {
         slow: "ゆっくり",
@@ -511,6 +515,7 @@ export const CHOICES_JA: Partial<
         inline: "文の中（語句のすぐ後）",
         sentence: "各文の終わり",
         end: "回答の最後にまとめて",
+        both: "文の中と、回答の最後にもまとめて",
     },
     autoHighlight: {
         where: "「どこ」「見せて」と聞いたときに根拠を囲む",

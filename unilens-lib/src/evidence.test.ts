@@ -582,6 +582,55 @@ describe("citation placement (co-design initial prototype: numbers out of the se
         expect(placeSlots("No sources.", "end")).toBe("No sources.");
     });
 
+    it("both (#27): the numbers where the model put them, and all again after", () => {
+        const text =
+            "Starter is {{$9}} [[n12]] and Team $29 [[n40]]. Starter again [[n12]].";
+        const r = renderCited(
+            text,
+            known,
+            label,
+            false,
+            undefined,
+            undefined,
+            true,
+            "both",
+        );
+        expect(r.ids).toEqual(["n12", "n40"]);
+        // three in the text, then 1 and 2 once each after the answer
+        expect(r.html.match(/class="unilens-cite"/g)).toHaveLength(5);
+        expect(r.html).not.toContain("unilens-cite-text");
+        expect(r.html).toMatch(
+            /again\s?<button[^>]*>1<\/button>\.\n\n<button[^>]*>1<\/button> <button[^>]*>2<\/button>$/,
+        );
+        // mid-stream, a half-written brace stays hidden before the row
+        for (const tail of ["{", "}", "{{9:30}}", "{{9:30}", "{{9"])
+            expect(
+                renderCited(
+                    `First [[n12]]. Next ${tail}`,
+                    known,
+                    label,
+                    true,
+                    undefined,
+                    undefined,
+                    false,
+                    "both",
+                ).html,
+            ).not.toMatch(/[{}]/);
+        // no sources, nothing added
+        expect(
+            renderCited(
+                "Nothing cited.",
+                known,
+                label,
+                false,
+                undefined,
+                undefined,
+                false,
+                "both",
+            ).html,
+        ).toBe("Nothing cited.");
+    });
+
     it("renderCited: chips move, ids and numbers stay; no underline away from the words", () => {
         const text =
             "Starter is {{$9}} [[n12]] and Team $29 [[n40]]. Starter again [[n12]].";

@@ -116,6 +116,9 @@ ${P} .ul-chat.s-chat .ulc-log { max-height: 9em; overflow: hidden; justify-conte
 }
 ${P} .ul-chat.s-chat { position: relative; inset: auto; width: 100%; height: auto; max-height: none; z-index: auto; pointer-events: none; }
 ${P} .ul-chat.s-chat .ulc-log { flex: none; }
+/* the source-style tiles (#27): the answer alone, filling its stage */
+${P} .ul-chat.s-chat.s-src { height: 100%; border-radius: 0; box-shadow: none; }
+${P} .ul-chat.s-chat.s-src .ulc-log { max-height: none; height: 100%; padding: 8px; justify-content: center; }
 ${P} .s-page { position: relative; overflow: hidden; min-height: 10em; border-radius: 10px; background: #fff; color: #333; padding: 1.1em 1em 1.2em; font-size: .95em; line-height: 1.6; }
 ${P} .s-page.with-map { min-height: 12em; padding-right: calc(140px * .55 + 24px); }
 ${P} .s-page .s-line { display: block; height: .55em; margin: .5em 0; border-radius: 3px; background: #d6dae0; }

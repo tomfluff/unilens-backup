@@ -326,6 +326,9 @@ describe("?sources= in the facilitator's link", () => {
         expect(sourceStyleOf(getSettings())).toBe("end");
         applySourcesParam("https://x/en/?sources=everywhere");
         expect(sourceStyleOf(getSettings())).toBe("end");
+        applySourcesParam("https://x/en/?sources=both");
+        expect(sourceStyleOf(getSettings())).toBe("both");
+        expect(getSettings().citePlacement).toBe("both");
         applySourcesParam("https://x/en/?sources=inline");
         expect(sourceStyleOf(getSettings())).toBe("inline");
     });

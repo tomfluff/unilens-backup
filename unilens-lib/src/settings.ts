@@ -189,11 +189,12 @@ export interface Settings {
     /** underline the fewest words each source supports, joined to its number */
     associateText: boolean;
     /** where an answer's source numbers go: where the model put them, at the end of
-     *  each sentence, or all after the answer (underlines need them in the sentence) */
-    citePlacement: "inline" | "sentence" | "end";
+     *  each sentence, all after the answer, or both where the model put them and
+     *  after (underlines need them in the sentence only) */
+    citePlacement: "inline" | "sentence" | "end" | "both";
     /** the Sources button's three styles as one setting (Yotam, 2026-10-10): kept in
      *  step with citePlacement and associateText, both ways */
-    sourceStyle: "inline" | "underline" | "end";
+    sourceStyle: "inline" | "underline" | "end" | "both";
     /** the settings gear on the page; hidden, Ctrl+Alt+Shift+S still opens settings */
     settingsButton: boolean;
     /** a button in the chat's header that switches where the source numbers go: in the
@@ -679,6 +680,7 @@ export const ENUM_CHOICES = {
             inline: "Numbers in the text",
             underline: "Numbers in the text, words underlined",
             end: "All numbers after the answer",
+            both: "Numbers in the text and after the answer",
         },
     },
     ttsSpeed: {
@@ -696,6 +698,7 @@ export const ENUM_CHOICES = {
             inline: "In the sentence, after the words",
             sentence: "At the end of each sentence",
             end: "After the whole answer",
+            both: "In the sentence, and again after the answer",
         },
     },
     aiProvider: {
@@ -1028,15 +1031,22 @@ export function nativeRate(
 }
 
 export type SourceStyle = Settings["sourceStyle"];
-export const SOURCE_STYLES: SourceStyle[] = ["inline", "underline", "end"];
+export const SOURCE_STYLES: SourceStyle[] = [
+    "inline",
+    "underline",
+    "end",
+    "both",
+];
 export function sourceStyleOf(s: Settings): SourceStyle {
+    if (s.citePlacement === "both") return "both";
     if (s.citePlacement !== "inline") return "end";
     return s.associateText ? "underline" : "inline";
 }
-/** set the source style: numbers in the text, underlined words too, or after */
+/** set the source style: numbers in the text, underlined words too, after, or in
+ *  the text and after (#27) */
 export function setSourceStyle(style: SourceStyle) {
     useSettings.setState({
-        citePlacement: style === "end" ? "end" : "inline",
+        citePlacement: style === "end" || style === "both" ? style : "inline",
         associateText: style === "underline",
         sourceStyle: style,
     });

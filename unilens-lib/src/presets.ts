@@ -242,7 +242,7 @@ export function choosePreset(
 }
 
 /**
- * ?sources=inline|underline|end in the page address sets where an answer's source
+ * ?sources=inline|underline|end|both in the page address sets where an answer's source
  * numbers go (the facilitator puts it in a participant's link); kept like any change
  * made in the settings (for the tab, under a preset)
  */
@@ -253,7 +253,8 @@ export function applySourcesParam(href: string) {
     } catch {
         v = null;
     }
-    if (v !== "inline" && v !== "underline" && v !== "end") return;
+    if (v !== "inline" && v !== "underline" && v !== "end" && v !== "both")
+        return;
     setSourceStyle(v);
     // applied once: a reload of this page must not undo a later press of the button
     if (href === location.href) {

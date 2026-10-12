@@ -122,7 +122,8 @@ export function renderCited(
     /** underline the words each citation supports ("Associate response text") */
     phrases = false,
     /** where the numbers go: where the model put them, at the end of each sentence,
-     *  or all after the answer. Underlines need them where the model put them */
+     *  all after the answer, or both where the model put them and after (#27).
+     *  Underlines need them where the model put them, and only there */
     placement: CitePlacement = "inline",
 ): Cited {
     let t = unjoin(ungoto(unzoom(text.replace(/[\uE0FC-\uE0FF]/g, ""))));
@@ -140,7 +141,16 @@ export function renderCited(
         return `${m.startsWith("[") ? "" : " "}\uE0FF${n}\uE0FF`;
     });
     // the numbers elsewhere than the model put them: no words are joined to them
-    if (placement !== "inline") {
+    if (placement === "both") {
+        // where the model put them, and every one again after the answer (P04)
+        phrases = false;
+        // no words are joined to the numbers; the braces go before the row (after
+        // it, a half brace the stream ends on would show)
+        t = t.replace(/\{\{|\}\}/g, "");
+        if (streaming) t = t.replace(/[{}]$/, "");
+        if (ids.length)
+            t = `${t.trimEnd()}\n\n${ids.map((_, i) => `\uE0FF${i + 1}\uE0FF`).join(" ")}`;
+    } else if (placement !== "inline") {
         phrases = false;
         t = placeSlots(t.replace(/\{\{|\}\}/g, ""), placement);
     }
@@ -178,7 +188,7 @@ export function renderCited(
     return { html, ids };
 }
 
-export type CitePlacement = "inline" | "sentence" | "end";
+export type CitePlacement = "inline" | "sentence" | "end" | "both";
 
 /** a citation's slot with the spaces (not line breaks) around it */
 const SPACED_SLOT = /[^\S\n]*\uE0FF(\d+)\uE0FF[^\S\n]*/g;

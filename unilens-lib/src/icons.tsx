@@ -38,11 +38,11 @@ export const SourcesIcon = () => (
     </Icon>
 );
 /** the sources' style, one shape each: numbers in the text, words underlined too,
- *  or the numbers after the answer */
+ *  the numbers after the answer, or in the text and after */
 export const SourceStyleIcon = ({
     style,
 }: {
-    style: "inline" | "underline" | "end";
+    style: "inline" | "underline" | "end" | "both";
 }) => (
     <Icon>
         {style === "inline" && (
@@ -61,6 +61,15 @@ export const SourceStyleIcon = ({
         {style === "end" && (
             <>
                 <path d="M3 5h15M3 10h15M3 15h9" />
+                <circle cx="8" cy="20" r="1.6" />
+                <circle cx="14" cy="20" r="1.6" />
+                <circle cx="20" cy="20" r="1.6" />
+            </>
+        )}
+        {style === "both" && (
+            <>
+                <path d="M3 5h8M16 5h5M3 10h15M3 15h9" />
+                <circle cx="13.5" cy="5" r="1.6" />
                 <circle cx="8" cy="20" r="1.6" />
                 <circle cx="14" cy="20" r="1.6" />
                 <circle cx="20" cy="20" r="1.6" />

@@ -92,7 +92,8 @@ const EN = {
         inline: "numbers in the text",
         underline: "numbers in the text, words underlined",
         end: "numbers after the answer",
-    } as Record<"inline" | "underline" | "end", string>,
+        both: "numbers in the text and after the answer",
+    } as Record<"inline" | "underline" | "end" | "both", string>,
     sSources: (now: string) => `Sources now: ${now}.`,
     /** the read-aloud pill's visible words (its full name stays the label) */
     readShort: "Listen",
@@ -249,6 +250,7 @@ const JA: Strings = {
         inline: "文中に番号",
         underline: "文中に番号、語句に下線",
         end: "回答の後に番号",
+        both: "文中と回答の後に番号",
     },
     sSources: (now: string) => `根拠の表示：${now}。`,
     readShort: "聞く",

@@ -77,6 +77,7 @@ import {
     SELECT_CHOICES,
     type SelectKnobKey,
     type Settings,
+    type SourceStyle,
     TOGGLE_LABELS,
     updateSetting,
     useSettings,
@@ -154,6 +155,7 @@ function relevant(key: Key, s: Settings): boolean {
 /** looks chosen by sight: a thumbnail card per choice */
 const PICKERS = new Set<Key>([
     "chatStyle",
+    "sourceStyle",
     "hlColorMode",
     "hlOutline",
     "hlBackdrop",
@@ -203,9 +205,22 @@ const SHORT_NONE = new Set<Key>([
     "mmBackdrop",
     "offscreenCue",
 ]);
+/** the source-style cards' names: their values are words other looks use too */
+const SOURCE_SHORT: Record<PanelLang, Record<SourceStyle, string>> = {
+    en: {
+        inline: "In the text",
+        underline: "Underlined",
+        end: "After",
+        both: "Both",
+    },
+    ja: { inline: "文中", underline: "下線", end: "回答の後", both: "両方" },
+};
+
 function shortName(k: Key, v: string, full: string, lang: PanelLang): string {
     if (OWN_CHOICES[k]) return full;
     const ja = lang === "ja";
+    if (k === "sourceStyle")
+        return SOURCE_SHORT[lang][v as SourceStyle] ?? full;
     if (v === "none" && SHORT_NONE.has(k)) return ja ? SHORT_JA.none : "None";
     if (k === "clickFx" && v === "edge") return PANEL_TEXT[lang].edgeGlow;
     return (ja ? SHORT_JA[v] : SHORT[v]) ?? full;
@@ -533,6 +548,12 @@ function paintMap(
 }
 
 function Thumb({ k, v, s, T }: { k: Key; v: string; s: Settings; T: Text }) {
+    if (k === "sourceStyle")
+        return (
+            <Stage w={190} h={108} page={false}>
+                <SourceSpecimen s={s} style={v as SourceStyle} T={T} />
+            </Stage>
+        );
     if (k === "chatStyle")
         return (
             // the chat at its real width at Normal size (24.3em of 14px), so its
@@ -1247,6 +1268,61 @@ function Row({
  * by the chat's own citation code, in the chat's own stylesheet. Inert: it shows,
  * it does nothing. Keep it in step with ChatPopover's markup.
  */
+/** a source-style tile (#27): a short answer with two sources, drawn by the chat's
+ *  own renderer in the chat's look, the numbers where this style puts them */
+function SourceSpecimen({
+    s,
+    style,
+    T,
+}: {
+    s: Settings;
+    style: SourceStyle;
+    T: Text;
+}) {
+    useEffect(() => ensureChatStyles(), []);
+    const C = chatText();
+    const theme = useChatTheme(s.chatTheme);
+    const placement = style === "end" || style === "both" ? style : "inline";
+    const cite = renderCited(
+        T.sampleSources,
+        (id) => id === "n1" || id === "n2",
+        () => T.samplePlace,
+        false,
+        C.evidenceLabel,
+        (n) => (s.chatStyle === "station" ? `U${n}` : String(n)),
+        style === "underline",
+        placement,
+    );
+    return (
+        <div
+            className="ul-chat s-chat s-src"
+            data-style={s.chatStyle}
+            data-hc={s.highContrast ? "true" : "false"}
+            data-theme={theme}
+            inert
+            style={
+                {
+                    "--ul-fs": "14px",
+                    "--ul-text": 1,
+                    "--ul-hl": s.hlColor,
+                } as React.CSSProperties
+            }
+        >
+            <div className="ulc-log">
+                <div className="ulc-turn">
+                    <div className="ulc-msg ulc-bot">
+                        <span
+                            className="ulc-text"
+                            // biome-ignore lint/security/noDangerouslySetInnerHtml: the chat's own renderer, which escapes the text first
+                            dangerouslySetInnerHTML={{ __html: cite.html }}
+                        />
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+}
+
 function ChatSpecimen({ s, T }: { s: Settings; T: Text }) {
     useEffect(() => ensureChatStyles(), []);
     const C = chatText();
