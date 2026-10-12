@@ -150,9 +150,10 @@ export const PRESETS = {
             zoom: true,
             zoomKeys: true,
             minimap: "off",
-            // Yotam, 2026-10-10 (P05): the chat steps aside from a highlight (a row in
-            // the panel), and what was Alt+clicked is outlined
-            chatMovesAside: true,
+            // Yotam, 2026-10-10 (P05): what was Alt+clicked is outlined; the chat
+            // stepping aside from a highlight is a row in the panel, off to begin with
+            // (Yotam's try-out, 2026-10-12; it was on)
+            chatMovesAside: false,
             outlineClicked: true,
             voicePauseMs: 2000,
             // the gear shows, and opens the participant's panel below

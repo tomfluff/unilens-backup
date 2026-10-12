@@ -100,6 +100,10 @@ import {
     besideTarget,
     canReturn,
     directionOf,
+    getTargetView,
+    getTargetZoom,
+    getView,
+    getZoom,
     returnToPreviousView,
     revealElement,
 } from "./zoom";
@@ -1734,46 +1738,82 @@ export default function ChatPopover({
             return;
         window.clearTimeout(stepAside.current);
         const T = chatText();
-        stepAside.current = window.setTimeout(() => {
-            const boxes = shown.map((e) => e.getBoundingClientRect());
-            const a = {
-                left: Math.min(...boxes.map((r) => r.left)),
-                top: Math.min(...boxes.map((r) => r.top)),
-                right: Math.max(...boxes.map((r) => r.right)),
-                bottom: Math.max(...boxes.map((r) => r.bottom)),
-            };
-            const b = rootRef.current?.getBoundingClientRect();
-            if (!b || dragRef.current) return;
-            const w = Math.min(a.right, b.right) - Math.max(a.left, b.left);
-            const h = Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top);
-            if (w <= 0 || h <= 0) return;
-            // turned off while this waited: the chat stays
-            if (!getSettings().chatMovesAside) return;
-            const aside = !pinnedNow.current;
-            if (aside) {
-                const left = besideTarget(a, b, window.innerWidth);
-                if (left != null) {
-                    setPos((p) => ({ ...p, left }));
-                    return;
+        // where the page is heading: the chat steps aside as the page starts to move,
+        // not after it lands (Yotam's try-out, 2026-10-12). Only a zoom on its way
+        // (the assistant's) changes sizes as well, and is waited out
+        // and a source pinned to the screen (in a fixed or sticky part of the page)
+        // does not move with the page: those are measured where they settle, too
+        const pinnedAny = shown.some((e) => {
+            for (
+                let n: Element | null = e;
+                n && n !== document.body;
+                n = n.parentElement
+            ) {
+                const p = getComputedStyle(n).position;
+                if (p === "fixed" || p === "sticky") return true;
+            }
+            return false;
+        });
+        const zooming = getZoom().scale !== getTargetZoom() || pinnedAny;
+        const now = getView();
+        const to = getTargetView();
+        const ahead = { x: now.x - to.x, y: now.y - to.y };
+        stepAside.current = window.setTimeout(
+            () => {
+                const boxes = shown.map((e) => {
+                    const r = e.getBoundingClientRect();
+                    return zooming
+                        ? r
+                        : {
+                              left: r.left + ahead.x,
+                              top: r.top + ahead.y,
+                              right: r.right + ahead.x,
+                              bottom: r.bottom + ahead.y,
+                          };
+                });
+                const a = {
+                    left: Math.min(...boxes.map((r) => r.left)),
+                    top: Math.min(...boxes.map((r) => r.top)),
+                    right: Math.max(...boxes.map((r) => r.right)),
+                    bottom: Math.max(...boxes.map((r) => r.bottom)),
+                };
+                const b = rootRef.current?.getBoundingClientRect();
+                if (!b || dragRef.current) return;
+                const w = Math.min(a.right, b.right) - Math.max(a.left, b.left);
+                const h = Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top);
+                if (w <= 0 || h <= 0) return;
+                // turned off while this waited: the chat stays
+                if (!getSettings().chatMovesAside) return;
+                const aside = !pinnedNow.current;
+                if (aside) {
+                    const left = besideTarget(a, b, window.innerWidth);
+                    if (left != null) {
+                        setPos((p) => ({ ...p, left }));
+                        return;
+                    }
                 }
-            }
-            const area = Math.max(1, (a.right - a.left) * (a.bottom - a.top));
-            // no room beside it (high zoom, or a phone's bottom sheet): a chat still
-            // covering the source folds to its header, if it may move at all
-            if ((short || aside) && (w * h) / area > 0.2) {
-                // folding removes the control that has focus: the keyboard moves
-                // to the unfold button, not to the page
-                const hadFocus = rootRef.current?.contains(
-                    document.activeElement,
+                const area = Math.max(
+                    1,
+                    (a.right - a.left) * (a.bottom - a.top),
                 );
-                setMini(true);
-                if (hadFocus)
-                    requestAnimationFrame(() =>
-                        foldRef.current?.focus({ preventScroll: true }),
+                // no room beside it (high zoom, or a phone's bottom sheet): a chat still
+                // covering the source folds to its header, if it may move at all
+                if ((short || aside) && (w * h) / area > 0.2) {
+                    // folding removes the control that has focus: the keyboard moves
+                    // to the unfold button, not to the page
+                    const hadFocus = rootRef.current?.contains(
+                        document.activeElement,
                     );
-                act("press", T.sCovered);
-            }
-        }, motionMs() + 80);
+                    setMini(true);
+                    if (hadFocus)
+                        requestAnimationFrame(() =>
+                            foldRef.current?.focus({ preventScroll: true }),
+                        );
+                    act("press", T.sCovered);
+                }
+            },
+            zooming ? motionMs() + 80 : 0,
+        );
     }
 
     function point(

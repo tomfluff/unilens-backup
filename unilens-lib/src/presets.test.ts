@@ -118,7 +118,8 @@ describe("session 2 (2026-10-09)", () => {
             regionSelect: false,
             liveTalk: false,
             offscreenCue: "none",
-            chatMovesAside: true,
+            // a row in the panel, off to begin with (Yotam's try-out, 2026-10-12)
+            chatMovesAside: false,
             outlineClicked: true,
             zoom: true,
             zoomKeys: true,
