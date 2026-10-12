@@ -172,6 +172,7 @@ const PICKERS = new Set<Key>([
     "hlBadges",
     "hlBadgePos",
     "hlFill",
+    "hlPulse",
     "mmOutline",
     "mmBackdrop",
     "offscreenCue",
@@ -235,6 +236,7 @@ function shortName(k: Key, v: string, full: string, lang: PanelLang): string {
         return SOURCE_SHORT[lang][v as SourceStyle] ?? full;
     if (k === "clickMark" || k === "clickMarkStyle")
         return MARK_SHORT[lang][v] ?? full;
+    if (k === "hlPulse") return PULSE_SHORT[lang][v] ?? full;
     if (v === "none" && SHORT_NONE.has(k)) return ja ? SHORT_JA.none : "None";
     if (k === "clickFx" && v === "edge") return PANEL_TEXT[lang].edgeGlow;
     return (ja ? SHORT_JA[v] : SHORT[v]) ?? full;
@@ -264,6 +266,11 @@ const MARK_SHORT: Record<PanelLang, Record<string, string>> = {
         halo: "光と線",
         line: "線だけ",
     },
+};
+
+const PULSE_SHORT: Record<PanelLang, Record<string, string>> = {
+    en: { off: "Off", few: "A few times", always: "Always" },
+    ja: { off: "オフ", few: "数回", always: "ずっと" },
 };
 
 /** a few short choices in a row */
@@ -482,6 +489,8 @@ function paintHighlight(
     r: Rect,
     badge?: string,
     feather?: number,
+    /** the pulse, as the page shows it round a highlight that appears */
+    pulse: Settings["hlPulse"] = "off",
 ) {
     layer.replaceChildren();
     if (look.backdrop !== "none") {
@@ -493,12 +502,28 @@ function paintHighlight(
     const box = document.createElement("div");
     box.className = "s-box";
     layer.appendChild(box);
-    paintOutline(box, r, {
+    const color = paintOutline(box, r, {
         look,
         badge,
         withBackdrop: look.backdrop !== "none",
     });
+    if (pulse === "off") {
+        pulsing.delete(layer);
+        return;
+    }
+    box.dataset.pulse = pulse;
+    box.style.setProperty("--ul-pulse", color);
+    // drawn again with nothing that shows changed (any setting re-renders the panel):
+    // the pulse goes on where it was, so "a few times" settles; a change plays it anew
+    const key = `${pulse}|${color}|${JSON.stringify(look)}|${r.left},${r.top},${r.width},${r.height}`;
+    const was = pulsing.get(layer);
+    const now = performance.now();
+    if (was?.key === key)
+        box.style.setProperty("--s-pulse-delay", `${was.at - now}ms`);
+    else pulsing.set(layer, { key, at: now });
 }
+/** each preview's pulse: what it shows, and when it began */
+const pulsing = new WeakMap<HTMLElement, { key: string; at: number }>();
 
 /** an off-screen arrow as the page draws it: centred at (x, y), aimed along `angle` */
 function paintCue(
@@ -751,6 +776,32 @@ function Thumb({ k, v, s, T }: { k: Key; v: string; s: Settings; T: Text }) {
                 }
             >
                 <span className="s-word" style={BADGE_WORD}>
+                    9:30
+                </span>
+            </Stage>
+        );
+    }
+    if (k === "hlPulse") {
+        // the pulse round the chosen look, played each time the tile is drawn
+        const look: HighlightLook = { ...lookFrom(s), backdrop: "none" };
+        return (
+            <Stage
+                w={GLOWY.w}
+                h={GLOWY.h}
+                paint={(l) =>
+                    paintHighlight(
+                        l,
+                        look,
+                        GLOWY.w,
+                        GLOWY.h,
+                        GLOW_WORD,
+                        look.badges ? "1" : undefined,
+                        undefined,
+                        v as Settings["hlPulse"],
+                    )
+                }
+            >
+                <span className="s-word" style={GLOW_WORD}>
                     9:30
                 </span>
             </Stage>
@@ -1410,6 +1461,14 @@ function ChatSpecimen({ s, T }: { s: Settings; T: Text }) {
         s.associateText && s.citePlacement === "inline",
         s.citePlacement,
     );
+    const listen = (cls: string) => (
+        <span className={cls}>
+            <button type="button" className="ulc-speak has-label">
+                <PlayIcon />
+                <span>{C.readShort}</span>
+            </button>
+        </span>
+    );
     const controls = (
         <div className="ulc-ctl">
             <button type="button" className="ulc-c ulc-all has-label">
@@ -1474,20 +1533,15 @@ function ChatSpecimen({ s, T }: { s: Settings; T: Text }) {
                 <div className="ulc-msg ulc-me">{T.sampleQuestion}</div>
                 <div className="ulc-turn">
                     <div className="ulc-msg ulc-bot">
+                        {/* Listen where the chat puts it: at the answer's start (#30),
+                            or at its end */}
+                        {s.answerFromStart && listen("ulc-read is-first")}
                         <span
                             className="ulc-text"
                             // biome-ignore lint/security/noDangerouslySetInnerHtml: the chat's own renderer, which escapes the text first
                             dangerouslySetInnerHTML={{ __html: cite.html }}
                         />
-                        <span className="ulc-read">
-                            <button
-                                type="button"
-                                className="ulc-speak has-label"
-                            >
-                                <PlayIcon />
-                                <span>{C.readShort}</span>
-                            </button>
-                        </span>
+                        {!s.answerFromStart && listen("ulc-read")}
                         {s.chatStyle === "assistant" && controls}
                     </div>
                     {s.chatStyle !== "assistant" && controls}
@@ -1569,7 +1623,16 @@ function PageSpecimen({
     useLayoutEffect(() => {
         const l = layer.current;
         if (!l || !rect) return;
-        paintHighlight(l, lookFrom(s), size.w, size.h, rect, "1");
+        paintHighlight(
+            l,
+            lookFrom(s),
+            size.w,
+            size.h,
+            rect,
+            "1",
+            undefined,
+            s.hlPulse,
+        );
         if (show === "look" && s.offscreenCue === "edge")
             paintCue(
                 l,

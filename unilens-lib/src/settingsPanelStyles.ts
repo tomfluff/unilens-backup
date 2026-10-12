@@ -128,6 +128,12 @@ ${P} .s-page .s-src { position: relative; z-index: 1; display: inline-block; pad
 ${P} .s-paint { position: absolute; inset: 0; z-index: 2; pointer-events: none; }
 ${P} .s-paint .s-dim { position: absolute; inset: 0; }
 ${P} .s-paint .s-box, ${P} .s-paint .s-cue, ${P} .s-paint .s-cursor { position: absolute; }
+/* the pulse round a highlight, as on the page (highlight.ts), reaching less far to
+   stay in a tile */
+${P} .s-paint .s-box[data-pulse]::after { content: ""; position: absolute; inset: -4px; border-radius: 8px; border: 4px solid var(--ul-pulse, #ffef26); box-shadow: 0 0 0 2px #000, inset 0 0 0 2px #000; opacity: 0; pointer-events: none; animation: s-pulse 1.6s ease-out var(--s-pulse-delay, 0ms) 3; }
+${P} .s-paint .s-box[data-pulse="always"]::after { animation-iteration-count: infinite; }
+@keyframes s-pulse { from { inset: -4px; opacity: 1; } 55% { opacity: 1; } to { inset: -18px; opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { ${P} .s-paint .s-box[data-pulse]::after { animation: none; } }
 ${P} .s-paint .s-cursor svg { display: block; }
 ${P} .s-paint .s-map { display: block; }
 /* the minimap in the page preview: its own box and lens, at a little over half size */

@@ -968,7 +968,7 @@ export function paintOutline(
         badge,
         withBackdrop = false,
     }: { look?: HighlightLook; badge?: string; withBackdrop?: boolean } = {},
-) {
+): string {
     // nothing else would show it (no number here, no fill, glow or backdrop): the ring
     let outline = drawnOutline(look, Boolean(badge));
     if (
@@ -987,11 +987,12 @@ export function paintOutline(
     const w = bandWidth();
     const entry = { box, badge };
     paintParts(entry, r, look, outline, w);
-    if (!adapts(look)) return;
+    // the colour it is drawn in: the look's, or the one adapted to what is under it
+    if (!adapts(look)) return look.color;
     // the colour for what is under it: measured where the box now is on screen (a
     // preview may be scaled), then drawn again in it
     const b = box.getBoundingClientRect();
-    if (!b.width || !box.offsetWidth) return;
+    if (!b.width || !box.offsetWidth) return look.color;
     const k = b.width / box.offsetWidth;
     const pad = padFor(outline, w) * k;
     const root = box.getRootNode();
@@ -1028,6 +1029,7 @@ export function paintOutline(
     });
     if (color && color !== look.color)
         paintParts(entry, r, { ...look, color }, outline, w);
+    return color ?? look.color;
 }
 
 /** whether the look's colour depends on what is under each box */
