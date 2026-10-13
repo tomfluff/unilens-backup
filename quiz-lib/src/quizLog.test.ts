@@ -4,19 +4,27 @@ import { pagePath, quizLogUrl, readStudyIds } from "./quizLog";
 describe("readStudyIds", () => {
     it("takes the participant from the address first", () => {
         expect(
-            readStudyIds("http://x/p?pid=P03&session=2", '{"pid":"P01","session":"1"}'),
+            readStudyIds(
+                "http://x/p?pid=P03&session=2",
+                '{"pid":"P01","session":"1"}',
+            ),
         ).toEqual({ pid: "P03", session: "2" });
     });
 
     it("falls back to what unilens-lib remembered", () => {
-        expect(readStudyIds("http://x/p", '{"pid":"P01","session":"4"}')).toEqual({
+        expect(
+            readStudyIds("http://x/p", '{"pid":"P01","session":"4"}'),
+        ).toEqual({
             pid: "P01",
             session: "4",
         });
     });
 
     it("defaults the session, and ignores bad values", () => {
-        expect(readStudyIds("http://x/?pid=P05", null)).toEqual({ pid: "P05", session: "1" });
+        expect(readStudyIds("http://x/?pid=P05", null)).toEqual({
+            pid: "P05",
+            session: "1",
+        });
         expect(readStudyIds("http://x/?pid=P05&session=x", null)).toEqual({
             pid: "P05",
             session: "1",
@@ -28,12 +36,17 @@ describe("readStudyIds", () => {
 
     it("keeps a remembered pid when the address pid is invalid (same as unilens-lib)", () => {
         expect(
-            readStudyIds("http://x/?pid=../x&session=1", '{"pid":"P01","session":"1"}'),
+            readStudyIds(
+                "http://x/?pid=../x&session=1",
+                '{"pid":"P01","session":"1"}',
+            ),
         ).toEqual({ pid: "P01", session: "1" });
     });
 
     it("applies session from the address when pid is only in storage", () => {
-        expect(readStudyIds("http://x/?session=3", '{"pid":"P04","session":"1"}')).toEqual({
+        expect(
+            readStudyIds("http://x/?session=3", '{"pid":"P04","session":"1"}'),
+        ).toEqual({
             pid: "P04",
             session: "3",
         });

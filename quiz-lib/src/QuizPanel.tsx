@@ -27,18 +27,13 @@ import {
     QUIZ_TITLE_ID,
     QUIZ_TOGGLE_ID,
 } from "./domIds";
-import {
-    LANG_NAMES,
-    localize,
-    MESSAGES,
-    type QuizMessages,
-} from "./quizI18n";
+import { LANG_NAMES, localize, MESSAGES, type QuizMessages } from "./quizI18n";
 import { logQuizEvent } from "./quizLog";
 import {
     correctChoiceIds,
     isAnswerable,
-    isGraded,
     isCorrect,
+    isGraded,
     orderedChoices,
     scoreOf,
 } from "./quizLogic";
@@ -109,7 +104,14 @@ function safeCall<T>(fn: ((arg: T) => void) | undefined, arg: T) {
 
 // ── Icons (no emoji as interface icons: PRODUCT.md) ───────────────────────
 
-type IconName = "quiz" | "close" | "check" | "cross" | "next" | "retry" | "alert";
+type IconName =
+    | "quiz"
+    | "close"
+    | "check"
+    | "cross"
+    | "next"
+    | "retry"
+    | "alert";
 
 const ICON_PATHS: Record<IconName, string> = {
     // a clipboard with lines: a form to fill in
@@ -179,7 +181,9 @@ function responseText(
     if (q.type === "text") return typeof r === "string" ? r : m.noAnswer;
     const ids = Array.isArray(r) ? r : [r];
     return ids.length
-        ? ids.map((id) => choiceText(q, id, lang)).join(lang === "ja" ? "、" : ", ")
+        ? ids
+              .map((id) => choiceText(q, id, lang))
+              .join(lang === "ja" ? "、" : ", ")
         : m.noAnswer;
 }
 
@@ -294,7 +298,9 @@ export function QuizApp({
             durationMs,
         });
         announce(
-            quiz.showFeedback ? m.score(score.correct, score.total) : m.doneTitle,
+            quiz.showFeedback
+                ? m.score(score.correct, score.total)
+                : m.doneTitle,
         );
         requestFocus("screen");
     }
@@ -312,7 +318,13 @@ export function QuizApp({
         const ms = Math.max(0, at - shownAt.current);
         // the answer as the visitor read it (choice ids alone mean little in a log)
         const text = responseText(q, response, lang, m);
-        recordAnswer(quiz.id, q.id, { response, responseText: text, correct, at, ms });
+        recordAnswer(quiz.id, q.id, {
+            response,
+            responseText: text,
+            correct,
+            at,
+            ms,
+        });
         logQuizEvent("quiz_answer", {
             ...base(),
             attempt: a.attempt,
@@ -368,7 +380,9 @@ export function QuizApp({
 
     let screen: ReactNode;
     if (!attempt) {
-        screen = <Intro quiz={quiz} lang={lang} m={m} onStart={() => start(false)} />;
+        screen = (
+            <Intro quiz={quiz} lang={lang} m={m} onStart={() => start(false)} />
+        );
     } else if (attempt.finishedAt) {
         screen = (
             <Result
@@ -431,9 +445,8 @@ export function QuizApp({
                     <h2 id={QUIZ_TITLE_ID} className="unilens-quiz-title">
                         {title}
                     </h2>
-                    <div
+                    <fieldset
                         className="unilens-quiz-lang"
-                        role="group"
                         aria-label={m.language}
                     >
                         {QUIZ_LANGS.map((l) => (
@@ -448,7 +461,7 @@ export function QuizApp({
                                 {LANG_NAMES[l]}
                             </button>
                         ))}
-                    </div>
+                    </fieldset>
                     <button
                         type="button"
                         className="unilens-quiz-icon-btn"
@@ -495,7 +508,11 @@ function Intro({
             </h3>
             {description && <p className="unilens-quiz-text">{description}</p>}
             <div className="unilens-quiz-actions">
-                <button type="button" className="unilens-quiz-btn" onClick={onStart}>
+                <button
+                    type="button"
+                    className="unilens-quiz-btn"
+                    onClick={onStart}
+                >
                     {m.start}
                     <Icon name="next" />
                 </button>
@@ -504,11 +521,21 @@ function Intro({
     );
 }
 
-function Progress({ index, total, m }: { index: number; total: number; m: QuizMessages }) {
+function Progress({
+    index,
+    total,
+    m,
+}: {
+    index: number;
+    total: number;
+    m: QuizMessages;
+}) {
     const pct = Math.round(((index + 1) / total) * 100);
     return (
         <div className="unilens-quiz-progress">
-            <p className="unilens-quiz-progress-label">{m.progress(index + 1, total)}</p>
+            <p className="unilens-quiz-progress-label">
+                {m.progress(index + 1, total)}
+            </p>
             <div className="unilens-quiz-bar" aria-hidden="true">
                 <span style={{ width: `${pct}%` }} />
             </div>
@@ -566,13 +593,25 @@ function QuestionView({
     }
 
     const hint =
-        q.type === "single" ? m.chooseOne : q.type === "multiple" ? m.chooseAll : m.typeAnswer;
+        q.type === "single"
+            ? m.chooseOne
+            : q.type === "multiple"
+              ? m.chooseAll
+              : m.typeAnswer;
     const describedBy = missing ? `${hintId} ${errorId}` : hintId;
 
     return (
         <>
-            <Progress index={attempt.index} total={quiz.questions.length} m={m} />
-            <h3 id={promptId} className="unilens-quiz-heading" {...focusProps("screen")}>
+            <Progress
+                index={attempt.index}
+                total={quiz.questions.length}
+                m={m}
+            />
+            <h3
+                id={promptId}
+                className="unilens-quiz-heading"
+                {...focusProps("screen")}
+            >
                 {localize(q.prompt, lang)}
             </h3>
             <form onSubmit={handleSubmit} noValidate>
@@ -597,7 +636,8 @@ function QuestionView({
                                 // Enter that confirms a Japanese IME conversion must not submit
                                 if (
                                     e.key === "Enter" &&
-                                    (e.nativeEvent.isComposing || e.keyCode === 229)
+                                    (e.nativeEvent.isComposing ||
+                                        e.keyCode === 229)
                                 )
                                     e.preventDefault();
                             }}
@@ -622,13 +662,20 @@ function QuestionView({
                     />
                 )}
                 {missing && (
-                    <p id={errorId} className="unilens-quiz-error" style={{ marginTop: "0.6em" }}>
+                    <p
+                        id={errorId}
+                        className="unilens-quiz-error"
+                        style={{ marginTop: "0.6em" }}
+                    >
                         <Icon name="alert" />
                         {m.needAnswer}
                     </p>
                 )}
                 {!locked && (
-                    <div className="unilens-quiz-actions" style={{ marginTop: "0.9em" }}>
+                    <div
+                        className="unilens-quiz-actions"
+                        style={{ marginTop: "0.9em" }}
+                    >
                         <button type="submit" className="unilens-quiz-btn">
                             {m.submit}
                         </button>
@@ -642,7 +689,10 @@ function QuestionView({
                     {...focusProps("feedback")}
                 >
                     <p className="unilens-quiz-verdict">
-                        <Icon name={record.correct ? "check" : "cross"} size={22} />
+                        <Icon
+                            name={record.correct ? "check" : "cross"}
+                            size={22}
+                        />
                         {record.correct ? m.correct : m.incorrect}
                     </p>
                     {!record.correct && (
@@ -671,7 +721,11 @@ function QuestionView({
                 // Normally only after a verdict; also a way on if an answer was
                 // stored without moving on (a reload at that very moment).
                 <div className="unilens-quiz-actions">
-                    <button type="button" className="unilens-quiz-btn" onClick={onNext}>
+                    <button
+                        type="button"
+                        className="unilens-quiz-btn"
+                        onClick={onNext}
+                    >
                         {isLast ? m.seeResult : m.next}
                         <Icon name="next" />
                     </button>
@@ -768,7 +822,11 @@ function Choices({
                                         if (e.target.checked) next.add(c.id);
                                         else next.delete(c.id);
                                         // keep the choices' own order, not the click order
-                                        onChange(q.choices.map((x) => x.id).filter((id) => next.has(id)));
+                                        onChange(
+                                            q.choices
+                                                .map((x) => x.id)
+                                                .filter((id) => next.has(id)),
+                                        );
                                     }}
                                 />
                                 <span className="unilens-quiz-choice-body">
@@ -776,17 +834,32 @@ function Choices({
                                     {showMarks && (isRight || isPicked) && (
                                         <span className="unilens-quiz-marks">
                                             {isRight && (
-                                                <span className="unilens-quiz-mark" data-kind="correct">
-                                                    <Icon name="check" size={14} />
+                                                <span
+                                                    className="unilens-quiz-mark"
+                                                    data-kind="correct"
+                                                >
+                                                    <Icon
+                                                        name="check"
+                                                        size={14}
+                                                    />
                                                     {m.choiceCorrectMark}
                                                 </span>
                                             )}
                                             {isPicked && (
                                                 <span
                                                     className="unilens-quiz-mark"
-                                                    data-kind={isRight ? "picked" : "wrong"}
+                                                    data-kind={
+                                                        isRight
+                                                            ? "picked"
+                                                            : "wrong"
+                                                    }
                                                 >
-                                                    {!isRight && <Icon name="cross" size={14} />}
+                                                    {!isRight && (
+                                                        <Icon
+                                                            name="cross"
+                                                            size={14}
+                                                        />
+                                                    )}
                                                     {m.choicePickedMark}
                                                 </span>
                                             )}
@@ -816,7 +889,9 @@ function Result({
     onRetry: () => void;
 }) {
     const score = scoreOf(quiz, attempt.answers);
-    const pct = score.total ? Math.round((score.correct / score.total) * 100) : 0;
+    const pct = score.total
+        ? Math.round((score.correct / score.total) * 100)
+        : 0;
     const sep = lang === "ja" ? "：" : ": ";
     // the score only counts when there was something to grade
     const scored = quiz.showFeedback && quiz.questions.some(isGraded);
@@ -850,15 +925,22 @@ function Result({
                                         className="unilens-quiz-mark"
                                         data-kind={ok ? "correct" : "wrong"}
                                     >
-                                        <Icon name={ok ? "check" : "cross"} size={14} />
+                                        <Icon
+                                            name={ok ? "check" : "cross"}
+                                            size={14}
+                                        />
                                         {ok ? m.correct : m.incorrect}
                                     </span>
                                 )}
                             </p>
-                            <p className="unilens-quiz-text">{localize(q.prompt, lang)}</p>
+                            <p className="unilens-quiz-text">
+                                {localize(q.prompt, lang)}
+                            </p>
                             <dl>
                                 <dt>{m.yourAnswer}</dt>
-                                <dd>{responseText(q, rec?.response, lang, m)}</dd>
+                                <dd>
+                                    {responseText(q, rec?.response, lang, m)}
+                                </dd>
                                 {judged && !ok && (
                                     <>
                                         <dt>{m.correctAnswer}</dt>

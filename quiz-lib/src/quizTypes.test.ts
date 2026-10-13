@@ -58,9 +58,17 @@ describe("normalizeQuiz", () => {
             id: "q",
             questions: [
                 { prompt: "no choices", answer: 0 },
-                { prompt: "answer out of range", choices: ["a", "b"], answer: 5 },
+                {
+                    prompt: "answer out of range",
+                    choices: ["a", "b"],
+                    answer: 5,
+                },
                 { type: "essay", prompt: "x" },
-                { type: "text", prompt: "Capital of Japan?", answer: ["Tokyo", "東京"] },
+                {
+                    type: "text",
+                    prompt: "Capital of Japan?",
+                    answer: ["Tokyo", "東京"],
+                },
             ],
         });
         expect(quiz?.questions.map((q) => q.type)).toEqual(["text"]);
@@ -77,7 +85,11 @@ describe("normalizeQuiz", () => {
             ],
         });
         expect(errors).toEqual([]);
-        expect(quiz?.questions.map((q) => q.type)).toEqual(["single", "multiple", "text"]);
+        expect(quiz?.questions.map((q) => q.type)).toEqual([
+            "single",
+            "multiple",
+            "text",
+        ]);
         expect(quiz?.questions[0]).toEqual({
             id: "q1",
             type: "single",
@@ -120,7 +132,9 @@ describe("toLocalizedText", () => {
     it("keeps strings and known languages, drops empties", () => {
         expect(toLocalizedText("a")).toBe("a");
         expect(toLocalizedText("  ")).toBeNull();
-        expect(toLocalizedText({ ja: "あ", fr: "x", en: "" })).toEqual({ ja: "あ" });
+        expect(toLocalizedText({ ja: "あ", fr: "x", en: "" })).toEqual({
+            ja: "あ",
+        });
         expect(toLocalizedText({ fr: "x" })).toBeNull();
         expect(toLocalizedText(3)).toBeNull();
     });

@@ -20,6 +20,8 @@ describe("localize", () => {
 
 describe("MESSAGES", () => {
     it("has every key in both languages", () => {
-        expect(Object.keys(MESSAGES.ja).sort()).toEqual(Object.keys(MESSAGES.en).sort());
+        expect(Object.keys(MESSAGES.ja).sort()).toEqual(
+            Object.keys(MESSAGES.en).sort(),
+        );
     });
 });

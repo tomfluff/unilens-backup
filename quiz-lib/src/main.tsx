@@ -26,15 +26,15 @@ import {
     TEXT_SIZE_ATTR,
     UI_ATTR,
 } from "./domIds";
-import { detectLang, isQuizLang } from "./quizI18n";
-import { initQuizLog, stopQuizLog } from "./quizLog";
-import { quizFingerprint, scoreOf } from "./quizLogic";
 import {
     type QuizAnswerEvent,
     QuizApp,
     type QuizCallbacks,
     type QuizResult,
 } from "./QuizPanel";
+import { detectLang, isQuizLang } from "./quizI18n";
+import { initQuizLog, stopQuizLog } from "./quizLog";
+import { quizFingerprint, scoreOf } from "./quizLogic";
 import {
     type AnswerRecord,
     clearAttempt,
@@ -156,7 +156,9 @@ function render() {
  */
 export async function init(options: QuizInitOptions = {}): Promise<boolean> {
     if (mounted) {
-        console.warn("[UniLens Quiz] already initialized; call destroy() first");
+        console.warn(
+            "[UniLens Quiz] already initialized; call destroy() first",
+        );
         return true;
     }
     const gen = ++generation;
@@ -207,7 +209,10 @@ export async function init(options: QuizInitOptions = {}): Promise<boolean> {
         quiz,
         fingerprint: quizFingerprint(quiz),
         lang: isQuizLang(options.lang) ? options.lang : detectLang(),
-        callbacks: { onAnswer: options.onAnswer, onComplete: options.onComplete },
+        callbacks: {
+            onAnswer: options.onAnswer,
+            onComplete: options.onComplete,
+        },
         container,
         root: createRoot(container),
         cleanups,
@@ -263,7 +268,10 @@ export function getResult(): QuizResult | null {
     const a = currentAttempt(quiz.id, fingerprint, quiz.questions.length);
     if (!a) return null;
     const { correct, total } = scoreOf(quiz, a.answers);
-    const last = Math.max(a.startedAt, ...Object.values(a.answers).map((r) => r.at));
+    const last = Math.max(
+        a.startedAt,
+        ...Object.values(a.answers).map((r) => r.at),
+    );
     return {
         quizId: quiz.id,
         attempt: a.attempt,
@@ -290,14 +298,8 @@ const UniLensQuiz = {
 };
 
 export default UniLensQuiz;
+export type { AnswerRecord, QuizAnswerEvent, QuizInput, QuizLang, QuizResult };
 export { UniLensQuiz };
-export type {
-    AnswerRecord,
-    QuizAnswerEvent,
-    QuizInput,
-    QuizLang,
-    QuizResult,
-};
 
 declare global {
     interface Window {

@@ -186,7 +186,7 @@ ${R} .unilens-quiz-icon-btn {
 }
 /* language switch: two pills; the one in use is filled and bold (not colour alone) */
 ${R} .unilens-quiz-lang {
-  display: inline-flex; flex: none; gap: 0; padding: 0; overflow: hidden;
+  display: inline-flex; flex: none; gap: 0; margin: 0; min-width: 0; padding: 0; overflow: hidden;
   border: ${v("bw")} solid ${v("edge")}; border-radius: 999px; background: ${v("bg")};
 }
 ${R} .unilens-quiz-lang-btn {

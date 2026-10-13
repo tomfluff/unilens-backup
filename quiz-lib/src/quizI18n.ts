@@ -119,13 +119,18 @@ const en: QuizMessages = {
 export const MESSAGES: Record<QuizLang, QuizMessages> = { ja, en };
 
 /** Each language's name in itself, for the switch (a visitor finds their own). */
-export const LANG_NAMES: Record<QuizLang, string> = { ja: "日本語", en: "English" };
+export const LANG_NAMES: Record<QuizLang, string> = {
+    ja: "日本語",
+    en: "English",
+};
 
 export const isQuizLang = (v: unknown): v is QuizLang =>
     (QUIZ_LANGS as readonly unknown[]).includes(v);
 
 /** The first of `tags` (BCP 47, e.g. "ja-JP") that is a supported language, else English. */
-export function pickLang(tags: readonly (string | null | undefined)[]): QuizLang {
+export function pickLang(
+    tags: readonly (string | null | undefined)[],
+): QuizLang {
     for (const tag of tags) {
         const base = tag?.trim().toLowerCase().split("-")[0];
         if (isQuizLang(base)) return base;
@@ -142,10 +147,11 @@ export function detectLang(): QuizLang {
 }
 
 /** Host text in `lang`, else the other language, so a one-language quiz still shows. */
-export function localize(text: LocalizedText | undefined, lang: QuizLang): string {
+export function localize(
+    text: LocalizedText | undefined,
+    lang: QuizLang,
+): string {
     if (text === undefined) return "";
     if (typeof text === "string") return text;
-    return (
-        text[lang] ?? QUIZ_LANGS.map((l) => text[l]).find((s) => s) ?? ""
-    );
+    return text[lang] ?? QUIZ_LANGS.map((l) => text[l]).find((s) => s) ?? "";
 }

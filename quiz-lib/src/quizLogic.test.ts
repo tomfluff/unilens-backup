@@ -15,9 +15,21 @@ const quiz = normalizeQuiz({
     id: "t",
     questions: [
         { id: "one", prompt: "p", choices: ["a", "b", "c"], answer: 1 },
-        { id: "many", type: "multiple", prompt: "p", choices: ["a", "b", "c"], answer: [0, 2] },
+        {
+            id: "many",
+            type: "multiple",
+            prompt: "p",
+            choices: ["a", "b", "c"],
+            answer: [0, 2],
+        },
         { id: "typed", type: "text", prompt: "p", answer: ["Tokyo", "東京"] },
-        { id: "exact", type: "text", prompt: "p", answer: "ABC", caseSensitive: true },
+        {
+            id: "exact",
+            type: "text",
+            prompt: "p",
+            answer: "ABC",
+            caseSensitive: true,
+        },
     ],
 }).quiz as Quiz;
 const [one, many, typed, exact] = quiz.questions;
@@ -93,7 +105,10 @@ describe("isAnswerable", () => {
 describe("scoreOf", () => {
     it("counts answered and correct", () => {
         expect(
-            scoreOf(quiz, { one: { correct: true }, typed: { correct: false } }),
+            scoreOf(quiz, {
+                one: { correct: true },
+                typed: { correct: false },
+            }),
         ).toEqual({ correct: 1, answered: 2, total: 4 });
     });
 });
@@ -110,7 +125,9 @@ describe("orderedChoices", () => {
         expect(orderedChoices(choices, true, "attempt1:q1")).toEqual(a);
         expect(a.map((c) => c.id).sort()).toEqual(choices.map((c) => c.id));
         const others = ["s1", "s2", "s3", "s4", "s5"].map((s) =>
-            orderedChoices(choices, true, s).map((c) => c.id).join(""),
+            orderedChoices(choices, true, s)
+                .map((c) => c.id)
+                .join(""),
         );
         expect(new Set(others).size > 1).toBe(true);
     });
