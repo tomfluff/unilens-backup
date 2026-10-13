@@ -21,6 +21,7 @@ import { initMinimap } from "./minimap";
 import { initFacilitator, startChosenPreset } from "./presets";
 import { forgetForReset } from "./restore";
 import { initSettings } from "./SettingsPanel";
+import { initSettingsLog } from "./settingsLog";
 import { setSpeechBackend } from "./speech";
 import { initStudyLog, logEvent, pageAddress } from "./studyLog";
 import { UnilensClient } from "./UnilensClient";
@@ -70,6 +71,8 @@ export function init(options: InitOptions = {}) {
             dpr: window.devicePixelRatio,
             preset,
         });
+    // the settings in the log: each change, and a snapshot now and as the page goes
+    initSettingsLog();
 
     startTrace(unilens.getOption("mouseWindow"));
     if (unilens.getOption("zoom")) initZoom();

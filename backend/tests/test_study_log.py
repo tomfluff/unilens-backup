@@ -207,3 +207,76 @@ def test_export_counts_what_the_participant_did(client, tmp_path):
         in md
     )
     assert row["errors"] == 1 and row["server_errors"] == 1
+
+
+def test_export_shows_the_settings_panel_and_each_change(client, tmp_path):
+    t = "2026-10-14T01:00:0{}.000Z"
+    snap = {
+        "type": "settings_snapshot",
+        "preset": "session2",
+        "defaults": {"hlPulse": "off", "chatTextScale": 100, "zoom": True},
+    }
+    events = [
+        {
+            "t": t.format(0),
+            "seq": 0,
+            **snap,
+            "reason": "load",
+            "values": {"hlPulse": "off", "chatTextScale": 100, "zoom": True},
+        },
+        {
+            "t": t.format(1),
+            "seq": 1,
+            "type": "settings_opened",
+            "panel": "participant",
+            "tab": "look",
+        },
+        {
+            "t": t.format(2),
+            "seq": 2,
+            "type": "setting_changed",
+            "key": "hlPulse",
+            "label": "Pulse",
+            "from": "off",
+            "to": "few",
+            "source": "panel",
+        },
+        {
+            "t": t.format(3),
+            "seq": 3,
+            "type": "setting_changed",
+            "key": "chatTextScale",
+            "label": "Text size",
+            "from": 100,
+            "to": 140,
+            "source": "panel",
+        },
+        {
+            "t": t.format(4),
+            "seq": 4,
+            "type": "settings_closed",
+            "panel": "participant",
+            "changes": 2,
+        },
+        {
+            "t": t.format(5),
+            "seq": 5,
+            **snap,
+            "reason": "hidden",
+            "values": {"hlPulse": "few", "chatTextScale": 140, "zoom": True},
+        },
+    ]
+    _post(client, "?pid=P02&session=2", {"events": events})
+    row = study_export.export(["P02"], app_module.STUDY_LOGS_DIR, tmp_path / "o")[0]
+    assert row["settings_opened"] == 1 and row["settings_changed"] == 2
+    md = (tmp_path / "o" / "P02-session-2.md").read_text(encoding="utf-8")
+    assert "settings opened (participant panel, look tab)" in md
+    assert 'setting Pulse (hlPulse): "off" → "few", by panel' in md
+    assert "setting Text size (chatTextScale): 100 → 140, by panel" in md
+    assert "settings closed (2 changes)" in md
+    assert "settings snapshot (hidden): 2 of 3 changed from the defaults" in md
+    assert "## Settings at the end" in md
+    assert '| Pulse (hlPulse) | "off" | "few" | **changed** |' in md
+    assert "| zoom | true | true |  |" in md
+    csv_text = (tmp_path / "o" / "P02-session-2.csv").read_text(encoding="utf-8")
+    assert "setting_changed" in csv_text and "settings_snapshot" in csv_text
