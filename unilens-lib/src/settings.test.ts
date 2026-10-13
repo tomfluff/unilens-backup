@@ -100,12 +100,16 @@ describe("the panel in Japanese", () => {
         );
         expect(missing).toEqual([]);
     });
-    it("lists Off or None first wherever a choice has one (item 21)", () => {
+    it("lists Off, None or Never first wherever a choice has one (item 21)", () => {
         const late = Object.entries(ENUM_CHOICES).flatMap(([k, v]) => {
             const values = Object.keys(v.choices);
-            const i = values.findIndex((x) => x === "off" || x === "none");
+            const i = values.findIndex((x) =>
+                ["off", "none", "never"].includes(x),
+            );
             const own = Object.keys(OWN_CHOICES[k as keyof Settings] ?? {});
-            const j = own.findIndex((x) => x === "off" || x === "none");
+            const j = own.findIndex((x) =>
+                ["off", "none", "never"].includes(x),
+            );
             return i > 0 || j > 0 ? [k] : [];
         });
         expect(late).toEqual([]);

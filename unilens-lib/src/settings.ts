@@ -633,9 +633,9 @@ export const ESCAPE_ORDERS: Record<Settings["escapeOrder"], string> = {
 
 /** the autoHighlight choices with their panel labels; the keys are the valid stored values */
 export const AUTO_HIGHLIGHTS: Record<Settings["autoHighlight"], string> = {
+    never: "Outline only when I click",
     where: "Outline evidence when I ask where / to show",
     always: "Outline evidence of every answer",
-    never: "Outline only when I click",
 };
 
 /**
@@ -722,9 +722,9 @@ export const ENUM_CHOICES = {
     moveToEvidence: {
         label: "Move the page to evidence",
         choices: {
+            never: "Never (cues only)",
             offscreen: "Only when it is off-screen",
             always: "Always center it",
-            never: "Never (cues only)",
         },
     },
     autoHighlight: { label: "Auto-highlight", choices: AUTO_HIGHLIGHTS },
