@@ -15,9 +15,9 @@
   "related": ["daigaku-imo", "chochin-dango", "agedashi-tofu", "tamagoyaki"],
   "en": {
     "title": "Chicken Karaage (Japanese Fried Chicken)",
-    "teaser": "Juicy ginger-soy chicken thighs with a crackly potato-starch crust, double-fried like the karaage stalls at the Harukawa Lantern Festival.",
+    "teaser": "Juicy ginger-soy chicken thighs with a crackly potato-starch crust, double-fried like the karaage stalls at the Springvale Lantern Festival.",
     "intro": [
-      "If you walk along the Kagami River during the Harukawa Lantern Festival, you smell the karaage stalls before you see them. This year the festival is on Saturday 10 and Sunday 11 October, and I can already tell you where my family will be standing: in the queue at the stall run by the Hirose family from the old fish-market district, who have fried chicken in the same blackened wok for as long as I can remember. Sota calls it “lantern chicken” and eats it from a paper cone while the lanterns float down the river.",
+      "If you walk along the Mirror River during the Springvale Lantern Festival, you smell the karaage stalls before you see them. This year the festival is on Saturday 10 and Sunday 11 October, and I can already tell you where my family will be standing: in the queue at the stall run by the Hirose family from the old fish-market district, who have fried chicken in the same blackened wok for as long as I can remember. Sota calls it “lantern chicken” and eats it from a paper cone while the lanterns float down the river.",
       "I spent years chasing that shatteringly crisp coating at home. Then one festival night Mr. Hirose took pity on me and shared his secret over the hiss of the oil: <em>fry it twice, and let it rest in between</em>. This is my home version, tested many times by Kenta, my recipe tester, and approved by a very strict nine-year-old.",
       { "h": "Why you'll love it" },
       { "ul": [
@@ -46,7 +46,7 @@
       "No thermometer? Dip dry wooden chopsticks in the oil: at 160°C small bubbles rise slowly from the tips; at 180°C lots of bubbles rush up straight away.",
       "Don't marinate longer than 12 hours. The soy sauce draws out moisture and the chicken turns salty and firm, almost like ham.",
       "If the coating falls off in the oil, the chicken was too wet or coated too early. Tip off the extra marinade, coat just before frying, and don't move the pieces for the first minute.",
-      "Strain the cooled oil through a paper filter and reuse it 2–3 times. When it darkens or smells, solidify it with an oil hardener and put it out with burnable rubbish (that's the rule in Harukawa)."
+      "Strain the cooled oil through a paper filter and reuse it 2–3 times. When it darkens or smells, solidify it with an oil hardener and put it out with burnable rubbish (that's the rule in Springvale)."
     ],
     "subs": [
       ["Sake", "Dry sherry or dry white wine, or water for no alcohol"],
@@ -162,7 +162,7 @@
   "nutrition": { "calories": 430, "carbs": 14, "protein": 28, "fat": 28, "satFat": 7, "cholesterol": 140, "sodium": 720, "fiber": 0, "sugar": 2 },
   "comments": [
     {
-      "name": { "en": "Akira (Harukawa)", "ja": "あきら（春川市）" }, "date": "2026-10-02", "stars": 5,
+      "name": { "en": "Akira (Springvale)", "ja": "あきら（春川市）" }, "date": "2026-10-02", "stars": 5,
       "en": "Made it as a warm-up for the festival next weekend. Honestly as good as the stall by the river. The double fry is magic.",
       "ja": "来週末のまつりの予習で作りました。正直、川沿いの屋台と同じくらいおいしいです。二度揚げ、すごい。",
       "reply": {
@@ -214,7 +214,7 @@
     },
     {
       "name": { "en": "Julien (Montréal)", "ja": "Julien（モントリオール）" }, "date": "2024-10-20", "stars": 5,
-      "en": "We lived in Harukawa for two years and miss the Lantern Festival terribly. This tastes exactly like it. Thank you!",
+      "en": "We lived in Springvale for two years and miss the Lantern Festival terribly. This tastes exactly like it. Thank you!",
       "ja": "春川に2年住んでいて、灯籠まつりが本当に恋しいです。この唐揚げはあの味そのもの。ありがとうございます！"
     }
   ]

@@ -15,7 +15,7 @@ const index = {
       h: { en: 'Important notices (updated Mon 5 Oct 2026)', ja: '重要なお知らせ（2026年10月5日（月）更新）' },
       en: `<ul>
 <li><strong>Lantern Festival Sale</strong> runs until <strong>Sun 11 Oct, 23:59</strong>. Lightning Deals change every day, and Marketa Fast members can buy each deal 30 minutes before everyone else. <a href="/en/deals.html">See today's deals</a>.</li>
-<li><strong>Road closures in central Harukawa on Sat 10 and Sun 11 Oct</strong> for the Harukawa Lantern Festival. Afternoon and evening deliveries inside the closure area move to the next morning, and same-day delivery is not available there on those two days. <a href="/en/help/shipping.html#delays">Affected streets and times</a>.</li>
+<li><strong>Road closures in central Springvale on Sat 10 and Sun 11 Oct</strong> for the Springvale Lantern Festival. Afternoon and evening deliveries inside the closure area move to the next morning, and same-day delivery is not available there on those two days. <a href="/en/help/shipping.html#delays">Affected streets and times</a>.</li>
 <li><strong>Typhoon season.</strong> When a storm warning is in force for your area, deliveries are paused until it is lifted. The latest date for each parcel is on <a href="/en/track.html">Track your package</a>.</li>
 <li><strong>Sports Day, Mon 12 Oct (public holiday):</strong> Marketa delivers as usual, chat is open 9:00–21:00 and phone 9:00–18:00. Sellers who work on business days only, such as BrightDeal Trading, will reply from Tue 13 Oct.</li>
 </ul>`,
@@ -49,8 +49,8 @@ const index = {
       h: { en: 'Popular topics this week', ja: '今週よく見られているご質問' },
       en: `<ul>
 <li><strong>Where is my order?</strong> Open <a href="/en/orders.html">Your Orders</a> and choose "Track package", or enter your tracking number on <a href="/en/track.html">Track your package</a>. Parcels from sellers that ship themselves have the seller's own tracking number.</li>
-<li><strong>Will it arrive tomorrow?</strong> For items in stock at our Harukawa centre, order by <strong>14:00</strong> for next-day delivery in Harukawa city and the rest of Minori Prefecture (¥600, free for Fast members). Order by <strong>11:00</strong> for same-day delivery in Harukawa city, 18:00–22:00. <a href="/en/help/shipping.html#next-day">All cut-off times</a>.</li>
-<li><strong>How much is delivery?</strong> Standard delivery in Harukawa city is ¥450, free on orders of ¥3,500 or more and always free for Fast members. Example: a ¥2,980 power bank costs ¥450 to ship; add a ¥980 refill and the order is free. <a href="/en/help/shipping.html#rates">Rates by region</a>.</li>
+<li><strong>Will it arrive tomorrow?</strong> For items in stock at our Springvale centre, order by <strong>14:00</strong> for next-day delivery in Springvale city and the rest of Harvest Prefecture (¥600, free for Fast members). Order by <strong>11:00</strong> for same-day delivery in Springvale city, 18:00–22:00. <a href="/en/help/shipping.html#next-day">All cut-off times</a>.</li>
+<li><strong>How much is delivery?</strong> Standard delivery in Springvale city is ¥450, free on orders of ¥3,500 or more and always free for Fast members. Example: a ¥2,980 power bank costs ¥450 to ship; add a ¥980 refill and the order is free. <a href="/en/help/shipping.html#rates">Rates by region</a>.</li>
 <li><strong>Can I return headphones I have opened?</strong> Over-ear and open-ear headphones: yes, within 30 days in like-new condition, minus a 15% restocking fee. In-ear earbuds: no, once the hygiene seal is broken (unless they are faulty). <a href="/en/help/returns.html#exceptions">Items that cannot be returned</a>.</li>
 <li><strong>When will I get my refund?</strong> We inspect returns in 1–2 business days; cards are refunded 3–5 business days after that, Marketa Points immediately (with a 5% bonus). <a href="/en/help/returns.html#refund-timing">Refund times by payment method</a>.</li>
 <li><strong>I chose convenience-store payment.</strong> Pay within 3 days or the order is cancelled. We ship only after your payment is confirmed. <a href="/en/help/payment.html#konbini">How it works</a>.</li>
@@ -107,7 +107,7 @@ const index = {
 <tr><td><strong>Chat</strong> (Help &gt; "Chat with us", or from an order)</td><td>9:00–21:00 every day, including weekends and public holidays</td><td>Delivery problems, returns, refunds, changing an order</td><td>Usual wait about 2 minutes; up to 10 minutes during the Lantern Festival Sale and after 19:00. English and Japanese.</td></tr>
 <tr><td><strong>Phone</strong> 0120-555-818 (free from mobiles and landlines)</td><td>9:00–18:00 every day (closed 1–3 Jan)</td><td>Marketa Fast membership, payment problems, anything urgent</td><td>English: press 2, weekdays 10:00–17:00. Calls are recorded for quality.</td></tr>
 <tr><td><strong>Message form</strong></td><td>24 hours</td><td>Non-urgent questions, sending photos of damage</td><td>We reply within 24 hours (48 hours at weekends).</td></tr>
-<tr><td><strong>Seller messages</strong> (Your Orders &gt; "Contact seller")</td><td>The seller's own hours</td><td>Items from sellers that ship themselves</td><td>Kagami Kiln: Mon–Sat 9:00–17:00. Minori Yuzu Farm: Mon–Sat 8:00–17:00. BrightDeal Trading: weekdays 10:00–17:00, messages only.</td></tr>
+<tr><td><strong>Seller messages</strong> (Your Orders &gt; "Contact seller")</td><td>The seller's own hours</td><td>Items from sellers that ship themselves</td><td>Kagami Kiln: Mon–Sat 9:00–17:00. Harvest Yuzu Farm: Mon–Sat 8:00–17:00. BrightDeal Trading: weekdays 10:00–17:00, messages only.</td></tr>
 </tbody>
 </table>
 <p>Please have your <strong>order number</strong> ready (12 digits, for example 261005-4821-0937). It is in your confirmation email and in <a href="/en/orders.html">Your Orders</a>.</p>
@@ -131,29 +131,29 @@ const shipping = {
   id: 'shipping',
   title: { en: 'Shipping rates and delivery times', ja: '配送料とお届け日数' },
   intro: {
-    en: 'Fees and delivery times for items shipped by Marketa from our Harukawa fulfilment centre (HRK1, Minori Port), by region and delivery speed, for Marketa Fast members and non-members. Items that sellers ship themselves follow the seller’s own fees and times.',
+    en: 'Fees and delivery times for items shipped by Marketa from our Springvale fulfilment centre (HRK1, Ferry Port), by region and delivery speed, for Marketa Fast members and non-members. Items that sellers ship themselves follow the seller’s own fees and times.',
     ja: 'マルケタ春川フルフィルメントセンター（HRK1・みのり港）から発送する商品の配送料とお届け日数を、地域・配送方法・Fast会員/非会員別にご案内します。出品者が発送する商品は、各出品者の配送料・お届け日数となります。',
   },
   sections: [
     {
       id: 'overview',
       h: { en: 'Delivery at a glance', ja: 'お届けの基本' },
-      en: `<p>Almost everything on Marketa is stored at <strong>HRK1</strong>, our fulfilment centre at Minori Port in Harukawa, and some items at Marketa warehouses outside Minori Prefecture. The delivery date shown on the product page and at checkout already takes your address, the time you order and the item's warehouse into account: it is the date we commit to.</p>
+      en: `<p>Almost everything on Marketa is stored at <strong>HRK1</strong>, our fulfilment centre at Ferry Port in Springvale, and some items at Marketa warehouses outside Harvest Prefecture. The delivery date shown on the product page and at checkout already takes your address, the time you order and the item's warehouse into account: it is the date we commit to.</p>
 <ul>
 <li><strong>Ships from Marketa</strong> (sold by Marketa, or "Sold by <em>seller</em>, ships from Marketa"): the fees and times on this page apply and the items are Fast-eligible.</li>
-<li><strong>Ships from the seller</strong> (Kagami Kiln, BrightDeal Trading, most Minori Yuzu Farm items and others): the seller's own fees and times apply. <a href="#sellers">See below</a>.</li>
+<li><strong>Ships from the seller</strong> (Kagami Kiln, BrightDeal Trading, most Harvest Yuzu Farm items and others): the seller's own fees and times apply. <a href="#sellers">See below</a>.</li>
 <li>We deliver every day, including Sundays and public holidays (Sports Day, Mon 12 Oct, too).</li>
 <li>Times in the tables are counted from dispatch. Standard orders usually leave HRK1 the next day; next-day and same-day orders leave the same day.</li>
 </ul>
-<p>What that means for an order placed <strong>today, Mon 5 Oct, to an address in Harukawa city</strong>:</p>
+<p>What that means for an order placed <strong>today, Mon 5 Oct, to an address in Springvale city</strong>:</p>
 <table>
 <thead><tr><th>Where the item ships from</th><th>Marketa Fast member</th><th>Not a member</th></tr></thead>
 <tbody>
 <tr><td>In stock at HRK1 (e.g. <a href="/en/p/corvo-kettle.html">Corvo Kettle</a>, Silver, ¥3,980)</td><td><strong>Tue 6 Oct</strong>, free (order by 14:00)</td><td>Thu 8 Oct, free on orders of ¥3,500 or more (otherwise ¥450), or Tue 6 Oct for ¥600</td></tr>
-<tr><td>Marketa warehouse outside Minori Prefecture (e.g. Corvo Kettle, Matte Black)</td><td>Thu 8 Oct, free</td><td>Sat 10 Oct, standard rates</td></tr>
+<tr><td>Marketa warehouse outside Harvest Prefecture (e.g. Corvo Kettle, Matte Black)</td><td>Thu 8 Oct, free</td><td>Sat 10 Oct, standard rates</td></tr>
 <tr><td>Kagami Kiln</td><td colspan="2">Thu 8 – Fri 9 Oct, ¥700 (free on Kagami Kiln orders of ¥5,000 or more)</td></tr>
 <tr><td>Kagami Kiln, made to order</td><td colspan="2">Dispatched in 3–4 weeks, arrives about 2–9 Nov</td></tr>
-<tr><td>Minori Yuzu Farm</td><td colspan="2">Wed 7 – Thu 8 Oct, ¥600 (free on farm orders of ¥4,000 or more)</td></tr>
+<tr><td>Harvest Yuzu Farm</td><td colspan="2">Wed 7 – Thu 8 Oct, ¥600 (free on farm orders of ¥4,000 or more)</td></tr>
 <tr><td>BrightDeal Trading (Kobe)</td><td colspan="2">Fri 9 – Tue 13 Oct, free</td></tr>
 </tbody>
 </table>
@@ -185,8 +185,8 @@ const shipping = {
       en: `<table>
 <thead><tr><th>Delivery region</th><th>Delivery time (after dispatch)</th><th>Fee, non-members</th><th>Free for non-members</th><th>Marketa Fast members</th></tr></thead>
 <tbody>
-<tr><td>Harukawa city</td><td>1–2 days</td><td>¥450</td><td>Orders of ¥3,500 or more</td><td>Always free</td></tr>
-<tr><td>Rest of Minori Prefecture</td><td>2–3 days</td><td>¥450</td><td>Orders of ¥3,500 or more</td><td>Always free</td></tr>
+<tr><td>Springvale city</td><td>1–2 days</td><td>¥450</td><td>Orders of ¥3,500 or more</td><td>Always free</td></tr>
+<tr><td>Rest of Harvest Prefecture</td><td>2–3 days</td><td>¥450</td><td>Orders of ¥3,500 or more</td><td>Always free</td></tr>
 <tr><td>Neighbouring prefectures</td><td>2–3 days</td><td>¥550</td><td>Orders of ¥3,500 or more</td><td>Always free</td></tr>
 <tr><td>Rest of Honshu, Shikoku and Kyushu</td><td>3–4 days</td><td>¥550</td><td>Orders of ¥3,500 or more</td><td>Always free</td></tr>
 <tr><td>Hokkaido and Okinawa</td><td>4–7 days</td><td>¥990</td><td>Orders of ¥3,500 or more</td><td>Always free</td></tr>
@@ -195,7 +195,7 @@ const shipping = {
 </table>
 <p><strong>Examples</strong></p>
 <ul>
-<li>A ¥2,980 order (an <a href="/en/p/ampora-slim-10k.html">Ampora Slim 10K</a> power bank) to Harukawa city: <strong>¥450</strong> standard. Add anything that brings the order to ¥3,500 and standard delivery is free.</li>
+<li>A ¥2,980 order (an <a href="/en/p/ampora-slim-10k.html">Ampora Slim 10K</a> power bank) to Springvale city: <strong>¥450</strong> standard. Add anything that brings the order to ¥3,500 and standard delivery is free.</li>
 <li>The same ¥2,980 order to Kyushu: ¥550. To Hokkaido: ¥990. To a remote island: ¥990 + ¥550 = <strong>¥1,540</strong>.</li>
 <li>A ¥4,980 <a href="/en/p/hearth-kettle.html">Hearth kettle</a> to a remote island: the delivery is free (over ¥3,500) but the <strong>¥550</strong> surcharge is charged, for Fast members too.</li>
 </ul>
@@ -226,8 +226,8 @@ const shipping = {
 <table>
 <thead><tr><th>Delivery region</th><th>Order by</th><th>Fee, non-members</th><th>Marketa Fast members</th></tr></thead>
 <tbody>
-<tr><td>Harukawa city</td><td>14:00</td><td>¥600</td><td>Free on Fast-eligible items, no minimum order</td></tr>
-<tr><td>Rest of Minori Prefecture</td><td>14:00</td><td>¥600</td><td>Free</td></tr>
+<tr><td>Springvale city</td><td>14:00</td><td>¥600</td><td>Free on Fast-eligible items, no minimum order</td></tr>
+<tr><td>Rest of Harvest Prefecture</td><td>14:00</td><td>¥600</td><td>Free</td></tr>
 <tr><td>Neighbouring prefectures</td><td>12:00</td><td>¥600</td><td>Free</td></tr>
 <tr><td>Rest of Honshu, Shikoku and Kyushu</td><td>10:00 (some mountain areas excluded)</td><td>¥800</td><td>Free</td></tr>
 <tr><td>Hokkaido, Okinawa and remote islands</td><td colspan="3">Not available: standard delivery only (4–7 days)</td></tr>
@@ -236,7 +236,7 @@ const shipping = {
 <ul>
 <li>The next-day fee replaces the standard fee; it is charged even on orders of ¥3,500 or more, because only standard delivery becomes free.</li>
 <li>Ordered after the cut-off? Next-day delivery becomes the day after tomorrow. Example: at 10:40 the 10:00 cut-off for the rest of Honshu has passed, so a next-day order to Tokyo placed now arrives Wed 7 Oct.</li>
-<li>Items at Marketa warehouses outside Minori Prefecture cannot come next day to Harukawa. With Fast they arrive in about 3 days (order Mon, arrive Thu); by standard delivery in about 5 days (Sat).</li>
+<li>Items at Marketa warehouses outside Harvest Prefecture cannot come next day to Springvale. With Fast they arrive in about 3 days (order Mon, arrive Thu); by standard delivery in about 5 days (Sat).</li>
 <li>If you pay at a convenience store or by Pay-easy, the cut-off applies to the time your payment is confirmed, not the time you ordered.</li>
 </ul>
 <p><small>"Some mountain areas" are postcodes our carrier serves only every other day; checkout shows whether yours is one. Next-day delivery to Marketa Lockers works the same way and costs the same.</small></p>`,
@@ -261,9 +261,9 @@ const shipping = {
     },
     {
       id: 'same-day',
-      h: { en: 'Same-day delivery (Harukawa city only)', ja: '当日お届け（春川市内のみ）' },
+      h: { en: 'Same-day delivery (Springvale city only)', ja: '当日お届け（春川市内のみ）' },
       en: `<ul>
-<li><strong>Where:</strong> addresses in Harukawa city only.</li>
+<li><strong>Where:</strong> addresses in Springvale city only.</li>
 <li><strong>Order by 11:00</strong>; delivered the same evening between <strong>18:00 and 22:00</strong>.</li>
 <li><strong>Fee:</strong> ¥900 for non-members. Marketa Fast members: free on orders of ¥2,000 or more, ¥300 below that.</li>
 <li><strong>Which items:</strong> items in stock at HRK1 marked "Today" at checkout. Not available for large items, cool delivery, Marketa Lockers, or items that sellers ship themselves.</li>
@@ -314,10 +314,10 @@ const shipping = {
 <table>
 <thead><tr><th>Pick-up point</th><th>Where exactly</th><th>Open</th></tr></thead>
 <tbody>
-<tr><td>Marketa Locker, Harukawa Central Station</td><td>Station concourse, beside the Kagami Line ticket gates (east exit side)</td><td>5:00–24:30 every day</td></tr>
-<tr><td>Marketa Locker, Minori Port Station</td><td>Bayside Line station, ground floor next to the ticket gates</td><td>5:30–24:00 every day</td></tr>
-<tr><td>Marketa Locker, Harukawa University co-op</td><td>Main campus, co-op building 1F (open to the public)</td><td>Weekdays 8:30–20:00, Sat 10:00–16:00, closed Sun and public holidays</td></tr>
-<tr><td>38 convenience stores</td><td>29 in Harukawa city (e.g. near Harukawa Castle, in Kamagaoka and by Harukawa University) and 9 elsewhere in Minori Prefecture (incl. Tsukimi Onsen station)</td><td>Most open 24 hours; collect at the counter</td></tr>
+<tr><td>Marketa Locker, Springvale Central Station</td><td>Station concourse, beside the Mirror Line ticket gates (east exit side)</td><td>5:00–24:30 every day</td></tr>
+<tr><td>Marketa Locker, Ferry Port Station</td><td>Bayside Line station, ground floor next to the ticket gates</td><td>5:30–24:00 every day</td></tr>
+<tr><td>Marketa Locker, Springvale University co-op</td><td>Main campus, co-op building 1F (open to the public)</td><td>Weekdays 8:30–20:00, Sat 10:00–16:00, closed Sun and public holidays</td></tr>
+<tr><td>38 convenience stores</td><td>29 in Springvale city (e.g. near Springvale Castle, in Kamagaoka and by Springvale University) and 9 elsewhere in Harvest Prefecture (incl. Moonview Spa station)</td><td>Most open 24 hours; collect at the counter</td></tr>
 </tbody>
 </table>
 <ul>
@@ -378,7 +378,7 @@ const shipping = {
 <li><strong>Gift message:</strong> free, up to 100 characters, printed on a card.</li>
 <li><strong>Prices hidden:</strong> gift orders come with a packing slip without prices. The receipt goes to you by email.</li>
 </ul>
-<p><strong>Sellers' gift services:</strong> Kagami Kiln wraps for ¥330 per item and adds noshi free; Minori Yuzu Farm adds noshi and a gift message free. Ask other sellers before ordering. <small>Gift wrap is not covered by Marketa Fast. You can add wrap or noshi until 1 hour after ordering.</small></p>`,
+<p><strong>Sellers' gift services:</strong> Kagami Kiln wraps for ¥330 per item and adds noshi free; Harvest Yuzu Farm adds noshi and a gift message free. Ask other sellers before ordering. <small>Gift wrap is not covered by Marketa Fast. You can add wrap or noshi until 1 hour after ordering.</small></p>`,
       ja: `<ul>
 <li><strong>ギフトラッピング：</strong>マルケタ発送の商品1点につき330円。ご注文手続きで「ギフトとして贈る」をお選びください。60cmを超える商品や外箱のまま発送する商品（炊飯器など）は、包装紙の代わりにリボンシールでのお届けとなります。</li>
 <li><strong>のし紙：無料。</strong>表書き（お祝・内祝・御礼・御中元・御歳暮・寸志など）とお名入れをお選びいただけます。配送中に破れないよう、通常は包装紙の内側にかける「内のし」でお届けします。「外のし」をご希望の場合はギフトメッセージ欄にご記入ください。</li>
@@ -392,15 +392,15 @@ const shipping = {
       h: { en: 'Items from sellers that ship themselves', ja: '出品者が発送する商品' },
       en: `<p>Items that a seller ships from its own premises arrive <strong>separately</strong> from Marketa parcels, with the <strong>seller's own fees, free-delivery threshold and times</strong>. They are not Fast-eligible, and Marketa Fast does not make their shipping free. Items marked "Sold by <em>seller</em>, ships from Marketa" are different: they follow this page and Marketa's return policy.</p>
 <table>
-<thead><tr><th>Seller</th><th>Ships from</th><th>Dispatch</th><th>Order today, arrives (Harukawa)</th><th>Fee</th><th>Free on seller orders of</th></tr></thead>
+<thead><tr><th>Seller</th><th>Ships from</th><th>Dispatch</th><th>Order today, arrives (Springvale)</th><th>Fee</th><th>Free on seller orders of</th></tr></thead>
 <tbody>
-<tr><td><a href="/en/seller/kagami.html">Kagami Kiln</a></td><td>Kamagaoka, Harukawa</td><td>Within 2 business days; made to order 3–4 weeks</td><td>Thu 8 – Fri 9 Oct</td><td>¥700</td><td>¥5,000</td></tr>
-<tr><td><a href="/en/seller/minori.html">Minori Yuzu Farm</a></td><td>Kagami River valley, Harukawa</td><td>Mon–Sat; arrives in 2–3 days</td><td>Wed 7 – Thu 8 Oct</td><td>¥600</td><td>¥4,000</td></tr>
+<tr><td><a href="/en/seller/kagami.html">Kagami Kiln</a></td><td>Kamagaoka, Springvale</td><td>Within 2 business days; made to order 3–4 weeks</td><td>Thu 8 – Fri 9 Oct</td><td>¥700</td><td>¥5,000</td></tr>
+<tr><td><a href="/en/seller/minori.html">Harvest Yuzu Farm</a></td><td>Mirror River valley, Springvale</td><td>Mon–Sat; arrives in 2–3 days</td><td>Wed 7 – Thu 8 Oct</td><td>¥600</td><td>¥4,000</td></tr>
 <tr><td><a href="/en/seller/brightdeal.html">BrightDeal Trading</a></td><td>Kobe</td><td>1–3 days; delivery 4–8 days</td><td>Fri 9 – Tue 13 Oct</td><td>Free</td><td>Always free</td></tr>
 </tbody>
 </table>
-<p><strong>Example:</strong> a basket with a <a href="/en/p/corvo-kettle.html">Corvo Kettle</a> (Silver, ¥3,980, Marketa), a <a href="/en/p/kagami-mug-pair.html">Kagami Kiln mug pair</a> (¥6,600) and a <a href="/en/p/minori-ponzu-set.html">Minori yuzu ponzu home pack</a> (¥3,780) arrives in three parcels. A non-member pays ¥0 for the kettle (over ¥3,500), ¥0 for the mugs (Kagami Kiln order over ¥5,000) and ¥600 for the ponzu (farm order under ¥4,000): <strong>¥600 in total</strong>. A Fast member pays the same ¥600, but gets the kettle on Tue 6 Oct.</p>
-<p><small>Minori Yuzu Farm's bath salts, hand cream and marmalade set are stored at HRK1 and ship next day like Marketa items. Cash on delivery and lockers are not available for seller-shipped items. If a seller's parcel has not arrived by the latest estimated date, contact the seller from Your Orders; if they do not reply within 2 business days, see <a href="/en/help/returns.html#protection">Purchase Protection</a>.</small></p>`,
+<p><strong>Example:</strong> a basket with a <a href="/en/p/corvo-kettle.html">Corvo Kettle</a> (Silver, ¥3,980, Marketa), a <a href="/en/p/kagami-mug-pair.html">Kagami Kiln mug pair</a> (¥6,600) and a <a href="/en/p/minori-ponzu-set.html">Harvest yuzu ponzu home pack</a> (¥3,780) arrives in three parcels. A non-member pays ¥0 for the kettle (over ¥3,500), ¥0 for the mugs (Kagami Kiln order over ¥5,000) and ¥600 for the ponzu (farm order under ¥4,000): <strong>¥600 in total</strong>. A Fast member pays the same ¥600, but gets the kettle on Tue 6 Oct.</p>
+<p><small>Harvest Yuzu Farm's bath salts, hand cream and marmalade set are stored at HRK1 and ship next day like Marketa items. Cash on delivery and lockers are not available for seller-shipped items. If a seller's parcel has not arrived by the latest estimated date, contact the seller from Your Orders; if they do not reply within 2 business days, see <a href="/en/help/returns.html#protection">Purchase Protection</a>.</small></p>`,
       ja: `<p>出品者が自社から発送する商品は、マルケタからの荷物とは<strong>別便</strong>で、<strong>出品者ごとの配送料・送料無料条件・お届け日数</strong>でお届けします。Fast対象外のため、マルケタFast会員でも配送料は無料になりません。なお「販売：○○／発送：マルケタ」と表示された商品は、このページの条件とマルケタの返品ポリシーが適用されます。</p>
 <table>
 <thead><tr><th>出品者</th><th>発送元</th><th>発送までの日数</th><th>本日注文のお届け（春川市内）</th><th>配送料</th><th>送料無料条件（同じ出品者の合計）</th></tr></thead>
@@ -416,7 +416,7 @@ const shipping = {
     {
       id: 'delays',
       h: { en: 'Delivery delays: Lantern Festival, typhoons and more', ja: '配送の遅延について（灯籠まつり・台風など）' },
-      en: `<p><strong>Harukawa Lantern Festival road closures, Sat 10 – Sun 11 Oct 2026.</strong> Central Harukawa is closed to traffic for the lantern parade. The closure area is everything inside the inner moat road (Horibata-dōri) around Harukawa Castle, Ōtemachi 1–3 chōme, Honmachi, Kawabata 1–2 chōme, and the riverside road along the Kagami River between Tsukimi Bridge and Minato Bridge.</p>
+      en: `<p><strong>Springvale Lantern Festival road closures, Sat 10 – Sun 11 Oct 2026.</strong> Central Springvale is closed to traffic for the lantern parade. The closure area is everything inside the inner moat road (Horibata-dōri) around Springvale Castle, Ōtemachi 1–3 chōme, Bridge Street, Riverside 1–2 chōme, and the riverside road along the Mirror River between Moonview Bridge and Minato Bridge.</p>
 <table>
 <thead><tr><th>Day</th><th>Roads closed</th><th>Deliveries inside the closure area</th></tr></thead>
 <tbody>
@@ -424,9 +424,9 @@ const shipping = {
 <tr><td>Sun 11 Oct</td><td>12:00–21:30</td><td>Morning deliveries as normal. Afternoon and evening deliveries move to Mon 12 Oct (Sports Day), 8:00–12:00. No same-day delivery.</td></tr>
 </tbody>
 </table>
-<p>Elsewhere in Harukawa city, evening deliveries may run up to 2 hours late on both days. Tip: choose a Marketa Locker at Minori Port Station; the Harukawa Central Station lockers stay open but the station will be very crowded. If we move your delivery because of the closures, scheduled-delivery and next-day fees are refunded automatically.</p>
+<p>Elsewhere in Springvale city, evening deliveries may run up to 2 hours late on both days. Tip: choose a Marketa Locker at Ferry Port Station; the Springvale Central Station lockers stay open but the station will be very crowded. If we move your delivery because of the closures, scheduled-delivery and next-day fees are refunded automatically.</p>
 <p><strong>Typhoons and storms.</strong> When a storm warning (暴風警報) is in force for the delivery area, or our carrier suspends service, deliveries pause and restart when it is lifted, usually 1–3 days later. We email you the new date. Fees for faster delivery (next-day, same-day, scheduled) are refunded if we miss the promised date, whatever the reason. Typhoon season runs from August to October.</p>
-<p><strong>Other times to expect delays:</strong> heavy snow on the mountain roads to Tsukimi Onsen and the upper Kagami River valley (January–February), and the New Year holidays (31 Dec – 3 Jan), when same-day delivery is suspended.</p>
+<p><strong>Other times to expect delays:</strong> heavy snow on the mountain roads to Moonview Spa and the upper Mirror River valley (January–February), and the New Year holidays (31 Dec – 3 Jan), when same-day delivery is suspended.</p>
 <p><small>Sellers that ship themselves use their own carriers and may be affected differently. Check the seller's tracking number in Your Orders.</small></p>`,
       ja: `<p><strong>春川灯籠まつりに伴う交通規制（2026年10月10日（土）・11日（日））</strong>　灯籠行列のため、春川市中心部で車両通行止めとなります。規制区域は、春川城を囲む内堀通り（堀端通り）の内側全域、大手町1～3丁目、本町、川端1～2丁目、および鏡川沿いの月見橋～湊橋間の河川沿い道路です。</p>
 <table>
@@ -485,7 +485,7 @@ const returns = {
 <tr><td>Faulty, damaged in delivery, or wrong item</td><td>30 days from delivery (report delivery damage within 7 days)</td><td>Full refund including delivery fees, or a replacement</td><td>Free, pick-up included</td></tr>
 <tr><td>Faulty after 30 days</td><td>The warranty period</td><td>Repair or replacement under the manufacturer's warranty</td><td>Per the warranty</td></tr>
 <tr><td>Non-returnable items (earbuds with a broken seal, opened cosmetics, food, made-to-order, gift cards)</td><td>—</td><td>Only if faulty, damaged or wrong</td><td>Free in those cases</td></tr>
-<tr><td>Items that sellers ship themselves</td><td colspan="3">The seller's own policy (Kagami Kiln 14 days, BrightDeal Trading 30 days, Minori Yuzu Farm food not returnable). <a href="#third-party">See below</a>.</td></tr>
+<tr><td>Items that sellers ship themselves</td><td colspan="3">The seller's own policy (Kagami Kiln 14 days, BrightDeal Trading 30 days, Harvest Yuzu Farm food not returnable). <a href="#third-party">See below</a>.</td></tr>
 </tbody>
 </table>`,
       ja: `<table>
@@ -552,8 +552,8 @@ const returns = {
       en: `<p>These items can be returned <strong>only if they are faulty, damaged in delivery or not what you ordered</strong>:</p>
 <ul>
 <li><strong>In-ear headphones and earbuds once the hygiene seal is broken</strong>, e.g. <a href="/en/p/nami-buds.html">Nami Buds 2</a>. With the seal intact they are returnable within 30 days like any unused item. Over-ear headphones (Seiran) and open-ear bone-conduction headphones (<a href="/en/p/kaze-openear.html">Kaze</a>) are not in-ear: they follow the 15% restocking rule.</li>
-<li><strong>Opened cosmetics, toiletries and bath products</strong>, e.g. <a href="/en/p/yumeguri-onsen-powder.html">Yumeguri bath powder</a>, <a href="/en/p/citrine-body-wash.html">Citrine Lab body wash</a>, <a href="/en/p/minori-bath-salts.html">Minori yuzu bath salts</a> and <a href="/en/p/minori-hand-cream.html">hand cream</a>. Unopened, they are returnable within 30 days.</li>
-<li><strong>Food and drink</strong>, opened or not, e.g. <a href="/en/p/shiroshita-senbei.html">Shiroshita senbei</a> and the <a href="/en/p/minori-marmalade-set.html">Minori marmalade set</a>.</li>
+<li><strong>Opened cosmetics, toiletries and bath products</strong>, e.g. <a href="/en/p/yumeguri-onsen-powder.html">Yumeguri bath powder</a>, <a href="/en/p/citrine-body-wash.html">Citrine Lab body wash</a>, <a href="/en/p/minori-bath-salts.html">Harvest yuzu bath salts</a> and <a href="/en/p/minori-hand-cream.html">hand cream</a>. Unopened, they are returnable within 30 days.</li>
+<li><strong>Food and drink</strong>, opened or not, e.g. <a href="/en/p/shiroshita-senbei.html">Shiroshita senbei</a> and the <a href="/en/p/minori-marmalade-set.html">Harvest marmalade set</a>.</li>
 <li><strong>Made-to-order and personalised items</strong>, e.g. the engraved Kagami Kiln mug pair and made-to-order glazes.</li>
 <li><strong>Marketa Gift Cards</strong>.</li>
 </ul>
@@ -595,7 +595,7 @@ const returns = {
 <tr><td>Home pick-up instead of drop-off</td><td>+¥330 (free if faulty)</td><td>+¥330 (free if faulty)</td><td>+¥330 (free if faulty)</td><td>+¥330 (free if faulty)</td></tr>
 </tbody>
 </table>
-<p><small>Return shipping is deducted from your refund; you never pay at the counter. Example: a Fast member in the free trial returns unused <a href="/en/p/aoba-mini.html">Aoba Mini rice cooker</a> (¥5,980): refund ¥5,430. The same return after the trial has become a paid membership: ¥5,980. Minori Yuzu Farm's bath salts ship from Marketa but are sold by the farm, so the ¥550 applies even to paid members.</small></p>`,
+<p><small>Return shipping is deducted from your refund; you never pay at the counter. Example: a Fast member in the free trial returns unused <a href="/en/p/aoba-mini.html">Aoba Mini rice cooker</a> (¥5,980): refund ¥5,430. The same return after the trial has become a paid membership: ¥5,980. Harvest Yuzu Farm's bath salts ship from Marketa but are sold by the farm, so the ¥550 applies even to paid members.</small></p>`,
       ja: `<table>
 <thead><tr><th>返品理由</th><th>非会員</th><th>Fast無料体験中</th><th>有料のFast会員（販売：マルケタ）</th><th>有料のFast会員（販売：他の出品者／発送：マルケタ）</th></tr></thead>
 <tbody>
@@ -680,7 +680,7 @@ const returns = {
 <thead><tr><th>Seller</th><th>Return window</th><th>Change of mind</th><th>Faulty or damaged</th><th>Cannot be returned</th></tr></thead>
 <tbody>
 <tr><td><a href="/en/seller/kagami.html">Kagami Kiln</a></td><td>14 days from delivery</td><td>Unused only; you pay return shipping</td><td>Breakage in delivery: report within 48 hours with photos; replacement or refund without sending it back</td><td>Engraved and made-to-order items. Variation in glaze, colour, size and small pinholes is the nature of handmade ware, not a defect.</td></tr>
-<tr><td><a href="/en/seller/minori.html">Minori Yuzu Farm</a></td><td>Unopened cosmetics: 14 days</td><td>Unopened cosmetics only</td><td>Damaged or faulty food: report within 7 days with photos</td><td>Food, unless damaged or faulty</td></tr>
+<tr><td><a href="/en/seller/minori.html">Harvest Yuzu Farm</a></td><td>Unopened cosmetics: 14 days</td><td>Unopened cosmetics only</td><td>Damaged or faulty food: report within 7 days with photos</td><td>Food, unless damaged or faulty</td></tr>
 <tr><td><a href="/en/seller/brightdeal.html">BrightDeal Trading</a></td><td>30 days</td><td>Unopened only; you pay ¥880 return shipping</td><td>Contact the seller first and wait up to 2 business days for a prepaid label; refund within 5 business days after the item reaches the Kobe warehouse; 6-month seller warranty on electronics</td><td>Opened items returned for change of mind</td></tr>
 </tbody>
 </table>
@@ -707,7 +707,7 @@ const returns = {
 </ul>
 <p><strong>File a claim within 90 days of the latest estimated delivery date</strong>, from Your Orders &gt; "Problem with this order" &gt; "Ask Marketa to step in". We decide within 5 business days and refund the item price and delivery fee, up to ¥300,000 per order.</p>
 <p><strong>Example:</strong> a <a href="/en/p/vetrina-kettle.html">Vetrina kettle</a> from BrightDeal Trading ordered today, Mon 5 Oct, has an estimated delivery of Fri 9 – Tue 13 Oct, so you can claim until <strong>Mon 11 Jan 2027</strong>.</p>
-<p><small>Purchase Protection does not override a seller's policy for change-of-mind returns: an opened BrightDeal item, unopened food from Minori Yuzu Farm or a Kagami Kiln glaze variation are not covered.</small></p>`,
+<p><small>Purchase Protection does not override a seller's policy for change-of-mind returns: an opened BrightDeal item, unopened food from Harvest Yuzu Farm or a Kagami Kiln glaze variation are not covered.</small></p>`,
       ja: `<p>マルケタ購入者保護は、出品者が発送する商品を含め、マルケタでご購入いただいたすべての商品が対象です。次の場合はマルケタが代わりに対応し、返金します。</p>
 <ul>
 <li>出品者が<strong>2営業日以内</strong>にメッセージに返信しない場合</li>
@@ -753,7 +753,7 @@ const fast = {
   id: 'fast',
   title: { en: 'Marketa Fast membership', ja: 'マルケタFast会員' },
   intro: {
-    en: 'Marketa Fast gives you free next-day delivery on Fast-eligible items with no minimum order, free standard and scheduled delivery, cheaper same-day delivery in Harukawa, early access to Lightning Deals, member coupons, free returns and double points. ¥600 a month or ¥5,900 a year; students pay half.',
+    en: 'Marketa Fast gives you free next-day delivery on Fast-eligible items with no minimum order, free standard and scheduled delivery, cheaper same-day delivery in Springvale, early access to Lightning Deals, member coupons, free returns and double points. ¥600 a month or ¥5,900 a year; students pay half.',
     ja: 'マルケタFastは、Fast対象商品の翌日配送が金額にかかわらず無料になるほか、通常配送・日時指定の無料、春川市内の当日お届けの割引、タイムセールの先行参加、会員限定クーポン、返品無料、ポイント2倍などの特典が受けられる有料会員プログラムです。月額600円または年額5,900円。学生は半額です。',
   },
   sections: [
@@ -785,8 +785,8 @@ const fast = {
 <tbody>
 <tr><td>Next-day delivery on Fast-eligible items</td><td><strong>Free, no minimum order</strong></td><td>¥600 (¥800 to the rest of Honshu, Shikoku and Kyushu)</td></tr>
 <tr><td>Standard delivery on items shipped by Marketa</td><td><strong>Always free</strong></td><td>¥450–¥990; free on orders of ¥3,500 or more</td></tr>
-<tr><td>Items at Marketa warehouses outside Minori Prefecture</td><td>Faster: about 3 days (e.g. Thu 8 Oct)</td><td>About 5 days (e.g. Sat 10 Oct)</td></tr>
-<tr><td>Same-day delivery in Harukawa city</td><td><strong>Free on orders of ¥2,000+</strong>, ¥300 below that</td><td>¥900</td></tr>
+<tr><td>Items at Marketa warehouses outside Harvest Prefecture</td><td>Faster: about 3 days (e.g. Thu 8 Oct)</td><td>About 5 days (e.g. Sat 10 Oct)</td></tr>
+<tr><td>Same-day delivery in Springvale city</td><td><strong>Free on orders of ¥2,000+</strong>, ¥300 below that</td><td>¥900</td></tr>
 <tr><td>Scheduled delivery (date and time slot)</td><td><strong>Free</strong></td><td>¥350</td></tr>
 <tr><td>Lightning Deals</td><td><strong>30 minutes early access</strong></td><td>From the published start time</td></tr>
 <tr><td>Member-only coupons</td><td>Yes (marked "Fast members" on the product page)</td><td>No</td></tr>
@@ -815,7 +815,7 @@ const fast = {
       id: 'not-covered',
       h: { en: 'What Fast does not cover', ja: 'Fastの特典対象外' },
       en: `<ul>
-<li><strong>Sellers' own shipping</strong>: items that Kagami Kiln (¥700, free on ¥5,000+), Minori Yuzu Farm (¥600, free on ¥4,000+) or other sellers ship themselves. BrightDeal Trading ships free for everyone.</li>
+<li><strong>Sellers' own shipping</strong>: items that Kagami Kiln (¥700, free on ¥5,000+), Harvest Yuzu Farm (¥600, free on ¥4,000+) or other sellers ship themselves. BrightDeal Trading ships free for everyone.</li>
 <li><strong>Large-item surcharge</strong>: ¥1,100 per item over 160 cm or 25 kg.</li>
 <li><strong>Cool delivery</strong>: ¥330 per box.</li>
 <li><strong>Cash on delivery fee</strong>: ¥330.</li>
@@ -861,11 +861,11 @@ const fast = {
       id: 'student',
       h: { en: 'Fast Student', ja: 'Fast Student（学生プラン）' },
       en: `<ul>
-<li>For students at a university, graduate school, junior college or technical college with a university email address (usually ending in .ac.jp), for example at Harukawa University.</li>
+<li>For students at a university, graduate school, junior college or technical college with a university email address (usually ending in .ac.jp), for example at Springvale University.</li>
 <li><strong>6-month free trial</strong>, then ¥300 a month or ¥2,950 a year. The same once-per-account and 12-month rules apply.</li>
 <li>We ask you to confirm your university email once a year. Fast Student lasts up to 4 years; after that, or if you can no longer confirm, it becomes the regular Fast plan (¥600 a month). We email you 30 days before.</li>
 </ul>
-<p><strong>Example:</strong> a Harukawa University student who starts today has free Fast until 4 Apr 2027, then pays ¥300 a month from 5 Apr 2027.</p>`,
+<p><strong>Example:</strong> a Springvale University student who starts today has free Fast until 4 Apr 2027, then pays ¥300 a month from 5 Apr 2027.</p>`,
       ja: `<ul>
 <li>大学・大学院・短期大学・高等専門学校に在籍し、学校のメールアドレス（通常は .ac.jp で終わるもの）をお持ちの方が対象です（例：春川大学）。</li>
 <li><strong>6か月間の無料体験</strong>のあと、月額300円または年額2,950円。1アカウント1回・過去12か月の条件は通常の無料体験と同じです。</li>
@@ -1056,7 +1056,7 @@ const payment = {
 <li>We usually confirm your payment within 30 minutes and then ship. <strong>Delivery dates start from payment</strong>, not from your order.</li>
 </ol>
 <table>
-<thead><tr><th>You order</th><th>Pay by</th><th>If you pay (Harukawa city, item in stock at HRK1)</th><th>Next-day delivery arrives</th></tr></thead>
+<thead><tr><th>You order</th><th>Pay by</th><th>If you pay (Springvale city, item in stock at HRK1)</th><th>Next-day delivery arrives</th></tr></thead>
 <tbody>
 <tr><td>Mon 5 Oct, 10:40</td><td>Thu 8 Oct, 23:59</td><td>Mon 5 Oct, 13:00</td><td>Tue 6 Oct</td></tr>
 <tr><td>Mon 5 Oct, 10:40</td><td>Thu 8 Oct, 23:59</td><td>Tue 6 Oct, 15:00 (after the 14:00 cut-off)</td><td>Thu 8 Oct</td></tr>
@@ -1155,7 +1155,7 @@ const faq = {
   id: 'faq',
   title: { en: 'Frequently asked questions', ja: 'よくあるご質問' },
   intro: {
-    en: 'Short answers to the questions we hear most, with links to the full rules. Times and dates assume an address in Harukawa city and an order placed today, Monday 5 October.',
+    en: 'Short answers to the questions we hear most, with links to the full rules. Times and dates assume an address in Springvale city and an order placed today, Monday 5 October.',
     ja: 'お問い合わせの多いご質問に簡潔にお答えします。詳しい条件は各リンク先をご覧ください。日時は、春川市内のお届け先で本日10月5日（月）にご注文の場合の例です。',
   },
   sections: [
@@ -1166,21 +1166,21 @@ const faq = {
         {
           q: { en: 'It is 10:40. Can my order still arrive today?', ja: '今10時40分です。今日中に届きますか？' },
           a: {
-            en: 'Yes, if the address is in Harukawa city and the item is in stock at HRK1: order by <strong>11:00</strong> for same-day delivery between 18:00 and 22:00. It costs ¥900; Fast members pay nothing on orders of ¥2,000 or more and ¥300 below that. <a href="/en/help/shipping.html#same-day">Same-day delivery</a>.',
+            en: 'Yes, if the address is in Springvale city and the item is in stock at HRK1: order by <strong>11:00</strong> for same-day delivery between 18:00 and 22:00. It costs ¥900; Fast members pay nothing on orders of ¥2,000 or more and ¥300 below that. <a href="/en/help/shipping.html#same-day">Same-day delivery</a>.',
             ja: '春川市内のお届け先で、HRK1に在庫がある商品なら可能です。<strong>11時まで</strong>にご注文いただくと、当日18時～22時にお届けします。料金は900円、Fast会員は2,000円以上で無料、2,000円未満は300円です。<a href="/ja/help/shipping.html#same-day">当日お届けについて</a>',
           },
         },
         {
           q: { en: 'What is the latest time to order for next-day delivery?', ja: '翌日配送の注文締め切りは何時ですか？' },
           a: {
-            en: '14:00 for Harukawa city and the rest of Minori Prefecture, 12:00 for neighbouring prefectures and 10:00 for the rest of Honshu, Shikoku and Kyushu. Next-day delivery is not available to Hokkaido, Okinawa or remote islands. It costs ¥600 (¥800 to the rest of Honshu etc.) and is free for Fast members on Fast-eligible items.',
+            en: '14:00 for Springvale city and the rest of Harvest Prefecture, 12:00 for neighbouring prefectures and 10:00 for the rest of Honshu, Shikoku and Kyushu. Next-day delivery is not available to Hokkaido, Okinawa or remote islands. It costs ¥600 (¥800 to the rest of Honshu etc.) and is free for Fast members on Fast-eligible items.',
             ja: '春川市内・みのり県内は14時、隣接県は12時、その他の本州・四国・九州は10時です。北海道・沖縄・離島は翌日配送の対象外です。料金は600円（その他の本州等は800円）、Fast会員はFast対象商品なら無料です。',
           },
         },
         {
           q: { en: 'Why does the Matte Black kettle arrive later than the Silver one?', ja: '同じケトルなのに、マットブラックだけお届けが遅いのはなぜですか？' },
           a: {
-            en: 'Colours and sizes can be stocked in different warehouses. The Silver <a href="/en/p/corvo-kettle.html">Corvo Kettle</a> is at HRK1 in Harukawa (next day, Tue 6 Oct); the Matte Black is at a Marketa warehouse outside Minori Prefecture, so it arrives Thu 8 Oct for Fast members and Sat 10 Oct by standard delivery.',
+            en: 'Colours and sizes can be stocked in different warehouses. The Silver <a href="/en/p/corvo-kettle.html">Corvo Kettle</a> is at HRK1 in Springvale (next day, Tue 6 Oct); the Matte Black is at a Marketa warehouse outside Harvest Prefecture, so it arrives Thu 8 Oct for Fast members and Sat 10 Oct by standard delivery.',
             ja: '色やサイズによって在庫している倉庫が異なるためです。<a href="/ja/p/corvo-kettle.html">コルヴォ 電気ケトル</a>のシルバーは春川のHRK1に在庫があり翌日（10月6日（火））お届け、マットブラックはみのり県外のマルケタ倉庫にあるため、Fast会員は10月8日（木）、通常配送では10月10日（土）のお届けとなります。',
           },
         },
@@ -1194,14 +1194,14 @@ const faq = {
         {
           q: { en: 'Will the Lantern Festival affect my delivery?', ja: '灯籠まつりの影響でお届けが遅れますか？' },
           a: {
-            en: 'Only inside the closure area in central Harukawa (around the castle, Ōtemachi, Honmachi, Kawabata and the riverside road). On Sat 10 Oct (closed 14:00–22:30) and Sun 11 Oct (closed 12:00–21:30), morning deliveries go ahead; afternoon and evening deliveries move to the next morning, and same-day delivery is not available there. <a href="/en/help/shipping.html#delays">Details</a>.',
+            en: 'Only inside the closure area in central Springvale (around the castle, Ōtemachi, Bridge Street, Riverside and the riverside road). On Sat 10 Oct (closed 14:00–22:30) and Sun 11 Oct (closed 12:00–21:30), morning deliveries go ahead; afternoon and evening deliveries move to the next morning, and same-day delivery is not available there. <a href="/en/help/shipping.html#delays">Details</a>.',
             ja: '影響があるのは春川市中心部の交通規制区域内（春川城周辺、大手町、本町、川端、河川沿い道路）のみです。10月10日（土）（14:00～22:30通行止め）と11日（日）（12:00～21:30通行止め）は、午前中のお届けは通常どおり、午後・夜間のお届けは翌朝に変更し、区域内への当日お届けは休止します。<a href="/ja/help/shipping.html#delays">詳しくはこちら</a>',
           },
         },
         {
-          q: { en: 'Can I collect my parcel at Harukawa Central Station?', ja: '春川中央駅で荷物を受け取れますか？' },
+          q: { en: 'Can I collect my parcel at Springvale Central Station?', ja: '春川中央駅で荷物を受け取れますか？' },
           a: {
-            en: 'Yes. Choose the Marketa Locker at Harukawa Central Station (by the Kagami Line ticket gates, 5:00–24:30). Standard delivery to a locker is always free. Parcels are held for 3 days and must fit 45 × 35 × 30 cm and 10 kg; no cool delivery or cash on delivery.',
+            en: 'Yes. Choose the Marketa Locker at Springvale Central Station (by the Mirror Line ticket gates, 5:00–24:30). Standard delivery to a locker is always free. Parcels are held for 3 days and must fit 45 × 35 × 30 cm and 10 kg; no cool delivery or cash on delivery.',
             ja: 'はい。春川中央駅のマルケタロッカー（鏡線改札横、5:00～24:30）をお選びください。ロッカー受取の通常配送はいつでも無料です。保管期間は3日間で、45×35×30cm・10kgまでの荷物に限ります。クール便・代金引換はご利用いただけません。',
           },
         },
@@ -1297,7 +1297,7 @@ const faq = {
         {
           q: { en: 'Is there a student discount?', ja: '学割はありますか？' },
           a: {
-            en: 'Yes: Fast Student is ¥300 a month or ¥2,950 a year, with a 6-month free trial if you have a university email address (for example at Harukawa University). The benefits are the same as Fast.',
+            en: 'Yes: Fast Student is ¥300 a month or ¥2,950 a year, with a 6-month free trial if you have a university email address (for example at Springvale University). The benefits are the same as Fast.',
             ja: 'はい。Fast Studentは月額300円または年額2,950円で、大学のメールアドレス（春川大学など）をお持ちの方は6か月間無料でお試しいただけます。特典はFastと同じです。',
           },
         },
@@ -1309,9 +1309,9 @@ const faq = {
           },
         },
         {
-          q: { en: 'Does Fast make shipping free for Kagami Kiln or Minori Yuzu Farm?', ja: 'Fast会員なら鏡窯やみのり柚子園の配送料も無料ですか？' },
+          q: { en: 'Does Fast make shipping free for Kagami Kiln or Harvest Yuzu Farm?', ja: 'Fast会員なら鏡窯やみのり柚子園の配送料も無料ですか？' },
           a: {
-            en: 'No. Items that sellers ship themselves use the seller’s fees: Kagami Kiln ¥700 (free on ¥5,000+), Minori Yuzu Farm ¥600 (free on ¥4,000+). The farm’s bath salts, hand cream and marmalade set ship from Marketa, so those are free for members and arrive next day.',
+            en: 'No. Items that sellers ship themselves use the seller’s fees: Kagami Kiln ¥700 (free on ¥5,000+), Harvest Yuzu Farm ¥600 (free on ¥4,000+). The farm’s bath salts, hand cream and marmalade set ship from Marketa, so those are free for members and arrive next day.',
             ja: 'いいえ。出品者が発送する商品は各出品者の配送料となります（鏡窯700円・5,000円以上で無料、みのり柚子園600円・4,000円以上で無料）。ただし、みのり柚子園のバスソルト・ハンドクリーム・マーマレードセットはマルケタから発送するため、会員は無料・翌日お届けとなります。',
           },
         },
@@ -1391,9 +1391,9 @@ const faq = {
           },
         },
         {
-          q: { en: 'Is the Tokiya mug pair real Harukawa ware?', ja: 'トキヤのペアマグは本物の春川焼ですか？' },
+          q: { en: 'Is the Tokiya mug pair real Springvale ware?', ja: 'トキヤのペアマグは本物の春川焼ですか？' },
           a: {
-            en: 'No. The <a href="/en/p/tokiya-mug-pair.html">Tokiya "Harukawa-style" mug pair</a> sold by BrightDeal Trading is factory-made in China in a Harukawa style. Genuine Harukawa ware on Marketa comes from <a href="/en/seller/kagami.html">Kagami Kiln</a> in Kamagaoka, Harukawa.',
+            en: 'No. The <a href="/en/p/tokiya-mug-pair.html">Tokiya "Springvale-style" mug pair</a> sold by BrightDeal Trading is factory-made in China in a Springvale style. Genuine Springvale ware on Marketa comes from <a href="/en/seller/kagami.html">Kagami Kiln</a> in Kamagaoka, Springvale.',
             ja: 'いいえ。ブライトディール商事が販売する<a href="/ja/p/tokiya-mug-pair.html">トキヤ「春川風」ペアマグ</a>は、春川焼風のデザインで中国の工場で製造された商品です。マルケタで扱う本物の春川焼は、春川市窯ヶ丘の<a href="/ja/seller/kagami.html">鏡窯</a>の商品です。',
           },
         },

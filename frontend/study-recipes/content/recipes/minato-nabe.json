@@ -14,11 +14,11 @@
   "updated": "2026-09-26",
   "related": ["yuzu-kosho", "saba-misoni", "yuzu-miso-salmon", "kinoko-takikomi-gohan"],
   "en": {
-    "title": "Minato-nabe (Harukawa Fisherman's Hot Pot with Sake Lees)",
-    "teaser": "The harbour hot pot of Minori Port: yellowtail, daikon and burdock in a creamy sake kasu and white miso broth, finished with udon or rice porridge.",
+    "title": "Minato-nabe (Springvale Fisherman's Hot Pot with Sake Lees)",
+    "teaser": "The harbour hot pot of Ferry Port: yellowtail, daikon and burdock in a creamy sake kasu and white miso broth, finished with udon or rice porridge.",
     "intro": [
-      "Every Saturday from October to March, I set my alarm for 5:30, take an early Bayside Line train to Minori Port and walk the two minutes from the station to the morning market while the sky over Minori Bay is still pink. The boats come in around four, the auction is over by six, and when the market opens the fishmongers are already calling out prices over crates of squid, flounder and, in autumn, gleaming silver yellowtail. My first stop is always Okabe Fish, where Mr. Okabe keeps a bag of buri <em>ara</em> (the head, collars and bones) under the counter for me. It costs about 400 yen, and it is the secret to this pot.",
-      "<strong>Minato-nabe</strong> means 'harbour pot', and it was born on those piers. After the auction, the fishermen would light a fire in an oil drum, throw the fish nobody had bought into a pot with daikon and whatever vegetables were around, and stir in sake lees from the brewery up the road to keep warm in the wind off the bay. Today every Harukawa family has its own version, and the pot comes out on the first chilly weekend of autumn, usually right after the Lantern Festival. Ours is a little sweeter than the dockside original because Daisuke and the kids like white miso, and Sota insists the best part is the udon at the end.",
+      "Every Saturday from October to March, I set my alarm for 5:30, take an early Bayside Line train to Ferry Port and walk the two minutes from the station to the morning market while the sky over Harvest Bay is still pink. The boats come in around four, the auction is over by six, and when the market opens the fishmongers are already calling out prices over crates of squid, flounder and, in autumn, gleaming silver yellowtail. My first stop is always Okabe Fish, where Mr. Okabe keeps a bag of buri <em>ara</em> (the head, collars and bones) under the counter for me. It costs about 400 yen, and it is the secret to this pot.",
+      "<strong>Minato-nabe</strong> means 'harbour pot', and it was born on those piers. After the auction, the fishermen would light a fire in an oil drum, throw the fish nobody had bought into a pot with daikon and whatever vegetables were around, and stir in sake lees from the brewery up the road to keep warm in the wind off the bay. Today every Springvale family has its own version, and the pot comes out on the first chilly weekend of autumn, usually right after the Lantern Festival. Ours is a little sweeter than the dockside original because Daisuke and the kids like white miso, and Sota insists the best part is the udon at the end.",
       { "h": "Why you'll love it" },
       { "ul": [
         "One pot on the table, and everyone helps themselves.",
@@ -180,7 +180,7 @@
   "nutrition": { "calories": 480, "carbs": 24, "protein": 36, "fat": 24, "satFat": 5, "cholesterol": 85, "sodium": 1850, "fiber": 6, "sugar": 8 },
   "comments": [
     {
-      "name": { "en": "Keiko (Harukawa)", "ja": "けいこ（春川市）" },
+      "name": { "en": "Keiko (Springvale)", "ja": "けいこ（春川市）" },
       "date": "2026-09-30",
       "stars": 5,
       "en": "First nabe of the season! I bought ara at the morning market on Saturday, 350 yen for a whole head and both collars. The blanching step really works, there was no smell at all. My husband put yuzu kosho in every single bowl.",
@@ -208,7 +208,7 @@
       "en": "The kids loved it, but it was a bit salty for us. I used the red miso I always have in the fridge.",
       "ja": "子どもたちには大好評でしたが、うちには少ししょっぱかったです。いつも冷蔵庫にある赤みそを使いました。",
       "reply": {
-        "en": "That's probably it: red miso is saltier and stronger than white. With red miso, start with 2 tbsp and taste before adding more. The white miso we use in Harukawa is sweet and quite mild.",
+        "en": "That's probably it: red miso is saltier and stronger than white. With red miso, start with 2 tbsp and taste before adding more. The white miso we use in Springvale is sweet and quite mild.",
         "ja": "原因はたぶんそこですね。赤みそは白みそより塩分も風味も強いので、赤みそなら大さじ2から始めて、味見をしてから足してください。春川でよく使う白みそは甘めでかなりマイルドなんです。"
       }
     },
@@ -231,10 +231,10 @@
       }
     },
     {
-      "name": { "en": "Hiroshi (Tsukimi Onsen)", "ja": "ひろし（月見温泉）" },
+      "name": { "en": "Hiroshi (Moonview Spa)", "ja": "ひろし（月見温泉）" },
       "date": "2025-11-15",
       "stars": 5,
-      "en": "My grandfather fished out of Minori Port for forty years, and he finished his pot with a splash of shochu. Yours tastes very close to what we ate as kids. Thank you for writing it down.",
+      "en": "My grandfather fished out of Ferry Port for forty years, and he finished his pot with a splash of shochu. Yours tastes very close to what we ate as kids. Thank you for writing it down.",
       "ja": "祖父はみのり港で40年漁師をしていて、仕上げに焼酎をちょっと入れていました。子どものころ食べた味にとても近いです。レシピに残してくださってありがとうございます。"
     },
     {

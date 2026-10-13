@@ -15,10 +15,10 @@
   "related": ["yuzu-kosho", "minato-nabe", "kinoko-takikomi-gohan", "yuzu-pound-cake"],
   "en": {
     "title": "Yuzu Miso Salmon",
-    "teaser": "Salmon marinated in sweet white miso with Kagami valley yuzu juice and zest, then grilled until the edges caramelise. Ten minutes of work, and it waits happily in the fridge overnight.",
+    "teaser": "Salmon marinated in sweet white miso with Mirror valley yuzu juice and zest, then grilled until the edges caramelise. Ten minutes of work, and it waits happily in the fridge overnight.",
     "intro": [
-      "If you take the Kagami Line inland from Harukawa Central, about forty minutes in the valley opens up and the hillsides turn into terraces of dark, glossy yuzu trees. That's where I grew up, and in early October the whole valley smells faintly of citrus. The fruit is still mostly green now; it turns golden in November, just in time for the winter yuzu baths at Tsukimi Onsen. My grandmother Fumi used to say the green ones are for the nose and the yellow ones for the tongue, and she was right: early-season yuzu has a sharper, more floral zest and a little less juice.",
-      "This salmon is what I make on evenings when swimming lessons, homework and a late train all collide. It takes ten minutes of hands-on work, you can marinate it in the morning (or the night before), and Hana packs the leftovers in her bento the next day. The marinade is a simple Harukawa-style yuzu miso: sweet white miso, a little mirin and sugar, and plenty of yuzu juice and zest. I buy my yuzu from the Tamura family's farm stand outside Tsukimi Onsen station whenever I visit my mother, and freeze the juice in ice cube trays so I have it all year.",
+      "If you take the Mirror Line inland from Springvale Central, about forty minutes in the valley opens up and the hillsides turn into terraces of dark, glossy yuzu trees. That's where I grew up, and in early October the whole valley smells faintly of citrus. The fruit is still mostly green now; it turns golden in November, just in time for the winter yuzu baths at Moonview Spa. My grandmother Fumi used to say the green ones are for the nose and the yellow ones for the tongue, and she was right: early-season yuzu has a sharper, more floral zest and a little less juice.",
+      "This salmon is what I make on evenings when swimming lessons, homework and a late train all collide. It takes ten minutes of hands-on work, you can marinate it in the morning (or the night before), and Hana packs the leftovers in her bento the next day. The marinade is a simple Springvale-style yuzu miso: sweet white miso, a little mirin and sugar, and plenty of yuzu juice and zest. I buy my yuzu from the Tamura family's farm stand outside Moonview Spa station whenever I visit my mother, and freeze the juice in ice cube trays so I have it all year.",
       { "h": "Why you'll love it" },
       { "ul": [
         "Ten minutes of work, and it cooks while the rice steams.",
@@ -156,10 +156,10 @@
   "nutrition": { "calories": 250, "carbs": 9, "protein": 23, "fat": 13, "satFat": 3, "cholesterol": 60, "sodium": 640, "fiber": 1, "sugar": 6 },
   "comments": [
     {
-      "name": { "en": "Mariko (Harukawa)", "ja": "まりこ（春川市）" },
+      "name": { "en": "Mariko (Springvale)", "ja": "まりこ（春川市）" },
       "date": "2026-10-01",
       "stars": 5,
-      "en": "Green yuzu from the Kagami valley are at the morning market now, three for 200 yen. I marinated the salmon before work and dinner was on the table fifteen minutes after I got home.",
+      "en": "Green yuzu from the Mirror valley are at the morning market now, three for 200 yen. I marinated the salmon before work and dinner was on the table fifteen minutes after I got home.",
       "ja": "朝市に鏡川の谷の青ゆずが並び始めましたね。3個で200円でした。出勤前に漬けておいたら、帰宅して15分で夕飯ができました。"
     },
     {

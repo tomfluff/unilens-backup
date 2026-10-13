@@ -17,8 +17,8 @@
     "title": "Nikujaga (Japanese Meat and Potato Stew)",
     "teaser": "My grandmother's sweet-salty beef and potato stew, simmered under a drop lid in dashi. One pot, 45 minutes, and even better the next day.",
     "intro": [
-      "The first evening in October that I need a cardigan in the kitchen, I make nikujaga. It's practically a law in our house. This year it was last Tuesday: the cicadas have finally gone quiet, the yuzu at the greengrocer by Harukawa Central have started turning from green to yellow, and Sota came home from soccer practice and asked, before he'd even taken his shoes off, “Is it potato stew weather yet?” It was.",
-      "Nikujaga (肉じゃが) simply means “meat and potatoes”, and every Japanese family makes it a little differently. Mine comes from my grandmother Fumi, who ran a small inn in Tsukimi Onsen. She served it to hikers coming down from Mount Tsukimi in a big Harukawa-ware bowl and left the pot on the stove for seconds. I've changed exactly one thing: I add the snow peas at the end instead of simmering them grey. Sorry, Grandma.",
+      "The first evening in October that I need a cardigan in the kitchen, I make nikujaga. It's practically a law in our house. This year it was last Tuesday: the cicadas have finally gone quiet, the yuzu at the greengrocer by Springvale Central have started turning from green to yellow, and Sota came home from soccer practice and asked, before he'd even taken his shoes off, “Is it potato stew weather yet?” It was.",
+      "Nikujaga (肉じゃが) simply means “meat and potatoes”, and every Japanese family makes it a little differently. Mine comes from my grandmother Fumi, who ran a small inn in Moonview Spa. She served it to hikers coming down from Mount Moonview in a big Springvale-ware bowl and left the pot on the stove for seconds. I've changed exactly one thing: I add the snow peas at the end instead of simmering them grey. Sorry, Grandma.",
       { "h": "Why you'll love it" },
       { "ul": [
         "One pot, about 45 minutes from cutting board to table, and most of that is gentle simmering.",
@@ -28,7 +28,7 @@
       { "h": "Choosing the potatoes" },
       "This decision changes the dish most. <strong>May Queen</strong> (メークイン) potatoes are long and waxy and hold their shape. <strong>Danshaku</strong> (男爵) are round and floury: their edges crumble into the sauce and thicken it, which is how Fumi liked it. I use Danshaku at home and May Queen when I take nikujaga to a potluck. Outside Japan, Yukon Gold or Charlotte behave like May Queen, and Russets like Danshaku. Cut them large, about 4 cm, and soak them in water for 5 minutes so the surface starch doesn't cloud the sauce.",
       { "h": "Beef or pork?" },
-      "Western Japan uses beef and eastern Japan uses pork; Harukawa sits in the middle and argues about it at every PTA dinner. I use thinly sliced beef chuck sold as <em>sukiyaki</em> cut, or cheaper offcuts (切り落とし). Thinly sliced pork belly or shoulder is just as good and a little richer.",
+      "Western Japan uses beef and eastern Japan uses pork; Springvale sits in the middle and argues about it at every PTA dinner. I use thinly sliced beef chuck sold as <em>sukiyaki</em> cut, or cheaper offcuts (切り落とし). Thinly sliced pork belly or shoulder is just as good and a little richer.",
       { "h": "Tips for success" },
       "<strong>Sugar goes in before the soy sauce.</strong> Sugar soaks in slowly, while salt tightens the surface, so if the soy sauce goes in first the potatoes never get properly sweet. <strong>Use a drop lid</strong> (otoshibuta), or a circle of baking paper with a small hole in the middle: it bastes everything with only 400 ml of liquid and stops the potatoes tumbling and breaking. <strong>Keep the shirataki away from the beef</strong>, because the calcium in konnyaku can toughen the meat. And once the liquid is in, <strong>don't stir</strong>; shake the pot instead.",
       "The real secret is cooling. The flavour soaks into the potatoes as they cool, not while they bubble, so if you have time, turn off the heat, leave it for 30 minutes and warm it up just before dinner. Homemade <a href=\"{{guide:dashi}}\">dashi</a> makes a difference, but instant granules are fine on a weeknight. If you love simmered dishes, try my <a href=\"{{recipe:saba-misoni}}\">mackerel simmered in miso</a> next, with a bowl of <a href=\"{{recipe:kinoko-takikomi-gohan}}\">autumn mushroom rice</a>."
@@ -184,7 +184,7 @@
       }
     },
     {
-      "name": { "en": "Harukawa Tanuki", "ja": "春川のたぬき" }, "date": "2026-07-14", "stars": 4,
+      "name": { "en": "Springvale Tanuki", "ja": "春川のたぬき" }, "date": "2026-07-14", "stars": 4,
       "en": "A bit sweet for me, so next time I'll use 1½ tbsp sugar. The tip about adding sugar before the soy sauce was new to me, and the potatoes really did taste different.",
       "ja": "私には少し甘めだったので、次回は砂糖を大さじ1と1/2にします。砂糖を先に入れるコツは知らなかったのですが、本当にじゃがいもの味が違いました。"
     },

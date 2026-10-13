@@ -23,7 +23,7 @@ ${figure(coverageMap({ title: 'クモモバイル みのり県サービスエリ
 <h2>みのり県の5Gエリア</h2>
 ${table(['市町村', '現在の5G人口カバー率', '目標（2027年3月）'], MUNI.map(([, ja, now, target]) => [ja, `${now.toFixed(1)}%`, `${target.toFixed(1)}%`]))}
 <h2>都道府県別の5Gエリア</h2>
-${table(['都道府県', '5G人口カバー率', '2025年9月からの増減', '5G基地局数', 'ミリ波（n257）'], [...PREF.map(([en, ja, cov, ch, sites, mm]) => Object.assign([ja, `${cov.toFixed(1)}%`, `+${ch.toFixed(1)}ポイント`, sites.toLocaleString('en-US'), mm ? MMW[mm] : '—'], en === 'Minori' ? { cls: 'hl' } : {})), Object.assign(['全国（47都道府県）', `${NATIONAL_5G}%`, '+2.4ポイント', '118,560', '—'], { cls: 'hl' })], { caption: '主な都道府県。人口カバー率は、屋外で5Gを利用できるエリアに住む人口の割合です。' })}
+${table(['都道府県', '5G人口カバー率', '2025年9月からの増減', '5G基地局数', 'ミリ波（n257）'], [...PREF.map(([en, ja, cov, ch, sites, mm]) => Object.assign([ja, `${cov.toFixed(1)}%`, `+${ch.toFixed(1)}ポイント`, sites.toLocaleString('en-US'), mm ? MMW[mm] : '—'], en === 'Harvest' ? { cls: 'hl' } : {})), Object.assign(['全国（47都道府県）', `${NATIONAL_5G}%`, '+2.4ポイント', '118,560', '—'], { cls: 'hl' })], { caption: '主な都道府県。人口カバー率は、屋外で5Gを利用できるエリアに住む人口の割合です。' })}
 <h2>通信速度</h2>
 <figure class="fig"><img src="/assets/charts/speeds-ja.svg" alt="グラフ" width="680" height="330"></figure>
 <p>通信速度は、エリア、時間帯、ご利用の機種、接続している人数などによって変わります。2026年3月は春の引っ越しシーズン、2026年7月は夏のイベントの影響で低下しました。</p>

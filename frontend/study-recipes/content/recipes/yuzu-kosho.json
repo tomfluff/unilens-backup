@@ -18,8 +18,8 @@
     "title": "Homemade Yuzu Kosho (Green Yuzu and Chilli Paste)",
     "teaser": "A salty, fiery, wonderfully fragrant paste of green yuzu zest, green chillies and salt. Thirty minutes of grinding, one week in the fridge, and it keeps for six months.",
     "intro": [
-      "When I was small, the last week of September at my grandmother Fumi's inn in Tsukimi Onsen meant one thing: green fingers. Fumi would send my cousins and me down to the orchards in the Kagami valley with a basket, and we came back with green yuzu the size of golf balls and a bag of fiery little green chillies from her neighbour's field. Then we sat on the engawa (the wooden veranda) grating zest while she ground it with salt in a huge Harukawa-ware suribachi, the grooved mortar that had been at the inn since before the war. The whole house smelled of citrus and chilli, and our eyes watered for an hour.",
-      "<strong>Yuzu kosho</strong> is a salty, spicy, intensely fragrant paste of yuzu zest, chillies and salt. Despite the name, there is no pepper in it: <em>kosho</em> means chilli in the dialects of Kyushu, where the paste comes from. It travelled here decades ago and stayed, because the Kagami valley grows some of the best yuzu in the country. Every September and October, Harukawa kitchens make a jar, and the yakitori stalls at the Lantern Festival put a dab on everything.",
+      "When I was small, the last week of September at my grandmother Fumi's inn in Moonview Spa meant one thing: green fingers. Fumi would send my cousins and me down to the orchards in the Mirror valley with a basket, and we came back with green yuzu the size of golf balls and a bag of fiery little green chillies from her neighbour's field. Then we sat on the engawa (the wooden veranda) grating zest while she ground it with salt in a huge Springvale-ware suribachi, the grooved mortar that had been at the inn since before the war. The whole house smelled of citrus and chilli, and our eyes watered for an hour.",
+      "<strong>Yuzu kosho</strong> is a salty, spicy, intensely fragrant paste of yuzu zest, chillies and salt. Despite the name, there is no pepper in it: <em>kosho</em> means chilli in the dialects of Kyushu, where the paste comes from. It travelled here decades ago and stayed, because the Mirror valley grows some of the best yuzu in the country. Every September and October, Springvale kitchens make a jar, and the yakitori stalls at the Lantern Festival put a dab on everything.",
       { "h": "Why you'll love it" },
       { "ul": [
         "A tiny jar goes a long way: a quarter teaspoon lifts a whole bowl of soup.",
@@ -29,7 +29,7 @@
       { "h": "Green or red?" },
       "This is the classic green version, made in September and October with unripe green yuzu and green chillies; it is sharp and grassy. In November, when the yuzu turn yellow, make the red version the same way with yellow yuzu and fresh red chillies. It is rounder and a little sweeter. For both, use roughly equal weights of zest and chillies, and salt at 15–20% of their combined weight. Below 15% the paste can spoil; I use 20% for a jar I want to keep all year.",
       { "h": "Before you start" },
-      "<strong>Wear gloves.</strong> Chilli oil soaks into your skin, and it will find your eyes hours later (I learned this the hard way at nine). Wash and dry the yuzu and chillies thoroughly, because any water left on them shortens the shelf life. A kitchen scale is essential, since the salt is calculated from the weight of the zest and chillies. I buy green yuzu at the vegetable stalls of the Minori Port morning market, about 70 yen each in early October, and the chillies from the same stall. Seven small green yuzu give about 40 g of zest.",
+      "<strong>Wear gloves.</strong> Chilli oil soaks into your skin, and it will find your eyes hours later (I learned this the hard way at nine). Wash and dry the yuzu and chillies thoroughly, because any water left on them shortens the shelf life. A kitchen scale is essential, since the salt is calculated from the weight of the zest and chillies. I buy green yuzu at the vegetable stalls of the Ferry Port morning market, about 70 yen each in early October, and the chillies from the same stall. Seven small green yuzu give about 40 g of zest.",
       { "h": "How to use it" },
       "Stir a little into miso soup, dab it on grilled chicken or steak, mix it into mayonnaise for a dip, or put it on the table with <a href=\"{{recipe:minato-nabe}}\">minato-nabe</a> or any hot pot. It is also wonderful in my <a href=\"{{recipe:wafu-mushroom-pasta}}\">butter-soy mushroom pasta</a> and on <a href=\"{{recipe:chicken-karaage}}\">karaage</a>. Keep the juice of the zested yuzu for <a href=\"{{recipe:yuzu-miso-salmon}}\">yuzu miso salmon</a>."
     ],
@@ -146,10 +146,10 @@
   "nutrition": { "calories": 40, "carbs": 9, "protein": 1.5, "fat": 0.3, "satFat": 0, "cholesterol": 0, "sodium": 5500, "fiber": 5, "sugar": 2 },
   "comments": [
     {
-      "name": { "en": "Satomi (Harukawa)", "ja": "さとみ（春川市）" },
+      "name": { "en": "Satomi (Springvale)", "ja": "さとみ（春川市）" },
       "date": "2026-09-27",
       "stars": 5,
-      "en": "Made my first ever batch with my daughter this weekend, with yuzu and chillies from the Minori Port market. We both wore gloves this time, after last year's disaster with chilli eyes!",
+      "en": "Made my first ever batch with my daughter this weekend, with yuzu and chillies from the Ferry Port market. We both wore gloves this time, after last year's disaster with chilli eyes!",
       "ja": "この週末、娘と初めて仕込みました。ゆずも唐辛子もみのり港の朝市で。去年、唐辛子を触った手で目をこすって大変だったので、今年は二人とも手袋をしました！"
     },
     {
@@ -208,7 +208,7 @@
       }
     },
     {
-      "name": { "en": "Tsukimi Onsen innkeeper", "ja": "月見温泉の宿の女将" },
+      "name": { "en": "Moonview Spa innkeeper", "ja": "月見温泉の宿の女将" },
       "date": "2024-10-05",
       "stars": 5,
       "en": "We serve homemade yuzu kosho with dinner at our inn, and our recipe is almost the same, with 18% salt. Lovely to see Fumi-san's way written down.",

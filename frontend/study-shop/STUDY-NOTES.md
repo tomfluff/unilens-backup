@@ -1,6 +1,6 @@
 # Marketa: candidate study tasks
 
-On the site it is Monday 5 October 2026, 10:40. The shopper is Aki in Harukawa and is not a Marketa Fast member. Each task gives the question in English and Japanese, where the answer is, why it is a good task for an assistant, and the answer.
+On the site it is Monday 5 October 2026, 10:40. The shopper is Aki in Springvale and is not a Marketa Fast member. Each task gives the question in English and Japanese, where the answer is, why it is a good task for an assistant, and the answer.
 
 1. **Which electric kettle holds the most water and can still arrive tomorrow?**
    今日注文して明日届く電気ケトルの中で、いちばん容量が大きいのはどれ？
@@ -16,7 +16,7 @@ On the site it is Monday 5 October 2026, 10:40. The shopper is Aki in Harukawa a
      - The single-wall body gets very hot; one reviewer returned it for the Hearth.
      - The lid hinge cracked after 5 months; the warranty replacement took 12 days.
      - It smelled of plastic for a week.
-     - Limescale builds up fast in hard Tsukimi Onsen water.
+     - Limescale builds up fast in hard Moonview Spa water.
      - It has no water window or temperature control.
      - Matte black shows water spots and took 3 days to arrive.
 
@@ -40,7 +40,7 @@ On the site it is Monday 5 October 2026, 10:40. The shopper is Aki in Harukawa a
    - **Why:** It needs a small calculation with the seller's free-delivery threshold.
    - **Answer:** The gift box. It is ¥4,320 with free delivery. The home pack is ¥3,780 + ¥600 delivery = ¥4,380, so ¥60 more. Food can't be returned unless it arrives damaged.
 
-6. **My friend is allergic to shrimp. Can she eat the Harukawa Castle senbei if she skips the shrimp ones?**
+6. **My friend is allergic to shrimp. Can she eat the Springvale Castle senbei if she skips the shrimp ones?**
    エビアレルギーの友人、春川城せんべいのエビ味を除けば食べられる？
    - **Where:** The senbei page: Q&A, specs (allergens) and reviews.
    - **Why:** It is a safety question; the answer is in a Q&A, not in the headline.
@@ -63,9 +63,9 @@ On the site it is Monday 5 October 2026, 10:40. The shopper is Aki in Harukawa a
    - **Where:** Your orders, then Track package (the timeline and the alert).
    - **Why:** It means reading a timeline and its options.
    - **Answer:**
-     - It is the TitanCell 40000 from BrightDeal, and it is delayed. It is held at the Minori hub because of Lantern Festival week.
+     - It is the TitanCell 40000 from BrightDeal, and it is delayed. It is held at the Harvest hub because of Lantern Festival week.
      - It now arrives Thu 8 Oct 14:00–16:00; it was due Tue 6 Oct. The carrier is Seiun Express, tracking ID 4417-2290-8836.
-     - You can switch to the Marketa Locker at Harukawa Central Station.
+     - You can switch to the Marketa Locker at Springvale Central Station.
      - If it hasn't arrived by Tue 13 Oct, you can claim a refund under Marketa Purchase Protection.
 
 10. **What's happening with my Drizzle Pro return, and when do I get my money back?**
@@ -86,11 +86,11 @@ On the site it is Monday 5 October 2026, 10:40. The shopper is Aki in Harukawa a
     - **Why:** The answer is spread over the specs, Q&A and reviews.
     - **Answer:** No, it is for gas flames only. The kiln does not recommend IH heat-diffuser plates (uneven heating, cracks), and damage from them isn't covered. A reviewer learned this the hard way. It also isn't for the microwave or dishwasher, and it needs seasoning with rice porridge before first use.
 
-13. **Are the Tokiya "Harukawa-style" mugs real Harukawa ware? What's the difference from the Kagami Kiln pair?**
+13. **Are the Tokiya "Springvale-style" mugs real Springvale ware? What's the difference from the Kagami Kiln pair?**
     トキヤの「春川焼風」マグは本物の春川焼？鏡窯のペアマグとの違いは？
-    - **Where:** The Tokiya and Kagami mug pages, the comparison table, reviews and Q&A.
+    - **Where:** The Tokiya and Mirror mug pages, the comparison table, reviews and Q&A.
     - **Why:** The title is misleading, and the sponsored placement pushes it.
-    - **Answer:** No. Tokiya mugs are factory-made in China and sold by BrightDeal (¥2,480, 350 mL, glossy uniform glaze, sponsored). They are not Kagami Kiln's cheaper line, as a seller answer confirms. Kagami Kiln mugs are handmade in Kamagaoka, Harukawa (¥6,600 the pair, 300 mL, each piece different, stamped 鏡).
+    - **Answer:** No. Tokiya mugs are factory-made in China and sold by BrightDeal (¥2,480, 350 mL, glossy uniform glaze, sponsored). They are not Kagami Kiln's cheaper line, as a seller answer confirms. Kagami Kiln mugs are handmade in Kamagaoka, Springvale (¥6,600 the pair, 300 mL, each piece different, stamped 鏡).
 
 14. **Is the Seiran headphones' Lightning Deal really the lowest price lately?**
     セイランのヘッドホンのタイムセール価格、最近でいちばん安い？

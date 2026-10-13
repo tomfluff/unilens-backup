@@ -8,7 +8,7 @@ A mock support and procedures site of a fictional national mobile carrier, for U
 - **Plans:** `plans/index.html` (comparison table of 4 plans, price chart, family discount, home internet bundle, under-22 discount, fine print), `plans/mini.html`, `plans/basic.html`, `plans/unlimited.html`, `plans/senior.html`, `plans/options.html` (call options, extra data, Device Care tiers, other options), `plans/roaming.html` (rates by zone)
 - **Procedures:** `procedures/index.html`, `switch-to-kumo.html` (MNP, flow diagram), `new-contract.html` (ID documents, minors), `change-plan.html`, `esim.html` (iPhone/Android tabs), `sim-card.html` (SIM tray diagram), `data-usage.html` (usage chart), `lost-phone.html` (flow diagram), `repair.html`, `cancel.html`, `change-details.html`, `transfer.html`
 - **Billing:** `billing/index.html` (payment methods, dates, late payment), `billing/read-your-bill.html` (annotated sample bill SVG, bill breakdown chart), `billing/fees.html`
-- `network.html` (coverage map of Minori Prefecture, 5G by prefecture and municipality, speed chart as `<img>` with alt "graph"), `status.html` (incidents, maintenance)
+- `network.html` (coverage map of Harvest Prefecture, 5G by prefecture and municipality, speed chart as `<img>` with alt "graph"), `status.html` (incidents, maintenance)
 - **Shops:** `shops/index.html`, `shops/harukawa-central.html`, `shops/appointments.html` (mock booking form)
 - `contact.html`, `faq.html` (51 questions in 9 categories), `my-kumo.html`, `forms/index.html`, `forms/checklist.html`, `search.html`
 - **Notices:** `news/index.html` (11 notices) and 4 detail pages: `price-revision-2026.html`, `maintenance-october-2026.html`, `scam-sms-warning.html`, `3g-service-end.html`

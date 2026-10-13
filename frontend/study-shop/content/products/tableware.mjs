@@ -1,4 +1,4 @@
-// Harukawa ware tableware (Home). Same shape as kettles.mjs.
+// Springvale ware tableware (Home). Same shape as kettles.mjs.
 export const cluster = {
   id: 'tableware',
   compareRows: {
@@ -16,7 +16,7 @@ export default [
     seller: 'kagami',
     images: ['kagami-mug-pair'],
     title: {
-      en: 'Kagami Kiln Harukawa Ware Mug Pair, 300 mL Each, Handmade Stoneware, Yuzu-Yellow Ash Glaze and Indigo, Microwave and Dishwasher Safe, Gift Box, Made in Harukawa, Japan',
+      en: 'Kagami Kiln Springvale Ware Mug Pair, 300 mL Each, Handmade Stoneware, Yuzu-Yellow Ash Glaze and Indigo, Microwave and Dishwasher Safe, Gift Box, Made in Springvale, Japan',
       ja: '鏡窯 春川焼 ペアマグカップ 300ml 柚子灰釉×藍釉 手作り 陶器 電子レンジ・食洗機対応 化粧箱入り 結婚祝い 贈り物 日本製',
     },
     short: { en: 'Kagami Kiln Mug Pair', ja: '鏡窯 春川焼 ペアマグ' },
@@ -38,13 +38,13 @@ export default [
     },
     bullets: {
       en: [
-        'GENUINE HARUKAWA WARE: thrown on the wheel and glazed by hand at Kagami Kiln, a family pottery in Harukawa’s Kamagaoka district since 1891. Each mug has the kiln’s 鏡 stamp on its unglazed foot.',
-        'TWO HARUKAWA GLAZES: the soft yuzu-yellow ash glaze is made with ash from pruned yuzu branches from the Kagami River valley; the deep indigo glaze turns brown at the rim. Choose one of each, or two indigo.',
+        'GENUINE SPRINGVALE WARE: thrown on the wheel and glazed by hand at Kagami Kiln, a family pottery in Springvale’s Kamagaoka district since 1891. Each mug has the kiln’s 鏡 stamp on its unglazed foot.',
+        'TWO SPRINGVALE GLAZES: the soft yuzu-yellow ash glaze is made with ash from pruned yuzu branches from the Mirror River valley; the deep indigo glaze turns brown at the rim. Choose one of each, or two indigo.',
         'NO TWO ALIKE: each mug differs a little from the photos and from its partner: height ±3 mm, capacity ±15 mL, glaze tone, drips, iron specks and tiny pinholes. These are the nature of handmade ware, not defects.',
         '300 mL EACH filled to the brim (about 250 mL to a comfortable level), a standard mug of coffee or tea. 8.5 cm across, 9 cm tall, about 320 g each.',
         'EVERYDAY SAFE: microwave and dishwasher OK, but we recommend hand washing to keep the ash glaze’s soft sheen and protect the rims. Not for the oven or a direct flame.',
         'IN TIME FOR THE LANTERN FESTIVAL: the two in-stock styles ship within 2 business days and arrive Thu 8 – Fri 9 Oct with free shipping (Kagami Kiln orders of ¥5,000 or more). The engraved pair is made to order and arrives in early November.',
-        'READY TO GIVE: in a paper gift box with a leaflet on Harukawa ware in English and Japanese. Noshi paper free; gift wrapping ¥330.',
+        'READY TO GIVE: in a paper gift box with a leaflet on Springvale ware in English and Japanese. Noshi paper free; gift wrapping ¥330.',
       ],
       ja: [
         '【正真正銘の春川焼】1891年創業、春川・窯ヶ丘の家族経営の窯元「鏡窯」が、ろくろで成形し一つずつ手で釉掛けしています。素地のままの高台には鏡窯の「鏡」印。',
@@ -58,13 +58,13 @@ export default [
     },
     specs: {
       en: [
-        ['Brand', 'Kagami Kiln (Harukawa, Minori Prefecture)'], ['Potter', 'Kagami Sōichi (4th generation) and workshop'], ['Ware', 'Harukawa ware (春川焼), stoneware'],
-        ['Clay', 'Kamagaoka clay (iron-rich, from the Kagami River terraces)'], ['Glaze', 'Yuzu-yellow ash glaze, indigo glaze (lead-free)'],
+        ['Brand', 'Kagami Kiln (Springvale, Harvest Prefecture)'], ['Potter', 'Kagami Sōichi (4th generation) and workshop'], ['Ware', 'Springvale ware (春川焼), stoneware'],
+        ['Clay', 'Kamagaoka clay (iron-rich, from the Mirror River terraces)'], ['Glaze', 'Yuzu-yellow ash glaze, indigo glaze (lead-free)'],
         ['Capacity', '300 mL each to the brim (about 250 mL in use), ±15 mL'], ['Dimensions', 'Ø8.5 × H9 cm, 11.5 cm wide with handle (±3 mm)'],
         ['Weight', 'About 320 g each'], ['Microwave', 'Yes'], ['Dishwasher', 'Yes (hand wash recommended)'], ['Oven / direct flame', 'No'],
         ['Firing', 'Gas kiln, reduction firing at about 1,250 °C'], ['Engraving (made-to-order style)', 'Up to 6 Japanese characters or 10 letters per mug'],
-        ['Country of origin', 'Japan (Harukawa)'], ['Warranty', 'No manufacturer warranty; breakage in delivery handled by the seller (report within 48 hours)'],
-        ['In the box', '2 mugs, paper gift box, Harukawa ware leaflet (English/Japanese)'],
+        ['Country of origin', 'Japan (Springvale)'], ['Warranty', 'No manufacturer warranty; breakage in delivery handled by the seller (report within 48 hours)'],
+        ['In the box', '2 mugs, paper gift box, Springvale ware leaflet (English/Japanese)'],
       ],
       ja: [
         ['ブランド', '鏡窯（みのり県春川市）'], ['作り手', '4代目 鏡 宗一と工房スタッフ'], ['種類', '春川焼（陶器）'],
@@ -77,7 +77,7 @@ export default [
       ],
     },
     compare: {
-      en: ['2 mugs', '300 mL each', 'Yuzu-yellow ash + indigo (handmade)', 'Yes', 'Yes (hand wash recommended)', 'Kagami Kiln, Harukawa'],
+      en: ['2 mugs', '300 mL each', 'Yuzu-yellow ash + indigo (handmade)', 'Yes', 'Yes (hand wash recommended)', 'Kagami Kiln, Springvale'],
       ja: ['マグ2客', '各300mL', '柚子灰釉＋藍釉（手作り）', '可', '可（手洗い推奨）', '鏡窯（春川）'],
     },
     tables: [
@@ -99,7 +99,7 @@ export default [
     ],
     description: {
       en: [
-        'Harukawa ware (春川焼) has been made on the hills of Kamagaoka, above the Kagami River, since the 1630s, when the lords of Harukawa Castle opened a domain kiln there to supply the castle. When the domain kiln closed in the 1870s, its potters set up their own family workshops. Kagami Kiln was founded in 1891 and is run today by the fourth generation, Kagami Sōichi, with his daughter and two apprentices.',
+        'Springvale ware (春川焼) has been made on the hills of Kamagaoka, above the Mirror River, since the 1630s, when the lords of Springvale Castle opened a domain kiln there to supply the castle. When the domain kiln closed in the 1870s, its potters set up their own family workshops. Kagami Kiln was founded in 1891 and is run today by the fourth generation, Kagami Sōichi, with his daughter and two apprentices.',
         'Each mug starts as iron-rich Kamagaoka clay that has been aged for a year. It is thrown on the wheel, trimmed when leather-hard and given a hand-pulled handle, then dried for about two weeks, bisque-fired at 800 °C, dipped in glaze by hand and fired again at about 1,250 °C in a gas kiln. In reduction firing the flame draws oxygen out of the glaze, which is why the yuzu-yellow ash glaze can come out anywhere from straw yellow to greenish yellow, and why the indigo ranges from blue-black to a brighter blue with brown edges. The foot is left unglazed and shows the reddish clay.',
         'Because every mug is made by hand, yours will not match the photos or each other exactly. Pinholes (tiny dots in the glaze), dark iron specks and glaze drips are part of the character of ash glaze. The mugs are microwave- and dishwasher-safe, but we recommend washing by hand with a soft sponge: strong dishwasher detergent slowly dulls ash glaze, and rims can chip if they knock against other dishes. The unglazed foot can scratch glass or lacquered tables, so use a coaster or smooth the foot with fine sandpaper. Soaking the mugs in water for 10 minutes before first use helps stop coffee and tea staining the pinholes.',
         'In the engraved pair (yellow & indigo), a name or short word is carved by hand into the side of each mug before glazing, so the glaze pools in the letters. Write the names in the order notes, up to 6 Japanese characters or 10 letters per mug; Kagami Kiln will message you within 2 business days to confirm the layout. Each pair is made from the clay up, so it takes 3–4 weeks and arrives in early November, after the Lantern Festival. Once production starts, engraved pairs cannot be cancelled or returned.',
@@ -115,7 +115,7 @@ export default [
     },
     reviews: [
       { stars: 5, date: '2026-09-26', variant: 'yellow-indigo', helpful: 142, verified: true,
-        en: { name: 'Haruka', title: 'Wedding gift, and they loved it', body: 'Bought these for a friend’s wedding with the free 結婚御祝 noshi. They arrived two days later, wrapped in recycled paper inside a sturdy box with a leaflet about Harukawa ware in English and Japanese, which was perfect because the groom is from Canada. The yellow one is a soft, almost buttery yellow with tiny green drips near the foot.' },
+        en: { name: 'Haruka', title: 'Wedding gift, and they loved it', body: 'Bought these for a friend’s wedding with the free 結婚御祝 noshi. They arrived two days later, wrapped in recycled paper inside a sturdy box with a leaflet about Springvale ware in English and Japanese, which was perfect because the groom is from Canada. The yellow one is a soft, almost buttery yellow with tiny green drips near the foot.' },
         ja: { name: 'はるか', title: '結婚祝いに。とても喜ばれました', body: '友人の結婚祝いに、無料の「結婚御祝」ののしを付けて注文。2日後に届きました。再生紙でていねいに包まれ、しっかりした箱に春川焼のしおり（日英）が入っていて、新郎がカナダの方なのでちょうど良かったです。柚子黄はバターのようなやわらかい黄色で、高台の近くに小さな緑の釉だれがありました。' } },
       { stars: 2, date: '2026-09-14', variant: 'yellow-indigo', helpful: 118, verified: true,
         en: { name: 'Mariko', title: 'The yellow is nothing like the photo', body: 'The photo shows a bright yuzu yellow. Mine is a muddy greenish brown with a grey patch on one side. I asked Kagami Kiln to exchange it and they politely said glaze variation is the nature of handmade ware, not a defect, so my only option was to return it unused at my own cost within 14 days. To be fair the policy is on the page, but the photos should show the range of colours you might get.' },
@@ -133,7 +133,7 @@ export default [
         en: { name: 'Nao', title: 'Lovely, but smaller and heavier than I thought', body: '300 mL is to the very brim; leaving room for milk it holds about 230 mL. They are also heavy, about 320 g each, so my mother, who has arthritis in her hands, finds the yellow one tiring to lift when full. Beautiful glaze though.' },
         ja: { name: 'なお', title: 'きれいだけど、思ったより小さくて重い', body: '300mLは縁までいっぱいの量で、ミルクを入れる余裕を残すと230mLくらいです。1客約320gと重めなので、手にリウマチのある母は柚子黄のほうを満杯で持ち上げるのがつらいそうです。釉薬はとてもきれいです。' } },
       { stars: 4, date: '2026-09-08', variant: 'yellow-indigo', helpful: 132, verified: true,
-        en: { name: 'Junko', title: 'Not the same thing as the Tokiya mugs', body: 'Last year I bought the Tokiya “Harukawa-style” mugs from BrightDeal for ¥2,480, thinking they were Harukawa ware. My mother, who grew up in Kamagaoka, turned one over and laughed: glossy, perfectly even, and a Made in China sticker on the base. These Kagami Kiln mugs are the real thing, with the kiln stamp on the unglazed foot and an ash glaze that changes in the light. Four stars only because the yellow one has two pinholes that collect coffee.' },
+        en: { name: 'Junko', title: 'Not the same thing as the Tokiya mugs', body: 'Last year I bought the Tokiya “Springvale-style” mugs from BrightDeal for ¥2,480, thinking they were Springvale ware. My mother, who grew up in Kamagaoka, turned one over and laughed: glossy, perfectly even, and a Made in China sticker on the base. These Kagami Kiln mugs are the real thing, with the kiln stamp on the unglazed foot and an ash glaze that changes in the light. Four stars only because the yellow one has two pinholes that collect coffee.' },
         ja: { name: 'じゅんこ', title: 'トキヤのマグとは別物です', body: '去年、ブライトディールでトキヤの「春川焼風」マグを2,480円で買い、春川焼だと思い込んでいました。窯ヶ丘育ちの母が裏返して笑ったのを覚えています。つやつやで均一、底には「中国製」のシール。こちらの鏡窯のマグは本物で、素地の高台に窯印があり、灰釉は光の加減で表情が変わります。柚子黄にピンホールが2つあってコーヒーがたまるので星4つ。' } },
       { stars: 5, date: '2026-06-18', variant: 'indigo-pair', helpful: 22, verified: true,
         en: { name: 'Sota', title: 'Fine in the microwave', body: 'I reheat coffee in these twice a day, one minute in the microwave, no problem, and the handle stays cool enough to hold. I wash them by hand and after a year they still look new.' },
@@ -153,16 +153,16 @@ export default [
     ],
     qa: [
       { date: '2026-09-29', votes: 34,
-        en: { q: 'If I order this week, will they arrive before the Lantern Festival?', a: 'The yellow & indigo and two-indigo pairs are in stock: we ship within 2 business days, and they reach Harukawa city 2–4 days after you order, well before 10–11 Oct. The engraved pair is made to order (3–4 weeks), so it will not be in time.', by: 'Kagami Kiln' },
+        en: { q: 'If I order this week, will they arrive before the Lantern Festival?', a: 'The yellow & indigo and two-indigo pairs are in stock: we ship within 2 business days, and they reach Springvale city 2–4 days after you order, well before 10–11 Oct. The engraved pair is made to order (3–4 weeks), so it will not be in time.', by: 'Kagami Kiln' },
         ja: { q: '今週注文すれば灯籠まつりまでに届きますか？', a: '柚子黄×藍と藍×藍は在庫がございます。2営業日以内に発送し、春川市内ならご注文から2〜4日でお届けしますので、10月10日・11日には十分間に合います。名入れペアは受注制作（3〜4週間）のため間に合いません。', by: '鏡窯' } },
       { date: '2026-07-15', votes: 41,
         en: { q: 'Are they really microwave and dishwasher safe?', a: 'Yes. Both glazes are fired at about 1,250 °C and contain no metal, so the microwave is fine. They can go in the dishwasher too, but we recommend hand washing: alkaline dishwasher detergent slowly dulls ash glaze, and rims can chip if they knock together. Please do not use them in an oven or on a flame.', by: 'Kagami Kiln (Kagami Sōichi)' },
         ja: { q: '本当に電子レンジ・食洗機で使えますか？', a: 'はい。どちらの釉薬も約1,250℃で焼成しており金属を含まないため、電子レンジは問題ありません。食洗機もお使いいただけますが、アルカリ性の洗剤で灰釉のつやが徐々に落ちることや、器同士がぶつかって口縁が欠けることがあるため、手洗いをおすすめしています。オーブン・直火ではお使いにならないでください。', by: '鏡窯（鏡 宗一）' } },
       { date: '2026-03-10', votes: 12,
-        en: { q: 'Is the Tokiya Harukawa-style mug pair a cheaper line from the same kiln?', a: 'I think so. The colours look the same and it’s much cheaper.', by: 'Marketa customer (Yoshi)' },
+        en: { q: 'Is the Tokiya Springvale-style mug pair a cheaper line from the same kiln?', a: 'I think so. The colours look the same and it’s much cheaper.', by: 'Marketa customer (Yoshi)' },
         ja: { q: 'トキヤの「春川焼風」ペアマグは、同じ窯元の廉価版ですか？', a: 'たぶんそうだと思います。色が同じで、ずっと安いので。', by: 'マルケタ購入者（よし）' } },
       { date: '2026-03-12', votes: 57,
-        en: { q: 'Are Tokiya mugs made by Kagami Kiln?', a: 'No, and an earlier answer here is mistaken. We have no connection with Tokiya. Their mugs are factory-made in China and are not Harukawa ware. Everything from Kagami Kiln is made in our workshop in Kamagaoka and has the 鏡 stamp on the foot.', by: 'Kagami Kiln' },
+        en: { q: 'Are Tokiya mugs made by Kagami Kiln?', a: 'No, and an earlier answer here is mistaken. We have no connection with Tokiya. Their mugs are factory-made in China and are not Springvale ware. Everything from Kagami Kiln is made in our workshop in Kamagaoka and has the 鏡 stamp on the foot.', by: 'Kagami Kiln' },
         ja: { q: 'トキヤのマグは鏡窯で作っているのですか？', a: 'いいえ。上のご回答は誤りです。当窯はトキヤとは一切関係がございません。トキヤのマグは中国の工場製で、春川焼ではありません。鏡窯の器はすべて窯ヶ丘の工房で作り、高台に「鏡」の印を入れています。', by: '鏡窯' } },
       { date: '2026-08-20', votes: 19,
         en: { q: 'How many characters can I engrave? Can I use kanji?', a: 'Up to 6 Japanese characters (kanji, hiragana or katakana) or 10 letters per mug. Write them in the order notes and we will message you within 2 business days with the layout. Once you confirm, production starts and the order cannot be cancelled or returned.', by: 'Kagami Kiln' },
@@ -180,7 +180,7 @@ export default [
     seller: 'kagami',
     images: ['kagami-tea-set'],
     title: {
-      en: 'Kagami Kiln Harukawa Ware Kyusu Tea Set, Side-Handle Teapot 360 mL with Built-In Ceramic Strainer and 2 Yunomi Cups 150 mL, Celadon Crackle Glaze, Handmade in Harukawa, Japan',
+      en: 'Kagami Kiln Springvale Ware Kyusu Tea Set, Side-Handle Teapot 360 mL with Built-In Ceramic Strainer and 2 Yunomi Cups 150 mL, Celadon Crackle Glaze, Handmade in Springvale, Japan',
       ja: '鏡窯 春川焼 急須 湯呑み セット 横手急須 360ml 陶製茶こし（ささめ） 湯呑 150ml×2客 青磁貫入 手作り 化粧箱入り 日本製',
     },
     short: { en: 'Kagami Kiln Kyusu Tea Set', ja: '鏡窯 青磁貫入 急須セット' },
@@ -218,11 +218,11 @@ export default [
     },
     specs: {
       en: [
-        ['Brand', 'Kagami Kiln (Harukawa, Minori Prefecture)'], ['Ware', 'Harukawa ware (春川焼), stoneware'], ['Set contents', 'Side-handle teapot ×1, yunomi ×2'],
+        ['Brand', 'Kagami Kiln (Springvale, Harvest Prefecture)'], ['Ware', 'Springvale ware (春川焼), stoneware'], ['Set contents', 'Side-handle teapot ×1, yunomi ×2'],
         ['Teapot capacity', '360 mL to the brim (about 300 mL in use)'], ['Teapot size', 'W15 × D10 × H9 cm including handle, about 330 g'],
         ['Strainer', 'Ceramic, about 250 holes, built into the pot wall'], ['Yunomi capacity', '150 mL each to the brim'], ['Yunomi size', 'Ø7.5 × H7 cm, about 130 g each'],
         ['Glaze', 'Celadon crackle (lead-free)'], ['Handle', 'Right-handed'], ['Microwave', 'No'], ['Dishwasher', 'No (hand wash)'], ['Direct flame', 'No'],
-        ['Country of origin', 'Japan (Harukawa)'], ['Warranty', 'No manufacturer warranty; breakage in delivery handled by the seller (report within 48 hours)'],
+        ['Country of origin', 'Japan (Springvale)'], ['Warranty', 'No manufacturer warranty; breakage in delivery handled by the seller (report within 48 hours)'],
         ['In the box', 'Teapot with lid, 2 yunomi, paper gift box, care leaflet (English/Japanese)'],
       ],
       ja: [
@@ -235,7 +235,7 @@ export default [
       ],
     },
     compare: {
-      en: ['Teapot + 2 cups', 'Teapot 360 mL, cups 150 mL', 'Celadon crackle', 'No', 'No (hand wash)', 'Kagami Kiln, Harukawa'],
+      en: ['Teapot + 2 cups', 'Teapot 360 mL, cups 150 mL', 'Celadon crackle', 'No', 'No (hand wash)', 'Kagami Kiln, Springvale'],
       ja: ['急須＋湯呑2客', '急須360mL・湯呑150mL', '青磁貫入', '不可', '不可（手洗い）', '鏡窯（春川）'],
     },
     tables: [
@@ -259,11 +259,11 @@ export default [
     ],
     description: {
       en: [
-        'This set is for drinking Japanese green tea the way it is made in Harukawa homes: a small side-handle kyusu that pours two cups at a time and a pair of matching yunomi. Like all Kagami Kiln ware it is thrown on the wheel in Kamagaoka from iron-rich local clay, bisque-fired, glazed by hand and fired at about 1,250 °C. The spout, lid and strainer of each pot are fitted to that pot by hand, so lids are not interchangeable.',
+        'This set is for drinking Japanese green tea the way it is made in Springvale homes: a small side-handle kyusu that pours two cups at a time and a pair of matching yunomi. Like all Kagami Kiln ware it is thrown on the wheel in Kamagaoka from iron-rich local clay, bisque-fired, glazed by hand and fired at about 1,250 °C. The spout, lid and strainer of each pot are fitted to that pot by hand, so lids are not interchangeable.',
         'The celadon glaze shrinks more than the clay as it cools, so it crazes into a web of fine lines called kannyū. The lines are in the glaze surface only and the pot does not leak. With daily use, tea gradually tints the lines brown, starting with the cups. Many people love the set “growing” this way; if you want it to stay pale, this is not the set for you, as bleach will not reverse it. Under Kagami Kiln’s policy, crackle and tea tint are not defects.',
         'The strainer is part of the pot: about 250 holes pierced one by one in the wall behind the spout, so the leaves can open fully and nothing metallic touches the tea. Pour to the last drop so the second infusion does not turn bitter, and keep a finger on the lid while pouring. Water at the right temperature makes the biggest difference: sencha tastes best at 70–80 °C, so a kettle with temperature settings helps.',
         'Hand wash only. Rinse the teapot with hot water, brush the strainer holes from inside with a soft toothbrush, and dry it upside down with the lid off for a day before putting it away. Crackle glaze can hold moisture, and a pot stored damp may smell musty. Before first use, soak all three pieces in water for an hour. Not for the microwave, dishwasher or a direct flame; warm the cups with hot water instead.',
-        'Only 2 sets are left from this firing; the next celadon firing is in late November, with new sets listed in early December. Kagami Kiln ships within 2 business days, wrapped in recycled paper in a paper gift box, and the set arrives Thu 8 – Fri 9 Oct in Harukawa city with free shipping. Noshi paper is free and gift wrapping is ¥330.',
+        'Only 2 sets are left from this firing; the next celadon firing is in late November, with new sets listed in early December. Kagami Kiln ships within 2 business days, wrapped in recycled paper in a paper gift box, and the set arrives Thu 8 – Fri 9 Oct in Springvale city with free shipping. Noshi paper is free and gift wrapping is ¥330.',
       ],
       ja: [
         '春川の家庭でいつも飲まれている日本茶を、そのままの形で楽しむためのセットです。湯呑2杯分を一度に注げる小ぶりの横手急須に、そろいの湯呑を合わせました。鏡窯のほかの器と同じく、窯ヶ丘の鉄分の多い土をろくろで挽き、素焼き、手作業での釉掛けを経て約1,250℃で焼き上げます。注ぎ口・ふた・茶こしは一つの急須ごとに手で合わせているため、ふたにほかの急須との互換性はありません。',
@@ -290,7 +290,7 @@ export default [
         en: { name: 'Sazanka', title: 'The brown crackle is the best part', body: 'After four months the cups have a fine web of tea-coloured lines, like a set from an old teahouse. That is exactly what kannyū is supposed to do. If you want it to stay spotless, buy porcelain.' },
         ja: { name: 'さざんか', title: '貫入が育つのが楽しみ', body: '4か月で湯呑に細かいお茶色の線が入り、古い茶屋の器のような味わいになりました。貫入はこうなるものです。真っさらなままがいいなら磁器を選ぶべきでしょう。' } },
       { stars: 1, date: '2026-05-20', variant: 'celadon', helpful: 58, verified: true,
-        en: { name: 'Masa', title: 'Strainer clogs with fukamushi tea', body: 'With the deep-steamed tea we buy in Tsukimi Onsen, the fine leaves block half the holes and the third cup takes forever to pour. My wife says it is fine with ordinary sencha, but it is useless for what we drink.' },
+        en: { name: 'Masa', title: 'Strainer clogs with fukamushi tea', body: 'With the deep-steamed tea we buy in Moonview Spa, the fine leaves block half the holes and the third cup takes forever to pour. My wife says it is fine with ordinary sencha, but it is useless for what we drink.' },
         ja: { name: 'まさ', title: '深蒸し茶だと茶こしが詰まる', body: '月見温泉で買う深蒸し茶を淹れると、細かい葉で穴が半分ふさがり、3煎目はなかなか出てきません。普通の煎茶なら問題ないと妻は言いますが、うちで飲むお茶には使えません。' } },
       { stars: 3, date: '2026-08-28', variant: 'celadon', helpful: 28, verified: true,
         en: { name: 'Chris', title: 'Small cups, and the pot is right-handed', body: 'The yunomi hold 150 mL to the brim, so about 120 mL of tea: proper Japanese size, but small if you are used to mugs. I am left-handed and pouring with a side handle is awkward. A lovely object, though.' },
@@ -337,7 +337,7 @@ export default [
     seller: 'kagami',
     images: ['kagami-plate-set'],
     title: {
-      en: 'Kagami Kiln Harukawa Ware Plate Set of 5, 16 cm Side Plates in Five Glazes (Amber, Indigo, White Ash, Celadon, Iron Brown), Handmade Stoneware, Dishwasher Safe, Gift Box, Made in Japan',
+      en: 'Kagami Kiln Springvale Ware Plate Set of 5, 16 cm Side Plates in Five Glazes (Amber, Indigo, White Ash, Celadon, Iron Brown), Handmade Stoneware, Dishwasher Safe, Gift Box, Made in Japan',
       ja: '鏡窯 春川焼 取り皿 5枚セット 16cm 5色の釉薬（飴釉・藍釉・白灰釉・青磁・鉄釉） 手作り 陶器 銘々皿 食洗機対応 化粧箱入り 日本製',
     },
     short: { en: 'Kagami Kiln Plate Set of 5', ja: '鏡窯 16cm皿 5枚組' },
@@ -357,7 +357,7 @@ export default [
     },
     bullets: {
       en: [
-        'FIVE HARUKAWA GLAZES IN ONE SET: amber, indigo, white ash, celadon and iron brown, one plate each, so the whole range of Harukawa ware sits on one table.',
+        'FIVE SPRINGVALE GLAZES IN ONE SET: amber, indigo, white ash, celadon and iron brown, one plate each, so the whole range of Springvale ware sits on one table.',
         '16 CM, THE EVERYDAY SIZE: right for side dishes, gyoza, a slice of cake or a piece of toast; too small for a dinner main course. About 2.5 cm deep with a low rim that holds a little sauce.',
         'MICROWAVE: FOUR OUT OF FIVE. The iron-brown plate has a high iron content and a metallic sheen and must not go in the microwave; its foot is stamped レンジ不可 (no microwave). The other four are fine. Not for the oven.',
         'DISHWASHER SAFE: all five can go in the dishwasher, though hand washing keeps the glazes looking their best. The plates stack neatly.',
@@ -377,11 +377,11 @@ export default [
     },
     specs: {
       en: [
-        ['Brand', 'Kagami Kiln (Harukawa, Minori Prefecture)'], ['Ware', 'Harukawa ware (春川焼), stoneware'],
+        ['Brand', 'Kagami Kiln (Springvale, Harvest Prefecture)'], ['Ware', 'Springvale ware (春川焼), stoneware'],
         ['Contents', '5 plates, one each: amber, indigo, white ash, celadon, iron brown'], ['Diameter', '16 cm (±5 mm)'], ['Height', 'About 2.5 cm'],
         ['Weight', 'About 280 g each; 1.8 kg boxed'], ['Clay', 'Kamagaoka clay (iron-rich)'], ['Glazes', 'Lead-free; celadon is smooth (no crackle)'],
         ['Microwave', 'Yes, except the iron-brown plate'], ['Dishwasher', 'Yes (hand wash recommended)'], ['Oven / direct flame', 'No'], ['Stackable', 'Yes'],
-        ['Country of origin', 'Japan (Harukawa)'], ['Warranty', 'No manufacturer warranty; breakage in delivery handled by the seller (report within 48 hours)'],
+        ['Country of origin', 'Japan (Springvale)'], ['Warranty', 'No manufacturer warranty; breakage in delivery handled by the seller (report within 48 hours)'],
         ['In the box', '5 plates, paper gift box with dividers, glaze card'],
       ],
       ja: [
@@ -394,7 +394,7 @@ export default [
       ],
     },
     compare: {
-      en: ['5 plates', '16 cm diameter', '5 glazes (amber, indigo, white ash, celadon, iron brown)', 'Yes, except iron brown', 'Yes (hand wash recommended)', 'Kagami Kiln, Harukawa'],
+      en: ['5 plates', '16 cm diameter', '5 glazes (amber, indigo, white ash, celadon, iron brown)', 'Yes, except iron brown', 'Yes (hand wash recommended)', 'Kagami Kiln, Springvale'],
       ja: ['皿5枚', '直径16cm', '5色（飴釉・藍釉・白灰釉・青磁・鉄釉）', '可（鉄釉を除く）', '可（手洗い推奨）', '鏡窯（春川）'],
     },
     tables: [
@@ -420,11 +420,11 @@ export default [
     ],
     description: {
       en: [
-        'This set puts side by side the five glazes Harukawa ware is known for: amber (ame-yū), indigo, white ash, celadon and iron brown. Harukawa potters have used them since the domain kiln in Kamagaoka supplied Harukawa Castle in the 1600s. Kagami Kiln, founded in 1891 and now run by fourth-generation potter Kagami Sōichi, still mixes its own glazes from local materials, including wood ash and iron-rich clay from the Kagami River terraces.',
+        'This set puts side by side the five glazes Springvale ware is known for: amber (ame-yū), indigo, white ash, celadon and iron brown. Springvale potters have used them since the domain kiln in Kamagaoka supplied Springvale Castle in the 1600s. Kagami Kiln, founded in 1891 and now run by fourth-generation potter Kagami Sōichi, still mixes its own glazes from local materials, including wood ash and iron-rich clay from the Mirror River terraces.',
         'Each 16 cm plate is thrown on the wheel, trimmed, bisque-fired at 800 °C, dipped in glaze by hand and fired again at about 1,250 °C. Diameters vary by a few millimetres and a plate may sit very slightly unevenly. Colours also depend on where a plate sat in the kiln: the iron brown can look almost black, the white ash more grey, the celadon greener or greyer than in the photo.',
         'Four plates are microwave-safe. The iron-brown plate is not: its glaze contains so much iron that it can spark, heat unevenly and crack. It is the darkest plate in the set, its foot is stamped レンジ不可 (no microwave), and the glaze card in the box marks it too. None of the plates can go in the oven or on a flame.',
         'All five are dishwasher-safe, but hand washing keeps the glazes at their best and protects the rims. The foot is unglazed, so use a mat on glass or lacquered tables. The white ash glaze is slightly porous: curry, turmeric and oil left on it overnight can leave a faint tint, so rinse it soon after use. Before first use, soak the plates in water for 10 minutes.',
-        'In Marketa’s Lantern Festival Sale the set is ¥8,800 instead of ¥9,900 until Sun 11 Oct at 23:59. Kagami Kiln ships within 2 business days, so it arrives Thu 8 – Fri 9 Oct in Harukawa city, free of shipping charges. Each plate is wrapped in recycled paper and boxed with card dividers. Noshi paper is free and gift wrapping is ¥330. Please open the box when it arrives: breakage must be reported to the kiln within 48 hours.',
+        'In Marketa’s Lantern Festival Sale the set is ¥8,800 instead of ¥9,900 until Sun 11 Oct at 23:59. Kagami Kiln ships within 2 business days, so it arrives Thu 8 – Fri 9 Oct in Springvale city, free of shipping charges. Each plate is wrapped in recycled paper and boxed with card dividers. Noshi paper is free and gift wrapping is ¥330. Please open the box when it arrives: breakage must be reported to the kiln within 48 hours.',
       ],
       ja: [
         '春川焼を代表する5つの釉薬、飴釉・藍釉・白灰釉・青磁・鉄釉を並べて楽しめるセットです。これらの釉薬は、1600年代に窯ヶ丘の御用窯が春川城に器を納めていた時代から使われてきました。1891年創業、現在4代目の鏡 宗一が営む鏡窯では、今も木の灰や鏡川の河岸段丘の鉄分の多い土など、地元の材料で釉薬を調合しています。',
@@ -495,10 +495,10 @@ export default [
     seller: 'brightdeal',
     images: ['tokiya-mug-pair'],
     title: {
-      en: 'Tokiya Harukawa-Style Mug Pair, 350 mL Ceramic Coffee Mugs, Set of 2, Glossy Yuzu Yellow and Blue, Japanese Pottery Look, Microwave and Dishwasher Safe, Couple Gift',
+      en: 'Tokiya Springvale-Style Mug Pair, 350 mL Ceramic Coffee Mugs, Set of 2, Glossy Yuzu Yellow and Blue, Japanese Pottery Look, Microwave and Dishwasher Safe, Couple Gift',
       ja: 'トキヤ 春川焼風 ペアマグカップ 350ml 陶器 2個セット イエロー ブルー 和モダン 和食器風 電子レンジ・食洗機対応 プレゼント カップル',
     },
-    short: { en: 'Tokiya Harukawa-Style Mug Pair', ja: 'トキヤ 春川焼風ペアマグ' },
+    short: { en: 'Tokiya Springvale-Style Mug Pair', ja: 'トキヤ 春川焼風ペアマグ' },
     rating: 3.6,
     ratings: 522,
     hist: [40, 20, 13, 10, 17],
@@ -515,7 +515,7 @@ export default [
     },
     bullets: {
       en: [
-        'HARUKAWA-STYLE DESIGN: glossy yuzu yellow and blue glazes inspired by traditional Harukawa ware give your table a Japanese pottery look at an everyday price. Factory-made in China; not Harukawa ware (春川焼) and not made in Harukawa.',
+        'SPRINGVALE-STYLE DESIGN: glossy yuzu yellow and blue glazes inspired by traditional Springvale ware give your table a Japanese pottery look at an everyday price. Factory-made in China; not Springvale ware (春川焼) and not made in Springvale.',
         'BIG 350 mL CAPACITY: room for a large coffee or a milky tea. Ø8.8 × H10 cm, about 360 g each.',
         'MICROWAVE AND DISHWASHER SAFE: the smooth glossy glaze wipes clean easily. Not for the oven or a direct flame.',
         'MATCHING PAIR: moulded and machine-glazed, so both mugs are the same size and look like the photo.',
@@ -548,15 +548,15 @@ export default [
       ],
     },
     compare: {
-      en: ['2 mugs', '350 mL each', 'Glossy yellow + blue (factory)', 'Yes', 'Yes', 'Factory in China (not Harukawa ware)'],
+      en: ['2 mugs', '350 mL each', 'Glossy yellow + blue (factory)', 'Yes', 'Yes', 'Factory in China (not Springvale ware)'],
       ja: ['マグ2個', '各350mL', 'イエロー＋ブルーの光沢釉（工場製）', '可', '可', '中国の工場（春川焼ではない）'],
     },
     description: {
       en: [
-        'Tokiya mugs bring the colours associated with Harukawa ware, a yuzu yellow and a deep blue, to an everyday price. The pair is made in a ceramics factory in China from moulded stoneware with a glossy machine-sprayed glaze, so both mugs are identical in size and colour and match the photo.',
-        'Please note (added May 2026 after customer feedback): these are “Harukawa-style” mugs. They are not Harukawa ware (春川焼), which is handmade by kilns in the Kamagaoka district of Harukawa, and they are not connected with any Harukawa kiln. The base carries a “Made in China” sticker, which can be peeled off.',
+        'Tokiya mugs bring the colours associated with Springvale ware, a yuzu yellow and a deep blue, to an everyday price. The pair is made in a ceramics factory in China from moulded stoneware with a glossy machine-sprayed glaze, so both mugs are identical in size and colour and match the photo.',
+        'Please note (added May 2026 after customer feedback): these are “Springvale-style” mugs. They are not Springvale ware (春川焼), which is handmade by kilns in the Kamagaoka district of Springvale, and they are not connected with any Springvale kiln. The base carries a “Made in China” sticker, which can be peeled off.',
         'At 350 mL to the brim, each mug holds a large coffee with room for milk. The handle is slim, so when the mug is full of hot liquid your knuckles may come close to the side. Both mugs are microwave- and dishwasher-safe. Avoid sudden temperature changes, such as pouring boiling water into a mug straight from the fridge, which can crack any ceramic.',
-        'BrightDeal Trading ships from Kobe in 1–3 days, with free shipping; delivery to Harukawa usually takes 4–8 days and this item is not Marketa Fast-eligible. We do not offer noshi, gift wrapping or gift messages. Change-of-mind returns are accepted only for unopened boxes within 30 days (¥880 return shipping); for damage, message us within 30 days. Support replies on weekdays, 10:00–17:00, by message only.',
+        'BrightDeal Trading ships from Kobe in 1–3 days, with free shipping; delivery to Springvale usually takes 4–8 days and this item is not Marketa Fast-eligible. We do not offer noshi, gift wrapping or gift messages. Change-of-mind returns are accepted only for unopened boxes within 30 days (¥880 return shipping); for damage, message us within 30 days. Support replies on weekdays, 10:00–17:00, by message only.',
       ],
       ja: [
         'トキヤのマグは、春川焼でおなじみの柚子イエローと深いブルーを、普段使いしやすい価格でお届けします。中国の陶磁器工場で型成形し、機械で光沢釉を吹き付けているため、2個とも同じサイズ・同じ色で、写真どおりの仕上がりです。',
@@ -567,7 +567,7 @@ export default [
     },
     reviews: [
       { stars: 1, date: '2026-09-15', variant: 'yellow-blue', helpful: 176, verified: true,
-        en: { name: 'Yoko', title: 'Not Harukawa ware, and I embarrassed myself', body: 'I gave these to my aunt in Harukawa as “Harukawa ware”. She turned one over: a Made in China sticker under the base and a perfectly even, glossy glaze. Real Harukawa ware, like her Kagami Kiln mugs, has an unglazed foot with the kiln’s stamp. The title says “Harukawa-style”, but the colours and photos are clearly meant to make you think otherwise.' },
+        en: { name: 'Yoko', title: 'Not Springvale ware, and I embarrassed myself', body: 'I gave these to my aunt in Springvale as “Springvale ware”. She turned one over: a Made in China sticker under the base and a perfectly even, glossy glaze. Real Springvale ware, like her Kagami Kiln mugs, has an unglazed foot with the kiln’s stamp. The title says “Springvale-style”, but the colours and photos are clearly meant to make you think otherwise.' },
         ja: { name: 'ようこ', title: '春川焼ではありません。恥をかきました', body: '春川に住む叔母に「春川焼だよ」と言って贈ったら、裏返されて底に「中国製」のシール。釉薬もつるつるで均一です。叔母の持っている鏡窯のマグのような本物の春川焼は、高台が素地のままで窯印があります。タイトルに「春川焼風」とはありますが、色も写真も本物と思わせるつくりだと思います。' } },
       { stars: 5, date: '2026-08-02', variant: 'yellow-blue', helpful: 64, verified: true,
         en: { name: 'Dan', title: 'Great mugs for the price', body: 'I knew they were not handmade. For ¥2,480 for two they are big (350 mL), sturdy and fine in the dishwasher. Perfect for the office kitchen.' },
@@ -605,10 +605,10 @@ export default [
     ],
     qa: [
       { date: '2026-05-14', votes: 63,
-        en: { q: 'Is this genuine Harukawa ware?', a: 'No. This is a Harukawa-style design produced by our partner factory in China. It is not made in Harukawa.', by: 'BrightDeal Trading' },
+        en: { q: 'Is this genuine Springvale ware?', a: 'No. This is a Springvale-style design produced by our partner factory in China. It is not made in Springvale.', by: 'BrightDeal Trading' },
         ja: { q: '本物の春川焼ですか？', a: 'いいえ。中国の提携工場で製造した春川焼風デザインの商品です。春川で作られたものではありません。', by: 'ブライトディール商事' } },
       { date: '2026-10-03', votes: 7,
-        en: { q: 'Will it arrive in Harukawa before 10 October?', a: 'Mine took 6 days from Kobe. They don’t promise a date, so if it’s for the festival I wouldn’t count on it.', by: 'Marketa customer (Riku)' },
+        en: { q: 'Will it arrive in Springvale before 10 October?', a: 'Mine took 6 days from Kobe. They don’t promise a date, so if it’s for the festival I wouldn’t count on it.', by: 'Marketa customer (Riku)' },
         ja: { q: '10月10日までに春川に届きますか？', a: '私のときは神戸から6日かかりました。日付の保証はないので、まつりに使うなら当てにしないほうがいいと思います。', by: 'マルケタ購入者（りく）' } },
       { date: '2026-06-09', votes: 21,
         en: { q: 'Can you add noshi or gift wrapping?', a: 'Sorry, we do not offer noshi, gift wrapping or gift messages. The mugs come in a printed gift box.', by: 'BrightDeal Trading' },
@@ -617,7 +617,7 @@ export default [
         en: { q: 'Is the glaze lead-free?', a: 'Yes. The mugs are tested for lead and cadmium to Japan’s Food Sanitation Act standards.', by: 'BrightDeal Trading' },
         ja: { q: '釉薬に鉛は含まれていませんか？', a: 'はい。食品衛生法の基準に基づき、鉛・カドミウムの検査を行っております。', by: 'ブライトディール商事' } },
       { date: '2026-08-04', votes: 18,
-        en: { q: 'Is this the same as the Kagami Kiln mug pair, just cheaper?', a: 'No. The Kagami Kiln mugs are handmade in Harukawa, 300 mL, with an unglazed foot and different colours each time. These are factory-made, 350 mL, glossy and identical.', by: 'Marketa customer (Mika)' },
+        en: { q: 'Is this the same as the Kagami Kiln mug pair, just cheaper?', a: 'No. The Kagami Kiln mugs are handmade in Springvale, 300 mL, with an unglazed foot and different colours each time. These are factory-made, 350 mL, glossy and identical.', by: 'Marketa customer (Mika)' },
         ja: { q: '鏡窯のペアマグの安い版ですか？', a: '違います。鏡窯のマグは春川で手作りされた300mLで、高台が素地のまま、色も一つずつ違います。こちらは工場製の350mLで、つやつや・均一です。', by: 'マルケタ購入者（みか）' } },
     ],
     similar: ['kagami-mug-pair', 'kagami-tea-set', 'kagami-plate-set'],

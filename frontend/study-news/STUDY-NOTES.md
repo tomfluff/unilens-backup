@@ -1,6 +1,6 @@
-# Study notes: The Harukawa Herald / 春川日報
+# Study notes: The Springvale Herald / 春川日報
 
-Candidate tasks for a UniLens session on the news site. Railway facts agree with the Harukawa Railway site and Kumo Mobile facts with the Kumo Mobile Support site (checked 4 October). Paths are under `en/` and `ja/` (same path in both). The site's "now" is Sunday 4 October 2026, about 18:00.
+Candidate tasks for a UniLens session on the news site. Railway facts agree with the Springvale Railway site and Kumo Mobile facts with the Kumo Mobile Support site (checked 4 October). Paths are under `en/` and `ja/` (same path in both). The site's "now" is Sunday 4 October 2026, about 18:00.
 
 ## 1. Festival road closure
 
@@ -8,7 +8,7 @@ Candidate tasks for a UniLens session on the news site. Railway facts agree with
 - **JA:** 「来週土曜の午後3時に、川端通りの友人宅まで車で行けますか？ 行けないならどこに止めればいい？」
 - **Where:** `articles/festival-road-closures.html`, in the closures table, the map (`<img alt="Map">`) and the "No parking" section.
 - **Why it's interesting:** a wide table plus a map image with no useful alt text; the answer combines the table with a later section.
-- **Answer:** No. Riverside Avenue (Nishiki Bridge – Asahi Bridge) is closed to all vehicles, bicycles included, from 14:00 to 23:00 on Saturday 10 and Sunday 11 October (stalls open at 16:00). There's no festival parking; use the park-and-ride at Harukawa University Kita Campus (1,200 spaces) or Minori Port Car Park No. 2 (800). Both cost ¥500 per car, including the shuttle, which runs every 10 minutes from 15:00 to 22:30 to the Castle Park east gate.
+- **Answer:** No. Riverside Avenue (Nishiki Bridge – Asahi Bridge) is closed to all vehicles, bicycles included, from 14:00 to 23:00 on Saturday 10 and Sunday 11 October (stalls open at 16:00). There's no festival parking; use the park-and-ride at Springvale University Kita Campus (1,200 spaces) or Ferry Port Car Park No. 2 (800). Both cost ¥500 per car, including the shuttle, which runs every 10 minutes from 15:00 to 22:30 to the Castle Park east gate.
 
 ## 2. A corrected time
 
@@ -16,7 +16,7 @@ Candidate tasks for a UniLens session on the news site. Railway facts agree with
 - **JA:** 「錦橋は何時から通行止め？ 灯籠流しの間は歩いて渡れる？」
 - **Where:** the same article: the table, the text, and the correction note at the foot.
 - **Why it's interesting:** the correction notice says an earlier version gave the wrong time, so the assistant must not report 17:00.
-- **Answer:** Closed to vehicles from 16:00 to 22:00 on both days (not 17:00, as first reported). Pedestrians can cross, but only one way, north to south, from 19:00 to 21:00 on both evenings. The lantern floating runs from 19:30 to 21:00 each evening at the main stage by Nishiki Bridge, 4 minutes from Shiromachi Station's River Exit.
+- **Answer:** Closed to vehicles from 16:00 to 22:00 on both days (not 17:00, as first reported). Pedestrians can cross, but only one way, north to south, from 19:00 to 21:00 on both evenings. The lantern floating runs from 19:30 to 21:00 each evening at the main stage by Nishiki Bridge, 4 minutes from Castle Town Station's River Exit.
 
 ## 3. Library spending
 
@@ -28,19 +28,19 @@ Candidate tasks for a UniLens session on the news site. Railway facts agree with
 
 ## 4. Trains tonight (live blog)
 
-- **EN:** "Can I still get a train from Harukawa Central to Tsukimi Onsen tonight? What about the limited express?"
+- **EN:** "Can I still get a train from Springvale Central to Moonview Spa tonight? What about the limited express?"
 - **JA:** 「今夜、春川中央から月見温泉まで電車で帰れますか？ 特急は？」
 - **Where:** `live/typhoon-21.html`: the 17:45 and 15:05 updates and the pinned key points. Consistent with the railway site's timetable and its 14:20 status (the deer collision, in the 14:05 update).
 - **Why it's interesting:** a long live page, newest first, with the information repeated and updated over time.
-- **Answer:** Yes, until 19:15: the last Kagami Line train from Harukawa Central to Tsukimi Onsen leaves at 19:15 (arriving 20:18), and no Kagami Line trains run after about 20:20. The Tsukikage has already stopped for the day: the last left Harukawa Central at 15:30, and it is cancelled until at least noon Monday (HaruTetsu decides at 10:00 Monday). The Bayside Line has been suspended since 18:00. City buses stop at 19:00.
+- **Answer:** Yes, until 19:15: the last Mirror Line train from Springvale Central to Moonview Spa leaves at 19:15 (arriving 20:18), and no Mirror Line trains run after about 20:20. The Comet has already stopped for the day: the last left Springvale Central at 15:30, and it is cancelled until at least noon Monday (Vale Rail decides at 10:00 Monday). The Bayside Line has been suspended since 18:00. City buses stop at 19:00.
 
 ## 5. Evacuating with a dog
 
-- **EN:** "I live in Shiohama with my dog. Do I have to evacuate, and which shelter will take the dog?"
+- **EN:** "I live in Tidewater with my dog. Do I have to evacuate, and which shelter will take the dog?"
 - **JA:** 「汐浜に犬と住んでいます。避難が必要？ 犬を連れて行ける避難所は？」
 - **Where:** the live blog: the 17:30 update, the 17:40 update and its shelters table.
 - **Why it's interesting:** the answer combines an update with a table; the nearest shelter doesn't take pets.
-- **Answer:** Yes. A Level 4 evacuation instruction has been in force since 17:30 for Shimo-Kawabata, Minatomachi, Wangancho and Shiohama. Shiohama Elementary School doesn't take pets. Pets in cages are accepted at the Harukawa Civic Gymnasium (Otemachi), the Wangancho Community Centre, Harukawa University Kita Campus Hall and three smaller shelters.
+- **Answer:** Yes. A Level 4 evacuation instruction has been in force since 17:30 for Shimo-Kawabata, Minatomachi, Wangancho and Tidewater. Tidewater Elementary School doesn't take pets. Pets in cages are accepted at the Springvale Civic Gymnasium (Otemachi), the Wangancho Community Centre, Springvale University Kita Campus Hall and three smaller shelters.
 
 ## 6. Festival weather
 
@@ -76,10 +76,10 @@ Candidate tasks for a UniLens session on the news site. Railway facts agree with
 
 ## 10. Timetable change
 
-- **EN:** "What changes for the Tsukikage in November, and can I get back from Tsukimi Onsen later on a Saturday?"
+- **EN:** "What changes for the Comet in November, and can I get back from Moonview Spa later on a Saturday?"
 - **JA:** 「11月から特急「月影」は何が変わる？ 土曜に月見温泉からもっと遅く帰れる？」
-- **Where:** `articles/railway-timetable.html`: the changes table and the text. It agrees with the Harukawa Railway site's notice.
-- **Answer:** From Saturday 14 November 2026, every Tsukikage also stops at Tsukimi-guchi, so Harukawa Central – Tsukimi Onsen takes 41 minutes (now 39). Weekday Tsukikage 1 runs 7:25 → 8:06 (was 7:30 → 8:09). Yes: on Saturdays, Sundays and holidays the last train from Tsukimi Onsen moves from 21:05 to 21:40 (Harukawa Central 22:43). Fares and surcharges don't change.
+- **Where:** `articles/railway-timetable.html`: the changes table and the text. It agrees with the Springvale Railway site's notice.
+- **Answer:** From Saturday 14 November 2026, every Comet also stops at Trailhead, so Springvale Central – Moonview Spa takes 41 minutes (now 39). Weekday Comet 1 runs 7:25 → 8:06 (was 7:30 → 8:09). Yes: on Saturdays, Sundays and holidays the last train from Moonview Spa moves from 21:05 to 21:40 (Springvale Central 22:43). Fares and surcharges don't change.
 
 ## 11. Behind the paywall
 
@@ -87,7 +87,7 @@ Candidate tasks for a UniLens session on the news site. Railway facts agree with
 - **JA:** 「村田恵子さんのコラムは、新ダイヤで取り残されるのは誰だと言っている？」
 - **Where:** `articles/column-timetable.html`; the column stops at "Subscribe to continue reading".
 - **Why it's interesting:** the answer isn't on the page, so the assistant should say so rather than guess.
-- **Answer:** The visible part ends with "So it is worth asking who received no new promise." The answer is in the hidden, subscriber-only part. The visible part does argue that the two extra minutes for the Tsukimi-guchi stop are "the best thing in the revision". The same applies to the second halves of `harukawa-ware-exports` and `port-cargo`.
+- **Answer:** The visible part ends with "So it is worth asking who received no new promise." The answer is in the hidden, subscriber-only part. The visible part does argue that the two extra minutes for the Trailhead stop are "the best thing in the revision". The same applies to the second halves of `harukawa-ware-exports` and `port-cargo`.
 
 ## 12. Library books during the move
 
@@ -120,8 +120,8 @@ Candidate tasks for a UniLens session on the news site. Railway facts agree with
 
 ## 16. Getting home after the festival
 
-- **EN:** "I'm going to the lantern floating on Saturday and live near Minori Port. What's the last train I can take, and which station should I avoid?"
+- **EN:** "I'm going to the lantern floating on Saturday and live near Ferry Port. What's the last train I can take, and which station should I avoid?"
 - **JA:** 「土曜の灯籠流しを見に行きます。みのり港の近くに住んでいますが、最終は何時？ 避けたほうがいい駅は？」
-- **Where:** `articles/festival-road-closures.html`, in the train section and the fact box. It agrees with the Harukawa Railway site's notice.
+- **Where:** `articles/festival-road-closures.html`, in the train section and the fact box. It agrees with the Springvale Railway site's notice.
 - **Why it's interesting:** extra trains aren't in the railway's journey planner; the answer is a list in prose.
-- **Answer:** Extra Bayside Line trains leave Harukawa Central for Minori Port at 21:15, 21:45, 22:15, 22:45 and 23:30 (arriving 23:58). The last regular train to Minori Port is at 23:00; the 23:35 goes only to Minori-kōen. Shiromachi Station, 4 minutes from the main stage, may restrict entry from 18:00 to 21:30. Harukawa Central's North Exit is 5 minutes from the promenade. Charge your HaruCa beforehand.
+- **Answer:** Extra Bayside Line trains leave Springvale Central for Ferry Port at 21:15, 21:45, 22:15, 22:45 and 23:30 (arriving 23:58). The last regular train to Ferry Port is at 23:00; the 23:35 goes only to Rose Garden. Castle Town Station, 4 minutes from the main stage, may restrict entry from 18:00 to 21:30. Springvale Central's North Exit is 5 minutes from the promenade. Charge your RideCard beforehand.

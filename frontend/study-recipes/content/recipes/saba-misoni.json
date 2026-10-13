@@ -17,8 +17,8 @@
     "title": "Saba no Misoni (Mackerel Simmered in Miso)",
     "teaser": "Fatty autumn mackerel simmered with ginger in a glossy, sweet-salty miso sauce. One pan, 30 minutes, and even better the next day.",
     "intro": [
-      "Saturday mornings in autumn start early in our house. By 6:30 Daisuke and I are on the first Bayside Line train to Minori Port, and by 7 we're weaving between the crates at the morning market with a cool-box on wheels. In October the mackerel are at their best. Locals call it <em>aki saba</em>, autumn mackerel, and it's so fatty that the fishmongers' knives shine. My favourite stall, Uomasa, is run by Mrs. Takeda, who has been telling me which fish to buy for fifteen years and always throws in a knob of ginger.",
-      "Saba no misoni was one of the dishes my grandmother Fumi cooked most at her inn in Tsukimi Onsen. Her guests were mostly older couples who came for the hot springs, and she said a plate of this with rice and miso soup made them look like they'd come home. It's rich, glossy, sweet and salty, and the ginger keeps it fresh.",
+      "Saturday mornings in autumn start early in our house. By 6:30 Daisuke and I are on the first Bayside Line train to Ferry Port, and by 7 we're weaving between the crates at the morning market with a cool-box on wheels. In October the mackerel are at their best. Locals call it <em>aki saba</em>, autumn mackerel, and it's so fatty that the fishmongers' knives shine. My favourite stall, Uomasa, is run by Mrs. Takeda, who has been telling me which fish to buy for fifteen years and always throws in a knob of ginger.",
+      "Saba no misoni was one of the dishes my grandmother Fumi cooked most at her inn in Moonview Spa. Her guests were mostly older couples who came for the hot springs, and she said a plate of this with rice and miso soup made them look like they'd come home. It's rich, glossy, sweet and salty, and the ginger keeps it fresh.",
       { "h": "Why you'll love it" },
       { "ul": [
         "Ready in 30 minutes in a single pan.",
@@ -149,7 +149,7 @@
   "nutrition": { "calories": 340, "carbs": 15, "protein": 22, "fat": 18, "satFat": 5, "cholesterol": 70, "sodium": 1050, "fiber": 1, "sugar": 11 },
   "comments": [
     {
-      "name": { "en": "Minori Port regular", "ja": "みのり港の常連" }, "date": "2026-10-03", "stars": 5,
+      "name": { "en": "Ferry Port regular", "ja": "みのり港の常連" }, "date": "2026-10-03", "stars": 5,
       "en": "Bought two fillets of aki saba at the morning market today and made this for dinner. The shimofuri step really does make a difference; no fishy smell at all.",
       "ja": "今朝の朝市で秋サバを2切れ買って、夕飯に作りました。霜降り、本当に違いますね。生臭さがまったくありませんでした。"
     },

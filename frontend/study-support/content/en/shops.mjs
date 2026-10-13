@@ -8,33 +8,33 @@ const hrs = (h) => `${h[0]}:00–${h[1]}:00`;
 export const pages = {
   'shops/index.html': {
     title: 'Find a shop', short: 'Shops',
-    lead: 'Kumo shops in Minori Prefecture. Book an appointment to avoid waiting: on weekends, waits without a booking can be over an hour.',
+    lead: 'Kumo shops in Harvest Prefecture. Book an appointment to avoid waiting: on weekends, waits without a booking can be over an hour.',
     body: `
 <img class="photo-wide" src="/assets/img/shop-interior.jpg" alt="">
-<p>Kumo has 1,420 shops across Japan. This page lists the shops in Minori Prefecture. Plan changes, data purchases and many other procedures can also be done in <a href="@/my-kumo.html">My Kumo</a>, with no admin fee.</p>
+<p>Kumo has 1,420 shops across Japan. This page lists the shops in Harvest Prefecture. Plan changes, data purchases and many other procedures can also be done in <a href="@/my-kumo.html">My Kumo</a>, with no admin fee.</p>
 ${table(['Shop', 'Address', 'Hours', 'Closed', 'New / switch', 'Repairs', 'eSIM', 'Classes', 'Parking'], SHOPS.map((s) => [
     `<span id="${s.id}"></span>${s.page ? `<a href="@/shops/${s.id}.html">${s.en.name}</a>` : s.en.name}<br><span class="small">${s.tel}</span>`, s.en.addr, s.en.hours, s.en.closed, tick(s, 'n'), tick(s, 'r'), tick(s, 'e'), tick(s, 'c'), tick(s, 'p'),
   ]), { cls: 'shop-row' })}
-<ul class="kome"><li>Kumo Shop Tsukimi Onsen does not sell devices on site; devices are ordered and delivered to the shop in 2–3 days. It is closed on Tuesdays and Wednesdays since 1 June 2026.</li><li>The Harukawa University counter serves students and staff, and the public. It does not accept repairs.</li><li>Shop phone numbers (0570, Navi Dial) are charged. For general questions, call the Information Center (free).</li></ul>
+<ul class="kome"><li>Kumo Shop Moonview Spa does not sell devices on site; devices are ordered and delivered to the shop in 2–3 days. It is closed on Tuesdays and Wednesdays since 1 June 2026.</li><li>The Springvale University counter serves students and staff, and the public. It does not accept repairs.</li><li>Shop phone numbers (0570, Navi Dial) are charged. For general questions, call the Information Center (free).</li></ul>
 <h2>Services at shops</h2>
 <p>Admin fees apply to some procedures done at a shop (${'¥3,850'}); the same procedures are free online. See <a href="@/billing/fees.html">Fees and charges</a>.</p>`,
     related: ['shops/harukawa-central.html', 'shops/appointments.html', 'forms/checklist.html'],
   },
 
   'shops/harukawa-central.html': {
-    title: 'Kumo Shop Harukawa Central', short: 'Harukawa Central',
-    lead: 'Our largest shop in Minori Prefecture, inside Harukawa Central Station building. All procedures, repairs and free smartphone classes.',
+    title: 'Kumo Shop Springvale Central', short: 'Springvale Central',
+    lead: 'Our largest shop in Harvest Prefecture, inside Springvale Central Station building. All procedures, repairs and free smartphone classes.',
     body: `
 <img class="photo-wide" src="/assets/img/station-shop.jpg" alt="The shopfront inside the station concourse">
 ${table(['', ''], [
     ['Address', SHOPS[0].en.addr],
-    ['Access', '1 minute from the East Exit of Harukawa Central Station (HaruTetsu Kagami Line and Bayside Line). Take the lift or escalator from the concourse to the 2nd floor.'],
+    ['Access', '1 minute from the East Exit of Springvale Central Station (Vale Rail Mirror Line and Bayside Line). Take the lift or escalator from the concourse to the 2nd floor.'],
     ['Opening hours', 'Every day 10:00–20:00 (including weekends and holidays). Reception for new contracts and switching closes at 18:30.'],
     ['Closed', SHOPS[0].en.closed],
     ['Phone', `${SHOPS[0].tel} (Navi Dial, charged; 10:00–19:00)`],
     ['Parking', 'No shop car park. Station building car park: 1 hour free when you complete a procedure (show your receipt at the counter).'],
   ], { cls: 'plain' })}
-${note('info', '<p>During the <b>Harukawa Lantern Festival</b> on Saturday 10 and Sunday 11 October 2026, the shop is open until <b>21:00</b> (reception for new contracts until 19:30). Expect long waits in the afternoon; appointments are recommended. Monday 12 October (Sports Day): normal hours.</p>', 'Extended hours during the Lantern Festival')}
+${note('info', '<p>During the <b>Springvale Lantern Festival</b> on Saturday 10 and Sunday 11 October 2026, the shop is open until <b>21:00</b> (reception for new contracts until 19:30). Expect long waits in the afternoon; appointments are recommended. Monday 12 October (Sports Day): normal hours.</p>', 'Extended hours during the Lantern Festival')}
 <h2>Services</h2>
 ${table(['Service', 'Available', 'Notes'], [
     ['New contracts and switching to Kumo', 'Yes', 'About 90 minutes. Last reception 18:30'],
@@ -69,7 +69,7 @@ ${table(['Procedure', 'Time to book', 'Note'], [
     ['eSIM setup or SIM reissue', '45 minutes', ''],
     ['Plan change, options, address change', '30 minutes', 'Free online in My Kumo'],
     ['Repair or Device Care claim', '30 minutes', 'Not at Hanaoka or the University counter'],
-    ['Smartphone class', '60 minutes', 'Harukawa Central and Bayside Mall only'],
+    ['Smartphone class', '60 minutes', 'Springvale Central and Bayside Mall only'],
   ])}
 <h2>Steps</h2>
 ${steps([
@@ -112,7 +112,7 @@ ${table(['Purpose', 'Number', 'Hours', 'Notes'], [
 <h2>Chat</h2>
 <div class="two"><div class="box"><h3>Chat with an assistant</h3><p>24 hours. Press the <b>Chat</b> button at the bottom right of any page.</p></div><div class="box"><h3>Chat with a person</h3><p>Every day 9:00–21:00. In the chat, type "agent". Available for contract holders logged in to My Kumo.</p></div></div>
 <h2>Customers with hearing or speech disabilities</h2>
-<p>Use chat, or call through the national telephone relay service. Sign-language video interpreting is available at <a href="@/shops/harukawa-central.html">Kumo Shop Harukawa Central</a> on weekdays.</p>
+<p>Use chat, or call through the national telephone relay service. Sign-language video interpreting is available at <a href="@/shops/harukawa-central.html">Kumo Shop Springvale Central</a> on weekdays.</p>
 <h2>Visit a shop</h2>
 <p><a href="@/shops/index.html">Find a shop</a> · <a href="@/shops/appointments.html">Book an appointment</a></p>`,
     related: ['faq.html', 'shops/index.html', 'status.html'],

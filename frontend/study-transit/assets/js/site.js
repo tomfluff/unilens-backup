@@ -1,4 +1,4 @@
-/* Harukawa Railway — site script (no dependencies) */
+/* Springvale Railway — site script (no dependencies) */
 (function () {
   'use strict';
   var lang = document.documentElement.lang === 'ja' ? 'ja' : 'en';
@@ -62,7 +62,7 @@
   function xFee(km) { return NET.fee.bands.find(function (x) { return kmc(km) <= x[0]; })[1]; }
   function dayType(iso) { var d = new Date(iso + 'T00:00:00'); var w = d.getDay(); return (w === 0 || w === 6 || NET.holidays.indexOf(iso) >= 0) ? 'we' : 'wd'; }
   function trainName(t) {
-    var ty = { L: tr('Local', '普通'), R: tr('Rapid', '快速'), X: tr('Ltd. Exp. Tsukikage ' + t.no, '特急「月影」' + t.no + '号') }[t.type];
+    var ty = { L: tr('Local', '普通'), R: tr('Rapid', '快速'), X: tr('Ltd. Exp. Comet ' + t.no, '特急「月影」' + t.no + '号') }[t.type];
     return J ? ty + ' ' + nm(t.d) + '行' : ty + ' for ' + nm(t.d);
   }
   var lineColor = function (t) { return t.type === 'X' ? '#3b2a7a' : NET.lines[t.line].color; };
@@ -165,7 +165,7 @@
       if (iso < NET.range.min || iso > NET.range.max) { out.innerHTML = '<p class="msg">' + tr('Please choose a date between 4 October and 13 November 2026. Searches for the new timetable from 14 November open on 1 November.', '2026年10月4日から11月13日までの日付を選んでください。11月14日以降（ダイヤ改正後）の検索は11月1日から可能になります。') + '</p>'; return; }
       var t0 = Number(params.get('h') || 14) * 60 + Number(params.get('m') || 0), mode = params.get('mode') === 'arr' ? 'arr' : 'dep';
       var res = plan(from, to, iso, t0, mode, params.get('x') === '1');
-      var head = '<h2 class="h2">' + esc(nm(from)) + ' → ' + esc(nm(to)) + '</h2><p class="small">' + fmtDate(iso) + ' ' + hm(t0) + (mode === 'arr' ? tr(' arrive by', ' 到着') : tr(' depart after', ' 以降出発')) + ' · ' + (dayType(iso) === 'we' ? tr('Saturday/holiday timetable', '土曜・休日ダイヤ') : tr('Weekday timetable', '平日ダイヤ')) + (NET.peak.indexOf(iso) >= 0 ? ' · <b>' + tr('Tsukikage peak date', '「月影」繁忙期') + '</b>' : '') + '</p>';
+      var head = '<h2 class="h2">' + esc(nm(from)) + ' → ' + esc(nm(to)) + '</h2><p class="small">' + fmtDate(iso) + ' ' + hm(t0) + (mode === 'arr' ? tr(' arrive by', ' 到着') : tr(' depart after', ' 以降出発')) + ' · ' + (dayType(iso) === 'we' ? tr('Saturday/holiday timetable', '土曜・休日ダイヤ') : tr('Weekday timetable', '平日ダイヤ')) + (NET.peak.indexOf(iso) >= 0 ? ' · <b>' + tr('Comet peak date', '「月影」繁忙期') + '</b>' : '') + '</p>';
       if (!res.length) { out.innerHTML = head + '<p class="msg">' + tr('No trains found for this time. Try an earlier time or another date.', '該当する列車がありません。時刻や日付を変えて検索してください。') + '</p>'; return; }
       var fastest = Math.min.apply(null, res.map(function (j) { return j.mins; })), cheapest = Math.min.apply(null, res.map(function (j) { return j.fare.ticket + j.x; })), fewest = Math.min.apply(null, res.map(function (j) { return j.changes; }));
       out.innerHTML = head + res.map(function (j, i) {
@@ -175,8 +175,8 @@
           var res = l.t.type === 'X' ? ' <a class="btn-sm" href="/' + lang + '/reserve/seat.html?train=' + encodeURIComponent(l.t.id) + '&date=' + iso + '&from=' + l.from + '&to=' + l.to + '&ad=1&ch=0&cls=std">' + tr('Reserve seat', '座席予約') + '</a>' : '';
           return wait + '<div class="leg-st"><b>' + hm(l.dep) + '</b><span>' + esc(nm(l.from)) + ' <span class="muted small">' + tr('Platform ', '') + l.plat + tr('', '番線') + '</span></span></div><div class="leg-train" style="border-color:' + lineColor(l.t) + '">' + esc(trainName(l.t)) + ' · ' + (l.arr - l.dep) + tr(' min', '分') + res + '</div>' + (k === j.legs.length - 1 ? '<div class="leg-st"><b>' + hm(l.arr) + '</b><span>' + esc(nm(l.to)) + '</span></div>' : '');
         }).join('');
-        return '<div class="route"><div class="route-h"><span class="small muted">' + tr('Route ', 'ルート') + (i + 1) + '</span><span class="tt-big">' + hm(j.dep) + ' → ' + hm(j.arr) + '</span><span>' + j.mins + tr(' min', '分') + '</span><span>' + tr('Changes: ', '乗換') + j.changes + tr('', '回') + '</span><span><b>' + yen(j.fare.ticket + j.x) + '</b> <span class="small muted">(HaruCa ' + yen(j.fare.ic + j.x) + ')</span></span>' + labels + '</div><div class="legs">' + legs +
-          '<p class="small muted">' + tr('Fare ', '運賃 ') + yen(j.fare.ticket) + tr(' (HaruCa ', '（ハルカ ') + yen(j.fare.ic) + tr(')', '）') + (j.x ? tr(' + Tsukikage surcharge ', ' ＋ 特急料金 ') + yen(j.x) : '') + ' · ' + j.fare.km.toFixed(1) + ' km</p></div></div>';
+        return '<div class="route"><div class="route-h"><span class="small muted">' + tr('Route ', 'ルート') + (i + 1) + '</span><span class="tt-big">' + hm(j.dep) + ' → ' + hm(j.arr) + '</span><span>' + j.mins + tr(' min', '分') + '</span><span>' + tr('Changes: ', '乗換') + j.changes + tr('', '回') + '</span><span><b>' + yen(j.fare.ticket + j.x) + '</b> <span class="small muted">(' + tr('RideCard ', 'HaruCa ') + yen(j.fare.ic + j.x) + ')</span></span>' + labels + '</div><div class="legs">' + legs +
+          '<p class="small muted">' + tr('Fare ', '運賃 ') + yen(j.fare.ticket) + tr(' (RideCard ', '（ハルカ ') + yen(j.fare.ic) + tr(')', '）') + (j.x ? tr(' + Comet surcharge ', ' ＋ 特急料金 ') + yen(j.x) : '') + ' · ' + j.fare.km.toFixed(1) + ' km</p></div></div>';
       }).join('');
     });
   }
@@ -192,15 +192,15 @@
         if (a === b) { out.innerHTML = '<p class="planner-out"><span class="msg">' + tr('Choose two different stations.', '異なる駅を選んでください。') + '</span></p>'; return; }
         var f = fare(a, b), rows = [], x = 0, xc = 0;
         if (cls) {
-          if (NET.xStops.indexOf(a) < 0 || NET.xStops.indexOf(b) < 0) { out.innerHTML = '<p class="planner-out"><span class="msg">' + tr('Tsukikage does not stop at one of these stations. Tsukikage stops: ', '「月影」はどちらかの駅に停車しません。停車駅：') + NET.xStops.map(nm).join(J ? '・' : ', ') + '</span></p>'; return; }
+          if (NET.xStops.indexOf(a) < 0 || NET.xStops.indexOf(b) < 0) { out.innerHTML = '<p class="planner-out"><span class="msg">' + tr('Comet does not stop at one of these stations. Comet stops: ', '「月影」はどちらかの駅に停車しません。停車駅：') + NET.xStops.map(nm).join(J ? '・' : ', ') + '</span></p>'; return; }
           var base = xFee(f.km) + (peak ? NET.fee.peak : 0); x = base + (cls === 'pre' ? NET.fee.premium : 0); xc = Math.floor((xFee(f.km)) / 20) * 10 + (peak ? NET.fee.peak / 2 : 0) + (cls === 'pre' ? NET.fee.premium : 0);
         }
         rows.push([tr('Distance', '営業キロ'), f.km.toFixed(1) + ' km (' + tr('charged as ', '') + kmc(f.km) + ' km' + tr('', 'で計算') + ')', '']);
-        rows.push([tr('Adult fare', '大人運賃'), yen(f.ticket) + tr(' ticket', '（きっぷ）'), yen(f.ic) + ' HaruCa']);
-        rows.push([tr('Child fare', '小児運賃'), yen(f.childTicket) + tr(' ticket', '（きっぷ）'), yen(f.childIc) + ' HaruCa']);
-        if (cls) rows.push([tr('Tsukikage surcharge', '「月影」特急料金'), tr('Adult ', '大人 ') + yen(x), tr('Child ', '小児 ') + yen(xc)]);
+        rows.push([tr('Adult fare', '大人運賃'), yen(f.ticket) + tr(' ticket', '（きっぷ）'), yen(f.ic) + tr(' RideCard', ' HaruCa')]);
+        rows.push([tr('Child fare', '小児運賃'), yen(f.childTicket) + tr(' ticket', '（きっぷ）'), yen(f.childIc) + tr(' RideCard', ' HaruCa')]);
+        if (cls) rows.push([tr('Comet surcharge', '「月影」特急料金'), tr('Adult ', '大人 ') + yen(x), tr('Child ', '小児 ') + yen(xc)]);
         var total = ad * (f.ticket + x) + ch * (f.childTicket + xc), totalIc = ad * (f.ic + x) + ch * (f.childIc + xc);
-        rows.push(['<b>' + tr('Total', '合計') + '</b> (' + tr('adults ', '大人') + ad + tr(', children ', '名・小児') + ch + tr('', '名') + ')', '<b>' + yen(total) + '</b>' + tr(' tickets', '（きっぷ）'), '<b>' + yen(totalIc) + '</b> HaruCa']);
+        rows.push(['<b>' + tr('Total', '合計') + '</b> (' + tr('adults ', '大人') + ad + tr(', children ', '名・小児') + ch + tr('', '名') + ')', '<b>' + yen(total) + '</b>' + tr(' tickets', '（きっぷ）'), '<b>' + yen(totalIc) + '</b>' + tr(' RideCard', ' HaruCa')]);
         var bandTicket = f.ticket; var c1 = Math.round(bandTicket * 28.5 / 10) * 10;
         rows.push([tr('Commuter pass, 1 month', '通勤定期券 1か月'), yen(c1), tr('Student ', '通学 ') + yen(Math.round(c1 * 0.55 / 10) * 10)]);
         out.innerHTML = '<h2 class="h2">' + esc(nm(a)) + ' → ' + esc(nm(b)) + '</h2><table class="data">' + rows.map(function (r) { return '<tr><th>' + r[0] + '</th><td class="num">' + r[1] + '</td><td class="num">' + r[2] + '</td></tr>'; }).join('') + '</table><p class="small"><a href="/' + lang + '/planner.html?from=' + a + '&to=' + b + '&date=2026-10-04&h=14&m=20&mode=dep&x=1">' + tr('Plan this journey', 'この区間の乗換案内') + '</a></p>';
@@ -210,7 +210,7 @@
     if (params.get('from')) go();
   }
 
-  // ---------- Tsukikage reservation ----------
+  // ---------- Comet reservation ----------
   var OCC = { 1: 38, 3: 52, 5: 71, 7: 64, 9: 58, 13: 47, 17: 44, 21: 40, 25: 29, 2: 61, 6: 35, 8: 49, 10: 55, 12: 63, 14: 66, 16: 70, 18: 74, 20: 68, 22: 59, 24: 52, 26: 41, 28: 45, 30: 22 };
   var CARS = { 1: { rows: 8, letters: ['A', 'C', 'D'], cls: 'pre' }, 2: { rows: 10, letters: ['A', 'B', 'C', 'D'], cls: 'std', ws: ['1A', '1B'] }, 3: { rows: 14, letters: ['A', 'B', 'C', 'D'], cls: 'std' } };
   function hash(s) { var h = 2166136261; for (var i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return (h >>> 0) / 4294967296; }
@@ -282,7 +282,7 @@
         app.innerHTML = summary(t) + '<div class="tabs"><div class="tab-bar">' + cars.map(function (c) { return '<button type="button" data-car="' + c + '" class="' + (c === carNo ? 'on' : '') + '">' + tr('Car ', '') + c + tr('', '号車') + '</button>'; }).join('') + '</div></div>' +
           '<div class="seat-legend"><span><i></i>' + tr('Available', '空席') + '</span><span><i class="tk"></i>' + tr('Taken', '予約済') + '</span><span><i class="sl"></i>' + tr('Your choice', '選択中') + '</span></div><div class="seat-scroll">' + seatSvg(t, carNo, chosen) + '</div>' +
           '<p>' + tr('Choose ', '座席を') + need + tr(need > 1 ? ' seats.' : ' seat.', '席お選びください。') + ' ' + tr('Selected: ', '選択中：') + '<b>' + (chosen.length ? chosen.map(function (s) { var p = s.split('-'); return tr('Car ', '') + p[0] + tr(' ', '号車') + p[1]; }).join(', ') : '—') + '</b></p>' +
-          (t.dir === 'd' ? '<p class="small muted">' + tr('Between Kamano and Kagami-kyō the river is on the D side.', '釜野〜鏡峡間はD席側に鏡川が見えます。') + '</p>' : '<p class="small muted">' + tr('Between Kagami-kyō and Kamano the river is on the A side.', '鏡峡〜釜野間はA席側に鏡川が見えます。') + '</p>') +
+          (t.dir === 'd' ? '<p class="small muted">' + tr('Between Clayfield and Red Canyon the river is on the D side.', '釜野〜鏡峡間はD席側に鏡川が見えます。') + '</p>' : '<p class="small muted">' + tr('Between Red Canyon and Clayfield the river is on the A side.', '鏡峡〜釜野間はA席側に鏡川が見えます。') + '</p>') +
           '<p><a href="/' + lang + '/reserve/index.html?' + new URLSearchParams({ date: Q.date, from: Q.from, to: Q.to, ad: Q.ad, ch: Q.ch, cls: Q.cls }).toString() + '">‹ ' + tr('Back to trains', '列車の選択に戻る') + '</a> <button type="button" class="btn-primary next"' + (chosen.length === need ? '' : ' disabled') + '>' + tr('Next', '次へ') + '</button></p>';
         $$('.tab-bar button', app).forEach(function (b) { b.addEventListener('click', function () { carNo = Number(b.getAttribute('data-car')); draw(); }); });
         $$('.seat', app).forEach(function (g) {
@@ -311,7 +311,7 @@
       var no = 'HT' + String(Math.floor(hash(qs() + (params.get('tel') || '')) * 1e8)).padStart(8, '0');
       var dep = t.s.find(function (s) { return s[0] === Q.from; })[1];
       box.innerHTML = '<p style="font-size:15px">' + tr('Reservation number', '予約番号') + ': <b style="font-size:20px;letter-spacing:.05em">' + no + '</b></p>' + summary(t) +
-        '<p>' + tr('Name: ', 'お名前：') + esc(params.get('name') || '') + ' · ' + tr('Phone: ', '電話：') + esc(params.get('tel') || '') + (params.get('haruca') ? ' · HaruCa ' + esc(params.get('haruca')) : '') + '</p>' +
+        '<p>' + tr('Name: ', 'お名前：') + esc(params.get('name') || '') + ' · ' + tr('Phone: ', '電話：') + esc(params.get('tel') || '') + (params.get('haruca') ? tr(' · RideCard ', ' · HaruCa ') + esc(params.get('haruca')) : '') + '</p>' +
         '<p class="warn">' + tr('Collect your tickets by ', 'きっぷは ') + hm(dep - 5) + tr(' on ' + fmtDate(Q.date) + ' (5 minutes before departure).', '（' + fmtDate(Q.date) + '、発車5分前）までにお受け取りください。') + '</p><p class="small muted">' + tr('This is a demonstration; no payment has been taken and no seat is held.', 'これはデモです。お支払いは発生せず、座席も確保されません。') + '</p>';
     });
   }

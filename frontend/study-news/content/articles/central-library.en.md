@@ -1,9 +1,9 @@
 ---
 headline: New Central Library to open on 7 November with 480,000 books and 640 seats
-standfirst: The ¥6.2 billion library next to Harukawa Central Station will have more than three times as many seats as the 1974 building at Shiroyama, which closes on 18 October. There will be no lending from the central library for three weeks during the move.
+standfirst: The ¥6.2 billion library next to Springvale Central Station will have more than three times as many seats as the 1974 building at Shiroyama, which closes on 18 October. There will be no lending from the central library for three weeks during the move.
 caption: The third-floor reading area of the new Central Library during a press preview this week.
 ---
-Harukawa's new Central Library will open on Saturday 7 November next to the South Exit of Harukawa Central Station, the city Board of Education said on Friday, ending nearly a decade of planning and three years of construction.
+Springvale's new Central Library will open on Saturday 7 November next to the South Exit of Springvale Central Station, the city Board of Education said on Friday, ending nearly a decade of planning and three years of construction.
 
 The five-storey building, with 9,800 square metres of floor space, replaces the Central Library at Shiroyama, which opened in 1974 and has long been too small for its collection: about a third of its books sit in closed stacks that readers must request at the counter.
 
@@ -15,7 +15,7 @@ The new library can hold 620,000 volumes and will open with 480,000, about 410,0
 - 2nd floor: children's library, with a story-time room and space for pushchairs
 - 3rd floor: general collection and reading area
 - 4th floor: local history collection and 12 study rooms that can be booked online
-- 5th floor: rooftop terrace with views of Harukawa Castle and Mount Tsukimi
+- 5th floor: rooftop terrace with views of Springvale Castle and Mount Moonview
 
 Self-service machines will let readers borrow books without queuing, and reserved books can be collected from lockers until 21:00.
 

@@ -43,7 +43,7 @@ ${steps([
     ['Check your phone works with Kumo', 'Most phones sold in Japan since 2021 are SIM-unlocked and work on Kumo. Check the model in the device list in My Kumo. If your phone is locked, ask your current carrier to unlock it (usually free online).'],
     ['Check One-Stop, or get an MNP reservation number', 'If you are using a reservation number, note the number and its expiry date.'],
     ['Apply', `<b>Online:</b> apply in My Kumo between 9:00 and 21:00. Admin fee ${yen(FEE.adminOnline)}. You need an ID document that can be read online (My Number card or driver's licence).<br><b>At a shop:</b> admin fee ${yen(FEE.adminShop)}. Allow about 90 minutes. <a href="@/shops/appointments.html">Book an appointment</a>.`],
-    ['Receive your SIM card or eSIM', 'SIM cards are delivered in 2 to 4 days (Tsukimi Town and Shiose Village: add 1 day). For eSIM, the setup screen appears in My Kumo when your application is approved, usually within 1 hour.'],
+    ['Receive your SIM card or eSIM', 'SIM cards are delivered in 2 to 4 days (Moonview Town and Shiose Village: add 1 day). For eSIM, the setup screen appears in My Kumo when your application is approved, usually within 1 hour.'],
     ['Switch your line', 'In My Kumo, press "Switch my line". Between 9:00 and 20:00 the switch finishes in about 15 minutes. If you press it after 20:00, it is completed after 9:00 the next morning. During the switch you cannot make calls with either carrier. At a shop, staff switch the line for you.'],
     ['Set up your phone and make a test call', 'Insert the SIM card (<a href="@/procedures/sim-card.html">how to</a>) or set up the eSIM (<a href="@/procedures/esim.html">how to</a>). Call 111 (free test number) to check.'],
   ])}
@@ -276,13 +276,13 @@ ${table(['', 'Device Care member', 'Not a member'], [
   ])}
 <h2>Delivery replacement (Device Care Standard and Premium)</h2>
 ${steps([
-    ['Apply', `Apply in My Kumo or call Device Care (${TEL.care.free}, ${TEL.care.hours[0]}:00–${TEL.care.hours[1]}:00). Applications by 15:00 are delivered the next day (Tsukimi Town and Shiose Village: 2 days).`],
+    ['Apply', `Apply in My Kumo or call Device Care (${TEL.care.free}, ${TEL.care.hours[0]}:00–${TEL.care.hours[1]}:00). Applications by 15:00 are delivered the next day (Moonview Town and Shiose Village: 2 days).`],
     ['Prepare the old phone', 'Back up your data, turn off Find My / Find My Device, and remove the SIM and any memory card.'],
     ['Receive the replacement', 'The courier hands you the replacement. Move your SIM to it, or reissue your eSIM in My Kumo (free).'],
     ['Return the old phone', 'Put the old phone in the return pack and post it within 14 days. If it is not returned, a fee of ¥22,000 is charged.'],
   ])}
 <h2>Repair through a shop</h2>
-<p>These shops accept repairs: ${SHOPS.filter((s) => s.svc.includes('r')).map((s) => `<a href="@/shops/index.html#${s.id}">${s.en.name}</a>`).join(', ')}. Kumo Shop Hanaoka and the Harukawa University counter do not accept repairs. <a href="@/shops/appointments.html">Book an appointment</a> (about 30 minutes).</p>
+<p>These shops accept repairs: ${SHOPS.filter((s) => s.svc.includes('r')).map((s) => `<a href="@/shops/index.html#${s.id}">${s.en.name}</a>`).join(', ')}. Kumo Shop Hanaoka and the Springvale University counter do not accept repairs. <a href="@/shops/appointments.html">Book an appointment</a> (about 30 minutes).</p>
 <h3>Before you bring the phone</h3>
 <ul class="checklist"><li>Back up your data (the repair may erase it)</li><li>Turn off Find My (iPhone) or remove your Google account (Android)</li><li>Remove the case, screen protector, SIM and memory card</li><li>Bring your ID and, for Device Care, nothing else: we check your membership</li></ul>
 <h2>Battery replacement</h2>

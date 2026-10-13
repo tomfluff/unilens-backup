@@ -1,15 +1,15 @@
-title: Tsukimi Onsen
-short: Hot-spring town in Tsukimi, Minori Prefecture
+title: Moonview Spa
+short: Hot-spring town in Moonview, Harvest Prefecture
 type: article
 categories: onsen; tourism; minori
-infobox: Tsukimi Onsen
+infobox: Moonview Spa
 ib-subtitle: 月見温泉
 ib-image: onsen-01.jpg | Inns along the stream at dusk
-ib-map: tsukimi-onsen | Location in Minori Prefecture
+ib-map: tsukimi-onsen | Location in Harvest Prefecture
 ib-section: Location
-ib: Town | Tsukimi Town (population 6,840), [[minori-prefecture|Minori Prefecture]]
+ib: Town | Moonview Town (population 6,840), [[minori-prefecture|Harvest Prefecture]]
 ib: Elevation | 310 m
-ib: Valley | Tsukimi Valley (upper [[kagami-river|Kagami River]])
+ib: Valley | Moonview Valley (upper [[kagami-river|Mirror River]])
 ib-section: Springs
 ib: Sources | 41
 ib: Temperature | 42–68.2 °C
@@ -19,42 +19,42 @@ ib-section: Tourism
 ib: Discovered | 807 (legend)
 ib: Inns and hotels | 23 (2025)
 ib: Overnight stays | 612,000 (2024)
-ib: Access | [[kagami-line|Kagami Line]], Tsukimi Onsen Station (terminus, 38.6 km from [[harukawa-central-station|Harukawa Central]])
+ib: Access | [[kagami-line|Mirror Line]], Moonview Spa Station (terminus, 38.6 km from [[harukawa-central-station|Springvale Central]])
 ---
-'''Tsukimi Onsen''' (月見温泉) is a hot-spring town in the town of Tsukimi, [[minori-prefecture|Minori Prefecture]], Japan. It lies at an elevation of 310 m in Tsukimi Valley, the upper valley of the [[kagami-river|Kagami River]], at the southern foot of [[mount-tsukimi|Mount Tsukimi]]. Its 41 sources yield about 4,800 liters a minute of sodium chloride–hydrogen carbonate water at 42 to 68.2 °C. The town is the terminus of the [[kagami-line|Kagami Line]] of the [[harukawa-railway|Harukawa Railway]], 38.6 km from [[harukawa-central-station|Harukawa Central Station]], and had 23 inns and hotels in 2025 and 612,000 overnight stays in 2024.<ref name="tsukimiguide">Tsukimi Town Tourism Association (2023). ''Tsukimi Onsen Guide''. Tsukimi Town, pp. 4–11.</ref>
+'''Moonview Spa''' (月見温泉) is a hot-spring town in the town of Moonview, [[minori-prefecture|Harvest Prefecture]], Japan. It lies at an elevation of 310 m in Moonview Valley, the upper valley of the [[kagami-river|Mirror River]], at the southern foot of [[mount-tsukimi|Mount Moonview]]. Its 41 sources yield about 4,800 liters a minute of sodium chloride–hydrogen carbonate water at 42 to 68.2 °C. The town is the terminus of the [[kagami-line|Mirror Line]] of the [[harukawa-railway|Springvale Railway]], 38.6 km from [[harukawa-central-station|Springvale Central Station]], and had 23 inns and hotels in 2025 and 612,000 overnight stays in 2024.<ref name="tsukimiguide">Moonview Town Tourism Association (2023). ''Moonview Spa Guide''. Moonview Town, pp. 4–11.</ref>
 
 == History ==
-According to local legend, the springs were discovered in 807 by a traveling monk who saw a wounded grey heron bathing in a warm pool beside the river and recovering its strength; the source he found is still called Sagi-no-yu, "heron's bath". For centuries the springs were used by farmers of the valley for hot-spring cures (''tōji'') in the slack winter months.<ref name="shishi5">Harukawa City History Compilation Committee (1989). ''Harukawa City History'', vol. 5: ''Folk Culture''. Harukawa City, pp. 311–318.</ref>
+According to local legend, the springs were discovered in 807 by a traveling monk who saw a wounded grey heron bathing in a warm pool beside the river and recovering its strength; the source he found is still called Sagi-no-yu, "heron's bath". For centuries the springs were used by farmers of the valley for hot-spring cures (''tōji'') in the slack winter months.<ref name="shishi5">Springvale City History Compilation Committee (1989). ''Springvale City History'', vol. 5: ''Folk Culture''. Springvale City, pp. 311–318.</ref>
 
-In 1660 the 3rd lord of Harukawa, [[asagiri-clan|Asagiri Tadakiyo]], built a private bathhouse for the lords, the Goten-yu (御殿湯), over the hottest source, and the village became a stop for officials and pilgrims to the shrine on [[mount-tsukimi|Mount Tsukimi]]. The Goten-yu was dismantled after the domain was abolished in 1871.
+In 1660 the 3rd lord of Springvale, [[asagiri-clan|Asagiri Tadakiyo]], built a private bathhouse for the lords, the Goten-yu (御殿湯), over the hottest source, and the village became a stop for officials and pilgrims to the shrine on [[mount-tsukimi|Mount Moonview]]. The Goten-yu was dismantled after the domain was abolished in 1871.
 
-The modern resort began with the railway. The [[kagami-line|Kagami Line]] reached Tsukimi Onsen through the [[tsukimi-tunnel|Tsukimi Tunnel]] on 4 October 1931, cutting the journey from [[harukawa|Harukawa]] from a day on foot to under two hours.<ref name="hr100">Harukawa Railway (2023). ''One Hundred Years of HaruTetsu''. Harukawa Railway Co., pp. 61–66.</ref> The number of inns grew from seven in 1930 to 21 in 1937, and the public bath Tsukimi Sōyu (月見総湯) was rebuilt in wood in 1931. After the Second World War the Tsukimi Ropeway (1968) made the town a popular destination for group tours, and after the limited express [[tsukikage|Tsukikage]] began running in 1987, overnight stays peaked at about 870,000 in 1991.{{cn}} They fell during the 1990s and 2000s, then recovered with individual travelers; the second public bath, Kogane-yu (こがね湯), opened in 2006.
+The modern resort began with the railway. The [[kagami-line|Mirror Line]] reached Moonview Spa through the [[tsukimi-tunnel|Moonview Tunnel]] on 4 October 1931, cutting the journey from [[harukawa|Springvale]] from a day on foot to under two hours.<ref name="hr100">Springvale Railway (2023). ''One Hundred Years of Vale Rail''. Springvale Railway Co., pp. 61–66.</ref> The number of inns grew from seven in 1930 to 21 in 1937, and the public bath Moonview Main Bath (月見総湯) was rebuilt in wood in 1931. After the Second World War the Moonview Ropeway (1968) made the town a popular destination for group tours, and after the limited express [[tsukikage|Comet]] began running in 1987, overnight stays peaked at about 870,000 in 1991.{{cn}} They fell during the 1990s and 2000s, then recovered with individual travelers; the second public bath, Golden Bath (こがね湯), opened in 2006.
 
 == Springs and baths ==
-The springs are heated by the old magma body beneath [[mount-tsukimi|Mount Tsukimi]]. The water is clear and slightly salty and is said to leave the skin smooth; local inns call it "beauty water".{{efn|The 41 sources belong to the town, the inns' cooperative and individual inns. Total flow has been held at about 4,800 liters a minute since a 1978 agreement limiting new wells.}} Most inns have their own baths, and two public bathhouses and a free foot bath in front of the station are open to day visitors.<ref name="tsukimiguide"/>
+The springs are heated by the old magma body beneath [[mount-tsukimi|Mount Moonview]]. The water is clear and slightly salty and is said to leave the skin smooth; local inns call it "beauty water".{{efn|The 41 sources belong to the town, the inns' cooperative and individual inns. Total flow has been held at about 4,800 liters a minute since a 1978 agreement limiting new wells.}} Most inns have their own baths, and two public bathhouses and a free foot bath in front of the station are open to day visitors.<ref name="tsukimiguide"/>
 
-{| Public baths of Tsukimi Onsen (2026)
+{| Public baths of Moonview Spa (2026)
 ! Bath !! Opened !! Source (temperature) !! Admission !! Hours !! Notes
-| Tsukimi Sōyu (月見総湯) || 1931 (present building) || Sagi-no-yu, 58.4 °C || ¥600 || 7:00–22:00 (closed Wednesdays) || Wooden bathhouse in the town center, 6 minutes' walk from the station
-| Kogane-yu (こがね湯) || 2006 || Kawara source, 47.5 °C || ¥450 || 10:00–21:00 || Open-air baths above the river, 10 minutes' walk from the station
+| Moonview Main Bath (月見総湯) || 1931 (present building) || Sagi-no-yu, 58.4 °C || ¥600 || 7:00–22:00 (closed Wednesdays) || Wooden bathhouse in the town center, 6 minutes' walk from the station
+| Golden Bath (こがね湯) || 2006 || Kawara source, 47.5 °C || ¥450 || 10:00–21:00 || Open-air baths above the river, 10 minutes' walk from the station
 | Station foot bath || 2000 || Goten-yu source, 68.2 °C (cooled) || Free || 9:00–18:00 || In front of the station; piped from the source of the lords' bathhouse of 1660
 |}
 
 == Town ==
-Tsukimi Onsen is the main settlement and administrative center of the town of Tsukimi, which had 6,840 inhabitants in 2025. The inns line both banks of the stream for about 1 km above the station, with a shopping street of souvenir shops, soba restaurants and washi makers; Tsukimi washi, made in the town, is used for the lanterns of the [[harukawa-lantern-festival|Harukawa Lantern Festival]]. The lower shrine of Tsukimi Shrine stands at the head of the street. The surrounding valleys grow "Tsukimi yuzu", a registered Geographical Indication since 2019 (see [[yuzu-cultivation-in-minori]]). The town's annual mean temperature is 13.8 °C, about 2.7 °C cooler than Harukawa.
+Moonview Spa is the main settlement and administrative center of the town of Moonview, which had 6,840 inhabitants in 2025. The inns line both banks of the stream for about 1 km above the station, with a shopping street of souvenir shops, soba restaurants and washi makers; Moonview washi, made in the town, is used for the lanterns of the [[harukawa-lantern-festival|Springvale Lantern Festival]]. The lower shrine of Moonview Shrine stands at the head of the street. The surrounding valleys grow "Moonview yuzu", a registered Geographical Indication since 2019 (see [[yuzu-cultivation-in-minori]]). The town's annual mean temperature is 13.8 °C, about 2.7 °C cooler than Springvale.
 
 == Access ==
-Tsukimi Onsen Station is the terminus of the [[kagami-line|Kagami Line]], 38.6 km from Harukawa Central, with 2,870 boardings a day in fiscal 2025. Local trains from Harukawa Central take 63 minutes and run hourly beyond Kamano; hourly rapid trains take 55 minutes. The limited express [[tsukikage|Tsukikage]] takes 39 minutes, stopping only at Shiromachi, Kamano and Kagami-kyō, with 7 northbound and 8 southbound trains on weekdays and 9 and 10 on Saturdays, Sundays and holidays.{{efn|From the timetable revision of Saturday 14 November 2026 every Tsukikage also stops at Tsukimi-guchi, and the journey takes 41 minutes.}}<ref name="rev2026">Harukawa Railway (2026). "Timetable revision on Saturday 14 November 2026". Notice, October 2026.</ref> The fare is ¥730 (¥715 with [[haruca|HaruCa]]), plus a ¥760 limited express surcharge on the Tsukikage, ¥1,490 in all. The two-day Tsukimi Onsen Yukemuri Ticket (¥2,800) covers a return journey with Tsukikage seats both ways, one entry to Tsukimi Sōyu or Kogane-yu (Kogane-yu since 1 July 2026) and a ¥500 voucher for shops in the town.<ref name="fares">Harukawa Railway (2019). ''Passenger Fare Tariff'', revised edition. Harukawa Railway Co., pp. 4–9.</ref> Tsukikage set 6001, of the 6000 series that ran the service from 1987 to 2019, is preserved beside the station. Tsukimi Bus route 5 runs from the station to Kōgen Station of the Tsukimi Ropeway in 25 minutes (¥480, every 40 minutes).
+Moonview Spa Station is the terminus of the [[kagami-line|Mirror Line]], 38.6 km from Springvale Central, with 2,870 boardings a day in fiscal 2025. Local trains from Springvale Central take 63 minutes and run hourly beyond Clayfield; hourly rapid trains take 55 minutes. The limited express [[tsukikage|Comet]] takes 39 minutes, stopping only at Castle Town, Clayfield and Red Canyon, with 7 northbound and 8 southbound trains on weekdays and 9 and 10 on Saturdays, Sundays and holidays.{{efn|From the timetable revision of Saturday 14 November 2026 every Comet also stops at Trailhead, and the journey takes 41 minutes.}}<ref name="rev2026">Springvale Railway (2026). "Timetable revision on Saturday 14 November 2026". Notice, October 2026.</ref> The fare is ¥730 (¥715 with [[haruca|RideCard]]), plus a ¥760 limited express surcharge on the Comet, ¥1,490 in all. The two-day Moonview Spa Day Ticket (¥2,800) covers a return journey with Comet seats both ways, one entry to Moonview Main Bath or Golden Bath (Golden Bath since 1 July 2026) and a ¥500 voucher for shops in the town.<ref name="fares">Springvale Railway (2019). ''Passenger Fare Tariff'', revised edition. Springvale Railway Co., pp. 4–9.</ref> Comet set 6001, of the 6000 series that ran the service from 1987 to 2019, is preserved beside the station. Moonview Bus route 5 runs from the station to Kōgen Station of the Moonview Ropeway in 25 minutes (¥480, every 40 minutes).
 
 == Culture ==
 === Michiyo Tōno ===
-The novelist [[michiyo-tono|Michiyo Tōno]], author of ''The River Mirror'' (1956), lived in Tsukimi Onsen from 1972 in an annex of the inn Seiryūkan (清流館), where she wrote the essays of ''Tsukimi Diary'' (1980). She died there on 19 November 1987. The Michiyo Tōno Memorial Hall opened near the Seiryūkan in 1992 and displays her manuscripts, desk and library.<ref name="memorial">Michiyo Tōno Memorial Hall (2017). ''Michiyo Tōno and Tsukimi: Catalogue of the Permanent Exhibition''. Tsukimi Town, pp. 3–9.</ref>
+The novelist [[michiyo-tono|Michiyo Tōno]], author of ''The River Mirror'' (1956), lived in Moonview Spa from 1972 in an annex of the inn Seiryūkan (清流館), where she wrote the essays of ''Moonview Diary'' (1980). She died there on 19 November 1987. The Michiyo Tōno Memorial Hall opened near the Seiryūkan in 1992 and displays her manuscripts, desk and library.<ref name="memorial">Michiyo Tōno Memorial Hall (2017). ''Michiyo Tōno and Moonview: Catalogue of the Permanent Exhibition''. Moonview Town, pp. 3–9.</ref>
 
 === Festivals ===
-On the night of the September full moon the town holds its Moon Festival, with moon-viewing at the square in front of Tsukimi Sōyu, offerings of rice dumplings and Tsukimi yuzu, and lanterns along the stream. On the winter solstice the inns and public baths float whole yuzu in their baths, a custom that draws many day visitors from Harukawa.<ref name="nippo2024">"Yuzu baths warm Tsukimi on the shortest day". ''Harukawa Nippō'', 22 December 2024, p. 18.</ref>
+On the night of the September full moon the town holds its Moon Festival, with moon-viewing at the square in front of Moonview Main Bath, offerings of rice dumplings and Moonview yuzu, and lanterns along the stream. On the winter solstice the inns and public baths float whole yuzu in their baths, a custom that draws many day visitors from Springvale.<ref name="nippo2024">"Yuzu baths warm Moonview on the shortest day". ''Springvale Herald'', 22 December 2024, p. 18.</ref>
 
 === Food ===
-The town's speciality is ''[[cuisine-of-harukawa#Onsen yu-soba|onsen yu-soba]]'', buckwheat noodles from the Tsukimi highlands rinsed in hot-spring water, served at about ten shops.
+The town's speciality is ''[[cuisine-of-harukawa#Onsen yu-soba|onsen yu-soba]]'', buckwheat noodles from the Moonview highlands rinsed in hot-spring water, served at about ten shops.
 
 == See also ==
 * [[mount-tsukimi]]

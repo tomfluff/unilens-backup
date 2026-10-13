@@ -1,5 +1,11 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { listen, pauseSpeaking, speak, stopSpeaking } from "./speech";
+import {
+    listen,
+    pauseSpeaking,
+    resumeSpeaking,
+    speak,
+    stopSpeaking,
+} from "./speech";
 
 /** a stand-in for the browser's SpeechRecognition that the test drives by hand */
 class FakeRecognition {
@@ -50,159 +56,163 @@ describe("listen", () => {
     });
 });
 
+/** a stand-in for WebAudio: pieces are recorded, and end when the test says so */
+class FakeSource {
+    buffer: { duration: number } | null = null;
+    onended: (() => void) | null = null;
+    startedAt = -1;
+    stopped = false;
+    connect() {}
+    start(at: number) {
+        this.startedAt = at;
+    }
+    stop() {
+        this.stopped = true;
+    }
+}
+class FakeAudioContext {
+    static last: FakeAudioContext;
+    currentTime = 0;
+    state = "running";
+    destination = {};
+    sources: FakeSource[] = [];
+    closed = false;
+    constructor() {
+        FakeAudioContext.last = this;
+    }
+    resume = vi.fn(async () => {
+        this.state = "running";
+    });
+    suspend = vi.fn(async () => {
+        this.state = "suspended";
+    });
+    close = vi.fn(async () => {
+        this.closed = true;
+        this.state = "closed";
+    });
+    createBuffer(_c: number, n: number, rate: number) {
+        return {
+            duration: n / rate,
+            getChannelData: () => new Float32Array(n),
+        };
+    }
+    createBufferSource() {
+        const src = new FakeSource();
+        this.sources.push(src);
+        return src;
+    }
+}
+
+/** a streamed PCM answer: the chunks, then the end */
+const pcm = (...chunks: number[]) =>
+    new Response(
+        new ReadableStream({
+            start(c) {
+                for (const n of chunks) c.enqueue(new Uint8Array(n));
+                c.close();
+            },
+        }),
+        { headers: { "X-Audio-Sample-Rate": "24000" } },
+    );
+
 describe("speak", () => {
-    it("drops a reading stopped while its audio was on the way", async () => {
+    afterEach(() => vi.unstubAllGlobals());
+    const setup = () => {
+        const synth = {
+            speak: vi.fn(),
+            cancel: vi.fn(),
+            pause: vi.fn(),
+            speaking: false,
+            paused: false,
+        };
+        vi.stubGlobal("speechSynthesis", synth);
+        vi.stubGlobal("SpeechSynthesisUtterance", class {});
+        vi.stubGlobal("AudioContext", FakeAudioContext);
+        return synth;
+    };
+
+    it("plays the reading as it arrives, then ends", async () => {
+        setup();
+        vi.stubGlobal(
+            "fetch",
+            vi.fn(async () => pcm(14400, 14400, 2000)),
+        );
+        const states: string[] = [];
+        await speak("hello", (s) => states.push(s));
+        const ctx = FakeAudioContext.last;
+        expect(states).toEqual(["loading", "playing"]);
+        expect(ctx.sources.length).toBeGreaterThan(0);
+        // pieces back to back, never in the past
+        const starts = ctx.sources.map((s) => s.startedAt);
+        expect(starts).toEqual([...starts].sort((a, b) => a - b));
+        for (const src of ctx.sources) src.onended?.();
+        expect(states.at(-1)).toBe("idle");
+        expect(ctx.closed).toBe(true);
+    });
+
+    it("asks with a POST and plays whole samples only", async () => {
+        setup();
+        const fetcher = vi.fn(async () => pcm(14401, 1));
+        vi.stubGlobal("fetch", fetcher);
+        await speak("hello");
+        expect((fetcher.mock.calls[0] as unknown[])[0]).toMatch(
+            /\/api\/tts\/stream$/,
+        );
+        expect(
+            ((fetcher.mock.calls[0] as unknown[])[1] as RequestInit).method,
+        ).toBe("POST");
+        const total = FakeAudioContext.last.sources.reduce(
+            (n, s) => n + (s.buffer?.duration ?? 0) * 24000,
+            0,
+        );
+        expect(Math.round(total)).toBe(7201);
+    });
+
+    it("drops a reading stopped while its answer was on the way", async () => {
+        const synth = setup();
         let arrive: (r: Response) => void = () => {};
         vi.stubGlobal(
             "fetch",
             vi.fn(() => new Promise<Response>((r) => (arrive = r))),
         );
-        const synth = { speak: vi.fn(), cancel: vi.fn() };
-        vi.stubGlobal("speechSynthesis", synth);
-        const audio = vi.fn();
-        vi.stubGlobal("Audio", audio);
         const reading = speak("hello");
+        const ctx = FakeAudioContext.last;
         stopSpeaking();
-        arrive(new Response(JSON.stringify({ id: "x" })));
+        arrive(pcm(20000));
         await reading;
-        expect(audio).not.toHaveBeenCalled();
+        expect(ctx.sources).toHaveLength(0);
+        expect(ctx.closed).toBe(true);
         expect(synth.speak).not.toHaveBeenCalled();
     });
 
-    it("does not switch to the browser's voice when a pause cuts play() short", async () => {
+    it("hands over to the browser's voice when the backend's cannot start, and pauses it", async () => {
+        const synth = setup();
         vi.stubGlobal(
             "fetch",
-            vi.fn(async () => new Response(JSON.stringify({ id: "x" }))),
+            vi.fn(async () => new Response("{}", { status: 502 })),
         );
-        const synth = { speak: vi.fn(), cancel: vi.fn() };
-        vi.stubGlobal("speechSynthesis", synth);
-        let started: () => void = () => {};
-        const playing = new Promise<void>((r) => (started = r));
-        class FakeAudio {
-            removeAttribute() {}
-            load() {}
-            paused = false;
-            reject: (e: Error) => void = () => {};
-            play() {
-                started();
-                return new Promise<void>((_, reject) => (this.reject = reject));
-            }
-            pause() {
-                this.paused = true;
-                this.reject(new DOMException("interrupted", "AbortError"));
-            }
-        }
-        vi.stubGlobal("Audio", FakeAudio);
-        const reading = speak("hello");
-        await playing;
-        pauseSpeaking();
-        await reading;
-        expect(synth.speak).not.toHaveBeenCalled();
-    });
-
-    it("pauses the browser's voice once it has taken over from failed audio", async () => {
-        vi.stubGlobal(
-            "fetch",
-            vi.fn(async () => new Response(JSON.stringify({ id: "x" }))),
-        );
-        const synth = {
-            speak: vi.fn(),
-            cancel: vi.fn(),
-            pause: vi.fn(),
-            speaking: true,
-            paused: false,
-        };
-        vi.stubGlobal("speechSynthesis", synth);
-        vi.stubGlobal("SpeechSynthesisUtterance", class {});
-        class BlockedAudio {
-            removeAttribute() {}
-            load() {}
-            paused = false;
-            play() {
-                return Promise.reject(
-                    new DOMException("no", "NotAllowedError"),
-                );
-            }
-            pause = vi.fn();
-        }
-        vi.stubGlobal("Audio", BlockedAudio);
-        await speak("hello");
-        expect(synth.speak).toHaveBeenCalled();
-        pauseSpeaking();
-        expect(synth.pause).toHaveBeenCalled();
-    });
-
-    it("keeps the new reading when the stopped one's audio reports its end late", async () => {
-        vi.stubGlobal(
-            "fetch",
-            vi.fn(async () => new Response(JSON.stringify({ id: "x" }))),
-        );
-        vi.stubGlobal("speechSynthesis", { speak: vi.fn(), cancel: vi.fn() });
-        const made: LateAudio[] = [];
-        class LateAudio {
-            removeAttribute() {}
-            load() {}
-            paused = false;
-            onended: (() => void) | null = null;
-            constructor() {
-                made.push(this);
-            }
-            play() {
-                return Promise.resolve();
-            }
-            pause = vi.fn(() => {
-                this.paused = true;
-            });
-        }
-        vi.stubGlobal("Audio", LateAudio);
-        await speak("first");
-        await speak("second");
-        made[0].onended?.();
-        pauseSpeaking();
-        expect(made[1].pause).toHaveBeenCalled();
-    });
-
-    it("keeps the controls when audio that fails to load hands over to the browser's voice", async () => {
-        vi.stubGlobal(
-            "fetch",
-            vi.fn(async () => new Response(JSON.stringify({ id: "x" }))),
-        );
-        const synth = { speak: vi.fn(), cancel: vi.fn() };
-        vi.stubGlobal("speechSynthesis", synth);
-        vi.stubGlobal("SpeechSynthesisUtterance", class {});
-        class MissingAudio {
-            removeAttribute() {}
-            load() {}
-            paused = true;
-            onerror: (() => void) | null = null;
-            play() {
-                // the browser reports the load error, then rejects play()
-                this.onerror?.();
-                return Promise.reject(
-                    new DOMException("no source", "NotSupportedError"),
-                );
-            }
-            pause() {}
-        }
-        vi.stubGlobal("Audio", MissingAudio);
         const states: string[] = [];
         await speak("hello", (s) => states.push(s));
         expect(synth.speak).toHaveBeenCalled();
         expect(states).not.toContain("idle");
+        synth.speaking = true;
+        pauseSpeaking();
+        expect(synth.pause).toHaveBeenCalled();
     });
 
-    it("closes the stopped reading's download", async () => {
-        vi.stubGlobal(
-            "fetch",
-            vi.fn(async () => new Response(JSON.stringify({ id: "x" }))),
+    it("uses the <audio> route of a backend without the streamed reading", async () => {
+        setup();
+        const fetcher = vi.fn(async (url: string) =>
+            url.endsWith("/api/tts/stream")
+                ? new Response("{}", { status: 404 })
+                : new Response(JSON.stringify({ id: "x" })),
         );
-        vi.stubGlobal("speechSynthesis", { speak: vi.fn(), cancel: vi.fn() });
-        const made: StreamingAudio[] = [];
-        class StreamingAudio {
+        vi.stubGlobal("fetch", fetcher);
+        const made: string[] = [];
+        class OldAudio {
             paused = false;
-            src = "stream.mp3";
-            constructor() {
-                made.push(this);
+            constructor(src: string) {
+                made.push(src);
             }
             play() {
                 return Promise.resolve();
@@ -210,16 +220,101 @@ describe("speak", () => {
             pause() {
                 this.paused = true;
             }
-            removeAttribute(name: string) {
-                if (name === "src") this.src = "";
-            }
-            load = vi.fn();
+            removeAttribute() {}
+            load() {}
         }
-        vi.stubGlobal("Audio", StreamingAudio);
+        vi.stubGlobal("Audio", OldAudio);
         await speak("hello");
+        expect(made).toEqual(["/api/tts/x.mp3"]);
+        expect(FakeAudioContext.last.closed).toBe(true);
+    });
+
+    it("reads with the browser's voice when the browser keeps the audio suspended", async () => {
+        const synth = setup();
+        class BlockedContext extends FakeAudioContext {
+            state = "suspended";
+            resume = vi.fn(() => new Promise<void>(() => {}));
+        }
+        vi.stubGlobal("AudioContext", BlockedContext);
+        vi.stubGlobal(
+            "fetch",
+            vi.fn(async () => pcm(14400)),
+        );
+        const states: string[] = [];
+        await speak("hello", (s) => states.push(s));
+        expect(states).not.toContain("playing");
+        expect(synth.speak).toHaveBeenCalled();
+        expect(FakeAudioContext.last.closed).toBe(true);
+    });
+
+    it("hands over to the browser's voice when the stream breaks before a sound", async () => {
+        const synth = setup();
+        vi.stubGlobal(
+            "fetch",
+            vi.fn(
+                async () =>
+                    new Response(
+                        new ReadableStream({
+                            start(c) {
+                                c.enqueue(new Uint8Array(14400));
+                            },
+                            pull(c) {
+                                c.error(new Error("connection lost"));
+                            },
+                        }),
+                    ),
+            ),
+        );
+        await speak("hello");
+        // the first piece was scheduled 20 ms ahead and the context's clock has not moved
+        expect(synth.speak).toHaveBeenCalled();
+    });
+
+    it("pauses and resumes the playing reading", async () => {
+        setup();
+        vi.stubGlobal(
+            "fetch",
+            vi.fn(async () => pcm(14400)),
+        );
+        const states: string[] = [];
+        await speak("hello", (s) => states.push(s));
+        const ctx = FakeAudioContext.last;
+        pauseSpeaking();
+        expect(ctx.suspend).toHaveBeenCalled();
+        expect(states.at(-1)).toBe("paused");
+        resumeSpeaking();
+        expect(ctx.resume).toHaveBeenCalled();
+        expect(states.at(-1)).toBe("playing");
+    });
+
+    it("stops the pieces and closes the stream of a stopped reading", async () => {
+        setup();
+        vi.stubGlobal(
+            "fetch",
+            vi.fn(async () => pcm(14400, 14400)),
+        );
+        await speak("hello");
+        const ctx = FakeAudioContext.last;
         stopSpeaking();
-        expect(made[0].src).toBe("");
-        expect(made[0].load).toHaveBeenCalled();
+        expect(ctx.sources.every((s) => s.stopped)).toBe(true);
+        expect(ctx.closed).toBe(true);
+    });
+
+    it("keeps the new reading when the stopped one's piece reports its end late", async () => {
+        setup();
+        vi.stubGlobal(
+            "fetch",
+            vi.fn(async () => pcm(14400)),
+        );
+        await speak("first");
+        const first = FakeAudioContext.last;
+        const states: string[] = [];
+        await speak("second", (s) => states.push(s));
+        const second = FakeAudioContext.last;
+        first.sources[0].onended?.();
+        expect(states.at(-1)).toBe("playing");
+        pauseSpeaking();
+        expect(second.suspend).toHaveBeenCalled();
     });
 });
 

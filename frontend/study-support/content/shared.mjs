@@ -79,41 +79,41 @@ export const PREF = [
   ['Hokkaido', '北海道', 91.2, 4.1, 6420, 'sapporo'], ['Miyagi', '宮城県', 93.8, 3.2, 2310, 'sendai'],
   ['Tokyo', '東京都', 99.4, 0.6, 14850, 'yes'], ['Kanagawa', '神奈川県', 98.9, 0.9, 8930, 'yes'],
   ['Niigata', '新潟県', 88.5, 5.0, 2480, null], ['Aichi', '愛知県', 97.6, 1.8, 7260, 'nagoya'],
-  ['Minori', 'みのり県', 86.7, 9.3, 1284, 'harukawa'], ['Kyoto', '京都府', 95.1, 2.2, 2940, 'kyoto'],
+  ['Harvest', 'みのり県', 86.7, 9.3, 1284, 'harukawa'], ['Kyoto', '京都府', 95.1, 2.2, 2940, 'kyoto'],
   ['Osaka', '大阪府', 99.0, 0.8, 10120, 'yes'], ['Hiroshima', '広島県', 92.4, 3.6, 2870, 'hiroshima'],
   ['Ehime', '愛媛県', 84.3, 6.8, 1390, null], ['Fukuoka', '福岡県', 96.8, 1.9, 5310, 'fukuoka'],
   ['Kagoshima', '鹿児島県', 82.9, 7.4, 1650, null], ['Okinawa', '沖縄県', 90.5, 4.4, 1480, 'naha'],
 ];
 export const NATIONAL_5G = 95.6;
-// Minori Prefecture municipalities: name en, ja, coverage now, target March 2027
+// Harvest Prefecture municipalities: name en, ja, coverage now, target March 2027
 export const MUNI = [
-  ['Harukawa City', '春川市', 97.9, 99.0], ['Mikage City', '御影市', 88.1, 94.0], ['Hanaoka Town', '花岡町', 74.6, 85.0],
-  ['Tsukimi Town (incl. Tsukimi Onsen)', '月見町（月見温泉を含む）', 61.2, 80.0], ['Shiose Village', '潮瀬村', 38.5, 55.0],
+  ['Springvale City', '春川市', 97.9, 99.0], ['Mikage City', '御影市', 88.1, 94.0], ['Hanaoka Town', '花岡町', 74.6, 85.0],
+  ['Moonview Town (incl. Moonview Spa)', '月見町（月見温泉を含む）', 61.2, 80.0], ['Shiose Village', '潮瀬村', 38.5, 55.0],
 ];
 
-// ---------- Shops (Minori Prefecture) ----------
+// ---------- Shops (Harvest Prefecture) ----------
 // services: n = new contracts & switching, r = repairs, e = eSIM, c = smartphone classes, p = parking
 export const SHOPS = [
   { id: 'harukawa-central', page: true, svc: 'nrecp',
-    en: { name: 'Kumo Shop Harukawa Central', addr: 'Harukawa Central Station Building 2F, 1-1 Ekimae-dōri, Harukawa-shi, Minori 789-0001', hours: 'Daily 10:00–20:00', closed: '1 January; building inspection day (17 February 2027)' },
+    en: { name: 'Kumo Shop Springvale Central', addr: 'Springvale Central Station Building 2F, 1-1 Ekimae-dōri, Springvale, Harvest 789-0001', hours: 'Daily 10:00–20:00', closed: '1 January; building inspection day (17 February 2027)' },
     ja: { name: 'クモショップ 春川中央店', addr: '〒789-0001 みのり県春川市駅前通1-1 春川中央駅ビル2階', hours: '毎日 10:00〜20:00', closed: '1月1日、ビル点検日（2027年2月17日）' }, tel: '0570-058-101' },
   { id: 'kitamachi', svc: 'nrep',
-    en: { name: 'Kumo Shop Harukawa Kitamachi', addr: '3-14-2 Kitamachi, Harukawa-shi, Minori 789-0034', hours: '10:00–19:00', closed: 'Wednesdays' },
+    en: { name: 'Kumo Shop Springvale Kitamachi', addr: '3-14-2 Kitamachi, Springvale, Harvest 789-0034', hours: '10:00–19:00', closed: 'Wednesdays' },
     ja: { name: 'クモショップ 春川北町店', addr: '〒789-0034 みのり県春川市北町3-14-2', hours: '10:00〜19:00', closed: '毎週水曜日' }, tel: '0570-058-102' },
   { id: 'bayside', svc: 'nrecp',
-    en: { name: 'Kumo Shop Bayside Mall Minori Port', addr: 'Bayside Mall 1F, 2-8 Minato-machi, Harukawa-shi, Minori 789-0310', hours: '10:00–21:00 (mall hours)', closed: 'Mall holidays' },
+    en: { name: 'Kumo Shop Bayside Mall Ferry Port', addr: 'Bayside Mall 1F, 2-8 Harbor Street, Springvale, Harvest 789-0310', hours: '10:00–21:00 (mall hours)', closed: 'Mall holidays' },
     ja: { name: 'クモショップ ベイサイドモールみのり港店', addr: '〒789-0310 みのり県春川市港町2-8 ベイサイドモール1階', hours: '10:00〜21:00（モールに準ずる）', closed: 'モール休館日' }, tel: '0570-058-103' },
   { id: 'mikage', svc: 'nrep',
-    en: { name: 'Kumo Shop Mikage', addr: '5-3-7 Honchō, Mikage-shi, Minori 789-1205', hours: '10:00–19:00', closed: '2nd and 4th Thursdays' },
+    en: { name: 'Kumo Shop Mikage', addr: '5-3-7 Honchō, Mikage-shi, Harvest 789-1205', hours: '10:00–19:00', closed: '2nd and 4th Thursdays' },
     ja: { name: 'クモショップ 御影店', addr: '〒789-1205 みのり県御影市本町5-3-7', hours: '10:00〜19:00', closed: '第2・第4木曜日' }, tel: '0570-058-104' },
   { id: 'hanaoka', svc: 'nep',
-    en: { name: 'Kumo Shop Hanaoka', addr: '880-1 Hanaoka, Hanaoka-chō, Minori-gun, Minori 789-1503', hours: '10:00–18:30', closed: 'Wednesdays and Thursdays' },
+    en: { name: 'Kumo Shop Hanaoka', addr: '880-1 Hanaoka, Hanaoka-chō, Harvest District, Harvest 789-1503', hours: '10:00–18:30', closed: 'Wednesdays and Thursdays' },
     ja: { name: 'クモショップ 花岡店', addr: '〒789-1503 みのり県みのり郡花岡町花岡880-1', hours: '10:00〜18:30', closed: '毎週水曜日・木曜日' }, tel: '0570-058-105' },
   { id: 'tsukimi', svc: 're',
-    en: { name: 'Kumo Shop Tsukimi Onsen', addr: '1-2 Yumoto, Tsukimi-chō, Minori 789-2101', hours: '10:00–18:00', closed: 'Tuesdays and Wednesdays' },
+    en: { name: 'Kumo Shop Moonview Spa', addr: '1-2 Spa Road, Moonview Town, Harvest 789-2101', hours: '10:00–18:00', closed: 'Tuesdays and Wednesdays' },
     ja: { name: 'クモショップ 月見温泉店', addr: '〒789-2101 みのり県月見町湯元1-2', hours: '10:00〜18:00', closed: '毎週火曜日・水曜日' }, tel: '0570-058-106' },
   { id: 'university', svc: 'ne',
-    en: { name: 'Kumo Counter Harukawa University (Co-op)', addr: 'Student Union Building 1F, Harukawa University, 1 Gakuen-chō, Harukawa-shi, Minori 789-0560', hours: 'Weekdays 10:00–17:00 (term time)', closed: 'Weekends, holidays and university vacations' },
+    en: { name: 'Kumo Counter Springvale University (Co-op)', addr: 'Student Union Building 1F, Springvale University, 1 Gakuen-chō, Springvale, Harvest 789-0560', hours: 'Weekdays 10:00–17:00 (term time)', closed: 'Weekends, holidays and university vacations' },
     ja: { name: 'クモカウンター 春川大学生協店', addr: '〒789-0560 みのり県春川市学園町1 春川大学 学生会館1階', hours: '平日 10:00〜17:00（授業期間中）', closed: '土日祝・大学の休業期間' }, tel: '0570-058-107' },
 ];
 

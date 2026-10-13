@@ -16,10 +16,10 @@
   "related": ["daigaku-imo", "chicken-karaage", "yuzu-kosho", "yuzu-pound-cake"],
   "en": {
     "title": "Chōchin Dango (Lantern Festival Dango with Mitarashi Glaze)",
-    "teaser": "The Harukawa Lantern Festival snack: chewy rice dumplings, four to a skewer, toasted and coated in a glossy sweet-salty mitarashi glaze until they glow like little lanterns.",
+    "teaser": "The Springvale Lantern Festival snack: chewy rice dumplings, four to a skewer, toasted and coated in a glossy sweet-salty mitarashi glaze until they glow like little lanterns.",
     "intro": [
-      "On the second weekend of October, the banks of the Kagami River turn into a river of light. Thousands of paper lanterns hang between the willows from Harukawa Castle down to the bay, and food stalls line both sides of the path. This year the Harukawa Lantern Festival falls on Saturday 10 and Sunday 11 October, and if you go, follow the smell of soy sauce caramelising over charcoal. That is <strong>chōchin dango</strong>, lantern dango: four chewy rice dumplings on a skewer, toasted and glazed with mitarashi sauce until they glow amber, exactly like the lanterns above them.",
-      "The most famous stall belongs to Kagamiya, a sweet shop by the castle moat that has been grilling them at the festival since 1958. When I was Hana's age, my grandmother Fumi took the train down from Tsukimi Onsen just to buy a box for the inn. My kids would happily queue for half an hour, but I have been making them at home for years, and shaping them has become a family job: Sota rolls the balls, Hana does the skewers, and Daisuke eats the ones that come out lopsided.",
+      "On the second weekend of October, the banks of the Mirror River turn into a river of light. Thousands of paper lanterns hang between the willows from Springvale Castle down to the bay, and food stalls line both sides of the path. This year the Springvale Lantern Festival falls on Saturday 10 and Sunday 11 October, and if you go, follow the smell of soy sauce caramelising over charcoal. That is <strong>chōchin dango</strong>, lantern dango: four chewy rice dumplings on a skewer, toasted and glazed with mitarashi sauce until they glow amber, exactly like the lanterns above them.",
+      "The most famous stall belongs to Kagamiya, a sweet shop by the castle moat that has been grilling them at the festival since 1958. When I was Hana's age, my grandmother Fumi took the train down from Moonview Spa just to buy a box for the inn. My kids would happily queue for half an hour, but I have been making them at home for years, and shaping them has become a family job: Sota rolls the balls, Hana does the skewers, and Daisuke eats the ones that come out lopsided.",
       { "h": "Why you'll love it" },
       { "ul": [
         "A handful of pantry ingredients and no oven.",
@@ -157,7 +157,7 @@
   "nutrition": { "calories": 120, "carbs": 27, "protein": 2, "fat": 0.3, "satFat": 0.1, "cholesterol": 0, "sodium": 260, "fiber": 0.3, "sugar": 6 },
   "comments": [
     {
-      "name": { "en": "Aiko (Harukawa)", "ja": "あいこ（春川市）" },
+      "name": { "en": "Aiko (Springvale)", "ja": "あいこ（春川市）" },
       "date": "2026-10-02",
       "stars": 5,
       "en": "Practising for our neighbourhood stall at the Lantern Festival next weekend. The kids rolled all 32 balls themselves and only a few were lopsided!",
@@ -197,7 +197,7 @@
       }
     },
     {
-      "name": { "en": "Hiromi (Tsukimi Onsen)", "ja": "ひろみ（月見温泉）" },
+      "name": { "en": "Hiromi (Moonview Spa)", "ja": "ひろみ（月見温泉）" },
       "date": "2025-10-13",
       "stars": 5,
       "en": "The queue at Kagamiya was 40 minutes on Saturday, so we made these at home on Sunday instead. The yuzu version is dangerously good.",

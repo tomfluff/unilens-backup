@@ -1,4 +1,4 @@
-// Shared data for The Harukawa Herald / 春川日報: everything that is the same in both
+// Shared data for The Springvale Herald / 春川日報: everything that is the same in both
 // languages (ids, dates, sections, numbers) plus the per-language labels of tables and charts.
 // Article text lives in content/articles/<id>.<lang>.md; page text in content/pages.mjs.
 
@@ -19,19 +19,19 @@ export const sections = [
 export const tags = {
   'lantern-festival': { en: 'Lantern Festival', ja: '春川灯籠まつり' },
   'typhoon-21': { en: 'Typhoon No. 21', ja: '台風21号' },
-  'kagami-river': { en: 'Kagami River', ja: '鏡川' },
-  harutetsu: { en: 'Harukawa Railway', ja: '春川鉄道' },
+  'kagami-river': { en: 'Mirror River', ja: '鏡川' },
+  harutetsu: { en: 'Springvale Railway', ja: '春川鉄道' },
   transport: { en: 'Transport', ja: '交通' },
   'election-2026': { en: 'Mayoral election 2026', ja: '春川市長選2026' },
   'city-budget': { en: 'City budget', ja: '市の予算' },
   'city-council': { en: 'City council', ja: '市議会' },
   library: { en: 'Libraries', ja: '図書館' },
-  'harukawa-ware': { en: 'Harukawa ware', ja: '春川焼' },
-  'minori-port': { en: 'Minori Port', ja: 'みのり港' },
+  'harukawa-ware': { en: 'Springvale ware', ja: '春川焼' },
+  'minori-port': { en: 'Ferry Port', ja: 'みのり港' },
   'kumo-mobile': { en: 'Kumo Mobile', ja: 'クモモバイル' },
-  'harukawa-university': { en: 'Harukawa University', ja: '春川大学' },
-  'minori-bay': { en: 'Minori Bay', ja: 'みのり湾' },
-  seagulls: { en: 'Harukawa Seagulls', ja: '春川シーガルズ' },
+  'harukawa-university': { en: 'Springvale University', ja: '春川大学' },
+  'minori-bay': { en: 'Harvest Bay', ja: 'みのり湾' },
+  seagulls: { en: 'Springvale Seagulls', ja: '春川シーガルズ' },
   vaccination: { en: 'Vaccination', ja: '予防接種' },
   children: { en: 'Children', ja: '子ども' },
   'disaster-prevention': { en: 'Disaster prevention', ja: '防災' },
@@ -49,17 +49,17 @@ export const authors = {
   ueno: { en: 'Haruka Ueno', ja: '上野遥', role: { en: 'Arts writer', ja: '文化部' } },
   murata: { en: 'Keiko Murata', ja: '村田恵子', role: { en: 'Columnist', ja: 'コラムニスト' } },
   arima: { en: 'Shota Arima', ja: '有馬翔太', role: { en: 'Weather and disaster desk', ja: '防災・気象担当' } },
-  editorial: { en: 'Editorial board', ja: '論説委員会', role: { en: 'The Harukawa Herald', ja: '春川日報' } },
+  editorial: { en: 'Editorial board', ja: '論説委員会', role: { en: 'The Springvale Herald', ja: '春川日報' } },
   hayakawa: { en: 'Tomoko Hayakawa', ja: '早川知子', role: { en: 'Guest writer, retired school librarian', ja: '寄稿・元学校司書' } },
   desk: { en: 'Herald staff', ja: '春川日報', role: { en: 'News desk', ja: '編集局' } },
 };
 
 export const credits = {
-  kanda: { en: 'Ryo Kanda / The Harukawa Herald', ja: '神田亮撮影' },
-  morishita: { en: 'Aya Morishita / The Harukawa Herald', ja: '森下彩撮影' },
-  city: { en: 'Harukawa City', ja: '春川市提供' },
-  univ: { en: 'Harukawa University', ja: '春川大学提供' },
-  file: { en: 'File photo / The Harukawa Herald', ja: '資料写真' },
+  kanda: { en: 'Ryo Kanda / The Springvale Herald', ja: '神田亮撮影' },
+  morishita: { en: 'Aya Morishita / The Springvale Herald', ja: '森下彩撮影' },
+  city: { en: 'Springvale City', ja: '春川市提供' },
+  univ: { en: 'Springvale University', ja: '春川大学提供' },
+  file: { en: 'File photo / The Springvale Herald', ja: '資料写真' },
 };
 
 // Articles. Dates are JST. `image` is a file in assets/img (without .jpg).
@@ -115,14 +115,14 @@ export const corrections = [
 // Tables. Each has an English and a Japanese version with the same numbers.
 export const tables = {
   closures: {
-    en: { caption: 'Road closures for the 68th Harukawa Lantern Festival, Saturday 10 and Sunday 11 October (numbers match the map)', head: ['No.', 'Road', 'Section', 'Saturday 10 October', 'Sunday 11 October', 'Notes'], rows: [
+    en: { caption: 'Road closures for the 68th Springvale Lantern Festival, Saturday 10 and Sunday 11 October (numbers match the map)', head: ['No.', 'Road', 'Section', 'Saturday 10 October', 'Sunday 11 October', 'Notes'], rows: [
       ['1', 'Riverside Avenue', 'Nishiki Bridge – Asahi Bridge (1.3 km)', '14:00–23:00', '14:00–23:00', 'All vehicles, including bicycles; stalls open from 16:00'],
       ['2', 'Nishiki Bridge', 'Whole bridge', '16:00–22:00', '16:00–22:00', 'Pedestrians only; one-way walking (north to south) from 19:00 to 21:00 during the lantern floating'],
-      ['3', 'Komachi-dori', 'Castle Park east gate – Harukawa Central North Exit (650 m)', '12:00–22:00', '12:00–22:00', 'Pedestrians only; deliveries before 11:30'],
+      ['3', 'Komachi-dori', 'Castle Park east gate – Springvale Central North Exit (650 m)', '12:00–22:00', '12:00–22:00', 'Pedestrians only; deliveries before 11:30'],
       ['4', 'Asahi Bridge', 'Whole bridge', '15:00–23:00', '15:00–23:00', 'One lane, northbound only'],
       ['5', 'Otemachi-dori', 'Castle Park south gate – Nishiki Bridge', '17:30–21:00', '17:30–21:00', 'Lantern procession, 18:00–20:30'],
-      ['6', 'Shiromachi Station front', 'Station square (River Exit) – Riverside Avenue', '17:00–22:00', '17:00–22:00', 'Station entry may be restricted 18:00–21:30 (HaruTetsu)'],
-    ], note: 'City buses on routes 3, 5 and 12 are diverted from 14:00 to 23:00 on both days. Source: Harukawa Lantern Festival Executive Committee, Harukawa Central Police Station.' },
+      ['6', 'Castle Town Station front', 'Station square (River Exit) – Riverside Avenue', '17:00–22:00', '17:00–22:00', 'Station entry may be restricted 18:00–21:30 (Vale Rail)'],
+    ], note: 'City buses on routes 3, 5 and 12 are diverted from 14:00 to 23:00 on both days. Source: Springvale Lantern Festival Executive Committee, Springvale Central Police Station.' },
     ja: { caption: '第68回春川灯籠まつり（10月10日・11日）の交通規制（番号は地図と対応）', head: ['番号', '道路', '区間', '10月10日（土）', '10月11日（日）', '備考'], rows: [
       ['1', '川端通り', '錦橋〜朝日橋（1.3キロ）', '14:00〜23:00', '14:00〜23:00', '自転車を含む全車両通行止め。露店は16時から'],
       ['2', '錦橋', '全線', '16:00〜22:00', '16:00〜22:00', '歩行者専用。灯籠流しの19:00〜21:00は北→南の一方通行'],
@@ -133,16 +133,16 @@ export const tables = {
     ], note: '市営バス3・5・12系統は両日とも14:00〜23:00に迂回運行。出典：春川灯籠まつり実行委員会、春川中央警察署' },
   },
   'railway-changes': {
-    en: { caption: 'HaruTetsu timetable revision on Saturday 14 November 2026: what changes', head: ['Item', 'Until Fri 13 November', 'From Sat 14 November'], rows: [
-      ['Tsukikage stops', 'Shiromachi, Kamano, Kagami-kyō', 'Also Tsukimi-guchi (all trains). Harukawa Central – Tsukimi Onsen 41 min'],
-      ['Tsukikage 1 (weekdays)', 'Harukawa Central 7:30 → Tsukimi Onsen 8:09', '7:25 → 8:06'],
-      ['Last train from Tsukimi Onsen, Sat/Sun/holidays', '21:05 (Harukawa Central 22:08)', '21:40 (Harukawa Central 22:43)'],
-      ['Last train from Tsukimi Onsen, weekdays', '21:40 (Harukawa Central 22:43)', 'No change'],
-      ['Last northbound train from Harukawa Central, weekdays', '23:20 for Kamano', '23:20 for Kagami-kyō (arr. 23:59)'],
-      ['Rapid stops', 'Does not stop at Kawabata', 'Stops at Kawabata (1 min longer)'],
+    en: { caption: 'Vale Rail timetable revision on Saturday 14 November 2026: what changes', head: ['Item', 'Until Fri 13 November', 'From Sat 14 November'], rows: [
+      ['Comet stops', 'Castle Town, Clayfield, Red Canyon', 'Also Trailhead (all trains). Springvale Central – Moonview Spa 41 min'],
+      ['Comet 1 (weekdays)', 'Springvale Central 7:30 → Moonview Spa 8:09', '7:25 → 8:06'],
+      ['Last train from Moonview Spa, Sat/Sun/holidays', '21:05 (Springvale Central 22:08)', '21:40 (Springvale Central 22:43)'],
+      ['Last train from Moonview Spa, weekdays', '21:40 (Springvale Central 22:43)', 'No change'],
+      ['Last northbound train from Springvale Central, weekdays', '23:20 for Clayfield', '23:20 for Red Canyon (arr. 23:59)'],
+      ['Rapid stops', 'Does not stop at Riverside', 'Stops at Riverside (1 min longer)'],
       ['Bayside Line, weekdays 10:00–16:40', 'Every 20 min', 'Every 15 min'],
-      ['Bayside Line last eastbound, Sat/Sun/holidays', '23:00 for Minori Port; 23:35 for Minori-kōen', '23:35 runs through to Minori Port (arr. 0:03)'],
-    ], note: 'Fares, Tsukikage surcharges and pass prices do not change. Source: Harukawa Railway (HaruTetsu), announcement of 29 September 2026.' },
+      ['Bayside Line last eastbound, Sat/Sun/holidays', '23:00 for Ferry Port; 23:35 for Rose Garden', '23:35 runs through to Ferry Port (arr. 0:03)'],
+    ], note: 'Fares, Comet surcharges and pass prices do not change. Source: Springvale Railway (Vale Rail), announcement of 29 September 2026.' },
     ja: { caption: '春川鉄道ダイヤ改正（2026年11月14日〈土〉）の主な変更点', head: ['項目', '11月13日（金）まで', '11月14日（土）から'], rows: [
       ['「月影」の停車駅', '城町・釜野・鏡峡', '月見口にも全列車停車。春川中央〜月見温泉 41分'],
       ['「月影」1号（平日）', '春川中央7:30発 → 月見温泉8:09着', '7:25発 → 8:06着'],
@@ -155,14 +155,14 @@ export const tables = {
     ], note: '運賃、「月影」の特急料金、各種きっぷの価格は変わらない。出典：春川鉄道（2026年9月29日発表）' },
   },
   'library-hours': {
-    en: { caption: 'Harukawa Central Library: opening hours from 7 November 2026', head: ['Day', 'Hours'], rows: [
+    en: { caption: 'Springvale Central Library: opening hours from 7 November 2026', head: ['Day', 'Hours'], rows: [
       ['Tuesday – Friday', '9:00–21:00'],
       ['Saturday, Sunday and national holidays', '9:00–19:00'],
       ['Monday', 'Closed (open when Monday is a national holiday; closed the next weekday instead)'],
       ['Last Thursday of the month', 'Closed for stock-taking (from December 2026)'],
       ['29 December – 3 January', 'Closed'],
       ['Book return box (east entrance)', '24 hours'],
-    ], note: 'Café on the ground floor: 8:30–20:00. Source: Harukawa City Board of Education.' },
+    ], note: 'Café on the ground floor: 8:30–20:00. Source: Springvale City Board of Education.' },
     ja: { caption: '春川市立中央図書館の開館時間（2026年11月7日から）', head: ['曜日', '開館時間'], rows: [
       ['火〜金曜日', '9:00〜21:00'],
       ['土・日曜日、祝日', '9:00〜19:00'],
@@ -180,7 +180,7 @@ export const tables = {
       ['Energy price support for small businesses', '¥0.5 billion', 'Up to ¥200,000 per business'],
       ['Lantern Festival safety (crowd sensors, stewards, first aid)', '¥0.3 billion', 'Includes the ¥38 million crowd-sensor trial'],
       ['Total', '¥3.4 billion', 'General account after revision: ¥199.6 billion'],
-    ], note: 'Source: Harukawa City Finance Division.' },
+    ], note: 'Source: Springvale City Finance Division.' },
     ja: { caption: '9月補正予算（2026年9月30日可決）', head: ['事業', '金額', '備考'], rows: [
       ['下川端排水ポンプ場（設計・初年度工事）', '11億円', '排水能力毎秒12立方メートル、2028年度完成'],
       ['避難所となる学校体育館21校の空調整備', '9億円', '2027年7月までに設置'],
@@ -191,9 +191,9 @@ export const tables = {
     ], note: '出典：春川市財政課' },
   },
   candidates: {
-    en: { caption: 'Candidates in the Harukawa mayoral election, 8 November 2026 (in order of announcement)', head: ['Candidate', 'Age', 'Background', 'Support', 'Main pledges'], rows: [
-      ['Takuya Hirose', '63', 'Mayor since 2018 (two terms); city official for 28 years before that', 'Independent; backed by the Civic Club and Mirai Harukawa council groups', 'Finish the embankment and the Shimo-Kawabata pump station; open the new library; bring investment to Minori Port'],
-      ['Michiko Sawada', '55', 'Member of the Minori Prefectural Assembly 2011–2023 (three terms)', 'Independent; backed by the Kagami Citizens\' Network', 'Half-price HaruCa fares for residents aged 70 and over, paid by the city; free school lunches; review the water rate rise'],
+    en: { caption: 'Candidates in the Springvale mayoral election, 8 November 2026 (in order of announcement)', head: ['Candidate', 'Age', 'Background', 'Support', 'Main pledges'], rows: [
+      ['Takuya Hirose', '63', 'Mayor since 2018 (two terms); city official for 28 years before that', 'Independent; backed by the Civic Club and Mirai Springvale council groups', 'Finish the embankment and the Shimo-Kawabata pump station; open the new library; bring investment to Ferry Port'],
+      ['Michiko Sawada', '55', 'Member of the Harvest Prefectural Assembly 2011–2023 (three terms)', 'Independent; backed by the Mirror Citizens\' Network', 'Half-price RideCard fares for residents aged 70 and over, paid by the city; free school lunches; review the water rate rise'],
       ['Ryo Onodera', '42', 'Former manager at a software company; first-time candidate', 'Independent; no organised backing', 'All city procedures online by 2028; cut the mayor\'s pay by 30%; revive the old town'],
     ], note: 'Official campaign: 1–7 November. Early voting: 2–7 November at City Hall and five branch offices.' },
     ja: { caption: '春川市長選（2026年11月8日投開票）の立候補予定者（表明順）', head: ['氏名', '年齢', '経歴', '支援', '主な公約'], rows: [
@@ -208,7 +208,7 @@ export const tables = {
       ['Two people (20 m³)', '¥5,830', '¥6,325', '+¥495 (+8.5%)'],
       ['Four people (40 m³)', '¥10,450', '¥11,380', '+¥930 (+8.9%)'],
       ['Small shop (100 m³)', '¥27,940', '¥30,690', '+¥2,750 (+9.8%)'],
-    ], note: 'Average rise across all users: 8.5%. Households receiving public assistance remain exempt from the basic charge. Source: Harukawa City Waterworks Bureau.' },
+    ], note: 'Average rise across all users: 8.5%. Households receiving public assistance remain exempt from the basic charge. Source: Springvale City Waterworks Bureau.' },
     ja: { caption: '上下水道料金（2カ月分・税込み）の改定前後の比較', head: ['世帯（2カ月の使用量）', '現行', '2027年4月から', '増額'], rows: [
       ['単身（10立方メートル）', '3,410円', '3,630円', '+220円（+6.5%）'],
       ['2人（20立方メートル）', '5,830円', '6,325円', '+495円（+8.5%）'],
@@ -235,14 +235,14 @@ export const tables = {
     ], note: '既存の契約を含め、2026年12月利用分（2027年1月支払い分）から新料金。各種割引は変わらない（家族割は1回線あたり、ベーシックとアンリミテッドで2回線550円・3回線1,100円・4〜10回線1,210円、65+は550円、ミニは対象外）。プラン変更は無料で、11月30日までの手続きで12月1日から適用。出典：クモモバイル（2026年10月2日発表）' },
   },
   'flu-schedule': {
-    en: { caption: 'Flu vaccination in Harukawa, 2026–27 season', head: ['Who', 'Doses', 'Period', 'You pay', 'Notes'], rows: [
+    en: { caption: 'Flu vaccination in Springvale, 2026–27 season', head: ['Who', 'Doses', 'Period', 'You pay', 'Notes'], rows: [
       ['Residents aged 65 and over', '1', '1 Oct 2026 – 31 Jan 2027', '¥1,500', 'Free for households on public assistance or exempt from resident tax (bring the certificate)'],
       ['Aged 60–64 with a grade 1 heart, kidney, respiratory or immune disability', '1', '1 Oct 2026 – 31 Jan 2027', '¥1,500', 'Bring the disability certificate'],
       ['Children aged 6 months to 12 years', '2 (2–4 weeks apart)', '1 Oct 2026 – 31 Jan 2027', 'Clinic price minus ¥2,000 per dose', 'Subsidy raised from ¥1,000 per dose'],
       ['Aged 13 to 18', '1', '1 Oct 2026 – 31 Jan 2027', 'Clinic price minus ¥2,000', 'New subsidy this season'],
       ['Nasal spray vaccine, aged 2 to 18', '1', '1 Oct 2026 – 31 Jan 2027', 'Clinic price minus ¥2,000', 'At 34 clinics only'],
       ['Everyone else', '1', 'Any time', 'Full price (usually ¥3,500–¥4,500)', 'No subsidy'],
-    ], note: '212 clinics in the city take part; most require a booking. Bring your insurance card or My Number card. Source: Harukawa City Public Health Centre.' },
+    ], note: '212 clinics in the city take part; most require a booking. Bring your insurance card or My Number card. Source: Springvale City Public Health Centre.' },
     ja: { caption: '春川市のインフルエンザ予防接種（2026〜27年シーズン）', head: ['対象', '回数', '期間', '自己負担', '備考'], rows: [
       ['65歳以上の市民', '1回', '2026年10月1日〜2027年1月31日', '1,500円', '生活保護世帯・住民税非課税世帯は無料（証明書を持参）'],
       ['60〜64歳で心臓・腎臓・呼吸器・免疫の機能に1級相当の障害がある方', '1回', '同上', '1,500円', '障害者手帳を持参'],
@@ -253,12 +253,12 @@ export const tables = {
     ], note: '市内212の医療機関で実施。多くは予約制。保険証またはマイナンバーカードを持参。出典：春川市保健所' },
   },
   'night-clinic': {
-    en: { caption: 'Harukawa City Emergency Clinic: children\'s hours', head: ['Day', 'Until 30 September', 'From 1 October'], rows: [
+    en: { caption: 'Springvale City Emergency Clinic: children\'s hours', head: ['Day', 'Until 30 September', 'From 1 October'], rows: [
       ['Weekdays', '19:00–22:00', '19:00–23:00'],
       ['Saturdays', '18:00–22:00', '18:00–23:00'],
       ['Sundays and national holidays', '9:00–12:00 and 13:00–22:00', '9:00–23:00 (no lunch break)'],
       ['Reception closes', '30 minutes before closing', '30 minutes before closing'],
-    ], note: 'After 23:00, call the children\'s medical helpline #8000 first. The duty hospital overnight is Minori Prefectural Central Hospital. Bring the child\'s insurance card and medical subsidy card.' },
+    ], note: 'After 23:00, call the children\'s medical helpline #8000 first. The duty hospital overnight is Harvest Prefectural Central Hospital. Bring the child\'s insurance card and medical subsidy card.' },
     ja: { caption: '春川市急患診療所・小児科の診療時間', head: ['曜日', '9月30日まで', '10月1日から'], rows: [
       ['平日', '19:00〜22:00', '19:00〜23:00'],
       ['土曜日', '18:00〜22:00', '18:00〜23:00'],
@@ -268,9 +268,9 @@ export const tables = {
   },
   standings: {
     en: { caption: 'Shiokaze League standings after Saturday 3 October', head: ['#', 'Team', 'G', 'W', 'L', 'D', 'Pct', 'GB', 'Last 10'], rows: [
-      ['1', 'Harukawa Seagulls', '69', '41', '25', '3', '.621', '—', '7-2-1'],
+      ['1', 'Springvale Seagulls', '69', '41', '25', '3', '.621', '—', '7-2-1'],
       ['2', 'Aogiri Comets', '69', '39', '27', '3', '.591', '2.0', '6-4-0'],
-      ['3', 'Tsukimi Wild Boars', '69', '34', '33', '2', '.507', '7.5', '4-6-0'],
+      ['3', 'Moonview Wild Boars', '69', '34', '33', '2', '.507', '7.5', '4-6-0'],
       ['4', 'Shiomi Red Crabs', '69', '33', '34', '2', '.493', '8.5', '5-5-0'],
       ['5', 'Nishiura Tritons', '69', '29', '38', '2', '.433', '12.5', '3-6-1'],
       ['6', 'Kamisato Fireflies', '71', '26', '45', '0', '.366', '17.5', '3-7-0'],
@@ -285,9 +285,9 @@ export const tables = {
     ], note: '各チーム72試合。上位2チームが10月17日からの決勝シリーズ（3戦先勝）に進出。' },
   },
   linescore: {
-    en: { caption: 'Harukawa Seagulls 5, Tsukimi Wild Boars 3 (Harukawa Bayside Stadium, 3 October)', head: ['Team', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'R', 'H', 'E'], rows: [
-      ['Tsukimi Wild Boars', '0', '1', '0', '0', '2', '0', '0', '0', '0', '3', '8', '1'],
-      ['Harukawa Seagulls', '2', '0', '0', '0', '0', '1', '2', '0', 'x', '5', '9', '0'],
+    en: { caption: 'Springvale Seagulls 5, Moonview Wild Boars 3 (Springvale Bayside Stadium, 3 October)', head: ['Team', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'R', 'H', 'E'], rows: [
+      ['Moonview Wild Boars', '0', '1', '0', '0', '2', '0', '0', '0', '0', '3', '8', '1'],
+      ['Springvale Seagulls', '2', '0', '0', '0', '0', '1', '2', '0', 'x', '5', '9', '0'],
     ], note: 'Attendance: 3,412. Time: 2 h 58 min. HR: Kuroda (24th, 1st inning, 1 on).' },
     ja: { caption: '春川シーガルズ 5－3 月見ワイルドボアーズ（10月3日、春川ベイサイド球場）', head: ['チーム', '1', '2', '3', '4', '5', '6', '7', '8', '9', '計', '安', '失'], rows: [
       ['月見ワイルドボアーズ', '0', '1', '0', '0', '2', '0', '0', '0', '0', '3', '8', '1'],
@@ -337,7 +337,7 @@ export const tables = {
     ] },
   },
   'marathon-categories': {
-    en: { caption: '11th Harukawa Castle Marathon, Sunday 21 February 2027: categories', head: ['Category', 'Places', 'Entry fee', 'Time limit', 'Who can enter'], rows: [
+    en: { caption: '11th Springvale Castle Marathon, Sunday 21 February 2027: categories', head: ['Category', 'Places', 'Entry fee', 'Time limit', 'Who can enter'], rows: [
       ['Full marathon', '7,000', '¥13,000', '6 hours', 'Aged 19 and over on race day (no high-school students)'],
       ['10 km', '3,000', '¥6,500', '1 h 30 min', 'Junior-high-school age and over'],
       ['Wheelchair 10 km', '60', '¥3,000', '1 h 10 min', 'Aged 16 and over, racing wheelchair'],
@@ -351,12 +351,12 @@ export const tables = {
     ], note: '申し込みは10月1日（10:00）〜11月10日。フルマラソンは定員超過の場合抽選、結果は11月20日までに通知。うち2,000人分は市民枠。' },
   },
   'embankment-phases': {
-    en: { caption: 'Kagami River left-bank embankment works (Minori Prefecture)', head: ['Phase', 'Section', 'Length', 'Period', 'Cost', 'Status'], rows: [
+    en: { caption: 'Mirror River left-bank embankment works (Harvest Prefecture)', head: ['Phase', 'Section', 'Length', 'Period', 'Cost', 'Status'], rows: [
       ['1', 'Asahi Bridge – Minato Bridge', '1.1 km', 'April 2024 – March 2026', '¥2.9 billion', 'Completed'],
       ['2', 'Minato Bridge – river mouth', '1.2 km', 'October 2026 – March 2028', '¥3.5 billion', 'Starts 1 October'],
       ['3', 'Nishiki Bridge – Asahi Bridge', '0.9 km', 'April 2028 – March 2029', '¥2.2 billion', 'Planned'],
       ['Total', '', '3.2 km', '', '¥8.6 billion', ''],
-    ], note: 'Crest raised by 1.0 m to 7.4 m, with steel sheet-pile walls and a 12 m berm. Source: Minori Prefecture Kagami River Office.' },
+    ], note: 'Crest raised by 1.0 m to 7.4 m, with steel sheet-pile walls and a 12 m berm. Source: Harvest Prefecture Mirror River Office.' },
     ja: { caption: '鏡川左岸の堤防強化工事（みのり県）', head: ['工区', '区間', '延長', '工期', '事業費', '状況'], rows: [
       ['1', '朝日橋〜港橋', '1.1キロ', '2024年4月〜2026年3月', '29億円', '完了'],
       ['2', '港橋〜河口', '1.2キロ', '2026年10月〜2028年3月', '35億円', '10月1日着工'],
@@ -366,15 +366,15 @@ export const tables = {
   },
   shelters: {
     en: { caption: 'Largest open shelters, as of 17:30 on Sunday', head: ['Shelter', 'District', 'Capacity', 'Pets', 'People'], rows: [
-      ['Harukawa Civic Gymnasium', 'Otemachi', '800', 'Yes (in cages)', '312'],
+      ['Springvale Civic Gymnasium', 'Otemachi', '800', 'Yes (in cages)', '312'],
       ['Minatomachi Junior High School', 'Minatomachi', '450', 'No', '268'],
-      ['Kawabata Elementary School', 'Shimo-Kawabata', '380', 'No', '241'],
+      ['Riverside Elementary School', 'Shimo-Kawabata', '380', 'No', '241'],
       ['Wangancho Community Centre', 'Wangancho', '300', 'Yes (in cages)', '187'],
-      ['Shiohama Elementary School', 'Shiohama', '350', 'No', '143'],
-      ['Harukawa University Kita Campus Hall', 'Kitamachi', '600', 'Yes (in cages)', '58'],
+      ['Tidewater Elementary School', 'Tidewater', '350', 'No', '143'],
+      ['Springvale University Kita Campus Hall', 'Kitamachi', '600', 'Yes (in cages)', '58'],
       ['18 other shelters', 'Citywide', '4,900', 'At 3 of them', '75'],
       ['Total (24 shelters)', '', '7,780', '', '1,284'],
-    ], note: 'Bring medicine, water, food for one day, a phone charger and a blanket. Source: Harukawa City Disaster Management Office.' },
+    ], note: 'Bring medicine, water, food for one day, a phone charger and a blanket. Source: Springvale City Disaster Management Office.' },
     ja: { caption: '主な開設避難所（日曜17時30分現在）', head: ['避難所', '地区', '収容人数', 'ペット', '避難者'], rows: [
       ['春川市総合体育館', '大手町', '800', '可（ケージ）', '312'],
       ['港町中学校', '港町', '450', '不可', '268'],
@@ -392,7 +392,7 @@ export const tables = {
       ['Digital Basic', '¥980', 'All articles on the web and app, comments', 'First month free until 31 October 2026'],
       ['Digital Basic (annual)', '¥9,800 a year', 'As Digital Basic', 'Two months free compared with monthly'],
       ['Digital Premium', '¥1,800', 'Digital Basic + e-paper (from 4:00), archive since 1985, crossword', 'Up to 3 devices'],
-      ['Print + Digital', '¥4,400', 'Morning paper delivered + Digital Premium', 'Delivery in Minori Prefecture only'],
+      ['Print + Digital', '¥4,400', 'Morning paper delivered + Digital Premium', 'Delivery in Harvest Prefecture only'],
       ['Student', '¥500', 'As Digital Basic', 'Student ID checked once a year'],
     ], note: 'Cancel online at any time; you keep access until the end of the paid month. Print + Digital prices for delivery outside the city may differ.' },
     ja: { caption: '購読プラン（税込み）', head: ['プラン', '月額', '内容', '備考'], rows: [
@@ -413,10 +413,10 @@ export const charts = {
   'budget-categories': { type: 'hbars', display: 'inline', unit: '¥bn', values: [
       [79.4, 22.6, 21.8, 19.7, 17.1, 8.9, 7.2, 6.3, 7.3],
       [82.1, 23.0, 22.9, 19.2, 17.4, 9.3, 6.9, 8.4, 7.0]],
-    en: { title: 'Where the money goes: general account by purpose', subtitle: 'Initial budgets, ¥ billion', series: ['FY2025', 'FY2026'], labels: ['Welfare and health', 'Education', 'Civil engineering (roads, rivers, parks)', 'Debt repayment', 'General administration', 'Disaster prevention and fire', 'Commerce, tourism and labour', 'Culture, sport and libraries', 'Other'], source: 'Source: Harukawa City Finance Division' },
+    en: { title: 'Where the money goes: general account by purpose', subtitle: 'Initial budgets, ¥ billion', series: ['FY2025', 'FY2026'], labels: ['Welfare and health', 'Education', 'Civil engineering (roads, rivers, parks)', 'Debt repayment', 'General administration', 'Disaster prevention and fire', 'Commerce, tourism and labour', 'Culture, sport and libraries', 'Other'], source: 'Source: Springvale City Finance Division' },
     ja: { title: '目的別に見た一般会計の歳出', subtitle: '当初予算、単位：億円', series: ['2025年度', '2026年度'], labels: ['民生・衛生', '教育', '土木（道路・河川・公園）', '公債費', '総務', '消防・防災', '商工・観光・労働', '文化・スポーツ・図書館', 'その他'], source: '出典：春川市財政課', scale: 10 } },
   'budget-revenue': { type: 'hbars', display: 'img', alt: { en: '', ja: '' }, unit: '¥bn', values: [[68.4, 40.1, 31.2, 24.6, 17.3, 14.6]],
-    en: { title: 'Where the money comes from (FY2026, ¥196.2 billion)', subtitle: '¥ billion', series: ['FY2026'], labels: ['City taxes', 'National subsidies', 'Local allocation tax', 'Other', 'Municipal bonds', 'Prefectural subsidies'], source: 'Source: Harukawa City Finance Division' },
+    en: { title: 'Where the money comes from (FY2026, ¥196.2 billion)', subtitle: '¥ billion', series: ['FY2026'], labels: ['City taxes', 'National subsidies', 'Local allocation tax', 'Other', 'Municipal bonds', 'Prefectural subsidies'], source: 'Source: Springvale City Finance Division' },
     ja: { title: '歳入の内訳（2026年度、1,962億円）', subtitle: '単位：億円', series: ['2026年度'], labels: ['市税', '国庫支出金', '地方交付税', 'その他', '市債', '県支出金'], source: '出典：春川市財政課', scale: 10 } },
   'election-poll': { type: 'bars', display: 'img', alt: { en: 'chart', ja: 'グラフ' }, unit: '%', values: [[36, 31, 12, 21], [22, 30, 27, 21]],
     en: { title: 'Who would you vote for if the election were held today?', subtitle: 'Herald poll, 26–27 September 2026, %', series: ['All respondents (1,012)', 'Aged 18–39'], labels: ['Hirose', 'Sawada', 'Onodera', 'Undecided'], source: 'Margin of error ±3.1 points (all respondents)' },
@@ -427,22 +427,22 @@ export const charts = {
   'kumo-prices': { type: 'bars', display: 'img', alt: { en: '', ja: '' }, unit: '¥', values: [[2178, 4378, 2728, 7238], [2178, 4378, 2728, 7458]],
     en: { title: 'Kumo Mobile monthly prices', subtitle: 'Yen per month, tax included', series: ['Now', 'From 1 Dec 2026'], labels: ['Mini (3 GB)', 'Basic (20 GB)', '65+ (5 GB)', 'Unlimited'], source: 'Source: Kumo Mobile' },
     ja: { title: 'クモモバイルの月額料金', subtitle: '円（税込み）', series: ['現在', '12月1日から'], labels: ['ミニ（3GB）', 'ベーシック（20GB）', '65+（5GB）', 'アンリミテッド'], source: '出典：クモモバイル' } },
-  'ware-exports': { type: 'bars', display: 'img', alt: { en: 'Harukawa ware', ja: '春川焼' }, unit: '¥bn', values: [[0.92, 1.01, 1.12, 1.25, 0.97, 1.31, 1.74, 2.05, 2.33, 2.84]],
-    en: { title: 'Harukawa ware exports', subtitle: '¥ billion per calendar year', series: ['Exports'], labels: ['2016', '2017', '2018', '2019', '2020', '2021', '2022', '2023', '2024', '2025'], source: 'Source: Harukawa Ware Cooperative' },
+  'ware-exports': { type: 'bars', display: 'img', alt: { en: 'Springvale ware', ja: '春川焼' }, unit: '¥bn', values: [[0.92, 1.01, 1.12, 1.25, 0.97, 1.31, 1.74, 2.05, 2.33, 2.84]],
+    en: { title: 'Springvale ware exports', subtitle: '¥ billion per calendar year', series: ['Exports'], labels: ['2016', '2017', '2018', '2019', '2020', '2021', '2022', '2023', '2024', '2025'], source: 'Source: Springvale Ware Cooperative' },
     ja: { title: '春川焼の輸出額', subtitle: '億円（暦年）', series: ['輸出額'], labels: ['2016', '2017', '2018', '2019', '2020', '2021', '2022', '2023', '2024', '2025'], source: '出典：春川焼協同組合', scale: 10 } },
   'port-monthly': { type: 'line', display: 'img', alt: { en: 'image', ja: '画像' }, unit: 'k TEU', values: [[14.8, 13.9, 16.2, 15.5, 15.1, 16.0, 16.6, 16.2], [15.2, 14.6, 17.1, 16.4, 16.0, 17.3, 17.9, 17.4]],
-    en: { title: 'Minori Port container handling, January–August', subtitle: 'Thousand TEU per month', series: ['2025', '2026'], labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug'], source: 'Source: Minori Prefecture Port Authority' },
+    en: { title: 'Ferry Port container handling, January–August', subtitle: 'Thousand TEU per month', series: ['2025', '2026'], labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug'], source: 'Source: Harvest Prefecture Port Authority' },
     ja: { title: 'みのり港のコンテナ取扱量（1〜8月）', subtitle: '千TEU（月間）', series: ['2025年', '2026年'], labels: ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月'], source: '出典：みのり県港湾局' } },
   'seagrass-area': { type: 'line', display: 'inline', unit: 'ha', x: [1978, 1990, 2000, 2005, 2010, 2015, 2020, 2025], values: [[1240, 860, 470, 380, 395, 412, 488, 569]],
-    en: { title: 'Eelgrass meadows in Minori Bay', subtitle: 'Area in hectares', series: ['Area'], labels: ['1978', '1990', '2000', '2005', '2010', '2015', '2020', '2025'], source: 'Source: Harukawa University' },
+    en: { title: 'Eelgrass meadows in Harvest Bay', subtitle: 'Area in hectares', series: ['Area'], labels: ['1978', '1990', '2000', '2005', '2010', '2015', '2020', '2025'], source: 'Source: Springvale University' },
     ja: { title: 'みのり湾のアマモ場面積', subtitle: 'ヘクタール', series: ['面積'], labels: ['1978', '1990', '2000', '2005', '2010', '2015', '2020', '2025'], source: '出典：春川大学' } },
   'flu-weekly': { type: 'line', display: 'img', alt: { en: '', ja: '' }, unit: '', threshold: 1.0, values: [[0.0, 0.1, 0.1, 0.1, 0.1, 0.1, 0.2, 0.2, 0.3, 0.3], [0.1, 0.1, 0.2, 0.2, 0.3, 0.4, 0.6, 0.8, 1.2, 1.8]],
-    en: { title: 'Flu patients per sentinel clinic, Minori Prefecture', subtitle: 'Weeks 30–39; the dashed line is the season threshold (1.0)', series: ['2025', '2026'], labels: ['30', '31', '32', '33', '34', '35', '36', '37', '38', '39'], source: 'Source: Minori Prefecture Infectious Disease Surveillance Centre' },
+    en: { title: 'Flu patients per sentinel clinic, Harvest Prefecture', subtitle: 'Weeks 30–39; the dashed line is the season threshold (1.0)', series: ['2025', '2026'], labels: ['30', '31', '32', '33', '34', '35', '36', '37', '38', '39'], source: 'Source: Harvest Prefecture Infectious Disease Surveillance Centre' },
     ja: { title: 'みのり県のインフルエンザ定点当たり患者数', subtitle: '第30〜39週。破線は流行開始の目安（1.0）', series: ['2025年', '2026年'], labels: ['30', '31', '32', '33', '34', '35', '36', '37', '38', '39'], source: '出典：みのり県感染症情報センター' } },
 };
 
 // ---------------------------------------------------------------------------------------------
-// Weather (Harukawa, Sunday 4 October 2026, issued 17:00).
+// Weather (Springvale, Sunday 4 October 2026, issued 17:00).
 export const weather = {
   issued: '2026-10-04T17:00',
   today: { high: 24, low: 20, humidity: 92, pressure: 1002, windDir: { en: 'NE', ja: '北東' }, wind: 12, gust: 24, rainSoFar: 26, rain24: 170, rainMountains: 250, sunrise: '5:49', sunset: '17:36', uv: { en: 'Low', ja: '弱い' } },
@@ -465,13 +465,13 @@ export const weather = {
   ],
   warnings: [
     { level: 'warning', issued: '16:42', en: ['Storm warning', 'Mean winds up to 30 m/s and gusts to 45 m/s from late Sunday evening to Monday morning, strongest around 04:00.'], ja: ['暴風警報', '日曜夜遅くから月曜朝にかけて最大風速30メートル、最大瞬間風速45メートル。最も強まるのは4時ごろ。'] },
-    { level: 'warning', issued: '17:20', en: ['Storm surge warning', 'Tide up to 2.4 m above standard level along Minori Bay around 04:00–06:00 on Monday (high tide 05:12).'], ja: ['高潮警報', 'みのり湾沿岸で月曜4〜6時ごろ、潮位が標準より最大2.4メートル上昇（満潮5時12分）。'] },
+    { level: 'warning', issued: '17:20', en: ['Storm surge warning', 'Tide up to 2.4 m above standard level along Harvest Bay around 04:00–06:00 on Monday (high tide 05:12).'], ja: ['高潮警報', 'みのり湾沿岸で月曜4〜6時ごろ、潮位が標準より最大2.4メートル上昇（満潮5時12分）。'] },
     { level: 'warning', issued: '15:10', en: ['Heavy rain warning (landslides, inundation)', 'Up to 40 mm an hour; 170 mm in the city and 250 mm in the mountains in the 24 hours to 18:00 Monday.'], ja: ['大雨警報（土砂災害、浸水害）', '1時間に最大40ミリ。月曜18時までの24時間に市街地170ミリ、山地250ミリ。'] },
-    { level: 'warning', issued: '11:05', en: ['High wave warning', 'Waves of 6 m in Minori Bay and 8 m offshore.'], ja: ['波浪警報', 'みのり湾で6メートル、沖合で8メートル。'] },
-    { level: 'advisory', issued: '14:30', en: ['Flood advisory (Kagami River)', 'The Nishiki Bridge gauge may reach the evacuation decision level (4.1 m) early on Monday.'], ja: ['洪水注意報（鏡川）', '錦橋観測所の水位が月曜未明に避難判断水位（4.1メートル）に達するおそれ。'] },
+    { level: 'warning', issued: '11:05', en: ['High wave warning', 'Waves of 6 m in Harvest Bay and 8 m offshore.'], ja: ['波浪警報', 'みのり湾で6メートル、沖合で8メートル。'] },
+    { level: 'advisory', issued: '14:30', en: ['Flood advisory (Mirror River)', 'The Nishiki Bridge gauge may reach the evacuation decision level (4.1 m) early on Monday.'], ja: ['洪水注意報（鏡川）', '錦橋観測所の水位が月曜未明に避難判断水位（4.1メートル）に達するおそれ。'] },
     { level: 'advisory', issued: '09:30', en: ['Thunderstorm advisory', 'Lightning and sudden gusts possible until Monday afternoon.'], ja: ['雷注意報', '月曜午後まで落雷や突風のおそれ。'] },
   ],
-  // Typhoon No. 21 positions (map units: x, y on a 600×420 canvas; Harukawa is at 330, 120).
+  // Typhoon No. 21 positions (map units: x, y on a 600×420 canvas; Springvale is at 330, 120).
   track: [
     { t: { en: 'Fri 2 Oct 09:00', ja: '2日（金）9時' }, x: 150, y: 410, hpa: 975, past: true },
     { t: { en: 'Sat 3 Oct 15:00', ja: '3日（土）15時' }, x: 215, y: 330, hpa: 960, past: true },

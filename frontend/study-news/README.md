@@ -1,6 +1,6 @@
-# Harukawa Nippō / The Harukawa Herald (study-news)
+# Springvale Herald / The Springvale Herald (study-news)
 
-A mock local-newspaper website for UniLens user studies (port 8035): a dense front page, section pages, 23 articles, a typhoon live blog, a weather page, charts and tables, a cookie banner, a newsletter pop-up, ads, comments and a paywall. Fictional, set in Harukawa (see `../STUDY-SITES.md`). Every page exists in English (`en/`) and Japanese (`ja/`) at the same path. Site "now" is Sunday 4 October 2026, about 18:00 JST.
+A mock local-newspaper website for UniLens user studies (port 8035): a dense front page, section pages, 23 articles, a typhoon live blog, a weather page, charts and tables, a cookie banner, a newsletter pop-up, ads, comments and a paywall. Fictional, set in Springvale (see `../STUDY-SITES.md`). Every page exists in English (`en/`) and Japanese (`ja/`) at the same path. Site "now" is Sunday 4 October 2026, about 18:00 JST.
 
 Serve: `make serve-frontend study-news`, or `npx live-server frontend/study-news --port=8035 --no-browser`.
 
@@ -16,7 +16,7 @@ Serve: `make serve-frontend study-news`, or `npx live-server frontend/study-news
 
 Articles: festival-road-closures (SVG map + closures table), lantern-workshop, crowd-sensors, embankment-works, railway-timetable, central-library, city-budget (3 charts/tables), mayoral-election-poll (candidates table, 2 charts), water-rates, kumo-mobile-prices (table + chart), harukawa-ware-exports (paywall), port-cargo (paywall), seagrass-research (chart), flu-vaccination (table + chart), pediatric-night-clinic, seagulls-clinch (standings, line score, batting, pitching), castle-marathon, museum-review, typhoon-forecast, editorial-embankment, column-timetable (paywall), column-library, correction-library-date. Four articles carry correction notes; eight have comments.
 
-Charts (SVG, drawn by `build.mjs` into `assets/charts/`): budget by purpose and seagrass area are inline SVG with a title; budget revenue, election poll, election issues, Kumo prices, ware exports, port monthly, flu weekly, the hourly weather chart and the festival map are `<img>` with empty or useless alt text ("chart", "graph", "image", "Harukawa ware", "Map"), on purpose.
+Charts (SVG, drawn by `build.mjs` into `assets/charts/`): budget by purpose and seagrass area are inline SVG with a title; budget revenue, election poll, election issues, Kumo prices, ware exports, port monthly, flu weekly, the hourly weather chart and the festival map are `<img>` with empty or useless alt text ("chart", "graph", "image", "Springvale ware", "Map"), on purpose.
 
 ## Rebuild
 
