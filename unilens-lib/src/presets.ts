@@ -24,6 +24,7 @@ import {
     setSourceStyle,
     startPreset,
 } from "./settings";
+import { asSource, logSettingsSnapshot } from "./settingsLog";
 import { forgetStudyIds, logEvent, readStudyIds } from "./studyLog";
 
 export interface Preset {
@@ -94,6 +95,7 @@ const INITIAL = {
     // the chat stays where it opened: stepping aside (or folding) to uncover
     // a source is a later feature (Yotam, 2026-10-07)
     chatMovesAside: false,
+    asideFold: true,
     // All outlines the sources where they are (session 1)
     allMoves: false,
     // the log follows an answer's text, and Listen is at its end (#30 changed both
@@ -166,17 +168,20 @@ export const PRESETS = {
             zoom: true,
             zoomKeys: true,
             minimap: "off",
-            // Yotam, 2026-10-10 (P05): what was Alt+clicked is outlined; the chat
-            // stepping aside from a highlight is a row in the panel, off to begin with
-            // (Yotam's try-out, 2026-10-12; it was on)
-            chatMovesAside: false,
+            // Yotam, 2026-10-10 (P05): what was Alt+clicked is outlined. The chat
+            // steps aside from a highlight the user chose, a row in the panel: off
+            // after the try-out (2026-10-12), on from P02 (Yotam, 2026-10-13). It
+            // never folds itself to do so: it moves as far as it can and stays open
+            // (P01 lost a folded chat). Folding is not in the panel
+            chatMovesAside: true,
+            asideFold: false,
             outlineClicked: true,
             voicePauseMs: 2000,
             // the gear shows, and opens the participant's panel below
             settingsButton: true,
-            // "take me to …": the model decides, and the page goes there (no guard:
-            // Yotam wants to see how participants take the model deciding)
-            assistantGoTo: true,
+            // "take me to …": off from P02 (Yotam, 2026-10-13); it returns in session
+            // 3, about agency and control. P01 had it on (the model decided, no guard)
+            assistantGoTo: false,
             // #26 (Yotam, 2026-10-12): the fixed color, as before; the other three
             // choices are in the participant's panel
             hlColorMode: "fixed",
@@ -430,6 +435,7 @@ export function initFacilitator(opts: {
             e.stopPropagation();
             if (e.repeat) return;
             logEvent("facilitator_key", { key });
+            logSettingsSnapshot("facilitator");
             if (key === "s") {
                 toggleSettingsPanel();
                 return;
@@ -447,7 +453,7 @@ export function initFacilitator(opts: {
             if (resetting) return;
             resetting = true;
             showToast("UniLens: resetting…", 10000);
-            clearPresetChanges();
+            asSource("facilitator", clearPresetChanges);
             // the participant id goes too: the next one gets their own link
             forgetStudyIds();
             const now = activePreset()?.id ?? "off";

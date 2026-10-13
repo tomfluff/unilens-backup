@@ -390,6 +390,7 @@ export const NAMES_JA: Partial<Record<keyof Settings, string>> = {
     mmNumbers: "対象に番号を表示",
     citeEvidence: "回答にページ上の根拠を示す",
     chatMovesAside: "根拠に重ならないようチャットをずらす",
+    asideFold: "根拠の横に場所がなければチャットをたたむ",
     allMoves: "「すべて」でページをハイライトへ動かす",
     outlineClicked: "Alt＋クリックしたものを囲む",
     clickMark: "印をつけるもの",

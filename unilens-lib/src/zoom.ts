@@ -709,6 +709,67 @@ export function besideTarget(
 }
 
 /**
+ * Where a chat that cannot clear a target goes instead of folding (asideFold off,
+ * session 2 from P02): the on-screen place, beside, above or below it or at the
+ * screen's edges, where it covers the least of the target; of equals, the one
+ * nearest where it is. Its own place when nothing covers less.
+ */
+export function leastCover(
+    target: { left: number; top: number; right: number; bottom: number },
+    chat: { left: number; top: number; width: number; height: number },
+    viewportW: number,
+    viewportH: number,
+    pad = 16,
+): { left: number; top: number } {
+    const clampX = (x: number) =>
+        Math.min(Math.max(x, 8), Math.max(8, viewportW - chat.width - 8));
+    const clampY = (y: number) =>
+        Math.min(Math.max(y, 8), Math.max(8, viewportH - chat.height - 8));
+    const xs = [
+        chat.left,
+        target.left - pad - chat.width,
+        target.right + pad,
+        8,
+        viewportW,
+    ].map(clampX);
+    const ys = [
+        chat.top,
+        target.top - pad - chat.height,
+        target.bottom + pad,
+        8,
+        viewportH,
+    ].map(clampY);
+    const cover = (x: number, y: number) =>
+        Math.max(
+            0,
+            Math.min(target.right, x + chat.width) - Math.max(target.left, x),
+        ) *
+        Math.max(
+            0,
+            Math.min(target.bottom, y + chat.height) - Math.max(target.top, y),
+        );
+    // where it is, kept on screen, is the first candidate: nothing returned is off it
+    const here = { left: clampX(chat.left), top: clampY(chat.top) };
+    let best = here;
+    let bestCover = cover(here.left, here.top);
+    let bestMove = Math.hypot(here.left - chat.left, here.top - chat.top);
+    for (const x of xs)
+        for (const y of ys) {
+            const c = cover(x, y);
+            const move = Math.hypot(x - chat.left, y - chat.top);
+            if (
+                c < bestCover - 0.5 ||
+                (Math.abs(c - bestCover) <= 0.5 && move < bestMove)
+            ) {
+                best = { left: x, top: y };
+                bestCover = c;
+                bestMove = move;
+            }
+        }
+    return best;
+}
+
+/**
  * Before a move to evidence: bookmark where the user is reading, unless this move
  * continues a run (the view is still where the last one put it, or heading there).
  * Remembered in content space, so a zoom change in between still returns right.
