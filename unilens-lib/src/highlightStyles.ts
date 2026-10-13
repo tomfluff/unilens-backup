@@ -12,6 +12,8 @@
  * W3C Technique C40: black and white bands, so one of them always clears 3:1.
  */
 
+import type { ColorMode, ColorRange } from "./adaptiveColor";
+
 export const BACKDROPS = {
     none: "No backdrop",
     dim: "Dim the rest of the page",
@@ -19,22 +21,50 @@ export const BACKDROPS = {
 } as const;
 export type Backdrop = keyof typeof BACKDROPS;
 
+/** None first, as every choice that has one (item 21, Yotam 2026-10-13) */
 export const OUTLINES = {
-    band: "Thick band in the colour",
+    none: "No outline",
+    band: "Thick band in the color",
     ring: "Two-band ring (black and white)",
+    thin: "Thin border",
     brackets: "Corner brackets",
     underline: "Marker underline",
-    none: "No outline",
 } as const;
 export type Outline = keyof typeof OUTLINES;
+
+export type GlowSize = "small" | "medium" | "large";
+/** the number badge's size on the page (Yotam, 2026-10-10; small is the one there was) */
+export type BadgeSize = "small" | "medium" | "large";
+export type BadgePos = "corner" | "beside";
+/** each glow's box-shadow: blur and spread, px (medium is the glow there was before) */
+export const GLOW_SHADOW: Record<GlowSize, string> = {
+    small: "0 0 10px 3px",
+    medium: "0 0 18px 6px",
+    large: "0 0 30px 12px",
+};
 
 export interface HighlightLook {
     backdrop: Backdrop;
     outline: Outline;
     fill: boolean;
+    /** how much of the colour the fill lays on, when there is one */
+    fillAlpha: number;
     glow: boolean;
+    /** its spread, when there is one */
+    glowSize: GlowSize;
+    /** how much of the colour the glow lays over the page; unset: the standard (light
+     *  backgrounds' text stays readable), stronger on a dark one (hlAdaptLine) */
+    glowAlpha?: number;
     badges: boolean;
+    /** its size, when there is one */
+    badgeSize: BadgeSize;
+    /** at the top-left corner, or beside where it fits */
+    badgePos: BadgePos;
+    /** the base colour; an adaptive mode draws each box in its own (highlight.ts) */
     color: string;
+    /** how the colour meets the page under it (adaptiveColor.ts) */
+    colorMode: ColorMode;
+    colorRange: ColorRange;
 }
 
 export const BACKDROP_ALPHA: Record<Exclude<Backdrop, "none">, number> = {
@@ -48,6 +78,12 @@ export const SPOTLIGHT_FEATHER = 14;
  *  (1.5 feathers: under 5% of the shade reaches the element's edge) */
 export const SPOTLIGHT_ROOM = 1.5;
 export const FILL_ALPHA = 0.3;
+/** the fill's strength (Yotam, 2026-10-10): heavy is the fill there was, light half */
+export type FillStrength = "light" | "heavy";
+export const FILL_ALPHAS: Record<FillStrength, number> = {
+    light: FILL_ALPHA / 2,
+    heavy: FILL_ALPHA,
+};
 export const RING = { inner: "#000", outer: "#fff" };
 /** dark edge drawn around coloured strokes so a yellow band still reads on white */
 export const EDGE = "#000";
@@ -60,18 +96,36 @@ export const isHexColor = (s: unknown): s is string =>
 export function lookFrom(s: {
     hlBackdrop: Backdrop;
     hlOutline: Outline;
-    hlFill: boolean;
-    hlGlow: boolean;
-    hlBadges: boolean;
+    hlFill: FillStrength | "none" | boolean;
+    hlGlow: GlowSize | "none" | boolean;
+    hlBadges: BadgeSize | "none" | boolean;
+    hlBadgePos?: BadgePos;
     hlColor: string;
+    hlColorMode?: ColorMode;
+    hlColorRange?: ColorRange;
 }): HighlightLook {
     return {
         backdrop: s.hlBackdrop,
         outline: s.hlOutline,
-        fill: s.hlFill,
-        glow: s.hlGlow,
-        badges: s.hlBadges,
+        fill: s.hlFill !== "none" && s.hlFill !== false,
+        fillAlpha:
+            typeof s.hlFill === "string" && s.hlFill !== "none"
+                ? FILL_ALPHAS[s.hlFill]
+                : FILL_ALPHA,
+        glow: s.hlGlow !== "none" && s.hlGlow !== false,
+        glowSize:
+            typeof s.hlGlow === "string" && s.hlGlow !== "none"
+                ? s.hlGlow
+                : "medium",
+        badges: s.hlBadges !== "none" && s.hlBadges !== false,
+        badgeSize:
+            typeof s.hlBadges === "string" && s.hlBadges !== "none"
+                ? s.hlBadges
+                : "small",
+        badgePos: s.hlBadgePos === "beside" ? "beside" : "corner",
         color: isHexColor(s.hlColor) ? s.hlColor : "#ffd400",
+        colorMode: s.hlColorMode ?? "fixed",
+        colorRange: s.hlColorRange ?? "some",
     };
 }
 
@@ -85,9 +139,9 @@ export function minimapLook(s: {
     mmNumbers: boolean;
     hlBackdrop: Backdrop;
     hlOutline: Outline;
-    hlFill: boolean;
-    hlGlow: boolean;
-    hlBadges: boolean;
+    hlFill: FillStrength | "none" | boolean;
+    hlGlow: GlowSize | "none" | boolean;
+    hlBadges: BadgeSize | "none" | boolean;
     hlColor: string;
 }): HighlightLook {
     return s.mmFollowHighlight
@@ -106,8 +160,13 @@ export function minimapLook(s: {
  * The outline actually drawn. "No outline" with nothing else on would draw
  * nothing at all; a highlight must always be visible, so it falls back to the ring.
  */
-export function drawnOutline(look: HighlightLook): Outline {
-    const other = look.fill || look.glow || look.backdrop !== "none";
+export function drawnOutline(look: HighlightLook, numbered = true): Outline {
+    // the number alone marks it too (Yotam, 2026-10-10: "None" draws no border)
+    const other =
+        look.fill ||
+        look.glow ||
+        look.backdrop !== "none" ||
+        (numbered && look.badges);
     return look.outline === "none" && !other ? "ring" : look.outline;
 }
 

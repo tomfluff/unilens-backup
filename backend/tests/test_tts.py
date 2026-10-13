@@ -151,6 +151,19 @@ def test_openai_streams_pcm_in_the_post_answer(client, monkeypatch):
     assert FakeSpeech.requests[0]["response_format"] == "pcm"
 
 
+def test_the_reading_speed_reaches_openai_within_its_range(client, monkeypatch):
+    import openai
+
+    monkeypatch.setenv("OPENAI_API_KEY", "test")
+    monkeypatch.setattr(openai, "OpenAI", FakeSpeech)
+    FakeSpeech.requests, FakeSpeech.refuse = [], False
+    for asked, sent in ((1.5, 1.5), (0.75, 0.75), (9, 4.0), ("fast", 1.0), (True, 1.0)):
+        stream(client, provider="openai", speed=asked)
+        assert FakeSpeech.requests[-1]["speed"] == sent, asked
+    stream(client, provider="openai")
+    assert FakeSpeech.requests[-1]["speed"] == 1.0
+
+
 def test_gemini_streams_bare_pcm_without_a_wav_header(client, spoken):
     res = stream(client, provider="gemini", voice="Puck")
     assert res.mimetype == "audio/pcm"

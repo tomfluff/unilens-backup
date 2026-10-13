@@ -45,7 +45,7 @@ describe("click feedback", () => {
         updateSetting("clickFx", "frame");
         updateSetting("fxFrameShape", "highlight");
         // the highlight look this test walks through: no glow, so "nothing at all" is
-        updateSetting("hlGlow", false);
+        updateSetting("hlGlow", "none");
         updateSetting("hlOutline", "band");
         updateSetting("ringWidth", 3);
         const box = { left: 50, top: 50, width: 120, height: 30 };
@@ -58,14 +58,14 @@ describe("click feedback", () => {
         for (const el of document.querySelectorAll(".ul-fx")) el.remove();
         // no outline: its fill shows; nothing at all: the ring
         updateSetting("hlOutline", "none");
-        updateSetting("hlFill", true);
+        updateSetting("hlFill", "heavy");
         clickFeedback(110, 65, box);
         expect(
             document.querySelector<HTMLElement>(".ul-fx-frame")?.dataset
                 .outline,
         ).toBe("none");
         for (const el of document.querySelectorAll(".ul-fx")) el.remove();
-        updateSetting("hlFill", false);
+        updateSetting("hlFill", "none");
         clickFeedback(110, 65, box);
         expect(
             document.querySelector<HTMLElement>(".ul-fx-frame")?.dataset

@@ -12,8 +12,8 @@ const EN = {
     open: "UniLens settings",
     /** a study preset is on (presets.ts): for the facilitator, who opened the panel
      *  with its hidden key */
-    presetOn: (name: string) =>
-        `Preset on: ${name}. Changes made here last until this tab is closed. Ctrl+Alt+Shift+B switches the preset.`,
+    presetOn: (name: string, keptFor?: string) =>
+        `Preset on: ${name}. ${keptFor ? `Changes made here are kept for ${keptFor} in this browser, until Ctrl+Alt+Shift+R.` : "Changes made here last until this tab is closed."} Ctrl+Alt+Shift+B switches the preset.`,
     close: "Close settings",
     preview: "Preview",
     tabs: {
@@ -32,6 +32,7 @@ const EN = {
         clickFeedback: "Click feedback",
         movement: "Movement",
         conversation: "Asking and answers",
+        talk: "Speaking and listening",
         zoom: "Zoom",
         minimap: "Minimap",
         voiceSound: "Voice and sound",
@@ -51,11 +52,18 @@ const EN = {
     /** the answer as the model writes it: the words a source supports in {{ }}, then
      *  its marker; the chat's own renderer turns them into a chip and an underline */
     sampleCited: "It opens at {{9:30 on weekdays}} [[n1]].",
+    /** the source-style tiles' answer: two sources, so where the numbers go shows */
+    sampleSources: "Opens at {{9:30}} [[n1]], closes at {{17:00}} [[n2]].",
     samplePlace: "Opening hours",
     sampleSource: "Open 9:30–17:00 (sample)",
+    /** what the sample's click mark marks, beside the source */
+    sampleClicked: "Tickets",
     hearSound: "Hear the action sound",
+    hearVoice: "Hear the reading voice",
+    stopVoice: "Stop",
+    sampleRead: "This is how answers are read aloud, at the speed you chose.",
     tryFx: "Try the click feedback",
-    custom: "Other colour",
+    custom: "Other color",
     search: "Find a setting",
     noMatch: (q: string) => `No setting matches “${q}”.`,
     hiddenNow: "Shown only with another setting on",
@@ -86,8 +94,8 @@ const EN = {
 const JA: typeof EN = {
     title: "UniLens 設定",
     open: "UniLens 設定",
-    presetOn: (name: string) =>
-        `プリセット使用中：${name}。ここでの変更はこのタブを閉じるまで有効です。Ctrl＋Alt＋Shift＋B でプリセットを切り替えます。`,
+    presetOn: (name: string, keptFor?: string) =>
+        `プリセット使用中：${name}。${keptFor ? `ここでの変更はこのブラウザに ${keptFor} の分として残ります（Ctrl＋Alt＋Shift＋R で消えます）。` : "ここでの変更はこのタブを閉じるまで有効です。"}Ctrl＋Alt＋Shift＋B でプリセットを切り替えます。`,
     close: "設定を閉じる",
     preview: "プレビュー",
     tabs: {
@@ -106,6 +114,7 @@ const JA: typeof EN = {
         clickFeedback: "クリックの反応",
         movement: "移動",
         conversation: "質問と回答",
+        talk: "話す・聞く",
         zoom: "拡大",
         minimap: "ミニマップ",
         voiceSound: "音声と音",
@@ -123,9 +132,14 @@ const JA: typeof EN = {
     previewPage: "この設定でのハイライトのプレビュー",
     sampleQuestion: "博物館は何時に開きますか？",
     sampleCited: "開館は{{平日の 9 時 30 分}} [[n1]]です。",
+    sampleSources: "開館は{{9:30}} [[n1]]、閉館は{{17:00}} [[n2]]です。",
     samplePlace: "開館時間",
     sampleSource: "開館 9:30〜17:00（見本）",
+    sampleClicked: "きっぷ",
     hearSound: "操作音を聞く",
+    hearVoice: "読み上げの声を聞く",
+    stopVoice: "止める",
+    sampleRead: "回答は、選んだ速さで、このように読み上げられます。",
     tryFx: "クリックの反応を試す",
     custom: "その他の色",
     search: "設定を検索",
@@ -166,7 +180,7 @@ export const OWN_SETTINGS: Partial<
     },
     chatLanguage: { label: { en: "Language", ja: "言語" } },
     chatFontSize: {
-        label: { en: "Chat size", ja: "チャットの大きさ" },
+        label: { en: "Interface size", ja: "表示の大きさ" },
         hint: {
             en: "The whole chat: words, buttons and panel",
             ja: "文字・ボタン・パネル全体",
@@ -178,7 +192,10 @@ export const OWN_SETTINGS: Partial<
     },
     highContrast: {
         label: { en: "High contrast", ja: "ハイコントラスト" },
-        hint: { en: "Black, white and yellow", ja: "黒・白・黄色で表示" },
+        hint: {
+            en: "Stronger colors and borders, light or dark with the theme",
+            ja: "色と枠を強く（テーマに合わせて明るく・暗く）",
+        },
     },
     quickActions: {
         label: { en: "Quick-action buttons", ja: "クイック操作ボタン" },
@@ -203,7 +220,7 @@ export const OWN_SETTINGS: Partial<
         },
     },
     hlColor: {
-        label: { en: "Highlight colour", ja: "ハイライトの色" },
+        label: { en: "Highlight color", ja: "ハイライトの色" },
         hint: {
             en: "Around the sources on the page",
             ja: "ページ上の根拠を囲む色",
@@ -234,19 +251,79 @@ export const OWN_SETTINGS: Partial<
         label: { en: "Double-click to fit", ja: "ダブルクリックで合わせる" },
     },
     voiceInput: {
-        label: { en: "Speak your question", ja: "声で質問する" },
-        hint: { en: "The microphone button", ja: "マイクのボタン" },
-    },
-    liveTalk: {
-        label: { en: "Talk live", ja: "ライブで話す" },
+        label: { en: "Show microphone button", ja: "マイクのボタンを表示" },
         hint: {
-            en: "The Live button: a spoken conversation",
-            ja: "ライブのボタン：声で会話する",
+            en: "Ask by speaking: press it, speak, pause",
+            ja: "押して話すと質問になります",
         },
     },
-    autoRead: { label: { en: "Read answers aloud", ja: "回答を読み上げる" } },
+    liveTalk: {
+        label: {
+            en: "Show live interaction button",
+            ja: "ライブ会話のボタンを表示",
+        },
+        hint: {
+            en: "A spoken conversation with the assistant",
+            ja: "アシスタントと声で会話する",
+        },
+    },
+    autoRead: {
+        label: { en: "Autoplay responses", ja: "回答を自動で再生" },
+        hint: {
+            en: "Each answer is read aloud as it arrives",
+            ja: "回答が届くと読み上げます",
+        },
+    },
+    readSources: {
+        label: {
+            en: "Say the source numbers when reading aloud",
+            ja: "読み上げで根拠の番号も読む",
+        },
+        hint: {
+            en: "For example “(source 2)”, where the chat shows the number",
+            ja: "たとえば「（根拠2）」。チャットで番号がある位置で読みます",
+        },
+    },
     sounds: {
         label: { en: "A sound for every action", ja: "操作ごとの音" },
+    },
+    floatingButton: {
+        label: { en: "Floating button", ja: "浮かぶボタン" },
+        hint: {
+            en: "Always on screen: press it to ask about the page",
+            ja: "いつも画面に表示。押すとページについて質問できます",
+        },
+    },
+    fabReminder: {
+        label: { en: "Remind me now and then", ja: "ときどき知らせる" },
+        hint: {
+            en: "“Ask me about this page” beside the round button, after a while without a question",
+            ja: "しばらく質問がないと、丸いボタンの横に「このページについて聞いてください」",
+        },
+    },
+    hlColorMode: {
+        label: { en: "Adaptive color", ja: "色の自動調整" },
+        hint: {
+            en: "Changes the highlight's color to fit the page behind it",
+            ja: "背景に合わせてハイライトの色を変えます",
+        },
+    },
+    hlPulse: {
+        label: { en: "Pulse", ja: "脈打つ輪" },
+        hint: {
+            en: "A ring pulses out from each highlight as it appears",
+            ja: "ハイライトが出るとき、輪が外へ広がります",
+        },
+    },
+    clickMark: {
+        label: { en: "What to mark", ja: "印をつけるもの" },
+        hint: {
+            en: "A numbered mark where you Alt+clicked, P1 and P2 as in the chat; press a P in the chat to show or hide its mark",
+            ja: "Alt＋クリックした場所に番号の印（チャットと同じP1・P2）。チャットのPを押すと、その印を表示・非表示",
+        },
+    },
+    clickMarkStyle: {
+        label: { en: "How it's marked", ja: "印の形" },
     },
     voiceAutoSend: {
         label: { en: "Send when I pause", ja: "話し終えたら送信" },
@@ -293,26 +370,44 @@ export const NAMES_JA: Partial<Record<keyof Settings, string>> = {
     streamReplies: "回答を少しずつ表示",
     elementContext: "クリックした要素のまわりも送る",
     regionSelect: "Alt＋ドラッグで範囲を選ぶ",
+    altDragInert: "範囲選択がオフのとき、Alt＋ドラッグは何もしない",
     hints: "先回りのヒント",
     lensPan: "レンズ移動（拡大中はページを固定）",
     debugView: "デバッグ表示（Ctrl＋Shift＋D）",
     inventory: "キャプチャと一緒にページの構造を送る",
     ringScale: "拡大に合わせて枠を太くする",
-    hlFill: "色で塗る",
+    hlBadgeClamp: "番号を画面の端にとどめる",
+    hlAdaptLine: "色の自動調整で線にも色をつける（暗い背景では光彩を強く）",
+    hlColorMode: "色の自動調整",
+    hlColorRange: "色を変えてよい幅",
+    hlFill: "塗り",
     hlGlow: "光彩",
-    hlBadges: "番号バッジ",
+    hlBadges: "ページの番号",
+    hlBadgePos: "番号の位置",
     mmFollowHighlight: "ハイライトと同じ見た目",
     mmFill: "色で塗る（半透明）",
     mmGlow: "対象のまわりを光らせる",
     mmNumbers: "対象に番号を表示",
     citeEvidence: "回答にページ上の根拠を示す",
     chatMovesAside: "根拠に重ならないようチャットをずらす",
+    allMoves: "「すべて」でページをハイライトへ動かす",
+    outlineClicked: "Alt＋クリックしたものを囲む",
+    clickMark: "印をつけるもの",
+    answerFromStart: "新しい回答を先頭から表示（読み上げは先頭に）",
+    quietNotFound: "何も指さない回答をメモの見た目に",
+    clickMarkStyle: "クリックした点の印",
     aboutLine: "次の質問の対象を入力欄の上に表示",
     debugShortcut: "Ctrl＋Shift＋D でデバッグ表示を開く",
     assistantZoom: "頼まれたらアシスタントがページを拡大する",
+    assistantGoTo: "アシスタントがページ上の場所へ連れて行く",
     associateText: "回答と根拠を結ぶ（根拠が支える語句に下線）",
     settingsButton: "設定ボタン（隠しても Ctrl＋Alt＋Shift＋S で設定を開く）",
+    sourceStyleButton: "チャットの「根拠」ボタン（文中・下線・回答の後）",
+    voicePauseMs: "声の質問を終える間 (ms)",
     citePlacement: "根拠の番号の位置",
+    chatTheme: "テーマ",
+    ttsSpeed: "読み上げの速さ",
+    sourceStyle: "回答の中の根拠",
     refreshView: "続けて質問するとき今の画面を送る",
     fxCore: "オーブ：光沢のある芯",
     fxSwirl: "オーブ：2色の渦",
@@ -337,6 +432,7 @@ export const NAMES_JA: Partial<Record<keyof Settings, string>> = {
     inventoryMaxNodes: "構造の要素数の上限",
     ringWidth: "枠の太さ (px)",
     minimapMarkerSize: "地図上の対象の最小サイズ (px)",
+    fabReminderSec: "知らせるまでの時間（質問のない秒数）",
     cueRadius: "ポインターからの距離 (px)",
     fxSize: "大きさ (%)",
     fxSoftness: "オーロラ：やわらかさ (px)",
@@ -375,6 +471,7 @@ export const NAMES_JA: Partial<Record<keyof Settings, string>> = {
 const OUTLINES_JA = {
     band: "色の太い帯",
     ring: "黒と白の二重の枠",
+    thin: "細い枠",
     brackets: "角のかっこ",
     underline: "マーカーの下線",
     none: "枠なし",
@@ -431,10 +528,82 @@ export const CHOICES_JA: Partial<
         always: "いつも中央に",
         never: "動かさない（矢印だけ）",
     },
+    hlFill: {
+        none: "なし",
+        light: "薄く",
+        heavy: "濃く",
+    },
+    hlColorMode: {
+        fixed: "オフ",
+        near: "色を強調（この色のまま、必要なところで見分けやすく）",
+        invert: "下の色を反転",
+        contrast: "下の色といちばん見分けやすい色",
+    },
+    hlColorRange: {
+        little: "少し",
+        some: "ある程度",
+        any: "必要なだけ",
+    },
+    hlBadgePos: {
+        corner: "左上の角",
+        beside: "空いている横",
+    },
+    hlBadges: {
+        none: "なし",
+        small: "小",
+        medium: "中",
+        large: "大",
+    },
+    hlGlow: {
+        none: "なし",
+        small: "小",
+        medium: "中",
+        large: "大",
+    },
+    clickMark: {
+        none: "なし",
+        spot: "クリックした点",
+        element: "クリックしたもの",
+        both: "両方",
+    },
+    floatingButton: {
+        off: "オフ",
+        round: "丸いボタン",
+        bar: "マイク付きのバー",
+    },
+    clickMarkStyle: {
+        pin: "番号入りのピン",
+        tagClear: "透ける点と、番号への線",
+        halo: "やわらかい光と、そばの番号",
+        line: "その場所を指す線だけ",
+    },
+    hlPulse: {
+        off: "オフ",
+        few: "数回だけ",
+        always: "表示中ずっと",
+    },
+    sourceStyle: {
+        inline: "文中に番号",
+        underline: "文中に番号、語句に下線",
+        end: "回答の後に番号をまとめて",
+        both: "文中に番号、回答の後にもまとめて",
+    },
+    ttsSpeed: {
+        slow: "ゆっくり",
+        normal: "ふつう",
+        fast: "速い",
+        fastest: "とても速い",
+    },
+    chatTheme: {
+        light: "ライト",
+        dark: "ダーク",
+        system: "コンピューターの設定に合わせる",
+    },
     citePlacement: {
         inline: "文の中（語句のすぐ後）",
         sentence: "各文の終わり",
         end: "回答の最後にまとめて",
+        both: "文の中と、回答の最後にもまとめて",
     },
     autoHighlight: {
         where: "「どこ」「見せて」と聞いたときに根拠を囲む",
@@ -476,6 +645,18 @@ export const CHOICES_JA: Partial<
 
 /** the look cards' short names in Japanese, by stored value (the full name is the tooltip) */
 export const SHORT_JA: Record<string, string> = {
+    fixed: "オフ",
+    invert: "反転",
+    contrast: "見分けやすさ優先",
+    near: "色を強調",
+    corner: "左上の角",
+    beside: "空いている横",
+    light: "薄く",
+    heavy: "濃く",
+    thin: "細い枠",
+    small: "小",
+    medium: "中",
+    large: "大",
     band: "太い帯",
     ring: "黒と白の枠",
     brackets: "角のかっこ",

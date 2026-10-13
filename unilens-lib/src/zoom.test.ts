@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { updateSetting } from "./settings";
 import {
+    aimInZone,
     assistantZoom,
     besideTarget,
     canReturn,
@@ -10,9 +11,13 @@ import {
     getView,
     isOwnUI,
     onViewChange,
+    openArea,
     returnToPreviousView,
     revealElement,
+    revealElements,
+    revealPlace,
     revealPoint,
+    setScreenCover,
     setView,
 } from "./zoom";
 
@@ -46,7 +51,11 @@ describe("revealElement", () => {
         const el = document.createElement("div");
         // jsdom viewport is 1024x768 and scrollX/Y are 0
         expect(revealElement(el, () => box(100, 2000))).toBe("moved");
-        expect(scroll).toHaveBeenLastCalledWith(150 - 512, 2020 - 384);
+        expect(scroll).toHaveBeenLastCalledWith({
+            left: 150 - 512,
+            top: 2020 - 384,
+            behavior: "instant",
+        });
         scroll.mockClear();
         expect(revealElement(el, () => box(100, 200))).toBe("in-view");
         expect(scroll).not.toHaveBeenCalled();
@@ -62,7 +71,11 @@ describe("revealElement", () => {
         const el = document.createElement("div");
         // inside the layout viewport but left of the pinched visual viewport
         expect(revealElement(el, () => box(100, 250))).toBe("moved");
-        expect(scroll).toHaveBeenLastCalledWith(150 - 500, 270 - 350);
+        expect(scroll).toHaveBeenLastCalledWith({
+            left: 150 - 500,
+            top: 270 - 350,
+            behavior: "instant",
+        });
         Object.defineProperty(window, "visualViewport", {
             configurable: true,
             value: undefined,
@@ -74,7 +87,11 @@ describe("revealElement", () => {
         window.scrollTo = scroll as unknown as typeof window.scrollTo;
         const el = document.createElement("div");
         revealElement(el, () => box(100, 200), { always: true });
-        expect(scroll).toHaveBeenCalledWith(150 - 512, 220 - 384);
+        expect(scroll).toHaveBeenCalledWith({
+            left: 150 - 512,
+            top: 220 - 384,
+            behavior: "instant",
+        });
     });
 
     it("remembers each move so the user can return to where they were", () => {
@@ -88,7 +105,11 @@ describe("revealElement", () => {
         scroll.mockClear();
         expect(returnToPreviousView()).toBe(true);
         // jsdom view is (0, 0), so returning centres the old view centre again
-        expect(scroll).toHaveBeenCalledWith(0, 0);
+        expect(scroll).toHaveBeenCalledWith({
+            left: 0,
+            top: 0,
+            behavior: "instant",
+        });
         expect(canReturn()).toBe(false);
         expect(returnToPreviousView()).toBe(false);
     });
@@ -106,7 +127,11 @@ describe("revealElement", () => {
         const el = document.createElement("div");
         // jsdom viewport 1024x768: an element below the fold goes to the middle
         expect(revealElement(el, () => box(400, 1500))).toBe("moved");
-        expect(scroll).toHaveBeenLastCalledWith(450 - 512, 1520 - 384);
+        expect(scroll).toHaveBeenLastCalledWith({
+            left: 450 - 512,
+            top: 1520 - 384,
+            behavior: "instant",
+        });
     });
 
     it("steps the chat aside to the nearer side that clears the target", () => {
@@ -146,6 +171,143 @@ describe("revealElement", () => {
     it("refuses an element with no box", () => {
         const el = document.createElement("div");
         expect(revealElement(el, () => box(0, 0, 0, 0))).toBe("none");
+    });
+});
+
+describe("the edge zone (session 2, item 16 of Yotam's try-out)", () => {
+    const box = (left: number, top: number, width = 100, height = 40) => ({
+        left,
+        top,
+        width,
+        height,
+    });
+    const at = (boxes: Map<Element, ReturnType<typeof box>>) => (el: Element) =>
+        boxes.get(el) ?? box(0, 0, 0, 0);
+    let scroll: ReturnType<typeof vi.fn>;
+    beforeEach(() => {
+        updateSetting("edgeZone", 0.2);
+        scroll = vi.fn();
+        window.scrollTo = scroll as unknown as typeof window.scrollTo;
+    });
+    afterEach(() => {
+        updateSetting("edgeZone", 0);
+        setScreenCover(null);
+        while (returnToPreviousView());
+    });
+    // jsdom's screen is 1024x768: the zone is x 204.8-819.2, y 153.6-614.4
+    const screen = box(0, 0, 1024, 768);
+
+    it("counts a highlight on screen but near an edge as out of view", () => {
+        expect(aimInZone(box(400, 300), screen, 0.2).inView).toBe(true);
+        expect(aimInZone(box(100, 300), screen, 0.2).inView).toBe(false);
+        expect(aimInZone(box(400, 700), screen, 0.2).inView).toBe(false);
+        expect(aimInZone(box(100, 300), screen, 0).inView).toBe(true);
+    });
+
+    it("moves it fully to the middle, not just past the zone's line", () => {
+        const el = document.createElement("div");
+        expect(revealElement(el, () => box(100, 200))).toBe("moved");
+        expect(scroll).toHaveBeenLastCalledWith({
+            left: 150 - 512,
+            top: 220 - 384,
+            behavior: "instant",
+        });
+        scroll.mockClear();
+        expect(revealElement(el, () => box(400, 300))).toBe("in-view");
+        expect(scroll).not.toHaveBeenCalled();
+    });
+
+    it("counts the chat's part as hidden, and centres in the rest", () => {
+        const chat = box(624, 0, 400, 768);
+        expect(openArea(screen, chat)).toEqual(box(0, 0, 624, 768));
+        // a chat over nearly all of the screen: the whole screen
+        expect(openArea(screen, box(50, 0, 974, 768))).toEqual(screen);
+        setScreenCover(() => chat);
+        const el = document.createElement("div");
+        // well inside the screen's zone, but under the chat
+        expect(revealElement(el, () => box(650, 300, 60, 40))).toBe("moved");
+        expect(scroll).toHaveBeenLastCalledWith({
+            left: 680 - 312,
+            top: 320 - 384,
+            behavior: "instant",
+        });
+    });
+
+    it("brings a highlight bigger than the zone in by its start", () => {
+        const el = document.createElement("div");
+        // its start (top-left) inside the zone: in view
+        expect(revealElement(el, () => box(300, 200, 900, 600))).toBe(
+            "in-view",
+        );
+        // its start outside: to the zone's start, not its middle to the middle
+        expect(revealElement(el, () => box(100, 100, 900, 600))).toBe("moved");
+        const last = scroll.mock.lastCall?.[0] as { left: number; top: number };
+        expect(last.left).toBeCloseTo(100 - 204.8);
+        expect(last.top).toBeCloseTo(100 - 153.6);
+    });
+
+    it("All: the group's box when it fits, else the first", () => {
+        const a = document.createElement("div");
+        const b = document.createElement("div");
+        const near = at(
+            new Map([
+                [a, box(100, 50)],
+                [b, box(300, 150)],
+            ]),
+        );
+        expect(revealElements([a, b], near)).toBe("moved");
+        // the group (100-400 by 50-190) to the middle
+        expect(scroll).toHaveBeenLastCalledWith({
+            left: 250 - 512,
+            top: 120 - 384,
+            behavior: "instant",
+        });
+        const far = at(
+            new Map([
+                [a, box(100, 50)],
+                [b, box(100, 2000)],
+            ]),
+        );
+        expect(revealElements([a, b], far)).toBe("moved");
+        // too tall for the zone together: the first one
+        expect(scroll).toHaveBeenLastCalledWith({
+            left: 150 - 512,
+            top: 70 - 384,
+            behavior: "instant",
+        });
+        scroll.mockClear();
+        const inside = at(
+            new Map([
+                [a, box(300, 200)],
+                [b, box(500, 400)],
+            ]),
+        );
+        expect(revealElements([a, b], inside)).toBe("in-view");
+        expect(scroll).not.toHaveBeenCalled();
+    });
+
+    it("a place the user clicked: by its point", () => {
+        expect(revealPlace(512, 384)).toBe("in-view");
+        expect(revealPlace(30, 384)).toBe("moved");
+        expect(scroll).toHaveBeenLastCalledWith({
+            left: 30 - 512,
+            top: 0,
+            behavior: "instant",
+        });
+    });
+
+    it("leaves session 1's rule as it was with no zone", () => {
+        updateSetting("edgeZone", 0);
+        // All: the first source alone, still when it shows nothing
+        const a = document.createElement("div");
+        const b = document.createElement("div");
+        const firstGone = at(new Map([[b, box(100, 2000)]]));
+        expect(revealElements([a, b], firstGone)).toBe("none");
+        expect(scroll).not.toHaveBeenCalled();
+        setScreenCover(() => box(624, 0, 400, 768));
+        const el = document.createElement("div");
+        expect(revealElement(el, () => box(650, 300, 60, 40))).toBe("in-view");
+        expect(revealPlace(30, 384)).toBe("in-view");
     });
 });
 
@@ -238,6 +400,27 @@ describe("page moves: eased, cancellable, and Back as a bookmark", () => {
         updateSetting("motion", "smooth");
         updateSetting("motionMs", ms);
     };
+
+    it("moves the user aims (a minimap click) land at once, even with motion smooth", () => {
+        smooth(1000);
+        setView(0, 2000, true);
+        // in the same call, and as an instant scroll: never the page's CSS smooth one
+        expect(pos.y).toBe(2000);
+        expect(scroll).toHaveBeenLastCalledWith({
+            left: 0,
+            top: 2000,
+            behavior: "instant",
+        });
+    });
+
+    it("every step of a glide is an instant scroll, never the page's smooth one", () => {
+        smooth(300);
+        setView(0, 3000);
+        vi.advanceTimersByTime(400);
+        expect(pos.y).toBe(3000);
+        for (const [a] of scroll.mock.calls)
+            expect(a).toMatchObject({ behavior: "instant" });
+    });
 
     it("jumps within the call when motion is instant, or when the system asks for reduced motion", () => {
         setView(0, 500);

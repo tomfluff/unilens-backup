@@ -8,6 +8,7 @@ import {
     foldNested,
     hasHighlight,
     init,
+    isLatest,
     nextToken,
     onHighlightsCleared,
     registerPopoverClose,
@@ -59,15 +60,16 @@ beforeEach(() => {
     updateSetting("escapeOrder", "highlight");
     updateSetting("hlOutline", "ring");
     updateSetting("hlBackdrop", "none");
-    updateSetting("hlFill", false);
-    updateSetting("hlGlow", false);
-    updateSetting("hlBadges", true);
+    updateSetting("hlFill", "none");
+    updateSetting("hlGlow", "none");
+    updateSetting("hlBadges", "small");
     updateSetting("hlColor", "#ffd400");
     updateSetting("offscreenCue", "none");
     updateSetting("cueRadius", 90);
     updateSetting("cueSize", 72);
     updateSetting("ringWidth", 2);
     updateSetting("ringScale", false);
+    updateSetting("hlPulse", "off");
 });
 
 describe("showHighlights", () => {
@@ -104,6 +106,15 @@ describe("showHighlights", () => {
         } finally {
             updateSetting("chatLanguage", "auto");
         }
+    });
+
+    it("knows whether a request is still the latest (a late go-to waits on it)", () => {
+        setCurrentCapture("c3");
+        const t = nextToken();
+        expect(isLatest("c3", t)).toBe(true);
+        expect(isLatest("c2", t)).toBe(false); // another capture since
+        nextToken(); // a newer question, or a number pressed
+        expect(isLatest("c3", t)).toBe(false);
     });
 
     it("is a no-op for another capture or a superseded token", () => {
@@ -202,8 +213,8 @@ describe("showHighlights", () => {
     });
 
     it("stacks fill and glow in the chosen colour over a dim backdrop", () => {
-        updateSetting("hlFill", true);
-        updateSetting("hlGlow", true);
+        updateSetting("hlFill", "heavy");
+        updateSetting("hlGlow", "medium");
         updateSetting("hlBackdrop", "dim");
         updateSetting("hlColor", "#ffe600");
         const { registry } = mount();
@@ -444,6 +455,51 @@ describe("clearHighlights", () => {
     });
 });
 
+describe("a number by a place partly off screen", () => {
+    it("stays by its place (session 2), or slides in at the edge (session 1)", () => {
+        updateSetting("hlBadgePos", "corner");
+        const { registry } = mount();
+        const off = () => rect(100, -200, 50, 20);
+        const badge = () =>
+            document.querySelector(
+                "#unilens-highlight-layer .unilens-hl-badge",
+            ) as HTMLElement;
+        updateSetting("hlBadgeClamp", false);
+        setCurrentCapture("c1");
+        showHighlights(
+            [{ id: "n1", role: "target", badge: "7" }],
+            registry,
+            "c1",
+            nextToken(),
+            { measure: off },
+        );
+        // above the screen with its place, not held at its top edge
+        expect(parseFloat(badge().style.top)).toBeLessThan(-150);
+        updateSetting("hlBadgeClamp", true);
+        relayNow();
+        expect(parseFloat(badge().style.top)).toBeGreaterThanOrEqual(0);
+        updateSetting("hlBadgeClamp", false);
+    });
+});
+
+describe("the pulse", () => {
+    it("marks each box to pulse in its colour, and none when off", () => {
+        updateSetting("hlPulse", "few");
+        const { registry } = mount();
+        show(registry);
+        const box = layerBoxes()[0] as HTMLElement;
+        expect(box.dataset.pulse).toBe("few");
+        expect(box.style.getPropertyValue("--ul-pulse")).toBe("#ffd400");
+        // a change applies to the highlight already on screen
+        updateSetting("hlPulse", "always");
+        relayNow();
+        expect(box.dataset.pulse).toBe("always");
+        updateSetting("hlPulse", "off");
+        relayNow();
+        expect(box.dataset.pulse).toBeUndefined();
+    });
+});
+
 describe("layered look", () => {
     const one = (m = () => rect(100, 200, 50, 20)) => {
         const { registry } = mount();
@@ -458,13 +514,15 @@ describe("layered look", () => {
         return layerBoxes()[0] as HTMLElement;
     };
 
-    it("band: a thick stroke in the colour between two dark edges", () => {
+    it("band: a thick see-through stroke in the colour, with a dark inner edge", () => {
         updateSetting("hlOutline", "band");
         updateSetting("hlColor", "#ff00aa");
         const box = one();
-        expect(box.style.border).toBe("6px solid rgb(255, 0, 170)");
-        expect(box.style.outline).toMatch(/^2px solid (#000|rgb\(0, 0, 0\))$/);
-        expect(box.style.boxShadow).toMatch(/^inset 0(px)? 0(px)? 0(px)? 2px/);
+        // see-through, so a neighbour's text under it still shows (Yotam, 2026-10-10)
+        expect(box.style.border).toBe("6px solid rgba(255, 0, 170, 0.6)");
+        // its inner edge only: an outer one would cross a neighbour's text
+        expect(box.style.outline).toMatch(/^(none|)$/);
+        expect(box.style.boxShadow).toMatch(/^inset 0(px)? 0(px)? 0(px)? 1px/);
     });
 
     it("brackets and underline draw decorations instead of a border", () => {
@@ -480,15 +538,20 @@ describe("layered look", () => {
     });
 
     it("badges are an addition the user can turn off", () => {
-        updateSetting("hlBadges", false);
+        updateSetting("hlBadges", "none");
         one();
         expect(document.querySelector(".unilens-hl-badge")).toBeNull();
         clearHighlights();
-        updateSetting("hlBadges", true);
+        updateSetting("hlBadges", "small");
         one();
         expect(document.querySelector(".unilens-hl-badge")?.textContent).toBe(
             "1",
         );
+        // over the lasting click marks (z-index 2) too
+        expect(
+            (document.querySelector(".unilens-hl-badge") as HTMLElement).style
+                .zIndex,
+        ).toBe("3");
     });
 
     it("spotlight feathers the holes and overshoots the screen edges", () => {
@@ -953,7 +1016,7 @@ describe("off-screen cues", () => {
 
     it("marks an outline-less box, so forced colours can give it a ring", () => {
         updateSetting("hlOutline", "none");
-        updateSetting("hlFill", true);
+        updateSetting("hlFill", "heavy");
         const { registry } = mount();
         show(registry);
         expect((layerBoxes()[0] as HTMLElement).dataset.outline).toBe("none");
@@ -1314,16 +1377,37 @@ describe("a wrapped link", () => {
             { measure: () => rect(40, 100, 400, 48), lines },
         );
     }
+    // the number sits in the layer above every box, at its first line's corner
     const badges = () =>
-        [...layerBoxes()].map(
-            (b) => b.querySelector(".unilens-hl-badge")?.textContent ?? "",
-        );
+        [
+            ...document.querySelectorAll(
+                "#unilens-highlight-layer .unilens-hl-badge",
+            ),
+        ].map((b) => b.textContent ?? "");
 
     it("is outlined line by line, with its number on the first", () => {
         showWrapped(() => [rect(300, 100, 140, 20), rect(40, 128, 60, 20)]);
         const boxes = [...layerBoxes()] as HTMLElement[];
         expect(boxes).toHaveLength(2);
-        expect(badges()).toEqual(["1", ""]);
+        expect(badges()).toEqual(["1"]);
+        const badge = document.querySelector(
+            "#unilens-highlight-layer .unilens-hl-badge",
+        ) as HTMLElement;
+        // at the top-left corner, its bottom-right at the element's top-left (300,
+        // 100): over the outline's room, not the element's text
+        expect(parseFloat(badge.style.left) + 24).toBeLessThanOrEqual(300);
+        expect(parseFloat(badge.style.top) + 24).toBeLessThanOrEqual(100);
+        expect(badge.dataset.side).toBe("corner");
+        // beside, where it fits: wholly outside the box, on its left here
+        updateSetting("hlBadgePos", "beside");
+        relayNow();
+        const beside = document.querySelector(
+            "#unilens-highlight-layer .unilens-hl-badge",
+        ) as HTMLElement;
+        expect(parseFloat(beside.style.left) + 24).toBeLessThanOrEqual(
+            parseFloat(boxes[0].style.left),
+        );
+        updateSetting("hlBadgePos", "corner");
         // each box hugs its line, not the 400 px wide union of both
         expect(parseFloat(boxes[0].style.width)).toBeLessThan(200);
         expect(parseFloat(boxes[1].style.left)).toBeLessThan(

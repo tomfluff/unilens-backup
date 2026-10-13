@@ -7,6 +7,7 @@ import {
     exportSettings,
     getSettings,
     importSettings,
+    mergeForTest,
     NUMBER_KNOBS,
     type NumSettingKey,
     PANEL_TABS,
@@ -29,8 +30,9 @@ const keys = Object.keys(defaults) as (keyof Settings)[];
 
 describe("settings tables", () => {
     it("bounds every numeric knob and its default lies within them", () => {
+        // edgeZone is a hidden preset value, with no panel row
         const numKeys = keys.filter(
-            (k) => typeof defaults[k] === "number",
+            (k) => typeof defaults[k] === "number" && k !== "edgeZone",
         ) as NumSettingKey[];
         expect(numKeys.length).toBeGreaterThan(0);
         for (const key of numKeys) {
@@ -98,9 +100,46 @@ describe("the panel in Japanese", () => {
         );
         expect(missing).toEqual([]);
     });
+    it("lists Off or None first wherever a choice has one (item 21)", () => {
+        const late = Object.entries(ENUM_CHOICES).flatMap(([k, v]) => {
+            const values = Object.keys(v.choices);
+            const i = values.findIndex((x) => x === "off" || x === "none");
+            const own = Object.keys(OWN_CHOICES[k as keyof Settings] ?? {});
+            const j = own.findIndex((x) => x === "off" || x === "none");
+            return i > 0 || j > 0 ? [k] : [];
+        });
+        expect(late).toEqual([]);
+    });
+});
+
+describe("the click marks' old settings", () => {
+    it("are not read: what they marked starts at None", async () => {
+        const { mergeForTest } = await import("./settings");
+        expect(
+            mergeForTest({ clickMarks: true, clickMarkTarget: "spot" })
+                .clickMark,
+        ).toBe("none");
+        expect(mergeForTest({ clickMark: "both" }).clickMark).toBe("both");
+    });
 });
 
 describe("clampSetting", () => {
+    it("reads a saved solid dot as the see-through one (four styles, 2026-10-13)", () => {
+        expect(mergeForTest({ clickMarkStyle: "tag" }).clickMarkStyle).toBe(
+            "tagClear",
+        );
+        expect(mergeForTest({ clickMarkStyle: "halo" }).clickMarkStyle).toBe(
+            "halo",
+        );
+        expect(mergeForTest({}).clickMarkStyle).toBe("tagClear");
+    });
+
+    it("takes both of adaptBg's values and nothing else", () => {
+        expect(clampSetting("adaptBg", "main")).toBe("main");
+        expect(clampSetting("adaptBg", "under-ring")).toBe("under-ring");
+        expect(clampSetting("adaptBg", "ring")).toBe("under-ring");
+    });
+
     it("clamps numbers into their NUMBER_KNOBS bounds", () => {
         const { min, max } = NUMBER_KNOBS.ringWidth;
         expect(clampSetting("ringWidth", min - 5)).toBe(min);
@@ -296,5 +335,24 @@ describe("settings files", () => {
         ])
             expect(() => importSettings(text)).toThrow();
         expect(getSettings()).toEqual(before);
+    });
+});
+
+describe("the reading speed on the browser's own voice (Yotam, 2026-10-10)", () => {
+    it("has a rate per browser, as each maps it", async () => {
+        const { nativeRate } = await import("./settings");
+        const chrome =
+            "Mozilla/5.0 (Windows NT 10.0) Chrome/131.0 Safari/537.36";
+        const edge = `${chrome} Edg/131.0`;
+        expect(
+            ["slow", "normal", "fast", "fastest"].map((s) =>
+                nativeRate(s as "slow", chrome),
+            ),
+        ).toEqual([0.5, 1, 2, 4]);
+        expect(
+            ["slow", "normal", "fast", "fastest"].map((s) =>
+                nativeRate(s as "slow", edge),
+            ),
+        ).toEqual([0.6, 1, 1.7, 2.2]);
     });
 });

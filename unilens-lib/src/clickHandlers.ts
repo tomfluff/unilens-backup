@@ -37,6 +37,8 @@ export type ClickOrDragBoxEvent = ClickEvent | DragBoxEvent;
 export type ClickOrDragTriggers = {
     click: Trigger;
     drag: Trigger;
+    /** a press that moved before its release is no click (it is a drag) */
+    dragIsNoClick?: () => boolean;
 };
 
 //------------------------------------------------------------------------------
@@ -72,6 +74,8 @@ export function useClickOrDragBox(
         let dragStart: { clientX: number; clientY: number } | null = null;
         let dragBox: HTMLDivElement | null = null;
         let suppressClick = false;
+        /** where the last press went down: a click that ends a drag is not a click */
+        let pressAt: { x: number; y: number } | null = null;
 
         function removeDragBox() {
             dragBox?.remove();
@@ -86,6 +90,7 @@ export function useClickOrDragBox(
 
         function onMouseDown(evt: Event) {
             const e = evt as MouseEvent;
+            pressAt = { x: e.clientX, y: e.clientY };
             // stale state must never survive into a new interaction: if the click that
             // was supposed to consume suppressClick never fired, or a drag never saw
             // its mouseup (released over browser chrome), clear both here
@@ -154,11 +159,30 @@ export function useClickOrDragBox(
             const e = evt as MouseEvent;
             if (suppressClick) {
                 suppressClick = false;
+                pressAt = null;
                 e.preventDefault();
                 e.stopImmediatePropagation();
                 return;
             }
+            // a drag with no box to draw (box drawing off) is no click either: it does
+            // nothing (session 2; the QA check, 2026-10-12)
+            // (a keyboard's click has no pointer: never a drag)
+            const from = e.detail === 0 ? null : pressAt;
+            pressAt = null;
             if (!triggers.click(e)) return;
+            if (
+                triggers.dragIsNoClick?.() &&
+                from &&
+                Math.max(
+                    Math.abs(e.clientX - from.x),
+                    Math.abs(e.clientY - from.y),
+                ) >= 10
+            ) {
+                // nor a click on the page: the drag's release reaches nothing
+                e.preventDefault();
+                e.stopImmediatePropagation();
+                return;
+            }
             e.preventDefault();
             e.stopImmediatePropagation();
             emitter.publish({
@@ -171,7 +195,11 @@ export function useClickOrDragBox(
 
         // pointer released outside the window: no mouseup/click ever arrives, so
         // abandon the drag instead of leaving the rubber band and flags stuck
-        window.addEventListener("blur", cancelDrag);
+        const onBlur = () => {
+            pressAt = null;
+            cancelDrag();
+        };
+        window.addEventListener("blur", onBlur);
         el.addEventListener("mousedown", onMouseDown);
         el.addEventListener("mousemove", onMouseMove);
         el.addEventListener("mouseup", onMouseUp);
@@ -183,7 +211,7 @@ export function useClickOrDragBox(
         clickAt.addEventListener("click", onClick, true);
 
         return () => {
-            window.removeEventListener("blur", cancelDrag);
+            window.removeEventListener("blur", onBlur);
             el.removeEventListener("mousedown", onMouseDown);
             el.removeEventListener("mousemove", onMouseMove);
             el.removeEventListener("mouseup", onMouseUp);

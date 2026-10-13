@@ -1,9 +1,11 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { updateSetting } from "./settings";
 import {
     listen,
     pauseSpeaking,
     resumeSpeaking,
     speak,
+    speakSample,
     stopSpeaking,
 } from "./speech";
 
@@ -114,6 +116,56 @@ const pcm = (...chunks: number[]) =>
         }),
         { headers: { "X-Audio-Sample-Rate": "24000" } },
     );
+
+describe("speakSample", () => {
+    afterEach(() => vi.unstubAllGlobals());
+    it("fetches each voice and speed once, then plays it from what it kept", async () => {
+        vi.stubGlobal("speechSynthesis", {
+            speak: vi.fn(),
+            cancel: vi.fn(),
+            pause: vi.fn(),
+        });
+        vi.stubGlobal("SpeechSynthesisUtterance", class {});
+        vi.stubGlobal("AudioContext", FakeAudioContext);
+        const fetcher = vi.fn(async () => pcm(4800));
+        vi.stubGlobal("fetch", fetcher);
+        updateSetting("ttsSpeed", "normal");
+        const states: string[] = [];
+        await speakSample("a sample", (s) => states.push(s));
+        await speakSample("a sample");
+        expect(fetcher).toHaveBeenCalledTimes(1);
+        expect(states).toEqual(["loading", "playing", "idle"]);
+        // another speed: its own sample
+        updateSetting("ttsSpeed", "fast");
+        await speakSample("a sample");
+        expect(fetcher).toHaveBeenCalledTimes(2);
+        await speakSample("a sample");
+        expect(fetcher).toHaveBeenCalledTimes(2);
+        updateSetting("ttsSpeed", "normal");
+    });
+});
+
+describe("speakSample, the browser holding the audio", () => {
+    afterEach(() => vi.unstubAllGlobals());
+    it("reads with the browser's voice instead of playing silence", async () => {
+        const synth = { speak: vi.fn(), cancel: vi.fn(), pause: vi.fn() };
+        vi.stubGlobal("speechSynthesis", synth);
+        vi.stubGlobal("SpeechSynthesisUtterance", class {});
+        class Held extends FakeAudioContext {
+            override resume = vi.fn(async () => {});
+            override state = "suspended" as AudioContextState;
+        }
+        vi.stubGlobal("AudioContext", Held);
+        vi.stubGlobal(
+            "fetch",
+            vi.fn(async () => pcm(4800)),
+        );
+        updateSetting("ttsSpeed", "slow");
+        await speakSample("held");
+        expect(synth.speak).toHaveBeenCalled();
+        updateSetting("ttsSpeed", "normal");
+    });
+});
 
 describe("speak", () => {
     afterEach(() => vi.unstubAllGlobals());
@@ -412,5 +464,25 @@ describe("a voice message the server turns into text", () => {
         expect(FakeRecorder.last?.stop).toHaveBeenCalled();
         await new Promise((r) => setTimeout(r));
         expect(fetch).not.toHaveBeenCalled();
+    });
+});
+
+describe("the browser's family, for the read-aloud fallback log", () => {
+    it("names the family only", async () => {
+        const { browserFamily } = await import("./speech");
+        const chrome =
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0 Safari/537.36";
+        expect(browserFamily(chrome)).toBe("Chrome");
+        expect(browserFamily(`${chrome} Edg/131.0`)).toBe("Edge");
+        expect(
+            browserFamily(
+                "Mozilla/5.0 (Macintosh) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Safari/605.1.15",
+            ),
+        ).toBe("Safari");
+        expect(
+            browserFamily(
+                "Mozilla/5.0 (X11; Linux) Gecko/20100101 Firefox/131.0",
+            ),
+        ).toBe("Firefox");
     });
 });

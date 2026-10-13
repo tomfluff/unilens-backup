@@ -15,9 +15,15 @@ const look = (over: Partial<HighlightLook>): HighlightLook => ({
     backdrop: "none",
     outline: "band",
     fill: false,
+    fillAlpha: 0.3,
     glow: false,
+    glowSize: "medium",
     badges: true,
+    badgeSize: "small",
+    badgePos: "corner",
     color: "#ffd400",
+    colorMode: "fixed",
+    colorRange: "some",
     ...over,
 });
 
@@ -29,7 +35,12 @@ describe("highlight look", () => {
     });
 
     it("never draws nothing: no outline and no other layer falls back to the ring", () => {
-        expect(drawnOutline(look({ outline: "none" }))).toBe("ring");
+        // the number alone marks it (Yotam, 2026-10-10: "None" draws no border)
+        expect(drawnOutline(look({ outline: "none" }))).toBe("none");
+        expect(drawnOutline(look({ outline: "none" }), false)).toBe("ring");
+        expect(drawnOutline(look({ outline: "none", badges: false }))).toBe(
+            "ring",
+        );
         expect(drawnOutline(look({ outline: "none", fill: true }))).toBe(
             "none",
         );
@@ -57,9 +68,9 @@ describe("minimapLook", () => {
         ...getSettings(),
         hlBackdrop: "spotlight" as const,
         hlOutline: "brackets" as const,
-        hlFill: false,
-        hlGlow: true,
-        hlBadges: false,
+        hlFill: "none" as const,
+        hlGlow: "medium" as const,
+        hlBadges: "none" as const,
         hlColor: "#00ff00",
         mmBackdrop: "dim" as const,
         mmOutline: "none" as const,
@@ -72,14 +83,38 @@ describe("minimapLook", () => {
             backdrop: "dim",
             outline: "none",
             fill: true,
+            fillAlpha: 0.3,
             glow: false,
+            glowSize: "medium",
             badges: true,
+            badgeSize: "small",
+            badgePos: "corner",
             color: "#00ff00",
+            colorMode: "fixed",
+            colorRange: "some",
         });
     });
     it("takes the highlight look whole when it follows it", () => {
         expect(minimapLook({ ...base, mmFollowHighlight: true })).toEqual(
             lookFrom(base),
+        );
+    });
+});
+
+describe("the glow's size (Yotam, 2026-10-10)", () => {
+    it("is none, small, medium or large; an old on or off still reads", async () => {
+        const { clampSetting } = await import("./settings");
+        const { GLOW_SHADOW } = await import("./highlightStyles");
+        expect(GLOW_SHADOW.medium).toBe("0 0 18px 6px"); // the glow there was
+        expect(clampSetting("hlGlow", true)).toBe("medium");
+        expect(clampSetting("hlGlow", false)).toBe("none");
+        expect(clampSetting("hlGlow", "large")).toBe("large");
+        expect(clampSetting("hlGlow", "huge")).toBe("medium");
+        // the fill too (heavy is the fill there was)
+        expect(clampSetting("hlFill", true)).toBe("heavy");
+        expect(clampSetting("hlFill", false)).toBe("none");
+        expect(lookFrom({ ...getSettings(), hlFill: "light" }).fillAlpha).toBe(
+            0.15,
         );
     });
 });

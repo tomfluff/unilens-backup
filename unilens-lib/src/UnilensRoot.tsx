@@ -22,9 +22,16 @@ import {
 } from "./clickHandlers";
 import { initDebug } from "./DebugPanel";
 import { earcon } from "./earcons";
+import { initFloatingButton, noteAsked } from "./floatingButton";
 import { announce, clearHighlights, setCurrentCapture } from "./highlight";
 import { initHint } from "./hint";
-import { aliasPlace, clearPlaces, placeOf, recordPlace } from "./places";
+import {
+    aliasPlace,
+    clearPlaces,
+    clickOffset,
+    placeOf,
+    recordPlace,
+} from "./places";
 import {
     forgetSnapshot,
     loadSnapshot,
@@ -108,6 +115,9 @@ export function UnilensRoot({
             click: (e) => !isOwnUI(e.target) && trigger(e),
             drag: (e) =>
                 getSettings().regionSelect && trigger(e) && !isOwnUI(e.target),
+            // session 2: an Alt+drag (box drawing off) does nothing; session 1 took
+            // its release as an Alt+click on what the drag crossed
+            dragIsNoClick: () => getSettings().altDragInert,
         };
     }, [unilens]);
     const clickActionEmitter = useClickOrDragBox(document, triggers);
@@ -445,21 +455,33 @@ export function UnilensRoot({
             region?: Region,
             /** the dragged region on screen, for feedback that frames it */
             regionBox?: DOMRectReadOnly,
+            /** from the floating button: about the window, the point its middle */
+            byButton = false,
         ) {
             // (pointX, pointY) is the client point being asked about — the click, or the
             // centre of a drag. clientToContent handles both pan engines.
             const p = clientToContent(pointX, pointY);
+            // where in what was clicked, now, before the page can move
+            const offset = clickOffset(el, pointX, pointY);
             const t0 = performance.now();
             // pairs the click with its capture in the study's log, whatever overlaps
             const click = ++clicks;
-            logEvent(region ? "region_select" : "alt_click", {
-                click,
-                x: Math.round(pointX),
-                y: Math.round(pointY),
-                pageX: Math.round(p.x),
-                pageY: Math.round(p.y),
-                element: describeElement(el),
-            });
+            noteAsked();
+            logEvent(
+                byButton
+                    ? "floating_button"
+                    : region
+                      ? "region_select"
+                      : "alt_click",
+                {
+                    click,
+                    x: Math.round(pointX),
+                    y: Math.round(pointY),
+                    pageX: Math.round(p.x),
+                    pageY: Math.round(p.y),
+                    element: describeElement(el),
+                },
+            );
             // a new capture retires the previous outline and its ids. Retire the id first:
             // while this capture renders and uploads, a late answer for the old one must
             // already be stale, or it could redraw after the clear (Codex review, P1)
@@ -558,6 +580,8 @@ export function UnilensRoot({
                 x: cap.meta.clickX,
                 y: cap.meta.clickY,
                 el,
+                offset,
+                byButton,
                 label: placeLabel(cap),
             });
             recordCapture(id, cap);
@@ -588,6 +612,8 @@ export function UnilensRoot({
                     r.height,
                 );
             });
+            // this capture opened the chat (a newer one, or a failure, did not)
+            return true;
         }
 
         // Subscribe capture to the click-or-drag-box emitter
@@ -624,6 +650,69 @@ export function UnilensRoot({
             backend: () => backend,
         });
 
+        // the floating button (#29): an open chat is brought to the question; else the
+        // chat opens beside the button, about what is on screen (as an Alt+click in
+        // the middle of the window), listening when the microphone was pressed
+        const toQuestion = (voice: boolean) => {
+            const chat = container.querySelector<HTMLElement>(".ul-chat");
+            if (!chat) return;
+            // folded to its header: opened first, so its field is there
+            if (!voice && chat.dataset.mini === "true") {
+                chat.querySelector<HTMLButtonElement>(
+                    'button.ulc-ib[aria-expanded="false"]',
+                )?.click();
+                requestAnimationFrame(() => toQuestion(false));
+                return;
+            }
+            if (!voice) {
+                chat.querySelector<HTMLElement>(".ulc-in input")?.focus();
+                return;
+            }
+            // started only: pressed while it records, or while it turns a recording
+            // into words (pressing it then would cancel the message), it is left alone
+            const mic = chat.querySelector<HTMLButtonElement>(".ulc-voice");
+            if (
+                mic &&
+                !mic.disabled &&
+                mic.getAttribute("aria-pressed") !== "true" &&
+                mic.getAttribute("aria-label") !== chatText().micCancel
+            )
+                mic.click();
+        };
+        const offFab = initFloatingButton({
+            chatOpen: () => current != null && !current.props.hidden,
+            ask: (voice, from) => {
+                if (current && !current.props.hidden) return toQuestion(voice);
+                const cx = window.innerWidth / 2;
+                const cy = window.innerHeight / 2;
+                const el = document
+                    .elementsFromPoint(cx, cy)
+                    .find((e) => !isOwnUI(e));
+                void doCapture(
+                    from.left + from.width / 2,
+                    from.top,
+                    cx,
+                    cy,
+                    el,
+                    undefined,
+                    undefined,
+                    true,
+                ).then((opened) => {
+                    // only the chat this press opened, not one a newer click opened
+                    if (opened !== true) return;
+                    const mine = latestCapture;
+                    requestAnimationFrame(() => {
+                        if (
+                            mine === latestCapture &&
+                            current &&
+                            !current.props.hidden
+                        )
+                            toQuestion(voice);
+                    });
+                });
+            },
+        });
+
         // Proactive dwell hint — clicking the chip is the zero-shortcut capture path
         initHint((clientX, clientY) => {
             const el = document.elementFromPoint(clientX, clientY) ?? undefined;
@@ -649,6 +738,7 @@ export function UnilensRoot({
 
         return () => {
             sub.unsubscribe();
+            offFab();
             offView();
             offSettings();
             document.removeEventListener("visibilitychange", onHide);

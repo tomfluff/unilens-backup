@@ -10,13 +10,26 @@
  * and the ARIA live region. Nothing here touches the host page's DOM.
  */
 
+import {
+    type Backgrounds,
+    chooseColor,
+    glowFor,
+    invertGlowFor,
+    isPageElement,
+    luminance,
+    mainBackground,
+    parseColor,
+    type RGBA,
+    sampleBackgrounds,
+    setImageLoadListener,
+} from "./adaptiveColor";
 import { chatText } from "./chatI18n";
 import {
     BACKDROP_ALPHA,
     colorWithAlpha,
     drawnOutline,
     EDGE,
-    FILL_ALPHA,
+    GLOW_SHADOW,
     type HighlightLook,
     lookFrom,
     OUTLINE_OFFSET,
@@ -26,7 +39,7 @@ import {
 } from "./highlightStyles";
 import { roleOf } from "./inventory";
 import { setTargets } from "./minimap";
-import { getSettings, onSettingsChange } from "./settings";
+import { getSettings, onSettingsChange, type Settings } from "./settings";
 import { logEvent } from "./studyLog";
 import {
     boxOf,
@@ -93,6 +106,10 @@ const POINTER_CUE_Z = "2147483646";
 const CLASS = "unilens-hl";
 
 let layer: HTMLDivElement | null = null;
+/** "Invert": white drawn here is blended by difference with the page under it; a
+ *  layer of its own, under the main one (so the numbers stay as they are), because
+ *  the main layer is a stacking context and would blend only with itself */
+let invertLayer: HTMLDivElement | null = null;
 let styleEl: HTMLStyleElement | null = null;
 let liveRegion: HTMLDivElement | null = null;
 interface Drawn {
@@ -102,6 +119,11 @@ interface Drawn {
     badge?: string;
     /** the look the box's decorations were built for; rebuilt when it changes */
     decoKey?: string;
+    /** on the page, the number sits in the layer above every outline (a box is its
+     *  own layer, so a number inside it would sit under a neighbour's band) */
+    badgeEl?: HTMLDivElement;
+    /** where its number sits beside the box, chosen once where it covers no text */
+    badgeSide?: BadgeSide;
     /** a wrapped inline element's lines after the first (`box` outlines the first
      *  and carries the badge); empty for anything drawn as one box */
     lines: { box: HTMLDivElement; decoKey?: string }[];
@@ -147,6 +169,10 @@ export const getCurrentCapture = () => currentCapture;
 export function nextToken(): number {
     return ++issued;
 }
+
+/** this capture and request are still the latest: nothing newer was asked or clicked */
+export const isLatest = (captureId: string, token: number) =>
+    captureId === currentCapture && token === issued;
 
 export const hasHighlight = () => boxes.length > 0;
 
@@ -234,6 +260,38 @@ export function init() {
         },
         { passive: true, capture: true },
     );
+    // a dialog closing (the settings panel): what was sampled while it was open is
+    // measured again on the page as it is now (the QA re-run, 2026-10-12)
+    document.addEventListener("close", resampleHighlights, true);
+}
+
+/** everything outlined is measured again on the page as it is now: a dialog over it
+ *  closed (the settings panel unmounts its dialog without closing it, so it says so) */
+export function resampleHighlights() {
+    sampledGen++;
+    scheduleRelay();
+}
+
+/** what is under each outlined element now, noted just before a modal (the settings
+ *  panel) makes the page inert: a choice made in it is judged against the page,
+ *  whatever the mode was before (Off measures nothing) */
+export function noteWhatIsUnder() {
+    if (!boxes.length || modalOpen()) return;
+    const look = currentLook();
+    const w = bandWidth();
+    for (const entry of boxes) {
+        if (!entry.el.isConnected) continue;
+        const r = boxOf(entry.el, measure);
+        if (isEmptyBox(r)) continue;
+        const outline = drawnOutline(look, Boolean(entry.badge));
+        const band = outline === "band" ? 3 * w : 2 * w;
+        pageUnder.set(entry, {
+            bg: sampleBackgrounds(r, OUTLINE_OFFSET + band / 2, {
+                el: entry.el,
+            }),
+            r,
+        });
+    }
 }
 
 // ── rendering ────────────────────────────────────────────────────────────────
@@ -255,7 +313,14 @@ function ensureLayer() {
     if (!styleEl) {
         styleEl = document.createElement("style");
         styleEl.textContent = `
+/* the pulse (hlPulse): a ring between black rims, so it reads on any page, growing
+   out from the highlight and fading; a few times, or for as long as it shows */
+[data-unilens-layer] .${CLASS}[data-pulse]::after { content: ""; position: absolute; inset: -4px; border-radius: 8px; border: 4px solid var(--ul-pulse, #ffef26); box-shadow: 0 0 0 2px #000, inset 0 0 0 2px #000; opacity: 0; pointer-events: none; animation: ${CLASS}-pulse 1.6s ease-out ${PULSES}; }
+[data-unilens-layer] .${CLASS}[data-pulse="always"]::after { animation-iteration-count: infinite; }
+@keyframes ${CLASS}-pulse { from { inset: -4px; opacity: 1; } 55% { opacity: 1; } to { inset: -${PULSE_REACH}px; opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { [data-unilens-layer] .${CLASS}[data-pulse]::after { animation: none; } }
 @media (forced-colors: active) {
+  [data-unilens-layer] .${CLASS}[data-pulse]::after { forced-color-adjust: none; border-color: CanvasText; box-shadow: none }
   [data-unilens-layer] .${CLASS}-deco { forced-color-adjust: none; background: CanvasText !important; stroke: CanvasText !important }
   [data-unilens-layer] .${CLASS}-deco path { stroke: CanvasText !important }
   [data-unilens-layer] .${CLASS}-cue { forced-color-adjust: none }
@@ -263,10 +328,36 @@ function ensureLayer() {
   [data-unilens-layer] .${CLASS} { forced-color-adjust: none; border-color: Canvas !important; outline-color: CanvasText !important; background: transparent !important; box-shadow: none !important }
   [data-unilens-layer] .${CLASS}-dim { display: none !important }
   [data-unilens-layer] .${CLASS}-badge { forced-color-adjust: none; background: CanvasText !important; color: Canvas !important; border-color: Canvas !important }
+  [data-unilens-invert] { display: none !important }
+  [data-unilens-layer] .${CLASS}[data-plain] { outline: 3px solid CanvasText !important }
 }`;
         document.head.appendChild(styleEl);
     }
     return layer;
+}
+
+/** the layer the highlights are drawn in, made if need be: the lasting click marks
+ *  are drawn in it too, between the outlines and the numbers */
+export const highlightLayer = (): HTMLDivElement => ensureLayer();
+
+function ensureInvertLayer() {
+    const main = ensureLayer();
+    if (invertLayer?.isConnected) return invertLayer;
+    invertLayer = document.createElement("div");
+    invertLayer.id = "unilens-highlight-invert";
+    Object.assign(invertLayer.style, {
+        position: "fixed",
+        left: "0",
+        top: "0",
+        width: "0",
+        height: "0",
+        pointerEvents: "none",
+        zIndex: LAYER_Z,
+        mixBlendMode: "difference",
+    });
+    invertLayer.setAttribute("data-unilens-invert", "");
+    main.before(invertLayer);
+    return invertLayer;
 }
 
 /** ring width per band in screen px: constant, or clamped to the zoom (research probe 2) */
@@ -278,15 +369,38 @@ function bandWidth(): number {
 
 const currentLook = (): HighlightLook => lookFrom(getSettings());
 
+/** the pulse: how many times "a few" is, and how far out the ring grows, px */
+const PULSES = 3;
+const PULSE_REACH = 28;
+/** mark a drawn box to pulse (hlPulse), in the colour it is drawn in. The same
+ *  value again leaves a running pulse alone; a new box pulses from the start */
+function setPulse(box: HTMLElement, pulse: Settings["hlPulse"], color: string) {
+    if (pulse === "off") {
+        delete box.dataset.pulse;
+        return;
+    }
+    box.dataset.pulse = pulse;
+    box.style.setProperty("--ul-pulse", color);
+}
+
 const SVG_NS = "http://www.w3.org/2000/svg";
 
 /** px from the element's edge to the box's edge, for the outline drawn */
-function padFor(outline: string, w: number): number {
+function padFor(outline: string, w: number, look?: HighlightLook): number {
     if (outline === "ring") return OUTLINE_OFFSET + w;
     if (outline === "band") return OUTLINE_OFFSET + 3 * w;
     if (outline === "brackets") return OUTLINE_OFFSET + 2 * w;
+    if (outline === "thin")
+        return (
+            OUTLINE_OFFSET + (look && linesAdapt(look) ? THIN_ADAPTED : THIN)
+        );
     return OUTLINE_OFFSET;
 }
+
+/** the thin border and the ring's inner band take the adapted colour, or inverted
+ *  are drawn in the twin (hlAdaptLine) */
+const linesAdapt = (look: HighlightLook) =>
+    look.colorMode !== "fixed" && getSettings().hlAdaptLine;
 
 /** bracket corners as one path, inset by half the stroke so it stays inside the box */
 function bracketPath(W: number, H: number, t: number): string {
@@ -322,46 +436,106 @@ const BADGE_LOOK: Record<string, Partial<CSSStyleDeclaration>> = {
     },
 };
 
-function makeBadge(text: string): HTMLDivElement {
+/** the thick band: how much of its colour covers what is under it, and its edges
+ *  (dark enough to show a light colour on white, light enough to read text under) */
+const BAND_ALPHA = 0.6;
+/** the glow's colour over what is next to the source: dark text under it keeps 5:1
+ *  (0.35 over white with #ffd400; 0.55 gave 2.9:1) */
+const GLOW_ALPHA = 0.35;
+const BAND_EDGE = "rgba(0, 0, 0, 0.7)";
+/** the thin border's width, px (a dark line with a light edge, on any page) */
+const THIN = 2;
+/** the thin border drawn in the adapted colour (hlAdaptLine): wider, to carry it */
+const THIN_ADAPTED = 3;
+/** the badge at each size: its height, font size and how far it sits out, px */
+const BADGE_SIZE = {
+    small: { h: 24, font: 14, off: 14 },
+    medium: { h: 32, font: 19, off: 18 },
+    large: { h: 42, font: 25, off: 23 },
+} as const;
+
+function makeBadge(
+    text: string,
+    size: keyof typeof BADGE_SIZE = "small",
+): HTMLDivElement {
+    const style = getSettings().chatStyle;
+    // station codes read "U1", like the chips; a folded pair reads "1·2" (or "U1·U2")
+    const badge = numberLike(
+        text
+            .split("·")
+            .map((t) => (style === "station" ? `U${t}` : t))
+            .join("·"),
+        size,
+    );
+    badge.className = `${CLASS}-badge`;
+    return badge;
+}
+
+/** a number in the page badges' look, at one of their sizes, with its text as given
+ *  (the click marks' "P1" wears it too, Yotam 2026-10-12) */
+export function numberLike(
+    text: string,
+    size: keyof typeof BADGE_SIZE = "small",
+): HTMLDivElement {
+    const z = BADGE_SIZE[size];
     const style = getSettings().chatStyle;
     const badge = document.createElement("div");
-    badge.className = `${CLASS}-badge`;
-    // station codes read "U1", like the chips; a folded pair reads "1·2" (or "U1·U2")
-    badge.textContent = text
-        .split("·")
-        .map((t) => (style === "station" ? `U${t}` : t))
-        .join("·");
+    badge.textContent = text;
     Object.assign(
         badge.style,
         {
             position: "absolute",
-            left: "-14px",
-            top: "-14px",
-            minWidth: "24px",
-            height: "24px",
-            padding: "0 5px",
+            left: `-${z.off}px`,
+            top: `-${z.off}px`,
+            minWidth: `${z.h}px`,
+            height: `${z.h}px`,
+            padding: `0 ${Math.round(z.h / 5)}px`,
             boxSizing: "border-box",
-            font: "700 14px/20px system-ui, sans-serif",
+            font: `700 ${z.font}px/${z.h - 4}px system-ui, sans-serif`,
             textAlign: "center",
+            // above every outline, also a neighbour's drawn after it
+            zIndex: "1",
         },
         BADGE_LOOK[style] ?? BADGE_LOOK.assistant,
     );
+    // a round badge stays round at every size
+    if (badge.style.borderRadius === "12px")
+        badge.style.borderRadius = `${z.h / 2}px`;
     return badge;
 }
 
 /** (re)build a box's children for the current look: badge, brackets, underline bar */
 function decorate(
-    entry: Pick<Drawn, "box" | "badge" | "decoKey">,
+    entry: Pick<Drawn, "box" | "badge" | "decoKey" | "badgeEl">,
     look: HighlightLook,
     outline: string,
     w: number,
+    part: Part = "all",
 ) {
-    const key = `${outline}|${look.badges}|${look.color}|${w}|${getSettings().chatStyle}`;
+    const key = `${outline}|${look.badges}|${look.badgeSize}|${look.badgePos}|${look.color}|${w}|${getSettings().chatStyle}|${part}`;
     if (entry.decoKey === key) return;
     entry.decoKey = key;
     entry.box.replaceChildren();
-    if (look.badges && entry.badge)
-        entry.box.appendChild(makeBadge(entry.badge));
+    entry.badgeEl?.remove();
+    entry.badgeEl = undefined;
+    (entry as { badgeSide?: BadgeSide }).badgeSide = undefined;
+    if (look.badges && entry.badge && part !== "tint") {
+        const badge = makeBadge(entry.badge, look.badgeSize);
+        const layer = entry.box.parentElement;
+        if (layer?.hasAttribute("data-unilens-layer")) {
+            // placed by paintBox, above every box
+            badge.style.position = "fixed";
+            // over the lasting click marks too (z-index 2 here, clickMarks.ts): a
+            // source's number is never covered
+            badge.style.zIndex = "3";
+            badge.style.pointerEvents = "none";
+            layer.appendChild(badge);
+            entry.badgeEl = badge;
+        } else entry.box.appendChild(badge);
+    }
+    // inverted, the strokes are drawn in the twin alone, white and without the edge
+    if (part === "plain") return;
+    const tint = part === "tint";
     if (outline === "brackets") {
         const svg = document.createElementNS(SVG_NS, "svg");
         svg.setAttribute("class", `${CLASS}-brackets`);
@@ -373,10 +547,13 @@ function decorate(
             height: "100%",
             overflow: "visible",
         });
-        for (const [stroke, width] of [
-            [EDGE, 2 * w + 2],
-            [look.color, 2 * w],
-        ] as const) {
+        const strokes: [string, number][] = tint
+            ? [["#fff", 2 * w]]
+            : [
+                  [EDGE, 2 * w + 2],
+                  [look.color, 2 * w],
+              ];
+        for (const [stroke, width] of strokes) {
             const path = document.createElementNS(SVG_NS, "path");
             path.setAttribute("class", `${CLASS}-deco`);
             path.setAttribute("fill", "none");
@@ -396,8 +573,8 @@ function decorate(
             right: "0",
             top: "100%",
             height: `${2 * w + 2}px`,
-            background: look.color,
-            outline: `1px solid ${EDGE}`,
+            background: tint ? "#fff" : look.color,
+            outline: tint ? "none" : `1px solid ${EDGE}`,
         });
         entry.box.appendChild(bar);
     }
@@ -407,44 +584,471 @@ function decorate(
  * One outline box around `r` (client px) in `look`: the drawing every highlight uses,
  * and the only one, so anything that should look like a highlight borrows it.
  */
-function paintBox(
-    entry: Pick<Drawn, "box" | "badge" | "decoKey">,
+type BadgeSide = "left" | "above" | "right" | "below" | "inside" | "corner";
+/** in this order; "inside" (the element's own top-right corner) when every side has
+ *  text, and only where the element has none there either */
+const BADGE_SIDES: BadgeSide[] = ["left", "above", "right", "below", "inside"];
+/** the gap between a number and its box, px */
+const BADGE_GAP = 2;
+
+/** the number's top-left, for a box (client px) and a side: outside the box, so it
+ *  never covers the element's own text (Yotam, 2026-10-10: at medium and large the
+ *  corner badge reached into it) */
+function badgeAt(
+    b: { left: number; top: number; right: number; bottom: number },
+    h: number,
+    w: number,
+    side: BadgeSide,
+): { x: number; y: number } {
+    if (side === "left") return { x: b.left - BADGE_GAP - w, y: b.top };
+    if (side === "above") return { x: b.left, y: b.top - BADGE_GAP - h };
+    if (side === "right") return { x: b.right + BADGE_GAP, y: b.top };
+    if (side === "below") return { x: b.left, y: b.bottom + BADGE_GAP };
+    if (side === "inside")
+        return {
+            x: b.right - OUTLINE_OFFSET - w,
+            y: b.top + OUTLINE_OFFSET,
+        };
+    // nowhere free: outside the box's corner, overlapping only its margin
+    return { x: b.left - w + OUTLINE_OFFSET, y: b.top - h + OUTLINE_OFFSET };
+}
+
+/** page text under a rectangle (client px): a 3×3 grid of points, each asked of the
+ *  page; a point counts when a letter is at it or within a few px on its line (so a
+ *  point on a space between words counts too) */
+function textHits(x: number, y: number, w: number, h: number): number {
+    const doc = document as Document & {
+        caretRangeFromPoint?: (x: number, y: number) => Range | null;
+    };
+    if (!doc.caretRangeFromPoint) return 0;
+    const NEAR = 4;
+    let hits = 0;
+    for (const fx of [0.2, 0.5, 0.8])
+        for (const fy of [0.25, 0.5, 0.75]) {
+            const px = x + w * fx;
+            const py = y + h * fy;
+            const r = doc.caretRangeFromPoint(px, py);
+            const node = r?.startContainer;
+            if (!r || !node || node.nodeType !== Node.TEXT_NODE) continue;
+            if (node.parentElement?.closest("[data-unilens-layer], .ul-chat"))
+                continue;
+            const text = node.textContent ?? "";
+            for (const k of [
+                r.startOffset - 1,
+                r.startOffset,
+                r.startOffset + 1,
+            ]) {
+                if (k < 0 || k >= text.length || !text[k].trim()) continue;
+                const ch = document.createRange();
+                ch.setStart(node, k);
+                ch.setEnd(node, k + 1);
+                const c = ch.getBoundingClientRect();
+                if (
+                    py >= c.top &&
+                    py <= c.bottom &&
+                    px >= c.left - NEAR &&
+                    px <= c.right + NEAR
+                ) {
+                    hits++;
+                    break;
+                }
+            }
+        }
+    return hits;
+}
+
+/** textHits for a settings tile: the points of the same grid that fall on its own
+ *  sample words, by their boxes (a tile out of view must place its number as in
+ *  view) */
+function stageTextHits(
+    stage: Element,
+    x: number,
+    y: number,
+    w: number,
+    h: number,
+): number {
+    const words = [...stage.querySelectorAll(".s-word")]
+        .filter((e) => !e.closest(".s-paint"))
+        .map((e) => e.getBoundingClientRect());
+    let hits = 0;
+    for (const fx of [0.2, 0.5, 0.8])
+        for (const fy of [0.25, 0.5, 0.75]) {
+            const px = x + w * fx;
+            const py = y + h * fy;
+            if (
+                words.some(
+                    (r) =>
+                        px >= r.left - 4 &&
+                        px <= r.right + 4 &&
+                        py >= r.top &&
+                        py <= r.bottom,
+                )
+            )
+                hits++;
+        }
+    return hits;
+}
+
+/** where each number on the page sits now (client px), so the next avoids them */
+const badgeRects = new Map<
+    object,
+    { x: number; y: number; w: number; h: number }
+>();
+
+/** place a number beside its box: the first side that is in bounds and covers no
+ *  text, kept while it stays in bounds; `origin` turns client px into its parent's */
+function placeBadge(
+    badge: HTMLElement,
+    entry: { badgeSide?: BadgeSide },
+    b: { left: number; top: number; right: number; bottom: number },
+    bounds: { left: number; top: number; right: number; bottom: number },
+    origin: { x: number; y: number },
+    /** a preview's own px to client px (the page's are client px already) */
+    client = { x: 0, y: 0, k: 1 },
+    /** "corner": always the top-left corner, clear of the element (the default);
+     *  "beside": the adaptive placement below */
+    mode: "corner" | "beside" = "corner",
+    /** the room the outline leaves round the element, px */
+    pad = OUTLINE_OFFSET,
+) {
+    const w =
+        badge.offsetWidth || Number.parseFloat(badge.style.minWidth) || 24;
+    const h = Number.parseFloat(badge.style.height) || 24;
+    // on the page, a number stays on its spot by its place and leaves the screen with
+    // it (Yotam's try-out, 2026-10-12: numbers held at the screen's top edge while their
+    // places were cut off there); session 1 slid it in at the edge (hlBadgeClamp).
+    // A preview keeps its number inside its stage
+    const page = !origin.x && !origin.y;
+    const previewStage = page ? null : badge.closest(".s-stage, .s-page");
+    const clamp = !page || getSettings().hlBadgeClamp;
+    const slide = (v: number, lo: number, hi: number) =>
+        clamp ? Math.min(Math.max(v, lo), hi) : v;
+    if (mode === "corner") {
+        // its bottom-right at the element's top-left: over the outline's room round
+        // the element, never the element's text (Yotam, 2026-10-10)
+        const x = slide(
+            b.left + pad - w,
+            bounds.left + 1,
+            bounds.right - 1 - w,
+        );
+        const y = slide(b.top + pad - h, bounds.top + 1, bounds.bottom - 1 - h);
+        entry.badgeSide = "corner";
+        badge.dataset.side = "corner";
+        badge.style.left = `${x - origin.x}px`;
+        badge.style.top = `${y - origin.y}px`;
+        return;
+    }
+    /** beside the box on its side, slid along that side to stay in bounds */
+    const at = (side: BadgeSide) => {
+        const p = badgeAt(b, h, w, side);
+        if (side === "left" || side === "right")
+            p.y = slide(p.y, bounds.top + 1, bounds.bottom - 1 - h);
+        else if (side === "above" || side === "below")
+            p.x = slide(p.x, bounds.left + 1, bounds.right - 1 - w);
+        return p;
+    };
+    const fits = (side: BadgeSide) => {
+        const p = at(side);
+        return (
+            p.x >= bounds.left + 1 &&
+            p.y >= bounds.top + 1 &&
+            p.x + w <= bounds.right - 1 &&
+            p.y + h <= bounds.bottom - 1
+        );
+    };
+    /** another number already there (page numbers only: previews have one each) */
+    const onAnother = (side: BadgeSide) => {
+        if (origin.x || origin.y) return false;
+        const p = at(side);
+        for (const [other, o] of badgeRects)
+            if (
+                other !== entry &&
+                p.x < o.x + o.w &&
+                p.x + w > o.x &&
+                p.y < o.y + o.h &&
+                p.y + h > o.y
+            )
+                return true;
+        return false;
+    };
+    // the corner is a stopgap (off-screen, or no room): chosen again each time.
+    // Unclamped, a side chosen stays as its place leaves the screen: it is chosen
+    // again only when the place is back and the side has no room
+    const onScreen =
+        b.right > bounds.left &&
+        b.left < bounds.right &&
+        b.bottom > bounds.top &&
+        b.top < bounds.bottom;
+    if (
+        !entry.badgeSide ||
+        entry.badgeSide === "corner" ||
+        (!fits(entry.badgeSide) && (clamp || onScreen))
+    ) {
+        // the first side that covers no text and no other number; else the one that
+        // covers the least text (the box's corner too), never another number
+        let best: BadgeSide = "corner";
+        let bestScore = Number.POSITIVE_INFINITY;
+        for (const side of [...BADGE_SIDES, "corner"] as BadgeSide[]) {
+            if (!fits(side)) continue;
+            const p = at(side);
+            // a preview counts its own sample's text, never the screen's (it may be
+            // scrolled out of the panel's view: the QA check, 2026-10-12)
+            const hit = previewStage
+                ? stageTextHits.bind(null, previewStage)
+                : textHits;
+            const score =
+                (onAnother(side) ? 100 : 0) +
+                hit(
+                    client.x + p.x * client.k,
+                    client.y + p.y * client.k,
+                    w * client.k,
+                    h * client.k,
+                );
+            if (score < bestScore) {
+                best = side;
+                bestScore = score;
+            }
+            if (score === 0) break;
+        }
+        entry.badgeSide = best;
+    }
+    const p = at(entry.badgeSide);
+    if (!origin.x && !origin.y) badgeRects.set(entry, { x: p.x, y: p.y, w, h });
+    badge.dataset.side = entry.badgeSide;
+    badge.style.left = `${p.x - origin.x}px`;
+    badge.style.top = `${p.y - origin.y}px`;
+}
+
+/** a box drawn whole; or, inverted, split in two: "plain" keeps what is not in the
+ *  colour (the black and white ring or border, the number) and "tint" draws the
+ *  coloured parts in white in the difference layer, at the same place */
+type Part = "all" | "plain" | "tint";
+
+/** inverted, how much of the page under the fill and glow is inverted: a full
+ *  inversion keeps text readable, a partial one greys it, so these stay low enough
+ *  for black text on white to keep 5:1 (0.3 would leave 4:1) */
+const INVERT_FILL_MAX = 0.25;
+const INVERT_GLOW = 0.25;
+
+/** each box's twin in the difference layer, while the look inverts */
+const twins = new WeakMap<
+    HTMLElement,
+    { box: HTMLDivElement; decoKey?: string }
+>();
+/** a preview's twins sit beside its paint layer; each knows its box, so the twins of
+ *  boxes a repaint threw away are swept */
+const twinOwner = new WeakMap<HTMLElement, HTMLElement>();
+
+/** a preview's twins whose boxes a repaint threw away */
+function sweepTwins(paint: Element | null) {
+    for (const t of paint?.parentElement?.querySelectorAll<HTMLElement>(
+        ":scope > [data-tint]",
+    ) ?? [])
+        if (!twinOwner.get(t)?.isConnected) t.remove();
+}
+
+/** `box`'s twin, made where the difference blends with what is under it; null for a
+ *  box drawn on its own (the click feedback's frame, animated and removed by its
+ *  owner, which would leave a twin behind): that one keeps the colour */
+function twinOf(box: HTMLDivElement) {
+    const had = twins.get(box);
+    if (had?.box.isConnected) return had;
+    const paint = box.closest(".s-paint");
+    if (!paint && box.parentElement !== layer) return null;
+    const twin = document.createElement("div");
+    twin.className = box.className;
+    twin.dataset.tint = "";
+    Object.assign(twin.style, {
+        position: box.style.position || "absolute",
+        boxSizing: "border-box",
+        pointerEvents: "none",
+        borderRadius: box.style.borderRadius || "4px",
+    });
+    if (paint) {
+        // a preview: the paint layer is a stacking context, so the twin goes beside
+        // it, over the sketch (and over its sample word, which sits at z-index 1)
+        sweepTwins(paint);
+        twin.style.mixBlendMode = "difference";
+        twin.style.zIndex = "1";
+        paint.before(twin);
+    } else {
+        twin.style.position = "fixed";
+        ensureInvertLayer().appendChild(twin);
+    }
+    twinOwner.set(twin, box);
+    const entry = { box: twin };
+    twins.set(box, entry);
+    return entry;
+}
+
+function dropTwin(box: HTMLElement) {
+    twins.get(box)?.box.remove();
+    twins.delete(box);
+}
+
+/** remove a box and its twin */
+function removeBox(box: HTMLElement) {
+    box.remove();
+    dropTwin(box);
+}
+
+/** a box in `look`: whole, or split into its plain part and its inverted twin */
+function paintParts(
+    entry: Pick<Drawn, "box" | "badge" | "decoKey" | "badgeEl" | "badgeSide">,
     r: { left: number; top: number; width: number; height: number },
     look: HighlightLook,
     outline: string,
     w: number,
 ) {
+    const twin = look.colorMode === "invert" ? twinOf(entry.box) : null;
+    if (!twin) {
+        dropTwin(entry.box);
+        paintBox(entry, r, look, outline, w);
+        return;
+    }
+    paintBox(entry, r, look, outline, w, "plain");
+    twin.box.style.display = entry.box.style.display;
+    paintBox(twin, r, look, outline, w, "tint");
+}
+
+function paintBox(
+    entry: Pick<Drawn, "box" | "badge" | "decoKey" | "badgeEl" | "badgeSide">,
+    r: { left: number; top: number; width: number; height: number },
+    look: HighlightLook,
+    outline: string,
+    w: number,
+    part: Part = "all",
+) {
     const box = entry.box;
-    const pad = padFor(outline, w);
+    const pad = padFor(outline, w, look);
     // forced colours drop fill, glow and backdrop: an outline-less look needs a ring there
     box.dataset.outline = outline;
-    decorate(entry, look, outline, w);
+    decorate(entry, look, outline, w, part);
     const band = outline === "band" ? 3 * w : outline === "ring" ? w : 0;
+    const tint = part === "tint";
+    const plain = part === "plain";
+    // inverted, the coloured parts are in the twin, which forced colours hide: this
+    // box then draws an outline of its own (the forced-colours styles)
+    if (plain) box.dataset.plain = "";
+    else delete box.dataset.plain;
     const shadows = [
-        outline === "band" ? `inset 0 0 0 2px ${EDGE}` : "",
-        look.glow ? `0 0 18px 6px ${look.color}` : "",
+        outline === "band" && part === "all"
+            ? `inset 0 0 0 1px ${BAND_EDGE}`
+            : "",
+        // see-through too: text next to a source stays readable under its glow
+        look.glow && !plain
+            ? `${GLOW_SHADOW[look.glowSize]} ${tint ? `rgba(255,255,255,${look.glowAlpha ?? INVERT_GLOW})` : colorWithAlpha(look.color, look.glowAlpha ?? GLOW_ALPHA)}`
+            : "",
     ].filter(Boolean);
+    // with Adaptive color on, the thin border and the ring's inner band are drawn
+    // in the adapted colour with a black edge, so the colour shows on any background
+    // (Yotam's try-out, 2026-10-12: on a dark section they were black, and only the
+    // faint glow carried the colour). Session 1 kept them black and white
+    const lineColor = !tint && !plain && linesAdapt(look) ? look.color : null;
+    // inverted, the lines too when they follow the adaptation (the spec of
+    // 2026-10-12: the opposite of what is behind, never the chosen colour): the twin
+    // draws them in white and this box keeps their black edge. Otherwise the twin
+    // keeps the ring's and border's room, unpainted
+    const invertLines = (tint || plain) && linesAdapt(look);
+    const edged = Boolean(lineColor) || (plain && invertLines);
+    const bandColor = tint
+        ? outline === "ring" && !invertLines
+            ? "transparent"
+            : "#fff"
+        : plain && (outline === "band" || invertLines)
+          ? "transparent"
+          : outline === "ring"
+            ? (lineColor ?? RING.inner)
+            : colorWithAlpha(look.color, BAND_ALPHA);
     Object.assign(box.style, {
         left: `${r.left - pad}px`,
         top: `${r.top - pad}px`,
         width: `${r.width + 2 * pad}px`,
         height: `${r.height + 2 * pad}px`,
         // real strokes, not shadows, so forced colours keep them
+        // the band is see-through, so text it crosses (a neighbour's) still shows
         border: band
-            ? `${band}px solid ${outline === "ring" ? RING.inner : look.color}`
-            : "0",
-        outline:
-            outline === "ring"
-                ? `${w}px solid ${RING.outer}`
-                : outline === "band"
-                  ? `2px solid ${EDGE}`
+            ? `${band}px solid ${bandColor}`
+            : outline === "thin"
+              ? lineColor
+                  ? `${THIN_ADAPTED}px solid ${lineColor}`
+                  : invertLines
+                    ? `${THIN_ADAPTED}px solid ${tint ? "#fff" : "transparent"}`
+                    : `${THIN}px solid ${tint ? "transparent" : EDGE}`
+              : "0",
+        outline: tint
+            ? "none"
+            : outline === "ring"
+              ? `${w}px solid ${edged ? EDGE : RING.outer}`
+              : outline === "band"
+                ? // no outer edge: a dark line there would cross a neighbour's text
+                  "none"
+                : outline === "thin"
+                  ? edged
+                      ? `1.5px solid ${EDGE}`
+                      : `1px solid ${RING.outer}`
                   : "none",
         outlineOffset: "0",
-        background: look.fill
-            ? colorWithAlpha(look.color, FILL_ALPHA)
-            : "transparent",
+        background:
+            look.fill && !plain
+                ? tint
+                    ? `rgba(255,255,255,${Math.min(INVERT_FILL_MAX, look.fillAlpha)})`
+                    : colorWithAlpha(look.color, look.fillAlpha)
+                : "transparent",
         boxShadow: shadows.length ? shadows.join(", ") : "none",
     });
+    const outer = {
+        left: r.left - pad,
+        top: r.top - pad,
+        right: r.left + r.width + pad,
+        bottom: r.top + r.height + pad,
+    };
+    if (entry.badgeEl) {
+        // on the page: fixed, beside the box, on-screen
+        entry.badgeEl.style.display = box.style.display;
+        placeBadge(
+            entry.badgeEl,
+            entry,
+            outer,
+            {
+                left: 0,
+                top: 0,
+                right: window.innerWidth,
+                bottom: window.innerHeight,
+            },
+            { x: 0, y: 0 },
+            undefined,
+            look.badgePos,
+            pad,
+        );
+    } else {
+        // a preview: inside the box, placed the same way within its stage
+        const inBox = box.querySelector<HTMLElement>(`.${CLASS}-badge`);
+        const stage = box.closest(".s-stage") ?? box.parentElement;
+        if (inBox && stage) {
+            const sr = stage.getBoundingClientRect();
+            const br = box.getBoundingClientRect();
+            // the box's rect in client px may be scaled (a thumbnail); work in its own px
+            const k =
+                br.width && box.offsetWidth ? br.width / box.offsetWidth : 1;
+            const toLocal = (v: number, o: number) => (v - o) / k;
+            placeBadge(
+                inBox,
+                entry,
+                {
+                    left: toLocal(br.left, sr.left),
+                    top: toLocal(br.top, sr.top),
+                    right: toLocal(br.right, sr.left),
+                    bottom: toLocal(br.bottom, sr.top),
+                },
+                { left: 0, top: 0, right: sr.width / k, bottom: sr.height / k },
+                { x: toLocal(br.left, sr.left), y: toLocal(br.top, sr.top) },
+                { x: sr.left, y: sr.top, k },
+                look.badgePos,
+                pad,
+            );
+        }
+    }
     for (const path of box.querySelectorAll("path"))
         path.setAttribute(
             "d",
@@ -467,19 +1071,297 @@ export function paintOutline(
         badge,
         withBackdrop = false,
     }: { look?: HighlightLook; badge?: string; withBackdrop?: boolean } = {},
-) {
-    let outline = drawnOutline(look);
-    if (outline === "none" && !look.fill && !look.glow && !withBackdrop)
+): string {
+    // nothing else would show it (no number here, no fill, glow or backdrop): the ring
+    let outline = drawnOutline(look, Boolean(badge));
+    if (
+        outline === "none" &&
+        !look.fill &&
+        !look.glow &&
+        !withBackdrop &&
+        !(look.badges && badge)
+    )
         outline = "ring";
     box.style.boxSizing = "border-box";
     box.style.borderRadius = "4px";
-    paintBox({ box, badge }, r, look, outline, bandWidth());
+    box.style.pointerEvents = "none";
+    // a repaint threw the last boxes away: their twins go too, whatever the look now
+    sweepTwins(box.closest(".s-paint"));
+    const w = bandWidth();
+    const entry = { box, badge };
+    paintParts(entry, r, look, outline, w);
+    // the colour it is drawn in: the look's, or the one adapted to what is under it
+    if (!measures(look)) return look.color;
+    // the colour for what is under it: measured where the box now is on screen (a
+    // preview may be scaled), then drawn again in it
+    const b = box.getBoundingClientRect();
+    if (!b.width || !box.offsetWidth) return look.color;
+    const k = b.width / box.offsetWidth;
+    const pad = padFor(outline, w, look) * k;
+    const root = box.getRootNode();
+    const inner = {
+        left: b.left + pad,
+        top: b.top + pad,
+        width: b.width - 2 * pad,
+        height: b.height - 2 * pad,
+    };
+    const where = root instanceof ShadowRoot ? root : document;
+    // a preview (the settings panel hangs off <html> too) reads its own stage, by
+    // the geometry of its own parts, never the screen: a tile scrolled out of the
+    // panel's view must look as it does in view (the QA check, 2026-10-12)
+    const stage = box.closest(".s-stage, .s-page");
+    const skip = stage
+        ? (e: Element) => !stage.contains(e)
+        : (e: Element) => !isPageElement(e);
+    const stack = stage
+        ? (x: number, y: number) => stagePartsAt(stage, x, y)
+        : (x: number, y: number) => where.elementsFromPoint(x, y);
+    // the text it outlines: the innermost element with text at its middle
+    const el = stack(
+        inner.left + inner.width / 2,
+        inner.top + inner.height / 2,
+    ).find(
+        (e) =>
+            !skip(e) &&
+            e !== document.body &&
+            e !== document.documentElement &&
+            Boolean(e.textContent?.trim()),
+    );
+    const got = colorUnder(inner, look, outline, w * k, {
+        root: where,
+        skip,
+        el,
+        ...(stage ? { stack, base: stageBase(stage) } : {}),
+    });
+    if (!got) return look.color;
+    const lk = adaptedLook(look, got);
+    if (lk.color !== look.color || lk.glowAlpha !== look.glowAlpha)
+        paintParts(entry, r, lk, outline, w);
+    return got.color;
+}
+
+/** a preview stage's parts at a client point, topmost first (later in the DOM is
+ *  drawn over earlier), the stage itself last; never the painter's own boxes or their inverted twins */
+function stagePartsAt(stage: Element, x: number, y: number): Element[] {
+    const hits: Element[] = [];
+    for (const e of [stage, ...stage.querySelectorAll("*")]) {
+        if (e.closest(".s-paint, [data-tint]")) continue;
+        const r = e.getBoundingClientRect();
+        if (x >= r.left && x < r.right && y >= r.top && y < r.bottom)
+            hits.push(e);
+    }
+    return hits.reverse();
+}
+
+/** what a preview stage lies on: the first opaque background round it */
+function stageBase(stage: Element): RGBA {
+    for (let e: Element | null = stage; e; e = e.parentElement) {
+        const c = parseColor(getComputedStyle(e).backgroundColor);
+        if (c && c.a >= 0.999) return c;
+    }
+    return { r: 255, g: 255, b: 255, a: 1 };
+}
+
+/** whether the look's colour depends on what is under each box */
+const adapts = (look: HighlightLook) =>
+    look.colorMode === "contrast" || look.colorMode === "near";
+/** whether what is under each box is measured: for an adaptive colour, or (with
+ *  hlAdaptLine) for a glow that must leave the text next to it readable in every
+ *  mode (the spec of 2026-10-12) */
+const measures = (look: HighlightLook) =>
+    adapts(look) || (look.glow && getSettings().hlAdaptLine);
+
+/** the colour to draw a box round `r` (client px) in, for what is under it; null
+ *  when nothing under it could be seen (off-screen) */
+function colorUnder(
+    r: Rect,
+    look: HighlightLook,
+    outline: string,
+    w: number,
+    opts: Parameters<typeof sampleBackgrounds>[2] = {},
+    known?: Backgrounds,
+): (Adapted & { bg: Backgrounds }) | null {
+    if (!measures(look)) return null;
+    // under the band, or just beyond the element where a glow or ring would be
+    const band = outline === "band" ? 3 * w : 2 * w;
+    const bg = known ?? sampleBackgrounds(r, OUTLINE_OFFSET + band / 2, opts);
+    const all = [...bg.edge, ...bg.inside];
+    if (!all.length) return null;
+    // the chosen colour, or the inverted one, kept: only the glow gives way
+    if (look.colorMode === "fixed")
+        return {
+            bg,
+            color: look.color,
+            dark: false,
+            // the fill is the person's own: only the glow is judged
+            glowAlpha: glowFor(bg, look.color, GLOW_ALPHA, 0),
+        };
+    if (look.colorMode === "invert")
+        return {
+            bg,
+            color: look.color,
+            dark: false,
+            glowAlpha: invertGlowFor(bg, INVERT_GLOW),
+        };
+    // what is round it is dark: a glow there may be stronger, and the colour is
+    // chosen for the glow as it will be drawn (the text under it stays readable)
+    // adaptBg "main": the colour is chosen for the element's main background alone,
+    // not the worst case under its ring; the glow is still judged by what is really
+    // next to it. Kept, not used: Yotam compared the two on the navy menu bar and
+    // kept "under-ring" (2026-10-13; .local/studies/01-guidance-codesign/
+    // session-2-screenshots/adaptive-dark/menu-bar-compare.png)
+    const judged = getSettings().adaptBg === "main" ? mainBackground(bg) : bg;
+    const seen = [...judged.edge, ...judged.inside];
+    const dark =
+        seen.reduce((n, c) => n + luminance(c), 0) / seen.length <
+        DARK_LUMINANCE;
+    const fillAlpha = look.fill ? look.fillAlpha : 0;
+    // the line carries the colour (hlAdaptLine): the colour is chosen for the page
+    // behind it, and the glow then gives way as far as the text next to it needs.
+    // Session 1: the colour itself gave way to the glow's 35%
+    const lines = getSettings().hlAdaptLine;
+    const color = chooseColor(judged, {
+        base: look.color,
+        mode: look.colorMode,
+        range: look.colorRange,
+        fillAlpha,
+        glowAlpha: look.glow && !lines ? GLOW_ALPHA : 0,
+    });
+    return {
+        bg,
+        color,
+        dark,
+        glowAlpha:
+            look.glow && lines
+                ? glowFor(bg, color, glowAlphaOver(dark), fillAlpha)
+                : GLOW_ALPHA,
+    };
+}
+
+/** an adapted colour, whether what is round it is dark, and the glow's strength */
+type Adapted = { color: string; dark: boolean; glowAlpha: number };
+/** below this mean relative luminance a background counts as dark (navy, charcoal) */
+const DARK_LUMINANCE = 0.2;
+/** the glow over a dark background (Yotam's try-out, 2026-10-12): stronger than over
+ *  a light one, where it must leave dark text readable */
+const DARK_GLOW_ALPHA = 0.6;
+
+/** the look in its adapted colour, with the stronger glow on a dark background when
+ *  the line follows the adaptation (hlAdaptLine) */
+function adaptedLook(look: HighlightLook, got: Adapted): HighlightLook {
+    return {
+        ...look,
+        color: got.color,
+        glowAlpha: got.glowAlpha === GLOW_ALPHA ? undefined : got.glowAlpha,
+    };
+}
+
+/** the glow's strength over a background, dark or light */
+const glowAlphaOver = (dark: boolean) =>
+    dark && getSettings().hlAdaptLine ? DARK_GLOW_ALPHA : GLOW_ALPHA;
+
+/** each outlined element's colour as last measured, and when: re-measured at most
+ *  every RESAMPLE_MS while the page moves, and once more after it stops, so a
+ *  section scrolling under it, a carousel turning or an image loading is caught */
+const RESAMPLE_MS = 200;
+const sampled = new WeakMap<Drawn, { got: Adapted; at: number; key: string }>();
+let resampleTimer = 0;
+/** what was under each outlined element when the page last answered for itself (no
+ *  modal over it), and where the element was then */
+const pageUnder = new WeakMap<Drawn, { bg: Backgrounds; r: Rect }>();
+
+/** raised when everything sampled must be measured again (a dialog closed) */
+let sampledGen = 0;
+
+/** a modal dialog is open over the page */
+function modalOpen(): boolean {
+    try {
+        return document.querySelector(":modal") !== null;
+    } catch {
+        return false;
+    }
+}
+
+/** `el` and its ancestors whose boxes hold a client point, innermost first: what is
+ *  under a point near it, without asking the screen */
+function ancestorsAt(el: Element, x: number, y: number): Element[] {
+    const hits: Element[] = [];
+    for (let e: Element | null = el; e; e = e.parentElement) {
+        const r = e.getBoundingClientRect();
+        if (x >= r.left && x < r.right && y >= r.top && y < r.bottom)
+            hits.push(e);
+    }
+    // the root holds everything: what lies under all of it
+    if (!hits.includes(document.documentElement))
+        hits.push(document.documentElement);
+    return hits;
+}
+
+function colorFor(
+    entry: Drawn,
+    r: Rect,
+    look: HighlightLook,
+    outline: string,
+    w: number,
+): Adapted {
+    const had = sampled.get(entry);
+    const key = `${sampledGen}|${getSettings().adaptBg}|${look.colorMode}|${look.colorRange}|${look.color}|${outline}|${look.fill}|${look.fillAlpha}|${look.glow}`;
+    const now = performance.now();
+    if (had && had.key === key && now - had.at < RESAMPLE_MS) {
+        // a frame inside the interval: measure once more when it ends
+        if (!resampleTimer)
+            resampleTimer = window.setTimeout(() => {
+                resampleTimer = 0;
+                scheduleRelay();
+            }, RESAMPLE_MS);
+        return had.got;
+    }
+    // a modal open over the page (the settings panel) makes the page inert, and the
+    // screen then answers with the dialog alone (the QA re-run, 2026-10-12): what was
+    // under the element just before it opened, while it has not moved; otherwise its
+    // own ancestors, by their boxes (an overlay or a sibling's backdrop is missed)
+    const modal = modalOpen();
+    const before = modal ? pageUnder.get(entry) : undefined;
+    const still =
+        before &&
+        Math.abs(before.r.left - r.left) <= 1 &&
+        Math.abs(before.r.top - r.top) <= 1 &&
+        Math.abs(before.r.width - r.width) <= 1 &&
+        Math.abs(before.r.height - r.height) <= 1;
+    const measured = colorUnder(
+        r,
+        look,
+        outline,
+        w,
+        {
+            el: entry.el,
+            ...(modal
+                ? {
+                      stack: (x: number, y: number) =>
+                          ancestorsAt(entry.el, x, y),
+                  }
+                : {}),
+        },
+        still ? before.bg : undefined,
+    );
+    if (measured && !modal) pageUnder.set(entry, { bg: measured.bg, r });
+    const got: Adapted = measured
+        ? {
+              color: measured.color,
+              dark: measured.dark,
+              glowAlpha: measured.glowAlpha,
+          }
+        : had?.key === key
+          ? had.got
+          : { color: look.color, dark: false, glowAlpha: GLOW_ALPHA };
+    sampled.set(entry, { got, at: now, key });
+    return got;
 }
 
 function render() {
     const look = currentLook();
-    const outline = drawnOutline(look);
     const w = bandWidth();
+    const pulse = getSettings().hlPulse;
     const gone: typeof boxes = [];
     for (const entry of boxes) {
         const { el, box } = entry;
@@ -491,16 +1373,31 @@ function render() {
         lastRects.set(entry, r);
         // collapsed since it was drawn (an accordion closed): hide, never park at (0, 0)
         box.style.display = isEmptyBox(r) ? "none" : "";
-        const parts = (!isEmptyBox(r) && measureLines(el)) || [r];
+        // "None" leaves only the number; one without a number keeps the ring
+        const outline = drawnOutline(look, Boolean(entry.badge));
+        // the thick band goes round the whole element, never between its lines,
+        // where it would cross its own text (Yotam, 2026-10-10)
+        const parts = (!isEmptyBox(r) &&
+            outline !== "band" &&
+            measureLines(el)) || [r];
         lastParts.set(entry, parts);
         syncLines(entry, parts.length - 1);
-        paintBox(entry, parts[0], look, outline, w);
+        // an adaptive colour is the element's own, for what is under it now
+        const lk =
+            measures(look) && !isEmptyBox(r)
+                ? adaptedLook(look, colorFor(entry, r, look, outline, w))
+                : look;
+        paintParts(entry, parts[0], lk, outline, w);
         for (const [i, l] of entry.lines.entries())
-            paintBox(l, parts[i + 1], look, outline, w);
+            paintParts(l, parts[i + 1], lk, outline, w);
+        for (const b of [entry.box, ...entry.lines.map((l) => l.box)])
+            setPulse(b, pulse, lk.color);
     }
     for (const g of gone) {
-        g.box.remove();
-        for (const l of g.lines) l.box.remove();
+        removeBox(g.box);
+        g.badgeEl?.remove();
+        badgeRects.delete(g);
+        for (const l of g.lines) removeBox(l.box);
         boxes.splice(boxes.indexOf(g), 1);
         lastRects.delete(g);
         lastParts.delete(g);
@@ -1100,6 +1997,9 @@ function setupSubscriptions() {
         capture: true,
     });
     window.addEventListener("resize", scheduleRelay);
+    // a lazy image arriving changes what is under an adaptive colour
+    document.addEventListener("load", scheduleRelay, true);
+    setImageLoadListener(scheduleRelay);
     const onPointer = () => {
         if (getSettings().offscreenCue === "pointer") scheduleCueRelay();
     };
@@ -1118,11 +2018,24 @@ function setupSubscriptions() {
                 capture: true,
             }),
         () => window.removeEventListener("resize", scheduleRelay),
+        () => document.removeEventListener("load", scheduleRelay, true),
+        () => setImageLoadListener(null),
         onViewChange(scheduleRelay),
         onZoomChange(scheduleRelay),
     ];
+    // a page's own theme switch (a class on <body> or <html>) changes what is under
+    // an adaptive colour; UniLens writes only their style
+    const themed = (r: MutationRecord) =>
+        r.type === "attributes" &&
+        r.attributeName === "class" &&
+        (r.target === document.body || r.target === document.documentElement);
     watcher = new MutationObserver((records) => {
-        if (records.some((r) => !isOwnMutation(r))) scheduleRelay();
+        if (records.some((r) => !isOwnMutation(r) || themed(r)))
+            scheduleRelay();
+    });
+    watcher.observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ["class"],
     });
     watcher.observe(document.body, {
         subtree: true,
@@ -1142,6 +2055,8 @@ function teardownSubscriptions() {
     raf = 0;
     if (cueRaf) cancelAnimationFrame(cueRaf);
     cueRaf = 0;
+    clearTimeout(resampleTimer);
+    resampleTimer = 0;
 }
 
 // ── public lifecycle ─────────────────────────────────────────────────────────
@@ -1175,7 +2090,10 @@ function newBox(role: HighlightRole): HTMLDivElement {
 /** as many extra line boxes as the element has lines after its first, right after
  *  its own box (a reflow can add or drop a line) */
 function syncLines(entry: Drawn, n: number) {
-    while (entry.lines.length > n) entry.lines.pop()?.box.remove();
+    while (entry.lines.length > n) {
+        const l = entry.lines.pop();
+        if (l) removeBox(l.box);
+    }
     while (entry.lines.length < n) {
         const box = newBox(entry.role);
         box.dataset.line = String(entry.lines.length + 2);
@@ -1192,10 +2110,7 @@ export function showHighlights(
     token: number,
     opts: ShowOptions = {},
 ): boolean {
-    if (
-        !opts.userInitiated &&
-        (captureId !== currentCapture || token !== issued)
-    ) {
+    if (!opts.userInitiated && !isLatest(captureId, token)) {
         console.debug("[UniLens] dropped stale highlight", {
             captureId,
             token,
@@ -1310,8 +2225,10 @@ export function clearHighlights() {
     const had = boxes.length > 0;
     if (had) logEvent("highlights_cleared", { count: boxes.length });
     for (const b of boxes) {
-        b.box.remove();
-        for (const l of b.lines) l.box.remove();
+        removeBox(b.box);
+        b.badgeEl?.remove();
+        badgeRects.delete(b);
+        for (const l of b.lines) removeBox(l.box);
     }
     boxes = [];
     dimBox?.remove();

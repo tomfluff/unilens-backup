@@ -30,6 +30,53 @@ export const PinIcon = () => (
         <path d="M12 16v4" />
     </Icon>
 );
+/** lines of text and a numbered dot: where an answer's sources go */
+export const SourcesIcon = () => (
+    <Icon>
+        <path d="M4 7h9M4 12h7M4 17h9" />
+        <circle cx="18" cy="12" r="2.5" />
+    </Icon>
+);
+/** the sources' style, one shape each: numbers in the text, words underlined too,
+ *  the numbers after the answer, or in the text and after */
+export const SourceStyleIcon = ({
+    style,
+}: {
+    style: "inline" | "underline" | "end" | "both";
+}) => (
+    <Icon>
+        {style === "inline" && (
+            <>
+                <path d="M3 7h8M3 12h5M14 12h7M3 17h8" />
+                <circle cx="15" cy="7" r="2" />
+            </>
+        )}
+        {style === "underline" && (
+            <>
+                <path d="M3 6h9M3 12h6M3 18h9" />
+                <path d="M3 9h9" strokeWidth="3" />
+                <circle cx="17" cy="7" r="2.2" />
+            </>
+        )}
+        {style === "end" && (
+            <>
+                <path d="M3 5h15M3 10h15M3 15h9" />
+                <circle cx="8" cy="20" r="1.6" />
+                <circle cx="14" cy="20" r="1.6" />
+                <circle cx="20" cy="20" r="1.6" />
+            </>
+        )}
+        {style === "both" && (
+            <>
+                <path d="M3 5h8M16 5h5M3 10h15M3 15h9" />
+                <circle cx="13.5" cy="5" r="1.6" />
+                <circle cx="8" cy="20" r="1.6" />
+                <circle cx="14" cy="20" r="1.6" />
+                <circle cx="20" cy="20" r="1.6" />
+            </>
+        )}
+    </Icon>
+);
 /** a speech bubble with a plus: a new conversation */
 export const NewChatIcon = () => (
     <Icon>

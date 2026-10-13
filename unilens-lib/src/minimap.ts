@@ -123,6 +123,9 @@ function strokeOutline(
     if (outline === "band") {
         stroke(4, EDGE, 1);
         stroke(2.5, color, 0);
+    } else if (outline === "thin") {
+        stroke(2.5, RING.outer, 0.5);
+        stroke(1.25, EDGE, 0);
     } else if (outline === "ring") {
         // two bands, black inside white: one of them always clears 3:1
         stroke(4, RING.outer, 1.5);
@@ -206,7 +209,8 @@ export function paintMapTargets(
     look: HighlightLook,
 ) {
     if (!rects.length) return;
-    const outline = drawnOutline(look);
+    // the map's numbers are too small to mark a target alone
+    const outline = drawnOutline(look, false);
     const color = look.color;
     if (look.backdrop !== "none") {
         const W = g.canvas.width;
@@ -294,15 +298,17 @@ function build() {
     document.documentElement.appendChild(box);
 }
 
-/** move the lens so it centres on the point clicked in the minimap */
+/** move the lens so it centres on the point clicked in the minimap, at once */
 function panTo(e: PointerEvent) {
     const r = canvas.getBoundingClientRect();
     const { scale } = getZoom();
     const contentX = (e.clientX - r.left) / mapScale;
     const contentY = (e.clientY - r.top) / mapScale;
+    // a move the user aims themselves: at once, no glide (Yotam, 2026-10-12)
     setView(
         contentX * scale - window.innerWidth / 2,
         contentY * scale - window.innerHeight / 2,
+        true,
     );
 }
 
