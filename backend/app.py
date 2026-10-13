@@ -5,6 +5,10 @@ POST /api/capture  {image: dataURL, meta: {...}, inventory?: [...]} -> {id}
 POST /api/chat     {capture_id, message, cite?}       -> {reply, provider, model}
                    (reply cites inventory elements inline as [[nID]])
 POST /api/locate   {capture_id, question, screenshot} -> {capture_id, answer, highlights}
+POST /api/quiz/log {events: [...]}                 -> {logged, dropped}  (quiz-lib)
+GET  /api/quiz                                     -> {quizzes: [...]}
+GET  /api/quiz/<id>/results[?pid&session&attempt&completed]
+                                                   -> {quiz, attempts: [...answers, timings]}
 GET  /health
 
 Captures stored under captures/<id>/ (capture.png + meta.json + chat.json,
@@ -452,6 +456,156 @@ def _study_log(ids: tuple[str, str] | None, events: list[dict], src: str) -> Non
 
 def _server_event(ids: tuple[str, str] | None, kind: str, **fields) -> None:
     _study_log(ids, [{"t": _now_iso(), "type": kind, **fields}], "server")
+
+
+# ── Quiz logs (quiz-lib) ───────────────────────────────────────────────────
+# The embeddable quiz posts its events to /api/quiz/log: one append-only JSONL file
+# per quiz, quiz-logs/<quiz id>.jsonl, whoever answers. When the page names a study
+# participant (?pid=&session=, as for the study log) the line carries them, and the
+# events are also appended to that participant's study log, so answers sit on the
+# same timeline as the chat. Nothing else about the visitor is written.
+QUIZ_LOGS_DIR = Path(__file__).parent / "quiz-logs"
+_QUIZ_ID = re.compile(r"^[A-Za-z0-9_-]{1,64}$")
+QUIZ_EVENT_TYPES = frozenset(
+    {
+        "quiz_open",
+        "quiz_close",
+        "quiz_start",
+        "quiz_answer",
+        "quiz_complete",
+        "quiz_lang",  # the visitor switched the panel between Japanese and English
+    }
+)
+QUIZ_MAX_EVENTS = 100
+QUIZ_MAX_EVENT_CHARS = 8_000
+_quiz_lock = threading.Lock()
+
+
+def _quiz_log(events: list[dict], ids: tuple[str, str] | None) -> None:
+    """Append events to their quiz's log, grouped per quiz (one line each)."""
+    rx = _now_iso()
+    who = {"pid": ids[0], "session": ids[1]} if ids else {}
+    by_quiz: dict[str, list[str]] = {}
+    for ev in events:
+        line = json.dumps({**ev, **who, "src": "client", "rx": rx}, ensure_ascii=False)
+        by_quiz.setdefault(ev["quiz"], []).append(line + "\n")
+    with _quiz_lock:
+        QUIZ_LOGS_DIR.mkdir(parents=True, exist_ok=True)
+        for quiz, lines in by_quiz.items():
+            with open(QUIZ_LOGS_DIR / f"{quiz}.jsonl", "a", encoding="utf-8") as f:
+                f.write("".join(lines))
+
+
+def _parse_time(value: object) -> datetime | None:
+    """An ISO 8601 time as the widget writes it ("…Z"), or None."""
+    if not isinstance(value, str):
+        return None
+    try:
+        return datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+
+
+def _ms_between(start: object, end: object) -> int | None:
+    a, b = _parse_time(start), _parse_time(end)
+    if a is None or b is None:
+        return None
+    return max(0, round((b - a).total_seconds() * 1000))
+
+
+def _read_quiz_events(quiz: str) -> list[dict] | None:
+    """Every event logged for a quiz, oldest first; None when it has no log. A line
+    that is not a JSON object (a torn write) is skipped."""
+    path = QUIZ_LOGS_DIR / f"{quiz}.jsonl"
+    if not _QUIZ_ID.fullmatch(quiz) or not path.is_file():
+        return None
+    events = []
+    with _quiz_lock:
+        text = path.read_text(encoding="utf-8")
+    for line in text.splitlines():
+        try:
+            ev = json.loads(line)
+        except ValueError:
+            continue
+        if isinstance(ev, dict):
+            events.append(ev)
+    return events
+
+
+def _quiz_attempts(events: list[dict]) -> list[dict]:
+    """The log folded into one record per attempt: who, when, the score, how long it
+    took, and each answer with the time spent on its question. An attempt that was
+    never completed has completed False and its duration up to the last answer.
+    A question without an answer key (a survey item) has correct None, and an
+    attempt with nothing graded has correct None too."""
+    attempts: dict[str, dict] = {}
+    for ev in events:
+        aid = ev.get("attempt")
+        if not isinstance(aid, str) or not aid:
+            continue
+        a = attempts.setdefault(
+            aid,
+            {
+                "attempt": aid,
+                "pid": None,
+                "session": None,
+                "lang": None,
+                "page": None,
+                "started_at": None,
+                "completed_at": None,
+                "completed": False,
+                "correct": 0,
+                "answered": 0,
+                "total": None,
+                "duration_ms": None,
+                "answers": {},
+            },
+        )
+        for key in ("pid", "session", "lang", "page"):
+            if ev.get(key) is not None:
+                a[key] = ev[key]
+        kind = ev.get("type")
+        if kind == "quiz_start":
+            a["started_at"] = ev.get("t")
+            a["total"] = ev.get("total", a["total"])
+        elif kind == "quiz_answer" and isinstance(ev.get("question"), str):
+            # one answer per question and attempt; a repeat (a retried send) replaces it
+            a["answers"][ev["question"]] = {
+                "question": ev["question"],
+                "index": ev.get("index"),
+                "response": ev.get("response"),
+                "response_text": ev.get("response_text"),
+                "correct": (
+                    ev["correct"] if isinstance(ev.get("correct"), bool) else None
+                ),
+                "ms": ev.get("ms"),
+                "lang": ev.get("lang"),  # the language the question was read in
+                "answered_at": ev.get("t"),
+            }
+        elif kind == "quiz_complete":
+            a["completed"] = True
+            a["completed_at"] = ev.get("t")
+            a["total"] = ev.get("total", a["total"])
+            if isinstance(ev.get("ms"), (int, float)):
+                a["duration_ms"] = ev["ms"]
+    out = []
+    for a in attempts.values():
+        answers = sorted(
+            a["answers"].values(),
+            key=lambda x: (x["index"] if isinstance(x["index"], int) else 1 << 30),
+        )
+        a["answers"] = answers
+        a["answered"] = len(answers)
+        graded = [x for x in answers if x["correct"] is not None]
+        a["correct"] = sum(1 for x in graded if x["correct"]) if graded else None
+        if a["duration_ms"] is None and answers:
+            last = max((x["answered_at"] or "" for x in answers), default=None)
+            a["duration_ms"] = _ms_between(a["started_at"], last)
+        if a["started_at"] is None and a["answered"] == 0:
+            continue  # only open/close events: no attempt was made
+        out.append(a)
+    out.sort(key=lambda a: a["started_at"] or "")
+    return out
 
 
 def _prune_storage() -> None:
@@ -1838,6 +1992,67 @@ def create_app():
         ]
         _study_log(ids, kept, "client")
         return jsonify({"logged": len(kept), "dropped": len(events) - len(kept)})
+
+    @app.post("/api/quiz/log")
+    def quiz_log():
+        """The quiz widget's events, as {"events": [...]}, each naming its quiz and a
+        known type. Sent as plain text (no CORS preflight; it also goes as the page
+        closes). The participant and session are optional here."""
+        ids = _study_ids()
+        try:
+            data = json.loads(request.get_data(as_text=True) or "{}")
+        except ValueError:
+            return jsonify({"error": "not JSON"}), 400
+        events = data.get("events") if isinstance(data, dict) else None
+        if not isinstance(events, list) or not 1 <= len(events) <= QUIZ_MAX_EVENTS:
+            return jsonify({"error": f"events: a list of 1-{QUIZ_MAX_EVENTS}"}), 400
+        kept = [
+            ev
+            for ev in events
+            if isinstance(ev, dict)
+            and ev.get("type") in QUIZ_EVENT_TYPES
+            and isinstance(ev.get("quiz"), str)
+            and _QUIZ_ID.fullmatch(ev["quiz"])
+            and len(json.dumps(ev, ensure_ascii=False)) <= QUIZ_MAX_EVENT_CHARS
+        ]
+        if kept:
+            _quiz_log(kept, ids)
+            _study_log(ids, kept, "client")
+        return jsonify({"logged": len(kept), "dropped": len(events) - len(kept)})
+
+    @app.get("/api/quiz")
+    def quiz_list():
+        """The quizzes that have a log: id, how many attempts, the last activity."""
+        items = []
+        if QUIZ_LOGS_DIR.is_dir():
+            for path in sorted(QUIZ_LOGS_DIR.glob("*.jsonl")):
+                events = _read_quiz_events(path.stem) or []
+                attempts = _quiz_attempts(events)
+                items.append(
+                    {
+                        "id": path.stem,
+                        "attempts": len(attempts),
+                        "completed": sum(1 for a in attempts if a["completed"]),
+                        "last_event_at": events[-1].get("t") if events else None,
+                    }
+                )
+        return jsonify({"quizzes": items})
+
+    @app.get("/api/quiz/<quiz_id>/results")
+    def quiz_results(quiz_id):
+        """Each attempt at a quiz with its answers and timings (see _quiz_attempts).
+        Optional filters: ?pid=, ?session=, ?attempt=, ?completed=1."""
+        events = _read_quiz_events(quiz_id)
+        if events is None:
+            return jsonify({"error": "no log for this quiz"}), 404
+        attempts = _quiz_attempts(events)
+        for key in ("pid", "session", "attempt"):
+            want = request.args.get(key)
+            if want:
+                attempts = [a for a in attempts if str(a.get(key)) == want]
+        if request.args.get("completed") in ("1", "true"):
+            attempts = [a for a in attempts if a["completed"]]
+        return jsonify({"quiz": quiz_id, "attempts": attempts})
 
     @app.get("/health")
     def health():

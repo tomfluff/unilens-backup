@@ -15,6 +15,9 @@
 | `POST /api/chat/stream` | Same as above, but streams tokens incrementally via SSE (`text/event-stream`) |
 | `GET /health` | Health check for confirming the active provider |
 | `POST /api/study/log?pid=&session=` | The widget's events for a study participant, appended to `study-logs/<pid>/session-<n>.jsonl` (see Storage) |
+| `POST /api/quiz/log[?pid=&session=]` | The quiz widget's (`quiz-lib`) events, appended to `quiz-logs/<quiz id>.jsonl`; with a participant, also to their study log |
+| `GET /api/quiz` | The quizzes that have a log, with attempt counts |
+| `GET /api/quiz/<id>/results` | Each attempt at a quiz: its answers (`response`, `response_text`, `correct` — `null` for a question without an answer key), time per question (`ms`) and in all (`duration_ms`). Filters `?pid=`, `?session=`, `?attempt=`, `?completed=1` (see `quiz-lib/README.md`) |
 
 ## LLM provider selection
 
@@ -36,5 +39,6 @@ Switched automatically via environment variables (`_provider()`):
 
 - `captures/<id>/`: `capture.png` (full annotated image), `viewport.png` (close-up, optional), `meta.json`, `chat.json` (one-off chat history outside of a session)
 - `sessions/<sid>.json`: per-session history
+- `quiz-logs/<quiz id>.jsonl`: every answer to an embedded quiz (`quiz-lib`), one event per line, append-only, with `pid`/`session` when the page named a participant. Git-ignored.
 - `study-logs/<pid>/session-<n>.jsonl`: a study participant's interaction log, one event per line, append-only. Written only when the page address named a participant (`?pid=P03&session=1`); the widget then adds `pid` and `session` to every request. The widget sends its events (clicks, questions, answers, source presses, the microphone, read-aloud, outlines, errors) to `POST /api/study/log`, and the routes add the capture saved, the model's answer and latency, a transcript and a read-aloud request. Git-ignored. `study_export.py` turns them into a CSV and a Markdown timeline per session and a `summary.csv` (`.venv/bin/python study_export.py [pid…]`, into `study-logs/export/`).
 

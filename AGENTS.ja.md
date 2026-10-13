@@ -10,6 +10,7 @@
 - `backend/`: Flask API（`/api/capture`、`/api/chat`、セッション/キャプチャの保存先）。
 - `unilens-lib/`: 埋め込み型のメイン React + TypeScript ウィジェット。
 - `accessibility-lib/`: アクセシビリティに特化した埋め込み型ウィジェット。
+- `quiz-lib/`: 埋め込み型のクイズウィジェット。回答はバックエンド（`/api/quiz/log`）に記録。
 - `frontend/`: 静的テストターゲット（`dev-demo`、`softbank-mirror`）。
 
 ## 必須チェック

@@ -30,6 +30,7 @@
           <li><strong>Chat</strong> — <kbd>Alt</kbd> + click (needs <code>make serve-backend</code> on port 5000).</li>
           <li><strong>Co-design preset</strong> — add <code>?unilens-preset=initial</code> (or facilitator <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>B</kbd>).</li>
           <li><strong>Study log</strong> — <code>?pid=P01&amp;session=1</code> with the backend running.</li>
+          <li><strong>Survey</strong> (quiz-lib) — top-left pill (<code>UniLensQuiz.init({ src: 'quiz.json' })</code>); answers go to <code>backend/quiz-logs/dev-demo.jsonl</code>.</li>
         </ul>
         <p>Other local frontends (after <code>make serve-all</code> or separate <code>make serve-frontend …</code>):</p>
         <ul>
@@ -81,9 +82,11 @@
     </div>
     <script src="accessibility.js"></script>
     <script src="unilens.js"></script>
+    <script src="quiz.js"></script>
     <script>
       Accessibility.init()
       UniLens.init({ backend: 'http://127.0.0.1:5000', mouseWindow: 5 })
+      UniLensQuiz.init({ src: 'quiz.json', backend: 'http://127.0.0.1:5000' })
     </script>
   </body>
 </html>

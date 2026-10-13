@@ -2873,9 +2873,11 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <!-- [local] unilens-a11y -->
 <script src="accessibility.js"></script>
 <script src="unilens.js"></script>
+<script src="quiz.js"></script>
 <script>
   Accessibility.init()
   UniLens.init({ backend: 'http://127.0.0.1:5000', mouseWindow: 5 })
+  UniLensQuiz.init({ src: 'quiz.json', backend: 'http://127.0.0.1:5000' })
 </script>
 <!-- [/local] unilens-a11y -->
 </body>

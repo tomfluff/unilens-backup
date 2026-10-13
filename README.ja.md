@@ -6,11 +6,12 @@
 
 ## 構成
 
-管理対象のパッケージは 4 つです:
+管理対象のパッケージは 5 つです:
 
 * `backend` - Python `venv` で管理する Flask サーバ。詳細は `backend/Makefile` を参照
 * `unilens-lib` - `npm` で管理する Unilens ライブラリ。詳細は `unilens-lib/Makefile` を参照
 * `accessibility-lib` - `npm` で管理する Unilens ライブラリ。詳細は `unilens-lib/Makefile` を参照
+* `quiz-lib` - `npm` で管理する埋め込み型クイズウィジェット。詳細は `quiz-lib/README.ja.md` を参照
 * `.` - `npm` で管理するルートディレクトリ。`softbank-mirror` のようなサンプルサイトの配信に使う、ごく小さなパッケージ。`./Makefile` が全パッケージを管理する
 
 `.` については `npm` と `venv` のどちらを使うかは比較的恣意的な選択です。クライアントビルドと一貫性を保つために `npm` を選んでいます。
@@ -24,6 +25,7 @@
 ```
 unilens-lib/          React + TS — esbuild で単一の埋め込み用 dist/unilens.js をビルド
 accessibility-lib/    React + TS — esbuild で単一の埋め込み用 dist/accessibility.js をビルド
+quiz-lib/             React + TS — esbuild で単一の埋め込み用 dist/quiz.js をビルド
 backend/           Flask — キャプチャを保存し、OpenAI / Gemini / スタブで /api/chat を提供
 softbank-mirror/   softbank.jp の IR ベネフィットページの静的コピー（テスト対象）
 softbank-mirror-recruit/  softbank.jp の recruit/disability ページの静的コピー（テスト対象）
@@ -58,6 +60,7 @@ make serve softbank-mirror
 * `backend` - サーバコード
 * `unilens-lib` - Unilens の JavaScript ライブラリソース
 * `accessibility-lib` - Accessibility の JavaScript ライブラリソース
+* `quiz-lib` - クイズの JavaScript ライブラリソース
 * `frontend/{target}` - クライアントの基本 HTML とソース（unilens.js の dist を除く）
 
 ### バックエンドのみ
@@ -166,10 +169,11 @@ SoftBank ミラーに対してテストする場合: `unilens-lib/dist/unilens.j
 # JS build targets
 
 # Define all targets here, this allows us to iterate through them
-JS_TARGETS:= unilens-lib accessibility-lib
+JS_TARGETS:= unilens-lib accessibility-lib quiz-lib
 
 target_dist_unilens-lib=unilens.js
 target_dist_accessibility-lib=accessibility.js
+target_dist_quiz-lib=quiz.js
 
 # Frontend build targets
 FRONTEND_TARGETS:= softbank-mirror dev-demo

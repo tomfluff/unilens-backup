@@ -31,6 +31,7 @@ def client(tmp_path, monkeypatch):
     monkeypatch.setattr(app_module, "CAPTURES_DIR", captures)
     monkeypatch.setattr(app_module, "SESSIONS_DIR", sessions)
     monkeypatch.setattr(app_module, "STUDY_LOGS_DIR", tmp_path / "study-logs")
+    monkeypatch.setattr(app_module, "QUIZ_LOGS_DIR", tmp_path / "quiz-logs")
     monkeypatch.setattr(app_module, "GUARDRAILS", False)
     monkeypatch.setattr(app_module, "MAX_CAPTURES", 500)
     monkeypatch.setattr(app_module, "RETENTION_DAYS", 30)

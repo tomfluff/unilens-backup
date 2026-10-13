@@ -5,7 +5,7 @@ Everything runs through `make` from the repo root. Requires Node 20+ and Python 
 | Part | Dir | What it is |
 |---|---|---|
 | Backend | `backend/` | Flask API, port `5000` |
-| JS libs | `unilens-lib/`, `accessibility-lib/` | esbuild bundles, copied into frontends as `unilens.js` / `accessibility.js` |
+| JS libs | `unilens-lib/`, `accessibility-lib/`, `quiz-lib/` | esbuild bundles, copied into frontends as `unilens.js` / `accessibility.js` / `quiz.js` |
 | Frontends | `frontend/softbank-mirror` (8000), `frontend/dev-demo` (8001), `frontend/softbank-mirror-recruit` (8002), six `frontend/study-*` mock sites (8031–8036; see `frontend/STUDY-SITES.md`) | static sites served by `live-server` |
 
 ## Setup
@@ -32,7 +32,7 @@ From the repo root, after `npm install` at the root and in `accessibility-lib` /
 `unilens-lib`:
 
 ```bash
-npm run bundle          # accessibility.js + unilens.js → every frontend/
+npm run bundle          # accessibility.js + quiz.js + unilens.js → every frontend/
 npm run serve:study     # all six study sites via live-server
 npm run serve:study -- study-wiki   # one site only
 ```
