@@ -118,6 +118,9 @@ const INITIAL = {
     // no settings gear and no debug view or its shortcut
     chatStyle: "assistant",
     chatLanguage: "en",
+    // session 1's sizes: a Large interface, its messages' text at 120%
+    chatFontSize: 17,
+    chatTextScale: 120,
     clickFx: "orb",
     motion: "smooth",
     continuity: true,
@@ -199,6 +202,10 @@ export const PRESETS = {
             // middle of the uncovered part: 20% in from each side (item 16 of
             // Yotam's try-out, 2026-10-13). Not in the panel
             edgeZone: 0.2,
+            // item 20 (Yotam, 2026-10-13): a Normal interface, its messages' text the
+            // same size as the rest of it; both in the panel
+            chatFontSize: 14,
+            chatTextScale: 100,
         },
         /** what a participant may change in session 2 (session-lead's list,
          *  2026-10-09): the highlight's look, page zoom, the page map, voice, sounds,

@@ -141,8 +141,14 @@ describe("session 2 (2026-10-09)", () => {
             altDragInert: true,
             // near the screen's edge or under the chat moves to the middle (item 16)
             edgeZone: 0.2,
+            // item 20: Normal, the messages at 100%
+            chatFontSize: 14,
+            chatTextScale: 100,
         });
         expect(PRESETS.initial.values.edgeZone).toBe(0);
+        // session 1's sizes stay: Large, 120%
+        expect(PRESETS.initial.values.chatFontSize).toBe(17);
+        expect(PRESETS.initial.values.chatTextScale).toBe(120);
         // judged over everything under the ring in every preset, and in no panel
         // (Yotam, 2026-10-13, after the menu-bar comparison)
         for (const p of Object.values(PRESETS)) {
@@ -240,7 +246,7 @@ describe("a preset in effect", () => {
         expect(s.liveTalk).toBe(false);
         expect(s.minimap).toBe("off");
         expect(s.settingsButton).toBe(false);
-        // not in the preset: the shipped default, not what localStorage held
+        // the preset's value, not what localStorage held
         expect(s.chatTextScale).toBe(120);
 
         // a change in the (hidden) panel: this tab only, and only the difference
@@ -355,7 +361,7 @@ describe("session 2 keeps a participant's changes across tabs", () => {
         // another participant in the same browser starts from the preset
         history.replaceState(null, "", "/en/?unilens-preset=session2&pid=P04");
         startChosenPreset();
-        expect(getSettings().chatTextScale).toBe(120);
+        expect(getSettings().chatTextScale).toBe(100);
         expect(getSettings().citePlacement).toBe("inline");
 
         // the reset forgets what P03 changed
@@ -385,7 +391,7 @@ describe("session 2 keeps a participant's changes across tabs", () => {
             }),
         );
         expect(getSettings().sounds).toBe(false);
-        expect(getSettings().chatTextScale).toBe(120);
+        expect(getSettings().chatTextScale).toBe(100);
 
         // a change made in the tab before the pid came is forgotten by the reset too
         sessionStorage.setItem(

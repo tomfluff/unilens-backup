@@ -100,6 +100,16 @@ describe("the panel in Japanese", () => {
         );
         expect(missing).toEqual([]);
     });
+    it("lists Off or None first wherever a choice has one (item 21)", () => {
+        const late = Object.entries(ENUM_CHOICES).flatMap(([k, v]) => {
+            const values = Object.keys(v.choices);
+            const i = values.findIndex((x) => x === "off" || x === "none");
+            const own = Object.keys(OWN_CHOICES[k as keyof Settings] ?? {});
+            const j = own.findIndex((x) => x === "off" || x === "none");
+            return i > 0 || j > 0 ? [k] : [];
+        });
+        expect(late).toEqual([]);
+    });
 });
 
 describe("the click marks' old settings", () => {

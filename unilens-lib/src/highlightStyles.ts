@@ -21,13 +21,14 @@ export const BACKDROPS = {
 } as const;
 export type Backdrop = keyof typeof BACKDROPS;
 
+/** None first, as every choice that has one (item 21, Yotam 2026-10-13) */
 export const OUTLINES = {
+    none: "No outline",
     band: "Thick band in the color",
     ring: "Two-band ring (black and white)",
     thin: "Thin border",
     brackets: "Corner brackets",
     underline: "Marker underline",
-    none: "No outline",
 } as const;
 export type Outline = keyof typeof OUTLINES;
 
