@@ -28,6 +28,27 @@ export function zoomAsked(text: string): ZoomAsk | null {
         ? { id: m[1] }
         : { change: m[1] as "in" | "out" | "reset" };
 }
+/** the assistant takes the user to an element (co-design study, 2026-10-09): acted on
+ *  once the answer is complete, whenever the model adds it */
+const GOTO = /\s?\[\[goto:(n\d{1,5})\]\]/g;
+/** ...and one still streaming in */
+const PARTIAL_GOTO = /\s?\[\[g(o(t(o(:[a-z0-9]*\]?)?)?)?)?$/;
+/** the element an answer takes the user to (its first go-to), or null */
+export function gotoAsked(text: string): string | null {
+    return [...text.matchAll(GOTO)][0]?.[1] ?? null;
+}
+/** an element cited in the text by a marker the chat renders ([[n5]], [[n4, n5]],
+ *  [[n4], [n5]]); a malformed one ([n5]) is no citation */
+const citedIn = (text: string, id: string) =>
+    unjoin(text).includes(`[[${id}]]`);
+/** go-to markers out of the text: each is its element's citation, unless the answer
+ *  cites that element already (the rules ask for both: one number, not two) */
+const ungoto = (text: string) => {
+    const rest = text.replace(GOTO, "");
+    return text.replace(GOTO, (all, id: string) =>
+        citedIn(rest, id) ? "" : `${all.startsWith("[") ? "" : " "}[[${id}]]`,
+    );
+};
 /** zoom markers out of the text: one into an element is its source, as a citation */
 const unzoom = (text: string) =>
     text.replace(ZOOM, (all, what: string) =>
@@ -101,12 +122,14 @@ export function renderCited(
     /** underline the words each citation supports ("Associate response text") */
     phrases = false,
     /** where the numbers go: where the model put them, at the end of each sentence,
-     *  or all after the answer. Underlines need them where the model put them */
+     *  all after the answer, or both where the model put them and after (#27).
+     *  Underlines need them where the model put them, and only there */
     placement: CitePlacement = "inline",
 ): Cited {
-    let t = unjoin(unzoom(text.replace(/[\uE0FC-\uE0FF]/g, "")));
+    let t = unjoin(ungoto(unzoom(text.replace(/[\uE0FC-\uE0FF]/g, ""))));
     if (streaming)
         t = t
+            .replace(PARTIAL_GOTO, "")
             .replace(PARTIAL_ZOOM, "")
             .replace(PARTIAL_JOINED, "")
             .replace(PARTIAL, "");
@@ -118,7 +141,16 @@ export function renderCited(
         return `${m.startsWith("[") ? "" : " "}\uE0FF${n}\uE0FF`;
     });
     // the numbers elsewhere than the model put them: no words are joined to them
-    if (placement !== "inline") {
+    if (placement === "both") {
+        // where the model put them, and every one again after the answer (P04)
+        phrases = false;
+        // no words are joined to the numbers; the braces go before the row (after
+        // it, a half brace the stream ends on would show)
+        t = t.replace(/\{\{|\}\}/g, "");
+        if (streaming) t = t.replace(/[{}]$/, "");
+        if (ids.length)
+            t = `${t.trimEnd()}\n\n${ids.map((_, i) => `\uE0FF${i + 1}\uE0FF`).join(" ")}`;
+    } else if (placement !== "inline") {
         phrases = false;
         t = placeSlots(t.replace(/\{\{|\}\}/g, ""), placement);
     }
@@ -156,7 +188,7 @@ export function renderCited(
     return { html, ids };
 }
 
-export type CitePlacement = "inline" | "sentence" | "end";
+export type CitePlacement = "inline" | "sentence" | "end" | "both";
 
 /** a citation's slot with the spaces (not line breaks) around it */
 const SPACED_SLOT = /[^\S\n]*\uE0FF(\d+)\uE0FF[^\S\n]*/g;
@@ -371,9 +403,70 @@ export function placeLiveMarkers(
 
 /** the reply as it should be read aloud or copied: no markers, no phrase braces */
 export const speakable = (text: string) =>
-    unjoin(unzoom(text))
+    unjoin(ungoto(unzoom(text)))
         .replace(MARKER, "")
         .replace(/\{\{|\}\}/g, "");
+
+/** a run of source numbers as said aloud: "1", "1 and 2", "1, 2 and 3" (Japanese
+ *  「1、2と3」) */
+function sayList(ns: number[], ja: boolean): string {
+    if (ns.length === 1) return String(ns[0]);
+    const head = ns.slice(0, -1).join(ja ? "、" : ", ");
+    return `${head}${ja ? "と" : " and "}${ns[ns.length - 1]}`;
+}
+
+/**
+ * The reply as read aloud with its source numbers said (#28): each number where the
+ * chat shows it, by the same rules (unknown ids dropped, numbered in first-citation
+ * order, moved to the sentence's end or after the answer with the placement). In the
+ * text it is "(source 2)", "(sources 1 and 2)"; a row of its own after the answer is
+ * "Sources: 1 and 2." Japanese: 「（根拠2）」, 「根拠：1と2。」. "both" says them
+ * once, in the text: the row after the answer would repeat them.
+ */
+export function speakableWithSources(
+    text: string,
+    known: (id: string) => boolean,
+    placement: CitePlacement = "inline",
+): string {
+    // the slot characters are the renderer's own: none may come from the reply
+    let t = unjoin(ungoto(unzoom(text.replace(/[\uE0FC-\uE0FF]/g, ""))));
+    // Japanese words by kana or kanji, as the reading voice is chosen (speech.ts), not
+    // by full-width signs an English answer may hold (￥4,378)
+    const ja = /[\u3040-\u30ff\u4e00-\u9fff]/.test(t);
+    const ids: string[] = [];
+    t = t.replace(MARKER, (m, id: string) => {
+        if (!known(id)) return "";
+        let n = ids.indexOf(id) + 1;
+        if (!n) n = ids.push(id);
+        return `${m.startsWith("[") ? "" : " "}\uE0FF${n}\uE0FF`;
+    });
+    // the braces go once the markers are read, as in the chat (one inside a marker
+    // never makes it one)
+    t = t.replace(/\{\{|\}\}/g, "");
+    if (placement === "sentence" || placement === "end")
+        t = placeSlots(t, placement);
+    return t.replace(
+        /([^\S\n]*)(\uE0FF\d+\uE0FF(?:[^\S\n]*\uE0FF\d+\uE0FF)*)/g,
+        (all: string, lead: string, run: string, at: number, whole: string) => {
+            const ns = [
+                ...new Set([...run.matchAll(SLOT)].map((m) => Number(m[1]))),
+            ];
+            const before = whole.slice(0, at);
+            const after = whole.slice(at + all.length);
+            // a row of its own: a sentence
+            if (/(^|\n)$/.test(before) && /^[^\S\n]*(\n|$)/.test(after))
+                return ja
+                    ? `根拠：${sayList(ns, true)}。`
+                    : `${ns.length > 1 ? "Sources" : "Source"}: ${sayList(ns, false)}.`;
+            // Japanese takes no space before the brackets
+            if (ja) return `（根拠${sayList(ns, true)}）`;
+            const word = ns.length > 1 ? "sources" : "source";
+            // after a full stop the chip has no space before it: the words need one
+            const gap = lead || /\S$/.test(before) ? " " : "";
+            return `${gap}(${word} ${sayList(ns, false)})`;
+        },
+    );
+}
 
 export type NavCommand =
     | { kind: "next" }

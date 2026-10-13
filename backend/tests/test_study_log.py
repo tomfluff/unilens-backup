@@ -165,6 +165,26 @@ def test_export_counts_what_the_participant_did(client, tmp_path):
             "action": "off",
         },
         {
+            "t": t.format(3),
+            "seq": 3,
+            "type": "source",
+            "n": 1,
+            "via": "assistant go-to",
+            "moved": True,
+        },
+        {
+            "t": t.format(3),
+            "seq": 3,
+            "type": "goto",
+            "question": "take me to the notise",
+            "target": "n149",
+            "label": "Notices",
+            "n": 1,
+            "where": "below",
+            "moved": True,
+            "done": True,
+        },
+        {
             "t": t.format(4),
             "seq": 4,
             "type": "error",
@@ -179,5 +199,11 @@ def test_export_counts_what_the_participant_did(client, tmp_path):
         "server",
     )
     row = study_export.export(["P01"], app_module.STUDY_LOGS_DIR, tmp_path / "o")[0]
-    assert row["sources_pressed"] == 1
+    assert row["sources_pressed"] == 1  # not the command's, nor the assistant's
+    assert row["gotos"] == 1
+    md = (tmp_path / "o" / "P01-session-1.md").read_text(encoding="utf-8")
+    assert (
+        'assistant took them to 1 (Notices, below); page moved; asked "take me to the notise"'
+        in md
+    )
     assert row["errors"] == 1 and row["server_errors"] == 1

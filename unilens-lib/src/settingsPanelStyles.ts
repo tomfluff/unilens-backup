@@ -116,15 +116,31 @@ ${P} .ul-chat.s-chat .ulc-log { max-height: 9em; overflow: hidden; justify-conte
 }
 ${P} .ul-chat.s-chat { position: relative; inset: auto; width: 100%; height: auto; max-height: none; z-index: auto; pointer-events: none; }
 ${P} .ul-chat.s-chat .ulc-log { flex: none; }
+/* the source-style tiles (#27): the answer alone, filling its stage */
+${P} .ul-chat.s-chat.s-src { height: 100%; border-radius: 0; box-shadow: none; }
+${P} .ul-chat.s-chat.s-src .ulc-log { max-height: none; height: 100%; padding: 8px; justify-content: center; }
 ${P} .s-page { position: relative; overflow: hidden; min-height: 10em; border-radius: 10px; background: #fff; color: #333; padding: 1.1em 1em 1.2em; font-size: .95em; line-height: 1.6; }
 ${P} .s-page.with-map { min-height: 12em; padding-right: calc(140px * .55 + 24px); }
 ${P} .s-page .s-line { display: block; height: .55em; margin: .5em 0; border-radius: 3px; background: #d6dae0; }
 ${P} .s-page .s-line.short { width: 62%; }
 ${P} .s-page .s-src { position: relative; z-index: 1; display: inline-block; padding: .1em .2em; font-weight: 600; color: #111; }
+/* what the click mark marks, on the source's line (Yotam, 2026-10-13) */
+${P} .s-page .s-src.s-clicked { margin-left: 2.2em; }
 /* what the page's own painters draw: outline, backdrop, arrows, click feedback, map */
 ${P} .s-paint { position: absolute; inset: 0; z-index: 2; pointer-events: none; }
 ${P} .s-paint .s-dim { position: absolute; inset: 0; }
 ${P} .s-paint .s-box, ${P} .s-paint .s-cue, ${P} .s-paint .s-cursor { position: absolute; }
+/* the pulse round a highlight, as on the page (highlight.ts), reaching less far to
+   stay in a tile */
+${P} .s-paint .s-box[data-pulse]::after { content: ""; position: absolute; inset: -4px; border-radius: 8px; border: 4px solid var(--ul-pulse, #ffef26); box-shadow: 0 0 0 2px #000, inset 0 0 0 2px #000; opacity: 0; pointer-events: none; animation: s-pulse 1.6s ease-out var(--s-pulse-delay, 0ms) 3; }
+${P} .s-paint .s-box[data-pulse="always"]::after { animation-iteration-count: infinite; }
+/* "a few times" loops in the preview, so it never looks like Off once it has played
+   (item 17 of Yotam's try-out, 2026-10-13): two pulses, a 3 s pause, again. On the
+   page it plays a few times and stops */
+${P} .s-paint .s-box[data-pulse="few"]::after { animation: s-pulse-few 6.2s linear var(--s-pulse-delay, 0ms) infinite; }
+@keyframes s-pulse { from { inset: -4px; opacity: 1; } 55% { opacity: 1; } to { inset: -18px; opacity: 0; } }
+@keyframes s-pulse-few { 0% { inset: -4px; opacity: 1; } 14.2% { inset: -14.6px; opacity: 1; } 25.8% { inset: -18px; opacity: 0; } 25.81% { inset: -4px; opacity: 1; } 40% { inset: -14.6px; opacity: 1; } 51.6% { inset: -18px; opacity: 0; } 100% { inset: -18px; opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { ${P} .s-paint .s-box[data-pulse]::after { animation: none; } }
 ${P} .s-paint .s-cursor svg { display: block; }
 ${P} .s-paint .s-map { display: block; }
 /* the minimap in the page preview: its own box and lens, at a little over half size */

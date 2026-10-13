@@ -21,14 +21,22 @@ import {
     activePreset,
     clearPresetChanges,
     type Settings,
+    setSourceStyle,
     startPreset,
 } from "./settings";
-import { forgetStudyIds, logEvent } from "./studyLog";
+import { forgetStudyIds, logEvent, readStudyIds } from "./studyLog";
 
 export interface Preset {
     /** what the facilitator sees: the confirmation toast, the settings panel */
     name: string;
     values: Partial<Settings>;
+    /** the participant's settings panel: only these settings, behind the gear
+     *  (settingsButton on); the facilitator's key still opens every setting */
+    panel?: readonly (keyof Settings)[];
+    /** a participant's changes (the panel, the Sources button) are kept in this
+     *  browser for their pid, across tabs and page loads, not only in the tab; the
+     *  facilitator's reset forgets them. Without a pid, the tab only */
+    keepPerParticipant?: boolean;
 }
 
 /**
@@ -37,6 +45,94 @@ export interface Preset {
  * for. Values equal to the defaults are listed anyway, where they matter, so a later
  * change of a default does not change a preset.
  */
+/** the initial prototype's values (session 1); later presets start from them */
+const INITIAL = {
+    // asking: Alt+click only, and the question typed or spoken
+    regionSelect: false,
+    quickActions: false,
+    hints: false,
+    voiceInput: true,
+    voiceAutoSend: true,
+    // speech is heard by the server, with OpenAI, for everyone: one recognizer
+    // whatever the browser, and one provider (Yotam, 2026-10-07)
+    sttEngine: "openai",
+    liveTalk: false,
+    // hearing: read aloud on request (the button on each answer), action sounds
+    autoRead: false,
+    readSources: false,
+    ttsProvider: "openai",
+    sounds: true,
+    // answers point at the page: every answer outlines its sources, numbered
+    // as the chips are; a chip, "next" or "the second one" goes to its source
+    citeEvidence: true,
+    autoHighlight: "always",
+    moveToEvidence: "offscreen",
+    associateText: false,
+    citePlacement: "end",
+    sourceStyle: "end",
+    // one fixed look, every part of it named here
+    hlOutline: "ring",
+    hlBackdrop: "none",
+    hlFill: "none",
+    hlGlow: "medium",
+    hlBadges: "small",
+    hlColor: "#ffef26",
+    hlColorMode: "fixed",
+    hlPulse: "off",
+    // a number partly off screen slid in at the screen's edge (session 1)
+    hlBadgeClamp: true,
+    // the ring and thin border black and white whatever the colour (session 1)
+    hlAdaptLine: false,
+    // an Alt+drag's release counted as an Alt+click (session 1)
+    altDragInert: false,
+    // an adaptive colour judged over everything under the ring (every preset)
+    adaptBg: "under-ring",
+    // a move to a highlight only when it is not fully on screen (session 1)
+    edgeZone: 0,
+    ringWidth: 2,
+    ringScale: false,
+    // the chat stays where it opened: stepping aside (or folding) to uncover
+    // a source is a later feature (Yotam, 2026-10-07)
+    chatMovesAside: false,
+    // All outlines the sources where they are (session 1)
+    allMoves: false,
+    // the log follows an answer's text, and Listen is at its end (#30 changed both
+    // for session 2)
+    answerFromStart: false,
+    // an answer to "where …?" that points at nothing looks like a note (dotted)
+    quietNotFound: true,
+    // no marks where the user clicked (a session-2 idea)
+    clickMark: "none",
+    clickMarkStyle: "tagClear",
+    // no "About all 3 sources" line above the field (not decided for good)
+    aboutLine: false,
+    // nothing else moves or zooms the page
+    offscreenCue: "none",
+    minimap: "off",
+    zoom: false,
+    zoomKeys: false,
+    smartZoom: false,
+    lensPan: false,
+    assistantZoom: false,
+    // the chat: the standard look, in English (the study runs in English),
+    // no settings gear and no debug view or its shortcut
+    chatStyle: "assistant",
+    chatLanguage: "en",
+    // session 1's sizes: a Large interface, its messages' text at 120%
+    chatFontSize: 17,
+    chatTextScale: 120,
+    clickFx: "orb",
+    motion: "smooth",
+    continuity: true,
+    restoreAfterReload: true,
+    settingsButton: false,
+    // no floating button (a session-2 idea, #29)
+    floatingButton: "off",
+    fabReminder: false,
+    debugView: false,
+    debugShortcut: false,
+} as const satisfies Partial<Settings>;
+
 export const PRESETS = {
     /** Session 1's first look (Yotam, 2026-10-06 and 07): Alt+click and chat, by
      *  typing or the mic, in English; answers highlight their sources in one fixed
@@ -44,62 +140,117 @@ export const PRESETS = {
      *  never moves to uncover a source; no settings on screen */
     initial: {
         name: "Initial prototype (co-design session 1)",
+        values: INITIAL,
+    },
+    /** Session 2 (Yotam, 2026-10-09): source numbers inside the text by default,
+     *  with a Sources button to underline the words they support or move them after
+     *  the answer; a 2 s pause ends a voice message */
+    session2: {
+        name: "Session 2 (co-design)",
         values: {
-            // asking: Alt+click only, and the question typed or spoken
-            regionSelect: false,
-            quickActions: false,
-            hints: false,
-            voiceInput: true,
-            voiceAutoSend: true,
-            // speech is heard by the server, with OpenAI, for everyone: one recognizer
-            // whatever the browser, and one provider (Yotam, 2026-10-07)
-            sttEngine: "openai",
-            liveTalk: false,
-            // hearing: read aloud on request (the button on each answer), action sounds
-            autoRead: false,
-            ttsProvider: "openai",
-            sounds: true,
-            // answers point at the page: every answer outlines its sources, numbered
-            // as the chips are; a chip, "next" or "the second one" goes to its source
-            citeEvidence: true,
-            autoHighlight: "always",
-            moveToEvidence: "offscreen",
+            ...INITIAL,
+            citePlacement: "inline",
+            sourceStyle: "inline",
             associateText: false,
-            citePlacement: "end",
-            // one fixed look, every part of it named here
-            hlOutline: "ring",
-            hlBackdrop: "none",
-            hlFill: false,
-            hlGlow: true,
-            hlBadges: true,
-            hlColor: "#ffef26",
-            ringWidth: 2,
-            ringScale: false,
-            // the chat stays where it opened: stepping aside (or folding) to uncover
-            // a source is a later feature (Yotam, 2026-10-07)
-            chatMovesAside: false,
-            // no "About all 3 sources" line above the field (not decided for good)
-            aboutLine: false,
-            // nothing else moves or zooms the page
-            offscreenCue: "none",
+            sourceStyleButton: true,
+            // Yotam, 2026-10-10: Marin reads, and the voice is not offered
+            ttsVoice: "marin",
+            // Yotam, 2026-10-12: participants use only the default ways to ask and be
+            // answered; every alternative is only discussed in the gallery. So no
+            // drawing a box (Alt+drag; it was on, not in the panel, on 2026-10-10),
+            // and no Live or edge arrows (both off, as in session 1, and out of
+            // the panel)
+            regionSelect: false,
+            // Yotam, 2026-10-10: page zoom and its keys; the page map off, to be found
+            // in the panel's walkthrough (Yotam, 2026-10-12)
+            zoom: true,
+            zoomKeys: true,
             minimap: "off",
-            zoom: false,
-            zoomKeys: false,
-            smartZoom: false,
-            lensPan: false,
-            assistantZoom: false,
-            // the chat: the standard look, in English (the study runs in English),
-            // no settings gear and no debug view or its shortcut
-            chatStyle: "assistant",
-            chatLanguage: "en",
-            clickFx: "orb",
-            motion: "smooth",
-            continuity: true,
-            restoreAfterReload: true,
-            settingsButton: false,
-            debugView: false,
-            debugShortcut: false,
+            // Yotam, 2026-10-10 (P05): what was Alt+clicked is outlined; the chat
+            // stepping aside from a highlight is a row in the panel, off to begin with
+            // (Yotam's try-out, 2026-10-12; it was on)
+            chatMovesAside: false,
+            outlineClicked: true,
+            voicePauseMs: 2000,
+            // the gear shows, and opens the participant's panel below
+            settingsButton: true,
+            // "take me to …": the model decides, and the page goes there (no guard:
+            // Yotam wants to see how participants take the model deciding)
+            assistantGoTo: true,
+            // #26 (Yotam, 2026-10-12): the fixed color, as before; the other three
+            // choices are in the participant's panel
+            hlColorMode: "fixed",
+            hlColorRange: "some",
+            // #30 (Yotam, 2026-10-12; P01, P06): a new answer shows from its start and
+            // stays put; Listen at its start. Not in the panel
+            answerFromStart: true,
+            // numbers stay by their places, off screen with them (Yotam's try-out,
+            // 2026-10-12). Not in the panel
+            hlBadgeClamp: false,
+            // every answer looks like an answer; notes and errors alone are dotted
+            // (Yotam's try-out, 2026-10-12). Not in the panel
+            quietNotFound: false,
+            // Adaptive color colors the line too, with a stronger glow on dark (Yotam's
+            // try-out, 2026-10-12). Not in the panel
+            hlAdaptLine: true,
+            // an Alt+drag does nothing (the QA check, 2026-10-12). Not in the panel
+            altDragInert: true,
+            // judged over everything under the ring, not the main background alone
+            // (Yotam, 2026-10-13, after the menu-bar comparison). Not in the panel
+            adaptBg: "under-ring",
+            // a highlight near the screen's edge, or under the chat, moves to the
+            // middle of the uncovered part: 20% in from each side (item 16 of
+            // Yotam's try-out, 2026-10-13). Not in the panel
+            edgeZone: 0.2,
+            // item 20 (Yotam, 2026-10-13): a Normal interface, its messages' text the
+            // same size as the rest of it; both in the panel
+            chatFontSize: 14,
+            chatTextScale: 100,
         },
+        /** what a participant may change in session 2 (session-lead's list,
+         *  2026-10-09): the highlight's look, page zoom, the page map, voice, sounds,
+         *  the chat's text size and high contrast; then (Yotam, 2026-10-10) the
+         *  interface size, the theme, the sources' style (the button's three) and the
+         *  reading speed; not the voice (Marin) or the pause. Not Live, the edge
+         *  arrows or drawing a box: those are only discussed (Yotam, 2026-10-12) */
+        panel: [
+            "hlColor",
+            "hlColorMode",
+            "hlColorRange",
+            "hlOutline",
+            "hlBadges",
+            "hlBadgePos",
+            "hlBackdrop",
+            "hlGlow",
+            "hlFill",
+            // the pulse (P02, session 1): off, offered here
+            "hlPulse",
+            "zoom",
+            "zoomKeys",
+            "minimap",
+            "voiceInput",
+            "autoRead",
+            "readSources",
+            "ttsSpeed",
+            "sounds",
+            "chatTextScale",
+            "highContrast",
+            // Yotam, 2026-10-10
+            "chatFontSize",
+            "chatTheme",
+            "sourceStyle",
+            "chatMovesAside",
+            // All moving the page (item 16b, Yotam 2026-10-13): off, offered here
+            "allMoves",
+            // the click marks (P02, P03, session 1): none, offered here
+            "clickMark",
+            "clickMarkStyle",
+            // the floating button (#29, Yotam 2026-10-12): off, offered here
+            "floatingButton",
+            "fabReminder",
+        ],
+        // each task link opens a new tab (session lead, 2026-10-09)
+        keepPerParticipant: true,
     },
 } as const satisfies Record<string, Preset>;
 
@@ -158,13 +309,43 @@ export function choosePreset(
     return isPreset(pick) ? pick : null;
 }
 
+/**
+ * ?sources=inline|underline|end|both in the page address sets where an answer's source
+ * numbers go (the facilitator puts it in a participant's link); kept like any change
+ * made in the settings (for the tab, under a preset)
+ */
+export function applySourcesParam(href: string) {
+    let v: string | null = null;
+    try {
+        v = new URL(href).searchParams.get("sources");
+    } catch {
+        v = null;
+    }
+    if (v !== "inline" && v !== "underline" && v !== "end" && v !== "both")
+        return;
+    setSourceStyle(v);
+    // applied once: a reload of this page must not undo a later press of the button
+    if (href === location.href) {
+        const url = new URL(href);
+        url.searchParams.delete("sources");
+        history.replaceState(history.state, "", url);
+    }
+}
+
 /** put this page load's preset in effect; before anything reads the settings */
 export function startChosenPreset(initOption?: string): PresetId | null {
     const id = choosePreset(initOption, location.href);
     if (id) {
-        startPreset(id, PRESETS[id].name, PRESETS[id].values);
+        const p: Preset = PRESETS[id];
+        // session 2 pastes each task link in the Zoom chat: a new tab each time
+        const keepFor = p.keepPerParticipant
+            ? readStudyIds(location.href)?.pid
+            : undefined;
+        startPreset(id, p.name, p.values, p.panel, keepFor);
         console.info(`[UniLens] preset: ${PRESETS[id].name}`);
     }
+    // the facilitator's link may say where the source numbers go
+    applySourcesParam(location.href);
     return id;
 }
 

@@ -25,18 +25,23 @@ import {
 } from "./ai";
 import { chatLang, chatText } from "./chatI18n";
 import { ensureChatStyles } from "./chatStyles";
+import { useChatTheme } from "./chatTheme";
 import { clickFeedback, fxStill } from "./clickFx";
+import { markHeadroom, paintMarkPreview } from "./clickMarks";
 import { earcon } from "./earcons";
 import { renderCited } from "./evidence";
 import {
     aimCue,
     claimEscape,
     cueSvg,
+    noteWhatIsUnder,
     paintBackdrop,
     paintOutline,
+    resampleHighlights,
 } from "./highlight";
 import { type HighlightLook, lookFrom, minimapLook } from "./highlightStyles";
 import {
+    BackIcon,
     CheckIcon,
     ChevronIcon,
     CloseIcon,
@@ -54,6 +59,8 @@ import {
     SearchIcon,
     SendIcon,
     SettingsIcon,
+    SourceStyleIcon,
+    StopIcon,
 } from "./icons";
 import { boxStyles, lensStyles, MAP_INK, paintMapTargets } from "./minimap";
 import {
@@ -74,6 +81,7 @@ import {
     SELECT_CHOICES,
     type SelectKnobKey,
     type Settings,
+    type SourceStyle,
     TOGGLE_LABELS,
     updateSetting,
     useSettings,
@@ -88,6 +96,7 @@ import {
     type PanelLang,
     SHORT_JA,
 } from "./settingsText";
+import { type SpeechState, speakSample, stopSpeaking } from "./speech";
 import { resetHostStyles } from "./uiReset";
 import {
     getTargetZoom,
@@ -139,7 +148,17 @@ function relevant(key: Key, s: Settings): boolean {
     if (s.mmFollowHighlight && MM_OWN_LOOK.has(key)) return false;
     if (key === "fxRippleLook" && !s.fxRipple) return false;
     if (key === "voiceAutoSend" && !s.voiceInput) return false;
+    if (key === "voicePauseMs" && !(s.voiceInput && s.voiceAutoSend))
+        return false;
     if (key === "associateText" && s.citePlacement !== "inline") return false;
+    if (key === "hlColorRange" && s.hlColorMode !== "near") return false;
+    // "How it's marked" shows whatever "What to mark" is (Yotam's try-out, 2026-10-12)
+    if (
+        (key === "fabReminder" || key === "fabReminderSec") &&
+        s.floatingButton !== "round"
+    )
+        return false;
+    if (key === "fabReminderSec" && !s.fabReminder) return false;
     if (MM_ALL.has(key) && s.minimap === "off") return false;
     const own = FX_OWN[key];
     return !own || own.includes(s.clickFx);
@@ -148,17 +167,28 @@ function relevant(key: Key, s: Settings): boolean {
 /** looks chosen by sight: a thumbnail card per choice */
 const PICKERS = new Set<Key>([
     "chatStyle",
+    "sourceStyle",
+    "hlColorMode",
     "hlOutline",
     "hlBackdrop",
+    "hlGlow",
+    "hlBadges",
+    "hlBadgePos",
+    "hlFill",
+    "hlPulse",
     "mmOutline",
     "mmBackdrop",
     "offscreenCue",
     "clickFx",
+    // the click marks (Yotam's try-out, 2026-10-12: galleries, as the highlight's look)
+    "clickMark",
+    "clickMarkStyle",
 ]);
 /** the pickers' cards name a look in a word or two; the full name is its tooltip */
 const SHORT: Record<string, string> = {
     band: "Thick band",
     ring: "Black and white ring",
+    thin: "Thin border",
     brackets: "Corner brackets",
     underline: "Underline",
     dim: "Dim",
@@ -169,24 +199,84 @@ const SHORT: Record<string, string> = {
     aurora: "Aurora",
     sonar: "Sonar",
     frame: "Frame",
+    small: "Small",
+    medium: "Medium",
+    large: "Large",
+    light: "Light",
+    heavy: "Heavy",
+    corner: "Top-left corner",
+    beside: "Beside, where it fits",
+    fixed: "Off",
+    invert: "Invert",
+    contrast: "Best contrast",
+    near: "Enhanced color",
 };
 const SHORT_NONE = new Set<Key>([
+    "hlFill",
+    "hlGlow",
+    "hlBadges",
     "hlOutline",
     "mmOutline",
     "hlBackdrop",
     "mmBackdrop",
     "offscreenCue",
 ]);
+/** the source-style cards' names: their values are words other looks use too */
+const SOURCE_SHORT: Record<PanelLang, Record<SourceStyle, string>> = {
+    en: {
+        inline: "In the text",
+        underline: "Underlined",
+        end: "After",
+        both: "Both",
+    },
+    ja: { inline: "文中", underline: "下線", end: "回答の後", both: "両方" },
+};
+
 function shortName(k: Key, v: string, full: string, lang: PanelLang): string {
     if (OWN_CHOICES[k]) return full;
     const ja = lang === "ja";
+    if (k === "sourceStyle")
+        return SOURCE_SHORT[lang][v as SourceStyle] ?? full;
+    if (k === "clickMark" || k === "clickMarkStyle")
+        return MARK_SHORT[lang][v] ?? full;
+    if (k === "hlPulse") return PULSE_SHORT[lang][v] ?? full;
     if (v === "none" && SHORT_NONE.has(k)) return ja ? SHORT_JA.none : "None";
     if (k === "clickFx" && v === "edge") return PANEL_TEXT[lang].edgeGlow;
     return (ja ? SHORT_JA[v] : SHORT[v]) ?? full;
 }
 
+/** the click-mark cards' names (their values are words other looks use too) */
+const MARK_SHORT: Record<PanelLang, Record<string, string>> = {
+    en: {
+        none: "None",
+        spot: "The spot",
+        element: "What I clicked",
+        both: "Both",
+        pin: "Pin",
+        tagClear: "See-through dot",
+        halo: "Soft glow",
+        line: "Line only",
+    },
+    ja: {
+        none: "なし",
+        spot: "クリックした点",
+        element: "クリックしたもの",
+        both: "両方",
+        pin: "ピン",
+        tagClear: "透ける点",
+        halo: "やわらかい光",
+        line: "線だけ",
+    },
+};
+
+const PULSE_SHORT: Record<PanelLang, Record<string, string>> = {
+    en: { off: "Off", few: "A few times", always: "Always" },
+    ja: { off: "オフ", few: "数回", always: "ずっと" },
+};
+
 /** a few short choices in a row */
 const SEGMENTS = new Set<Key>([
+    "hlColorRange",
     "chatLanguage",
     "chatFontSize",
     "motion",
@@ -233,7 +323,7 @@ function nameOf(key: Key, lang: PanelLang): { name: string; unit?: string } {
         (NUMBER_KNOBS as Record<string, { label: string }>)[key]?.label ??
         (key === "aiReasoning" ? "Reasoning" : undefined) ??
         (CATALOGUE_LABELS as Record<string, string>)[key] ??
-        (key === "hlColor" ? "Colour" : key);
+        (key === "hlColor" ? "Color" : key);
     const m = raw.match(/^(.*?)\s*\((px|%|ms|chars)\)$/);
     if (m) return { name: m[1], unit: m[2] === "chars" ? "" : m[2] };
     const pct = raw.match(/^(.*?)\s*\(%, (.*)\)$/);
@@ -353,8 +443,44 @@ function Stage({
 
 /** a thumbnail's stage, px: a close crop round the sample source, so what is drawn
  *  at the page's size reads at a thumbnail's (arrows and click feedback need room) */
-const TIGHT = { w: 130, h: 52 };
+const _TIGHT = { w: 130, h: 52 };
 const ROOMY = { w: 170, h: 68 };
+/** the glow's tiles: room round a short sample, so each spread shows whole */
+const _GLOWY = { w: 130, h: 92 };
+/** the highlight tiles (HighlightTile): room above and to the left of the sample for
+ *  the largest number, wherever it is placed, so it never covers the sample's text
+ *  (task #24; the QA check, 2026-10-12), and room round it for the largest glow */
+const SAMPLE = { w: 150, h: 104 };
+const SAMPLE_WORD = { left: 62, top: 54, width: 56, height: 22 };
+const WIDE = { w: 200, h: 100 };
+const WIDE_WORD = { left: 66, top: 54, width: 94, height: 22 };
+/** the colour tiles: a light section and a dark one, a source on each */
+const SPLIT = { w: 210, h: 104 };
+const SPLIT_HALF = {
+    light: {
+        position: "absolute",
+        left: 0,
+        top: 0,
+        width: SPLIT.w / 2,
+        height: SPLIT.h,
+        background: "#ffffff",
+    },
+    dark: {
+        position: "absolute",
+        left: SPLIT.w / 2,
+        top: 0,
+        width: SPLIT.w / 2,
+        height: SPLIT.h,
+        background: "#1f2a44",
+    },
+} as const;
+const SPLIT_WORDS = [
+    { left: 52, top: 54, width: 40, height: 22 },
+    { left: 157, top: 54, width: 42, height: 22 },
+];
+const _GLOW_WORD = { left: 37, top: 35, width: 56, height: 22 };
+/** the number tiles: room above and to the left for the largest number */
+const _BADGE_WORD = { left: 58, top: 48, width: 56, height: 22 };
 /** the sample source, centred on a stage */
 const wordOn = (st: { w: number; h: number }) => ({
     left: (st.w - 94) / 2,
@@ -369,26 +495,56 @@ function paintHighlight(
     look: HighlightLook,
     w: number,
     h: number,
-    r: Rect,
+    r: Rect | Rect[],
     badge?: string,
     feather?: number,
+    /** the pulse, as the page shows it round a highlight that appears */
+    pulse: Settings["hlPulse"] = "off",
 ) {
+    const rects = Array.isArray(r) ? r : [r];
     layer.replaceChildren();
     if (look.backdrop !== "none") {
         const dim = document.createElement("div");
         dim.className = "s-dim";
         layer.appendChild(dim);
-        paintBackdrop(dim, look.backdrop, [r], w, h, feather);
+        paintBackdrop(dim, look.backdrop, rects, w, h, feather);
     }
-    const box = document.createElement("div");
-    box.className = "s-box";
-    layer.appendChild(box);
-    paintOutline(box, r, {
-        look,
-        badge,
-        withBackdrop: look.backdrop !== "none",
+    const keys: string[] = [];
+    const boxes = rects.map((rect, i) => {
+        const box = document.createElement("div");
+        box.className = "s-box";
+        layer.appendChild(box);
+        // several places: numbered as the page numbers them
+        const color = paintOutline(box, rect, {
+            look,
+            badge: badge && rects.length > 1 ? String(i + 1) : badge,
+            withBackdrop: look.backdrop !== "none",
+        });
+        keys.push(
+            `${color}|${rect.left},${rect.top},${rect.width},${rect.height}`,
+        );
+        return { box, color };
     });
+    if (pulse === "off") {
+        pulsing.delete(layer);
+        return;
+    }
+    // drawn again with nothing that shows changed (any setting re-renders the panel):
+    // the pulse goes on where it was, never restarting at each render; a change plays
+    // it anew. "A few times" loops here (two pulses, a pause), unlike on the page
+    const key = `${pulse}|${JSON.stringify(look)}|${keys.join(";")}`;
+    const was = pulsing.get(layer);
+    const now = performance.now();
+    if (was?.key !== key) pulsing.set(layer, { key, at: now });
+    for (const { box, color } of boxes) {
+        box.dataset.pulse = pulse;
+        box.style.setProperty("--ul-pulse", color);
+        if (was?.key === key)
+            box.style.setProperty("--s-pulse-delay", `${was.at - now}ms`);
+    }
 }
+/** each preview's pulse: what it shows, and when it began */
+const pulsing = new WeakMap<HTMLElement, { key: string; at: number }>();
 
 /** an off-screen arrow as the page draws it: centred at (x, y), aimed along `angle` */
 function paintCue(
@@ -408,7 +564,7 @@ function paintCue(
         width: `${size}px`,
         height: `${size}px`,
     });
-    el.innerHTML = cueSvg(lookFrom(s).color, s.hlBadges ? num : "");
+    el.innerHTML = cueSvg(lookFrom(s).color, s.hlBadges !== "none" ? num : "");
     aimCue(el, angle);
     layer.appendChild(el);
 }
@@ -477,7 +633,144 @@ function paintMap(
     );
 }
 
+/** the click-mark tiles: room up and to the right of the spot for its number */
+const MARKY = { w: 150, h: 124 };
+const MARK_WORD = { left: 26, top: 86, width: 74, height: 22 };
+const MARK_SPOT = { x: 44, y: 97 };
+
+/** the galleries that show a highlight: each tile is the page's highlight with that
+ *  one choice, and every other look setting as it is now (Yotam, 2026-10-12): the
+ *  colour and its adaptation, the outline, the number's size and position, the
+ *  backdrop, the glow, the fill and the pulse */
+const HIGHLIGHT_TILES = new Set<Key>([
+    "hlOutline",
+    "hlBackdrop",
+    "hlColorMode",
+    "hlBadges",
+    "hlBadgePos",
+    "hlGlow",
+    "hlFill",
+    "hlPulse",
+]);
+
+function HighlightTile({ k, v, s }: { k: Key; v: string; s: Settings }) {
+    // a number's position shows only where there is a number: medium when none is
+    // drawn, or its tiles could not differ
+    const t = {
+        ...s,
+        [k]: v,
+        ...(k === "hlBadgePos" && s.hlBadges === "none"
+            ? { hlBadges: "medium" }
+            : {}),
+    } as Settings;
+    const look = lookFrom(t);
+    const badge = look.badges ? "1" : undefined;
+    if (k === "hlColorMode")
+        // that way of meeting the page, on a light and a dark section side by side
+        return (
+            <Stage
+                w={SPLIT.w}
+                h={SPLIT.h}
+                page={false}
+                paint={(l) =>
+                    paintHighlight(
+                        l,
+                        look,
+                        SPLIT.w,
+                        SPLIT.h,
+                        SPLIT_WORDS,
+                        badge,
+                        undefined,
+                        t.hlPulse,
+                    )
+                }
+            >
+                <span className="s-half" style={SPLIT_HALF.light} />
+                <span className="s-half" style={SPLIT_HALF.dark} />
+                <span
+                    className="s-word"
+                    style={{ ...SPLIT_WORDS[0], color: "#111" }}
+                >
+                    9:30
+                </span>
+                <span
+                    className="s-word"
+                    style={{ ...SPLIT_WORDS[1], color: "#fff" }}
+                >
+                    17:00
+                </span>
+            </Stage>
+        );
+    // the outline and backdrop on a wide sample, the rest on a short one
+    const wide = k === "hlOutline" || k === "hlBackdrop";
+    const stage = wide ? WIDE : SAMPLE;
+    const word = wide ? WIDE_WORD : SAMPLE_WORD;
+    return (
+        <Stage
+            w={stage.w}
+            h={stage.h}
+            paint={(l) =>
+                paintHighlight(
+                    l,
+                    look,
+                    stage.w,
+                    stage.h,
+                    word,
+                    badge,
+                    undefined,
+                    t.hlPulse,
+                )
+            }
+        >
+            <span className="s-word" style={word}>
+                {wide ? "9:30–17:00" : "9:30"}
+            </span>
+        </Stage>
+    );
+}
+
 function Thumb({ k, v, s, T }: { k: Key; v: string; s: Settings; T: Text }) {
+    if (k === "clickMark" || k === "clickMarkStyle") {
+        // what to mark, drawn with the chosen look; each look with what is marked
+        // now, and the spot always in it, or its tiles could not differ (the spot
+        // alone while that is None, with what was clicked while that is alone)
+        const target = (
+            k === "clickMark"
+                ? v
+                : s.clickMark === "none"
+                  ? "spot"
+                  : s.clickMark === "element"
+                    ? "both"
+                    : s.clickMark
+        ) as Settings["clickMark"];
+        const style = (
+            k === "clickMarkStyle" ? v : s.clickMarkStyle
+        ) as Settings["clickMarkStyle"];
+        return (
+            <Stage
+                w={MARKY.w}
+                h={MARKY.h}
+                paint={(l) =>
+                    paintMarkPreview(l, {
+                        target,
+                        style,
+                        word: MARK_WORD,
+                        spot: MARK_SPOT,
+                    })
+                }
+            >
+                <span className="s-word" style={MARK_WORD}>
+                    9:30
+                </span>
+            </Stage>
+        );
+    }
+    if (k === "sourceStyle")
+        return (
+            <Stage w={190} h={108} page={false}>
+                <SourceSpecimen s={s} style={v as SourceStyle} T={T} />
+            </Stage>
+        );
     if (k === "chatStyle")
         return (
             // the chat at its real width at Normal size (24.3em of 14px), so its
@@ -493,24 +786,7 @@ function Thumb({ k, v, s, T }: { k: Key; v: string; s: Settings; T: Text }) {
                 />
             </Stage>
         );
-    if (k === "hlOutline" || k === "hlBackdrop") {
-        const look = {
-            ...lookFrom(s),
-            [k === "hlOutline" ? "outline" : "backdrop"]: v,
-        } as HighlightLook;
-        const word = wordOn(TIGHT);
-        return (
-            <Stage
-                w={TIGHT.w}
-                h={TIGHT.h}
-                paint={(l) => paintHighlight(l, look, TIGHT.w, TIGHT.h, word)}
-            >
-                <span className="s-word" style={word}>
-                    9:30–17:00
-                </span>
-            </Stage>
-        );
-    }
+    if (HIGHLIGHT_TILES.has(k)) return <HighlightTile k={k} v={v} s={s} />;
     if (k === "mmOutline" || k === "mmBackdrop") {
         const look = minimapLook({
             ...s,
@@ -1068,10 +1344,66 @@ function Row({
  * by the chat's own citation code, in the chat's own stylesheet. Inert: it shows,
  * it does nothing. Keep it in step with ChatPopover's markup.
  */
+/** a source-style tile (#27): a short answer with two sources, drawn by the chat's
+ *  own renderer in the chat's look, the numbers where this style puts them */
+function SourceSpecimen({
+    s,
+    style,
+    T,
+}: {
+    s: Settings;
+    style: SourceStyle;
+    T: Text;
+}) {
+    useEffect(() => ensureChatStyles(), []);
+    const C = chatText();
+    const theme = useChatTheme(s.chatTheme);
+    const placement = style === "end" || style === "both" ? style : "inline";
+    const cite = renderCited(
+        T.sampleSources,
+        (id) => id === "n1" || id === "n2",
+        () => T.samplePlace,
+        false,
+        C.evidenceLabel,
+        (n) => (s.chatStyle === "station" ? `U${n}` : String(n)),
+        style === "underline",
+        placement,
+    );
+    return (
+        <div
+            className="ul-chat s-chat s-src"
+            data-style={s.chatStyle}
+            data-hc={s.highContrast ? "true" : "false"}
+            data-theme={theme}
+            inert
+            style={
+                {
+                    "--ul-fs": "14px",
+                    "--ul-text": 1,
+                    "--ul-hl": s.hlColor,
+                } as React.CSSProperties
+            }
+        >
+            <div className="ulc-log">
+                <div className="ulc-turn">
+                    <div className="ulc-msg ulc-bot">
+                        <span
+                            className="ulc-text"
+                            // biome-ignore lint/security/noDangerouslySetInnerHtml: the chat's own renderer, which escapes the text first
+                            dangerouslySetInnerHTML={{ __html: cite.html }}
+                        />
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+}
+
 function ChatSpecimen({ s, T }: { s: Settings; T: Text }) {
     useEffect(() => ensureChatStyles(), []);
     const C = chatText();
     const station = s.chatStyle === "station";
+    const theme = useChatTheme(s.chatTheme);
     const cite = renderCited(
         T.sampleCited,
         (id) => id === "n1",
@@ -1082,11 +1414,22 @@ function ChatSpecimen({ s, T }: { s: Settings; T: Text }) {
         s.associateText && s.citePlacement === "inline",
         s.citePlacement,
     );
+    const listen = (cls: string) => (
+        <span className={cls}>
+            <button type="button" className="ulc-speak has-label">
+                <PlayIcon />
+                <span>{C.readShort}</span>
+            </button>
+        </span>
+    );
     const controls = (
         <div className="ulc-ctl">
             <button type="button" className="ulc-c ulc-all has-label">
                 <HighlightIcon />
                 <span>{C.highlightAll(1)}</span>
+            </button>
+            <button type="button" className="ulc-c ulc-back" disabled>
+                <BackIcon />
             </button>
         </div>
     );
@@ -1095,6 +1438,7 @@ function ChatSpecimen({ s, T }: { s: Settings; T: Text }) {
             className="ul-chat s-chat"
             data-style={s.chatStyle}
             data-hc={s.highContrast ? "true" : "false"}
+            data-theme={theme}
             inert
             style={
                 {
@@ -1110,6 +1454,16 @@ function ChatSpecimen({ s, T }: { s: Settings; T: Text }) {
                     <b>{station ? C.stationName : C.title}</b>
                     {station && <small>{C.otherName}</small>}
                 </div>
+                {/* as the chat draws them: the Sources button first, when it shows */}
+                {s.sourceStyleButton && (
+                    <button
+                        type="button"
+                        className="ulc-ib ulc-ground"
+                        data-style={s.sourceStyle}
+                    >
+                        <SourceStyleIcon style={s.sourceStyle} />
+                    </button>
+                )}
                 <button type="button" className="ulc-ib">
                     <NewChatIcon />
                 </button>
@@ -1132,16 +1486,15 @@ function ChatSpecimen({ s, T }: { s: Settings; T: Text }) {
                 <div className="ulc-msg ulc-me">{T.sampleQuestion}</div>
                 <div className="ulc-turn">
                     <div className="ulc-msg ulc-bot">
+                        {/* Listen where the chat puts it: at the answer's start (#30),
+                            or at its end */}
+                        {s.answerFromStart && listen("ulc-read is-first")}
                         <span
                             className="ulc-text"
                             // biome-ignore lint/security/noDangerouslySetInnerHtml: the chat's own renderer, which escapes the text first
                             dangerouslySetInnerHTML={{ __html: cite.html }}
                         />
-                        <span className="ulc-read">
-                            <button type="button" className="ulc-speak">
-                                <PlayIcon />
-                            </button>
-                        </span>
+                        {!s.answerFromStart && listen("ulc-read")}
                         {s.chatStyle === "assistant" && controls}
                     </div>
                     {s.chatStyle !== "assistant" && controls}
@@ -1178,6 +1531,46 @@ function ChatSpecimen({ s, T }: { s: Settings; T: Text }) {
     );
 }
 
+/** the reading voice at the chosen speed, so the speeds can be compared; each
+ *  voice and speed is fetched once (speakSample keeps it) */
+function HearVoice({ T }: { T: Text }) {
+    const [phase, setPhase] = useState<SpeechState>("idle");
+    const on = phase === "loading" || phase === "playing";
+    // the panel closing, or this tab left: a sample still playing stops (never the
+    // chat's own reading)
+    const playing = useRef(false);
+    // set as the state changes, not on the next render: a reading that takes over
+    // ends the sample at once
+    const track = (st: SpeechState) => {
+        playing.current = st === "loading" || st === "playing";
+        setPhase(st);
+    };
+    useEffect(
+        () => () => {
+            if (playing.current) stopSpeaking();
+        },
+        [],
+    );
+    return (
+        <button
+            type="button"
+            className="s-btn s-try"
+            aria-pressed={on}
+            onClick={() => {
+                if (on) {
+                    stopSpeaking();
+                    track("idle");
+                    return;
+                }
+                void speakSample(T.sampleRead, track);
+            }}
+        >
+            {on ? <StopIcon /> : <PlayIcon />}
+            {on ? T.stopVoice : T.hearVoice}
+        </button>
+    );
+}
+
 /** the minimap preview's sketch: real px, scaled as the page's minimap is to the page */
 const MAP = { w: 140, h: 180 };
 
@@ -1199,6 +1592,11 @@ function PageSpecimen({
     const src = useRef<HTMLSpanElement>(null);
     const layer = useRef<HTMLDivElement>(null);
     const map = useRef<HTMLDivElement>(null);
+    /** the click mark (Yotam, 2026-10-13): a word beside the source stands for what
+     *  was Alt+clicked, marked as the page marks it; nothing with "What to mark" None */
+    const clicked = useRef<HTMLSpanElement>(null);
+    const marks = useRef<HTMLDivElement>(null);
+    const marking = show === "look" && s.clickMark !== "none";
     const [rect, setRect] = useState<Rect | null>(null);
     const [size, setSize] = useState({ w: 0, h: 0 });
     // laid out first: the outline goes where the words are
@@ -1223,26 +1621,65 @@ function PageSpecimen({
     useLayoutEffect(() => {
         const l = layer.current;
         if (!l || !rect) return;
-        paintHighlight(l, lookFrom(s), size.w, size.h, rect, "1");
+        // with room above the clicked word for its mark (a large pin), the sample
+        // growing as it needs; first, so all below is measured where it then is
+        const pg = page.current;
+        if (pg) pg.style.paddingTop = "";
+        let p = pg?.getBoundingClientRect();
+        let c = clicked.current?.getBoundingClientRect();
+        if (pg && p && c) {
+            const need =
+                markHeadroom(s.clickMark, s.clickMarkStyle, c.height) +
+                6 -
+                (c.top + c.height / 2 - p.top);
+            if (need > 0) {
+                pg.style.paddingTop = `calc(1.1em + ${need}px)`;
+                p = pg.getBoundingClientRect();
+                c = clicked.current?.getBoundingClientRect();
+            }
+        }
+        // the source as it now lies (the padding moves it, not always resizing
+        // what the observer watches)
+        const r = src.current?.getBoundingClientRect();
+        const at =
+            p && r
+                ? {
+                      left: r.left - p.left,
+                      top: r.top - p.top,
+                      width: r.width,
+                      height: r.height,
+                  }
+                : rect;
+        const w = p?.width ?? size.w;
+        const h = p?.height ?? size.h;
+        paintHighlight(l, lookFrom(s), w, h, at, "1", undefined, s.hlPulse);
         if (show === "look" && s.offscreenCue === "edge")
-            paintCue(
-                l,
-                s,
-                size.w / 2,
-                size.h - 8 - s.cueSize / 2,
-                Math.PI / 2,
-                "2",
-            );
+            paintCue(l, s, w / 2, h - 8 - s.cueSize / 2, Math.PI / 2, "2");
         if (show === "look" && s.offscreenCue === "pointer") {
-            const x = size.w * 0.25;
+            const x = w * 0.25;
             const y = 50;
             const a = Math.PI / 3;
-            const p = aroundPointer(s, x, y, a, s.cueRadius);
+            const q = aroundPointer(s, x, y, a, s.cueRadius);
             paintPointer(l, x, y);
-            paintCue(l, s, p.x, p.y, a, "2");
+            paintCue(l, s, q.x, q.y, a, "2");
         }
         if (map.current && show === "zoom" && s.minimap !== "off")
             paintMap(map.current, minimapLook(s), s, MAP.w, MAP.h);
+        if (marks.current && p && c)
+            paintMarkPreview(marks.current, {
+                target: s.clickMark,
+                style: s.clickMarkStyle,
+                word: {
+                    left: c.left - p.left,
+                    top: c.top - p.top,
+                    width: c.width,
+                    height: c.height,
+                },
+                spot: {
+                    x: c.left - p.left + c.width * 0.35,
+                    y: c.top - p.top + c.height / 2,
+                },
+            });
     });
     return (
         <div
@@ -1261,9 +1698,15 @@ function PageSpecimen({
             <span ref={src} className="s-src">
                 {T.sampleSource}
             </span>
+            {marking && (
+                <span ref={clicked} className="s-src s-clicked">
+                    {T.sampleClicked}
+                </span>
+            )}
             <span className="s-line" />
             <span className="s-line short" />
             <div ref={layer} className="s-paint" />
+            {marking && <div ref={marks} className="s-paint" />}
             {show === "zoom" && s.minimap !== "off" && (
                 <div
                     className="s-minimap"
@@ -1440,16 +1883,19 @@ function SettingsSearch({
     lang,
     q,
     setQ,
+    tabs,
 }: {
     s: Settings;
     lang: PanelLang;
     q: string;
     setQ: (q: string) => void;
+    tabs: Tabs;
 }) {
     const T = PANEL_TEXT[lang];
     const words = q.trim().toLowerCase();
     const hits = words
-        ? PANEL_TABS.flatMap((t) => t.groups.map((g) => ({ t, g })))
+        ? tabs
+              .flatMap((t) => t.groups.map((g) => ({ t, g })))
               .map(({ t, g }) => ({
                   t,
                   g,
@@ -1510,11 +1956,22 @@ function SettingsSearch({
 const MAX_SETTINGS_FILE = 256 * 1024;
 
 /** this tab back to its defaults; every setting to or from a file */
-function Footer({ tab, T }: { tab: PanelTabId; T: Text }) {
+function Footer({
+    tab,
+    T,
+    tabs,
+    files = true,
+}: {
+    tab: PanelTabId;
+    T: Text;
+    tabs: Tabs;
+    /** save and load settings files: the facilitator's, not a participant's */
+    files?: boolean;
+}) {
     const [status, setStatus] = useState("");
     const picker = useRef<HTMLInputElement>(null);
     const reset = () => {
-        for (const g of PANEL_TABS.find((t) => t.id === tab)?.groups ?? [])
+        for (const g of tabs.find((t) => t.id === tab)?.groups ?? [])
             for (const k of [...g.first, ...g.more]) write(k, defaultOf(k));
         setStatus(T.resetDone(T.tabs[tab]));
     };
@@ -1550,35 +2007,58 @@ function Footer({ tab, T }: { tab: PanelTabId; T: Text }) {
                 <ResetIcon />
                 {T.reset}
             </button>
-            <button type="button" className="s-btn" onClick={save}>
-                <SaveIcon />
-                {T.save}
-            </button>
-            <button
-                type="button"
-                className="s-btn"
-                onClick={() => picker.current?.click()}
-            >
-                <LoadIcon />
-                {T.load}
-            </button>
-            <input
-                ref={picker}
-                type="file"
-                accept="application/json,.json"
-                hidden
-                onChange={(e) => {
-                    const file = e.currentTarget.files?.[0];
-                    // cleared, so choosing the same file again imports it again
-                    e.currentTarget.value = "";
-                    if (file) void load(file);
-                }}
-            />
+            {files && (
+                <>
+                    <button type="button" className="s-btn" onClick={save}>
+                        <SaveIcon />
+                        {T.save}
+                    </button>
+                    <button
+                        type="button"
+                        className="s-btn"
+                        onClick={() => picker.current?.click()}
+                    >
+                        <LoadIcon />
+                        {T.load}
+                    </button>
+                </>
+            )}
+            {files && (
+                <input
+                    ref={picker}
+                    type="file"
+                    accept="application/json,.json"
+                    hidden
+                    onChange={(e) => {
+                        const file = e.currentTarget.files?.[0];
+                        // cleared, so choosing the same file again imports it again
+                        e.currentTarget.value = "";
+                        if (file) void load(file);
+                    }}
+                />
+            )}
             <p className="s-status" role="status" aria-live="polite">
                 {status}
             </p>
         </div>
     );
+}
+
+type Tabs = { id: PanelTabId; groups: PanelGroup[] }[];
+/** a participant's panel (a preset's list): only those settings, every one of them
+ *  shown in its group (none folded away); empty groups and tabs go */
+function limitTabs(keys: readonly Key[]): Tabs {
+    const set = new Set(keys);
+    return PANEL_TABS.map((t) => ({
+        id: t.id,
+        groups: t.groups
+            .map((g) => ({
+                id: g.id,
+                first: [...g.first, ...g.more].filter((k) => set.has(k)),
+                more: [] as Key[],
+            }))
+            .filter((g) => g.first.length),
+    })).filter((t) => t.groups.length);
 }
 
 /** the tab shown last time the panel was open, for this page view */
@@ -1588,11 +2068,23 @@ const NO_PREVIEW = new Set<PanelTabId>(["ai", "advanced"]);
 /** whether the preview was shown last time, for this page view */
 let lastPreview = true;
 
-function Panel({ onClose }: { onClose: () => void }) {
+function Panel({
+    onClose,
+    limited,
+}: {
+    onClose: () => void;
+    /** a participant's panel: only these settings (the preset's list) */
+    limited?: readonly Key[];
+}) {
+    const shownTabs = limited ? limitTabs(limited) : PANEL_TABS;
     const s = useSettings();
     const lang: PanelLang = chatLang();
     const T = PANEL_TEXT[lang];
-    const [tab, setTab] = useState<PanelTabId>(lastTab);
+    const [tab, setTab] = useState<PanelTabId>(
+        shownTabs.some((t) => t.id === lastTab)
+            ? lastTab
+            : (shownTabs[0]?.id ?? "general"),
+    );
     /** words in the search: while there are any, only what they match shows */
     const [q, setQ] = useState("");
     const [preview, setPreview] = useState(lastPreview);
@@ -1610,7 +2102,10 @@ function Panel({ onClose }: { onClose: () => void }) {
     // modal: centred over the page, in the top layer above any host layer, with the
     // keyboard kept inside; laid out first, so the tab below can take the focus
     useLayoutEffect(() => {
-        if (!dialog.current?.open) dialog.current?.showModal();
+        if (dialog.current?.open) return;
+        // what is under the highlights, while the page still answers for itself
+        noteWhatIsUnder();
+        dialog.current?.showModal();
     }, []);
     // the active tab takes the keyboard as the panel opens
     useEffect(() => {
@@ -1621,7 +2116,7 @@ function Panel({ onClose }: { onClose: () => void }) {
     // Escape closes the settings before it touches the chat or the outlines
     useEffect(() => claimEscape(onClose), [onClose]);
     const onTabKey = (e: ReactKeyboardEvent) => {
-        const ids = PANEL_TABS.map((t) => t.id);
+        const ids = shownTabs.map((t) => t.id);
         const i = ids.indexOf(tab);
         const to =
             e.key === "ArrowRight"
@@ -1642,7 +2137,7 @@ function Panel({ onClose }: { onClose: () => void }) {
                 ?.focus(),
         );
     };
-    const groups = PANEL_TABS.find((t) => t.id === tab)?.groups ?? [];
+    const groups = shownTabs.find((t) => t.id === tab)?.groups ?? [];
     const preset = activePreset();
     /** the preview beside the settings: on tabs with something to show */
     const shown = preview && !NO_PREVIEW.has(tab);
@@ -1696,8 +2191,10 @@ function Panel({ onClose }: { onClose: () => void }) {
                         <CloseIcon />
                     </button>
                 </div>
-                {preset && (
-                    <p className="s-preset">{T.presetOn(preset.name)}</p>
+                {preset && !limited && (
+                    <p className="s-preset">
+                        {T.presetOn(preset.name, preset.keepFor)}
+                    </p>
                 )}
                 <div
                     ref={tabs}
@@ -1706,7 +2203,7 @@ function Panel({ onClose }: { onClose: () => void }) {
                     aria-label={T.title}
                     onKeyDown={onTabKey}
                 >
-                    {PANEL_TABS.map((t) => (
+                    {shownTabs.map((t) => (
                         <button
                             key={t.id}
                             type="button"
@@ -1730,7 +2227,13 @@ function Panel({ onClose }: { onClose: () => void }) {
                         role="tabpanel"
                         aria-labelledby={`${uid}-${tab}`}
                     >
-                        <SettingsSearch s={s} lang={lang} q={q} setQ={setQ} />
+                        <SettingsSearch
+                            s={s}
+                            lang={lang}
+                            q={q}
+                            setQ={setQ}
+                            tabs={shownTabs}
+                        />
                         {!q.trim() &&
                             groups.map((g) => (
                                 <Group key={g.id} g={g} s={s} lang={lang}>
@@ -1739,7 +2242,12 @@ function Panel({ onClose }: { onClose: () => void }) {
                                     )}
                                 </Group>
                             ))}
-                        <Footer tab={tab} T={T} />
+                        <Footer
+                            tab={tab}
+                            T={T}
+                            tabs={shownTabs}
+                            files={!limited}
+                        />
                     </div>
                     {shown && (tab === "general" || tab === "conversation") && (
                         <div
@@ -1762,6 +2270,7 @@ function Panel({ onClose }: { onClose: () => void }) {
                                 <PlayIcon />
                                 {T.hearSound}
                             </button>
+                            <HearVoice T={T} />
                         </div>
                     )}
                     {shown && (tab === "look" || tab === "zoom") && (
@@ -1794,13 +2303,18 @@ function SettingsLauncher() {
         requestAnimationFrame(() => {
             const back = before.current?.isConnected ? before.current : null;
             (back ?? launcher.current)?.focus();
+            // the page is no longer inert: adaptive colors are read from it again
+            resampleHighlights();
         });
     };
+    /** opened from the gear under a preset with a participant's panel: that panel */
+    const [limitedOpen, setLimitedOpen] = useState(false);
     togglePanel = () => {
         if (open) return close();
         const had = document.activeElement;
         before.current =
             had instanceof HTMLElement && had !== document.body ? had : null;
+        setLimitedOpen(false);
         setOpen(true);
     };
     return (
@@ -1823,13 +2337,19 @@ function SettingsLauncher() {
                     onClick={() => {
                         if (open) return close();
                         before.current = null;
+                        setLimitedOpen(Boolean(activePreset()?.panel));
                         setOpen(true);
                     }}
                 >
                     <SettingsIcon />
                 </button>
             )}
-            {open && <Panel onClose={close} />}
+            {open && (
+                <Panel
+                    onClose={close}
+                    limited={limitedOpen ? activePreset()?.panel : undefined}
+                />
+            )}
         </>
     );
 }

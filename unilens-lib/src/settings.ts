@@ -33,15 +33,22 @@ export interface Settings {
     elementContext: boolean;
     regionSelect: boolean;
     highContrast: boolean;
+    /** the chat's colours: light, dark, or as the computer is set (Yotam, 2026-10-10) */
+    chatTheme: "light" | "dark" | "system";
     continuity: boolean;
     /** after a reload, the conversation on this site comes back (UniLens's own store) */
     restoreAfterReload: boolean;
     autoRead: boolean;
+    /** reading an answer aloud says its source numbers, "(source 2)", where the
+     *  chat shows them (#28, Yotam 2026-10-12) */
+    readSources: boolean;
     voiceInput: boolean;
     /** the Live button: a spoken conversation with the assistant */
     liveTalk: boolean;
     /** the mic sends what was heard when the speaker pauses; off, it stays in the field */
     voiceAutoSend: boolean;
+    /** how long a pause ends a voice message (the server's recognizer), ms */
+    voicePauseMs: number;
     hints: boolean;
     /** the minimap: never, while the page is zoomed, or always */
     minimap: "off" | "zoomed" | "always";
@@ -83,12 +90,55 @@ export interface Settings {
     /** highlight look, in layers (highlightStyles.ts): one backdrop, one outline, additions */
     hlBackdrop: Backdrop;
     hlOutline: Outline;
-    hlFill: boolean;
-    hlGlow: boolean;
+    /** the colour laid over each source (Yotam, 2026-10-10; heavy is the fill there
+     *  was) */
+    hlFill: "none" | "light" | "heavy";
+    /** the glow around a highlight, by its spread (Yotam, 2026-10-10; medium is the
+     *  glow there was before) */
+    hlGlow: "none" | "small" | "medium" | "large";
     /** numbers on the outlines, matching the chips in the chat */
-    hlBadges: boolean;
+    /** the number on each source on the page, by size (Yotam, 2026-10-10; small is
+     *  the one there was); none hides it, the answer's numbers still work */
+    hlBadges: "none" | "small" | "medium" | "large";
+    /** where the number sits (Yotam, 2026-10-10): always at the highlight's top-left
+     *  corner, clear of the element's text; or beside it, wherever there is room */
+    hlBadgePos: "corner" | "beside";
+    /** session 1: a number whose place is partly off screen slides in to stay at the
+     *  screen's edge. Off (Yotam's try-out, 2026-10-12): it stays by its place and
+     *  leaves the screen with it. A preset value, not a participant's setting */
+    hlBadgeClamp: boolean;
+    /** with Adaptive color on: the thin border and the ring's inner band take the
+     *  adapted colour (a black edge round it), and the glow is stronger on a dark
+     *  background (Yotam's try-out, 2026-10-12). Off: session 1's black and white
+     *  lines. A preset value, not a participant's setting */
+    hlAdaptLine: boolean;
+    /** an Alt+drag with box drawing off does nothing (the QA check, 2026-10-12);
+     *  session 1 took its release as an Alt+click on what the drag crossed. A preset
+     *  value, not a participant's setting */
+    altDragInert: boolean;
+    /** what an adaptive colour is judged against: everything under the highlight and
+     *  its ring ("under-ring"), or only the element's main background ("main").
+     *  Yotam kept "under-ring" after comparing them on the navy menu bar
+     *  (2026-10-13). A preset value, in no panel */
+    adaptBg: "under-ring" | "main";
+    /** a move to a highlight counts it as in view only this fraction in from each
+     *  side of what the user sees, the chat's part hidden, and centres it in the
+     *  uncovered part (item 16 of Yotam's try-out, 2026-10-13); 0: session 1's rule,
+     *  fully on screen. A preset value, in no panel */
+    edgeZone: number;
     /** the highlight colour, #rgb or #rrggbb; the two-band ring stays black and white */
     hlColor: string;
+    /** how the colour meets the page under it (#26, Yotam 2026-10-12): always the
+     *  colour; inverting what is under it; the palette colour with the best contrast
+     *  there; or the colour, its lightness moved only as far as contrast needs
+     *  (adaptiveColor.ts) */
+    hlColorMode: "fixed" | "invert" | "contrast" | "near";
+    /** how far "near" may move the colour */
+    hlColorRange: "little" | "some" | "any";
+    /** a ring that pulses out from each highlight as it is shown, to catch the eye
+     *  (P02, session 1): a few times then still, or for as long as it shows; never
+     *  under reduced motion */
+    hlPulse: "off" | "few" | "always";
     /** how an outlined element outside the screen is pointed at */
     offscreenCue: "none" | "edge" | "pointer";
     /** radius of the pointer cue circle, px */
@@ -153,6 +203,34 @@ export interface Settings {
     /** a chat covering a chosen source steps aside, to the nearer side, or folds to
      *  its header when there is no room (a pinned chat only folds); off, it stays */
     chatMovesAside: boolean;
+    /** pressing All (or "show all") moves the page to the group of highlights, by
+     *  the edge zone's rule: the group to the middle when it fits, else number 1;
+     *  pressing it off, or an answer's own outlines, never move it. Off: All only
+     *  outlines them where they are (item 16b, Yotam 2026-10-13) */
+    allMoves: boolean;
+    /** outline the element just Alt+clicked, until the answer's sources replace it
+     *  (Yotam, 2026-10-10, session 2) */
+    outlineClicked: boolean;
+    /** #30 (Yotam, 2026-10-12; P01 and P06): a new answer is shown from its start. When
+     *  it begins, the log scrolls once so the question above it (or the answer) is at
+     *  the top; it does not follow the text or jump when the answer ends; and Listen
+     *  sits at the answer's start. Off: as in session 1, the log follows the text and
+     *  a long answer jumps back to its start when it ends; Listen at the end. A preset
+     *  value, not a participant's setting */
+    answerFromStart: boolean;
+    /** session 1: an answer to "where …?" that points at nothing is styled as a note
+     *  (dotted). Off (Yotam's try-out, 2026-10-12): every answer is styled as one;
+     *  only notes and errors look apart. A preset value, not a participant's setting */
+    quietNotFound: boolean;
+    /** a numbered mark (P1, P2, … as in the chat) where an Alt+click landed (P02,
+     *  P03, session 1), and what it marks (Yotam, 2026-10-12): none, the spot clicked,
+     *  what was clicked (outlined as its P entry in the chat outlines it), or both.
+     *  One at a time: the latest click's, or the place whose P entry is pressed */
+    clickMark: "none" | "spot" | "element" | "both";
+    /** how the spot is marked (Yotam, 2026-10-12; four of them from 2026-10-13): a
+     *  map pin with its number; a see-through dot with a line to its number; a soft
+     *  glow with the number beside it; or a line alone pointing at the spot */
+    clickMarkStyle: "pin" | "tagClear" | "halo" | "line";
     /** the line above the field saying what the next question is about (the outlined
      *  sources or place); hidden, they still go with the question */
     aboutLine: boolean;
@@ -160,13 +238,31 @@ export interface Settings {
     debugShortcut: boolean;
     /** the assistant zooms the page when the user asks (the chat and Live) */
     assistantZoom: boolean;
+    /** the assistant takes the user to a place on the page when it decides they asked
+     *  (a go-to marker in the chat: scroll there and outline it) */
+    assistantGoTo: boolean;
     /** underline the fewest words each source supports, joined to its number */
     associateText: boolean;
     /** where an answer's source numbers go: where the model put them, at the end of
-     *  each sentence, or all after the answer (underlines need them in the sentence) */
-    citePlacement: "inline" | "sentence" | "end";
+     *  each sentence, all after the answer, or both where the model put them and
+     *  after (underlines need them in the sentence only) */
+    citePlacement: "inline" | "sentence" | "end" | "both";
+    /** the Sources button's three styles as one setting (Yotam, 2026-10-10): kept in
+     *  step with citePlacement and associateText, both ways */
+    sourceStyle: "inline" | "underline" | "end" | "both";
     /** the settings gear on the page; hidden, Ctrl+Alt+Shift+S still opens settings */
     settingsButton: boolean;
+    /** a button that stays on screen, a reminder and a way in (#29: P04 asked; P03
+     *  forgot the assistant): a round button above the settings gear at the bottom
+     *  left, or a bar at the bottom centre with a microphone (floatingButton.ts) */
+    floatingButton: "off" | "round" | "bar";
+    /** the round button says "Ask me about this page" now and then: after this many
+     *  seconds without a question, never while the chat is open */
+    fabReminder: boolean;
+    fabReminderSec: number;
+    /** a button in the chat's header that switches where the source numbers go: in the
+     *  text, with the words they support underlined, or after the answer */
+    sourceStyleButton: boolean;
     /** AI settings (research): the backend checks each choice against its catalogue */
     aiProvider: "auto" | "openai" | "gemini";
     /** a model id from the backend's catalogue; "" = the provider's default */
@@ -178,6 +274,8 @@ export interface Settings {
     ttsModel: string;
     /** the read-aloud voice; "" = the provider's default */
     ttsVoice: string;
+    /** how fast answers are read aloud (Yotam, 2026-10-10; OpenAI's reader) */
+    ttsSpeed: "slow" | "normal" | "fast" | "fastest";
     /** who hears a voice message: the browser, else the server (auto), or a provider */
     sttEngine: "auto" | "browser" | "openai" | "gemini";
     /** the server's speech-to-text model; "" = the backend's default */
@@ -215,7 +313,7 @@ const DEFAULTS: Settings = {
     trailColor: "orange",
     zoomTrace: true,
     viewportCrop: true,
-    zoomKeys: false,
+    zoomKeys: true,
     smoothZoom: true,
     smartZoom: true,
     streamReplies: true,
@@ -224,12 +322,15 @@ const DEFAULTS: Settings = {
     elementContext: true,
     regionSelect: true,
     highContrast: false,
+    chatTheme: "light",
     continuity: true,
     restoreAfterReload: true,
     autoRead: false,
+    readSources: false,
     voiceInput: false,
     liveTalk: true,
     voiceAutoSend: true,
+    voicePauseMs: 2000,
     hints: false,
     minimap: "zoomed",
     lensPan: false,
@@ -250,10 +351,19 @@ const DEFAULTS: Settings = {
     minimapMarkerSize: 32,
     hlBackdrop: "none",
     hlOutline: "ring",
-    hlFill: false,
-    hlGlow: true,
-    hlBadges: true,
+    hlFill: "none",
+    hlGlow: "medium",
+    hlBadges: "small",
+    hlBadgePos: "corner",
+    hlBadgeClamp: false,
+    hlAdaptLine: true,
+    altDragInert: true,
+    adaptBg: "under-ring",
+    edgeZone: 0,
     hlColor: "#ffef26",
+    hlColorMode: "fixed",
+    hlColorRange: "some",
+    hlPulse: "off",
     offscreenCue: "edge",
     cueRadius: 60,
     cueSize: 48,
@@ -291,18 +401,31 @@ const DEFAULTS: Settings = {
     sounds: true,
     citeEvidence: true,
     chatMovesAside: true,
+    allMoves: false,
+    outlineClicked: false,
+    answerFromStart: true,
+    quietNotFound: false,
+    clickMark: "none",
+    clickMarkStyle: "tagClear",
     aboutLine: true,
     debugShortcut: true,
     assistantZoom: true,
+    assistantGoTo: false,
     associateText: false,
     citePlacement: "inline",
+    sourceStyle: "inline",
     settingsButton: true,
+    floatingButton: "off",
+    fabReminder: false,
+    fabReminderSec: 120,
+    sourceStyleButton: false,
     aiProvider: "auto",
     aiModel: "",
     aiReasoning: "default",
     ttsProvider: "auto",
     ttsModel: "",
     ttsVoice: "",
+    ttsSpeed: "normal",
     sttEngine: "auto",
     sttModel: "",
     liveProvider: "auto",
@@ -340,30 +463,40 @@ export const TOGGLE_LABELS: Record<BoolSettingKey, string> = {
     highContrast: "High contrast",
     continuity: "Conversation continuity",
     restoreAfterReload: "Keep the conversation across reloads",
-    autoRead: "Read replies aloud",
-    voiceInput: "Voice input (mic)",
-    liveTalk: "Live conversation button",
+    autoRead: "Autoplay responses",
+    readSources: "Say the source numbers when reading aloud",
+    voiceInput: "Show microphone button",
+    liveTalk: "Show live interaction button",
     voiceAutoSend: "Send what I say when I pause",
     hints: "Proactive help hints",
     lensPan: "Lens panning (freeze page while zoomed)",
     debugView: "Debug view (ctrl+shift+D)",
     inventory: "Send page inventory with captures",
+    hlBadgeClamp: "Slide a number in at the screen's edge",
+    hlAdaptLine:
+        "Adaptive color also colors the line (and a stronger glow on dark)",
+    altDragInert: "An Alt+drag does nothing when box drawing is off",
     ringScale: "Outline grows with the zoom",
-    hlFill: "Colour fill",
-    hlGlow: "Glow",
-    hlBadges: "Numbered badges",
     mmFollowHighlight: "Same look as the highlights",
-    mmFill: "Colour fill (see-through)",
+    mmFill: "Color fill (see-through)",
     mmGlow: "Glow around targets",
     mmNumbers: "Numbers on targets",
     citeEvidence: "Answers cite page elements",
     chatMovesAside: "Move the chat out of the way of sources",
+    allMoves: "All moves the page to the highlights",
+    outlineClicked: "Outline what I Alt+click",
+    answerFromStart: "New answers show from their start, Listen first",
+    quietNotFound: "An answer that points at nothing looks like a note",
     aboutLine: "Show what the next question is about, above the field",
     debugShortcut: "Ctrl+Shift+D opens the debug view",
     assistantZoom: "The assistant can zoom the page when asked",
+    assistantGoTo: "The assistant can take you to a place on the page",
     associateText:
         "Associate response text (underline what each source supports)",
     settingsButton: "Settings button (hidden: Ctrl+Alt+Shift+S opens settings)",
+    fabReminder: "Remind me now and then",
+    sourceStyleButton:
+        "Sources button in the chat (in the text, underlined, after the answer)",
     sounds: "A sound for every action",
     refreshView: "Send my new view with follow-ups",
     fxCore: "Orb: glossy core",
@@ -371,7 +504,7 @@ export const TOGGLE_LABELS: Record<BoolSettingKey, string> = {
     fxRipple: "Ripple on the click",
     fxHalo: "Orb: halo",
     fxDot: "Aurora: dot on the exact point",
-    fxThirdTone: "Third colour (coral)",
+    fxThirdTone: "Third color (coral)",
     fxSheen: "Frame: scanning sheen",
     fxHug: "Frame: breathing",
     fxEdgeGradient: "Edge: moving gradient",
@@ -383,8 +516,13 @@ export const TOGGLE_LABELS: Record<BoolSettingKey, string> = {
 };
 
 /** keys of Settings whose value is a number — the integer knob rows in the panel */
+/** the numeric settings with a panel row; a hidden preset value (edgeZone) has none */
 export type NumSettingKey = {
-    [K in keyof Settings]: Settings[K] extends number ? K : never;
+    [K in keyof Settings]: Settings[K] extends number
+        ? K extends "edgeZone"
+            ? never
+            : K
+        : never;
 }[keyof Settings];
 
 /**
@@ -397,7 +535,7 @@ export const NUMBER_KNOBS: Record<
     { label: string; min: number; max: number; step: number }
 > = {
     captureRes: { label: "Capture resolution", min: 0.5, max: 1, step: 0.5 },
-    chatFontSize: { label: "Chat scale", min: 14, max: 20, step: 3 },
+    chatFontSize: { label: "Interface size", min: 14, max: 20, step: 3 },
     chatTextScale: { label: "Text size (%)", min: 80, max: 200, step: 10 },
     liveSpeed: {
         label: "Speaking rate (%, OpenAI)",
@@ -438,6 +576,12 @@ export const NUMBER_KNOBS: Record<
         step: 50,
     },
     ringWidth: { label: "Outline width (px)", min: 1, max: 6, step: 1 },
+    fabReminderSec: {
+        label: "Remind after (s without a question)",
+        min: 10,
+        max: 900,
+        step: 10,
+    },
     minimapMarkerSize: {
         label: "Smallest target on the map (px)",
         min: 8,
@@ -459,6 +603,12 @@ export const NUMBER_KNOBS: Record<
         min: 48,
         max: 128,
         step: 8,
+    },
+    voicePauseMs: {
+        label: "Pause that ends a voice message (ms)",
+        min: 600,
+        max: 4000,
+        step: 100,
     },
     motionMs: {
         label: "Movement duration (ms)",
@@ -531,8 +681,8 @@ export const ENUM_CHOICES = {
     fxRippleLook: {
         label: "Ripple look",
         choices: {
-            rimmed: "Highlight colour with black rims",
-            taper: "Highlight colour, thick to thin",
+            rimmed: "Highlight color with black rims",
+            taper: "Highlight color, thick to thin",
         },
     },
     fxSpeed: {
@@ -567,17 +717,121 @@ export const ENUM_CHOICES = {
         label: "Move the page to evidence",
         choices: {
             offscreen: "Only when it is off-screen",
-            always: "Always centre it",
+            always: "Always center it",
             never: "Never (cues only)",
         },
     },
     autoHighlight: { label: "Auto-highlight", choices: AUTO_HIGHLIGHTS },
+    chatTheme: {
+        label: "Theme",
+        choices: {
+            light: "Light",
+            dark: "Dark",
+            system: "As the computer is set",
+        },
+    },
+    hlBadges: {
+        label: "Number on the page",
+        choices: {
+            none: "None",
+            small: "Small",
+            medium: "Medium",
+            large: "Large",
+        },
+    },
+    hlColorMode: {
+        label: "Adaptive color",
+        choices: {
+            // in this order (Yotam, 2026-10-12); "near" keeps its stored value
+            fixed: "Off",
+            near: "Enhanced color: this color, made to stand out where needed",
+            invert: "Invert what is under it",
+            contrast: "Best contrast with what is under it",
+        },
+    },
+    hlColorRange: {
+        label: "How far the color may change",
+        choices: { little: "A little", some: "Some", any: "As far as needed" },
+    },
+    hlFill: {
+        label: "Fill",
+        choices: { none: "None", light: "Light", heavy: "Heavy" },
+    },
+    hlBadgePos: {
+        label: "Number position",
+        choices: {
+            corner: "Top-left corner",
+            beside: "Beside, where it fits",
+        },
+    },
+    clickMark: {
+        label: "What to mark",
+        choices: {
+            none: "None",
+            spot: "The spot I clicked",
+            element: "What I clicked",
+            both: "Both",
+        },
+    },
+    floatingButton: {
+        label: "Floating button",
+        choices: {
+            off: "Off",
+            round: "Round button",
+            bar: "Bar with a microphone",
+        },
+    },
+    clickMarkStyle: {
+        label: "How it's marked",
+        choices: {
+            pin: "A map pin with its number",
+            tagClear: "A see-through dot with a line to its number",
+            halo: "A soft glow, its number beside it",
+            line: "Only a line pointing at the spot",
+        },
+    },
+    hlPulse: {
+        label: "Pulse",
+        choices: {
+            off: "Off",
+            few: "A few times, then still",
+            always: "For as long as it shows",
+        },
+    },
+    hlGlow: {
+        label: "Glow",
+        choices: {
+            none: "None",
+            small: "Small",
+            medium: "Medium",
+            large: "Large",
+        },
+    },
+    sourceStyle: {
+        label: "Sources in the answer",
+        choices: {
+            inline: "Numbers in the text",
+            underline: "Numbers in the text, words underlined",
+            end: "All numbers after the answer",
+            both: "Numbers in the text and after the answer",
+        },
+    },
+    ttsSpeed: {
+        label: "Reading speed",
+        choices: {
+            slow: "Slow",
+            normal: "Normal",
+            fast: "Fast",
+            fastest: "Fastest",
+        },
+    },
     citePlacement: {
         label: "Where the source numbers go",
         choices: {
             inline: "In the sentence, after the words",
             sentence: "At the end of each sentence",
             end: "After the whole answer",
+            both: "In the sentence, and again after the answer",
         },
     },
     aiProvider: {
@@ -589,7 +843,7 @@ export const ENUM_CHOICES = {
         },
     },
     trailColor: {
-        label: "Pointer trail colour (in the assistant's pictures)",
+        label: "Pointer trail color (in the assistant's pictures)",
         choices: { orange: "Orange", lime: "Lime" },
     },
     ttsProvider: {
@@ -686,12 +940,21 @@ export const PANEL_TABS: { id: PanelTabId; groups: PanelGroup[] }[] = [
                 id: "chat",
                 first: [
                     "chatStyle",
+                    "chatTheme",
                     "chatLanguage",
                     "chatFontSize",
                     "chatTextScale",
                     "highContrast",
+                    "floatingButton",
+                    "fabReminder",
                 ],
-                more: ["dragPopover", "hints", "escapeOrder", "settingsButton"],
+                more: [
+                    "dragPopover",
+                    "hints",
+                    "escapeOrder",
+                    "settingsButton",
+                    "fabReminderSec",
+                ],
             },
         ],
     },
@@ -700,14 +963,23 @@ export const PANEL_TABS: { id: PanelTabId; groups: PanelGroup[] }[] = [
         groups: [
             {
                 id: "highlight",
-                first: ["hlColor", "hlOutline", "hlBackdrop"],
-                more: [
-                    "hlFill",
-                    "hlGlow",
+                first: [
+                    "hlColor",
+                    "hlColorMode",
+                    "hlColorRange",
+                    "hlOutline",
                     "hlBadges",
-                    "ringWidth",
-                    "ringScale",
+                    "hlBadgePos",
+                    "hlBackdrop",
+                    "hlGlow",
+                    "hlFill",
+                    "hlPulse",
+                    // drawn on the page too, beside the highlight's look, with the
+                    // mark on the sample (Yotam, 2026-10-13)
+                    "clickMark",
+                    "clickMarkStyle",
                 ],
+                more: ["ringWidth", "ringScale", "hlBadgeClamp", "hlAdaptLine"],
             },
             {
                 id: "cues",
@@ -753,18 +1025,32 @@ export const PANEL_TABS: { id: PanelTabId; groups: PanelGroup[] }[] = [
                     "restoreAfterReload",
                     "autoHighlight",
                     "moveToEvidence",
+                    "allMoves",
                 ],
                 more: [
                     "streamReplies",
                     "citeEvidence",
+                    "sourceStyle",
                     "citePlacement",
                     "associateText",
+                    "sourceStyleButton",
                     "chatMovesAside",
+                    "outlineClicked",
+                    "answerFromStart",
+                    "quietNotFound",
+                    "assistantGoTo",
                     "aboutLine",
                     "regionSelect",
+                    "altDragInert",
                     "elementContext",
                     "refreshView",
                 ],
+            },
+            {
+                // asking and hearing by voice, beside the asking (Yotam, 2026-10-10)
+                id: "talk",
+                first: ["voiceInput", "liveTalk", "autoRead", "readSources"],
+                more: ["voiceAutoSend", "voicePauseMs"],
             },
         ],
     },
@@ -796,8 +1082,8 @@ export const PANEL_TABS: { id: PanelTabId; groups: PanelGroup[] }[] = [
         groups: [
             {
                 id: "voiceSound",
-                first: ["voiceInput", "liveTalk", "autoRead", "sounds"],
-                more: ["voiceAutoSend", "ttsVoice"],
+                first: ["sounds", "ttsSpeed"],
+                more: ["ttsVoice"],
             },
             {
                 id: "live",
@@ -867,6 +1153,55 @@ export const PANEL_TABS: { id: PanelTabId; groups: PanelGroup[] }[] = [
     },
 ];
 
+/** where an answer's source numbers go, as the chat's Sources button names it */
+/** the reading speeds, as OpenAI takes them */
+export const TTS_SPEEDS: Record<Settings["ttsSpeed"], number> = {
+    slow: 0.75,
+    normal: 1,
+    fast: 1.5,
+    fastest: 2,
+};
+
+/** the same speeds for the browser's own voice (SpeechSynthesisUtterance.rate), when
+ *  the backend's cannot read. Browsers map the rate differently, so each has its
+ *  own: timed on Windows' default voice (Microsoft David), each gives 1.36, 1, 0.69
+ *  and 0.5 times the normal length, as OpenAI's speeds do (2026-10-10) */
+const NATIVE_RATES = {
+    chrome: { slow: 0.5, normal: 1, fast: 2, fastest: 4 },
+    edge: { slow: 0.6, normal: 1, fast: 1.7, fastest: 2.2 },
+} satisfies Record<string, Record<Settings["ttsSpeed"], number>>;
+export function nativeRate(
+    speed: Settings["ttsSpeed"],
+    userAgent = typeof navigator === "undefined" ? "" : navigator.userAgent,
+): number {
+    const table = /\bEdg\//.test(userAgent)
+        ? NATIVE_RATES.edge
+        : NATIVE_RATES.chrome;
+    return table[speed] ?? 1;
+}
+
+export type SourceStyle = Settings["sourceStyle"];
+export const SOURCE_STYLES: SourceStyle[] = [
+    "inline",
+    "underline",
+    "end",
+    "both",
+];
+export function sourceStyleOf(s: Settings): SourceStyle {
+    if (s.citePlacement === "both") return "both";
+    if (s.citePlacement !== "inline") return "end";
+    return s.associateText ? "underline" : "inline";
+}
+/** set the source style: numbers in the text, underlined words too, after, or in
+ *  the text and after (#27) */
+export function setSourceStyle(style: SourceStyle) {
+    useSettings.setState({
+        citePlacement: style === "end" || style === "both" ? style : "inline",
+        associateText: style === "underline",
+        sourceStyle: style,
+    });
+}
+
 /** a setting's starting value: the preset's while one is on (presets.ts), else the
  *  shipped one. What "Reset this tab" restores, and what "changed" means */
 export function defaultOf<K extends keyof Settings>(key: K): Settings[K] {
@@ -910,6 +1245,15 @@ export function clampSetting<K extends keyof Settings>(
         const { min, max } = NUMBER_KNOBS[key as NumSettingKey];
         return Math.min(max, Math.max(min, n)) as Settings[K];
     }
+    // the glow was on or off before it had sizes
+    if (key === "hlGlow" && typeof value === "boolean")
+        return (value ? "medium" : "none") as Settings[K];
+    // the fill was on or off before it had strengths
+    if (key === "hlFill" && typeof value === "boolean")
+        return (value ? "heavy" : "none") as Settings[K];
+    // the badges were on or off before they had sizes
+    if (key === "hlBadges" && typeof value === "boolean")
+        return (value ? "small" : "none") as Settings[K];
     if (Object.hasOwn(ENUM_CHOICES, key)) {
         const { choices } = ENUM_CHOICES[key as EnumKey];
         return Object.hasOwn(choices, String(value))
@@ -919,6 +1263,16 @@ export function clampSetting<K extends keyof Settings>(
     if (key === "hlColor") {
         return isHexColor(value) ? (value as Settings[K]) : fallback;
     }
+    if (key === "edgeZone") {
+        const n = Number(value);
+        return (
+            Number.isFinite(n) ? Math.min(0.45, Math.max(0, n)) : fallback
+        ) as Settings[K];
+    }
+    if (key === "adaptBg")
+        return value === "under-ring" || value === "main"
+            ? (value as Settings[K])
+            : fallback;
     if ((CATALOGUE_KEYS as readonly string[]).includes(key)) {
         return typeof value === "string" && /^[\w.:-]{0,64}$/.test(value)
             ? (value as Settings[K])
@@ -949,15 +1303,41 @@ function mergePersisted(persisted: unknown, current: Settings): Settings {
     // and the minimap as a switch (on: while zoomed)
     if (typeof stored.minimap === "boolean")
         next.minimap = stored.minimap ? "zoomed" : "off";
+    // the solid dot with a line (Yotam, 2026-10-13: four styles) is the see-through one
+    if (stored.clickMarkStyle === "tag") next.clickMarkStyle = "tagClear";
+    // the click marks' old switch (clickMarks) and its choice (clickMarkTarget) are
+    // not read: what they marked starts again at "None" (2026-10-12; only test
+    // browsers had them)
     return next;
 }
 
+/** stored values as they are read back, over the defaults (tests) */
+export const mergeForTest = (stored: unknown) =>
+    mergePersisted(stored, { ...DEFAULTS });
+
 /** the preset in effect (presets.ts), or null: set once, at init, before anything
  *  reads the settings */
-let preset: { id: string; name: string; values: Partial<Settings> } | null =
-    null;
-export const activePreset = (): { id: string; name: string } | null =>
-    preset && { id: preset.id, name: preset.name };
+let preset: {
+    id: string;
+    name: string;
+    values: Partial<Settings>;
+    /** the settings a participant's panel shows (the gear); none: no such panel */
+    panel?: readonly (keyof Settings)[];
+    /** the participant whose changes are kept across tabs (presets.ts) */
+    keepFor?: string;
+} | null = null;
+export const activePreset = (): {
+    id: string;
+    name: string;
+    panel?: readonly (keyof Settings)[];
+    keepFor?: string;
+} | null =>
+    preset && {
+        id: preset.id,
+        name: preset.name,
+        panel: preset.panel,
+        keepFor: preset.keepFor,
+    };
 
 const STORE_NAME = "unilens-settings";
 /**
@@ -965,21 +1345,29 @@ const STORE_NAME = "unilens-settings";
  * on, this tab's sessionStorage under the preset's own key, and only the values that
  * differ from the preset: every page load starts from the preset whatever
  * localStorage holds, a change made in the panel lasts until the tab closes, and the
- * user's own settings in localStorage are left as they were.
+ * user's own settings in localStorage are left as they were. A preset that keeps a
+ * participant's changes (session 2: each task link opens a new tab) keeps them in
+ * localStorage under the preset and the participant id instead.
  */
+function presetStore(name: string): [Storage, string] | null {
+    if (!preset) return null;
+    return preset.keepFor
+        ? [localStorage, `${name}:${preset.id}:${preset.keepFor}`]
+        : [sessionStorage, `${name}:${preset.id}`];
+}
 const settingsStorage: StateStorage = {
     getItem: (name) => {
         try {
-            return preset
-                ? sessionStorage.getItem(`${name}:${preset.id}`)
-                : localStorage.getItem(name);
+            const at = presetStore(name);
+            return at ? at[0].getItem(at[1]) : localStorage.getItem(name);
         } catch {
             return null;
         }
     },
     setItem: (name, value) => {
         try {
-            if (preset) sessionStorage.setItem(`${name}:${preset.id}`, value);
+            const at = presetStore(name);
+            if (at) at[0].setItem(at[1], value);
             else localStorage.setItem(name, value);
         } catch {
             // storage blocked or full: the settings still apply for this page
@@ -987,7 +1375,8 @@ const settingsStorage: StateStorage = {
     },
     removeItem: (name) => {
         try {
-            if (preset) sessionStorage.removeItem(`${name}:${preset.id}`);
+            const at = presetStore(name);
+            if (at) at[0].removeItem(at[1]);
             else localStorage.removeItem(name);
         } catch {
             // as above
@@ -995,15 +1384,45 @@ const settingsStorage: StateStorage = {
     },
 };
 
-/** what is written: everything, or under a preset only what differs from it */
+/**
+ * The settings' generation, written into every record: raised when a setting is
+ * added, renamed or removed in a way an older build would undo. A tab running an
+ * older build (still open from before) writes its whole record without the settings
+ * it does not know; a newer tab ignores that write rather than lose them (Yotam's
+ * try-out, 2026-10-12: "What to mark" snapped back to None). Older records still
+ * load as they always did (mergePersisted ignores the marker). 3: allMoves and the
+ * four click-mark styles (2026-10-13).
+ */
+export const SETTINGS_GEN = 3;
+const GEN_KEY = "_gen";
+
+/** what is written: everything, or under a preset only what differs from it; and
+ *  the generation that wrote it */
 function partialize(s: Settings): Partial<Settings> {
-    if (!preset) return s;
-    const base = { ...DEFAULTS, ...preset.values };
-    return Object.fromEntries(
-        (Object.keys(DEFAULTS) as (keyof Settings)[])
-            .filter((k) => JSON.stringify(s[k]) !== JSON.stringify(base[k]))
-            .map((k) => [k, s[k]]),
-    );
+    const out: Partial<Settings> = !preset
+        ? { ...s }
+        : Object.fromEntries(
+              (Object.keys(DEFAULTS) as (keyof Settings)[])
+                  .filter(
+                      (k) =>
+                          JSON.stringify(s[k]) !==
+                          JSON.stringify({ ...DEFAULTS, ...preset?.values }[k]),
+                  )
+                  .map((k) => [k, s[k]]),
+          );
+    (out as Record<string, unknown>)[GEN_KEY] = SETTINGS_GEN;
+    return out;
+}
+
+/** the generation a stored record was written by (0: before generations) */
+export function recordGen(raw: string): number {
+    try {
+        const g = (JSON.parse(raw) as { state?: Record<string, unknown> })
+            ?.state?.[GEN_KEY];
+        return typeof g === "number" ? g : 0;
+    } catch {
+        return 0;
+    }
 }
 
 export const useSettings = create<Settings>()(
@@ -1015,34 +1434,117 @@ export const useSettings = create<Settings>()(
     }),
 );
 
+// the source style and the two settings it stands for stay in step: one chosen in the
+// panel sets them; either of them changed (the full panel, a preset) names the style
+useSettings.subscribe((s, prev) => {
+    const now = sourceStyleOf(s);
+    if (s.sourceStyle === now) return;
+    if (s.sourceStyle !== prev.sourceStyle) setSourceStyle(s.sourceStyle);
+    else useSettings.setState({ sourceStyle: now });
+});
+
 /**
  * Put a preset in effect for this page (presets.ts decides which): the settings
  * become the defaults plus its values, plus what was changed in this tab while it
- * was on. Called once, at init.
+ * was on (or, with keepFor, what that participant changed in this browser). Called
+ * once, at init.
  */
 export function startPreset(
     id: string,
     name: string,
     values: Partial<Settings>,
+    panel?: readonly (keyof Settings)[],
+    keepFor?: string,
 ) {
-    preset = { id, name, values };
+    preset = { id, name, values, panel, keepFor };
+    loadPresetChanges();
+    // kept across tabs: an older tab still open takes up what a newer one changed
+    // (or the facilitator's reset), so its next change does not undo them
+    if (keepFor && !following) {
+        following = true;
+        window.addEventListener("storage", (e) => {
+            const at = presetStore(STORE_NAME);
+            if (!at || e.storageArea !== at[0] || e.key !== at[1]) return;
+            // the record as it is now (never a stale event's copy: tabs converge on
+            // the latest), unless an older build's tab wrote it: that one would drop
+            // newer settings. What is checked is what is taken up. An older tab's
+            // record stays in storage until this tab's next change: older tabs are
+            // best closed once (the study's fresh links have none)
+            const raw = at[0].getItem(at[1]);
+            if (raw && recordGen(raw) < SETTINGS_GEN) {
+                olderSeen = true;
+                return;
+            }
+            loadPresetChanges(raw);
+        });
+        // an older tab's record replaced this one's in storage: this tab writes its
+        // own back as it is reloaded, left or hidden, so the next page load has it.
+        // Not at once: the older tab would take that up and write its own again,
+        // and the two would trade records for as long as both are open. A limit:
+        // the older tab still takes this write up and writes its own over it, so a
+        // setting it does not know can be lost on a reload while it stays open.
+        // Close tabs from before a new build (the study's fresh links have none)
+        const saveOwn = () => {
+            if (!olderSeen || !preset) return;
+            olderSeen = false;
+            // a tab of this build (or a newer one) wrote since: its record stands
+            const at = presetStore(STORE_NAME);
+            let now: string | null = null;
+            try {
+                now = at ? at[0].getItem(at[1]) : null;
+            } catch {
+                // storage blocked: nothing to keep
+            }
+            if (now && recordGen(now) >= SETTINGS_GEN) return;
+            settingsStorage.setItem(
+                STORE_NAME,
+                JSON.stringify({
+                    state: partialize(useSettings.getState()),
+                    version: 0,
+                }),
+            );
+        };
+        window.addEventListener("pagehide", saveOwn);
+        document.addEventListener("visibilitychange", () => {
+            if (document.visibilityState === "hidden") saveOwn();
+        });
+    }
+}
+let following = false;
+/** an older build's tab wrote the shared record since this tab last wrote its own */
+let olderSeen = false;
+
+/** the preset's values plus the changes kept for it */
+function loadPresetChanges(raw?: string | null) {
+    if (!preset) return;
     let stored: unknown;
     try {
         stored = JSON.parse(
-            settingsStorage.getItem(STORE_NAME) as string,
+            (raw === undefined
+                ? settingsStorage.getItem(STORE_NAME)
+                : raw) as string,
         )?.state;
     } catch {
         stored = undefined;
     }
     useSettings.setState(
-        mergePersisted(stored, { ...DEFAULTS, ...values } as Settings),
+        mergePersisted(stored, { ...DEFAULTS, ...preset.values } as Settings),
     );
 }
 
-/** back to the preset's own values: what was changed in this tab while it is on is
- *  forgotten (the next participant) */
+/** back to the preset's own values: what was changed in this tab (or kept for the
+ *  participant) while it is on is forgotten (the next participant) */
 export function clearPresetChanges() {
-    if (preset) useSettings.setState({ ...DEFAULTS, ...preset.values });
+    if (!preset) return;
+    useSettings.setState({ ...DEFAULTS, ...preset.values });
+    // kept for a participant: what this tab changed before the pid came goes too,
+    // or it would come back once the reset has forgotten the pid
+    if (preset.keepFor)
+        try {
+            sessionStorage.removeItem(`${STORE_NAME}:${preset.id}`);
+        } catch {
+            // no session storage: nothing kept there
+        }
 }
 
 /** live snapshot for non-React modules (React components use the useSettings hook) */

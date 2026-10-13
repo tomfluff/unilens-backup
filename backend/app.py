@@ -555,7 +555,12 @@ PHRASE_RULES = (
     "fact from the page in {{ and }}, immediately before its marker, for example: "
     "Shareholders get {{¥1,000 of PayPay Money Lite}}[[n30]]. Every marker gets "
     "its own marked words. Mark only words of your own answer, a few words, never "
-    "a whole sentence. Never explain or mention the braces."
+    "a whole sentence. When a sentence names several things, mark and cite each "
+    "where it is named, each with the element that shows it: The plan includes "
+    "{{unlimited calls}}[[n12]], {{5 GB of data}}[[n13]] and {{free roaming}}[[n14]]. "
+    "Never put several markers together "
+    "after one phrase unless each of those elements states that same phrase. "
+    "Never explain or mention the braces."
 )
 
 # The assistant zooms the page when the user asks (R1 of the 2026-09-27 report); only
@@ -569,6 +574,19 @@ ZOOM_RULES = (
     "few words what they will see. Never mention the marker."
 )
 ZOOM_RE = re.compile(r"( ?)\[\[zoom:(n\d+|in|out|reset)\]\]")
+
+# The assistant takes the user to a place on the page (co-design study, Yotam
+# 2026-10-09): the model decides, the widget scrolls there and outlines it once the
+# answer is complete. Only when the chat says it may (the go_to request field)
+GOTO_RULES = (
+    "The user can ask you to take them to something on the page, to show them where "
+    "it is, or to let them see it on the page. When they do, add one go-to marker to "
+    "your answer: [[goto:ID]] with the id of the inventory element that shows it, the "
+    "most specific one; cite it as well. When your answer is complete, the page "
+    "scrolls there and outlines it: say in a few words what they will see there. "
+    "Never mention the marker."
+)
+GOTO_RE = re.compile(r"( ?)\[\[goto:(n\d+)\]\]")
 
 # a selection is a few sources at most; their labels are the page's own words
 SELECTION_MAX = 30  # the chat's own cap; the About line says when it cut
@@ -637,13 +655,16 @@ def _page_data(inventory, selection) -> str | None:
     return "\n\n".join(parts) or None
 
 
-def _chat_rules(inventory, selection, phrases=False, zoom=False) -> str | None:
+def _chat_rules(
+    inventory, selection, phrases=False, zoom=False, goto=False
+) -> str | None:
     rules = [
         r
         for r, on in (
             (EVIDENCE_RULES, inventory),
             (PHRASE_RULES, inventory and phrases),
             (ZOOM_RULES, zoom),
+            (GOTO_RULES, inventory and goto),
             (SELECTION_RULES, selection),
         )
         if on
@@ -764,6 +785,20 @@ def _tts_choice(data: dict) -> tuple[str, str, str] | None:
     fallback = os.getenv("TTS_VOICE", "alloy") if provider == "openai" else voices[0]
     voice = data.get("voice") if data.get("voice") in voices else fallback
     return provider, model, voice
+
+
+# reading speed (Yotam, 2026-10-10: slow 0.75, normal 1, fast 1.5, fastest 2); OpenAI
+# takes 0.25-4.0, also with gpt-4o-mini-tts (checked: 6.2 s at 1, 2.8 s at 2); Gemini
+# has none and reads at its own pace
+TTS_SPEED = (0.25, 4.0)
+
+
+def _tts_speed(data: dict) -> float:
+    """The request's reading speed, within OpenAI's range; 1.0 without one."""
+    v = data.get("speed")
+    if not isinstance(v, (int, float)) or isinstance(v, bool) or v != v:
+        return 1.0
+    return min(max(float(v), TTS_SPEED[0]), TTS_SPEED[1])
 
 
 def _wav_header(rate: int) -> bytes:
@@ -892,6 +927,22 @@ def _unzoom(text: str) -> str:
     )
 
 
+def _ungoto(text: str) -> str:
+    """A go-to marker as the history keeps it: its element's citation (the move
+    happened once; a later turn must not copy it, nor a chat back from a reload move).
+    """
+    rest = _unjoin_cites(GOTO_RE.sub("", text))
+
+    def cite(m: re.Match) -> str:
+        # the rules ask for a citation as well: one number, not two (only a marker
+        # the chat reads counts; a malformed [n7] is none)
+        if f"[[{m.group(2)}]]" in rest:
+            return ""
+        return f"{m.group(1)}[[{m.group(2)}]]"
+
+    return GOTO_RE.sub(cite, text)
+
+
 def _strip_unknown_cites(text: str, ids: set[str]) -> str:
     """Drop [[id]] markers that name no element of the inventory in use. The
     space before one goes with it only when punctuation or the end follows:
@@ -983,7 +1034,9 @@ def _chat_openai_request(
     selection=None,
     phrases=False,
     zoom=False,
+    goto=False,
     ai=None,
+    usage=None,
 ) -> dict:
     """Keyword arguments for responses.create; pure, so tests can inspect it.
     Without an inventory or a selection the request is exactly the pre-citation one."""
@@ -1000,7 +1053,7 @@ def _chat_openai_request(
     }
     if (ai or {}).get("reasoning"):
         req["reasoning"] = {"effort": ai["reasoning"]}
-    rules = _chat_rules(inventory, selection, phrases, zoom)
+    rules = _chat_rules(inventory, selection, phrases, zoom, goto)
     if rules:
         req["instructions"] = rules
     if stream:
@@ -1018,24 +1071,27 @@ def _call_openai(
     selection=None,
     phrases=False,
     zoom=False,
+    goto=False,
     ai=None,
+    usage=None,
 ) -> str:
     from openai import OpenAI
 
-    response = OpenAI().responses.create(
-        **_chat_openai_request(
-            png_b64,
-            viewport_b64,
-            meta,
-            history,
-            message,
-            inventory,
-            selection=selection,
-            phrases=phrases,
-            zoom=zoom,
-            ai=ai,
-        )
+    req = _chat_openai_request(
+        png_b64,
+        viewport_b64,
+        meta,
+        history,
+        message,
+        inventory,
+        selection=selection,
+        phrases=phrases,
+        zoom=zoom,
+        goto=goto,
+        ai=ai,
     )
+    response = OpenAI().responses.create(**req)
+    _record_usage(usage, "openai", req["model"], getattr(response, "usage", None))
     return response.output_text
 
 
@@ -1102,12 +1158,14 @@ def _chat_gemini_request(
     selection=None,
     phrases=False,
     zoom=False,
+    goto=False,
     ai=None,
+    usage=None,
 ) -> dict:
     """Keyword arguments for generate_content(_stream); pure, so tests can inspect it."""
     from google.genai import types
 
-    rules = _chat_rules(inventory, selection, phrases, zoom)
+    rules = _chat_rules(inventory, selection, phrases, zoom, goto)
     level = (ai or {}).get("reasoning")
     return {
         "model": (ai or {}).get("model") or GEMINI_MODEL,
@@ -1142,26 +1200,31 @@ def _call_gemini(
     selection=None,
     phrases=False,
     zoom=False,
+    goto=False,
     ai=None,
+    usage=None,
 ) -> str:
     from google import genai
 
     # a named client: a temporary one is closed once collected, which google-genai does
     # mid-request ("Cannot send a request, as the client has been closed")
     client = genai.Client()
-    response = client.models.generate_content(
-        **_chat_gemini_request(
-            png_b64,
-            viewport_b64,
-            meta,
-            history,
-            message,
-            inventory,
-            selection,
-            phrases,
-            zoom=zoom,
-            ai=ai,
-        )
+    req = _chat_gemini_request(
+        png_b64,
+        viewport_b64,
+        meta,
+        history,
+        message,
+        inventory,
+        selection,
+        phrases,
+        zoom=zoom,
+        goto=goto,
+        ai=ai,
+    )
+    response = client.models.generate_content(**req)
+    _record_usage(
+        usage, "gemini", req["model"], getattr(response, "usage_metadata", None)
     )
     return response.text
 
@@ -1176,29 +1239,39 @@ def _stream_openai(
     selection=None,
     phrases=False,
     zoom=False,
+    goto=False,
     ai=None,
+    usage=None,
 ):
     """Yield text deltas from the OpenAI Responses streaming API."""
     from openai import OpenAI
 
-    stream = OpenAI().responses.create(
-        **_chat_openai_request(
-            png_b64,
-            viewport_b64,
-            meta,
-            history,
-            message,
-            inventory,
-            stream=True,
-            selection=selection,
-            phrases=phrases,
-            zoom=zoom,
-            ai=ai,
-        )
+    req = _chat_openai_request(
+        png_b64,
+        viewport_b64,
+        meta,
+        history,
+        message,
+        inventory,
+        stream=True,
+        selection=selection,
+        phrases=phrases,
+        zoom=zoom,
+        goto=goto,
+        ai=ai,
     )
+    stream = OpenAI().responses.create(**req)
     for event in stream:
         if event.type == "response.output_text.delta":
             yield event.delta
+        elif event.type == "response.completed":
+            # the whole response, with its token counts, comes last
+            _record_usage(
+                usage,
+                "openai",
+                req["model"],
+                getattr(getattr(event, "response", None), "usage", None),
+            )
 
 
 def _stream_gemini(
@@ -1211,29 +1284,35 @@ def _stream_gemini(
     selection=None,
     phrases=False,
     zoom=False,
+    goto=False,
     ai=None,
+    usage=None,
 ):
     from google import genai
 
     # held for the whole stream: a temporary client is closed once collected, and the
     # stream then fails on its next chunk ("the client has been closed")
     client = genai.Client()
-    for chunk in client.models.generate_content_stream(
-        **_chat_gemini_request(
-            png_b64,
-            viewport_b64,
-            meta,
-            history,
-            message,
-            inventory,
-            selection,
-            phrases,
-            zoom=zoom,
-            ai=ai,
-        )
-    ):
+    req = _chat_gemini_request(
+        png_b64,
+        viewport_b64,
+        meta,
+        history,
+        message,
+        inventory,
+        selection,
+        phrases,
+        zoom=zoom,
+        goto=goto,
+        ai=ai,
+    )
+    last = None
+    for chunk in client.models.generate_content_stream(**req):
+        # each chunk carries the counts so far; the last one has the whole call's
+        last = getattr(chunk, "usage_metadata", None) or last
         if chunk.text:
             yield chunk.text
+    _record_usage(usage, "gemini", req["model"], last)
 
 
 def _stream_stub(meta: dict, message: str, inventory: list | None = None):
@@ -1436,10 +1515,12 @@ def _locate_openai_request(
     }
 
 
-def _locate_openai(**kw) -> dict:
+def _locate_openai(usage=None, **kw) -> dict:
     from openai import OpenAI
 
-    response = OpenAI().responses.create(**_locate_openai_request(**kw))
+    req = _locate_openai_request(**kw)
+    response = OpenAI().responses.create(**req)
+    _record_usage(usage, "openai", req["model"], getattr(response, "usage", None))
     return json.loads(response.output_text)
 
 
@@ -1468,11 +1549,15 @@ def _locate_gemini_request(
     }
 
 
-def _locate_gemini(**kw) -> dict:
+def _locate_gemini(usage=None, **kw) -> dict:
     from google import genai
 
     client = genai.Client()  # named: a temporary one closes once collected
-    response = client.models.generate_content(**_locate_gemini_request(**kw))
+    req = _locate_gemini_request(**kw)
+    response = client.models.generate_content(**req)
+    _record_usage(
+        usage, "gemini", req["model"], getattr(response, "usage_metadata", None)
+    )
     return json.loads(response.text)
 
 
@@ -1501,6 +1586,77 @@ def _locate_stub(question: str, inventory: list) -> dict:
 # One dispatch table for every route that talks to a model. The stub takes only
 # (meta, message), so its entries adapt the shape here rather than widening the
 # stub's signature; `_run` is the single place an unknown provider can fail.
+# token use per model call (Yotam, 2026-10-10: why "gpt-5.6-terra, cache writes" costs
+# so much): logged only, nothing about the request or its caching changes
+def _usage_fields(provider: str, usage) -> dict:
+    """A response's token counts, under one set of names for both providers."""
+    if usage is None:
+        return {}
+
+    def get(obj, *names):
+        for n in names:
+            v = getattr(obj, n, None) if obj is not None else None
+            if v is not None:
+                return v
+        return None
+
+    def plain(obj):
+        try:
+            return obj.model_dump(exclude_none=True) if obj is not None else None
+        except Exception:
+            return None
+
+    if provider == "openai":
+        inp = get(usage, "input_tokens_details")
+        out = get(usage, "output_tokens_details")
+        return {
+            "input": get(usage, "input_tokens"),
+            "cachedInput": get(inp, "cached_tokens"),
+            # not reported by the Responses API so far; kept if a version names it
+            "cacheWrite": get(
+                inp,
+                "cache_write_tokens",
+                "cache_creation_tokens",
+                "cache_creation_input_tokens",
+            ),
+            "output": get(usage, "output_tokens"),
+            "reasoning": get(out, "reasoning_tokens"),
+            "total": get(usage, "total_tokens"),
+            # every detail as sent, so a field not named above is not lost
+            "inputDetails": plain(inp),
+            "outputDetails": plain(out),
+        }
+    return {
+        "input": get(usage, "prompt_token_count"),
+        "cachedInput": get(usage, "cached_content_token_count"),
+        "cacheWrite": None,
+        "output": get(usage, "candidates_token_count"),
+        "reasoning": get(usage, "thoughts_token_count"),
+        "total": get(usage, "total_token_count"),
+    }
+
+
+def _record_usage(ctx: dict | None, provider: str, model: str, usage) -> None:
+    """One `usage` event in the participant's study log, and a line on stdout; never
+    in the way of the answer."""
+    if not ctx:
+        return
+    try:
+        fields = {
+            "call": ctx.get("call"),
+            "provider": provider,
+            "model": model,
+            "capture": ctx.get("capture"),
+            # a later question about the same capture, or the first one about it
+            "followUp": ctx.get("followUp"),
+            **_usage_fields(provider, usage),
+        }
+        print(f"[usage] {json.dumps(fields, default=str)}", flush=True)
+        _server_event(ctx.get("ids"), "usage", **fields)
+    except Exception as e:  # the log must never break an answer
+        print(f"[usage] not recorded: {e}", flush=True)
+
+
 PROVIDERS = {
     "openai": {
         "call": _call_openai,
@@ -1530,10 +1686,24 @@ PROVIDERS = {
 }
 
 
-def _run(kind: str, provider: str, **kw):
+def _usage_context(ids, call: str, cap_id: str, history: list) -> dict:
+    """What a call's token log says about it: who, which call, which capture, and
+    whether this capture was asked about before (its images and page are sent again)."""
+    return {
+        "ids": ids,
+        "call": call,
+        "capture": cap_id,
+        "followUp": any(
+            isinstance(h, dict) and h.get("capture_id") == cap_id for h in history
+        ),
+    }
+
+
+def _run(kind: str, provider: str, usage: dict | None = None, **kw):
+    """A model call; `usage` names the call for its token log (_record_usage)."""
     if provider not in PROVIDERS:
         raise ValueError(f"unknown provider: {provider}")
-    return PROVIDERS[provider][kind](**kw)
+    return PROVIDERS[provider][kind](usage=usage, **kw)
 
 
 def _images_sent(provider: str, viewport_b64: str | None) -> int:
@@ -2067,7 +2237,7 @@ def create_app():
     # Two-step streaming TTS: POST the text, GET the mp3 by id. The GET streams
     # chunks straight from OpenAI so the <audio> element starts playing before
     # synthesis finishes (an <audio> src can only GET, hence the id hop).
-    tts_texts: dict[str, tuple[str, str]] = {}
+    tts_texts: dict[str, tuple[str, str, str, str, float]] = {}
 
     @app.post("/api/tts")
     def tts_prepare():
@@ -2080,7 +2250,7 @@ def create_app():
         if not text:
             return jsonify({"error": "empty text"}), 400
         tid = uuid.uuid4().hex[:12]
-        tts_texts[tid] = (text, *choice)
+        tts_texts[tid] = (text, *choice, _tts_speed(data))
         _server_event(
             _study_ids(), "read_aloud_prepared", chars=len(text), provider=choice[0]
         )
@@ -2132,7 +2302,11 @@ def create_app():
         # answer, not an empty stream
         try:
             ctx = client.audio.speech.with_streaming_response.create(
-                model=model, voice=voice, input=text, response_format="pcm"
+                model=model,
+                voice=voice,
+                input=text,
+                response_format="pcm",
+                speed=_tts_speed(data),
             )
             resp = ctx.__enter__()
         except Exception as e:
@@ -2163,7 +2337,7 @@ def create_app():
     def tts_stream(tid):
         """The reading, streamed: OpenAI's MP3, or Gemini's WAV (the name is the
         widget's; the type says what it is)."""
-        text, provider, model, voice = tts_texts.pop(tid, (None,) * 4)
+        text, provider, model, voice, speed = tts_texts.pop(tid, (None,) * 5)
         if text is None:
             return jsonify({"error": "unknown or expired tts id"}), 404
         if provider == "gemini":
@@ -2187,6 +2361,7 @@ def create_app():
                 voice=voice,
                 input=text,
                 response_format="mp3",
+                speed=speed,
             ) as resp:
                 yield from resp.iter_bytes(4096)
 
@@ -2415,12 +2590,16 @@ def create_app():
         zoom = data.get("assistant_zoom", False)
         if not isinstance(zoom, bool):
             return jsonify({"error": "assistant_zoom must be a boolean"}), 400
+        goto = data.get("go_to", False)
+        if not isinstance(goto, bool):
+            return jsonify({"error": "go_to must be a boolean"}), 400
         cite_ids = set(_inventory_ids(inventory or []))
 
         choice = _ai_choice(data)
         provider, model = choice["provider"], choice["model"]
         images_sent = _images_sent(provider, viewport_b64)
         study = _study_ids()
+        usage = _usage_context(study, "chat_stream", cap_id, history)
 
         def sse(obj):
             return f"data: {json.dumps(obj)}\n\n"
@@ -2432,6 +2611,7 @@ def create_app():
                 deltas = _run(
                     "stream",
                     provider,
+                    usage=usage,
                     png_b64=png_b64,
                     viewport_b64=viewport_b64,
                     meta=meta,
@@ -2441,6 +2621,7 @@ def create_app():
                     selection=selection,
                     phrases=phrases,
                     zoom=zoom,
+                    goto=goto,
                     ai=choice,
                 )
                 for delta in deltas:
@@ -2452,7 +2633,7 @@ def create_app():
                 return
             # deltas went out as the model wrote them; history keeps only real ids,
             # checked after a zoom marker became its citation
-            reply = _strip_unknown_cites(_unzoom("".join(parts)), cite_ids)
+            reply = _strip_unknown_cites(_ungoto(_unzoom("".join(parts))), cite_ids)
             new_history = history + [
                 {"role": "user", "text": message, "capture_id": cap_id},
                 {"role": "assistant", "text": reply},
@@ -2509,6 +2690,9 @@ def create_app():
         zoom = data.get("assistant_zoom", False)
         if not isinstance(zoom, bool):
             return jsonify({"error": "assistant_zoom must be a boolean"}), 400
+        goto = data.get("go_to", False)
+        if not isinstance(goto, bool):
+            return jsonify({"error": "go_to must be a boolean"}), 400
 
         choice = _ai_choice(data)
         provider = choice["provider"]
@@ -2517,6 +2701,7 @@ def create_app():
             reply = _run(
                 "call",
                 provider,
+                usage=_usage_context(_study_ids(), "chat", cap_id, history),
                 png_b64=png_b64,
                 viewport_b64=viewport_b64,
                 meta=meta,
@@ -2526,11 +2711,12 @@ def create_app():
                 selection=selection,
                 phrases=phrases,
                 zoom=zoom,
+                goto=goto,
                 ai=choice,
             )
             ids = set(_inventory_ids(inventory or []))
             # the widget gets the zoom marker; the history its citation, checked
-            saved = _strip_unknown_cites(_unzoom(reply), ids)
+            saved = _strip_unknown_cites(_ungoto(_unzoom(reply)), ids)
             reply = _strip_unknown_cites(reply, ids)
         except Exception as e:  # surface provider errors to the popover
             _server_event(_study_ids(), "error", where="answer", message=str(e))
@@ -2603,6 +2789,7 @@ def create_app():
             raw = _run(
                 "locate",
                 provider,
+                usage=_usage_context(_study_ids(), "locate", cap_id, history),
                 png_b64=png_b64,
                 viewport_b64=viewport_b64,
                 meta=meta,

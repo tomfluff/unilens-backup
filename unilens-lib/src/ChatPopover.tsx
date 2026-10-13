@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import { aiCatalogue, aiChoice, liveProvider } from "./ai";
 import {
     type CaptureResult,
@@ -10,11 +10,14 @@ import {
 } from "./capture";
 import { chatLang, chatText, speechLang } from "./chatI18n";
 import { ensureChatStyles } from "./chatStyles";
+import { useChatTheme } from "./chatTheme";
+import { markedPlace, markPlace, onMarkChange } from "./clickMarks";
 import { type Earcon, earcon, releaseAudio } from "./earcons";
 import {
     asksToLocate,
     asksToZoom,
     type Cited,
+    gotoAsked,
     mdLite,
     type NavCommand,
     navCommand,
@@ -23,6 +26,7 @@ import {
     renderCited,
     sourcesIn,
     speakable,
+    speakableWithSources,
     zoomAsked,
 } from "./evidence";
 import {
@@ -30,6 +34,7 @@ import {
     claimEscape,
     clearHighlights,
     hasHighlight,
+    isLatest,
     nextToken,
     onHighlightsCleared,
     registerPopoverClose,
@@ -51,6 +56,7 @@ import {
     PlayIcon,
     PrevIcon,
     SendIcon,
+    SourceStyleIcon,
     StopIcon,
     WaitIcon,
 } from "./icons";
@@ -72,7 +78,14 @@ import {
     placeOf,
 } from "./places";
 import { recordAsk, type SentAsk } from "./sentLog";
-import { getSettings, motionMs, useSettings } from "./settings";
+import {
+    getSettings,
+    motionMs,
+    SOURCE_STYLES,
+    setSourceStyle,
+    sourceStyleOf,
+    useSettings,
+} from "./settings";
 import {
     listenVoice,
     pauseSpeaking,
@@ -88,8 +101,14 @@ import {
     besideTarget,
     canReturn,
     directionOf,
+    getTargetView,
+    getTargetZoom,
+    getView,
+    getZoom,
     returnToPreviousView,
     revealElement,
+    revealElements,
+    setScreenCover,
 } from "./zoom";
 
 interface Msg {
@@ -168,9 +187,25 @@ function cited(m: Msg): Cited | null {
 }
 
 /** underlined words need the numbers where the model put them: only then are they
- *  asked for and drawn */
+ *  drawn */
 const phrasesOn = () =>
     getSettings().associateText && getSettings().citePlacement === "inline";
+/** ...and asked for; with the Sources button always, so a switch to underlines is
+ *  exact for every answer at once */
+const phrasesAsked = () => phrasesOn() || getSettings().sourceStyleButton;
+
+/** an answer as read aloud: its source numbers said where the chat shows them, with
+ *  "Say the source numbers" on (#28); a failed answer shows none, so says none */
+function readText(text: string, src: Msg["cite"], failed = false): string {
+    const s = getSettings();
+    return s.readSources && src && !failed
+        ? speakableWithSources(
+              text,
+              (id) => src.registry.has(id),
+              s.citePlacement,
+          )
+        : speakable(text);
+}
 
 /** station signs number their sources like station codes */
 const chipText = (n: number) =>
@@ -215,6 +250,8 @@ interface Props {
 /** width and height in em of the chat's font size (chatStyles.ts sizes the panel in em) */
 const PANEL_W_EM = 24.3;
 const PANEL_H_EM = 30;
+/** #30: the gap kept above an answer's question at the top of the log, px */
+const LAND_GAP = 8;
 /** the least a chat can be and still work: header, three lines of log, input, status */
 const MIN_H_EM = 16;
 
@@ -360,6 +397,7 @@ export default function ChatPopover({
 
     const fs = settings.chatFontSize;
     const hc = settings.highContrast;
+    const theme = useChatTheme(settings.chatTheme);
     const style = settings.chatStyle;
     const T = chatText();
     // on a phone-width screen the chat docks as a bottom sheet over half the height,
@@ -457,12 +495,17 @@ export default function ChatPopover({
         text: string,
         cls: string,
         playLabel = T.readAloud,
+        /** visible words beside the icon (the answer's pill; not the folded header) */
+        labelled = false,
+        /** the answer is still arriving: shown in its place, not yet pressable */
+        disabled = false,
     ) => {
         const phase = speaking?.idx === idx ? speaking.phase : null;
         const main =
             phase === "playing"
                 ? {
                       label: T.pauseReading,
+                      short: T.pauseShort,
                       icon: <PauseIcon />,
                       run: () => {
                           pauseSpeaking();
@@ -473,6 +516,7 @@ export default function ChatPopover({
                 : phase === "paused"
                   ? {
                         label: T.resumeReading,
+                        short: T.resumeShort,
                         icon: <PlayIcon />,
                         run: () => {
                             resumeSpeaking();
@@ -486,11 +530,13 @@ export default function ChatPopover({
                   : phase === "loading"
                     ? {
                           label: T.preparingAudio,
+                          short: T.preparingShort,
                           icon: <WaitIcon />,
                           run: () => {},
                       }
                     : {
                           label: playLabel,
+                          short: T.readShort,
                           icon: <PlayIcon />,
                           run: () => readMessage(idx, text),
                       };
@@ -502,8 +548,10 @@ export default function ChatPopover({
                     aria-label={main.label}
                     title={main.label}
                     onClick={main.run}
+                    disabled={disabled}
                 >
                     {main.icon}
+                    {labelled && <span>{main.short}</span>}
                 </button>
                 {phase && (
                     <button
@@ -521,6 +569,7 @@ export default function ChatPopover({
                         }}
                     >
                         <StopIcon />
+                        {labelled && <span>{T.stopShort}</span>}
                     </button>
                 )}
             </>
@@ -533,6 +582,16 @@ export default function ChatPopover({
     const inputRef = useRef<HTMLInputElement>(null);
     const aboutId = useId();
     const rootRef = useRef<HTMLDivElement>(null);
+    // what the chat covers counts as hidden to a move to a highlight (the edge zone,
+    // session 2): read at each move, where the chat is then
+    useEffect(() => {
+        setScreenCover(() => {
+            if (hiddenRef.current) return null;
+            const r = rootRef.current?.getBoundingClientRect();
+            return r?.width && r.height ? r : null;
+        });
+        return () => setScreenCover(null);
+    }, []);
     /** the header's fold button, where the keyboard goes when the chat folds itself */
     const foldRef = useRef<HTMLButtonElement>(null);
     /** a question asked while a new place is captured: it waits for that place */
@@ -1074,6 +1133,8 @@ export default function ChatPopover({
                         // captions off: the words show once the turn is complete
                         const shown =
                             final || getSettings().liveCaptions ? words : "";
+                        // a talk follows its words, as before (#30 is for answers asked)
+                        if (landAt.current) unland();
                         stick.current = true;
                         if (role === "user") {
                             if (!words.trim() && !final) {
@@ -1302,7 +1363,8 @@ export default function ChatPopover({
         cur.current = { id: captureId, cap: capture };
         setActive(null);
         setReturnable(canReturn());
-        setMini(false);
+        // a folded chat stays folded: it goes to the new place, but the user folded it
+        // (P05, 2026-10-10; it used to open out again)
         if (!pinned)
             setPos(
                 settle(
@@ -1319,6 +1381,7 @@ export default function ChatPopover({
         livePage.current?.();
         // the new place is the latest entry: follow it
         stick.current = true;
+        unland();
         requestAnimationFrame(() => {
             logScroll({ top: scrollRef.current?.scrollHeight ?? 0 });
             // the next thing typed is about the new place: the field takes the
@@ -1385,6 +1448,94 @@ export default function ChatPopover({
     // controls that appear when an answer ends) while the user is at the bottom; once
     // they scroll up to read, it stays put until they send again.
     const stick = useRef(true);
+    /** #30: the row a new answer was landed at (its question, or the answer), kept
+     *  at the top of the log while the answer streams; the spacer after the last row
+     *  is the room that lets it get there, shrinking as the answer fills it */
+    const landAt = useRef<string | null>(null);
+    /** an answer that began but is not placed yet (the log is folded away, or not
+     *  drawn yet): its row is chosen once the log is there */
+    const landFresh = useRef<{ answer: string; asked: string | null } | null>(
+        null,
+    );
+    /** where the landed row sits in the log's view, so rows added above it (history
+     *  arriving late) do not move what the reader sees */
+    const landedTop = useRef<number | null>(null);
+    /** the log's scroll while an answer is landed, for a log made again (unfolded) */
+    const landedScroll = useRef(0);
+    /** the question the answer on its way answers (a queued one included) */
+    const askedRow = useRef<string | null>(null);
+    const spacerRef = useRef<HTMLDivElement>(null);
+    const rowOf = (log: HTMLElement, id: string) =>
+        log.querySelector<HTMLElement>(
+            `[data-msg="${CSS.escape(id)}"], [data-turn="${CSS.escape(id)}"]`,
+        );
+    /** the spacer's height: enough for the landed row to scroll to the log's top */
+    const fitSpacer = () => {
+        const log = scrollRef.current;
+        const sp = spacerRef.current;
+        if (!log || !sp) return;
+        const row = landAt.current ? rowOf(log, landAt.current) : null;
+        if (!row || landFresh.current) {
+            sp.style.height = "0px";
+            return;
+        }
+        const lr = log.getBoundingClientRect();
+        const at = (e: Element) =>
+            e.getBoundingClientRect().top - lr.top + log.scrollTop;
+        const pad = Number.parseFloat(getComputedStyle(log).paddingBottom) || 0;
+        // the farthest the log scrolls is the spacer's end and its padding, less the
+        // view; that must reach the row
+        const need = log.clientHeight + at(row) - LAND_GAP - at(sp) - pad;
+        sp.style.height = `${Math.max(0, Math.ceil(need))}px`;
+    };
+    /** no answer is held at the top any more (a new question, a new place) */
+    const unland = () => {
+        landAt.current = null;
+        landFresh.current = null;
+        landedTop.current = null;
+        fitSpacer();
+    };
+    /** scroll the log so the landed row is at its top; a fresh answer first chooses
+     *  that row: its question, unless the question would take too much of the log */
+    const placeLanded = () => {
+        const log = scrollRef.current;
+        if (!log) return;
+        const fresh = landFresh.current;
+        if (fresh) {
+            const turn = rowOf(log, fresh.answer);
+            if (!turn) return;
+            const asked = fresh.asked ? rowOf(log, fresh.asked) : null;
+            const h = log.getBoundingClientRect().height;
+            landAt.current =
+                asked &&
+                fresh.asked &&
+                asked.getBoundingClientRect().height < h * 0.4
+                    ? fresh.asked
+                    : fresh.answer;
+            landFresh.current = null;
+        }
+        const row = landAt.current ? rowOf(log, landAt.current) : null;
+        if (!row) return;
+        fitSpacer();
+        const lr = log.getBoundingClientRect();
+        const top =
+            log.scrollTop + row.getBoundingClientRect().top - lr.top - LAND_GAP;
+        landedTop.current = LAND_GAP;
+        landedScroll.current = top;
+        logScroll({ top });
+    };
+    /**
+     * #30: an answer has begun. The log scrolls once, so the question above it is at
+     * the top (or the answer, when the question would take too much of the log), and
+     * then stays: it does not follow the text, nor jump when the answer ends.
+     */
+    const landAnswer = (id: string) => {
+        if (!getSettings().answerFromStart) return;
+        stick.current = false;
+        landAt.current = id;
+        landFresh.current = { answer: id, asked: askedRow.current };
+        requestAnimationFrame(placeLanded);
+    };
     /** until when the log's scroll events are our own eased scroll, not the user's */
     const ownScroll = useRef(0);
     const logScroll = (opts: ScrollToOptions, by = false) => {
@@ -1429,9 +1580,18 @@ export default function ChatPopover({
         const log = scrollRef.current;
         if (!log || typeof ResizeObserver === "undefined") return;
         const ro = new ResizeObserver(() => {
+            fitSpacer();
             if (stick.current) log.scrollTop = log.scrollHeight;
         });
         ro.observe(log);
+        // made again (unfolded) with an answer landed: placed now if it began while
+        // folded, else back where the reader was
+        if (landAt.current)
+            requestAnimationFrame(() => {
+                if (landFresh.current) return placeLanded();
+                fitSpacer();
+                log.scrollTop = landedScroll.current;
+            });
         return () => ro.disconnect();
     }, [mini]);
     /** a finished answer taller than the log opens at its first line, not its last:
@@ -1452,6 +1612,27 @@ export default function ChatPopover({
                 logScroll({ top: log.scrollTop + tr.top - lr.top - 8 });
             }),
         );
+    // the landed answer grows into its room, so the log's length stays; and rows added
+    // above it (history arriving) leave what the reader sees where it was (#30)
+    // biome-ignore lint/correctness/useExhaustiveDependencies: follows every message change
+    useLayoutEffect(() => {
+        fitSpacer();
+        const log = scrollRef.current;
+        const row = log && landAt.current ? rowOf(log, landAt.current) : null;
+        if (
+            !log ||
+            !row ||
+            landedTop.current == null ||
+            performance.now() < ownScroll.current
+        )
+            return;
+        const now =
+            row.getBoundingClientRect().top - log.getBoundingClientRect().top;
+        if (Math.abs(now - landedTop.current) > 0.5) {
+            log.scrollTop += now - landedTop.current;
+            landedScroll.current = log.scrollTop;
+        }
+    }, [messages]);
     // biome-ignore lint/correctness/useExhaustiveDependencies: follows every message change
     useEffect(() => {
         if (stick.current)
@@ -1490,6 +1671,9 @@ export default function ChatPopover({
     const [returnable, setReturnable] = useState(false);
     /** the place whose clicked element is outlined, so its entry shows pressed */
     const [placeOn, setPlaceOn] = useState<Place | null>(null);
+    // the marked place's entry shows pressed: drawn again when the mark moves
+    const [, setMarkTick] = useState(0);
+    useEffect(() => onMarkChange(() => setMarkTick((t) => t + 1)), []);
     /**
      * What "this" means right now: the sources outlined from an answer, or the
      * element of an outlined place. It goes with the question, so the model answers
@@ -1549,12 +1733,112 @@ export default function ChatPopover({
     const sourceVia = (fromText: boolean, still: boolean) =>
         still
             ? "live"
-            : byCommand.current
-              ? "command"
-              : fromText
-                ? "number in the answer"
-                : "controls";
+            : byGoto.current
+              ? "assistant go-to"
+              : byCommand.current
+                ? "command"
+                : fromText
+                  ? "number in the answer"
+                  : "controls";
     /** outline a reply's evidence (all, or item `index`), on the user's click or command */
+    /**
+     * Once the page settles, a chat covering these elements steps aside to the nearer
+     * side (a setting; a pinned chat stays), and at high zoom with no room either side
+     * it folds to its header. Only for a source the user presses: an answer's own
+     * outlines leave the chat where it is (Yotam, 2026-10-10).
+     */
+    function stepAsideFrom(shown: Element[], still = false) {
+        // chatMovesAside off: the chat stays where it is, unfolded (co-design
+        // initial prototype, Yotam 2026-10-07: stepping aside is an advanced feature)
+        if (!shown.length || mini || still || !getSettings().chatMovesAside)
+            return;
+        window.clearTimeout(stepAside.current);
+        const T = chatText();
+        // where the page is heading: the chat steps aside as the page starts to move,
+        // not after it lands (Yotam's try-out, 2026-10-12). Only a zoom on its way
+        // (the assistant's) changes sizes as well, and is waited out
+        // and a source pinned to the screen (in a fixed or sticky part of the page)
+        // does not move with the page: those are measured where they settle, too
+        const pinnedAny = shown.some((e) => {
+            for (
+                let n: Element | null = e;
+                n && n !== document.body;
+                n = n.parentElement
+            ) {
+                const p = getComputedStyle(n).position;
+                if (p === "fixed" || p === "sticky") return true;
+            }
+            return false;
+        });
+        const zooming = getZoom().scale !== getTargetZoom() || pinnedAny;
+        const now = getView();
+        const to = getTargetView();
+        const ahead = { x: now.x - to.x, y: now.y - to.y };
+        stepAside.current = window.setTimeout(
+            () => {
+                const boxes = shown.map((e) => {
+                    const r = e.getBoundingClientRect();
+                    return zooming
+                        ? r
+                        : {
+                              left: r.left + ahead.x,
+                              top: r.top + ahead.y,
+                              right: r.right + ahead.x,
+                              bottom: r.bottom + ahead.y,
+                          };
+                });
+                const a = {
+                    left: Math.min(...boxes.map((r) => r.left)),
+                    top: Math.min(...boxes.map((r) => r.top)),
+                    right: Math.max(...boxes.map((r) => r.right)),
+                    bottom: Math.max(...boxes.map((r) => r.bottom)),
+                };
+                const b = rootRef.current?.getBoundingClientRect();
+                if (!b || dragRef.current) return;
+                const w = Math.min(a.right, b.right) - Math.max(a.left, b.left);
+                const h = Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top);
+                if (w <= 0 || h <= 0) return;
+                // turned off while this waited: the chat stays
+                if (!getSettings().chatMovesAside) return;
+                const aside = !pinnedNow.current;
+                if (aside) {
+                    const left = besideTarget(a, b, window.innerWidth);
+                    if (left != null) {
+                        setPos((p) => ({ ...p, left }));
+                        return;
+                    }
+                }
+                const area = Math.max(
+                    1,
+                    (a.right - a.left) * (a.bottom - a.top),
+                );
+                // no room beside it (high zoom, or a phone's bottom sheet): a chat still
+                // covering the source folds to its header, if it may move at all
+                if ((short || aside) && (w * h) / area > 0.2) {
+                    // folding removes the control that has focus: the keyboard moves
+                    // to the unfold button, not to the page
+                    const hadFocus = rootRef.current?.contains(
+                        document.activeElement,
+                    );
+                    setMini(true);
+                    if (hadFocus)
+                        requestAnimationFrame(() =>
+                            foldRef.current?.focus({ preventScroll: true }),
+                        );
+                    act("press", T.sCovered);
+                }
+            },
+            zooming ? motionMs() + 80 : 0,
+        );
+    }
+
+    /** whether showing all the sources (the button, "show all") moves the page
+     *  (allMoves, a switch off by default: item 16b, Yotam 2026-10-13): to the group,
+     *  or its first source when the group does not fit the edge zone. Off, All only
+     *  outlines them where they are, as since 4707024: several places cannot all be
+     *  brought to the middle. An answer's own outlines as it arrives never move it */
+    const allMoves = () => getSettings().allMoves;
+
     function point(
         m: Msg,
         index: number | "all",
@@ -1614,11 +1898,20 @@ export default function ChatPopover({
         // the moveToEvidence setting decides whether choosing an item moves the page;
         // "never" leaves finding it to the off-screen cues and the minimap
         const move = getSettings().moveToEvidence;
+        // All: the group's box when it fits the edge zone (session 2), else the first
         const moved =
             reveal && move !== "never" && el
-                ? revealElement(el, undefined, {
-                      always: move === "always",
-                  }) === "moved"
+                ? (index === "all"
+                      ? revealElements(
+                            picks
+                                .map(({ id }) => src.registry.get(id))
+                                .filter((e): e is Element => e != null),
+                            undefined,
+                            { always: move === "always" },
+                        )
+                      : revealElement(el, undefined, {
+                            always: move === "always",
+                        })) === "moved"
                 : false;
         setReturnable(canReturn());
         logEvent("source", {
@@ -1640,50 +1933,7 @@ export default function ChatPopover({
             .filter((e): e is Element => e != null);
         // chatMovesAside off: the chat stays where it is, unfolded (co-design
         // initial prototype, Yotam 2026-10-07: stepping aside is an advanced feature)
-        if (shown.length && !mini && !still && getSettings().chatMovesAside)
-            stepAside.current = window.setTimeout(() => {
-                const boxes = shown.map((e) => e.getBoundingClientRect());
-                const a = {
-                    left: Math.min(...boxes.map((r) => r.left)),
-                    top: Math.min(...boxes.map((r) => r.top)),
-                    right: Math.max(...boxes.map((r) => r.right)),
-                    bottom: Math.max(...boxes.map((r) => r.bottom)),
-                };
-                const b = rootRef.current?.getBoundingClientRect();
-                if (!b || dragRef.current) return;
-                const w = Math.min(a.right, b.right) - Math.max(a.left, b.left);
-                const h = Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top);
-                if (w <= 0 || h <= 0) return;
-                // turned off while this waited: the chat stays
-                if (!getSettings().chatMovesAside) return;
-                const aside = !pinnedNow.current;
-                if (aside) {
-                    const left = besideTarget(a, b, window.innerWidth);
-                    if (left != null) {
-                        setPos((p) => ({ ...p, left }));
-                        return;
-                    }
-                }
-                const area = Math.max(
-                    1,
-                    (a.right - a.left) * (a.bottom - a.top),
-                );
-                // no room beside it (high zoom, or a phone's bottom sheet): a chat still
-                // covering the source folds to its header, if it may move at all
-                if ((short || aside) && (w * h) / area > 0.2) {
-                    // folding removes the control that has focus: the keyboard moves
-                    // to the unfold button, not to the page
-                    const hadFocus = rootRef.current?.contains(
-                        document.activeElement,
-                    );
-                    setMini(true);
-                    if (hadFocus)
-                        requestAnimationFrame(() =>
-                            foldRef.current?.focus({ preventScroll: true }),
-                        );
-                    act("press", T.sCovered);
-                }
-            }, motionMs() + 80);
+        stepAsideFrom(shown, still);
         if (hasHighlight()) {
             const said =
                 index === "all"
@@ -1702,7 +1952,14 @@ export default function ChatPopover({
         // the controls row sits at the answer's end: keep it in view for a press there,
         // but a source pressed in the text is where the reader is reading
         // Live pointing as it speaks leaves the log where the reader is
-        if (!fromText && !still) revealTurn(m.id);
+        // the assistant's go-to, as an answer shown from its start ends, leaves the log
+        // where the reader is (#30)
+        if (
+            !fromText &&
+            !still &&
+            !(byGoto.current && getSettings().answerFromStart)
+        )
+            revealTurn(m.id);
         return moved;
     }
 
@@ -1759,13 +2016,69 @@ export default function ChatPopover({
                 ms.map((x) => (x.id === m.id ? { ...x, zoomed: true } : x)),
             );
         };
+        // the place the answer takes the user to (co-design study, 2026-10-09): the
+        // model decides, with no guard on the question; it goes as a pressed number goes
+        const goal = getSettings().assistantGoTo ? gotoAsked(m.text) : null;
+        const gotoNow = (latest: boolean) => {
+            if (!goal || !c || !src) return;
+            const k = c.ids.indexOf(goal);
+            const el = src.registry.get(goal);
+            const skip = (reason: string) =>
+                logEvent("goto", {
+                    msg: m.id,
+                    question,
+                    target: goal,
+                    done: false,
+                    reason,
+                });
+            if (k < 0) return skip("not a source of the answer");
+            if (!el?.isConnected) return skip("not on the page");
+            // a late answer moves nothing: the user closed the chat, or asked or
+            // clicked again since (the guard the answer's own outlines have)
+            if (hiddenRef.current) return skip("the chat was closed");
+            if (!latest) return skip("a newer question or click came first");
+            const where = directionOf(el);
+            byGoto.current = true;
+            let moved = false;
+            try {
+                moved = point(m, k, true);
+            } finally {
+                byGoto.current = false;
+            }
+            // nothing drawn: the element is there but shows nothing (collapsed,
+            // hidden), so the user was taken nowhere
+            const shown = hasHighlight();
+            logEvent("goto", {
+                msg: m.id,
+                question,
+                target: goal,
+                label: labelOfWire(goal, src.inventory),
+                n: k + 1,
+                where,
+                moved,
+                done: shown,
+                ...(shown ? {} : { reason: "nothing to show on the page" }),
+            });
+        };
         const done = () => {
+            // judged before the answer's own zoom, whose outline is a newer request
+            const latest = !!src && isLatest(src.id, token);
             zoomNow();
             act("done", said);
+            // after the answer's own status, so the move is the last thing said
+            gotoNow(latest);
         };
-        showAnswerStart(m.id);
+        // shown from its start as it began (#30): no jump now
+        if (!getSettings().answerFromStart) showAnswerStart(m.id);
         // asked where, pointed nowhere: "nothing found", styled apart from an answer
-        if (c && !c.ids.length && asksToLocate(question))
+        // (session 1; in session 2 every answer looks like one, notes and errors
+        // alone are styled apart: Yotam's try-out, 2026-10-12)
+        if (
+            getSettings().quietNotFound &&
+            c &&
+            !c.ids.length &&
+            asksToLocate(question)
+        )
             setMessages((ms) =>
                 ms.map((x) => (x.id === m.id ? { ...x, quiet: true } : x)),
             );
@@ -1787,6 +2100,8 @@ export default function ChatPopover({
             token,
         );
         if (drawn && hasHighlight()) {
+            // the chat stays put for the answer's own outlines: it steps aside only
+            // for a source the user presses (Yotam, 2026-10-10)
             setActive({ msgId: m.id, index: "all" });
             said += ` ${chatText().hFound(
                 c.ids.map((id) => labelOfWire(id, src.inventory)).join(", "),
@@ -1795,16 +2110,45 @@ export default function ChatPopover({
         done();
     }
 
+    // what was just Alt+clicked, outlined as its place entry outlines it, until the
+    // answer's sources replace it (Yotam, 2026-10-10, session 2)
+    useEffect(() => {
+        if (!getSettings().outlineClicked) return;
+        const p = placeOf(captureId);
+        const box = p?.el?.isConnected ? p.el.getBoundingClientRect() : null;
+        // a thing, not a whole section (as the place entry decides)
+        if (
+            !p?.el ||
+            !box ||
+            box.width > window.innerWidth ||
+            box.height > window.innerHeight / 2
+        )
+            return;
+        const drawn = showHighlights(
+            [{ id: "click", role: "anchor" }],
+            new Map([["click", p.el]]),
+            captureId,
+            nextToken(),
+            { userInitiated: true },
+        );
+        if (drawn && hasHighlight()) setPlaceOn(p);
+    }, [captureId]);
+
     /** "next", "show all", "the second one": steer the last cited reply without a model call */
     /** take the user back to where they clicked, and outline what they clicked on */
     function goPlace(p: Place, toggle = false): string {
         const T = chatText();
-        // its entry is a toggle: pressed again, the outline goes and the page stays
-        if (toggle && placeOn === p && hasHighlight()) {
-            clearHighlights();
+        // its entry is a toggle: pressed again, the outline and the place's mark go,
+        // and the page stays
+        const lit = placeOn === p && hasHighlight();
+        if (toggle && (lit || markedPlace() === p)) {
+            if (lit) clearHighlights();
+            markPlace(null);
             act("clear", T.sCleared);
             return T.sCleared;
         }
+        // its mark shows, the others' hide (Yotam's try-out, 2026-10-12)
+        markPlace(p);
         const r = goToPlace(p);
         // outline what was clicked only when it is a thing, not a whole section
         const box = p.el?.isConnected ? p.el.getBoundingClientRect() : null;
@@ -1829,7 +2173,14 @@ export default function ChatPopover({
 
     /** a command is choosing the source: point() logs it as the command's */
     const byCommand = useRef(false);
+    /** the assistant's go-to is choosing the source (the study's log) */
+    const byGoto = useRef(false);
     function runNav(cmd: NavCommand, text: string): boolean {
+        // an answer landed (#30): a command's note is followed, as a new question is
+        if (landAt.current) {
+            unland();
+            stick.current = true;
+        }
         byCommand.current = true;
         try {
             return runNavNow(cmd, text);
@@ -1872,7 +2223,7 @@ export default function ChatPopover({
             note = T.sCleared;
             act("clear", note);
         } else if (cmd.kind === "all") {
-            point(last, "all", false);
+            point(last, "all", allMoves());
             note = T.sAllNote(n);
         } else {
             const i =
@@ -1929,8 +2280,9 @@ export default function ChatPopover({
                 session_id: sessionId,
                 cite: getSettings().citeEvidence,
                 selection: sel ? { items: selectionIn(sel, on) } : undefined,
-                mark_phrases: phrasesOn(),
+                mark_phrases: phrasesAsked(),
                 assistant_zoom: getSettings().assistantZoom,
+                go_to: getSettings().assistantGoTo,
                 ai: aiChoice(),
             }),
         });
@@ -1954,6 +2306,7 @@ export default function ChatPopover({
             ...m,
             { id: msgId, role: "assistant", text: "", cite, streaming: true },
         ]);
+        landAnswer(msgId);
         const reader = res.body.getReader();
         const decoder = new TextDecoder();
         let buffer = "";
@@ -2002,7 +2355,7 @@ export default function ChatPopover({
                             chars: full.length,
                         });
                         readCue();
-                        speak(speakable(full), (s) =>
+                        speak(readText(full, cite), (s) =>
                             setSpeaking(
                                 s === "idle" ? null : { idx, phase: s },
                             ),
@@ -2037,8 +2390,9 @@ export default function ChatPopover({
                 session_id: sessionId,
                 cite: getSettings().citeEvidence,
                 selection: sel ? { items: selectionIn(sel, on) } : undefined,
-                mark_phrases: phrasesOn(),
+                mark_phrases: phrasesAsked(),
                 assistant_zoom: getSettings().assistantZoom,
+                go_to: getSettings().assistantGoTo,
                 ai: aiChoice(),
             }),
         });
@@ -2057,6 +2411,7 @@ export default function ChatPopover({
             cite: data.reply == null ? undefined : cite,
         };
         setMessages((m) => [...m, reply]);
+        landAnswer(reply.id);
         if (data.reply != null) onReplyDone(reply, text, token, ask);
         // live read: the user may toggle auto-read while the request is in flight
         if (getSettings().autoRead && data.reply && !hiddenRef.current) {
@@ -2066,7 +2421,7 @@ export default function ChatPopover({
                 chars: data.reply.length,
             });
             readCue();
-            speak(speakable(data.reply));
+            speak(readText(data.reply, cite));
         }
     }
 
@@ -2091,6 +2446,7 @@ export default function ChatPopover({
                     { id, role: "user", text, captureId: cur.current.id },
                 ]);
                 stick.current = true;
+                unland();
                 // about the new place being captured: it waits for it, as a typed
                 // question does
                 if (capturing) {
@@ -2134,15 +2490,19 @@ export default function ChatPopover({
             ]);
             // a new place is being captured: the question is about it, so it waits
             // for it (the capturing edge sends it) instead of going to the old one
+            askedRow.current = msgId;
             if (capturing) {
                 waiting.current = { text, msgId };
                 stick.current = true;
+                unland();
                 act("send", T.sAskQueued);
                 return;
             }
         }
+        if (queuedId) askedRow.current = queuedId;
         setBusy(true);
         stick.current = true;
+        unland();
         act("send", T.sAsking);
         // minted at ask time: an auto-highlight for this reply loses to anything newer
         const token = nextToken();
@@ -2225,7 +2585,7 @@ export default function ChatPopover({
         if (pressed) {
             clearHighlights();
             act("clear", T.sCleared);
-        } else point(m, "all", false);
+        } else point(m, "all", allMoves());
     };
     const goBack = () => {
         const ok = returnToPreviousView();
@@ -2241,6 +2601,8 @@ export default function ChatPopover({
             className="ulc-c ulc-back"
             aria-label={T.back}
             title={T.backTitle}
+            // always there, so it is found; usable once there is a place to go back to
+            disabled={!returnable}
             onClick={goBack}
         >
             <BackIcon />
@@ -2254,7 +2616,7 @@ export default function ChatPopover({
             type="button"
             className="ulc-where"
             onClick={() => goPlace(p, true)}
-            aria-pressed={placeOn === p}
+            aria-pressed={placeOn === p || markedPlace() === p}
             aria-label={T.placeEntry(placeNumber(p), p.label)}
             title={T.placeEntry(placeNumber(p), p.label)}
         >
@@ -2294,7 +2656,8 @@ export default function ChatPopover({
                     (style === "assistant" ? (
                         // the status line announces the position; this is its visible copy
                         <span className="ulc-of" aria-hidden="true">
-                            {at >= 0 ? at + 1 : "–"}/{n}
+                            {/* one chosen: "2/5"; none or all: how many there are */}
+                            {at >= 0 ? `${at + 1}/${n}` : n}
                         </span>
                     ) : (
                         keys.map(({ id, k }) => (
@@ -2336,13 +2699,14 @@ export default function ChatPopover({
                         <span>{nav ? T.allShort : T.highlightAll(n)}</span>
                     )}
                 </button>
-                {returnable && backButton}
+                {backButton}
             </div>
         );
     }
 
     // the log: every click as its own entry, questions and answers, in order
     const rows: React.ReactNode[] = [];
+    const fromStart = settings.answerFromStart;
     messages.forEach((m, i) => {
         if (m.role === "place") {
             const p = placeOf(m.captureId);
@@ -2359,7 +2723,7 @@ export default function ChatPopover({
         }
         if (m.role === "user") {
             rows.push(
-                <div key={m.id} className="ulc-msg ulc-me">
+                <div key={m.id} className="ulc-msg ulc-me" data-msg={m.id}>
                     {m.text}
                 </div>,
             );
@@ -2382,6 +2746,19 @@ export default function ChatPopover({
                 <div
                     className={`ulc-msg ulc-bot${m.error ? " is-err" : ""}${m.quiet ? " is-quiet" : ""}`}
                 >
+                    {/* #30: read aloud at the answer's start, there from its first word */}
+                    {fromStart && (m.text || m.streaming) && (
+                        <span className="ulc-read is-first">
+                            {readControls(
+                                i,
+                                readText(m.text, m.cite, m.error),
+                                "ulc-speak has-label",
+                                T.readAloud,
+                                true,
+                                Boolean(m.streaming),
+                            )}
+                        </span>
+                    )}
                     {/* Chips are <button data-cite> inside escaped HTML; one delegated
                         click handler serves them (keyboard Enter/Space clicks too) */}
                     {/* biome-ignore lint/a11y/noStaticElementInteractions lint/a11y/useKeyWithClickEvents: delegation only; the targets are real <button> chips, which click on Enter and Space */}
@@ -2408,9 +2785,15 @@ export default function ChatPopover({
                         <span className="ulc-caret" aria-hidden="true" />
                     )}
                     {/* read aloud sits at the end of the answer, not on a row of its own */}
-                    {m.text && !m.streaming && (
+                    {!fromStart && m.text && !m.streaming && (
                         <span className="ulc-read">
-                            {readControls(i, speakable(m.text), "ulc-speak")}
+                            {readControls(
+                                i,
+                                readText(m.text, m.cite, m.error),
+                                "ulc-speak has-label",
+                                T.readAloud,
+                                true,
+                            )}
                         </span>
                     )}
                     {style === "assistant" && controls}
@@ -2516,6 +2899,7 @@ export default function ChatPopover({
             className="ul-chat"
             data-style={style}
             data-hc={hc ? "true" : "false"}
+            data-theme={theme}
             data-mini={mini ? "true" : "false"}
             data-short={short ? "true" : "false"}
             role="dialog"
@@ -2557,6 +2941,35 @@ export default function ChatPopover({
                     <b>{style === "station" ? T.stationName : T.title}</b>
                     {style === "station" && <small>{T.otherName}</small>}
                 </div>
+                {!mini && settings.sourceStyleButton && (
+                    // the three source styles, in turn; each has its own icon, and
+                    // the button is lit while the words are underlined (Yotam,
+                    // 2026-10-10: it must show that it did something)
+                    <button
+                        type="button"
+                        className="ulc-ib ulc-ground"
+                        data-style={settings.sourceStyle}
+                        aria-label={T.sourcesButton(
+                            T.sourceStyle[settings.sourceStyle],
+                        )}
+                        title={T.sourcesButton(
+                            T.sourceStyle[settings.sourceStyle],
+                        )}
+                        onClick={() => {
+                            const now = sourceStyleOf(getSettings());
+                            const next =
+                                SOURCE_STYLES[
+                                    (SOURCE_STYLES.indexOf(now) + 1) %
+                                        SOURCE_STYLES.length
+                                ];
+                            setSourceStyle(next);
+                            logEvent("sources_style", { style: next });
+                            act("press", T.sSources(T.sourceStyle[next]));
+                        }}
+                    >
+                        <SourceStyleIcon style={settings.sourceStyle} />
+                    </button>
+                )}
                 {!mini && onNewConversation && (
                     <button
                         type="button"
@@ -2578,7 +2991,11 @@ export default function ChatPopover({
                     lastAnswer >= 0 &&
                     readControls(
                         lastAnswer,
-                        speakable(messages[lastAnswer].text),
+                        readText(
+                            messages[lastAnswer].text,
+                            messages[lastAnswer].cite,
+                            messages[lastAnswer].error,
+                        ),
                         "ulc-ib",
                         T.readLast,
                     )}
@@ -2626,18 +3043,38 @@ export default function ChatPopover({
 
             {!mini && (
                 <div
-                    className="ulc-log"
+                    className={`ulc-log${fromStart ? " is-from-start" : ""}`}
                     ref={scrollRef}
                     onScroll={(e) => {
+                        const el = e.currentTarget;
+                        // an answer shown from its start (#30): where the log is now is
+                        // kept, whoever moved it (the last of our own eased scroll is
+                        // where it lands; a user's scroll is where they read)
+                        if (landAt.current && !landFresh.current) {
+                            landedScroll.current = el.scrollTop;
+                            const row = rowOf(el, landAt.current);
+                            if (row)
+                                landedTop.current =
+                                    row.getBoundingClientRect().top -
+                                    el.getBoundingClientRect().top;
+                        }
                         // our own eased scroll passes through positions the user never chose
                         if (performance.now() < ownScroll.current) return;
-                        const el = e.currentTarget;
+                        // where the user scrolls, they read: not followed again (#30)
                         stick.current =
+                            !landAt.current &&
                             el.scrollHeight - el.scrollTop - el.clientHeight <
-                            48;
+                                48;
                     }}
                 >
                     {rows}
+                    {fromStart && (
+                        <div
+                            className="ulc-spacer"
+                            ref={spacerRef}
+                            aria-hidden="true"
+                        />
+                    )}
                     {!talked && (
                         <p className="ulc-empty">
                             {settings.quickActions

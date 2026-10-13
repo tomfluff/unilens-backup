@@ -15,6 +15,7 @@
 import { flushSync } from "react-dom";
 import { createRoot } from "react-dom/client";
 import { startTrace } from "./capture";
+import { initClickMarks } from "./clickMarks";
 import { init as initHighlight } from "./highlight";
 import { initMinimap } from "./minimap";
 import { initFacilitator, startChosenPreset } from "./presets";
@@ -74,6 +75,7 @@ export function init(options: InitOptions = {}) {
     if (unilens.getOption("zoom")) initZoom();
     initMinimap();
     initHighlight();
+    initClickMarks();
     initSettings(unilens.getBackend());
     setSpeechBackend(unilens.getBackend());
     initFacilitator({
