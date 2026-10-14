@@ -377,6 +377,7 @@ export const NAMES_JA: Partial<Record<keyof Settings, string>> = {
     inventory: "キャプチャと一緒にページの構造を送る",
     ringScale: "拡大に合わせて枠を太くする",
     hlBadgeClamp: "番号を画面の端にとどめる",
+    hlFoldOuter: "大きな範囲の中の場所はその枠にまとめる",
     hlAdaptLine: "色の自動調整で線にも色をつける（暗い背景では光彩を強く）",
     hlColorMode: "色の自動調整",
     hlColorRange: "色を変えてよい幅",

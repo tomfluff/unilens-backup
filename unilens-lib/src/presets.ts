@@ -82,6 +82,8 @@ const INITIAL = {
     hlPulse: "off",
     // a number partly off screen slid in at the screen's edge (session 1)
     hlBadgeClamp: true,
+    // a place inside another cited place folds into the larger outline (session 1)
+    hlFoldOuter: true,
     // the ring and thin border black and white whatever the colour (session 1)
     hlAdaptLine: false,
     // an Alt+drag's release counted as an Alt+click (session 1)
@@ -192,6 +194,10 @@ export const PRESETS = {
             // numbers stay by their places, off screen with them (Yotam's try-out,
             // 2026-10-12). Not in the panel
             hlBadgeClamp: false,
+            // every cited place has its own outline and number, also inside a cited
+            // section; only an outer that adds nothing folds (Yotam, 2026-10-14, for
+            // P02). Not in the panel
+            hlFoldOuter: false,
             // every answer looks like an answer; notes and errors alone are dotted
             // (Yotam's try-out, 2026-10-12). Not in the panel
             quietNotFound: false,
