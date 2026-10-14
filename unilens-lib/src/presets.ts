@@ -250,9 +250,9 @@ export const PRESETS = {
             // the click marks (P02, P03, session 1): none, offered here
             "clickMark",
             "clickMarkStyle",
-            // the floating button (#29, Yotam 2026-10-12): off, offered here
+            // the floating button (#29, Yotam 2026-10-12): off, offered here. Not
+            // its reminder: that fits session 3, agency (Yotam, 2026-10-14)
             "floatingButton",
-            "fabReminder",
         ],
         // each task link opens a new tab (session lead, 2026-10-09)
         keepPerParticipant: true,

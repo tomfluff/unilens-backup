@@ -173,6 +173,12 @@ describe("session 2 (2026-10-09)", () => {
         expect(PRESETS.session2.panel as readonly string[]).not.toContain(
             "answerFromStart",
         );
+        // the floating button's reminder: off, and not offered in session 2
+        // (session 3's topic, Yotam 2026-10-14)
+        expect(PRESETS.session2.values.fabReminder).toBe(false);
+        expect(PRESETS.session2.panel as readonly string[]).not.toContain(
+            "fabReminder",
+        );
     });
 
     it("lists a participant's panel of real panel settings", async () => {
