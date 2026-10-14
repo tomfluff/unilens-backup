@@ -87,6 +87,15 @@ export const POSITIONED_OVERLAY_ATTR = "data-unilens-a11y-positioned-overlay";
 export const BG_SAMPLE_ATTR = "data-unilens-a11y-bg-sample";
 
 /**
+ * Held for one style flush right after the bg-sample probe ends. Dropping the
+ * probe flips an element from its sampled author color back to the themed one;
+ * with transitions enabled, a host `transition: all .3s` would fade between the
+ * two and flash the unthemed color. Freezing transitions in the same batch that
+ * ends the probe means that flip never starts a transition.
+ */
+export const BG_FREEZE_ATTR = "data-unilens-a11y-bg-freeze";
+
+/**
  * Marked on a host element when its own ::before / ::after pseudo-element
  * paints an opaque background-color of its own (e.g. SoftBank decorative
  * hairlines/arrows such as `.p-graduateArrow::after`, `.c-hdg::after`).
@@ -118,6 +127,31 @@ export const BG_MEDIA_ATTR = "data-unilens-a11y-bg-media";
 export const TEXT_BG_ATTR = "data-unilens-a11y-text-bg";
 export const TEXT_BG_BEFORE_ATTR = "data-unilens-a11y-text-bg-before";
 export const TEXT_BG_AFTER_ATTR = "data-unilens-a11y-text-bg-after";
+/**
+ * Marked on a host element that owns no text of its own (a wrapper such as a
+ * card link or list item). The tag-based text-plate rule skips these, so a
+ * photo set as the wrapper's background-image stays visible; the text inside
+ * is plated by its own element.
+ */
+export const TEXT_BG_SKIP_ATTR = "data-unilens-a11y-text-bg-skip";
+
+/**
+ * Text drawn on top of a picture (mediaTextGuard.ts). Set on the picture
+ * block and every descendant: color rules (theme palette, text plates, text
+ * outline, link background) skip these so the host's own colors stay.
+ */
+export const MEDIA_TEXT_ATTR = "data-unilens-a11y-media-text";
+/**
+ * The picture block itself: whole-page filters are undone here (a hole in the
+ * saturation/contrast layer, a counter-filter under invert).
+ */
+export const MEDIA_TEXT_ROOT_ATTR = "data-unilens-a11y-media-text-root";
+/**
+ * An element whose own CSS background (or mask / ::before / ::after) paints a
+ * picture. Text plates must not strip that background-image — a banner link
+ * whose photo is its background would lose the photo.
+ */
+export const MEDIA_OWNER_ATTR = "data-unilens-a11y-media-owner";
 
 export const HTML_STYLE_FONT_SCALE = "--unilens-a11y-font-scale";
 
@@ -137,6 +171,9 @@ export const HTML_STYLE_LETTER_SPACING = "--unilens-a11y-letter-spacing";
 export const HTML_STYLE_WORD_SPACING = "--unilens-a11y-word-spacing";
 export const HTML_STYLE_SATURATE = "--unilens-a11y-display-saturate";
 export const HTML_STYLE_CONTRAST = "--unilens-a11y-display-contrast";
+/** 1 / saturate and 1 / contrast, for undoing the invert filter on picture blocks. */
+export const HTML_STYLE_SATURATE_INV = "--unilens-a11y-display-saturate-inv";
+export const HTML_STYLE_CONTRAST_INV = "--unilens-a11y-display-contrast-inv";
 export const HTML_STYLE_DISPLAY_BG = "--unilens-a11y-display-bg";
 export const HTML_STYLE_DISPLAY_TEXT = "--unilens-a11y-display-text";
 export const HTML_STYLE_DISPLAY_SURFACE = "--unilens-a11y-display-surface";

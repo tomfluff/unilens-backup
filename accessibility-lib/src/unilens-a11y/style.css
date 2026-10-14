@@ -133,6 +133,42 @@ html[data-unilens-a11y-html-filter]
     contrast(var(--unilens-a11y-display-contrast));
 }
 
+/* ── Text over pictures keeps the host's colors ──────────────────────────────
+ * mediaTextGuard.ts marks each picture block that has text drawn on it
+ * (an <img>/<video>/CSS background-image plus the text on top) with
+ * [data-unilens-a11y-media-text] (block + descendants) and
+ * [data-unilens-a11y-media-text-root] (the block). Every color rule in this
+ * file skips the former, so the designer's text-on-photo colors stay.
+ *
+ * Color is inherited, so the block's own text paint is pinned to the value
+ * the host gives it (read by mediaTextGuard with these attributes lifted);
+ * otherwise an uncolored heading would inherit the themed parent color. */
+html:is(
+    [data-unilens-a11y-display-active],
+    [data-unilens-a11y-text-stroke],
+    [data-unilens-a11y-text-plate],
+    [data-unilens-a11y-link-background]
+  )
+  #unilens-a11y-page-root
+  [data-unilens-a11y-media-text-root] {
+  /* The host backdrop too: a transparent image (tag outline, frame) must not
+   * show the theme's page color behind the host-colored text. */
+  background-color: var(--unilens-a11y-media-text-backdrop) !important;
+  color: var(--unilens-a11y-media-text-color) !important;
+  -webkit-text-fill-color: var(--unilens-a11y-media-text-fill) !important;
+  -webkit-text-stroke-width: var(--unilens-a11y-media-text-stroke-width) !important;
+  -webkit-text-stroke-color: var(--unilens-a11y-media-text-stroke-color) !important;
+}
+
+/* Invert: undo the <html> filter on the block — the same steps, inverted, in
+ * reverse order. Saturation 0 (mono) cannot be undone, so under mono + invert
+ * the block is un-inverted but stays gray. (Saturation / contrast without
+ * invert are cut out of #unilens-a11y-tone-layer's mask instead.) */
+html[data-unilens-a11y-html-filter] #unilens-a11y-page-root [data-unilens-a11y-media-text-root] {
+  filter: contrast(var(--unilens-a11y-display-contrast-inv, 1))
+    saturate(var(--unilens-a11y-display-saturate-inv, 1)) hue-rotate(-180deg) invert(1) !important;
+}
+
 /* Force color + background-color on every descendant, not just on the root.
  * The host site's own CSS almost always sets `color` explicitly on individual
  * elements (p, span, div, li, ...), which breaks CSS inheritance — so setting
@@ -155,7 +191,7 @@ html[data-unilens-a11y-html-filter]
  * show this fill (and keep host background-image icons intact).
  * [data-unilens-a11y-bg-sample] temporarily opts an element out of the
  * transparent reset while markers sample the author background. */
-html[data-unilens-a11y-display-active] #unilens-a11y-page-root *:not([data-unilens-a11y-bg-sample]) {
+html[data-unilens-a11y-display-active] #unilens-a11y-page-root *:not([data-unilens-a11y-bg-sample]):not([data-unilens-a11y-media-text]) {
   background-color: transparent !important;
 }
 
@@ -168,12 +204,31 @@ html[data-unilens-a11y-display-active] #unilens-a11y-page-root [data-unilens-a11
   animation: none !important;
 }
 
-html[data-unilens-a11y-display-active] #unilens-a11y-page-root * {
+/* mediaTextGuard lifts the color attributes off <html> to read host paint
+ * (data-unilens-a11y-paint-probe). No host fade may run while it does, nor
+ * when the attributes come back. */
+html[data-unilens-a11y-paint-probe] #unilens-a11y-page-root *,
+html[data-unilens-a11y-paint-probe] #unilens-a11y-page-root *::before,
+html[data-unilens-a11y-paint-probe] #unilens-a11y-page-root *::after {
+  transition: none !important;
+}
+
+/* Held for one style flush when a probe ends, so the flip from the sampled
+ * author color back to the themed one does not start a host fade
+ * (`transition: all .3s`). Only transitions: `animation: none` here would
+ * restart host animations. */
+html[data-unilens-a11y-display-active] #unilens-a11y-page-root [data-unilens-a11y-bg-freeze],
+html[data-unilens-a11y-display-active] #unilens-a11y-page-root [data-unilens-a11y-bg-freeze]::before,
+html[data-unilens-a11y-display-active] #unilens-a11y-page-root [data-unilens-a11y-bg-freeze]::after {
+  transition: none !important;
+}
+
+html[data-unilens-a11y-display-active] #unilens-a11y-page-root *:not([data-unilens-a11y-media-text]) {
   color: var(--unilens-a11y-display-text) !important;
   border-color: var(--unilens-a11y-display-border) !important;
 }
 
-html[data-unilens-a11y-display-active] #unilens-a11y-page-root [data-unilens-a11y-positioned-overlay] {
+html[data-unilens-a11y-display-active] #unilens-a11y-page-root [data-unilens-a11y-positioned-overlay]:not([data-unilens-a11y-media-text]) {
   background-color: var(--unilens-a11y-display-surface) !important;
 }
 
@@ -183,7 +238,7 @@ html[data-unilens-a11y-display-active] #unilens-a11y-page-root [data-unilens-a11
  * adjacent same-surface controls stay separable. Limited to controls — not
  * every opaque surface — to avoid framing decorative panels.
  */
-html[data-unilens-a11y-display-active] #unilens-a11y-page-root [data-unilens-a11y-positioned-overlay]:is(
+html[data-unilens-a11y-display-active] #unilens-a11y-page-root [data-unilens-a11y-positioned-overlay]:not([data-unilens-a11y-media-text]):is(
   a,
   button,
   [role='button'],
@@ -211,8 +266,8 @@ html[data-unilens-a11y-display-active] #unilens-a11y-page-root [data-unilens-a11
  * onto pseudos. background-color is limited to likely hairline containers so
  * large decorative ::before blocks (header bars, contact icons) are left alone.
  */
-html[data-unilens-a11y-display-active] #unilens-a11y-page-root *::before,
-html[data-unilens-a11y-display-active] #unilens-a11y-page-root *::after {
+html[data-unilens-a11y-display-active] #unilens-a11y-page-root *:not([data-unilens-a11y-media-text])::before,
+html[data-unilens-a11y-display-active] #unilens-a11y-page-root *:not([data-unilens-a11y-media-text])::after {
   border-color: var(--unilens-a11y-display-border) !important;
   color: var(--unilens-a11y-display-text) !important;
 }
@@ -228,11 +283,11 @@ html[data-unilens-a11y-display-active] #unilens-a11y-page-root *::after {
  * own background the same way it already does for real elements and marks
  * the host so we can repaint just these two pseudos with the themed surface.
  */
-html[data-unilens-a11y-display-active] #unilens-a11y-page-root [data-unilens-a11y-pseudo-overlay-before]::before {
+html[data-unilens-a11y-display-active] #unilens-a11y-page-root [data-unilens-a11y-pseudo-overlay-before]:not([data-unilens-a11y-media-text])::before {
   background-color: var(--unilens-a11y-display-surface) !important;
 }
 
-html[data-unilens-a11y-display-active] #unilens-a11y-page-root [data-unilens-a11y-pseudo-overlay-after]::after {
+html[data-unilens-a11y-display-active] #unilens-a11y-page-root [data-unilens-a11y-pseudo-overlay-after]:not([data-unilens-a11y-media-text])::after {
   background-color: var(--unilens-a11y-display-surface) !important;
 }
 
@@ -246,28 +301,28 @@ html[data-unilens-a11y-display-active] #unilens-a11y-page-root [data-unilens-a11
  * is live it will match the same elements too; this block is then a harmless
  * duplicate and can be removed.
  */
-html[data-unilens-a11y-display-active] #unilens-a11y-page-root .p-graduateArrow::after,
-html[data-unilens-a11y-display-active] #unilens-a11y-page-root .c-hdg::after,
-html[data-unilens-a11y-display-active] #unilens-a11y-page-root .slick-active::before {
+html[data-unilens-a11y-display-active] #unilens-a11y-page-root .p-graduateArrow:not([data-unilens-a11y-media-text])::after,
+html[data-unilens-a11y-display-active] #unilens-a11y-page-root .c-hdg:not([data-unilens-a11y-media-text])::after,
+html[data-unilens-a11y-display-active] #unilens-a11y-page-root .slick-active:not([data-unilens-a11y-media-text])::before {
   background-color: var(--unilens-a11y-display-surface) !important;
 }
 
-html[data-unilens-a11y-display-active] #unilens-a11y-page-root [class*='link-container']::after,
-html[data-unilens-a11y-display-active] #unilens-a11y-page-root [class*='link-container']::before {
+html[data-unilens-a11y-display-active] #unilens-a11y-page-root [class*='link-container']:not([data-unilens-a11y-media-text])::after,
+html[data-unilens-a11y-display-active] #unilens-a11y-page-root [class*='link-container']:not([data-unilens-a11y-media-text])::before {
   background-color: var(--unilens-a11y-display-border) !important;
 }
 
 /* SoftBank accordion open-state thickens the same ::after into a white spacer
  * (parent gets `…-lv4--open`). Keep that fill on the surface token. */
-html[data-unilens-a11y-display-active] #unilens-a11y-page-root [class*='--open'] [class*='link-container']::after,
-html[data-unilens-a11y-display-active] #unilens-a11y-page-root [class*='link-container'][class*='--open']::after {
+html[data-unilens-a11y-display-active] #unilens-a11y-page-root [class*='--open'] [class*='link-container']:not([data-unilens-a11y-media-text])::after,
+html[data-unilens-a11y-display-active] #unilens-a11y-page-root [class*='link-container'][class*='--open']:not([data-unilens-a11y-media-text])::after {
   background-color: var(--unilens-a11y-display-surface) !important;
 }
 
 /* SoftBank world-menu trigger paints an open-state plate via ::before with
  * hardcoded #ebebee — unreadable under dark/high-contrast text. Align with
  * the themed surface used for the positioned overlay panel. */
-html[data-unilens-a11y-display-active] #unilens-a11y-page-root .sb-appshell-v1-header_world-menu-button::before {
+html[data-unilens-a11y-display-active] #unilens-a11y-page-root .sb-appshell-v1-header_world-menu-button:not([data-unilens-a11y-media-text])::before {
   background-color: var(--unilens-a11y-display-surface) !important;
 }
 
@@ -286,11 +341,11 @@ html[data-unilens-a11y-display-active] #unilens-a11y-page-root :where(
   nav,
   main,
   aside
-):not(#unilens-a11y-root):not(#unilens-root):not([data-unilens-ui]) {
+):not(#unilens-a11y-root):not(#unilens-root):not([data-unilens-ui]):not([data-unilens-a11y-media-text]) {
   background-color: var(--unilens-a11y-display-surface) !important;
 }
 
-html[data-unilens-a11y-display-active] #unilens-a11y-page-root a {
+html[data-unilens-a11y-display-active] #unilens-a11y-page-root a:not([data-unilens-a11y-media-text]) {
   color: var(--unilens-a11y-display-link) !important;
 }
 
@@ -312,15 +367,15 @@ html[data-unilens-a11y-display-active] #unilens-a11y-page-root a {
  * standard/light/soft/invert, surface is white/cream anyway, so this is a
  * no-op there; it only changes anything for dark and high-contrast.
  */
-html[data-unilens-a11y-display-active] #unilens-a11y-page-root .c-hdg.vertical.f-font-en {
+html[data-unilens-a11y-display-active] #unilens-a11y-page-root .c-hdg.vertical.f-font-en:not([data-unilens-a11y-media-text]) {
   background-color: var(--unilens-a11y-display-surface) !important;
 }
 
-html[data-unilens-a11y-theme='high-contrast'][data-unilens-a11y-display-active] #unilens-a11y-page-root .hero {
+html[data-unilens-a11y-theme='high-contrast'][data-unilens-a11y-display-active] #unilens-a11y-page-root .hero:not([data-unilens-a11y-media-text]) {
   background-color: var(--unilens-a11y-display-bg) !important;
 }
 
-html[data-unilens-a11y-text-plate] #unilens-a11y-page-root kbd {
+html[data-unilens-a11y-text-plate] #unilens-a11y-page-root kbd:not([data-unilens-a11y-media-text]) {
   background: var(--unilens-a11y-text-plate-bg) !important;
   color: var(--unilens-a11y-text-plate-fg) !important;
   border: 1px solid var(--unilens-a11y-text-plate-fg) !important;
@@ -337,6 +392,8 @@ html[data-unilens-a11y-text-plate] #unilens-a11y-page-root kbd {
  * transparent background reset above. Tag list is a JS-free first paint;
  * documentEffects then marks any other node that directly owns text.
  * Do not CSS-target all span/div — icon wrappers and photo wrappers stay open.
+ * Tag-listed wrappers that own no text (a card <a> / <li> whose photo is its
+ * background-image) are marked text-bg-skip by documentEffects and left alone.
  */
 html[data-unilens-a11y-text-plate]
   #unilens-a11y-page-root
@@ -370,9 +427,8 @@ html[data-unilens-a11y-text-plate]
     i,
     cite,
     a
-  ):not([data-unilens-a11y-bg-sample]) {
+  ):not([data-unilens-a11y-bg-sample]):not([data-unilens-a11y-text-bg-skip]):not([data-unilens-a11y-media-text]) {
   background-color: var(--unilens-a11y-text-plate-bg) !important;
-  background-image: none !important;
   color: var(--unilens-a11y-text-plate-fg) !important;
   -webkit-box-decoration-break: clone;
   box-decoration-break: clone;
@@ -380,9 +436,8 @@ html[data-unilens-a11y-text-plate]
 
 html[data-unilens-a11y-text-plate]
   #unilens-a11y-page-root
-  [data-unilens-a11y-text-bg]:not([data-unilens-a11y-bg-sample]) {
+  [data-unilens-a11y-text-bg]:not([data-unilens-a11y-bg-sample]):not([data-unilens-a11y-media-text]) {
   background-color: var(--unilens-a11y-text-plate-bg) !important;
-  background-image: none !important;
   color: var(--unilens-a11y-text-plate-fg) !important;
   -webkit-box-decoration-break: clone;
   box-decoration-break: clone;
@@ -390,13 +445,65 @@ html[data-unilens-a11y-text-plate]
 
 html[data-unilens-a11y-text-plate]
   #unilens-a11y-page-root
-  [data-unilens-a11y-text-bg-before]::before,
+  [data-unilens-a11y-text-bg-before]:not([data-unilens-a11y-media-text])::before,
 html[data-unilens-a11y-text-plate]
   #unilens-a11y-page-root
-  [data-unilens-a11y-text-bg-after]::after {
+  [data-unilens-a11y-text-bg-after]:not([data-unilens-a11y-media-text])::after {
   background-color: var(--unilens-a11y-text-plate-bg) !important;
-  background-image: none !important;
   color: var(--unilens-a11y-text-plate-fg) !important;
+}
+
+/* Plates drop leftover background images (light textures under the type) —
+ * except a picture the element paints as its own background
+ * ([data-unilens-a11y-media-owner], set by mediaTextGuard.ts): a banner link
+ * whose photo is its background-image would otherwise lose the photo. The
+ * plate fill then sits under the picture instead of replacing it. */
+html[data-unilens-a11y-text-plate]
+  #unilens-a11y-page-root
+  :is(
+    p,
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6,
+    li,
+    td,
+    th,
+    dt,
+    dd,
+    label,
+    figcaption,
+    blockquote,
+    legend,
+    caption,
+    summary,
+    pre,
+    code,
+    kbd,
+    small,
+    time,
+    em,
+    strong,
+    b,
+    i,
+    cite,
+    a
+  ):not([data-unilens-a11y-bg-sample]):not([data-unilens-a11y-text-bg-skip]):not([data-unilens-a11y-media-text]):not([data-unilens-a11y-media-owner]),
+html[data-unilens-a11y-text-plate]
+  #unilens-a11y-page-root
+  [data-unilens-a11y-text-bg]:not([data-unilens-a11y-bg-sample]):not([data-unilens-a11y-media-text]):not([data-unilens-a11y-media-owner]) {
+  background-image: none !important;
+}
+
+html[data-unilens-a11y-text-plate]
+  #unilens-a11y-page-root
+  [data-unilens-a11y-text-bg-before]:not([data-unilens-a11y-media-text]):not([data-unilens-a11y-media-owner])::before,
+html[data-unilens-a11y-text-plate]
+  #unilens-a11y-page-root
+  [data-unilens-a11y-text-bg-after]:not([data-unilens-a11y-media-text]):not([data-unilens-a11y-media-owner])::after {
+  background-image: none !important;
 }
 
 html[data-unilens-a11y-text-plate]
@@ -409,7 +516,7 @@ html[data-unilens-a11y-text-plate]
     select,
     button,
     option
-  ) {
+  ):not([data-unilens-a11y-media-text]) {
   background-color: var(--unilens-a11y-text-plate-bg) !important;
   color: var(--unilens-a11y-text-plate-fg) !important;
   caret-color: var(--unilens-a11y-text-plate-fg);
@@ -417,7 +524,7 @@ html[data-unilens-a11y-text-plate]
 
 html[data-unilens-a11y-text-plate]
   #unilens-a11y-page-root
-  ::placeholder {
+  :not([data-unilens-a11y-media-text])::placeholder {
   color: var(--unilens-a11y-text-plate-fg) !important;
   opacity: 1;
 }
@@ -474,7 +581,7 @@ html[data-unilens-a11y-link-underline='true'] #unilens-a11y-page-root a {
    opacity just keeps it reading as a translucent tint rather than a solid
    block on light hosts. */
 
-html[data-unilens-a11y-link-background='true'] #unilens-a11y-page-root a {
+html[data-unilens-a11y-link-background='true'] #unilens-a11y-page-root a:not([data-unilens-a11y-media-text]) {
   background-color: color-mix(
     in srgb,
     color-mix(in srgb, var(--unilens-a11y-display-link) 55%, white 45%) 68%,
@@ -627,7 +734,7 @@ html[data-unilens-a11y-focus-enhance] #unilens-root :focus-visible {
  * Media and SVG chrome are skipped; generated ::before/::after text is
  * included because host sites often put captions there. */
 html[data-unilens-a11y-text-stroke] #unilens-a11y-page-root,
-html[data-unilens-a11y-text-stroke] #unilens-a11y-page-root *:not(img, video, canvas, svg, iframe, picture, source) {
+html[data-unilens-a11y-text-stroke] #unilens-a11y-page-root *:not(img, video, canvas, svg, iframe, picture, source):not([data-unilens-a11y-media-text]) {
   color: var(--unilens-a11y-text-stroke-fill, rgb(255, 255, 255)) !important;
   -webkit-text-fill-color: var(--unilens-a11y-text-stroke-fill, rgb(255, 255, 255)) !important;
   -webkit-text-stroke-width: var(--unilens-a11y-text-stroke-width, 0.1em) !important;
@@ -635,8 +742,8 @@ html[data-unilens-a11y-text-stroke] #unilens-a11y-page-root *:not(img, video, ca
   paint-order: stroke fill;
 }
 
-html[data-unilens-a11y-text-stroke] #unilens-a11y-page-root *::before,
-html[data-unilens-a11y-text-stroke] #unilens-a11y-page-root *::after {
+html[data-unilens-a11y-text-stroke] #unilens-a11y-page-root *:not([data-unilens-a11y-media-text])::before,
+html[data-unilens-a11y-text-stroke] #unilens-a11y-page-root *:not([data-unilens-a11y-media-text])::after {
   color: var(--unilens-a11y-text-stroke-fill, rgb(255, 255, 255)) !important;
   -webkit-text-fill-color: var(--unilens-a11y-text-stroke-fill, rgb(255, 255, 255)) !important;
   -webkit-text-stroke-width: var(--unilens-a11y-text-stroke-width, 0.1em) !important;

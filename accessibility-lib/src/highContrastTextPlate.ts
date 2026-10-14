@@ -9,6 +9,7 @@ import {
     TEXT_BG_AFTER_ATTR,
     TEXT_BG_ATTR,
     TEXT_BG_BEFORE_ATTR,
+    TEXT_BG_SKIP_ATTR,
 } from "./domIds";
 
 const TEXT_NODE = 3;
@@ -58,6 +59,7 @@ const TEXT_PLATE_ATTRS = [
     TEXT_BG_ATTR,
     TEXT_BG_BEFORE_ATTR,
     TEXT_BG_AFTER_ATTR,
+    TEXT_BG_SKIP_ATTR,
 ] as const;
 
 export function clearHighContrastTextPlates(
@@ -93,10 +95,17 @@ export function syncHighContrastTextPlates(pageRoot: HTMLElement | null) {
             el.removeAttribute(TEXT_BG_ATTR);
             el.removeAttribute(TEXT_BG_BEFORE_ATTR);
             el.removeAttribute(TEXT_BG_AFTER_ATTR);
+            el.removeAttribute(TEXT_BG_SKIP_ATTR);
             continue;
         }
-        if (hasDirectText(el)) el.setAttribute(TEXT_BG_ATTR, "true");
-        else el.removeAttribute(TEXT_BG_ATTR);
+        if (hasDirectText(el)) {
+            el.setAttribute(TEXT_BG_ATTR, "true");
+            el.removeAttribute(TEXT_BG_SKIP_ATTR);
+        } else {
+            el.removeAttribute(TEXT_BG_ATTR);
+            // Wrapper-only: keep its own background-image (host photo).
+            el.setAttribute(TEXT_BG_SKIP_ATTR, "true");
+        }
 
         if (hasGeneratedTextContent(getComputedStyle(el, "::before").content)) {
             el.setAttribute(TEXT_BG_BEFORE_ATTR, "true");
