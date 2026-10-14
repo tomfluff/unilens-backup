@@ -70,6 +70,7 @@ beforeEach(() => {
     updateSetting("ringWidth", 2);
     updateSetting("ringScale", false);
     updateSetting("hlPulse", "off");
+    updateSetting("hlFoldOuter", true);
 });
 
 describe("showHighlights", () => {
@@ -495,6 +496,7 @@ describe("the pulse", () => {
         relayNow();
         expect(box.dataset.pulse).toBe("always");
         updateSetting("hlPulse", "off");
+        updateSetting("hlFoldOuter", true);
         relayNow();
         expect(box.dataset.pulse).toBeUndefined();
     });
@@ -1359,6 +1361,173 @@ describe("foldNested (one outline per nested pair)", () => {
             { measure },
         );
         expect(layerBoxes()).toHaveLength(1);
+    });
+
+    it("keeps every inner place under hlFoldOuter off, unless the outer adds nothing", () => {
+        const section = node("", 1000);
+        const heading = node("History", 100, section);
+        const para = node("Built in 1611.", 300, section);
+        const wrap = node("", 1000);
+        const only = node("Main menu", 980, wrap);
+        expect(
+            foldNested(
+                [
+                    { el: section, badge: "1" },
+                    { el: heading, badge: "2" },
+                    { el: para, badge: "3" },
+                    { el: wrap, badge: "4" },
+                    { el: only, badge: "5" },
+                ],
+                byArea,
+                false,
+            ).map((i) => [i.el.textContent, i.badge]),
+        ).toEqual([
+            ["HistoryBuilt in 1611.", "1"],
+            ["History", "2"],
+            ["Built in 1611.", "3"],
+            ["Main menu", "4·5"],
+        ]);
+    });
+
+    /** a canned "What is this page?" answer: a section cited with three places
+     *  inside it, and a wrapper that adds nothing to the one place it holds */
+    function showSectionAnswer() {
+        const at = new Map<Element, ReturnType<typeof rect>>();
+        const add = (
+            parent: Element,
+            tag: string,
+            text: string,
+            r: ReturnType<typeof rect>,
+        ) => {
+            const el = document.createElement(tag);
+            el.textContent = text;
+            parent.appendChild(el);
+            at.set(el, r);
+            return el;
+        };
+        const section = add(
+            document.body,
+            "section",
+            "",
+            rect(100, 100, 600, 400),
+        );
+        // the heading starts at the section's corner: their numbers meet there
+        const heading = add(section, "h2", "History", rect(100, 100, 600, 40));
+        const p1 = add(section, "p", "Built in 1611.", rect(100, 160, 600, 60));
+        const p2 = add(
+            section,
+            "p",
+            "Rebuilt in 1958.",
+            rect(100, 240, 600, 60),
+        );
+        const wrap = add(document.body, "div", "", rect(100, 600, 200, 30));
+        const link = add(wrap, "a", "Visit", rect(100, 600, 200, 30));
+        (link as HTMLAnchorElement).href = "#visit";
+        const registry = new Map<string, Element>(
+            [section, heading, p1, p2, wrap, link].map((el, i) => [
+                `n${i + 1}`,
+                el,
+            ]),
+        );
+        setCurrentCapture("c1");
+        showHighlights(
+            [...registry.keys()].map((id, i) => ({
+                id,
+                role: "target" as const,
+                badge: String(i + 1),
+            })),
+            registry,
+            "c1",
+            nextToken(),
+            { measure: (el) => at.get(el) ?? rect(0, 0, 0, 0) },
+        );
+    }
+    const badgeEls = () =>
+        [
+            ...document.querySelectorAll(
+                "#unilens-highlight-layer .unilens-hl-badge",
+            ),
+        ] as HTMLElement[];
+
+    it("shows every source number of a section answer under hlFoldOuter off", () => {
+        updateSetting("hlFoldOuter", false);
+        showSectionAnswer();
+        // six numbers, one pair folded (the wrapper adds nothing to its link)
+        expect(layerBoxes()).toHaveLength(5);
+        expect(badgeEls().map((b) => b.textContent)).toEqual([
+            "1",
+            "2",
+            "3",
+            "4",
+            "5·6",
+        ]);
+        // no number sits on another: the heading's steps off the section's
+        const r = badgeEls().map((b) => ({
+            x: Number.parseFloat(b.style.left),
+            y: Number.parseFloat(b.style.top),
+            w: Number.parseFloat(b.style.minWidth) || 24,
+            h: Number.parseFloat(b.style.height) || 24,
+        }));
+        const overlaps = r.flatMap((a, i) =>
+            r
+                .slice(i + 1)
+                .filter(
+                    (b) =>
+                        a.x < b.x + b.w &&
+                        a.x + a.w > b.x &&
+                        a.y < b.y + b.h &&
+                        a.y + a.h > b.y,
+                ),
+        );
+        expect(overlaps).toEqual([]);
+    });
+
+    it("keeps three numbers sharing a corner at the screen's left edge apart", () => {
+        updateSetting("hlFoldOuter", false);
+        const section = document.createElement("section");
+        const h = document.createElement("h2");
+        h.textContent = "Castle";
+        const p = document.createElement("p");
+        p.textContent = "Keep";
+        section.append(h, p);
+        document.body.appendChild(section);
+        const at = new Map<Element, ReturnType<typeof rect>>([
+            [section, rect(30, 100, 600, 400)],
+            [h, rect(30, 100, 300, 40)],
+            [p, rect(30, 100, 200, 20)],
+        ]);
+        const registry = new Map<string, Element>([
+            ["n1", section],
+            ["n2", h],
+            ["n3", p],
+        ]);
+        setCurrentCapture("c1");
+        showHighlights(
+            [...registry.keys()].map((id, i) => ({
+                id,
+                role: "target" as const,
+                badge: String(i + 1),
+            })),
+            registry,
+            "c1",
+            nextToken(),
+            { measure: (el) => at.get(el) ?? rect(0, 0, 0, 0) },
+        );
+        relayNow();
+        const spots = badgeEls().map((b) => `${b.style.left},${b.style.top}`);
+        expect(spots).toHaveLength(3);
+        expect(new Set(spots).size).toBe(3);
+        for (const b of badgeEls())
+            expect(Number.parseFloat(b.style.left)).toBeGreaterThanOrEqual(1);
+    });
+
+    it("folds a section answer into the section under hlFoldOuter on (session 1)", () => {
+        updateSetting("hlFoldOuter", true);
+        showSectionAnswer();
+        expect(badgeEls().map((b) => b.textContent)).toEqual([
+            "1·2·3·4",
+            "5·6",
+        ]);
     });
 });
 

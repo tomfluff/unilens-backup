@@ -107,6 +107,11 @@ export interface Settings {
      *  screen's edge. Off (Yotam's try-out, 2026-10-12): it stays by its place and
      *  leaves the screen with it. A preset value, not a participant's setting */
     hlBadgeClamp: boolean;
+    /** session 1 (Yotam, 2026-09-26): a place inside another cited place folds into
+     *  the larger one's outline, which carries both numbers ("1·2"). Off (Yotam,
+     *  2026-10-14, for P02): both are drawn, each with its number, unless the outer
+     *  adds nothing (the same text, or the inner covers 90% of it). A preset value */
+    hlFoldOuter: boolean;
     /** with Adaptive color on: the thin border and the ring's inner band take the
      *  adapted colour (a black edge round it), and the glow is stronger on a dark
      *  background (Yotam's try-out, 2026-10-12). Off: session 1's black and white
@@ -360,6 +365,7 @@ const DEFAULTS: Settings = {
     hlBadges: "small",
     hlBadgePos: "corner",
     hlBadgeClamp: false,
+    hlFoldOuter: false,
     hlAdaptLine: true,
     altDragInert: true,
     adaptBg: "under-ring",
@@ -478,6 +484,7 @@ export const TOGGLE_LABELS: Record<BoolSettingKey, string> = {
     debugView: "Debug view (ctrl+shift+D)",
     inventory: "Send page inventory with captures",
     hlBadgeClamp: "Slide a number in at the screen's edge",
+    hlFoldOuter: "Fold a place inside a larger one into its outline",
     hlAdaptLine:
         "Adaptive color also colors the line (and a stronger glow on dark)",
     altDragInert: "An Alt+drag does nothing when box drawing is off",
@@ -985,7 +992,13 @@ export const PANEL_TABS: { id: PanelTabId; groups: PanelGroup[] }[] = [
                     "clickMark",
                     "clickMarkStyle",
                 ],
-                more: ["ringWidth", "ringScale", "hlBadgeClamp", "hlAdaptLine"],
+                more: [
+                    "ringWidth",
+                    "ringScale",
+                    "hlBadgeClamp",
+                    "hlFoldOuter",
+                    "hlAdaptLine",
+                ],
             },
             {
                 id: "cues",

@@ -122,6 +122,8 @@ describe("session 2 (2026-10-09)", () => {
             // a row in the panel, on from P02, never folding (Yotam, 2026-10-13)
             chatMovesAside: true,
             asideFold: false,
+            // every cited place drawn, also inside a cited section (Yotam, 2026-10-14)
+            hlFoldOuter: false,
             outlineClicked: true,
             zoom: true,
             zoomKeys: true,
