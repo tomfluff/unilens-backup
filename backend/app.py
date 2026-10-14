@@ -5,10 +5,14 @@ POST /api/capture  {image: dataURL, meta: {...}, inventory?: [...]} -> {id}
 POST /api/chat     {capture_id, message, cite?}       -> {reply, provider, model}
                    (reply cites inventory elements inline as [[nID]])
 POST /api/locate   {capture_id, question, screenshot} -> {capture_id, answer, highlights}
-POST /api/quiz/log {events: [...]}                 -> {logged, dropped}  (quiz-lib)
+GET  /survey?quiz=<id>[&q&pid&session&return]      -> the survey page (quiz-lib, Japanese); q=N: question N only
+GET  /api/quiz/<id>                                -> the survey's questions (quizzes/<id>.json)
+POST /api/quiz/log {events: [...]}                 -> {logged, dropped}
 GET  /api/quiz                                     -> {quizzes: [...]}
-GET  /api/quiz/<id>/results[?pid&session&attempt&completed]
+GET  /api/quiz/<id>/results[?pid&session&attempt&user_id&survey_id&completed]
                                                    -> {quiz, attempts: [...answers, timings]}
+GET  /api/quiz/<id>/results.csv[?same filters]     -> one row per attempt, per-question times
+GET  /api/quiz/<id>/progress?pid&session | ?vid    -> {total, answered, next, completed}
 GET  /health
 
 Captures stored under captures/<id>/ (capture.png + meta.json + chat.json,
@@ -19,6 +23,8 @@ Patterns follow assets26-ai4vis-proj/prototype (base64 inline images).
 """
 
 import base64
+import csv
+import io
 import json
 import os
 import re
@@ -465,6 +471,12 @@ def _server_event(ids: tuple[str, str] | None, kind: str, **fields) -> None:
 # events are also appended to that participant's study log, so answers sit on the
 # same timeline as the chat. Nothing else about the visitor is written.
 QUIZ_LOGS_DIR = Path(__file__).parent / "quiz-logs"
+# The surveys themselves, one JSON file per survey (quiz-lib/README.md has the
+# format); kept in the repository, unlike the logs. The survey page is
+# /survey?quiz=<file name without .json>.
+QUIZZES_DIR = Path(__file__).parent / "quizzes"
+# quiz-lib's build, served to the survey page: `make build` writes it
+QUIZ_LIB_DIST = Path(__file__).resolve().parent.parent / "quiz-lib" / "dist"
 _QUIZ_ID = re.compile(r"^[A-Za-z0-9_-]{1,64}$")
 QUIZ_EVENT_TYPES = frozenset(
     {
@@ -473,7 +485,10 @@ QUIZ_EVENT_TYPES = frozenset(
         "quiz_start",
         "quiz_answer",
         "quiz_complete",
-        "quiz_lang",  # the visitor switched the panel between Japanese and English
+        # the visitor switched between Japanese and English: the survey is Japanese
+        # only now, but an older quiz.js (a cached page) may still send it
+        "quiz_lang",
+        "quiz_ids",  # IDs typed into an attempt begun before they were asked
     }
 )
 QUIZ_MAX_EVENTS = 100
@@ -513,6 +528,21 @@ def _ms_between(start: object, end: object) -> int | None:
     return max(0, round((b - a).total_seconds() * 1000))
 
 
+def _quiz_definition(quiz: str) -> dict | None:
+    """A survey's questions as written in quizzes/<id>.json, or None when there is
+    no such survey (or the file is not a JSON object)."""
+    if not _QUIZ_ID.fullmatch(quiz):
+        return None
+    path = QUIZZES_DIR / f"{quiz}.json"
+    if not path.is_file():
+        return None
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except ValueError:
+        return None
+    return data if isinstance(data, dict) else None
+
+
 def _read_quiz_events(quiz: str) -> list[dict] | None:
     """Every event logged for a quiz, oldest first; None when it has no log. A line
     that is not a JSON object (a torn write) is skipped."""
@@ -532,6 +562,10 @@ def _read_quiz_events(quiz: str) -> list[dict] | None:
     return events
 
 
+# the user ID and survey ID a respondent types before the survey (quiz-lib respondentIds.ts)
+_RESPONDENT_ID = re.compile(r"^[A-Za-z0-9_-]{1,32}$")
+
+
 def _quiz_attempts(events: list[dict]) -> list[dict]:
     """The log folded into one record per attempt: who, when, the score, how long it
     took, and each answer with the time spent on its question. An attempt that was
@@ -547,8 +581,12 @@ def _quiz_attempts(events: list[dict]) -> list[dict]:
             aid,
             {
                 "attempt": aid,
+                # typed by the respondent before the first question
+                "user_id": None,
+                "survey_id": None,
                 "pid": None,
                 "session": None,
+                "vid": None,
                 "lang": None,
                 "page": None,
                 "started_at": None,
@@ -558,12 +596,18 @@ def _quiz_attempts(events: list[dict]) -> list[dict]:
                 "answered": 0,
                 "total": None,
                 "duration_ms": None,
+                "last_event_at": None,
                 "answers": {},
             },
         )
-        for key in ("pid", "session", "lang", "page"):
+        for key in ("pid", "session", "vid", "lang", "page"):
             if ev.get(key) is not None:
                 a[key] = ev[key]
+        for key in ("user_id", "survey_id"):
+            if isinstance(ev.get(key), str) and _RESPONDENT_ID.fullmatch(ev[key]):
+                a[key] = ev[key]
+        if isinstance(ev.get("t"), str) and ev["t"] > (a["last_event_at"] or ""):
+            a["last_event_at"] = ev["t"]
         kind = ev.get("type")
         if kind == "quiz_start":
             a["started_at"] = ev.get("t")
@@ -595,6 +639,8 @@ def _quiz_attempts(events: list[dict]) -> list[dict]:
             key=lambda x: (x["index"] if isinstance(x["index"], int) else 1 << 30),
         )
         a["answers"] = answers
+        # each question's time on its own, by question id (the same as answers[].ms)
+        a["question_ms"] = {x["question"]: x["ms"] for x in answers}
         a["answered"] = len(answers)
         graded = [x for x in answers if x["correct"] is not None]
         a["correct"] = sum(1 for x in graded if x["correct"]) if graded else None
@@ -606,6 +652,117 @@ def _quiz_attempts(events: list[dict]) -> list[dict]:
         out.append(a)
     out.sort(key=lambda a: a["started_at"] or "")
     return out
+
+
+def _filter_attempts(attempts: list[dict], args) -> list[dict]:
+    """The ?pid= ?session= ?attempt= ?user_id= ?survey_id= ?completed=1 filters of
+    the results routes."""
+    for key in ("pid", "session", "attempt", "user_id", "survey_id"):
+        want = args.get(key)
+        if want:
+            attempts = [a for a in attempts if str(a.get(key)) == want]
+    if args.get("completed") in ("1", "true"):
+        attempts = [a for a in attempts if a["completed"]]
+    return attempts
+
+
+def _seconds(ms: object) -> str:
+    """Milliseconds as seconds with one decimal, for a spreadsheet; blank if unknown."""
+    return f"{ms / 1000:.1f}" if isinstance(ms, (int, float)) else ""
+
+
+def _question_order(definition: dict | None) -> list[str]:
+    """The survey's question ids in order, as quiz-lib names them (q1, q2, … when a
+    question has no id of its own)."""
+    questions = (definition or {}).get("questions")
+    return [
+        q.get("id") or f"q{i + 1}"
+        for i, q in enumerate(questions if isinstance(questions, list) else [])
+        if isinstance(q, dict)
+    ]
+
+
+_QUIZ_VISITOR = re.compile(r"^[A-Za-z0-9_-]{6,32}$")
+
+
+def _quiz_progress(quiz: str, attempts: list[dict], args) -> dict:
+    """How far one visitor is through a survey, for the test pages' button: their
+    latest attempt (by its last event), which questions it answered, and the next
+    one to answer (1-based; None once every question is answered). The visitor is
+    ?pid= (and ?session=, default 1) or, without a participant, ?vid= — the
+    anonymous id the button gives a browser."""
+    order = _question_order(_quiz_definition(quiz))
+    pid, vid = args.get("pid", ""), args.get("vid", "")
+    if _STUDY_PID.fullmatch(pid):
+        session = args.get("session", "1")
+        session = str(int(session)) if _STUDY_SESSION.fullmatch(session) else "1"
+        mine = [a for a in attempts if a["pid"] == pid and str(a["session"]) == session]
+    elif _QUIZ_VISITOR.fullmatch(vid):
+        mine = [a for a in attempts if a["vid"] == vid and not a["pid"]]
+    else:
+        mine = []
+    latest = max(mine, key=lambda a: a["last_event_at"] or "", default=None)
+    done = {x["question"] for x in latest["answers"]} if latest else set()
+    answered = [q for q in order if q in done]
+    pending = [i + 1 for i, q in enumerate(order) if q not in done]
+    return {
+        "quiz": quiz,
+        "total": len(order),
+        "answered": len(answered),
+        "answered_questions": answered,
+        "next": pending[0] if pending else None,
+        "completed": bool(order) and not pending,
+        "attempt": latest["attempt"] if latest else None,
+    }
+
+
+def _quiz_results_csv(quiz: str, attempts: list[dict]) -> str:
+    """One row per attempt: who, when, how long in all, and for each question in
+    the survey's order its time (ms and seconds), the answer in words and whether
+    it was right (blank for a question without an answer key)."""
+    order = _question_order(_quiz_definition(quiz))
+    # questions answered but no longer in the survey (or no survey file) go last
+    for a in attempts:
+        for x in a["answers"]:
+            if x["question"] not in order:
+                order.append(x["question"])
+    head = [
+        "attempt", "user_id", "survey_id", "pid", "session", "lang", "started_at", "completed_at",
+        "completed", "answered", "correct", "duration_ms", "duration_s",
+    ]  # fmt: skip
+    for q in order:
+        head += [f"{q}_ms", f"{q}_s", f"{q}_answer", f"{q}_correct"]
+    out = io.StringIO()
+    w = csv.writer(out, lineterminator="\r\n")
+    w.writerow(head)
+    for a in attempts:
+        by_q = {x["question"]: x for x in a["answers"]}
+        row = [
+            a["attempt"], a["user_id"] or "", a["survey_id"] or "", a["pid"] or "", a["session"] or "", a["lang"] or "",
+            a["started_at"] or "", a["completed_at"] or "",
+            int(a["completed"]), a["answered"],
+            "" if a["correct"] is None else a["correct"],
+            "" if a["duration_ms"] is None else a["duration_ms"],
+            _seconds(a["duration_ms"]),
+        ]  # fmt: skip
+        for q in order:
+            x = by_q.get(q)
+            if x is None:
+                row += ["", "", "", ""]
+                continue
+            text = x.get("response_text")
+            if text is None:
+                r = x.get("response")
+                text = ", ".join(r) if isinstance(r, list) else (r or "")
+            row += [
+                "" if x["ms"] is None else x["ms"],
+                _seconds(x["ms"]),
+                text,
+                "" if x["correct"] is None else int(x["correct"]),
+            ]
+        w.writerow(row)
+    # BOM: Excel then reads the Japanese answers as UTF-8
+    return "\ufeff" + out.getvalue()
 
 
 def _prune_storage() -> None:
@@ -2039,22 +2196,61 @@ def create_app():
             _study_log(ids, kept, "client")
         return jsonify({"logged": len(kept), "dropped": len(events) - len(kept)})
 
+    @app.get("/survey")
+    def survey_page():
+        """The survey page (Japanese only): ?quiz=<id> picks the survey, ?q=N one
+        question, ?pid=&session= the participant (as for the study log), ?return=
+        the test page to go back to. Without ?quiz it lists the surveys, for the
+        facilitator."""
+        return send_file(Path(__file__).parent / "survey.html")
+
+    @app.get("/survey/<asset>")
+    def survey_asset(asset):
+        """quiz-lib's build for the survey page (only these two files)."""
+        if asset not in ("quiz.js", "quiz.js.map"):
+            return jsonify({"error": "not found"}), 404
+        path = QUIZ_LIB_DIST / asset
+        if not path.is_file():
+            return (
+                jsonify({"error": f"quiz-lib/dist/{asset} is missing: run make build"}),
+                503,
+            )
+        return send_file(path, max_age=0)
+
+    @app.get("/api/quiz/<quiz_id>")
+    def quiz_definition(quiz_id):
+        """A survey's questions (quizzes/<id>.json), for the survey page."""
+        data = _quiz_definition(quiz_id)
+        if data is None:
+            return jsonify({"error": "no such survey"}), 404
+        # the file name is the survey's id: answers are logged under the name in the address
+        return jsonify({**data, "id": quiz_id})
+
     @app.get("/api/quiz")
     def quiz_list():
-        """The quizzes that have a log: id, how many attempts, the last activity."""
-        items = []
+        """The surveys: those in quizzes/ and those with a log; for each, its title,
+        how many questions, attempts and completions, and the last activity."""
+        ids = set()
+        if QUIZZES_DIR.is_dir():
+            ids |= {p.stem for p in QUIZZES_DIR.glob("*.json")}
         if QUIZ_LOGS_DIR.is_dir():
-            for path in sorted(QUIZ_LOGS_DIR.glob("*.jsonl")):
-                events = _read_quiz_events(path.stem) or []
-                attempts = _quiz_attempts(events)
-                items.append(
-                    {
-                        "id": path.stem,
-                        "attempts": len(attempts),
-                        "completed": sum(1 for a in attempts if a["completed"]),
-                        "last_event_at": events[-1].get("t") if events else None,
-                    }
-                )
+            ids |= {p.stem for p in QUIZ_LOGS_DIR.glob("*.jsonl")}
+        items = []
+        for quiz in sorted(i for i in ids if _QUIZ_ID.fullmatch(i)):
+            definition = _quiz_definition(quiz)
+            events = _read_quiz_events(quiz) or []
+            attempts = _quiz_attempts(events)
+            items.append(
+                {
+                    "id": quiz,
+                    "title": (definition or {}).get("title"),
+                    "defined": definition is not None,
+                    "questions": len(_question_order(definition)),
+                    "attempts": len(attempts),
+                    "completed": sum(1 for a in attempts if a["completed"]),
+                    "last_event_at": events[-1].get("t") if events else None,
+                }
+            )
         return jsonify({"quizzes": items})
 
     @app.get("/api/quiz/<quiz_id>/results")
@@ -2064,14 +2260,38 @@ def create_app():
         events = _read_quiz_events(quiz_id)
         if events is None:
             return jsonify({"error": "no log for this quiz"}), 404
-        attempts = _quiz_attempts(events)
-        for key in ("pid", "session", "attempt"):
-            want = request.args.get(key)
-            if want:
-                attempts = [a for a in attempts if str(a.get(key)) == want]
-        if request.args.get("completed") in ("1", "true"):
-            attempts = [a for a in attempts if a["completed"]]
+        attempts = _filter_attempts(_quiz_attempts(events), request.args)
         return jsonify({"quiz": quiz_id, "attempts": attempts})
+
+    @app.get("/api/quiz/<quiz_id>/progress")
+    def quiz_progress(quiz_id):
+        """One visitor's progress through a survey (?pid=&session= or ?vid=), for the
+        test pages' button: "アンケート（2/4）" and the next question's page."""
+        if _quiz_definition(quiz_id) is None:
+            return jsonify({"error": "no such survey"}), 404
+        if not (
+            _STUDY_PID.fullmatch(request.args.get("pid", ""))
+            or _QUIZ_VISITOR.fullmatch(request.args.get("vid", ""))
+        ):
+            return jsonify({"error": "pid or vid needed"}), 400
+        attempts = _quiz_attempts(_read_quiz_events(quiz_id) or [])
+        return jsonify(_quiz_progress(quiz_id, attempts, request.args))
+
+    @app.get("/api/quiz/<quiz_id>/results.csv")
+    def quiz_results_csv(quiz_id):
+        """The same attempts as a spreadsheet: one row each, with every question's
+        time in its own columns (<id>_ms, <id>_s). Same filters as /results."""
+        events = _read_quiz_events(quiz_id)
+        if events is None:
+            return jsonify({"error": "no log for this quiz"}), 404
+        attempts = _filter_attempts(_quiz_attempts(events), request.args)
+        return Response(
+            _quiz_results_csv(quiz_id, attempts),
+            mimetype="text/csv",
+            headers={
+                "Content-Disposition": f'attachment; filename="{quiz_id}-results.csv"'
+            },
+        )
 
     @app.get("/health")
     def health():
