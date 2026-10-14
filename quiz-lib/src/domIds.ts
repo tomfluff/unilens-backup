@@ -16,6 +16,8 @@ export const QUIZ_CLASS_PREFIX = "unilens-quiz";
  */
 export const UI_ATTR = "data-unilens-ui";
 
+/** Set on the root: "panel" (floating, over a host page) or "page" (the survey page). */
+export const MODE_ATTR = "data-unilens-quiz-mode";
 /** Set on the root: which corner the toggle sits in. */
 export const POSITION_ATTR = "data-unilens-quiz-position";
 /** Set on the root while accessibility-lib's high-contrast theme is on. */

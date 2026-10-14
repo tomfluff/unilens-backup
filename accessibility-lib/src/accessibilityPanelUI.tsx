@@ -261,7 +261,7 @@ export function Card({ title, iconName, desc, badge, children }: CardProps) {
 export interface ChoiceOption<T extends string> {
     value: T;
     label: string;
-    /** A hint shown below the label (e.g. "195%"). */
+    /** A hint shown below the label (e.g. "150%"). */
     hint?: string;
     ariaLabel: string;
     /** A preview element that shows the result of choosing this option. */

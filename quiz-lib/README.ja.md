@@ -2,29 +2,59 @@
 
 > [README.md](README.md) の日本語訳です。規約の正典は英語版であり、両者が食い違った場合は英語版が優先されます。
 
-任意の HTML ページに埋め込めるアンケート（設問）ウィジェットです。`accessibility-lib` と同じ構成で、ビルドすると単一の `dist/quiz.js` になり、`UniLensQuiz.init()` で起動します（ページに同名のグローバルが無ければ `window.Quiz` も同じ API です）。「アンケート」ボタンからパネルを開き、質問に順に答えると、最後にお礼と自分の回答の一覧が表示されます。既定では正誤・正解・解説・得点は画面に一切表示しません。質問に正解（`answer`）を設定した場合は、ログにだけ正誤を記録します（`showFeedback: true` で画面にも表示）。
+UniLens の研究用アンケートです。研究では **backend 上の専用ページ** として、URL で開いて使います：
 
-- 問題はホストページが渡します（インライン、または JSON ファイル）。
+```
+http://127.0.0.1:5000/survey?quiz=unilens-poc&pid=P01&session=1&lang=ja
+```
+
+検証用ページには緑の「アンケート」ボタンだけを置き（link モード）、押すとこのページへ移動します。そのとき参加者（`pid` / `session`）と、元のページの言語を引き継ぎます。質問に順に答えると、最後にお礼と自分の回答の一覧が表示されます。
+
+ライブラリは `accessibility-lib` と同じ構成（単一の `dist/quiz.js`、`window.UniLensQuiz`。同名のグローバルが無ければ `window.Quiz` も同じ API）で、ページの上にボタンとパネルとして重ねる使い方（`mode: "panel"`、後述）も引き続きできます。既定では正誤・正解・解説・得点は画面に一切表示しません。質問に正解（`answer`）を設定した場合は、ログにだけ正誤を記録します（`showFeedback: true` で画面にも表示）。
+
+- アンケートページでは質問を `backend/quizzes/<id>.json` から読み込みます。パネル型では、ホストページが渡します（インライン、または JSON ファイル）。
 - 単一選択・複数選択・記述（入力）の 3 形式。
 - 日本語と英語に対応し、パネル上部に「日本語 / English」の切り替えボタンがあります。切り替えるまでは `<html lang>`、次にブラウザの言語に従い、訪問者が選んだ言語は記憶されて優先されます。質問の文を `{ "ja": …, "en": … }` で書くと、質問も切り替わります。
-- 進捗はブラウザに保存され、再読み込みしても途中から再開します。
+- 進捗はブラウザに保存され、再読み込みしても途中から再開します。進捗と言語の選択は参加者（`pid` / `session`）ごとに分けて保存するので、実験用の PC を共用しても次の参加者は最初から始まります。
 - `backend` を指定すると、回答ごとに UniLens バックエンドへ記録します（`backend/quiz-logs/<クイズ id>.jsonl`）。ページが参加者を指定している場合（`?pid=P01&session=1`）は研究ログにも記録します。
 - アクセシビリティは表示調整パネルに合わせています：44px のタップ領域、キーボード・スクリーンリーダー対応、正誤（表示する場合）は色だけで示さない、高コントラスト（`prefers-contrast: more` と表示調整パネルの高コントラストテーマ）。
-- 誰でも読みやすい表示：文字は 18px・行間 1.7、UD（ユニバーサルデザイン）書体を優先（Windows は BIZ UDPゴシック、macOS はヒラギノ）、押せる部分の枠は背景とのコントラスト 3:1 以上、パネルは画面幅の 65% で UniLens の設定ボタンの手前まで。表示調整パネルの文字サイズが「大」「特大」のときは 24px / 30px になり、アイコンやボタンも一緒に大きくなります。
+- 誰でも読みやすい表示：文字は 18px・行間 1.7、UD（ユニバーサルデザイン）書体を優先（Windows は BIZ UDPゴシック、macOS はヒラギノ）、押せる部分の枠は背景とのコントラスト 3:1 以上、パネルは画面幅の 65%・高さ 75%（収まらない内容はパネル内でスクロール）で、UniLens の設定ボタンには重ならない。表示調整パネルの文字サイズが「大」「特大」のときは 24px / 30px になり、アイコンやボタンも一緒に大きくなります。
 
 作業ディレクトリは、特に断りのない限り **UniLens リポジトリのルート**です。
+
+## アンケートページ
+
+| URL | 表示内容 |
+|---|---|
+| `/survey` | アンケートの一覧と、それぞれの参加者用 URL の例（実験者向け） |
+| `/survey?quiz=<id>` | `backend/quizzes/<id>.json` のアンケート |
+| `…&pid=P01&session=1` | 参加者。回答ログにこの ID が入り、その参加者の研究ログにも記録 |
+| `…&lang=ja` / `…&lang=en` | 最初に表示する言語（ページ上の「日本語 / English」でも切り替え可） |
+
+検証用ページのボタン（`accessibility.js` と `unilens.js` の後に置く）：
+
+```html
+<script src="quiz.js"></script>
+<script>
+  UniLensQuiz.init({ mode: "link", survey: "unilens-poc", backend: "http://127.0.0.1:5000" })
+</script>
+```
+
+`make build` は、ボタンを置くページ（`softbank-mirror`・`softbank-mirror-recruit`・`dev-demo`。`scripts/sync-dist.mjs` 参照）に `quiz.js` をコピーします。
+
+アンケートを追加するときは `backend/quizzes/<id>.json` を置き（書式は後述。ファイル名がログに使われる id になります）、`/survey?quiz=<id>` を開きます。ページは `quiz-lib/dist/quiz.js` を backend 経由（`/survey/quiz.js`）で読み込むので、quiz-lib を変更したら一度 `make build` を実行してください。
 
 ## ビルドと起動
 
 ```sh
 make init-target quiz-lib          # npm install
 make build                         # 全ライブラリを型チェック＋バンドルし frontend/* にコピー
-make serve dev-demo                # バックエンド + http://localhost:8001 （サンプルのクイズ入り）
+make serve-backend                 # その後 http://127.0.0.1:5000/survey を開く
 ```
 
 | コマンド | 内容 |
 |---|---|
-| `make serve-target quiz-lib` | watch ビルド（保存時に `frontend/*` へ `quiz.js` をコピー） |
+| `make serve-target quiz-lib` | `dist/quiz.js` の watch ビルド（ボタンのあるページにもコピー。変更は再読み込みで反映） |
 | `cd quiz-lib && npm run dev` | 上と同じ（Make なし / Windows 向け） |
 | `cd quiz-lib && make build` | 型チェック後に `dist/quiz.js` を出力 |
 | `cd quiz-lib && make lint` | 型チェック |
@@ -32,7 +62,9 @@ make serve dev-demo                # バックエンド + http://localhost:8001 
 
 Make が無い場合：`cd quiz-lib && npm install && npm run build`
 
-## 埋め込み
+## パネル型（ページへの埋め込み）
+
+研究では使わなくなりましたが、ページの上にボタンとパネルとして重ねる使い方も引き続きできます。
 
 ```html
 <script src="quiz.js"></script>
@@ -84,6 +116,9 @@ Make が無い場合：`cd quiz-lib && npm install && npm run build`
 | `src` | — | クイズの JSON ファイルの URL。 |
 | `backend` | — | 回答を記録する UniLens バックエンド。 |
 | `lang` | 自動判定 | `'ja'` または `'en'`：最初に表示する言語。訪問者が切り替えボタンで選んだ言語が優先されます。 |
+| `mode` | `'panel'` | `'link'`：ボタンだけを表示し、押すとアンケートページへ移動（検証用ページ）。`'page'`：`container` いっぱいにアンケートを表示（アンケートページ）。`'panel'`：ボタンと浮かぶパネル。 |
+| `survey` | — | link モードで開くアンケートの id（`backend/quizzes/<id>.json`）。 |
+| `container` | `<body>` の末尾 | page モードで表示する要素、またはそのセレクタ。 |
 | `position` | `'top-left'` | `'top-left'`・`'top-right'`・`'bottom-left'`・`'bottom-right'`。パネルはボタンの位置から開きます。表示調整のボタンは右下、UniLens の設定ボタンは左下にあるため、下の角を選ぶと重なります。 |
 | `open` | `false` | 準備ができたらパネルを開く。 |
 | `followDisplayPanel` | `true` | `accessibility-lib` の高コントラストテーマと文字サイズ（大 → 24px、特大 → 30px）に追従する。 |
@@ -116,15 +151,21 @@ Make が無い場合：`cd quiz-lib && npm install && npm run build`
 |---|---|
 | `GET /api/quiz` | ログのあるクイズの一覧：`{ "quizzes": [{ "id", "attempts", "completed", "last_event_at" }] }` |
 | `GET /api/quiz/<クイズ id>/results` | 各挑戦の回答内容と所要時間。絞り込み：`?pid=`、`?session=`、`?attempt=`、`?completed=1` |
+| `GET /api/quiz/<クイズ id>/results.csv` | 同じ内容を 1 挑戦 1 行の CSV で（Excel 用）。全体の集計のあとに、問題ごとの `<id>_ms`・`<id>_s`・`<id>_answer`・`<id>_correct`。絞り込みも同じ |
 
 ```sh
 curl "http://127.0.0.1:5000/api/quiz/dev-demo/results?pid=P01&completed=1"
+curl -o results.csv "http://127.0.0.1:5000/api/quiz/unilens-poc/results.csv?completed=1"
 ```
 
-返り値の例は [README.md](README.md#reading-the-results) を参照してください。
+アンケート一覧（`/survey`）にも各アンケートの CSV へのリンクがあります。
+
+CSV の列は `attempt, pid, session, lang, started_at, completed_at, completed, answered, correct, duration_ms, duration_s` のあと、アンケートの問題順に 4 列ずつ（`q1_ms, q1_s, q1_answer, q1_correct, q2_ms, …`）です。未回答の問題は空欄になります。BOM 付き UTF-8 なので、Excel で開いても日本語が文字化けしません。
+
+返り値の例は [README.md](README.md#reading-the-results) を参照してください。各挑戦の `question_ms` に問題 id ごとの所要時間（ミリ秒）がまとまっています。
 
 - `response` は採点に使った値（選択肢の id、または入力した文字列）、`response_text` は同じ回答を訪問者が見た文言で表したもので、その言語は `lang` に入ります。
-- `ms` はその問題に要した時間です。問題が表示されてから回答するまでで、パネルを閉じていた時間も含みます（答えはたいていページ上で探すため）。再読み込みするとその問題の計測は最初からになります。
+- `ms` はその問題に要した時間です。問題が表示されてから回答するまでで、パネルを閉じていた時間も含みます（答えはたいていページ上で探すため）。問題が表示された時刻は進捗と一緒に保存されるので、再読み込みや言語の切り替えで計測がやり直しになることはありません。
 - `duration_ms` は開始から最後の回答までの時間です。完了していない挑戦は `completed: false` で、最後の回答までの時間が入ります。
 
 ページ内では `UniLensQuiz.getResult()` で現在の挑戦を同じ形で取得できます（`answers[問題id]` に `response`・`responseText`・`correct`・`at`・`ms`）。`onAnswer`・`onComplete` でも回答のたびに受け取れます。

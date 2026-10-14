@@ -227,3 +227,80 @@ def test_a_language_switch_is_logged_and_answers_keep_their_language(client):
     assert r.get_json() == {"logged": 3, "dropped": 0}
     [a] = client.get("/api/quiz/ir-basics/results").get_json()["attempts"]
     assert a["lang"] == "en" and a["answers"][0]["lang"] == "en"
+
+
+# ── Per-question times ───────────────────────────────────────────────────
+
+
+def test_each_questions_time_is_listed_by_question(client):
+    answers = (("q1", "c2", True, 4200), ("q2", ["a", "c"], False, 3100))
+    _post(client, "?pid=P07&session=1", {"events": _attempt("a1", answers=answers)})
+    [a] = client.get("/api/quiz/ir-basics/results").get_json()["attempts"]
+    assert a["question_ms"] == {"q1": 4200, "q2": 3100}
+
+
+def _csv_rows(client, query=""):
+    import csv
+    import io
+
+    r = client.get(f"/api/quiz/ir-basics/results.csv{query}")
+    assert r.status_code == 200
+    assert r.mimetype == "text/csv"
+    assert "ir-basics-results.csv" in r.headers["Content-Disposition"]
+    text = r.data.decode("utf-8")
+    assert text.startswith("﻿")  # Excel reads it as UTF-8
+    return list(csv.DictReader(io.StringIO(text[1:])))
+
+
+def test_the_csv_has_one_row_per_attempt_and_columns_per_question(client):
+    answers = (("q1", "c2", True, 4200), ("q2", ["a", "c"], False, 3150))
+    _post(client, "?pid=P07&session=1", {"events": _attempt("a1", answers=answers)})
+    _post(
+        client,
+        "?pid=P08&session=1",
+        {"events": _attempt("a2", complete=False, answers=(("q1", "c1", False, 900),))},
+    )
+    rows = _csv_rows(client)
+    assert [r["pid"] for r in rows] == ["P07", "P08"]
+    first, second = rows
+    assert (first["q1_ms"], first["q1_s"], first["q2_ms"], first["q2_s"]) == (
+        "4200",
+        "4.2",
+        "3150",
+        "3.1",
+    )
+    assert first["q1_answer"] == "text of c2" and first["q1_correct"] == "1"
+    assert first["q2_correct"] == "0"
+    assert (first["duration_ms"], first["duration_s"], first["completed"]) == (
+        "8000",
+        "8.0",
+        "1",
+    )
+    # the second participant stopped after one question: the rest is blank
+    assert (
+        second["q1_ms"] == "900"
+        and second["q2_ms"] == ""
+        and second["completed"] == "0"
+    )
+    assert _csv_rows(client, "?pid=P08")[0]["attempt"] == "a2"
+
+
+def test_the_csv_follows_the_surveys_question_order(client):
+    app_module.QUIZZES_DIR.mkdir(parents=True, exist_ok=True)
+    survey = {
+        "id": "ir-basics",
+        "questions": [{"id": "q2"}, {"id": "q1"}, {"id": "q3"}],
+    }
+    (app_module.QUIZZES_DIR / "ir-basics.json").write_text(json.dumps(survey))
+    _post(client, "", {"events": _attempt("a1")})
+    r = client.get("/api/quiz/ir-basics/results.csv")
+    head = r.data.decode("utf-8")[1:].splitlines()[0].split(",")
+    assert [h for h in head if h.endswith("_ms") and h != "duration_ms"] == [
+        "q2_ms",
+        "q1_ms",
+        "q3_ms",
+    ]
+
+
+def test_the_csv_of_an_unknown_survey_is_404(client):
+    assert client.get("/api/quiz/nothing-here/results.csv").status_code == 404

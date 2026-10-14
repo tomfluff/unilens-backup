@@ -1,6 +1,10 @@
 /**
  * Copy dist/quiz.js (+ .map) into every frontend that embeds it.
  * Used after one-shot builds and by the dev watcher.
+ *
+ * Those pages show only the "アンケート" button (link mode), which opens the
+ * survey page on the backend (/survey, backend/survey.html); that page loads
+ * dist/quiz.js straight from here.
  */
 import { copyFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
@@ -10,18 +14,8 @@ const root = join(fileURLToPath(new URL(".", import.meta.url)), "..");
 const distJs = join(root, "dist", "quiz.js");
 const distMap = join(root, "dist", "quiz.js.map");
 
-/** Keep in sync with FRONTEND_TARGETS in ../make-targets.mk */
-const FRONTENDS = [
-    "softbank-mirror",
-    "softbank-mirror-recruit",
-    "dev-demo",
-    "study-support",
-    "study-wiki",
-    "study-shop",
-    "study-transit",
-    "study-news",
-    "study-recipes",
-];
+/** frontends whose pages carry the survey button */
+const FRONTENDS = ["softbank-mirror", "softbank-mirror-recruit", "dev-demo"];
 
 export function syncDist() {
     for (const fe of FRONTENDS) {

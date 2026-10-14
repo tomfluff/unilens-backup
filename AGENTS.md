@@ -8,7 +8,7 @@
 - `backend/`: Flask API (`/api/capture`, `/api/chat`, sessions/captures storage).
 - `unilens-lib/`: Main embeddable React + TypeScript widget.
 - `accessibility-lib/`: Accessibility-focused embeddable widget.
-- `quiz-lib/`: Embeddable quiz widget; answers logged by the backend (`/api/quiz/log`).
+- `quiz-lib/`: Survey widget; the study's survey page is served by the backend (`/survey?quiz=<id>`, questions in `backend/quizzes/`), answers logged at `/api/quiz/log`.
 - `frontend/`: Static test targets (`dev-demo`, `softbank-mirror`).
 
 ## Required Checks
@@ -21,4 +21,4 @@
 - `make serve-frontend <target>`
 
 ## Before Finishing Any Change
-To test and validate your changes, please make sure you run `make check` until it passes with 0 errors or warnings.
+To test and validate your changes, please make sure you run `make check` until it passes with 0 errors or warnings.

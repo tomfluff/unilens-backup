@@ -107,7 +107,7 @@ function storedStudyIdsJson(): string | null {
 }
 
 /** Prefer UniLens.init()'s ids; else the same merge as studyLog without writing storage. */
-function resolveStudyIds(): StudyIds | null {
+export function resolveStudyIds(): StudyIds | null {
     const fromUniLens = (
         window as unknown as {
             UniLens?: { studyIds?: () => StudyIds | null };

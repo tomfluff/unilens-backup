@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>アンケート / Survey</title>
+    <!--
+      The survey page (GET /survey). The address says what to show:
+        /survey?quiz=unilens-poc&pid=P01&session=1&lang=ja
+      quiz     the survey: backend/quizzes/<quiz>.json (required; without it, a list)
+      pid, session  the participant, as for the study log (optional)
+      lang     ja | en: the starting language (optional; the page's switch changes it)
+      The survey itself is quiz-lib (served at /survey/quiz.js) in its "page" mode.
+    -->
+    <style>
+      html { background: #f1f3f5; }
+      body {
+        margin: 0; padding: 24px 16px 48px;
+        font-family: "BIZ UDPGothic", "BIZ UDPゴシック", "Hiragino Sans", "Hiragino Kaku Gothic ProN",
+          "Yu Gothic UI", Meiryo, system-ui, sans-serif;
+        font-size: 18px; line-height: 1.7; color: #1f2937;
+      }
+      .note {
+        max-width: 48rem; margin: 0 auto; padding: 1em 1.2em;
+        background: #fff; border: 2px solid #6b7280; border-radius: 16px;
+      }
+      .note h1 { margin: 0 0 0.5em; font-size: 1.35em; }
+      .note p { margin: 0.4em 0; }
+      .note ul { margin: 0.6em 0 0; padding-left: 1.2em; }
+      .note li + li { margin-top: 0.8em; }
+      .note a { color: #15803d; font-weight: 700; }
+      .note a:focus-visible { outline: 3px solid #15803d; outline-offset: 2px; }
+      .note code { font-size: 0.9em; background: #f1f3f5; padding: 0.1em 0.35em; border-radius: 4px; overflow-wrap: anywhere; }
+      [hidden] { display: none !important; }
+    </style>
+  </head>
+  <body>
+    <main id="survey"></main>
+    <noscript>
+      <div class="note"><p>このアンケートには JavaScript が必要です。/ This survey needs JavaScript.</p></div>
+    </noscript>
+    <script src="/survey/quiz.js" onerror="window.__quizMissing = true"></script>
+    <script>
+      (function () {
+        var main = document.getElementById("survey");
+        var params = new URLSearchParams(location.search);
+        var quiz = (params.get("quiz") || "").trim();
+        var lang = params.get("lang");
+
+        function note(html) {
+          var box = document.createElement("div");
+          box.className = "note";
+          box.innerHTML = html;
+          main.replaceChildren(box);
+        }
+        function esc(s) {
+          return String(s).replace(/[&<>"']/g, function (c) {
+            return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+          });
+        }
+        function text(t) {
+          if (!t) return "";
+          if (typeof t === "string") return t;
+          return t.ja || t.en || "";
+        }
+
+        if (window.__quizMissing || !window.UniLensQuiz) {
+          note(
+            "<h1>アンケートを表示できません / The survey cannot be shown</h1>" +
+              "<p><code>quiz-lib/dist/quiz.js</code> がありません。リポジトリのルートで <code>make build</code> を実行してください。</p>" +
+              "<p lang=\"en\"><code>quiz-lib/dist/quiz.js</code> is missing: run <code>make build</code> at the repository root.</p>",
+          );
+          return;
+        }
+
+        // No survey named: list them, for the facilitator to pick and copy
+        if (!quiz) {
+          fetch("/api/quiz")
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+              var items = (data.quizzes || []).filter(function (q) { return q.defined; });
+              if (!items.length) {
+                note("<h1>アンケート一覧 / Surveys</h1><p>アンケートがありません。<code>backend/quizzes/&lt;id&gt;.json</code> を置いてください。</p>");
+                return;
+              }
+              note(
+                "<h1>アンケート一覧 / Surveys</h1>" +
+                  "<p>参加者には <code>?quiz=…&amp;pid=P01&amp;session=1</code> を付けた URL を開いてもらいます。</p><ul>" +
+                  items.map(function (q) {
+                    var url = "/survey?quiz=" + encodeURIComponent(q.id);
+                    var csv = "/api/quiz/" + encodeURIComponent(q.id) + "/results.csv";
+                    return (
+                      "<li><a href=\"" + esc(url) + "\">" + esc(text(q.title) || q.id) + "</a><br />" +
+                      "<code>" + esc(location.origin + url + "&pid=P01&session=1") + "</code><br />" +
+                      "回答 " + q.attempts + " 件（完了 " + q.completed + " 件）" +
+                      // one row per attempt, with each question's time: there is a file once someone has answered
+                      (q.attempts ? "　<a href=\"" + esc(csv) + "\" download>結果 CSV（問題ごとの所要時間）</a>" : "") +
+                      "</li>"
+                    );
+                  }).join("") +
+                  "</ul>",
+              );
+            })
+            .catch(function () {
+              note("<h1>アンケート一覧 / Surveys</h1><p>一覧を読み込めませんでした。/ The list could not be loaded.</p>");
+            });
+          return;
+        }
+
+        var chosen = lang === "ja" || lang === "en" ? lang : undefined;
+        UniLensQuiz.init({
+          mode: "page",
+          container: main,
+          src: "/api/quiz/" + encodeURIComponent(quiz),
+          backend: location.origin,
+          lang: chosen,
+        }).then(function (ok) {
+          if (!ok) {
+            note(
+              "<h1>アンケートが見つかりません / Survey not found</h1>" +
+                "<p><code>" + esc(quiz) + "</code> というアンケートはありません。URL を確かめてください。</p>" +
+                "<p lang=\"en\">There is no survey called <code>" + esc(quiz) + "</code>. Please check the address.</p>" +
+                "<p><a href=\"/survey\">アンケート一覧 / All surveys</a></p>",
+            );
+            return;
+          }
+          // an explicit ?lang= wins over a choice remembered in this browser
+          if (chosen) UniLensQuiz.setLang(chosen);
+        });
+      })();
+    </script>
+  </body>
+</html>

@@ -30,7 +30,7 @@
           <li><strong>チャット</strong> — <kbd>Alt</kbd> + クリック（<code>make serve-backend</code>、ポート 5000）。</li>
           <li><strong>共同デザイン用プリセット</strong> — <code>?unilens-preset=initial</code> または <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>B</kbd>。</li>
           <li><strong>研究ログ</strong> — <code>?pid=P01&amp;session=1</code>（バックエンド起動時）。</li>
-          <li><strong>アンケート</strong> — 左上の「アンケート」ボタン（<code>UniLensQuiz.init()</code>、質問は <code>quiz.json</code> の UniLens PoC アンケート 4 問。上部の「日本語 / English」で言語を切り替え。正誤は表示しない）。回答は <code>backend/quiz-logs/softbank-mirror-recruit.jsonl</code>、取得は <code>GET /api/quiz/softbank-mirror-recruit/results</code>。</li>
+          <li><strong>アンケート</strong> — 左上の緑の「アンケート」ボタンを押すと、backend のアンケートページ（<code>/survey?quiz=unilens-poc</code>）へ移動します。このページの <code>pid</code> / <code>session</code> と言語を引き継ぎます。</li>
         </ul>
         <p>他の検証用フロント：</p>
         <ul>
@@ -49,7 +49,7 @@
     <script>
       Accessibility.init()
       UniLens.init({ backend: 'http://127.0.0.1:5000', mouseWindow: 5 })
-      UniLensQuiz.init({ src: '/quiz.json', backend: 'http://127.0.0.1:5000' })
+      UniLensQuiz.init({ mode: 'link', survey: 'unilens-poc', backend: 'http://127.0.0.1:5000' })
     </script>
   </body>
 </html>

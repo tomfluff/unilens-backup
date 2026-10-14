@@ -23,6 +23,7 @@
 
 import {
     CONTRAST_ATTR,
+    MODE_ATTR,
     POSITION_ATTR,
     QUIZ_ROOT_ID,
     TEXT_SIZE_ATTR,
@@ -148,6 +149,8 @@ ${R} .unilens-quiz-toggle {
   background: ${v("toggle")}; color: ${v("on-toggle")};
   font-weight: 700; box-shadow: ${v("shadow-toggle")};
 }
+/* link mode: the pill is a link to the survey page */
+${R} a.unilens-quiz-toggle { text-decoration: none; cursor: pointer; }
 ${R} .unilens-quiz-toggle[aria-expanded="true"] {
   box-shadow: 0 0 0 2px ${v("bg")}, 0 0 0 4px ${v("toggle")}, ${v("shadow-toggle")};
 }
@@ -163,7 +166,9 @@ ${R} .unilens-quiz-badge {
 ${R} .unilens-quiz-panel {
   /* 65% of the window wide; never narrower than 26em, never past the window */
   width: min(max(65vw, 26em), calc(100vw - 16px));
-  /* down to just above UniLens' settings gear (bottom left, 14px + 44px) */
+  /* three quarters of the window tall, whatever the content: longer content
+     scrolls inside. Never past UniLens' settings gear (bottom left, 14px + 44px). */
+  height: 75vh;
   max-height: calc(100vh - 150px);
   display: flex; flex-direction: column; overflow: hidden;
   border-radius: 16px; background: ${v("bg")}; color: ${v("text")};
@@ -294,6 +299,18 @@ ${R} .unilens-quiz-review dt { font-weight: 700; color: ${v("muted")}; }
 ${R} .unilens-quiz-review dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
 
 /* ── Small screens: the panel becomes a sheet across the width ──────────── */
+/* ── Survey page (mode "page"): the survey is the page, not a panel over one.
+   A centred card at a comfortable reading width; the page scrolls, not the card. */
+${R}[${MODE_ATTR}="page"] {
+  position: static; z-index: auto; display: block; max-width: none;
+}
+${R}[${MODE_ATTR}="page"] .unilens-quiz-panel {
+  width: min(48rem, 100%); height: auto; max-height: none; margin: 0 auto;
+  overflow: visible;
+}
+${R}[${MODE_ATTR}="page"] .unilens-quiz-body { overflow: visible; }
+${R}[${MODE_ATTR}="page"] .unilens-quiz-title { font-size: 1.35em; }
+
 @media (max-width: 560px) {
   ${R} .unilens-quiz-panel { width: calc(100vw - 16px); }
   /* narrow: title and close on the first row, the language switch on its own row */

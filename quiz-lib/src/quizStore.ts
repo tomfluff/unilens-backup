@@ -32,6 +32,11 @@ export interface Attempt {
     startedAt: number;
     /** index of the question on screen */
     index: number;
+    /**
+     * epoch ms the question on screen first appeared: each answer's `ms` runs from
+     * here. Stored, so a reload does not restart a question's clock.
+     */
+    shownAt?: number;
     /** by question id */
     answers: Record<string, AnswerRecord>;
     finishedAt: number | null;
@@ -41,8 +46,12 @@ interface QuizState {
     open: boolean;
     /** by quiz id */
     attempts: Record<string, Attempt>;
-    /** the language the visitor picked with the panel's switch; null: not picked */
-    lang: QuizLang | null;
+    /**
+     * The language picked with the 日本語 / English switch, by the same key as
+     * attempts: per quiz and participant, so the next participant on a shared
+     * laptop is not shown the last one's choice.
+     */
+    langs: Record<string, QuizLang>;
 }
 
 /** Storage that may be blocked (privacy modes, sandboxed frames): degrade to memory. */
@@ -73,10 +82,10 @@ function safeStorage(): Storage {
 }
 
 export const useQuizStore = create<QuizState>()(
-    persist(() => ({ open: false, attempts: {}, lang: null }) as QuizState, {
+    persist(() => ({ open: false, attempts: {}, langs: {} }) as QuizState, {
         name: QUIZ_STORE_KEY,
         storage: createJSONStorage(safeStorage),
-        partialize: (s) => ({ attempts: s.attempts, lang: s.lang }),
+        partialize: (s) => ({ attempts: s.attempts, langs: s.langs }),
     }),
 );
 
@@ -93,9 +102,11 @@ export function chosenLang(lang: unknown): QuizLang | null {
         : null;
 }
 
-/** Remember the visitor's language choice; it wins over the page's language. */
-export function setChosenLang(lang: QuizLang) {
-    useQuizStore.setState({ lang });
+/** Remember the visitor's language choice for `key`; it wins over the page's language. */
+export function setChosenLang(key: string, lang: QuizLang) {
+    useQuizStore.setState((s) => ({
+        langs: { ...(s.langs ?? {}), [key]: lang },
+    }));
 }
 
 function newAttemptId(): string {
@@ -143,6 +154,8 @@ export function startAttempt(quizId: string, fingerprint: string): Attempt {
         fingerprint,
         startedAt: Date.now(),
         index: 0,
+        // the first question appears as the attempt starts
+        shownAt: Date.now(),
         answers: {},
         finishedAt: null,
     };
@@ -165,7 +178,7 @@ export function recordAnswer(
 }
 
 export function goToQuestion(quizId: string, index: number) {
-    patchAttempt(quizId, { index });
+    patchAttempt(quizId, { index, shownAt: Date.now() });
 }
 
 export function finishAttempt(quizId: string) {

@@ -10,7 +10,7 @@
 - `backend/`: Flask API（`/api/capture`、`/api/chat`、セッション/キャプチャの保存先）。
 - `unilens-lib/`: 埋め込み型のメイン React + TypeScript ウィジェット。
 - `accessibility-lib/`: アクセシビリティに特化した埋め込み型ウィジェット。
-- `quiz-lib/`: 埋め込み型のクイズウィジェット。回答はバックエンド（`/api/quiz/log`）に記録。
+- `quiz-lib/`: アンケートウィジェット。研究用のアンケートページは backend が配信（`/survey?quiz=<id>`、質問は `backend/quizzes/`）、回答は `/api/quiz/log` に記録。
 - `frontend/`: 静的テストターゲット（`dev-demo`、`softbank-mirror`）。
 
 ## 必須チェック
@@ -23,4 +23,4 @@
 - `make serve-frontend <target>`
 
 ## 変更完了前の確認事項
-変更のテストと検証を行うため、エラーや警告が 0 件になり正常終了するまで、make check を必ず実行してください。
+変更のテストと検証を行うため、エラーや警告が 0 件になり正常終了するまで、make check を必ず実行してください。

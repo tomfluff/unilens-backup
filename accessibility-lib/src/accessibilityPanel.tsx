@@ -24,6 +24,7 @@ import {
     useState,
 } from "react";
 import { createRoot } from "react-dom/client";
+import { installToggleDrag } from "./toggleDrag";
 import {
     getA11yLang,
     onA11yLangChange,
@@ -478,6 +479,13 @@ function AccessibilityPanelApp() {
 
     // Reflects the widget's language and display-isolation flags into the
     // mount point's own attributes (set outside React — see the file header).
+    useEffect(() => {
+        const btn = toggleBtnRef.current;
+        const root = document.getElementById(ROOT_ID);
+        if (!btn || !root) return;
+        return installToggleDrag(btn, root);
+    }, []);
+
     useEffect(() => {
         document.getElementById(ROOT_ID)?.setAttribute("lang", getA11yLang());
     }, []);

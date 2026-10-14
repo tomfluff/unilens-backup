@@ -119,6 +119,24 @@ export const TEXT_BG_ATTR = "data-unilens-a11y-text-bg";
 export const TEXT_BG_BEFORE_ATTR = "data-unilens-a11y-text-bg-before";
 export const TEXT_BG_AFTER_ATTR = "data-unilens-a11y-text-bg-after";
 
+/**
+ * Text drawn on top of a picture (mediaTextGuard.ts). Set on the picture
+ * block and every descendant: color rules (theme palette, text plates, text
+ * outline, link background) skip these so the host's own colors stay.
+ */
+export const MEDIA_TEXT_ATTR = "data-unilens-a11y-media-text";
+/**
+ * The picture block itself: whole-page filters are undone here (a hole in the
+ * saturation/contrast layer, a counter-filter under invert).
+ */
+export const MEDIA_TEXT_ROOT_ATTR = "data-unilens-a11y-media-text-root";
+/**
+ * An element whose own CSS background (or mask / ::before / ::after) paints a
+ * picture. Text plates must not strip that background-image — a banner link
+ * whose photo is its background would lose the photo.
+ */
+export const MEDIA_OWNER_ATTR = "data-unilens-a11y-media-owner";
+
 export const HTML_STYLE_FONT_SCALE = "--unilens-a11y-font-scale";
 
 /** Whole-page text scale (font-size only — images stay at their host size). */
@@ -137,6 +155,9 @@ export const HTML_STYLE_LETTER_SPACING = "--unilens-a11y-letter-spacing";
 export const HTML_STYLE_WORD_SPACING = "--unilens-a11y-word-spacing";
 export const HTML_STYLE_SATURATE = "--unilens-a11y-display-saturate";
 export const HTML_STYLE_CONTRAST = "--unilens-a11y-display-contrast";
+/** 1 / saturate and 1 / contrast, for undoing the invert filter on picture blocks. */
+export const HTML_STYLE_SATURATE_INV = "--unilens-a11y-display-saturate-inv";
+export const HTML_STYLE_CONTRAST_INV = "--unilens-a11y-display-contrast-inv";
 export const HTML_STYLE_DISPLAY_BG = "--unilens-a11y-display-bg";
 export const HTML_STYLE_DISPLAY_TEXT = "--unilens-a11y-display-text";
 export const HTML_STYLE_DISPLAY_SURFACE = "--unilens-a11y-display-surface";

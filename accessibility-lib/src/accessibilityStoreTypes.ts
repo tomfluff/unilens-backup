@@ -406,7 +406,16 @@ export function textPlateActive(theme: string): boolean {
     return theme === "high-contrast";
 }
 
-export type AutoTextMode = "off" | "viewport" | "content" | "combined";
+/**
+ * "health" (Lab): grow text until the layout starts to break — horizontal
+ * scrolling, overlapping text, or narrow wrapping (see pageHealth.ts).
+ */
+export type AutoTextMode =
+    | "off"
+    | "viewport"
+    | "content"
+    | "combined"
+    | "health";
 
 export interface A11ySettings {
     fontSize: A11yFontSize;

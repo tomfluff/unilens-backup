@@ -167,6 +167,7 @@ import {
 export type { PanelTab } from "./accessibilityPanelOptions";
 
 const scaleText = () => getAppliedTextScale().toFixed(2);
+const healthPercent = (health: number) => `${Math.round(health * 100)}%`;
 
 function presetMeta(id: A11yPresetId): { label: string; hint: string } {
     switch (id) {
@@ -1560,6 +1561,7 @@ function AutoTextCard({
 }) {
     const { autoTextSize, autoTextMode, autoTextMinPx } = useSettings();
     const enabled = autoTextSize && autoTextMode !== "off";
+    const healthMode = enabled && autoTextMode === "health";
     const scale = getAppliedTextScale();
 
     // The stepper doesn't move focus, so without an announcement the change would go unnoticed.
@@ -1608,7 +1610,7 @@ function AutoTextCard({
                 <>
                     <ChoiceGroup<Exclude<AutoTextMode, "off">>
                         label={t().autoModeGroup}
-                        columns={3}
+                        columns={2}
                         focusPrefix="autoMode"
                         // By the time we get here enabled === true, so 'off' can't occur.
                         current={autoTextMode as Exclude<AutoTextMode, "off">}
@@ -1624,35 +1626,55 @@ function AutoTextCard({
                         onSelect={(value) => {
                             patchSettings({ autoTextMode: value });
                             saveSettings();
-                            setLastAnalysis(refreshAutoTextSize());
+                            // The settings subscription has already re-applied;
+                            // a second health search would reflow the page.
+                            let a =
+                                value === "health"
+                                    ? runAutoTextAction("analyze")
+                                    : refreshAutoTextSize();
+                            // autoText: false at init = no subscription, no search.
+                            if (value === "health" && !a.health)
+                                a = refreshAutoTextSize();
+                            setLastAnalysis(a);
                             announce(
-                                t().autoModeAnnounce(
-                                    t().autoMode[value].label,
-                                    scaleText(),
-                                ),
+                                a.health
+                                    ? t().healthAnnounce(
+                                          scaleText(),
+                                          t().healthStop[a.health.stopReason],
+                                      )
+                                    : t().autoModeAnnounce(
+                                          t().autoMode[value].label,
+                                          scaleText(),
+                                      ),
                             );
                         }}
                     />
 
-                    <ChoiceGroup<string>
-                        label={t().autoMinGroup}
-                        columns={4}
-                        focusPrefix="autoMin"
-                        current={String(autoTextMinPx)}
-                        options={AUTO_MIN_PX_OPTIONS.map((px) => ({
-                            value: String(px),
-                            label: `${px}px`,
-                            ariaLabel: t().autoMinAria(px),
-                        }))}
-                        onSelect={(value) => {
-                            patchSettings({ autoTextMinPx: Number(value) });
-                            saveSettings();
-                            setLastAnalysis(refreshAutoTextSize());
-                            announce(
-                                t().autoMinAnnounce(Number(value), scaleText()),
-                            );
-                        }}
-                    />
+                    {/* Health mode measures layout, not text size: no target. */}
+                    {!healthMode && (
+                        <ChoiceGroup<string>
+                            label={t().autoMinGroup}
+                            columns={4}
+                            focusPrefix="autoMin"
+                            current={String(autoTextMinPx)}
+                            options={AUTO_MIN_PX_OPTIONS.map((px) => ({
+                                value: String(px),
+                                label: `${px}px`,
+                                ariaLabel: t().autoMinAria(px),
+                            }))}
+                            onSelect={(value) => {
+                                patchSettings({ autoTextMinPx: Number(value) });
+                                saveSettings();
+                                setLastAnalysis(refreshAutoTextSize());
+                                announce(
+                                    t().autoMinAnnounce(
+                                        Number(value),
+                                        scaleText(),
+                                    ),
+                                );
+                            }}
+                        />
+                    )}
 
                     <Stepper
                         label={t().autoStepGroup}
@@ -1672,10 +1694,21 @@ function AutoTextCard({
                             ariaLabel={t().analyzeAria}
                             focusKey="auto-analyze"
                             onClick={() => {
-                                const a = runAutoTextAction("analyze");
+                                // Health mode: search again, since the page
+                                // may have changed since the last search.
+                                const a = healthMode
+                                    ? refreshAutoTextSize()
+                                    : runAutoTextAction("analyze");
                                 setLastAnalysis(a);
                                 announce(
-                                    a
+                                    a.health
+                                        ? t().healthAnnounce(
+                                              scaleText(),
+                                              t().healthStop[
+                                                  a.health.stopReason
+                                              ],
+                                          )
+                                        : a
                                         ? t().analyzeAnnounce(
                                               a.medianPx,
                                               Math.round(
@@ -1689,7 +1722,36 @@ function AutoTextCard({
                         />
                     </ButtonRow>
 
-                    {lastAnalysis && (
+                    {lastAnalysis?.health && healthMode && (
+                        <Metrics
+                            rows={[
+                                [
+                                    t().metricHealthBase,
+                                    healthPercent(lastAnalysis.health.baseline),
+                                ],
+                                [
+                                    t().metricHealthNow,
+                                    healthPercent(lastAnalysis.health.current),
+                                ],
+                                [
+                                    t().metricHealthStop,
+                                    t().healthStop[
+                                        lastAnalysis.health.stopReason
+                                    ],
+                                ],
+                                [
+                                    t().metricHealthCost,
+                                    t().metricHealthCostValue(
+                                        lastAnalysis.health.trials,
+                                        lastAnalysis.health.ms,
+                                    ),
+                                ],
+                                [t().metricScale, `×${scaleText()}`],
+                            ]}
+                        />
+                    )}
+
+                    {lastAnalysis && !(lastAnalysis.health && healthMode) && (
                         <Metrics
                             rows={[
                                 [

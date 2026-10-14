@@ -1,5 +1,5 @@
 /**
- * Apply font-size scale ratios (100% / 195% / 260%) to the user's text selection.
+ * Apply font-size scale ratios (100% / 150% / 200%) to the user's text selection.
  * Ratios match automatic / accessibility font-size settings.
  *
  * Host-page citizenship: we inject a prefixed <span> around the selection and

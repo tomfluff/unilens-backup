@@ -138,6 +138,13 @@ ${R} .unilens-a11y-toggle {
   font-size: 1em; font-weight: 700; cursor: pointer;
   box-shadow: ${v("shadow-toggle")};
 }
+/* Draggable: hold and drag to move. The root is re-anchored to the nearest corner
+   (inline left/right/top/bottom), and the panel opens toward the screen centre. */
+${R} .unilens-a11y-toggle { touch-action: none; user-select: none; -webkit-user-select: none; cursor: grab; }
+${R} .unilens-a11y-toggle[data-unilens-a11y-dragging] { cursor: grabbing; }
+${R}[data-unilens-a11y-down] { flex-direction: column; }
+${R}[data-unilens-a11y-down] .unilens-a11y-panel { margin-bottom: 0; margin-top: 10px; max-height: calc(100vh - 110px); }
+${R}[data-unilens-a11y-start] { align-items: flex-start; }
 ${R} .unilens-a11y-toggle[aria-expanded="true"] {
   box-shadow: 0 0 0 2px ${v("bg")}, 0 0 0 4px ${v("accent")}, ${v("shadow-toggle")};
 }

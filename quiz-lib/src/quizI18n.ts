@@ -14,6 +14,8 @@ export interface QuizMessages {
     languageChanged: string;
     /** accessible name of the toggle, with progress */
     toggleLabel: (answered: number, total: number) => string;
+    /** accessible name of the link to the survey page (link mode) */
+    openSurvey: string;
     close: string;
     defaultTitle: string;
     questionCount: (n: number) => string;
@@ -51,6 +53,7 @@ const ja: QuizMessages = {
     language: "表示言語",
     languageChanged: "日本語で表示しています",
     toggleLabel: (a, t) => `アンケート（全${t}問中${a}問回答済み）`,
+    openSurvey: "アンケートに回答する（アンケートのページへ移動）",
     close: "閉じる",
     defaultTitle: "アンケート",
     questionCount: (n) => `全${n}問`,
@@ -86,6 +89,7 @@ const en: QuizMessages = {
     language: "Language",
     languageChanged: "Now showing in English",
     toggleLabel: (a, t) => `Survey (${a} of ${t} answered)`,
+    openSurvey: "Survey: answer it (opens the survey page)",
     close: "Close",
     defaultTitle: "Survey",
     questionCount: (n) => (n === 1 ? "1 question" : `${n} questions`),

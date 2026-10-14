@@ -13,10 +13,13 @@
  */
 
 import {
+    createContext,
     type FormEvent,
+    type HTMLAttributes,
     type KeyboardEvent,
     type ReactNode,
     type RefObject,
+    useContext,
     useEffect,
     useRef,
     useState,
@@ -124,7 +127,13 @@ const ICON_PATHS: Record<IconName, string> = {
     alert: '<circle cx="12" cy="12" r="9"/><path d="M12 7.5v5.5"/><path d="M12 16.5h.01"/>',
 };
 
-function Icon({ name, size = 18 }: { name: IconName; size?: number }) {
+export function Icon({
+    name,
+    size = 18,
+}: {
+    name: IconName;
+    size?: number;
+}) {
     return (
         <svg
             viewBox="0 0 24 24"
@@ -196,10 +205,25 @@ function correctText(q: QuizQuestion, lang: QuizLang): string {
 
 const focusProps = (key: string) => ({ [FOCUS_ATTR]: key, tabIndex: -1 });
 
+/**
+ * Screen headings sit one level under the title: h3 under the panel's h2, h2
+ * under the survey page's h1 (no skipped levels for screen-reader navigation).
+ */
+const ScreenHeadingLevel = createContext<"h2" | "h3">("h3");
+
+function ScreenHeading(props: HTMLAttributes<HTMLHeadingElement>) {
+    const Tag = useContext(ScreenHeadingLevel);
+    return <Tag {...props} />;
+}
+
 // ── The widget ────────────────────────────────────────────────────────────
 
 export interface QuizAppProps {
     quiz: Quiz;
+    /** "panel": toggle + floating dialog; "page": the survey page itself (no toggle, no close) */
+    mode: "panel" | "page";
+    /** the store's key for this attempt (per quiz, and per participant) */
+    storeKey: string;
     fingerprint: string;
     /** the page's language (or init's `lang`), until the visitor picks one */
     defaultLang: QuizLang;
@@ -208,16 +232,20 @@ export interface QuizAppProps {
 
 export function QuizApp({
     quiz,
+    mode,
+    storeKey,
     fingerprint,
     defaultLang,
     callbacks,
 }: QuizAppProps) {
-    const lang = chosenLang(useQuizStore((s) => s.lang)) ?? defaultLang;
+    const page = mode === "page";
+    const lang =
+        chosenLang(useQuizStore((s) => s.langs?.[storeKey])) ?? defaultLang;
     const m = MESSAGES[lang];
     const open = useQuizStore((s) => s.open);
     // subscribe to this quiz's attempt; read it through the validating accessor
-    useQuizStore((s) => s.attempts[quiz.id]);
-    const attempt = currentAttempt(quiz.id, fingerprint, quiz.questions.length);
+    useQuizStore((s) => s.attempts[storeKey]);
+    const attempt = currentAttempt(storeKey, fingerprint, quiz.questions.length);
 
     const toggleRef = useRef<HTMLButtonElement>(null);
     const panelRef = useRef<HTMLDivElement>(null);
@@ -227,7 +255,8 @@ export function QuizApp({
     );
     const requestFocus = (key: string) =>
         setFocusReq((prev) => ({ key, n: (prev?.n ?? 0) + 1 }));
-    /** when the question on screen appeared, for the time-to-answer in the log */
+    /** fallback start of the question on screen, for an attempt stored before
+     *  `shownAt` was (the stored start is used whenever there is one) */
     const shownAt = useRef(Date.now());
 
     useEffect(() => {
@@ -240,13 +269,20 @@ export function QuizApp({
     const questionIndex = attempt && !attempt.finishedAt ? attempt.index : -1;
     // The clock runs from the question's first appearance to its answer, including
     // time with the panel closed: the answer is usually looked up on the page itself.
-    // A reload restarts it (the start is not stored), so that answer's time is short.
+    // The start is stored with the attempt (quizStore `shownAt`), so a reload or a
+    // language switch does not restart it.
     // biome-ignore lint/correctness/useExhaustiveDependencies: restart the clock per question shown
     useEffect(() => {
         shownAt.current = Date.now();
     }, [questionIndex, attempt?.attempt]);
 
     const base = () => ({ quiz: quiz.id, lang });
+
+    // The survey page is opened by its address: that counts as opening the survey.
+    // biome-ignore lint/correctness/useExhaustiveDependencies: once per page load
+    useEffect(() => {
+        if (page) logQuizEvent("quiz_open", { ...base(), attempt: attempt?.attempt });
+    }, []);
 
     function openPanel() {
         setOpen(true);
@@ -261,7 +297,7 @@ export function QuizApp({
     }
 
     function start(retry: boolean) {
-        const a = startAttempt(quiz.id, fingerprint);
+        const a = startAttempt(storeKey, fingerprint);
         logQuizEvent("quiz_start", {
             ...base(),
             attempt: a.attempt,
@@ -272,10 +308,10 @@ export function QuizApp({
     }
 
     function finish(a: Attempt) {
-        finishAttempt(quiz.id);
+        finishAttempt(storeKey);
         // re-read: the last answer was recorded a moment ago
         const done =
-            currentAttempt(quiz.id, fingerprint, quiz.questions.length) ?? a;
+            currentAttempt(storeKey, fingerprint, quiz.questions.length) ?? a;
         const score = scoreOf(quiz, done.answers);
         const last = Math.max(
             done.startedAt,
@@ -307,7 +343,7 @@ export function QuizApp({
 
     function advance(a: Attempt) {
         if (a.index + 1 < quiz.questions.length) {
-            goToQuestion(quiz.id, a.index + 1);
+            goToQuestion(storeKey, a.index + 1);
             requestFocus("screen");
         } else finish(a);
     }
@@ -315,10 +351,14 @@ export function QuizApp({
     function submit(a: Attempt, q: QuizQuestion, response: QuizResponse) {
         const correct = isCorrect(q, response);
         const at = Date.now();
-        const ms = Math.max(0, at - shownAt.current);
+        const start =
+            Number.isFinite(a.shownAt) && (a.shownAt as number) <= at
+                ? (a.shownAt as number)
+                : shownAt.current;
+        const ms = Math.max(0, at - start);
         // the answer as the visitor read it (choice ids alone mean little in a log)
         const text = responseText(q, response, lang, m);
-        recordAnswer(quiz.id, q.id, {
+        recordAnswer(storeKey, q.id, {
             response,
             responseText: text,
             correct,
@@ -357,7 +397,7 @@ export function QuizApp({
 
     function chooseLang(next: QuizLang) {
         if (next === lang) return;
-        setChosenLang(next);
+        setChosenLang(storeKey, next);
         logQuizEvent("quiz_lang", {
             quiz: quiz.id,
             lang: next,
@@ -368,6 +408,7 @@ export function QuizApp({
     }
 
     function onPanelKeyDown(e: KeyboardEvent<HTMLDivElement>) {
+        if (page) return; // a page has nothing to close
         if (e.key === "Escape" && !e.nativeEvent.isComposing) {
             e.stopPropagation();
             closePanel();
@@ -377,6 +418,13 @@ export function QuizApp({
     const answered = attempt ? Object.keys(attempt.answers).length : 0;
     const total = quiz.questions.length;
     const title = localize(quiz.title, lang) || m.defaultTitle;
+
+    // On the survey page the document is the survey: its title and language follow
+    useEffect(() => {
+        if (!page) return;
+        document.title = title;
+        document.documentElement.lang = lang;
+    }, [page, title, lang]);
 
     let screen: ReactNode;
     if (!attempt) {
@@ -411,6 +459,7 @@ export function QuizApp({
 
     return (
         <>
+            {!page && (
             <button
                 ref={toggleRef}
                 id={QUIZ_TOGGLE_ID}
@@ -430,21 +479,28 @@ export function QuizApp({
                     </span>
                 )}
             </button>
+            )}
             <div
                 ref={panelRef}
                 id={QUIZ_PANEL_ID}
                 lang={lang}
                 className="unilens-quiz-panel"
-                role="dialog"
-                aria-modal="false"
+                role={page ? "region" : "dialog"}
+                aria-modal={page ? undefined : "false"}
                 aria-labelledby={QUIZ_TITLE_ID}
-                hidden={!open}
+                hidden={!page && !open}
                 onKeyDown={onPanelKeyDown}
             >
                 <div className="unilens-quiz-header">
-                    <h2 id={QUIZ_TITLE_ID} className="unilens-quiz-title">
-                        {title}
-                    </h2>
+                    {page ? (
+                        <h1 id={QUIZ_TITLE_ID} className="unilens-quiz-title">
+                            {title}
+                        </h1>
+                    ) : (
+                        <h2 id={QUIZ_TITLE_ID} className="unilens-quiz-title">
+                            {title}
+                        </h2>
+                    )}
                     <fieldset
                         className="unilens-quiz-lang"
                         aria-label={m.language}
@@ -462,6 +518,7 @@ export function QuizApp({
                             </button>
                         ))}
                     </fieldset>
+                    {!page && (
                     <button
                         type="button"
                         className="unilens-quiz-icon-btn"
@@ -471,8 +528,13 @@ export function QuizApp({
                     >
                         <Icon name="close" size={20} />
                     </button>
+                    )}
                 </div>
-                <div className="unilens-quiz-body">{screen}</div>
+                <div className="unilens-quiz-body">
+                    <ScreenHeadingLevel.Provider value={page ? "h2" : "h3"}>
+                        {screen}
+                    </ScreenHeadingLevel.Provider>
+                </div>
                 <div
                     ref={(node) => {
                         liveRegionEl = node;
@@ -503,9 +565,9 @@ function Intro({
     const description = localize(quiz.description, lang);
     return (
         <>
-            <h3 className="unilens-quiz-heading" {...focusProps("screen")}>
+            <ScreenHeading className="unilens-quiz-heading" {...focusProps("screen")}>
                 {m.questionCount(quiz.questions.length)}
-            </h3>
+            </ScreenHeading>
             {description && <p className="unilens-quiz-text">{description}</p>}
             <div className="unilens-quiz-actions">
                 <button
@@ -607,13 +669,13 @@ function QuestionView({
                 total={quiz.questions.length}
                 m={m}
             />
-            <h3
+            <ScreenHeading
                 id={promptId}
                 className="unilens-quiz-heading"
                 {...focusProps("screen")}
             >
                 {localize(q.prompt, lang)}
-            </h3>
+            </ScreenHeading>
             <form onSubmit={handleSubmit} noValidate>
                 {q.type === "text" ? (
                     <>
@@ -897,9 +959,9 @@ function Result({
     const scored = quiz.showFeedback && quiz.questions.some(isGraded);
     return (
         <>
-            <h3 className="unilens-quiz-heading" {...focusProps("screen")}>
+            <ScreenHeading className="unilens-quiz-heading" {...focusProps("screen")}>
                 {scored ? m.resultTitle : m.doneTitle}
-            </h3>
+            </ScreenHeading>
             {scored ? (
                 <>
                     <p className="unilens-quiz-score">
