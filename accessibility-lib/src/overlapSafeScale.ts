@@ -5,8 +5,8 @@
  * Page font scale, body-text expand, small-text boost and selection resize
  * each multiply an element's font-size on their own, independent of host
  * layout. A single flat ceiling (the old 1.3x used for out-of-flow badges)
- * either undershoots roomy layouts — capping "large" (150%) and "extra-large"
- * (200%) to the exact same visible size — or overshoots tight ones, letting
+ * either undershoots roomy layouts — capping "large" (195%) and "extra-large"
+ * (260%) to the exact same visible size — or overshoots tight ones, letting
  * a badge grow until it sits on top of the text next to it. Measuring the
  * real box against its neighbors after each trial scale lets every element
  * grow as far as its own layout allows, and no further.
@@ -27,7 +27,7 @@ const DEFAULT_RESOLUTION = 0.02;
 const OVERLAY_SEARCH_DEPTH = 4;
 
 export interface MaxSafeScaleOptions {
-    /** The scale we'd like to apply (e.g. the panel's 1.5 / 2). */
+    /** The scale we'd like to apply (e.g. the panel's 1.95 / 2.6). */
     desiredScale: number;
     /** Always-safe fallback, never reduced further than this. */
     minScale?: number;

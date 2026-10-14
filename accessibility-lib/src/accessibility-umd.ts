@@ -303,7 +303,7 @@ const FEATURES = {
     },
     selectionText: {
         id: "selectionText",
-        title: "Selection text size (100% / 150% / 200%)",
+        title: "Selection text size (100% / 195% / 260%)",
         scales: FONT_SCALE_LEVELS,
     },
     // Read-aloud disabled — see init() above.

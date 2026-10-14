@@ -5,14 +5,10 @@ POST /api/capture  {image: dataURL, meta: {...}, inventory?: [...]} -> {id}
 POST /api/chat     {capture_id, message, cite?}       -> {reply, provider, model}
                    (reply cites inventory elements inline as [[nID]])
 POST /api/locate   {capture_id, question, screenshot} -> {capture_id, answer, highlights}
-GET  /survey?quiz=<id>[&q&pid&session&return]      -> the survey page (quiz-lib, Japanese); q=N: question N only
-GET  /api/quiz/<id>                                -> the survey's questions (quizzes/<id>.json)
-POST /api/quiz/log {events: [...]}                 -> {logged, dropped}
+POST /api/quiz/log {events: [...]}                 -> {logged, dropped}  (quiz-lib)
 GET  /api/quiz                                     -> {quizzes: [...]}
-GET  /api/quiz/<id>/results[?pid&session&attempt&user_id&survey_id&completed]
+GET  /api/quiz/<id>/results[?pid&session&attempt&completed]
                                                    -> {quiz, attempts: [...answers, timings]}
-GET  /api/quiz/<id>/results.csv[?same filters]     -> one row per attempt, per-question times
-GET  /api/quiz/<id>/progress?pid&session | ?vid    -> {total, answered, next, completed}
 GET  /health
 
 Captures stored under captures/<id>/ (capture.png + meta.json + chat.json,
@@ -23,8 +19,6 @@ Patterns follow assets26-ai4vis-proj/prototype (base64 inline images).
 """
 
 import base64
-import csv
-import io
 import json
 import os
 import re
@@ -471,12 +465,6 @@ def _server_event(ids: tuple[str, str] | None, kind: str, **fields) -> None:
 # events are also appended to that participant's study log, so answers sit on the
 # same timeline as the chat. Nothing else about the visitor is written.
 QUIZ_LOGS_DIR = Path(__file__).parent / "quiz-logs"
-# The surveys themselves, one JSON file per survey (quiz-lib/README.md has the
-# format); kept in the repository, unlike the logs. The survey page is
-# /survey?quiz=<file name without .json>.
-QUIZZES_DIR = Path(__file__).parent / "quizzes"
-# quiz-lib's build, served to the survey page: `make build` writes it
-QUIZ_LIB_DIST = Path(__file__).resolve().parent.parent / "quiz-lib" / "dist"
 _QUIZ_ID = re.compile(r"^[A-Za-z0-9_-]{1,64}$")
 QUIZ_EVENT_TYPES = frozenset(
     {
@@ -485,10 +473,7 @@ QUIZ_EVENT_TYPES = frozenset(
         "quiz_start",
         "quiz_answer",
         "quiz_complete",
-        # the visitor switched between Japanese and English: the survey is Japanese
-        # only now, but an older quiz.js (a cached page) may still send it
-        "quiz_lang",
-        "quiz_ids",  # IDs typed into an attempt begun before they were asked
+        "quiz_lang",  # the visitor switched the panel between Japanese and English
     }
 )
 QUIZ_MAX_EVENTS = 100
@@ -528,21 +513,6 @@ def _ms_between(start: object, end: object) -> int | None:
     return max(0, round((b - a).total_seconds() * 1000))
 
 
-def _quiz_definition(quiz: str) -> dict | None:
-    """A survey's questions as written in quizzes/<id>.json, or None when there is
-    no such survey (or the file is not a JSON object)."""
-    if not _QUIZ_ID.fullmatch(quiz):
-        return None
-    path = QUIZZES_DIR / f"{quiz}.json"
-    if not path.is_file():
-        return None
-    try:
-        data = json.loads(path.read_text(encoding="utf-8"))
-    except ValueError:
-        return None
-    return data if isinstance(data, dict) else None
-
-
 def _read_quiz_events(quiz: str) -> list[dict] | None:
     """Every event logged for a quiz, oldest first; None when it has no log. A line
     that is not a JSON object (a torn write) is skipped."""
@@ -562,10 +532,6 @@ def _read_quiz_events(quiz: str) -> list[dict] | None:
     return events
 
 
-# the user ID and survey ID a respondent types before the survey (quiz-lib respondentIds.ts)
-_RESPONDENT_ID = re.compile(r"^[A-Za-z0-9_-]{1,32}$")
-
-
 def _quiz_attempts(events: list[dict]) -> list[dict]:
     """The log folded into one record per attempt: who, when, the score, how long it
     took, and each answer with the time spent on its question. An attempt that was
@@ -581,12 +547,8 @@ def _quiz_attempts(events: list[dict]) -> list[dict]:
             aid,
             {
                 "attempt": aid,
-                # typed by the respondent before the first question
-                "user_id": None,
-                "survey_id": None,
                 "pid": None,
                 "session": None,
-                "vid": None,
                 "lang": None,
                 "page": None,
                 "started_at": None,
@@ -596,18 +558,12 @@ def _quiz_attempts(events: list[dict]) -> list[dict]:
                 "answered": 0,
                 "total": None,
                 "duration_ms": None,
-                "last_event_at": None,
                 "answers": {},
             },
         )
-        for key in ("pid", "session", "vid", "lang", "page"):
+        for key in ("pid", "session", "lang", "page"):
             if ev.get(key) is not None:
                 a[key] = ev[key]
-        for key in ("user_id", "survey_id"):
-            if isinstance(ev.get(key), str) and _RESPONDENT_ID.fullmatch(ev[key]):
-                a[key] = ev[key]
-        if isinstance(ev.get("t"), str) and ev["t"] > (a["last_event_at"] or ""):
-            a["last_event_at"] = ev["t"]
         kind = ev.get("type")
         if kind == "quiz_start":
             a["started_at"] = ev.get("t")
@@ -639,8 +595,6 @@ def _quiz_attempts(events: list[dict]) -> list[dict]:
             key=lambda x: (x["index"] if isinstance(x["index"], int) else 1 << 30),
         )
         a["answers"] = answers
-        # each question's time on its own, by question id (the same as answers[].ms)
-        a["question_ms"] = {x["question"]: x["ms"] for x in answers}
         a["answered"] = len(answers)
         graded = [x for x in answers if x["correct"] is not None]
         a["correct"] = sum(1 for x in graded if x["correct"]) if graded else None
@@ -652,117 +606,6 @@ def _quiz_attempts(events: list[dict]) -> list[dict]:
         out.append(a)
     out.sort(key=lambda a: a["started_at"] or "")
     return out
-
-
-def _filter_attempts(attempts: list[dict], args) -> list[dict]:
-    """The ?pid= ?session= ?attempt= ?user_id= ?survey_id= ?completed=1 filters of
-    the results routes."""
-    for key in ("pid", "session", "attempt", "user_id", "survey_id"):
-        want = args.get(key)
-        if want:
-            attempts = [a for a in attempts if str(a.get(key)) == want]
-    if args.get("completed") in ("1", "true"):
-        attempts = [a for a in attempts if a["completed"]]
-    return attempts
-
-
-def _seconds(ms: object) -> str:
-    """Milliseconds as seconds with one decimal, for a spreadsheet; blank if unknown."""
-    return f"{ms / 1000:.1f}" if isinstance(ms, (int, float)) else ""
-
-
-def _question_order(definition: dict | None) -> list[str]:
-    """The survey's question ids in order, as quiz-lib names them (q1, q2, … when a
-    question has no id of its own)."""
-    questions = (definition or {}).get("questions")
-    return [
-        q.get("id") or f"q{i + 1}"
-        for i, q in enumerate(questions if isinstance(questions, list) else [])
-        if isinstance(q, dict)
-    ]
-
-
-_QUIZ_VISITOR = re.compile(r"^[A-Za-z0-9_-]{6,32}$")
-
-
-def _quiz_progress(quiz: str, attempts: list[dict], args) -> dict:
-    """How far one visitor is through a survey, for the test pages' button: their
-    latest attempt (by its last event), which questions it answered, and the next
-    one to answer (1-based; None once every question is answered). The visitor is
-    ?pid= (and ?session=, default 1) or, without a participant, ?vid= — the
-    anonymous id the button gives a browser."""
-    order = _question_order(_quiz_definition(quiz))
-    pid, vid = args.get("pid", ""), args.get("vid", "")
-    if _STUDY_PID.fullmatch(pid):
-        session = args.get("session", "1")
-        session = str(int(session)) if _STUDY_SESSION.fullmatch(session) else "1"
-        mine = [a for a in attempts if a["pid"] == pid and str(a["session"]) == session]
-    elif _QUIZ_VISITOR.fullmatch(vid):
-        mine = [a for a in attempts if a["vid"] == vid and not a["pid"]]
-    else:
-        mine = []
-    latest = max(mine, key=lambda a: a["last_event_at"] or "", default=None)
-    done = {x["question"] for x in latest["answers"]} if latest else set()
-    answered = [q for q in order if q in done]
-    pending = [i + 1 for i, q in enumerate(order) if q not in done]
-    return {
-        "quiz": quiz,
-        "total": len(order),
-        "answered": len(answered),
-        "answered_questions": answered,
-        "next": pending[0] if pending else None,
-        "completed": bool(order) and not pending,
-        "attempt": latest["attempt"] if latest else None,
-    }
-
-
-def _quiz_results_csv(quiz: str, attempts: list[dict]) -> str:
-    """One row per attempt: who, when, how long in all, and for each question in
-    the survey's order its time (ms and seconds), the answer in words and whether
-    it was right (blank for a question without an answer key)."""
-    order = _question_order(_quiz_definition(quiz))
-    # questions answered but no longer in the survey (or no survey file) go last
-    for a in attempts:
-        for x in a["answers"]:
-            if x["question"] not in order:
-                order.append(x["question"])
-    head = [
-        "attempt", "user_id", "survey_id", "pid", "session", "lang", "started_at", "completed_at",
-        "completed", "answered", "correct", "duration_ms", "duration_s",
-    ]  # fmt: skip
-    for q in order:
-        head += [f"{q}_ms", f"{q}_s", f"{q}_answer", f"{q}_correct"]
-    out = io.StringIO()
-    w = csv.writer(out, lineterminator="\r\n")
-    w.writerow(head)
-    for a in attempts:
-        by_q = {x["question"]: x for x in a["answers"]}
-        row = [
-            a["attempt"], a["user_id"] or "", a["survey_id"] or "", a["pid"] or "", a["session"] or "", a["lang"] or "",
-            a["started_at"] or "", a["completed_at"] or "",
-            int(a["completed"]), a["answered"],
-            "" if a["correct"] is None else a["correct"],
-            "" if a["duration_ms"] is None else a["duration_ms"],
-            _seconds(a["duration_ms"]),
-        ]  # fmt: skip
-        for q in order:
-            x = by_q.get(q)
-            if x is None:
-                row += ["", "", "", ""]
-                continue
-            text = x.get("response_text")
-            if text is None:
-                r = x.get("response")
-                text = ", ".join(r) if isinstance(r, list) else (r or "")
-            row += [
-                "" if x["ms"] is None else x["ms"],
-                _seconds(x["ms"]),
-                text,
-                "" if x["correct"] is None else int(x["correct"]),
-            ]
-        w.writerow(row)
-    # BOM: Excel then reads the Japanese answers as UTF-8
-    return "\ufeff" + out.getvalue()
 
 
 def _prune_storage() -> None:
@@ -866,12 +709,7 @@ PHRASE_RULES = (
     "fact from the page in {{ and }}, immediately before its marker, for example: "
     "Shareholders get {{¥1,000 of PayPay Money Lite}}[[n30]]. Every marker gets "
     "its own marked words. Mark only words of your own answer, a few words, never "
-    "a whole sentence. When a sentence names several things, mark and cite each "
-    "where it is named, each with the element that shows it: The plan includes "
-    "{{unlimited calls}}[[n12]], {{5 GB of data}}[[n13]] and {{free roaming}}[[n14]]. "
-    "Never put several markers together "
-    "after one phrase unless each of those elements states that same phrase. "
-    "Never explain or mention the braces."
+    "a whole sentence. Never explain or mention the braces."
 )
 
 # The assistant zooms the page when the user asks (R1 of the 2026-09-27 report); only
@@ -885,19 +723,6 @@ ZOOM_RULES = (
     "few words what they will see. Never mention the marker."
 )
 ZOOM_RE = re.compile(r"( ?)\[\[zoom:(n\d+|in|out|reset)\]\]")
-
-# The assistant takes the user to a place on the page (co-design study, Yotam
-# 2026-10-09): the model decides, the widget scrolls there and outlines it once the
-# answer is complete. Only when the chat says it may (the go_to request field)
-GOTO_RULES = (
-    "The user can ask you to take them to something on the page, to show them where "
-    "it is, or to let them see it on the page. When they do, add one go-to marker to "
-    "your answer: [[goto:ID]] with the id of the inventory element that shows it, the "
-    "most specific one; cite it as well. When your answer is complete, the page "
-    "scrolls there and outlines it: say in a few words what they will see there. "
-    "Never mention the marker."
-)
-GOTO_RE = re.compile(r"( ?)\[\[goto:(n\d+)\]\]")
 
 # a selection is a few sources at most; their labels are the page's own words
 SELECTION_MAX = 30  # the chat's own cap; the About line says when it cut
@@ -966,16 +791,13 @@ def _page_data(inventory, selection) -> str | None:
     return "\n\n".join(parts) or None
 
 
-def _chat_rules(
-    inventory, selection, phrases=False, zoom=False, goto=False
-) -> str | None:
+def _chat_rules(inventory, selection, phrases=False, zoom=False) -> str | None:
     rules = [
         r
         for r, on in (
             (EVIDENCE_RULES, inventory),
             (PHRASE_RULES, inventory and phrases),
             (ZOOM_RULES, zoom),
-            (GOTO_RULES, inventory and goto),
             (SELECTION_RULES, selection),
         )
         if on
@@ -1096,20 +918,6 @@ def _tts_choice(data: dict) -> tuple[str, str, str] | None:
     fallback = os.getenv("TTS_VOICE", "alloy") if provider == "openai" else voices[0]
     voice = data.get("voice") if data.get("voice") in voices else fallback
     return provider, model, voice
-
-
-# reading speed (Yotam, 2026-10-10: slow 0.75, normal 1, fast 1.5, fastest 2); OpenAI
-# takes 0.25-4.0, also with gpt-4o-mini-tts (checked: 6.2 s at 1, 2.8 s at 2); Gemini
-# has none and reads at its own pace
-TTS_SPEED = (0.25, 4.0)
-
-
-def _tts_speed(data: dict) -> float:
-    """The request's reading speed, within OpenAI's range; 1.0 without one."""
-    v = data.get("speed")
-    if not isinstance(v, (int, float)) or isinstance(v, bool) or v != v:
-        return 1.0
-    return min(max(float(v), TTS_SPEED[0]), TTS_SPEED[1])
 
 
 def _wav_header(rate: int) -> bytes:
@@ -1238,22 +1046,6 @@ def _unzoom(text: str) -> str:
     )
 
 
-def _ungoto(text: str) -> str:
-    """A go-to marker as the history keeps it: its element's citation (the move
-    happened once; a later turn must not copy it, nor a chat back from a reload move).
-    """
-    rest = _unjoin_cites(GOTO_RE.sub("", text))
-
-    def cite(m: re.Match) -> str:
-        # the rules ask for a citation as well: one number, not two (only a marker
-        # the chat reads counts; a malformed [n7] is none)
-        if f"[[{m.group(2)}]]" in rest:
-            return ""
-        return f"{m.group(1)}[[{m.group(2)}]]"
-
-    return GOTO_RE.sub(cite, text)
-
-
 def _strip_unknown_cites(text: str, ids: set[str]) -> str:
     """Drop [[id]] markers that name no element of the inventory in use. The
     space before one goes with it only when punctuation or the end follows:
@@ -1345,9 +1137,7 @@ def _chat_openai_request(
     selection=None,
     phrases=False,
     zoom=False,
-    goto=False,
     ai=None,
-    usage=None,
 ) -> dict:
     """Keyword arguments for responses.create; pure, so tests can inspect it.
     Without an inventory or a selection the request is exactly the pre-citation one."""
@@ -1364,7 +1154,7 @@ def _chat_openai_request(
     }
     if (ai or {}).get("reasoning"):
         req["reasoning"] = {"effort": ai["reasoning"]}
-    rules = _chat_rules(inventory, selection, phrases, zoom, goto)
+    rules = _chat_rules(inventory, selection, phrases, zoom)
     if rules:
         req["instructions"] = rules
     if stream:
@@ -1382,27 +1172,24 @@ def _call_openai(
     selection=None,
     phrases=False,
     zoom=False,
-    goto=False,
     ai=None,
-    usage=None,
 ) -> str:
     from openai import OpenAI
 
-    req = _chat_openai_request(
-        png_b64,
-        viewport_b64,
-        meta,
-        history,
-        message,
-        inventory,
-        selection=selection,
-        phrases=phrases,
-        zoom=zoom,
-        goto=goto,
-        ai=ai,
+    response = OpenAI().responses.create(
+        **_chat_openai_request(
+            png_b64,
+            viewport_b64,
+            meta,
+            history,
+            message,
+            inventory,
+            selection=selection,
+            phrases=phrases,
+            zoom=zoom,
+            ai=ai,
+        )
     )
-    response = OpenAI().responses.create(**req)
-    _record_usage(usage, "openai", req["model"], getattr(response, "usage", None))
     return response.output_text
 
 
@@ -1469,14 +1256,12 @@ def _chat_gemini_request(
     selection=None,
     phrases=False,
     zoom=False,
-    goto=False,
     ai=None,
-    usage=None,
 ) -> dict:
     """Keyword arguments for generate_content(_stream); pure, so tests can inspect it."""
     from google.genai import types
 
-    rules = _chat_rules(inventory, selection, phrases, zoom, goto)
+    rules = _chat_rules(inventory, selection, phrases, zoom)
     level = (ai or {}).get("reasoning")
     return {
         "model": (ai or {}).get("model") or GEMINI_MODEL,
@@ -1511,31 +1296,26 @@ def _call_gemini(
     selection=None,
     phrases=False,
     zoom=False,
-    goto=False,
     ai=None,
-    usage=None,
 ) -> str:
     from google import genai
 
     # a named client: a temporary one is closed once collected, which google-genai does
     # mid-request ("Cannot send a request, as the client has been closed")
     client = genai.Client()
-    req = _chat_gemini_request(
-        png_b64,
-        viewport_b64,
-        meta,
-        history,
-        message,
-        inventory,
-        selection,
-        phrases,
-        zoom=zoom,
-        goto=goto,
-        ai=ai,
-    )
-    response = client.models.generate_content(**req)
-    _record_usage(
-        usage, "gemini", req["model"], getattr(response, "usage_metadata", None)
+    response = client.models.generate_content(
+        **_chat_gemini_request(
+            png_b64,
+            viewport_b64,
+            meta,
+            history,
+            message,
+            inventory,
+            selection,
+            phrases,
+            zoom=zoom,
+            ai=ai,
+        )
     )
     return response.text
 
@@ -1550,39 +1330,29 @@ def _stream_openai(
     selection=None,
     phrases=False,
     zoom=False,
-    goto=False,
     ai=None,
-    usage=None,
 ):
     """Yield text deltas from the OpenAI Responses streaming API."""
     from openai import OpenAI
 
-    req = _chat_openai_request(
-        png_b64,
-        viewport_b64,
-        meta,
-        history,
-        message,
-        inventory,
-        stream=True,
-        selection=selection,
-        phrases=phrases,
-        zoom=zoom,
-        goto=goto,
-        ai=ai,
+    stream = OpenAI().responses.create(
+        **_chat_openai_request(
+            png_b64,
+            viewport_b64,
+            meta,
+            history,
+            message,
+            inventory,
+            stream=True,
+            selection=selection,
+            phrases=phrases,
+            zoom=zoom,
+            ai=ai,
+        )
     )
-    stream = OpenAI().responses.create(**req)
     for event in stream:
         if event.type == "response.output_text.delta":
             yield event.delta
-        elif event.type == "response.completed":
-            # the whole response, with its token counts, comes last
-            _record_usage(
-                usage,
-                "openai",
-                req["model"],
-                getattr(getattr(event, "response", None), "usage", None),
-            )
 
 
 def _stream_gemini(
@@ -1595,35 +1365,29 @@ def _stream_gemini(
     selection=None,
     phrases=False,
     zoom=False,
-    goto=False,
     ai=None,
-    usage=None,
 ):
     from google import genai
 
     # held for the whole stream: a temporary client is closed once collected, and the
     # stream then fails on its next chunk ("the client has been closed")
     client = genai.Client()
-    req = _chat_gemini_request(
-        png_b64,
-        viewport_b64,
-        meta,
-        history,
-        message,
-        inventory,
-        selection,
-        phrases,
-        zoom=zoom,
-        goto=goto,
-        ai=ai,
-    )
-    last = None
-    for chunk in client.models.generate_content_stream(**req):
-        # each chunk carries the counts so far; the last one has the whole call's
-        last = getattr(chunk, "usage_metadata", None) or last
+    for chunk in client.models.generate_content_stream(
+        **_chat_gemini_request(
+            png_b64,
+            viewport_b64,
+            meta,
+            history,
+            message,
+            inventory,
+            selection,
+            phrases,
+            zoom=zoom,
+            ai=ai,
+        )
+    ):
         if chunk.text:
             yield chunk.text
-    _record_usage(usage, "gemini", req["model"], last)
 
 
 def _stream_stub(meta: dict, message: str, inventory: list | None = None):
@@ -1826,12 +1590,10 @@ def _locate_openai_request(
     }
 
 
-def _locate_openai(usage=None, **kw) -> dict:
+def _locate_openai(**kw) -> dict:
     from openai import OpenAI
 
-    req = _locate_openai_request(**kw)
-    response = OpenAI().responses.create(**req)
-    _record_usage(usage, "openai", req["model"], getattr(response, "usage", None))
+    response = OpenAI().responses.create(**_locate_openai_request(**kw))
     return json.loads(response.output_text)
 
 
@@ -1860,15 +1622,11 @@ def _locate_gemini_request(
     }
 
 
-def _locate_gemini(usage=None, **kw) -> dict:
+def _locate_gemini(**kw) -> dict:
     from google import genai
 
     client = genai.Client()  # named: a temporary one closes once collected
-    req = _locate_gemini_request(**kw)
-    response = client.models.generate_content(**req)
-    _record_usage(
-        usage, "gemini", req["model"], getattr(response, "usage_metadata", None)
-    )
+    response = client.models.generate_content(**_locate_gemini_request(**kw))
     return json.loads(response.text)
 
 
@@ -1897,77 +1655,6 @@ def _locate_stub(question: str, inventory: list) -> dict:
 # One dispatch table for every route that talks to a model. The stub takes only
 # (meta, message), so its entries adapt the shape here rather than widening the
 # stub's signature; `_run` is the single place an unknown provider can fail.
-# token use per model call (Yotam, 2026-10-10: why "gpt-5.6-terra, cache writes" costs
-# so much): logged only, nothing about the request or its caching changes
-def _usage_fields(provider: str, usage) -> dict:
-    """A response's token counts, under one set of names for both providers."""
-    if usage is None:
-        return {}
-
-    def get(obj, *names):
-        for n in names:
-            v = getattr(obj, n, None) if obj is not None else None
-            if v is not None:
-                return v
-        return None
-
-    def plain(obj):
-        try:
-            return obj.model_dump(exclude_none=True) if obj is not None else None
-        except Exception:
-            return None
-
-    if provider == "openai":
-        inp = get(usage, "input_tokens_details")
-        out = get(usage, "output_tokens_details")
-        return {
-            "input": get(usage, "input_tokens"),
-            "cachedInput": get(inp, "cached_tokens"),
-            # not reported by the Responses API so far; kept if a version names it
-            "cacheWrite": get(
-                inp,
-                "cache_write_tokens",
-                "cache_creation_tokens",
-                "cache_creation_input_tokens",
-            ),
-            "output": get(usage, "output_tokens"),
-            "reasoning": get(out, "reasoning_tokens"),
-            "total": get(usage, "total_tokens"),
-            # every detail as sent, so a field not named above is not lost
-            "inputDetails": plain(inp),
-            "outputDetails": plain(out),
-        }
-    return {
-        "input": get(usage, "prompt_token_count"),
-        "cachedInput": get(usage, "cached_content_token_count"),
-        "cacheWrite": None,
-        "output": get(usage, "candidates_token_count"),
-        "reasoning": get(usage, "thoughts_token_count"),
-        "total": get(usage, "total_token_count"),
-    }
-
-
-def _record_usage(ctx: dict | None, provider: str, model: str, usage) -> None:
-    """One `usage` event in the participant's study log, and a line on stdout; never
-    in the way of the answer."""
-    if not ctx:
-        return
-    try:
-        fields = {
-            "call": ctx.get("call"),
-            "provider": provider,
-            "model": model,
-            "capture": ctx.get("capture"),
-            # a later question about the same capture, or the first one about it
-            "followUp": ctx.get("followUp"),
-            **_usage_fields(provider, usage),
-        }
-        print(f"[usage] {json.dumps(fields, default=str)}", flush=True)
-        _server_event(ctx.get("ids"), "usage", **fields)
-    except Exception as e:  # the log must never break an answer
-        print(f"[usage] not recorded: {e}", flush=True)
-
-
 PROVIDERS = {
     "openai": {
         "call": _call_openai,
@@ -1997,24 +1684,10 @@ PROVIDERS = {
 }
 
 
-def _usage_context(ids, call: str, cap_id: str, history: list) -> dict:
-    """What a call's token log says about it: who, which call, which capture, and
-    whether this capture was asked about before (its images and page are sent again)."""
-    return {
-        "ids": ids,
-        "call": call,
-        "capture": cap_id,
-        "followUp": any(
-            isinstance(h, dict) and h.get("capture_id") == cap_id for h in history
-        ),
-    }
-
-
-def _run(kind: str, provider: str, usage: dict | None = None, **kw):
-    """A model call; `usage` names the call for its token log (_record_usage)."""
+def _run(kind: str, provider: str, **kw):
     if provider not in PROVIDERS:
         raise ValueError(f"unknown provider: {provider}")
-    return PROVIDERS[provider][kind](usage=usage, **kw)
+    return PROVIDERS[provider][kind](**kw)
 
 
 def _images_sent(provider: str, viewport_b64: str | None) -> int:
@@ -2366,61 +2039,22 @@ def create_app():
             _study_log(ids, kept, "client")
         return jsonify({"logged": len(kept), "dropped": len(events) - len(kept)})
 
-    @app.get("/survey")
-    def survey_page():
-        """The survey page (Japanese only): ?quiz=<id> picks the survey, ?q=N one
-        question, ?pid=&session= the participant (as for the study log), ?return=
-        the test page to go back to. Without ?quiz it lists the surveys, for the
-        facilitator."""
-        return send_file(Path(__file__).parent / "survey.html")
-
-    @app.get("/survey/<asset>")
-    def survey_asset(asset):
-        """quiz-lib's build for the survey page (only these two files)."""
-        if asset not in ("quiz.js", "quiz.js.map"):
-            return jsonify({"error": "not found"}), 404
-        path = QUIZ_LIB_DIST / asset
-        if not path.is_file():
-            return (
-                jsonify({"error": f"quiz-lib/dist/{asset} is missing: run make build"}),
-                503,
-            )
-        return send_file(path, max_age=0)
-
-    @app.get("/api/quiz/<quiz_id>")
-    def quiz_definition(quiz_id):
-        """A survey's questions (quizzes/<id>.json), for the survey page."""
-        data = _quiz_definition(quiz_id)
-        if data is None:
-            return jsonify({"error": "no such survey"}), 404
-        # the file name is the survey's id: answers are logged under the name in the address
-        return jsonify({**data, "id": quiz_id})
-
     @app.get("/api/quiz")
     def quiz_list():
-        """The surveys: those in quizzes/ and those with a log; for each, its title,
-        how many questions, attempts and completions, and the last activity."""
-        ids = set()
-        if QUIZZES_DIR.is_dir():
-            ids |= {p.stem for p in QUIZZES_DIR.glob("*.json")}
-        if QUIZ_LOGS_DIR.is_dir():
-            ids |= {p.stem for p in QUIZ_LOGS_DIR.glob("*.jsonl")}
+        """The quizzes that have a log: id, how many attempts, the last activity."""
         items = []
-        for quiz in sorted(i for i in ids if _QUIZ_ID.fullmatch(i)):
-            definition = _quiz_definition(quiz)
-            events = _read_quiz_events(quiz) or []
-            attempts = _quiz_attempts(events)
-            items.append(
-                {
-                    "id": quiz,
-                    "title": (definition or {}).get("title"),
-                    "defined": definition is not None,
-                    "questions": len(_question_order(definition)),
-                    "attempts": len(attempts),
-                    "completed": sum(1 for a in attempts if a["completed"]),
-                    "last_event_at": events[-1].get("t") if events else None,
-                }
-            )
+        if QUIZ_LOGS_DIR.is_dir():
+            for path in sorted(QUIZ_LOGS_DIR.glob("*.jsonl")):
+                events = _read_quiz_events(path.stem) or []
+                attempts = _quiz_attempts(events)
+                items.append(
+                    {
+                        "id": path.stem,
+                        "attempts": len(attempts),
+                        "completed": sum(1 for a in attempts if a["completed"]),
+                        "last_event_at": events[-1].get("t") if events else None,
+                    }
+                )
         return jsonify({"quizzes": items})
 
     @app.get("/api/quiz/<quiz_id>/results")
@@ -2430,38 +2064,14 @@ def create_app():
         events = _read_quiz_events(quiz_id)
         if events is None:
             return jsonify({"error": "no log for this quiz"}), 404
-        attempts = _filter_attempts(_quiz_attempts(events), request.args)
+        attempts = _quiz_attempts(events)
+        for key in ("pid", "session", "attempt"):
+            want = request.args.get(key)
+            if want:
+                attempts = [a for a in attempts if str(a.get(key)) == want]
+        if request.args.get("completed") in ("1", "true"):
+            attempts = [a for a in attempts if a["completed"]]
         return jsonify({"quiz": quiz_id, "attempts": attempts})
-
-    @app.get("/api/quiz/<quiz_id>/progress")
-    def quiz_progress(quiz_id):
-        """One visitor's progress through a survey (?pid=&session= or ?vid=), for the
-        test pages' button: "アンケート（2/4）" and the next question's page."""
-        if _quiz_definition(quiz_id) is None:
-            return jsonify({"error": "no such survey"}), 404
-        if not (
-            _STUDY_PID.fullmatch(request.args.get("pid", ""))
-            or _QUIZ_VISITOR.fullmatch(request.args.get("vid", ""))
-        ):
-            return jsonify({"error": "pid or vid needed"}), 400
-        attempts = _quiz_attempts(_read_quiz_events(quiz_id) or [])
-        return jsonify(_quiz_progress(quiz_id, attempts, request.args))
-
-    @app.get("/api/quiz/<quiz_id>/results.csv")
-    def quiz_results_csv(quiz_id):
-        """The same attempts as a spreadsheet: one row each, with every question's
-        time in its own columns (<id>_ms, <id>_s). Same filters as /results."""
-        events = _read_quiz_events(quiz_id)
-        if events is None:
-            return jsonify({"error": "no log for this quiz"}), 404
-        attempts = _filter_attempts(_quiz_attempts(events), request.args)
-        return Response(
-            _quiz_results_csv(quiz_id, attempts),
-            mimetype="text/csv",
-            headers={
-                "Content-Disposition": f'attachment; filename="{quiz_id}-results.csv"'
-            },
-        )
 
     @app.get("/health")
     def health():
@@ -2672,7 +2282,7 @@ def create_app():
     # Two-step streaming TTS: POST the text, GET the mp3 by id. The GET streams
     # chunks straight from OpenAI so the <audio> element starts playing before
     # synthesis finishes (an <audio> src can only GET, hence the id hop).
-    tts_texts: dict[str, tuple[str, str, str, str, float]] = {}
+    tts_texts: dict[str, tuple[str, str]] = {}
 
     @app.post("/api/tts")
     def tts_prepare():
@@ -2685,7 +2295,7 @@ def create_app():
         if not text:
             return jsonify({"error": "empty text"}), 400
         tid = uuid.uuid4().hex[:12]
-        tts_texts[tid] = (text, *choice, _tts_speed(data))
+        tts_texts[tid] = (text, *choice)
         _server_event(
             _study_ids(), "read_aloud_prepared", chars=len(text), provider=choice[0]
         )
@@ -2737,11 +2347,7 @@ def create_app():
         # answer, not an empty stream
         try:
             ctx = client.audio.speech.with_streaming_response.create(
-                model=model,
-                voice=voice,
-                input=text,
-                response_format="pcm",
-                speed=_tts_speed(data),
+                model=model, voice=voice, input=text, response_format="pcm"
             )
             resp = ctx.__enter__()
         except Exception as e:
@@ -2772,7 +2378,7 @@ def create_app():
     def tts_stream(tid):
         """The reading, streamed: OpenAI's MP3, or Gemini's WAV (the name is the
         widget's; the type says what it is)."""
-        text, provider, model, voice, speed = tts_texts.pop(tid, (None,) * 5)
+        text, provider, model, voice = tts_texts.pop(tid, (None,) * 4)
         if text is None:
             return jsonify({"error": "unknown or expired tts id"}), 404
         if provider == "gemini":
@@ -2796,7 +2402,6 @@ def create_app():
                 voice=voice,
                 input=text,
                 response_format="mp3",
-                speed=speed,
             ) as resp:
                 yield from resp.iter_bytes(4096)
 
@@ -3025,16 +2630,12 @@ def create_app():
         zoom = data.get("assistant_zoom", False)
         if not isinstance(zoom, bool):
             return jsonify({"error": "assistant_zoom must be a boolean"}), 400
-        goto = data.get("go_to", False)
-        if not isinstance(goto, bool):
-            return jsonify({"error": "go_to must be a boolean"}), 400
         cite_ids = set(_inventory_ids(inventory or []))
 
         choice = _ai_choice(data)
         provider, model = choice["provider"], choice["model"]
         images_sent = _images_sent(provider, viewport_b64)
         study = _study_ids()
-        usage = _usage_context(study, "chat_stream", cap_id, history)
 
         def sse(obj):
             return f"data: {json.dumps(obj)}\n\n"
@@ -3046,7 +2647,6 @@ def create_app():
                 deltas = _run(
                     "stream",
                     provider,
-                    usage=usage,
                     png_b64=png_b64,
                     viewport_b64=viewport_b64,
                     meta=meta,
@@ -3056,7 +2656,6 @@ def create_app():
                     selection=selection,
                     phrases=phrases,
                     zoom=zoom,
-                    goto=goto,
                     ai=choice,
                 )
                 for delta in deltas:
@@ -3068,7 +2667,7 @@ def create_app():
                 return
             # deltas went out as the model wrote them; history keeps only real ids,
             # checked after a zoom marker became its citation
-            reply = _strip_unknown_cites(_ungoto(_unzoom("".join(parts))), cite_ids)
+            reply = _strip_unknown_cites(_unzoom("".join(parts)), cite_ids)
             new_history = history + [
                 {"role": "user", "text": message, "capture_id": cap_id},
                 {"role": "assistant", "text": reply},
@@ -3125,9 +2724,6 @@ def create_app():
         zoom = data.get("assistant_zoom", False)
         if not isinstance(zoom, bool):
             return jsonify({"error": "assistant_zoom must be a boolean"}), 400
-        goto = data.get("go_to", False)
-        if not isinstance(goto, bool):
-            return jsonify({"error": "go_to must be a boolean"}), 400
 
         choice = _ai_choice(data)
         provider = choice["provider"]
@@ -3136,7 +2732,6 @@ def create_app():
             reply = _run(
                 "call",
                 provider,
-                usage=_usage_context(_study_ids(), "chat", cap_id, history),
                 png_b64=png_b64,
                 viewport_b64=viewport_b64,
                 meta=meta,
@@ -3146,12 +2741,11 @@ def create_app():
                 selection=selection,
                 phrases=phrases,
                 zoom=zoom,
-                goto=goto,
                 ai=choice,
             )
             ids = set(_inventory_ids(inventory or []))
             # the widget gets the zoom marker; the history its citation, checked
-            saved = _strip_unknown_cites(_ungoto(_unzoom(reply)), ids)
+            saved = _strip_unknown_cites(_unzoom(reply), ids)
             reply = _strip_unknown_cites(reply, ids)
         except Exception as e:  # surface provider errors to the popover
             _server_event(_study_ids(), "error", where="answer", message=str(e))
@@ -3224,7 +2818,6 @@ def create_app():
             raw = _run(
                 "locate",
                 provider,
-                usage=_usage_context(_study_ids(), "locate", cap_id, history),
                 png_b64=png_b64,
                 viewport_b64=viewport_b64,
                 meta=meta,

@@ -118,9 +118,9 @@ describe("combining with language-independent values", () => {
 
     it("the scale label joins the name and the percentage", () => {
         setA11yLang("en");
-        expect(fontScaleLabel(2)).toBe("Large 150%");
+        expect(fontScaleLabel(2)).toBe("Large 195%");
         setA11yLang("ja");
-        expect(fontScaleLabel(2)).toBe("大 150%");
+        expect(fontScaleLabel(2)).toBe("大 195%");
     });
 
     it("focus cursor band sizes are small / medium / large", () => {

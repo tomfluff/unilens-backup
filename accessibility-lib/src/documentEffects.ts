@@ -46,7 +46,6 @@ import {
     HTML_ATTR_TEXT_STROKE,
     HTML_ATTR_THEME,
     HTML_STYLE_CONTRAST,
-    HTML_STYLE_CONTRAST_INV,
     HTML_STYLE_DISPLAY_BG,
     HTML_STYLE_DISPLAY_BORDER,
     HTML_STYLE_DISPLAY_LINK,
@@ -57,7 +56,6 @@ import {
     HTML_STYLE_LETTER_SPACING,
     HTML_STYLE_LINE_HEIGHT,
     HTML_STYLE_SATURATE,
-    HTML_STYLE_SATURATE_INV,
     HTML_STYLE_TEXT_PLATE_BG,
     HTML_STYLE_TEXT_PLATE_FG,
     HTML_STYLE_TEXT_STROKE_EDGE,
@@ -83,12 +81,6 @@ import {
     restoreHostInlineStyle,
     setHostInlineStyle,
 } from "./hostSurface";
-import {
-    clearMediaTextMarkers,
-    onMediaTextResync,
-    setToneMaskLayer,
-    syncMediaTextMarkers,
-} from "./mediaTextGuard";
 import { destroyPageFontScale, setPageFontSizeScale } from "./pageFontScale";
 import type { Settings } from "./settings";
 
@@ -141,30 +133,6 @@ function needsToneFilter(
     s: Pick<A11ySettings, "saturation" | "contrast">,
 ): boolean {
     return s.saturation !== "standard" || s.contrast !== "standard";
-}
-
-/**
- * Any setting that changes colors on the page. While one is on, text drawn
- * over a picture is found and kept in the host's own colors
- * (mediaTextGuard.ts).
- */
-export function mediaTextGuardActive(
-    s: Pick<
-        A11ySettings,
-        "theme" | "saturation" | "contrast" | "textStroke" | "linkBackground"
-    >,
-): boolean {
-    return (
-        s.theme !== "standard" ||
-        needsToneFilter(s) ||
-        s.textStroke ||
-        s.linkBackground
-    );
-}
-
-/** 1 / n for undoing a filter step; 0 cannot be undone, so it stays 1. */
-export function inverseFilterAmount(n: number): number {
-    return Number.isFinite(n) && n > 0 ? Math.round((1 / n) * 1000) / 1000 : 1;
 }
 
 /** Where saturate/contrast is painted. Overlay UI stays outside the page root. */
@@ -296,10 +264,7 @@ function syncPageDisplayFilters(pageRoot: HTMLElement | null, s: A11ySettings) {
         const css = toneFilterCss(s);
         layer?.style.setProperty("backdrop-filter", css);
         layer?.style.setProperty("-webkit-backdrop-filter", css);
-        // Picture blocks with text are cut out of the layer's mask.
-        setToneMaskLayer(layer);
     } else {
-        setToneMaskLayer(null);
         removeToneLayer();
     }
 }
@@ -465,23 +430,12 @@ export function syncPositionedOverlayMarkers(pageRoot: HTMLElement | null) {
 let overlayMarkerObserver: MutationObserver | null = null;
 let surfaceSyncRoot: HTMLElement | null = null;
 let lastSurfaceInputsKey: string | null = null;
-/** What the surface pass does: themed surfaces, and/or the picture-text guard. */
-const surfaceMode = { display: false, mediaText: false };
-let detachLayoutListeners: (() => void) | null = null;
-
-function runSurfacePass(root: HTMLElement | null) {
-    // Picture blocks first, so the surface pass below already sees them.
-    if (surfaceMode.mediaText) syncMediaTextMarkers(root);
-    else clearMediaTextMarkers(root);
-    if (surfaceMode.display) syncPositionedOverlayMarkers(root);
-    else clearPositionedOverlayMarkers(root);
-}
 
 const surfaceSync = afterNextPaint(() => {
     const root = surfaceSyncRoot;
     surfaceSyncRoot = null;
     if (!root || !overlayMarkerObserver || !root.isConnected) return;
-    runSurfacePass(root);
+    syncPositionedOverlayMarkers(root);
 });
 
 /**
@@ -578,62 +532,23 @@ function onHostMutations(records: MutationRecord[], pageRoot: HTMLElement) {
     }
 }
 
-/**
- * Text-over-picture geometry also changes without a DOM mutation: the window
- * is resized, or an image finishes loading and pushes the layout around.
- */
-function attachLayoutListeners(pageRoot: HTMLElement) {
-    if (detachLayoutListeners || typeof window === "undefined") return;
-    let timer: number | undefined;
-    const onResize = () => {
-        window.clearTimeout(timer);
-        timer = window.setTimeout(
-            () => scheduleDisplaySurfaceSync(pageRoot),
-            200,
-        );
-    };
-    const onLoad = (e: Event) => {
-        if (e.target instanceof HTMLImageElement) onResize();
-    };
-    window.addEventListener("resize", onResize, { passive: true });
-    pageRoot.addEventListener("load", onLoad, true);
-    detachLayoutListeners = () => {
-        window.clearTimeout(timer);
-        window.removeEventListener("resize", onResize);
-        pageRoot.removeEventListener("load", onLoad, true);
-    };
-}
-
-// A background image's size arrived after the pass: run the pass again.
-onMediaTextResync(() => {
-    const root = document.getElementById(PAGE_CONTENT_ROOT_ID);
-    if (root && overlayMarkerObserver && surfaceMode.mediaText)
-        scheduleDisplaySurfaceSync(root);
-});
-
 function ensurePositionedOverlayObserver(
     pageRoot: HTMLElement | null,
-    mode: { display: boolean; mediaText: boolean },
+    active: boolean,
     inputsKey: string | null = null,
 ) {
-    surfaceMode.display = mode.display;
-    surfaceMode.mediaText = mode.mediaText;
-    const active = mode.display || mode.mediaText;
-
     if (typeof MutationObserver === "undefined") {
-        runSurfacePass(pageRoot);
+        if (active) syncPositionedOverlayMarkers(pageRoot);
+        else clearPositionedOverlayMarkers(pageRoot);
         return;
     }
 
     if (!active || !pageRoot) {
         overlayMarkerObserver?.disconnect();
         overlayMarkerObserver = null;
-        detachLayoutListeners?.();
-        detachLayoutListeners = null;
         cancelDisplaySurfaceSync();
         lastSurfaceInputsKey = null;
         clearPositionedOverlayMarkers(pageRoot);
-        clearMediaTextMarkers(pageRoot);
         return;
     }
 
@@ -642,12 +557,6 @@ function ensurePositionedOverlayObserver(
         scheduleDisplaySurfaceSync(pageRoot);
     }
     lastSurfaceInputsKey = inputsKey;
-
-    if (mode.mediaText) attachLayoutListeners(pageRoot);
-    else {
-        detachLayoutListeners?.();
-        detachLayoutListeners = null;
-    }
 
     if (!firstRun) return;
     overlayMarkerObserver = new MutationObserver((records) =>
@@ -790,16 +699,6 @@ export function applyA11yToDocument() {
         HTML_STYLE_CONTRAST,
         String(CONTRAST_FILTER[s.contrast]),
     );
-    setHostInlineStyle(
-        html,
-        HTML_STYLE_SATURATE_INV,
-        String(inverseFilterAmount(SATURATION_FILTER[s.saturation])),
-    );
-    setHostInlineStyle(
-        html,
-        HTML_STYLE_CONTRAST_INV,
-        String(inverseFilterAmount(CONTRAST_FILTER[s.contrast])),
-    );
 
     setFlag(html, HTML_ATTR_DISPLAY_ACTIVE, isDisplayActive(s));
     setFlag(html, HTML_ATTR_LINK_UNDERLINE, s.linkUnderline);
@@ -816,14 +715,10 @@ export function applyA11yToDocument() {
     else removeUdFontLink();
 
     syncPageDisplayFilters(pageRoot, s);
-    const mode = {
-        display: isDisplayActive(s),
-        mediaText: mediaTextGuardActive(s),
-    };
     ensurePositionedOverlayObserver(
         pageRoot,
-        mode,
-        `${surfaceInputsKey(s)}|${mode.mediaText ? 1 : 0}`,
+        isDisplayActive(s),
+        surfaceInputsKey(s),
     );
     syncPageFontScale(s.fontSize);
     syncWidgetDisplayIsolation();
@@ -837,16 +732,12 @@ export function clearAppliedA11yDocument() {
     for (const attr of A11Y_HTML_ATTRS) html.removeAttribute(attr);
     restoreAllHostInlineStyles(html);
     const pageRoot = document.getElementById(PAGE_CONTENT_ROOT_ID);
-    ensurePositionedOverlayObserver(pageRoot, {
-        display: false,
-        mediaText: false,
-    });
+    ensurePositionedOverlayObserver(pageRoot, false);
     if (pageRoot) {
         pageRoot.removeAttribute(HTML_ATTR_PAGE_FILTER);
         pageRoot.removeAttribute(HTML_ATTR_IMAGE_FILTER);
         pageRoot.style.removeProperty("filter");
     }
-    setToneMaskLayer(null);
     removeToneLayer();
     html.removeAttribute(BODY_EXPAND_LEVEL_ATTR);
     restorePageContentRoot();

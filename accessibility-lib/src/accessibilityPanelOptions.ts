@@ -112,7 +112,6 @@ export const AUTO_MODES: Exclude<AutoTextMode, "off">[] = [
     "viewport",
     "content",
     "combined",
-    "health",
 ];
 
 /** Minimum target size (px) selectable for auto-adjustment. */

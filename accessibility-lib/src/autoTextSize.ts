@@ -5,12 +5,6 @@
 
 import { isUniLensOverlayNode, UI_ATTR } from "./domIds";
 import { restoreHostInlineStyle, setHostInlineStyle } from "./hostSurface";
-import { setPageFontExtraScale } from "./pageFontScale";
-import {
-    type HealthStopReason,
-    measurePageHealth,
-    searchHealthyScale,
-} from "./pageHealth";
 import {
     getSettings,
     patchSettings,
@@ -44,18 +38,6 @@ const TEXT_TAGS = new Set([
     "DD",
 ]);
 
-/** Last "health" search (Lab: largest scale that keeps the layout). */
-export interface HealthReport {
-    /** Health at the panel's own size, before auto-text grows anything. */
-    baseline: number;
-    /** Health at the applied scale, measured when this report was made. */
-    current: number;
-    stopReason: HealthStopReason;
-    /** Page reflows the search needed. */
-    trials: number;
-    ms: number;
-}
-
 export interface TextAnalysis {
     sampleCount: number;
     medianPx: number;
@@ -66,18 +48,9 @@ export interface TextAnalysis {
     viewportScale: number;
     contentScale: number;
     appliedScale: number;
-    /** Present in "health" mode only. */
-    health?: HealthReport;
 }
 
 let appliedScale = 1;
-/**
- * "health" mode scales text through pageFontScale (per text node, px and rem
- * alike) instead of the root font-size, which leaves px-sized pages
- * unchanged and so would always look "healthy".
- */
-let extraScaleApplied = false;
-let lastHealth: HealthReport | null = null;
 let resizeTimer: number | undefined;
 let autoTextClassApplied = false;
 
@@ -170,7 +143,6 @@ export function analyzePageText(): TextAnalysis {
     else if (autoTextMode === "content") suggestedScale = contentScale;
     else if (autoTextMode === "combined")
         suggestedScale = clampScale(Math.max(vpScale, contentScale));
-    else if (autoTextMode === "health") suggestedScale = appliedScale;
 
     suggestedScale = clampScale(suggestedScale);
 
@@ -203,42 +175,21 @@ function ensureStylesheet() {
 }
 
 function applyScaleToPage(scale: number) {
-    clearExtraScale();
     ensureStylesheet();
     appliedScale = scale;
     const html = document.documentElement;
-    // Applying twice in a row (mode change + settings subscription) must not
-    // forget that we added the class, or clearing leaves it on the page.
     if (!html.classList.contains(HTML_CLASS)) {
         html.classList.add(HTML_CLASS);
         autoTextClassApplied = true;
+    } else {
+        autoTextClassApplied = false;
     }
     setHostInlineStyle(html, TEXT_SCALE_VAR, String(scale));
     setHostInlineStyle(html, TEXT_LINE_VAR, scale > 1.1 ? "1.08" : "1");
 }
 
-function clearExtraScale() {
-    if (!extraScaleApplied) return;
-    extraScaleApplied = false;
-    setPageFontExtraScale(1);
-}
-
-/** Health mode: grow text node by node, with the root font-size left alone. */
-function applyExtraScale(scale: number) {
-    clearRootScale();
-    appliedScale = scale;
-    extraScaleApplied = true;
-    setPageFontExtraScale(scale);
-}
-
 function clearPageScale() {
     appliedScale = 1;
-    clearRootScale();
-    clearExtraScale();
-    lastHealth = null;
-}
-
-function clearRootScale() {
     const html = document.documentElement;
     if (autoTextClassApplied) html.classList.remove(HTML_CLASS);
     autoTextClassApplied = false;
@@ -259,65 +210,14 @@ export function getAppliedTextScale(): number {
     return appliedScale;
 }
 
-function isHealthMode(): boolean {
-    const s = getSettings();
-    return s.autoTextSize && s.autoTextMode === "health";
-}
-
-/**
- * Largest scale at which the page keeps its layout. Every trial applies the
- * scale and reads layout synchronously, so the browser never paints the
- * intermediate sizes.
- */
-function runHealthSearch(): HealthReport {
-    const t0 = performance.now();
-    const result = searchHealthyScale({
-        maxScale: getSettings().autoTextMaxScale,
-        healthAt: (scale) => {
-            applyExtraScale(scale);
-            return measurePageHealth();
-        },
-    });
-    // The search ends on whichever trial came last, not necessarily the winner.
-    if (appliedScale !== result.scale) applyExtraScale(result.scale);
-    if (result.scale === 1) clearExtraScale();
-    lastHealth = {
-        baseline: result.baseline.health,
-        current: result.final.health,
-        stopReason: result.stopReason,
-        trials: result.trials,
-        ms: Math.round(performance.now() - t0),
-    };
-    return lastHealth;
-}
-
-/** Health now, at whatever scale is applied (manual nudges included). */
-function currentHealthReport(): HealthReport | undefined {
-    if (!lastHealth) return undefined;
-    return { ...lastHealth, current: measurePageHealth().health };
-}
-
 export function refreshAutoTextSize(): TextAnalysis {
+    const analysis = analyzePageText();
     const s = getSettings();
 
     if (!s.autoTextSize || s.autoTextMode === "off") {
         clearPageScale();
-        return { ...analyzePageText(), appliedScale: 1 };
+        return { ...analysis, appliedScale: 1 };
     }
-
-    if (isHealthMode()) {
-        const health = runHealthSearch();
-        // Sampled after the search: the numbers describe what is on screen.
-        const analysis = analyzePageText();
-        return {
-            ...analysis,
-            suggestedScale: appliedScale,
-            appliedScale,
-            health,
-        };
-    }
-
-    const analysis = analyzePageText();
 
     applyScaleToPage(analysis.suggestedScale);
     analysis.appliedScale = analysis.suggestedScale;
@@ -345,16 +245,6 @@ export function runAutoTextAction(
         const next = clampScale(
             appliedScale + (action === "bumpUp" ? 0.1 : -0.1),
         );
-        if (isHealthMode()) {
-            // A manual nudge past the safe scale is the visitor's call; the
-            // report then shows how far health has dropped.
-            applyExtraScale(next);
-            saveSettings();
-            const a = analyzePageText();
-            a.appliedScale = next;
-            a.health = currentHealthReport();
-            return a;
-        }
         applyScaleToPage(next);
         saveSettings();
         const a = analyzePageText();
@@ -362,11 +252,7 @@ export function runAutoTextAction(
         return a;
     }
 
-    if (action === "analyze") {
-        const a = analyzePageText();
-        if (isHealthMode()) a.health = currentHealthReport();
-        return a;
-    }
+    if (action === "analyze") return analyzePageText();
 
     const s = getSettings();
     patchSettings({

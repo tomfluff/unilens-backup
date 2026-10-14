@@ -11,7 +11,7 @@ There are five managed packages:
 * `backend` - Flask server managed by python `venv`. See `backend/Makefile` for details
 * `unilens-lib` - Unilens library managed by `npm`. See `unilens-lib/Makefile` for details
 * `accessibility-lib` - Accessibility library managed by `npm`. See `accessibility-lib/Makefile` for details
-* `quiz-lib` - Survey widget managed by `npm`; the backend serves it as the survey page (`/survey?quiz=<id>`). See `quiz-lib/README.md` for details
+* `quiz-lib` - Embeddable quiz widget managed by `npm`. See `quiz-lib/README.md` for details
 * `.` - Root dir managed by `npm`. Very small package which is used to serve sample sites such as `softbank-mirror`. `./Makefile` manages all packages
 
 Note that for `.`, the choice of `npm` vs `venv` is relatively arbitrary. We choose `npm` to stay consistent with the client builds.
@@ -25,7 +25,7 @@ backend, and opens a chat popover at the cursor backed by an LLM/VLM.
 ```
 unilens-lib/          React + TS — builds a single embeddable dist/unilens.js using esbuild
 accessibility-lib/    React + TS — builds a single embeddable dist/accessibility.js using esbuild
-quiz-lib/             React + TS — builds dist/quiz.js (esbuild); the backend's survey page loads it
+quiz-lib/             React + TS — builds a single embeddable dist/quiz.js using esbuild
 backend/           Flask — stores captures, /api/chat with OpenAI / Gemini / stub
 frontend/softbank-mirror/          Static copy of softbank.jp IR benefit page (port 8000)
 frontend/softbank-mirror-recruit/  Static copy of softbank.jp recruit/disability page (port 8002)

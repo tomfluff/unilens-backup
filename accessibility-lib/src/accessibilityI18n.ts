@@ -124,12 +124,11 @@ const ja = {
         viewport: { label: "画面幅", hint: "端末に合わせる" },
         content: { label: "ページ内容", hint: "文字量から判定" },
         combined: { label: "おまかせ", hint: "両方の大きい方" },
-        health: { label: "崩れない最大", hint: "崩れる手前まで拡大" },
     },
     fontScale: {
         1: { label: "標準", hint: "100%" },
-        2: { label: "大", hint: "150%" },
-        3: { label: "特大", hint: "200%" },
+        2: { label: "大", hint: "195%" },
+        3: { label: "特大", hint: "260%" },
     },
 
     /** Sample glyphs shown in the typeface/font-size preview. */
@@ -467,21 +466,6 @@ const ja = {
     metricMinMax: "最小 / 最大",
     metricSmallRatio: "小さい文字の割合",
     metricScale: "適用中の倍率",
-    metricHealthBase: "拡大前の健全度",
-    metricHealthNow: "いまの健全度",
-    metricHealthStop: "止めた理由",
-    metricHealthCost: "試した回数",
-    metricHealthCostValue: (trials: number, ms: number) =>
-        `${trials} 回（${ms} ms）`,
-    healthStop: {
-        overflow: "横スクロールが出る",
-        overlap: "文字が重なる",
-        narrow: "折り返しが狭くなる",
-        max: "上限まで拡大できた",
-        empty: "文字が見つからない",
-    },
-    healthAnnounce: (scale: string, reason: string) =>
-        `崩れない最大の倍率は ×${scale} です。${reason}`,
 
     // Selection resize (operation results returned by selectionTextSize.ts)
     selNeedSelection: "先にページ上の文字をドラッグして選択してください",
@@ -584,12 +568,11 @@ const en: A11yMessages = {
         viewport: { label: "Screen", hint: "Match the device" },
         content: { label: "Content", hint: "Judge by the text" },
         combined: { label: "Automatic", hint: "Larger of the two" },
-        health: { label: "Largest safe", hint: "Grow until layout breaks" },
     },
     fontScale: {
         1: { label: "Normal", hint: "100%" },
-        2: { label: "Large", hint: "150%" },
-        3: { label: "X-large", hint: "200%" },
+        2: { label: "Large", hint: "195%" },
+        3: { label: "X-large", hint: "260%" },
     },
 
     previewSample: "Aa",
@@ -919,20 +902,6 @@ const en: A11yMessages = {
     metricMinMax: "Min / max",
     metricSmallRatio: "Small text share",
     metricScale: "Current scale",
-    metricHealthBase: "Health before",
-    metricHealthNow: "Health now",
-    metricHealthStop: "Stopped because",
-    metricHealthCost: "Tries",
-    metricHealthCostValue: (trials, ms) => `${trials} (${ms} ms)`,
-    healthStop: {
-        overflow: "Horizontal scrolling appears",
-        overlap: "Text overlaps",
-        narrow: "Lines wrap too narrowly",
-        max: "Reached the upper limit",
-        empty: "No text found",
-    },
-    healthAnnounce: (scale, reason) =>
-        `Largest safe scale is ×${scale}. ${reason}`,
 
     selNeedSelection: "First, drag to select some text on the page",
     selUiBlocked: "Text inside the UniLens UI cannot be changed",
