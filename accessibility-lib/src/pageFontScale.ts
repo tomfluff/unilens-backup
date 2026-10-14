@@ -287,7 +287,7 @@ export function refreshPageFontScale(deferScan = false) {
     scanPageFont();
 }
 
-/** Panel text-size choice (1 / 1.95 / 2.6). Combined with auto-text extra scale. */
+/** Panel text-size choice (1 / 1.5 / 2). Combined with auto-text extra scale. */
 export function setPageFontSizeScale(scale: number) {
     const next = Number.isFinite(scale) && scale > 0 ? scale : 1;
     if (next === fontSizeScale && pageFontActive) {

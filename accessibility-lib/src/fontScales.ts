@@ -1,8 +1,8 @@
 /**
  * Shared font-size scale ratios — page font settings and selection resize.
- * Level 1 = 100%. Large / extra-large are the previous 150% / 200% raised 30%.
+ * Level 1 = 100%, large = 150%, extra-large = 200%.
  */
-export const FONT_SCALE_LEVELS = [1, 1.95, 2.6] as const;
+export const FONT_SCALE_LEVELS = [1, 1.5, 2] as const;
 
 export type FontScaleLevel = 1 | 2 | 3;
 
@@ -35,7 +35,7 @@ export function a11yFontSizeToScale(
     return levelToScale(A11Y_FONT_SIZE_LEVEL[size]);
 }
 
-/** Language-independent hint, e.g. "195%". */
+/** Language-independent hint, e.g. "150%". */
 export function fontScalePercent(level: FontScaleLevel): string {
     return `${Math.round(levelToScale(level) * 100)}%`;
 }

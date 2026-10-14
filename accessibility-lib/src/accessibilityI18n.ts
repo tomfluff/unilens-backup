@@ -127,8 +127,8 @@ const ja = {
     },
     fontScale: {
         1: { label: "標準", hint: "100%" },
-        2: { label: "大", hint: "195%" },
-        3: { label: "特大", hint: "260%" },
+        2: { label: "大", hint: "150%" },
+        3: { label: "特大", hint: "200%" },
     },
 
     /** Sample glyphs shown in the typeface/font-size preview. */
@@ -571,8 +571,8 @@ const en: A11yMessages = {
     },
     fontScale: {
         1: { label: "Normal", hint: "100%" },
-        2: { label: "Large", hint: "195%" },
-        3: { label: "X-large", hint: "260%" },
+        2: { label: "Large", hint: "150%" },
+        3: { label: "X-large", hint: "200%" },
     },
 
     previewSample: "Aa",

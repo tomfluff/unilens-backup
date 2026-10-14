@@ -13,8 +13,8 @@ import {
 describe("levelToScale / scaleToLevel", () => {
     it("maps each level to its scale", () => {
         expect(levelToScale(1)).toBe(1);
-        expect(levelToScale(2)).toBe(1.95);
-        expect(levelToScale(3)).toBe(2.6);
+        expect(levelToScale(2)).toBe(1.5);
+        expect(levelToScale(3)).toBe(2);
     });
 
     it("round-trips back to the same level", () => {
@@ -42,8 +42,8 @@ describe("levelToScale / scaleToLevel", () => {
 describe("a11yFontSizeToScale", () => {
     it("converts a page font-size choice to a scale", () => {
         expect(a11yFontSizeToScale("standard")).toBe(1);
-        expect(a11yFontSizeToScale("large")).toBe(1.95);
-        expect(a11yFontSizeToScale("xlarge")).toBe(2.6);
+        expect(a11yFontSizeToScale("large")).toBe(1.5);
+        expect(a11yFontSizeToScale("xlarge")).toBe(2);
     });
 
     it("agrees with the shared level table for its scale", () => {
@@ -54,14 +54,14 @@ describe("a11yFontSizeToScale", () => {
 });
 
 describe("preview glyphs follow the same ratios as the live scale", () => {
-    it("is 100% / 195% / 260% of the base preview size", () => {
+    it("is 100% / 150% / 200% of the base preview size", () => {
         expect([...PREVIEW_FONT_PX]).toEqual([
             PREVIEW_FONT_BASE_PX,
-            Math.round(PREVIEW_FONT_BASE_PX * 1.95),
-            Math.round(PREVIEW_FONT_BASE_PX * 2.6),
+            Math.round(PREVIEW_FONT_BASE_PX * 1.5),
+            Math.round(PREVIEW_FONT_BASE_PX * 2),
         ]);
         expect(fontScalePercent(1)).toBe("100%");
-        expect(fontScalePercent(2)).toBe("195%");
-        expect(fontScalePercent(3)).toBe("260%");
+        expect(fontScalePercent(2)).toBe("150%");
+        expect(fontScalePercent(3)).toBe("200%");
     });
 });
