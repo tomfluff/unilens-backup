@@ -119,16 +119,20 @@ describe("session 2 (2026-10-09)", () => {
             regionSelect: false,
             liveTalk: false,
             offscreenCue: "none",
-            // a row in the panel, off to begin with (Yotam's try-out, 2026-10-12)
-            chatMovesAside: false,
+            // a row in the panel, on from P02, never folding (Yotam, 2026-10-13)
+            chatMovesAside: true,
+            asideFold: false,
+            // every cited place drawn, also inside a cited section (Yotam, 2026-10-14)
+            hlFoldOuter: false,
             outlineClicked: true,
             zoom: true,
             zoomKeys: true,
             minimap: "off",
             voicePauseMs: 2000,
-            // the gear opens the participant's panel; the model may take them places
+            // the gear opens the participant's panel; the model no longer takes them
+            // places (from P02; back in session 3)
             settingsButton: true,
-            assistantGoTo: true,
+            assistantGoTo: false,
             // #26: the fixed color (Yotam, 2026-10-12)
             hlColorMode: "fixed",
             hlColorRange: "some",
@@ -170,6 +174,12 @@ describe("session 2 (2026-10-09)", () => {
         expect(PRESETS.initial.values.answerFromStart).toBe(false);
         expect(PRESETS.session2.panel as readonly string[]).not.toContain(
             "answerFromStart",
+        );
+        // the floating button's reminder: off, and not offered in session 2
+        // (session 3's topic, Yotam 2026-10-14)
+        expect(PRESETS.session2.values.fabReminder).toBe(false);
+        expect(PRESETS.session2.panel as readonly string[]).not.toContain(
+            "fabReminder",
         );
     });
 
@@ -223,6 +233,7 @@ describe("session 2 (2026-10-09)", () => {
         });
         // session 1 keeps the chat still and outlines no click
         expect(PRESETS.initial.values.chatMovesAside).toBe(false);
+        expect(PRESETS.initial.values.asideFold).toBe(true);
         expect("outlineClicked" in PRESETS.initial.values).toBe(false);
         // session 1 still has no box drawing (Alt+drag), and no participant panel
         expect(PRESETS.initial.values.regionSelect).toBe(false);

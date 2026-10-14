@@ -124,6 +124,8 @@ interface Drawn {
     badgeEl?: HTMLDivElement;
     /** where its number sits beside the box, chosen once where it covers no text */
     badgeSide?: BadgeSide;
+    /** its corner number's rect this frame (client px), for the numbers after it */
+    cornerAt?: { x: number; y: number; w: number; h: number };
     /** a wrapped inline element's lines after the first (`box` outlines the first
      *  and carries the badge); empty for anything drawn as one box */
     lines: { box: HTMLDivElement; decoKey?: string }[];
@@ -699,7 +701,7 @@ const badgeRects = new Map<
  *  text, kept while it stays in bounds; `origin` turns client px into its parent's */
 function placeBadge(
     badge: HTMLElement,
-    entry: { badgeSide?: BadgeSide },
+    entry: { badgeSide?: BadgeSide; cornerAt?: Drawn["cornerAt"] },
     b: { left: number; top: number; right: number; bottom: number },
     bounds: { left: number; top: number; right: number; bottom: number },
     origin: { x: number; y: number },
@@ -726,12 +728,56 @@ function placeBadge(
     if (mode === "corner") {
         // its bottom-right at the element's top-left: over the outline's room round
         // the element, never the element's text (Yotam, 2026-10-10)
-        const x = slide(
-            b.left + pad - w,
-            bounds.left + 1,
-            bounds.right - 1 - w,
-        );
-        const y = slide(b.top + pad - h, bounds.top + 1, bounds.bottom - 1 - h);
+        let x = slide(b.left + pad - w, bounds.left + 1, bounds.right - 1 - w);
+        let y = slide(b.top + pad - h, bounds.top + 1, bounds.bottom - 1 - h);
+        // a place drawn inside another one's outline can start at its corner
+        // (hlFoldOuter off): its number takes the first free spot among steps to
+        // the left, then the right, then the rows below, so each stays readable.
+        // Free of the numbers placed before it this frame only, so nothing stale
+        // moves one; a fixed order, so it never flips between spots. Page only
+        const idx = boxes.indexOf(entry as Drawn);
+        if (page && idx > 0 && !getSettings().hlFoldOuter) {
+            const earlier = boxes
+                .slice(0, idx)
+                .flatMap((o) => (o.cornerAt ? [o.cornerAt] : []));
+            const hits = (nx: number, ny: number) =>
+                earlier.some(
+                    (o) =>
+                        nx < o.x + o.w &&
+                        nx + w > o.x &&
+                        ny < o.y + o.h &&
+                        ny + h > o.y,
+                );
+            const inView = (nx: number, ny: number) =>
+                nx >= bounds.left + 1 &&
+                nx + w <= bounds.right - 1 &&
+                ny >= bounds.top + 1 &&
+                ny + h <= bounds.bottom - 1;
+            const free = (nx: number, ny: number) =>
+                inView(nx, ny) && !hits(nx, ny);
+            const steps = [0];
+            for (let k = 1; k <= idx; k++) steps.push(-k);
+            for (let k = 1; k <= idx; k++) steps.push(k);
+            // only a number on screen whose own spot is taken moves; one off
+            // screen stays with its place (hlBadgeClamp off)
+            const spot = (() => {
+                if (!inView(x, y) || !hits(x, y)) return null;
+                for (let row = 0; row <= idx; row++)
+                    for (const k of steps) {
+                        const nx = x + k * (w + BADGE_GAP);
+                        const ny = y + row * (h + BADGE_GAP);
+                        if (free(nx, ny)) return { nx, ny };
+                    }
+                return null;
+            })();
+            if (spot) {
+                x = spot.nx;
+                y = spot.ny;
+            }
+        }
+        // a hidden number (its place collapsed) leaves its spot to the others
+        entry.cornerAt =
+            page && badge.style.display !== "none" ? { x, y, w, h } : undefined;
         entry.badgeSide = "corner";
         badge.dataset.side = "corner";
         badge.style.left = `${x - origin.x}px`;
@@ -1366,6 +1412,7 @@ function render() {
     for (const entry of boxes) {
         const { el, box } = entry;
         if (!el.isConnected) {
+            entry.cornerAt = undefined;
             gone.push(entry);
             continue;
         }
@@ -2134,7 +2181,7 @@ export function showHighlights(
         }
         placeable.push({ ...h, el });
     }
-    for (const h of foldNested(placeable, measure)) {
+    for (const h of foldNested(placeable, measure, getSettings().hlFoldOuter)) {
         const box = newBox(h.role);
         host.appendChild(box);
         boxes.push({ el: h.el, box, role: h.role, badge: h.badge, lines: [] });
@@ -2171,10 +2218,14 @@ export function showHighlights(
  * chains (a in b in c) fold too. The same element twice counts as a pair.
  * A link or a button inside a sentence is never folded away (Yotam, 2026-09-27): it
  * is the thing to press, so it keeps its own outline inside the sentence's.
+ * `outer` false (hlFoldOuter, session 2 from P02): only pairs whose outer adds
+ * nothing fold; any other inner place keeps its own outline and number inside the
+ * outer one's, as a link does.
  */
 export function foldNested<T extends { el: Element; badge?: string }>(
     items: T[],
     measureEl: Measure,
+    outer = true,
 ): T[] {
     const list = [...items];
     const text = (e: Element) =>
@@ -2194,9 +2245,9 @@ export function foldNested<T extends { el: Element; badge?: string }>(
     const addsNothing = (outer: Element, inner: Element) =>
         text(outer) === text(inner) ||
         (!pressable(inner) && area(inner) >= 0.9 * area(outer));
-    const folds = (outer: Element, inner: Element) =>
-        outer.contains(inner) &&
-        (outer === inner || !pressable(inner) || addsNothing(outer, inner));
+    const folds = (a: Element, b: Element) =>
+        a.contains(b) &&
+        (a === b || (outer && !pressable(b)) || addsNothing(a, b));
     for (;;) {
         let pair: [T, T] | null = null;
         for (const a of list)

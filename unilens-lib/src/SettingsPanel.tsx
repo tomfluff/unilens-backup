@@ -86,6 +86,7 @@ import {
     updateSetting,
     useSettings,
 } from "./settings";
+import { asSource, logPanelSession } from "./settingsLog";
 import { ensurePanelStyles } from "./settingsPanelStyles";
 import {
     CHOICES_JA,
@@ -1971,8 +1972,10 @@ function Footer({
     const [status, setStatus] = useState("");
     const picker = useRef<HTMLInputElement>(null);
     const reset = () => {
-        for (const g of tabs.find((t) => t.id === tab)?.groups ?? [])
-            for (const k of [...g.first, ...g.more]) write(k, defaultOf(k));
+        asSource("reset", () => {
+            for (const g of tabs.find((t) => t.id === tab)?.groups ?? [])
+                for (const k of [...g.first, ...g.more]) write(k, defaultOf(k));
+        });
         setStatus(T.resetDone(T.tabs[tab]));
     };
     const save = () => {
@@ -2107,6 +2110,9 @@ function Panel({
         noteWhatIsUnder();
         dialog.current?.showModal();
     }, []);
+    // the study's log: the panel opening and closing, and each setting changed in it
+    // biome-ignore lint/correctness/useExhaustiveDependencies: once per opening
+    useEffect(() => logPanelSession(limited ? "participant" : "full", tab), []);
     // the active tab takes the keyboard as the panel opens
     useEffect(() => {
         tabs.current

@@ -107,6 +107,11 @@ export interface Settings {
      *  screen's edge. Off (Yotam's try-out, 2026-10-12): it stays by its place and
      *  leaves the screen with it. A preset value, not a participant's setting */
     hlBadgeClamp: boolean;
+    /** session 1 (Yotam, 2026-09-26): a place inside another cited place folds into
+     *  the larger one's outline, which carries both numbers ("1·2"). Off (Yotam,
+     *  2026-10-14, for P02): both are drawn, each with its number, unless the outer
+     *  adds nothing (the same text, or the inner covers 90% of it). A preset value */
+    hlFoldOuter: boolean;
     /** with Adaptive color on: the thin border and the ring's inner band take the
      *  adapted colour (a black edge round it), and the glow is stronger on a dark
      *  background (Yotam's try-out, 2026-10-12). Off: session 1's black and white
@@ -203,6 +208,10 @@ export interface Settings {
     /** a chat covering a chosen source steps aside, to the nearer side, or folds to
      *  its header when there is no room (a pinned chat only folds); off, it stays */
     chatMovesAside: boolean;
+    /** with no room beside a source, the chat folds to its header (sessions 1 and 2
+     *  until P01); off, it moves to where it covers the least of the source and stays
+     *  open (P01: a folded chat stayed wherever it was and was hard to find again) */
+    asideFold: boolean;
     /** pressing All (or "show all") moves the page to the group of highlights, by
      *  the edge zone's rule: the group to the middle when it fits, else number 1;
      *  pressing it off, or an answer's own outlines, never move it. Off: All only
@@ -356,6 +365,7 @@ const DEFAULTS: Settings = {
     hlBadges: "small",
     hlBadgePos: "corner",
     hlBadgeClamp: false,
+    hlFoldOuter: false,
     hlAdaptLine: true,
     altDragInert: true,
     adaptBg: "under-ring",
@@ -401,6 +411,7 @@ const DEFAULTS: Settings = {
     sounds: true,
     citeEvidence: true,
     chatMovesAside: true,
+    asideFold: true,
     allMoves: false,
     outlineClicked: false,
     answerFromStart: true,
@@ -473,6 +484,7 @@ export const TOGGLE_LABELS: Record<BoolSettingKey, string> = {
     debugView: "Debug view (ctrl+shift+D)",
     inventory: "Send page inventory with captures",
     hlBadgeClamp: "Slide a number in at the screen's edge",
+    hlFoldOuter: "Fold a place inside a larger one into its outline",
     hlAdaptLine:
         "Adaptive color also colors the line (and a stronger glow on dark)",
     altDragInert: "An Alt+drag does nothing when box drawing is off",
@@ -483,6 +495,7 @@ export const TOGGLE_LABELS: Record<BoolSettingKey, string> = {
     mmNumbers: "Numbers on targets",
     citeEvidence: "Answers cite page elements",
     chatMovesAside: "Move the chat out of the way of sources",
+    asideFold: "Fold the chat when there is no room beside a source",
     allMoves: "All moves the page to the highlights",
     outlineClicked: "Outline what I Alt+click",
     answerFromStart: "New answers show from their start, Listen first",
@@ -979,7 +992,13 @@ export const PANEL_TABS: { id: PanelTabId; groups: PanelGroup[] }[] = [
                     "clickMark",
                     "clickMarkStyle",
                 ],
-                more: ["ringWidth", "ringScale", "hlBadgeClamp", "hlAdaptLine"],
+                more: [
+                    "ringWidth",
+                    "ringScale",
+                    "hlBadgeClamp",
+                    "hlFoldOuter",
+                    "hlAdaptLine",
+                ],
             },
             {
                 id: "cues",
@@ -1035,6 +1054,7 @@ export const PANEL_TABS: { id: PanelTabId; groups: PanelGroup[] }[] = [
                     "associateText",
                     "sourceStyleButton",
                     "chatMovesAside",
+                    "asideFold",
                     "outlineClicked",
                     "answerFromStart",
                     "quietNotFound",
@@ -1475,7 +1495,12 @@ export function startPreset(
                 olderSeen = true;
                 return;
             }
-            loadPresetChanges(raw);
+            hydrating = true;
+            try {
+                loadPresetChanges(raw);
+            } finally {
+                hydrating = false;
+            }
         });
         // an older tab's record replaced this one's in storage: this tab writes its
         // own back as it is reloaded, left or hidden, so the next page load has it.
@@ -1511,6 +1536,9 @@ export function startPreset(
     }
 }
 let following = false;
+/** taking up what another tab changed: the study's log does not count it again */
+let hydrating = false;
+export const isHydrating = () => hydrating;
 /** an older build's tab wrote the shared record since this tab last wrote its own */
 let olderSeen = false;
 

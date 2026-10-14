@@ -10,6 +10,7 @@ import {
     getTargetZoom,
     getView,
     isOwnUI,
+    leastCover,
     onViewChange,
     openArea,
     returnToPreviousView,
@@ -132,6 +133,45 @@ describe("revealElement", () => {
             top: 1520 - 384,
             behavior: "instant",
         });
+    });
+
+    it("moves a chat that cannot clear the target to where it covers the least", () => {
+        // a full-width paragraph at 400-600: no side clears it; below it does
+        const at = leastCover(
+            { left: 0, top: 300, right: 1280, bottom: 420 },
+            { left: 400, top: 250, width: 420, height: 300 },
+            1280,
+            800,
+        );
+        expect(at).toEqual({ left: 400, top: 436 });
+        // nothing clears it (a target taller and wider than the room left): the least
+        // covered, still on screen; of the two edges that cover as little, the nearer
+        const tight = leastCover(
+            { left: 0, top: 100, right: 1280, bottom: 700 },
+            { left: 400, top: 300, width: 420, height: 300 },
+            1280,
+            800,
+        );
+        expect(tight.top).toBe(492);
+        expect(tight.left).toBe(400);
+        // partly off screen, and nothing covers less: back on screen
+        expect(
+            leastCover(
+                { left: 0, top: 0, right: 1280, bottom: 800 },
+                { left: -100, top: 100, width: 420, height: 300 },
+                1280,
+                800,
+            ).left,
+        ).toBe(8);
+        // already clear: it stays
+        expect(
+            leastCover(
+                { left: 0, top: 0, right: 100, bottom: 100 },
+                { left: 400, top: 250, width: 420, height: 300 },
+                1280,
+                800,
+            ),
+        ).toEqual({ left: 400, top: 250 });
     });
 
     it("steps the chat aside to the nearer side that clears the target", () => {

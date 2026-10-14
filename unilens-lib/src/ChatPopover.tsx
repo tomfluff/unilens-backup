@@ -86,6 +86,7 @@ import {
     sourceStyleOf,
     useSettings,
 } from "./settings";
+import { asSource } from "./settingsLog";
 import {
     listenVoice,
     pauseSpeaking,
@@ -105,6 +106,7 @@ import {
     getTargetZoom,
     getView,
     getZoom,
+    leastCover,
     returnToPreviousView,
     revealElement,
     revealElements,
@@ -1808,6 +1810,42 @@ export default function ChatPopover({
                         return;
                     }
                 }
+                // never folding (asideFold off, session 2 from P02): as far out of the
+                // way as it can go, and open; a pinned chat or a phone's bottom sheet
+                // stays where it is
+                if (!getSettings().asideFold) {
+                    if (aside && !narrow) {
+                        const at = leastCover(
+                            a,
+                            {
+                                left: b.left,
+                                top: b.top,
+                                width: b.width,
+                                height: b.height,
+                            },
+                            window.innerWidth,
+                            window.innerHeight,
+                        );
+                        // off the page's own floating controls too, unless that
+                        // would cover more of the source: the source comes first
+                        // ponytail: the controls are not candidates themselves; a
+                        // spot clear of both is found only when leastCover picks it
+                        const off = settle(at);
+                        const cover = (p: { left: number; top: number }) =>
+                            Math.max(
+                                0,
+                                Math.min(a.right, p.left + b.width) -
+                                    Math.max(a.left, p.left),
+                            ) *
+                            Math.max(
+                                0,
+                                Math.min(a.bottom, p.top + b.height) -
+                                    Math.max(a.top, p.top),
+                            );
+                        setPos(cover(off) <= cover(at) ? off : at);
+                    }
+                    return;
+                }
                 const area = Math.max(
                     1,
                     (a.right - a.left) * (a.bottom - a.top),
@@ -2962,7 +3000,9 @@ export default function ChatPopover({
                                     (SOURCE_STYLES.indexOf(now) + 1) %
                                         SOURCE_STYLES.length
                                 ];
-                            setSourceStyle(next);
+                            asSource("sources button", () =>
+                                setSourceStyle(next),
+                            );
                             logEvent("sources_style", { style: next });
                             act("press", T.sSources(T.sourceStyle[next]));
                         }}

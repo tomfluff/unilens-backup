@@ -59,6 +59,42 @@ def _short(text: object, n: int = 90) -> str:
     return s if len(s) <= n else s[: n - 1] + "…"
 
 
+def _val(v: object) -> str:
+    return _short(json.dumps(v, ensure_ascii=False), 40)
+
+
+def settings_at_end(events: list[dict]) -> list[str]:
+    """The last snapshot of the participant's panel as a table: each setting, its
+    default and its final value, the changed ones marked."""
+    snap = next(
+        (e for e in reversed(events) if e.get("type") == "settings_snapshot"), None
+    )
+    if not snap:
+        return []
+    values = snap.get("values") or {}
+    defaults = snap.get("defaults") or {}
+    labels = {
+        e.get("key"): e.get("label")
+        for e in events
+        if e.get("type") == "setting_changed" and e.get("label")
+    }
+    rows = [
+        "## Settings at the end",
+        "",
+        f"From the last snapshot ({snap.get('reason')}, {snap.get('t', '')}). Changed values are marked **changed**.",
+        "",
+        "| setting | default | at the end | |",
+        "|---|---|---|---|",
+    ]
+    for k, v in values.items():
+        name = f"{labels[k]} ({k})" if labels.get(k) else k
+        d = defaults.get(k)
+        mark = "**changed**" if k in defaults and v != d else ""
+        d_cell, v_cell = (_val(x).replace("|", "\\|") for x in (d, v))
+        rows.append(f"| {name} | {d_cell} | {v_cell} | {mark} |")
+    return [*rows, ""]
+
+
 def summarize(ev: dict) -> str:
     """One line saying what happened, for the timeline."""
     kind = ev.get("type")
@@ -93,6 +129,19 @@ def summarize(ev: dict) -> str:
         )
         labels = ", ".join(_short(x, 30) for x in ev.get("labels") or [])
         return f"source {ev.get('n')} ({labels}), {how}; {moved}"
+    if kind == "usage":
+        cached = f", {ev.get('cachedInput')} cached" if ev.get("cachedInput") else ""
+        thought = f", {ev.get('reasoning')} reasoning" if ev.get("reasoning") else ""
+        again = "follow-up" if ev.get("followUp") else "new capture"
+        return f"{ev.get('call')} {ev.get('model')}: {ev.get('input')} in{cached}, {ev.get('output')} out{thought} ({again})"
+    if kind == "read_aloud_fallback":
+        return f"read aloud by the browser's voice ({ev.get('voice') or '?'}, {ev.get('browser') or '?'}): {ev.get('reason')}"
+    if kind == "goto":
+        q = _short(ev.get("question"), 60)
+        if not ev.get("done"):
+            return f'assistant go-to {ev.get("target")} not done ({ev.get("reason")}), asked "{q}"'
+        moved = "page moved" if ev.get("moved") else "page stayed (on screen)"
+        return f'assistant took them to {ev.get("n")} ({_short(ev.get("label"), 30)}, {ev.get("where") or "on screen"}); {moved}; asked "{q}"'
     if kind == "command":
         n = f" {ev['n']}" if ev.get("n") else ""
         return f'{ev.get("kind")}{n}: "{_short(ev.get("text"), 40)}" → {_short(ev.get("result"), 60)}'
@@ -117,6 +166,18 @@ def summarize(ev: dict) -> str:
         return f"chat dragged to ({ev.get('left')}, {ev.get('top')})"
     if kind == "chat_hidden":
         return "chat hidden (✕)"
+    if kind == "settings_opened":
+        return f"settings opened ({ev.get('panel')} panel, {ev.get('tab')} tab)"
+    if kind == "settings_closed":
+        return f"settings closed ({ev.get('changes')} changes)"
+    if kind == "setting_changed":
+        name = ev.get("label") or ev.get("key")
+        return f"setting {name} ({ev.get('key')}): {_val(ev.get('from'))} → {_val(ev.get('to'))}, by {ev.get('source') or '?'}"
+    if kind == "settings_snapshot":
+        values = ev.get("values") or {}
+        defaults = ev.get("defaults") or {}
+        moved = [k for k in values if k in defaults and values[k] != defaults[k]]
+        return f"settings snapshot ({ev.get('reason')}): {len(moved)} of {len(values)} changed from the defaults"
     if kind == "facilitator_key":
         return f"facilitator key Ctrl+Alt+Shift+{str(ev.get('key', '?')).upper()}"
     if kind == "back":
@@ -161,12 +222,20 @@ def stats(events: list[dict]) -> dict:
             1
             for e in events
             if e.get("type") == "source"
-            and e.get("via") not in ("command", "live")
+            and e.get("via") not in ("command", "live", "assistant go-to")
             and e.get("action") != "off"
         ),
+        # the assistant took them to a place (session 2's go-to marker)
+        "gotos": count("goto", done=True),
         "mic_starts": count("mic", action="start"),
+        "read_aloud_fallbacks": count("read_aloud_fallback"),
+        # model token use (usage events, one per call)
+        **_usage_totals(events),
         "read_aloud_plays": count("read_aloud", action="play"),
         "chat_drags": count("chat_dragged"),
+        # the settings panel (from P02 in session 2)
+        "settings_opened": count("settings_opened"),
+        "settings_changed": count("setting_changed"),
         # the widget reports what the participant met; the server's own errors (the
         # same failure, seen from the other side) are counted apart
         "errors": sum(
@@ -175,6 +244,28 @@ def stats(events: list[dict]) -> dict:
         "server_errors": sum(
             1 for e in events if e.get("type") == "error" and e.get("src") == "server"
         ),
+    }
+
+
+def _usage_totals(events: list[dict]) -> dict:
+    """The session's model calls and their tokens, summed (missing counts as 0)."""
+    used = [e for e in events if e.get("type") == "usage"]
+
+    def total(field: str) -> int:
+        return sum(
+            int(e.get(field) or 0)
+            for e in used
+            if isinstance(e.get(field) or 0, (int, float))
+        )
+
+    return {
+        "model_calls": len(used),
+        "follow_up_calls": sum(1 for e in used if e.get("followUp")),
+        "input_tokens": total("input"),
+        "cached_input_tokens": total("cachedInput"),
+        "cache_write_tokens": total("cacheWrite"),
+        "output_tokens": total("output"),
+        "reasoning_tokens": total("reasoning"),
     }
 
 
@@ -218,9 +309,12 @@ def export_session(pid: str, path: Path, out: Path) -> dict:
         "",
         f"- {s['start']} to {s['end']} ({s['minutes']} min), {s['pages']} pages",
         f"- {s['alt_clicks']} Alt+clicks; {s['questions']} questions ({s['typed']} typed, {s['voice']} by voice), {s['commands']} of them commands",
-        f"- {s['answers']} answers, {s['mean_answer_s'] or '–'} s on average; {s['sources_pressed']} sources chosen",
-        f"- {s['mic_starts']} microphone uses, {s['read_aloud_plays']} read-aloud plays, {s['chat_drags']} chat drags, {s['errors']} errors",
+        f"- {s['answers']} answers, {s['mean_answer_s'] or '–'} s on average; {s['sources_pressed']} sources chosen; {s['gotos']} times taken to a place by the assistant",
+        f"- {s['mic_starts']} microphone uses, {s['read_aloud_plays']} read-aloud plays ({s['read_aloud_fallbacks']} by the browser's voice), {s['chat_drags']} chat drags, {s['errors']} errors",
+        f"- settings opened {s['settings_opened']} times, {s['settings_changed']} settings changed",
+        f"- {s['model_calls']} model calls ({s['follow_up_calls']} follow-ups): {s['input_tokens']} input tokens ({s['cached_input_tokens']} cached), {s['output_tokens']} output ({s['reasoning_tokens']} reasoning)",
         "",
+        *settings_at_end(events),
         "Status lines are left out here; the CSV has every event. Captures: backend/captures/<id>/.",
         "",
         "| time | +s | event | what happened |",
