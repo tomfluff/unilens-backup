@@ -16,11 +16,12 @@
 | `GET /health` | Health check for confirming the active provider |
 | `POST /api/tts/stream` | Reads `text` aloud as the POST's own answer: 16-bit mono PCM at 24 kHz, sent as it is made (OpenAI or Gemini), for the widget to play with WebAudio. A quick tunnel passes a POST's body on at once but holds a GET's until it is complete |
 | `POST /api/study/log?pid=&session=` | The widget's events for a study participant, appended to `study-logs/<pid>/session-<n>.jsonl` (see Storage) |
-| `GET /survey?quiz=<id>[&pid=&session=&lang=]` | The survey page (`survey.html`, running `quiz-lib` in page mode). Without `quiz`, a list of the surveys for the facilitator |
+| `GET /survey?quiz=<id>[&q=&pid=&session=&return=]` | The survey page (`survey.html`, running `quiz-lib` in page mode, Japanese only); with `q=N`, question N only (one page per question). Without `quiz`, a list of the surveys for the facilitator |
 | `GET /api/quiz/<id>` | A survey's questions, from `quizzes/<id>.json` |
 | `POST /api/quiz/log[?pid=&session=]` | The quiz widget's (`quiz-lib`) events, appended to `quiz-logs/<quiz id>.jsonl`; with a participant, also to their study log |
 | `GET /api/quiz` | The surveys (in `quizzes/` or with a log): title, attempt and completion counts |
-| `GET /api/quiz/<id>/results` | Each attempt at a quiz: its answers (`response`, `response_text`, `correct` — `null` for a question without an answer key), time per question (`ms`) and in all (`duration_ms`). Filters `?pid=`, `?session=`, `?attempt=`, `?completed=1` (see `quiz-lib/README.md`) |
+| `GET /api/quiz/<id>/results` | Each attempt at a quiz: its answers (`response`, `response_text`, `correct` — `null` for a question without an answer key), time per question (`ms`) and in all (`duration_ms`). Each carries the `user_id` and `survey_id` the respondent typed before the survey. Filters `?pid=`, `?session=`, `?attempt=`, `?user_id=`, `?survey_id=`, `?completed=1` (see `quiz-lib/README.md`) |
+| `GET /api/quiz/<id>/progress?pid=&session=` (or `?vid=`) | One visitor's progress through a survey, for the test pages' button ("アンケート（2/4）"): `total`, `answered`, `next` (1-based, null once all are answered), `completed` |
 | `GET /api/quiz/<id>/results.csv` | The same as a CSV for Excel (UTF-8 with BOM), one row per attempt: totals, then `<question>_ms`, `_s`, `_answer`, `_correct` for each question in the survey's order. Same filters |
 
 ## LLM provider selection

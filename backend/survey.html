@@ -3,14 +3,19 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>アンケート / Survey</title>
+    <title>アンケート</title>
     <!--
       The survey page (GET /survey). The address says what to show:
-        /survey?quiz=unilens-poc&pid=P01&session=1&lang=ja
+        /survey?quiz=unilens-poc&q=2&pid=P01&session=1
       quiz     the survey: backend/quizzes/<quiz>.json (required; without it, a list)
+      q        1, 2, …: that question (one page per question; the test pages' button
+               opens the next one to answer). Without it, the next question to answer:
+               the page never runs on through several.
       pid, session  the participant, as for the study log (optional)
-      lang     ja | en: the starting language (optional; the page's switch changes it)
-      The survey itself is quiz-lib (served at /survey/quiz.js) in its "page" mode.
+      vid      without a participant: the anonymous id the button gives a browser
+      return   the test page to go back to after answering (the button sets it)
+      The survey itself is quiz-lib (served at /survey/quiz.js) in its "page" mode,
+      in Japanese only (no language switch; a ?lang= in an old link is ignored).
     -->
     <style>
       html { background: #f1f3f5; }
@@ -45,7 +50,7 @@
         var main = document.getElementById("survey");
         var params = new URLSearchParams(location.search);
         var quiz = (params.get("quiz") || "").trim();
-        var lang = params.get("lang");
+        var q = (params.get("q") || "").trim();
 
         function note(html) {
           var box = document.createElement("div");
@@ -66,9 +71,8 @@
 
         if (window.__quizMissing || !window.UniLensQuiz) {
           note(
-            "<h1>アンケートを表示できません / The survey cannot be shown</h1>" +
-              "<p><code>quiz-lib/dist/quiz.js</code> がありません。リポジトリのルートで <code>make build</code> を実行してください。</p>" +
-              "<p lang=\"en\"><code>quiz-lib/dist/quiz.js</code> is missing: run <code>make build</code> at the repository root.</p>",
+            "<h1>アンケートを表示できません</h1>" +
+              "<p><code>quiz-lib/dist/quiz.js</code> がありません。リポジトリのルートで <code>make build</code> を実行してください。</p>",
           );
           return;
         }
@@ -80,17 +84,22 @@
             .then(function (data) {
               var items = (data.quizzes || []).filter(function (q) { return q.defined; });
               if (!items.length) {
-                note("<h1>アンケート一覧 / Surveys</h1><p>アンケートがありません。<code>backend/quizzes/&lt;id&gt;.json</code> を置いてください。</p>");
+                note("<h1>アンケート一覧</h1><p>アンケートがありません。<code>backend/quizzes/&lt;id&gt;.json</code> を置いてください。</p>");
                 return;
               }
               note(
-                "<h1>アンケート一覧 / Surveys</h1>" +
-                  "<p>参加者には <code>?quiz=…&amp;pid=P01&amp;session=1</code> を付けた URL を開いてもらいます。</p><ul>" +
+                "<h1>アンケート一覧</h1>" +
+                  "<p>参加者には <code>?quiz=…&amp;pid=P01&amp;session=1</code> を付けた URL を開いてもらいます。" +
+                  "1 回の表示で答えるのは 1 問だけです。<code>&amp;q=2</code> で質問を指定でき、指定しなければ次に答える質問が表示されます（テストページのボタンも、次に答える質問のページを開きます）。</p><ul>" +
                   items.map(function (q) {
                     var url = "/survey?quiz=" + encodeURIComponent(q.id);
                     var csv = "/api/quiz/" + encodeURIComponent(q.id) + "/results.csv";
+                    var pages = "";
+                    for (var i = 1; i <= (q.questions || 0); i++)
+                      pages += " <a href=\"" + esc(url + "&q=" + i) + "\">" + i + "</a>";
                     return (
                       "<li><a href=\"" + esc(url) + "\">" + esc(text(q.title) || q.id) + "</a><br />" +
+                      (pages ? "質問ごとのページ：" + pages + "<br />" : "") +
                       "<code>" + esc(location.origin + url + "&pid=P01&session=1") + "</code><br />" +
                       "回答 " + q.attempts + " 件（完了 " + q.completed + " 件）" +
                       // one row per attempt, with each question's time: there is a file once someone has answered
@@ -102,30 +111,27 @@
               );
             })
             .catch(function () {
-              note("<h1>アンケート一覧 / Surveys</h1><p>一覧を読み込めませんでした。/ The list could not be loaded.</p>");
+              note("<h1>アンケート一覧</h1><p>一覧を読み込めませんでした。</p>");
             });
           return;
         }
 
-        var chosen = lang === "ja" || lang === "en" ? lang : undefined;
         UniLensQuiz.init({
           mode: "page",
           container: main,
           src: "/api/quiz/" + encodeURIComponent(quiz),
           backend: location.origin,
-          lang: chosen,
+          question: q ? Number(q) : undefined,
+          returnTo: params.get("return") || undefined,
         }).then(function (ok) {
           if (!ok) {
+            var what = esc(quiz) + (q ? "</code> の質問 <code>" + esc(q) : "");
             note(
-              "<h1>アンケートが見つかりません / Survey not found</h1>" +
-                "<p><code>" + esc(quiz) + "</code> というアンケートはありません。URL を確かめてください。</p>" +
-                "<p lang=\"en\">There is no survey called <code>" + esc(quiz) + "</code>. Please check the address.</p>" +
-                "<p><a href=\"/survey\">アンケート一覧 / All surveys</a></p>",
+              "<h1>アンケートが見つかりません</h1>" +
+                "<p><code>" + what + "</code> はありません。URL を確かめてください。</p>" +
+                "<p><a href=\"/survey\">アンケート一覧</a></p>",
             );
-            return;
           }
-          // an explicit ?lang= wins over a choice remembered in this browser
-          if (chosen) UniLensQuiz.setLang(chosen);
         });
       })();
     </script>

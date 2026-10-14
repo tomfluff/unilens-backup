@@ -6,13 +6,19 @@ A questionnaire for the UniLens studies. The study uses it as **a page of its
 own on the backend**, opened by its address:
 
 ```
-http://127.0.0.1:5000/survey?quiz=unilens-poc&pid=P01&session=1&lang=ja
+http://127.0.0.1:5000/survey?quiz=unilens-poc&pid=P01&session=1
 ```
 
-The test pages carry only the green "アンケート" / "Survey" button (link mode);
-a click opens that page, with the participant (`pid` / `session`) and the
-language of the page they were on. The page walks the participant through the
-questions and ends with a thank-you and their own answers.
+Each question has a page of its own (`&q=1`, `&q=2`, …). The test pages carry
+only the green button (link mode), which shows how far the participant is —
+**"アンケート（2/4）"**, the next question to answer of all — and opens that
+question's page, with the participant (`pid` / `session`) and the way back. After the answer the page says it is saved
+and offers "元のページに戻る" (back to the page); the button then shows
+"アンケート（3/4）". Once every question is answered it shows
+"アンケート（完了）" and opens the whole survey, which shows the thank-you and the
+participant's own answers. The survey page never runs on to the next question:
+opened without `&q=` it shows the next question to answer (and adds its `&q=` to
+the address), so every visit is one question, then back to the page.
 
 The library is built the same way as `accessibility-lib` (one script,
 `dist/quiz.js`, `window.UniLensQuiz`; `window.Quiz` too when the page has no
@@ -24,13 +30,20 @@ key; it is then graded in the log only (or on screen with `showFeedback: true`).
 - On the survey page the questions come from `backend/quizzes/<id>.json`; in
   panel mode, from the host page (inline, or a JSON file).
 - Single choice, multiple choice and typed answers.
-- Japanese and English, with a 日本語 / English switch at the top of the panel.
-  Until the visitor uses it the language follows `<html lang>`, then the browser;
-  their choice is remembered and wins. Write each text as `{ "ja": …, "en": … }`
-  so the switch changes the questions too.
+- Japanese only: there is no language switch, and the page's or browser's
+  language does not change it (`SURVEY_LANG` in `src/quizI18n.ts`). A survey
+  written as `{ "ja": …, "en": … }` shows its Japanese; the English text and the
+  library's English messages are kept, unused, for a return to two languages.
+- Before the first question the respondent types a **user ID** and a **survey
+  ID** (a number the facilitator gives each user's survey). Both are required and
+  always typed by hand, even when the address names a participant: letters,
+  digits, `-` and `_`, up to 32 (full-width input is converted). They belong to
+  the attempt, so the pages of one survey (one per question) ask only once; every
+  later screen shows them, and every logged event carries them (`user_id`,
+  `survey_id`). "Answer again" asks for them afresh.
 - Progress is kept in the browser: a reload resumes the attempt. It is kept per
   participant (`pid` / `session`), so on a shared lab laptop the next participant
-  starts afresh, and so is the language choice.
+  starts afresh.
 - With `backend`, every answer is logged to the UniLens backend
   (`backend/quiz-logs/<quiz id>.jsonl`), and into the study log when the page
   names a participant (`?pid=P01&session=1`).
@@ -51,9 +64,20 @@ Unless stated otherwise, commands run from the **UniLens repository root**.
 | Address | Shows |
 |---|---|
 | `/survey` | The list of surveys, with a ready-made participant address for each (for the facilitator) |
-| `/survey?quiz=<id>` | The survey in `backend/quizzes/<id>.json` |
+| `/survey?quiz=<id>` | The survey in `backend/quizzes/<id>.json`: its next question to answer (one per visit), or, once all are answered, the thank-you and the answers |
+| `…&q=2` | Question 2 only (one page per question; the button opens the next one to answer) |
 | `…&pid=P01&session=1` | The participant: answers go to the quiz log with these, and to their study log |
-| `…&lang=ja` / `…&lang=en` | The starting language (the page's 日本語 / English switch still changes it) |
+| `…&return=<address>` | The test page to go back to after answering (the button sets it) |
+| `…&vid=<id>` | Without a participant: the anonymous id the button gives the browser, so its progress can still be found |
+
+How the button knows the progress: the survey page lives on the backend, so the
+button asks it (`GET /api/quiz/<id>/progress?pid=&session=`, or `?vid=` without
+a participant) when the page loads and whenever it is shown again (back from
+the survey, with the page's link or the browser's Back). It counts the
+participant's latest attempt; a question answered on its own page counts
+wherever it was answered. Until the backend answers (or when it is down) the
+button reads just "アンケート" and opens `/survey?quiz=<id>`, which shows the next
+question to answer all the same.
 
 The button on a test page (after `accessibility.js` and `unilens.js`):
 
@@ -183,10 +207,11 @@ visitors afresh rather than grading them against moved answers.
 | `quiz` | — | The quiz object. Either this or `src`. |
 | `src` | — | URL of a JSON file with the quiz. |
 | `backend` | — | UniLens backend to log answers to. |
-| `lang` | detected | `'ja'` or `'en'`: the starting language. The visitor's choice on the switch wins over it. |
 | `mode` | `'panel'` | `'link'`: only the button, opening the survey page (test pages). `'page'`: the survey fills `container` (the survey page). `'panel'`: button and floating panel. |
 | `survey` | — | Link mode: the survey's id (`backend/quizzes/<id>.json`). |
 | `container` | end of `<body>` | Page mode: the element, or a selector, to fill. |
+| `question` | next to answer | Page mode: show only this question (1-based). Without it, the first question not answered yet (the page never runs through several). `init()` resolves false for a question the survey does not have. |
+| `returnTo` | — | Page mode: the page to go back to after answering (absolute http(s) only). |
 | `position` | `'top-left'` | `'top-left'`, `'top-right'`, `'bottom-left'`, `'bottom-right'`. The panel opens from the toggle. The display panel's button sits bottom-right and UniLens' settings gear bottom-left: the bottom corners overlap them. |
 | `open` | `false` | Open the panel once ready. |
 | `followDisplayPanel` | `true` | Follow `accessibility-lib`'s high-contrast theme and text size (large → 24px, extra large → 30px). |
@@ -197,7 +222,7 @@ visitors afresh rather than grading them against moved answers.
 loaded.
 
 Other methods: `UniLensQuiz.open()`, `close()`, `reset()` (forget this
-browser's progress), `setLang('ja' | 'en')`, `getResult()`, `isOpen()`,
+browser's progress), `getResult()`, `isOpen()`,
 `destroy()`.
 
 ## The log
@@ -208,14 +233,16 @@ browser's progress), `setLang('ja' | 'en')`, `getResult()`, `isOpen()`,
 
 | `type` | Fields |
 |---|---|
-| `quiz_open`, `quiz_close` | panel shown / hidden |
+| `quiz_open`, `quiz_close` | panel shown / hidden; on the survey page, the page opened (`question` on a question's page) |
 | `quiz_start` | `attempt`, `total`, `retry` |
 | `quiz_answer` | `attempt`, `question`, `index`, `response`, `response_text`, `correct`, `ms` (time on the question) |
 | `quiz_complete` | `attempt`, `correct`, `total`, `ms` (start to last answer) |
-| `quiz_lang` | `lang` (the new language), `from`, `attempt`: the visitor used the 日本語 / English switch |
+| `quiz_lang` | No longer sent (the survey is Japanese only). Older logs have it: `lang` (the new language), `from`, `attempt` |
+| `quiz_ids` | `attempt`: the IDs were typed into an attempt begun before they were asked (one started by an earlier version) |
 
-Every line also has `t`, `seq`, `quiz`, `lang`, `page` (path only), and `pid` /
-`session` when the page named a participant; then the same events also go to
+Every line also has `t`, `seq`, `quiz`, `lang`, `page` (path only), the typed
+`user_id` / `survey_id` once entered, and `pid` /
+`session` when the page named a participant (else `vid`, the button's anonymous id, when there is one); then the same events also go to
 `backend/study-logs/<pid>/session-<n>.jsonl`. Nothing else about the visitor is
 sent.
 
@@ -226,7 +253,8 @@ The backend folds the log into one record per attempt.
 | Endpoint | Returns |
 |---|---|
 | `GET /api/quiz` | The quizzes with a log: `{ "quizzes": [{ "id", "attempts", "completed", "last_event_at" }] }` |
-| `GET /api/quiz/<quiz id>/results` | Every attempt with its answers and timings. Filters: `?pid=`, `?session=`, `?attempt=`, `?completed=1` |
+| `GET /api/quiz/<quiz id>/results` | Every attempt with its answers and timings. Each has `user_id` and `survey_id`. Filters: `?pid=`, `?session=`, `?attempt=`, `?user_id=`, `?survey_id=`, `?completed=1` |
+| `GET /api/quiz/<quiz id>/progress?pid=&session=` (or `?vid=`) | One visitor's progress, for the button: `{ "total": 4, "answered": 1, "answered_questions": ["q1"], "next": 2, "completed": false, "attempt": "…" }` (`next` is 1-based; null once all are answered) |
 | `GET /api/quiz/<quiz id>/results.csv` | The same, one row per attempt, for Excel: the totals, then for each question `<id>_ms`, `<id>_s`, `<id>_answer`, `<id>_correct`. Same filters. |
 
 ```sh
@@ -236,7 +264,7 @@ curl -o results.csv "http://127.0.0.1:5000/api/quiz/unilens-poc/results.csv?comp
 
 The survey list (`/survey`) links each survey's CSV.
 
-CSV columns: `attempt, pid, session, lang, started_at, completed_at, completed,
+CSV columns: `attempt, user_id, survey_id, pid, session, lang, started_at, completed_at, completed,
 answered, correct, duration_ms, duration_s`, then the four columns per question,
 in the survey's order (`q1_ms, q1_s, q1_answer, q1_correct, q2_ms, …`). A
 question not answered leaves its columns empty. The file is UTF-8 with a BOM, so
@@ -266,8 +294,8 @@ Excel shows Japanese answers correctly.
   `lang`, the language the question was shown in.
 - `ms` is the time on that question: from its first appearance to the answer,
   including time with the panel closed (the answer is usually looked up on the
-  page). The moment it appeared is kept with the progress, so a reload or a
-  language switch does not restart the clock. `question_ms` lists the same
+  page). The moment it appeared is kept with the progress, so a reload does not
+  restart the clock. `question_ms` lists the same
   times by question id.
 - `duration_ms` runs from the start to the last answer. An attempt not
   completed has `completed: false` and its duration up to its last answer.

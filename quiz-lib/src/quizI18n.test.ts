@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { localize, MESSAGES, pickLang } from "./quizI18n";
+import { localize, MESSAGES, pickLang, SURVEY_LANG } from "./quizI18n";
 
 describe("pickLang", () => {
     it("takes the first supported language tag", () => {
@@ -23,5 +23,11 @@ describe("MESSAGES", () => {
         expect(Object.keys(MESSAGES.ja).sort()).toEqual(
             Object.keys(MESSAGES.en).sort(),
         );
+    });
+});
+
+describe("SURVEY_LANG", () => {
+    it("is Japanese: the survey has no language switch", () => {
+        expect(SURVEY_LANG).toBe("ja");
     });
 });

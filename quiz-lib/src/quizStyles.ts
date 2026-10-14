@@ -177,7 +177,7 @@ ${R} .unilens-quiz-panel {
 /* title | language switch | close on one row; the title wraps rather than pushing
    the close button onto a row of its own */
 ${R} .unilens-quiz-header {
-  display: grid; grid-template-columns: minmax(0, 1fr) auto auto;
+  display: grid; grid-template-columns: minmax(0, 1fr) auto;
   align-items: center; gap: 0.6em; flex: none;
   padding: 0.6em 0.75em 0.6em 1.1em;
   border-bottom: ${v("bw")} solid ${v("line")};
@@ -188,19 +188,6 @@ ${R} .unilens-quiz-icon-btn {
   width: ${v("tap")}; height: ${v("tap")}; padding: 0;
   border: ${v("bw")} solid transparent; border-radius: 10px;
   background: ${v("soft")}; color: ${v("text")};
-}
-/* language switch: two pills; the one in use is filled and bold (not colour alone) */
-${R} .unilens-quiz-lang {
-  display: inline-flex; flex: none; gap: 0; margin: 0; min-width: 0; padding: 0; overflow: hidden;
-  border: ${v("bw")} solid ${v("edge")}; border-radius: 999px; background: ${v("bg")};
-}
-${R} .unilens-quiz-lang-btn {
-  min-height: ${v("tap")}; min-width: 4.5em; padding: 0 0.9em; white-space: nowrap;
-  border: 0; border-radius: 999px; background: transparent; color: ${v("text")};
-  font-weight: 400;
-}
-${R} .unilens-quiz-lang-btn[aria-pressed="true"] {
-  background: ${v("accent")}; color: ${v("on-accent")}; font-weight: 700;
 }
 ${R} .unilens-quiz-body {
   flex: 1; min-height: 0; overflow-y: auto; padding: 1em 1.1em 1.2em;
@@ -261,6 +248,11 @@ ${R} .unilens-quiz-input {
   background: ${v("bg")}; color: ${v("text")};
 }
 ${R} .unilens-quiz-input[readonly] { background: ${v("soft")}; }
+/* the IDs typed before the first question */
+${R} .unilens-quiz-field { display: flex; flex-direction: column; gap: 0.3em; margin: 0 0 0.9em; max-width: 24em; }
+${R} .unilens-quiz-field-label { font-weight: 700; }
+${R} .unilens-quiz-input[aria-invalid="true"] { border-color: ${v("danger")}; }
+${R} .unilens-quiz-ids { margin: 0 0 0.6em; color: ${v("muted")}; font-size: 0.9em; }
 
 /* ── Actions ────────────────────────────────────────────────────────────── */
 ${R} .unilens-quiz-actions { display: flex; flex-wrap: wrap; gap: 0.5em; }
@@ -270,6 +262,7 @@ ${R} .unilens-quiz-btn {
   border: ${v("bw-strong")} solid ${v("accent")};
   background: ${v("accent")}; color: ${v("on-accent")}; font-weight: 700;
 }
+${R} a.unilens-quiz-btn { text-decoration: none; }
 ${R} .unilens-quiz-btn[data-variant="secondary"] { background: ${v("bg")}; color: ${v("text")}; border-color: ${v("edge")}; }
 ${R} .unilens-quiz-error { margin: 0; color: ${v("danger")}; font-weight: 700; display: flex; align-items: center; gap: 0.35em; }
 
@@ -313,11 +306,6 @@ ${R}[${MODE_ATTR}="page"] .unilens-quiz-title { font-size: 1.35em; }
 
 @media (max-width: 560px) {
   ${R} .unilens-quiz-panel { width: calc(100vw - 16px); }
-  /* narrow: title and close on the first row, the language switch on its own row */
-  ${R} .unilens-quiz-header { grid-template-columns: minmax(0, 1fr) auto; }
-  ${R} .unilens-quiz-title { grid-row: 1; grid-column: 1; }
-  ${R} .unilens-quiz-header > .unilens-quiz-icon-btn { grid-row: 1; grid-column: 2; }
-  ${R} .unilens-quiz-lang { grid-row: 2; grid-column: 1 / -1; justify-self: start; }
   ${R}[${POSITION_ATTR}$="-right"] { right: 8px; }
   ${R}[${POSITION_ATTR}$="-left"] { left: 8px; }
 }

@@ -5,11 +5,13 @@
  * the page has no global of that name already). Two ways to show a survey:
  *
  * - "page" (how the study uses it): the backend's survey page,
- *   /survey?quiz=<id>&pid=P01&session=1&lang=ja (backend/survey.html), runs
- *     UniLensQuiz.init({ mode: "page", container: "#survey", src: "/api/quiz/<id>", backend })
+ *   /survey?quiz=<id>&q=2&pid=P01&session=1 (backend/survey.html), runs
+ *     UniLensQuiz.init({ mode: "page", container: "#survey", src: "/api/quiz/<id>", backend, question: 2 })
  *   and the survey fills the page: no floating button, nothing on the test pages.
- * - "link" (on the test pages): only the "アンケート" button; a click opens that
- *   survey page, carrying the participant and the language,
+ *   The page holds one question: `question`, else the next one to answer.
+ * - "link" (on the test pages): only the "アンケート（2/4）" button, showing the
+ *   next question to answer; a click opens that question's page, carrying the
+ *   participant and the way back (the survey is in Japanese only),
  *     UniLensQuiz.init({ mode: "link", survey: "unilens-poc", backend: "http://127.0.0.1:5000" })
  * - "panel": a button and floating panel over any host page,
  *     UniLensQuiz.init({ src: "quiz.json", backend: "http://127.0.0.1:5000" })
@@ -33,30 +35,31 @@ import {
     UI_ATTR,
 } from "./domIds";
 import {
+    prepareQuestion,
     type QuizAnswerEvent,
     QuizApp,
     type QuizCallbacks,
     type QuizResult,
 } from "./QuizPanel";
-import { detectLang, isQuizLang } from "./quizI18n";
-import { initQuizLog, resolveStudyIds, stopQuizLog } from "./quizLog";
-import { quizFingerprint, scoreOf } from "./quizLogic";
+import {
+    initQuizLog,
+    readVisitorId,
+    resolveStudyIds,
+    stopQuizLog,
+} from "./quizLog";
+import { firstUnanswered, quizFingerprint, scoreOf } from "./quizLogic";
 import {
     type AnswerRecord,
     clearAttempt,
     currentAttempt,
-    setChosenLang,
     setOpen,
     useQuizStore,
 } from "./quizStore";
 import { QUIZ_CSS } from "./quizStyles";
+import { normalizeQuiz, type Quiz, type QuizInput } from "./quizTypes";
+import { idsOf } from "./respondentIds";
 import { SurveyLink } from "./SurveyLink";
-import {
-    normalizeQuiz,
-    type Quiz,
-    type QuizInput,
-    type QuizLang,
-} from "./quizTypes";
+import { safeReturnUrl } from "./surveyUrl";
 
 export const QUIZ_POSITIONS = [
     "top-right",
@@ -78,6 +81,10 @@ export interface QuizInitOptions extends QuizCallbacks {
     survey?: string;
     /** page mode: the element (or a selector for it) to fill. Default: a new one at the end of <body>. */
     container?: HTMLElement | string;
+    /** page mode: show only this question (1-based), one page per question. Default: the next one to answer. */
+    question?: number;
+    /** page mode: the test page to go back to after answering (an absolute http(s) address). */
+    returnTo?: string;
     /** The quiz itself. Either this or `src`. */
     quiz?: QuizInput;
     /** URL of a JSON file holding the quiz (same shape as `quiz`). */
@@ -87,8 +94,6 @@ export interface QuizInitOptions extends QuizCallbacks {
      * Omit to keep everything in the browser.
      */
     backend?: string;
-    /** Interface language. Default: `<html lang>`, then the browser's. */
-    lang?: QuizLang;
     /**
      * Corner for the toggle; the panel opens from it. Default "top-left": the
      * display panel's button sits bottom-right and UniLens' settings gear
@@ -117,8 +122,10 @@ interface Mounted {
     /** where this browser keeps the attempt: per quiz, and per participant when the address names one */
     storeKey: string;
     fingerprint: string;
-    lang: QuizLang;
     callbacks: QuizCallbacks;
+    /** page mode: the one question shown (0-based); null for a finished attempt's answers (or panel mode) */
+    question: number | null;
+    returnTo: string | null;
     container: HTMLElement;
     root: Root;
     cleanups: (() => void)[];
@@ -158,17 +165,25 @@ function displayPanel(): DisplayPanelApi | undefined {
 
 function render() {
     if (!mounted) return;
-    const { quiz, mode, storeKey, fingerprint, lang, callbacks, root } =
-        mounted;
-    // the toggle and panel carry `lang` themselves: the visitor's switch can change it
+    const {
+        quiz,
+        mode,
+        storeKey,
+        fingerprint,
+        callbacks,
+        question,
+        returnTo,
+        root,
+    } = mounted;
     root.render(
         <QuizApp
             quiz={quiz}
             mode={mode}
             storeKey={storeKey}
             fingerprint={fingerprint}
-            defaultLang={lang}
             callbacks={callbacks}
+            question={question}
+            returnTo={returnTo}
         />,
     );
 }
@@ -191,8 +206,11 @@ function followDisplayPanel(container: HTMLElement, cleanups: (() => void)[]) {
 }
 
 /** link mode: what is on the page (no quiz is loaded there) */
-let link: { container: HTMLElement; root: Root; cleanups: (() => void)[] } | null =
-    null;
+let link: {
+    container: HTMLElement;
+    root: Root;
+    cleanups: (() => void)[];
+} | null = null;
 
 /** The "アンケート" button as a link to the survey page; no questions load here. */
 function mountLink(options: QuizInitOptions): boolean {
@@ -217,11 +235,10 @@ function mountLink(options: QuizInitOptions): boolean {
     // documentElement, not body, as the panel (CONTRIBUTING §1)
     document.documentElement.appendChild(container);
     const cleanups: (() => void)[] = [];
-    if (options.followDisplayPanel !== false) followDisplayPanel(container, cleanups);
+    if (options.followDisplayPanel !== false)
+        followDisplayPanel(container, cleanups);
     const root = createRoot(container);
-    // the button speaks the page's language, and the survey opens in it
-    const lang = isQuizLang(options.lang) ? options.lang : detectLang();
-    root.render(<SurveyLink backend={backend} survey={survey} lang={lang} />);
+    root.render(<SurveyLink backend={backend} survey={survey} />);
     link = { container, root, cleanups };
     return true;
 }
@@ -252,9 +269,20 @@ export async function init(options: QuizInitOptions = {}): Promise<boolean> {
     const { quiz, errors } = normalizeQuiz(raw);
     for (const e of errors) console.warn(`[UniLens Quiz] ${e}`);
     if (!quiz) return false;
+    const mode: "panel" | "page" = options.mode === "page" ? "page" : "panel";
+    let question: number | null = null;
+    if (mode === "page" && options.question !== undefined) {
+        const n = Number(options.question);
+        if (!Number.isInteger(n) || n < 1 || n > quiz.questions.length) {
+            console.error(
+                `[UniLens Quiz] question ${options.question}: this survey has questions 1-${quiz.questions.length}`,
+            );
+            return false;
+        }
+        question = n - 1;
+    }
 
     ensureStyles();
-    const mode: "panel" | "page" = options.mode === "page" ? "page" : "panel";
     const container = document.createElement("div");
     container.id = QUIZ_ROOT_ID;
     container.setAttribute(UI_ATTR, "1");
@@ -278,22 +306,53 @@ export async function init(options: QuizInitOptions = {}): Promise<boolean> {
     }
 
     const cleanups: (() => void)[] = [];
-    if (options.followDisplayPanel !== false) followDisplayPanel(container, cleanups);
+    if (options.followDisplayPanel !== false)
+        followDisplayPanel(container, cleanups);
 
     initQuizLog(options.backend);
     // One lab laptop, many participants: progress is kept per participant, so the
-    // next pid starts afresh instead of landing on the last one's answers.
+    // next pid starts afresh instead of landing on the last one's answers. Without
+    // one, per anonymous visitor id when the button sent one (?vid=).
     const study = resolveStudyIds();
+    const vid = study ? null : readVisitorId(location.href);
+    const storeKey = study
+        ? `${quiz.id}#${study.pid}#${study.session}`
+        : vid
+          ? `${quiz.id}#vid:${vid}`
+          : quiz.id;
+    const fingerprint = quizFingerprint(quiz);
+    // The survey page shows one question at a time, always: opened without
+    // `question` (an old link, or the button when it could not ask the backend
+    // how far the visitor is) it shows the next question to answer, and the
+    // address says which, so a reload stays on it. A finished attempt shows the
+    // visitor's answers instead.
+    if (mode === "page" && question === null) {
+        const a = currentAttempt(storeKey, fingerprint, quiz.questions.length);
+        const next = a ? firstUnanswered(quiz, a.answers) : 0;
+        if (!a?.finishedAt && next >= 0) {
+            question = next;
+            try {
+                const u = new URL(location.href);
+                u.searchParams.set("q", String(next + 1));
+                history.replaceState(history.state, "", u.href);
+            } catch {
+                // the page still shows that one question
+            }
+        }
+    }
+    if (question !== null)
+        prepareQuestion(quiz, storeKey, fingerprint, question);
     mounted = {
         quiz,
         mode,
-        storeKey: study ? `${quiz.id}#${study.pid}#${study.session}` : quiz.id,
-        fingerprint: quizFingerprint(quiz),
-        lang: isQuizLang(options.lang) ? options.lang : detectLang(),
+        storeKey,
+        fingerprint,
         callbacks: {
             onAnswer: options.onAnswer,
             onComplete: options.onComplete,
         },
+        question,
+        returnTo: mode === "page" ? safeReturnUrl(options.returnTo) : null,
         container,
         root: createRoot(container),
         cleanups,
@@ -344,12 +403,6 @@ export function reset() {
     if (mounted) clearAttempt(mounted.storeKey);
 }
 
-/** Switch the interface language, as the panel's 日本語 / English switch does (remembered). */
-export function setLang(lang: QuizLang) {
-    if (!mounted || !isQuizLang(lang)) return;
-    setChosenLang(mounted.storeKey, lang);
-}
-
 /** The current attempt's score and answers, or null before the first start. */
 export function getResult(): QuizResult | null {
     if (!mounted) return null;
@@ -368,6 +421,7 @@ export function getResult(): QuizResult | null {
         total,
         answers: a.answers,
         durationMs: last - a.startedAt,
+        ...idsOf(a),
     };
 }
 
@@ -380,14 +434,13 @@ const UniLensQuiz = {
     open,
     close,
     reset,
-    setLang,
     getResult,
     isOpen,
     VERSION: "0.1.0",
 };
 
 export default UniLensQuiz;
-export type { AnswerRecord, QuizAnswerEvent, QuizInput, QuizLang, QuizResult };
+export type { AnswerRecord, QuizAnswerEvent, QuizInput, QuizResult };
 export { UniLensQuiz };
 
 declare global {

@@ -1,9 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
     correctChoiceIds,
+    firstUnanswered,
     isAnswerable,
     isCorrect,
     isGraded,
+    nextUnanswered,
     normalizeTextAnswer,
     orderedChoices,
     quizFingerprint,
@@ -138,5 +140,28 @@ describe("quizFingerprint", () => {
         const edited = { ...quiz, questions: quiz.questions.slice(1) };
         expect(quizFingerprint(quiz)).toBe(quizFingerprint({ ...quiz }));
         expect(quizFingerprint(edited) === quizFingerprint(quiz)).toBe(false);
+    });
+});
+
+describe("nextUnanswered", () => {
+    // one, many, typed, exact
+    it("goes on to the next question not answered", () => {
+        expect(nextUnanswered(quiz, {}, 0)).toBe(1);
+        expect(nextUnanswered(quiz, { many: 1 }, 0)).toBe(2);
+    });
+
+    it("comes back to a question skipped earlier, then ends", () => {
+        expect(nextUnanswered(quiz, { many: 1, typed: 1 }, 3)).toBe(0);
+        expect(nextUnanswered(quiz, { one: 1, many: 1, typed: 1 }, 3)).toBe(-1);
+    });
+});
+
+describe("firstUnanswered", () => {
+    it("is the first question without an answer, or -1", () => {
+        expect(firstUnanswered(quiz, {})).toBe(0);
+        expect(firstUnanswered(quiz, { one: 1, typed: 1 })).toBe(1);
+        expect(
+            firstUnanswered(quiz, { one: 1, many: 1, typed: 1, exact: 1 }),
+        ).toBe(-1);
     });
 });

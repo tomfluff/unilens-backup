@@ -304,3 +304,150 @@ def test_the_csv_follows_the_surveys_question_order(client):
 
 def test_the_csv_of_an_unknown_survey_is_404(client):
     assert client.get("/api/quiz/nothing-here/results.csv").status_code == 404
+
+
+# ── Progress, for the test pages' button ───────────────────────────────────
+
+
+def _survey(*ids):
+    app_module.QUIZZES_DIR.mkdir(parents=True, exist_ok=True)
+    survey = {"id": "ir-basics", "questions": [{"id": q} for q in ids]}
+    (app_module.QUIZZES_DIR / "ir-basics.json").write_text(json.dumps(survey))
+
+
+def test_progress_names_the_next_question_to_answer(client):
+    _survey("q1", "q2", "q3")
+    r = client.get("/api/quiz/ir-basics/progress?pid=P01&session=1")
+    assert r.status_code == 200
+    assert r.get_json() == {
+        "quiz": "ir-basics",
+        "total": 3,
+        "answered": 0,
+        "answered_questions": [],
+        "next": 1,
+        "completed": False,
+        "attempt": None,
+    }
+    evs = _attempt("a1", complete=False, answers=(("q1", "c1", None, 900),))
+    _post(client, "?pid=P01&session=1", {"events": evs})
+    body = client.get("/api/quiz/ir-basics/progress?pid=P01&session=1").get_json()
+    assert (body["answered"], body["next"], body["completed"]) == (1, 2, False)
+    # another participant, or another session, has not started
+    assert client.get("/api/quiz/ir-basics/progress?pid=P02").get_json()["next"] == 1
+    other = "/api/quiz/ir-basics/progress?pid=P01&session=2"
+    assert client.get(other).get_json()["next"] == 1
+
+
+def test_progress_skips_answered_questions_and_ends_completed(client):
+    _survey("q1", "q2", "q3")
+    answers = (("q1", "c1", None, 900), ("q3", "c1", None, 900))
+    _post(
+        client,
+        "?pid=P01&session=1",
+        {"events": _attempt("a1", complete=False, answers=answers)},
+    )
+    body = client.get("/api/quiz/ir-basics/progress?pid=P01").get_json()
+    assert body["next"] == 2 and body["answered_questions"] == ["q1", "q3"]
+    more = _attempt("a1", complete=False, answers=(("q2", "c1", None, 900),))[1:]
+    _post(client, "?pid=P01&session=1", {"events": more})
+    body = client.get("/api/quiz/ir-basics/progress?pid=P01").get_json()
+    assert (body["answered"], body["next"], body["completed"]) == (3, None, True)
+
+
+def test_progress_follows_the_latest_attempt(client):
+    _survey("q1", "q2")
+    _post(
+        client,
+        "?pid=P01&session=1",
+        {
+            "events": _attempt(
+                "old", answers=(("q1", "c", None, 1), ("q2", "c", None, 1))
+            )
+        },
+    )
+    fresh = [
+        dict(e, t=e["t"].replace("2026-10-08", "2026-10-09"))
+        for e in _attempt("new", complete=False, answers=())
+    ]
+    _post(client, "?pid=P01&session=1", {"events": fresh})
+    body = client.get("/api/quiz/ir-basics/progress?pid=P01").get_json()
+    assert (body["attempt"], body["next"]) == ("new", 1)
+
+
+def test_progress_without_a_participant_goes_by_the_visitor_id(client):
+    _survey("q1", "q2")
+    evs = [dict(e, vid="v-abc123") for e in _attempt("a1", complete=False)]
+    _post(client, "", {"events": evs})
+    assert (
+        client.get("/api/quiz/ir-basics/progress?vid=v-abc123").get_json()["next"] == 2
+    )
+    assert (
+        client.get("/api/quiz/ir-basics/progress?vid=v-other1").get_json()["next"] == 1
+    )
+
+
+def test_progress_needs_a_survey_and_a_visitor(client):
+    _survey("q1")
+    assert client.get("/api/quiz/nothing-here/progress?pid=P01").status_code == 404
+    assert client.get("/api/quiz/ir-basics/progress").status_code == 400
+    assert client.get("/api/quiz/ir-basics/progress?vid=x").status_code == 400
+
+
+# ── The IDs typed before the survey ────────────────────────────────────────
+
+
+def test_the_typed_ids_are_kept_and_filterable(client):
+    _post(
+        client,
+        "",
+        {"events": [dict(e, user_id="U01", survey_id="3") for e in _attempt("a1")]},
+    )
+    _post(
+        client,
+        "",
+        {"events": [dict(e, user_id="U02", survey_id="4") for e in _attempt("a2")]},
+    )
+    rows = client.get("/api/quiz/ir-basics/results").get_json()["attempts"]
+    assert [(a["user_id"], a["survey_id"]) for a in rows] == [
+        ("U01", "3"),
+        ("U02", "4"),
+    ]
+    one = client.get("/api/quiz/ir-basics/results?user_id=U02").get_json()["attempts"]
+    assert [a["attempt"] for a in one] == ["a2"]
+    one = client.get("/api/quiz/ir-basics/results?survey_id=3").get_json()["attempts"]
+    assert [a["attempt"] for a in one] == ["a1"]
+
+
+def test_ids_typed_later_and_odd_ids(client):
+    evs = _attempt("a1", complete=False)
+    late = {
+        "t": "2026-10-08T01:00:08.000Z",
+        "type": "quiz_ids",
+        "quiz": "ir-basics",
+        "attempt": "a1",
+        "user_id": "U09",
+        "survey_id": "s-1",
+    }
+    _post(client, "", {"events": [*evs, late]})
+    _post(
+        client,
+        "",
+        {"events": [dict(e, user_id="no spaces <b>") for e in _attempt("a2")]},
+    )
+    rows = {
+        a["attempt"]: a
+        for a in client.get("/api/quiz/ir-basics/results").get_json()["attempts"]
+    }
+    assert (rows["a1"]["user_id"], rows["a1"]["survey_id"]) == ("U09", "s-1")
+    assert rows["a2"]["user_id"] is None
+
+
+def test_the_csv_starts_with_the_typed_ids(client):
+    _post(
+        client,
+        "",
+        {"events": [dict(e, user_id="U01", survey_id="3") for e in _attempt("a1")]},
+    )
+    rows = _csv_rows(client, "")
+    assert list(rows[0])[:3] == ["attempt", "user_id", "survey_id"]
+    assert (rows[0]["user_id"], rows[0]["survey_id"]) == ("U01", "3")

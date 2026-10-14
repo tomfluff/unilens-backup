@@ -8,14 +8,37 @@ import { type LocalizedText, QUIZ_LANGS, type QuizLang } from "./quizTypes";
 
 export interface QuizMessages {
     toggle: string;
-    /** name of the language switch group */
-    language: string;
-    /** read out after switching, in the new language */
-    languageChanged: string;
     /** accessible name of the toggle, with progress */
     toggleLabel: (answered: number, total: number) => string;
     /** accessible name of the link to the survey page (link mode) */
     openSurvey: string;
+    /** link mode: the button's text with the next question, "アンケート（2/4）" */
+    surveyAt: (next: number, total: number) => string;
+    /** link mode: the button's text once every question is answered */
+    surveyDone: string;
+    /** link mode: the button's accessible name (starts with its visible text) */
+    surveyAtLabel: (next: number, total: number) => string;
+    surveyDoneLabel: string;
+    /** one question's page: after the answer */
+    savedTitle: string;
+    /** one question's page, opened again after it was answered */
+    alreadyAnswered: string;
+    answeredOf: (answered: number, total: number) => string;
+    allAnswered: string;
+    backToPage: string;
+    backNote: string;
+    nextQuestionAt: (next: number, total: number) => string;
+    /** before the first question: the respondent types two IDs */
+    idsLead: string;
+    userIdLabel: string;
+    surveyIdLabel: string;
+    idHint: string;
+    idMissing: (label: string) => string;
+    idInvalid: (label: string) => string;
+    /** on every screen after: who is answering */
+    idsShown: (userId: string, surveyId: string) => string;
+    /** the start button, when the attempt had begun before the IDs were asked */
+    resume: string;
     close: string;
     defaultTitle: string;
     questionCount: (n: number) => string;
@@ -50,10 +73,30 @@ export interface QuizMessages {
 
 const ja: QuizMessages = {
     toggle: "アンケート",
-    language: "表示言語",
-    languageChanged: "日本語で表示しています",
     toggleLabel: (a, t) => `アンケート（全${t}問中${a}問回答済み）`,
     openSurvey: "アンケートに回答する（アンケートのページへ移動）",
+    surveyAt: (n, t) => `アンケート（${n}/${t}）`,
+    surveyDone: "アンケート（完了）",
+    surveyAtLabel: (n, t) =>
+        `アンケート（${n}/${t}）：${t}問中${n}問目に回答する（アンケートのページへ移動）`,
+    surveyDoneLabel:
+        "アンケート（完了）：回答内容を見る（アンケートのページへ移動）",
+    savedTitle: "回答を記録しました",
+    alreadyAnswered: "この質問には回答済みです",
+    answeredOf: (a, t) => `${t}問中 ${a}問に回答済み`,
+    allAnswered: "すべての質問に回答しました。ご協力ありがとうございました。",
+    backToPage: "元のページに戻る",
+    backNote: "元のページに戻って、作業を続けてください。",
+    nextQuestionAt: (n, t) => `次の質問へ（${n}/${t}）`,
+    idsLead: "回答を始める前に、ユーザーIDとアンケートIDを入力してください。",
+    userIdLabel: "ユーザーID",
+    surveyIdLabel: "アンケートID",
+    idHint: "半角英数字と「-」「_」で入力してください（32文字まで）。",
+    idMissing: (l) => `${l}を入力してください`,
+    idInvalid: (l) =>
+        `${l}は半角英数字と「-」「_」で入力してください（32文字まで）`,
+    idsShown: (u, s) => `ユーザーID：${u}　アンケートID：${s}`,
+    resume: "回答を続ける",
     close: "閉じる",
     defaultTitle: "アンケート",
     questionCount: (n) => `全${n}問`,
@@ -86,10 +129,29 @@ const ja: QuizMessages = {
 
 const en: QuizMessages = {
     toggle: "Survey",
-    language: "Language",
-    languageChanged: "Now showing in English",
     toggleLabel: (a, t) => `Survey (${a} of ${t} answered)`,
     openSurvey: "Survey: answer it (opens the survey page)",
+    surveyAt: (n, t) => `Survey (${n}/${t})`,
+    surveyDone: "Survey (done)",
+    surveyAtLabel: (n, t) =>
+        `Survey (${n}/${t}): answer question ${n} of ${t} (opens the survey page)`,
+    surveyDoneLabel: "Survey (done): see your answers (opens the survey page)",
+    savedTitle: "Your answer is saved",
+    alreadyAnswered: "You have answered this question",
+    answeredOf: (a, t) => `${a} of ${t} questions answered`,
+    allAnswered: "You have answered every question. Thank you for taking part.",
+    backToPage: "Back to the page",
+    backNote: "Please go back to the page and carry on.",
+    nextQuestionAt: (n, t) => `Next question (${n}/${t})`,
+    idsLead: "Before you start, enter your user ID and survey ID.",
+    userIdLabel: "User ID",
+    surveyIdLabel: "Survey ID",
+    idHint: "Use letters, digits, - and _ (up to 32 characters).",
+    idMissing: (l) => `Enter your ${l}`,
+    idInvalid: (l) =>
+        `${l}: use letters, digits, - and _ only (up to 32 characters)`,
+    idsShown: (u, s) => `User ID: ${u} · Survey ID: ${s}`,
+    resume: "Continue",
     close: "Close",
     defaultTitle: "Survey",
     questionCount: (n) => (n === 1 ? "1 question" : `${n} questions`),
@@ -122,11 +184,12 @@ const en: QuizMessages = {
 
 export const MESSAGES: Record<QuizLang, QuizMessages> = { ja, en };
 
-/** Each language's name in itself, for the switch (a visitor finds their own). */
-export const LANG_NAMES: Record<QuizLang, string> = {
-    ja: "日本語",
-    en: "English",
-};
+/**
+ * The survey is shown in Japanese only: no language switch, whatever the page's
+ * or browser's language (the study's request). A survey's `{ "ja", "en" }` text
+ * shows its Japanese; the English messages above stay for a return to two languages.
+ */
+export const SURVEY_LANG: QuizLang = "ja";
 
 export const isQuizLang = (v: unknown): v is QuizLang =>
     (QUIZ_LANGS as readonly unknown[]).includes(v);

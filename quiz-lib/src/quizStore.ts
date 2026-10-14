@@ -10,7 +10,8 @@
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import { QUIZ_STORE_KEY } from "./domIds";
-import { QUIZ_LANGS, type QuizLang, type QuizResponse } from "./quizTypes";
+import type { QuizResponse } from "./quizTypes";
+import type { RespondentIds } from "./respondentIds";
 
 export interface AnswerRecord {
     response: QuizResponse;
@@ -40,18 +41,15 @@ export interface Attempt {
     /** by question id */
     answers: Record<string, AnswerRecord>;
     finishedAt: number | null;
+    /** typed by the respondent before the first question (respondentIds.ts) */
+    userId?: string;
+    surveyId?: string;
 }
 
 interface QuizState {
     open: boolean;
     /** by quiz id */
     attempts: Record<string, Attempt>;
-    /**
-     * The language picked with the 日本語 / English switch, by the same key as
-     * attempts: per quiz and participant, so the next participant on a shared
-     * laptop is not shown the last one's choice.
-     */
-    langs: Record<string, QuizLang>;
 }
 
 /** Storage that may be blocked (privacy modes, sandboxed frames): degrade to memory. */
@@ -82,10 +80,10 @@ function safeStorage(): Storage {
 }
 
 export const useQuizStore = create<QuizState>()(
-    persist(() => ({ open: false, attempts: {}, langs: {} }) as QuizState, {
+    persist(() => ({ open: false, attempts: {} }) as QuizState, {
         name: QUIZ_STORE_KEY,
         storage: createJSONStorage(safeStorage),
-        partialize: (s) => ({ attempts: s.attempts, langs: s.langs }),
+        partialize: (s) => ({ attempts: s.attempts }),
     }),
 );
 
@@ -93,20 +91,6 @@ export const getQuizState = () => useQuizStore.getState();
 
 export function setOpen(open: boolean) {
     useQuizStore.setState({ open });
-}
-
-/** The visitor's language choice, if a valid one was stored (validated on read, §2). */
-export function chosenLang(lang: unknown): QuizLang | null {
-    return (QUIZ_LANGS as readonly unknown[]).includes(lang)
-        ? (lang as QuizLang)
-        : null;
-}
-
-/** Remember the visitor's language choice for `key`; it wins over the page's language. */
-export function setChosenLang(key: string, lang: QuizLang) {
-    useQuizStore.setState((s) => ({
-        langs: { ...(s.langs ?? {}), [key]: lang },
-    }));
 }
 
 function newAttemptId(): string {
@@ -148,8 +132,13 @@ function patchAttempt(quizId: string, patch: Partial<Attempt>) {
     });
 }
 
-export function startAttempt(quizId: string, fingerprint: string): Attempt {
+export function startAttempt(
+    quizId: string,
+    fingerprint: string,
+    ids?: RespondentIds,
+): Attempt {
     const attempt: Attempt = {
+        ...(ids ? { userId: ids.userId, surveyId: ids.surveyId } : {}),
         attempt: newAttemptId(),
         fingerprint,
         startedAt: Date.now(),
@@ -175,6 +164,11 @@ export function recordAnswer(
     patchAttempt(quizId, {
         answers: { ...prev.answers, [questionId]: record },
     });
+}
+
+/** The respondent's IDs, for an attempt started before they were asked. */
+export function setAttemptIds(quizId: string, ids: RespondentIds) {
+    patchAttempt(quizId, { userId: ids.userId, surveyId: ids.surveyId });
 }
 
 export function goToQuestion(quizId: string, index: number) {

@@ -1,6 +1,9 @@
 /**
  * Quiz panel — the React part of the widget: a toggle pill and a non-modal
  * dialog that walks through the questions (start → questions → last screen).
+ * On the survey page it fills the page instead, with one question (`question`):
+ * its answer, then a way back to the test page (or, once all are answered, the
+ * visitor's answers).
  * By default it is a survey: nothing on screen says whether an answer was
  * right (quiz.showFeedback turns the verdicts and the score on).
  *
@@ -30,37 +33,44 @@ import {
     QUIZ_TITLE_ID,
     QUIZ_TOGGLE_ID,
 } from "./domIds";
-import { LANG_NAMES, localize, MESSAGES, type QuizMessages } from "./quizI18n";
-import { logQuizEvent } from "./quizLog";
+import { localize, MESSAGES, type QuizMessages, SURVEY_LANG } from "./quizI18n";
+import { flushQuizLog, logQuizEvent } from "./quizLog";
 import {
     correctChoiceIds,
     isAnswerable,
     isCorrect,
     isGraded,
+    nextUnanswered,
     orderedChoices,
     scoreOf,
 } from "./quizLogic";
 import {
     type AnswerRecord,
     type Attempt,
-    chosenLang,
+    clearAttempt,
     currentAttempt,
     finishAttempt,
     goToQuestion,
     recordAnswer,
-    setChosenLang,
+    setAttemptIds,
     setOpen,
     startAttempt,
     useQuizStore,
 } from "./quizStore";
-import {
-    type ChoiceQuestion,
-    QUIZ_LANGS,
-    type Quiz,
-    type QuizLang,
-    type QuizQuestion,
-    type QuizResponse,
+import type {
+    ChoiceQuestion,
+    Quiz,
+    QuizLang,
+    QuizQuestion,
+    QuizResponse,
 } from "./quizTypes";
+import {
+    checkId,
+    type IdError,
+    idFields,
+    idsOf,
+    type RespondentIds,
+} from "./respondentIds";
 
 // ── Public callback payloads ──────────────────────────────────────────────
 
@@ -77,6 +87,9 @@ export interface QuizAnswerEvent {
     correct: boolean | null;
     /** ms from the question appearing to this answer */
     ms: number;
+    /** the IDs typed before the first question */
+    userId?: string;
+    surveyId?: string;
 }
 
 export interface QuizResult {
@@ -89,6 +102,9 @@ export interface QuizResult {
     answers: Record<string, AnswerRecord>;
     /** ms from start to the last answer */
     durationMs: number;
+    /** the IDs typed before the first question */
+    userId?: string;
+    surveyId?: string;
 }
 
 export interface QuizCallbacks {
@@ -127,13 +143,7 @@ const ICON_PATHS: Record<IconName, string> = {
     alert: '<circle cx="12" cy="12" r="9"/><path d="M12 7.5v5.5"/><path d="M12 16.5h.01"/>',
 };
 
-export function Icon({
-    name,
-    size = 18,
-}: {
-    name: IconName;
-    size?: number;
-}) {
+export function Icon({ name, size = 18 }: { name: IconName; size?: number }) {
     return (
         <svg
             viewBox="0 0 24 24"
@@ -216,6 +226,40 @@ function ScreenHeading(props: HTMLAttributes<HTMLHeadingElement>) {
     return <Tag {...props} />;
 }
 
+/**
+ * One question's page: make this question the one on screen, so its clock runs
+ * from now. Nothing to do before the attempt has started (the respondent types
+ * their IDs first; starting shows the question), for a question already answered
+ * or a finished attempt, or for a question already on screen (a reload keeps its
+ * clock).
+ */
+export function prepareQuestion(
+    quiz: Quiz,
+    storeKey: string,
+    fingerprint: string,
+    index: number,
+) {
+    const a = currentAttempt(storeKey, fingerprint, quiz.questions.length);
+    if (!a || !idsOf(a) || a.finishedAt) return;
+    if (a.answers[quiz.questions[index].id]) return;
+    if (a.index !== index) goToQuestion(storeKey, index);
+}
+
+/** Back to the test page, once the answer has reached the backend (its button counts it), or after 2 s at most. */
+function backTo(url: string) {
+    void Promise.race([
+        flushQuizLog(),
+        new Promise((done) => window.setTimeout(done, 2000)),
+    ]).then(() => location.assign(url));
+}
+
+/** This page's address for another question of the same survey (one page per question). */
+function questionPageUrl(index: number): string {
+    const u = new URL(location.href);
+    u.searchParams.set("q", String(index + 1));
+    return u.href;
+}
+
 // ── The widget ────────────────────────────────────────────────────────────
 
 export interface QuizAppProps {
@@ -225,9 +269,11 @@ export interface QuizAppProps {
     /** the store's key for this attempt (per quiz, and per participant) */
     storeKey: string;
     fingerprint: string;
-    /** the page's language (or init's `lang`), until the visitor picks one */
-    defaultLang: QuizLang;
     callbacks: QuizCallbacks;
+    /** page mode: show only this question (0-based), one page per question */
+    question?: number | null;
+    /** page mode: the test page to go back to (an absolute http(s) address) */
+    returnTo?: string | null;
 }
 
 export function QuizApp({
@@ -235,20 +281,33 @@ export function QuizApp({
     mode,
     storeKey,
     fingerprint,
-    defaultLang,
     callbacks,
+    question = null,
+    returnTo = null,
 }: QuizAppProps) {
     const page = mode === "page";
-    const lang =
-        chosenLang(useQuizStore((s) => s.langs?.[storeKey])) ?? defaultLang;
+    /** one question's page: its index */
+    const only =
+        page &&
+        typeof question === "number" &&
+        question >= 0 &&
+        question < quiz.questions.length
+            ? question
+            : null;
+    // Japanese only (quizI18n SURVEY_LANG): no switch
+    const lang: QuizLang = SURVEY_LANG;
     const m = MESSAGES[lang];
     const open = useQuizStore((s) => s.open);
     // subscribe to this quiz's attempt; read it through the validating accessor
     useQuizStore((s) => s.attempts[storeKey]);
-    const attempt = currentAttempt(storeKey, fingerprint, quiz.questions.length);
+    const attempt = currentAttempt(
+        storeKey,
+        fingerprint,
+        quiz.questions.length,
+    );
 
     const toggleRef = useRef<HTMLButtonElement>(null);
-    const panelRef = useRef<HTMLDivElement>(null);
+    const panelRef = useRef<HTMLElement>(null);
     /** a focus request: the FOCUS_ATTR key, and a counter so the same key re-fires */
     const [focusReq, setFocusReq] = useState<{ key: string; n: number } | null>(
         null,
@@ -258,6 +317,11 @@ export function QuizApp({
     /** fallback start of the question on screen, for an attempt stored before
      *  `shownAt` was (the stored start is used whenever there is one) */
     const shownAt = useRef(Date.now());
+    /** one question's page: answered here, now (not on an earlier visit) */
+    const [savedNow, setSavedNow] = useState(false);
+    /** "answer again" was pressed: the next start is a retry (after the IDs) */
+    const [retrying, setRetrying] = useState(false);
+    const ids = idsOf(attempt);
 
     useEffect(() => {
         if (!focusReq || !open) return;
@@ -269,20 +333,38 @@ export function QuizApp({
     const questionIndex = attempt && !attempt.finishedAt ? attempt.index : -1;
     // The clock runs from the question's first appearance to its answer, including
     // time with the panel closed: the answer is usually looked up on the page itself.
-    // The start is stored with the attempt (quizStore `shownAt`), so a reload or a
-    // language switch does not restart it.
+    // The start is stored with the attempt (quizStore `shownAt`), so a reload does
+    // not restart it.
     // biome-ignore lint/correctness/useExhaustiveDependencies: restart the clock per question shown
     useEffect(() => {
         shownAt.current = Date.now();
     }, [questionIndex, attempt?.attempt]);
 
-    const base = () => ({ quiz: quiz.id, lang });
+    /** what every event carries: the quiz, the language, and the respondent's IDs once typed */
+    const base = (a: Attempt | null = attempt) => ({
+        quiz: quiz.id,
+        lang,
+        ...idFields(idsOf(a)),
+    });
 
     // The survey page is opened by its address: that counts as opening the survey.
     // biome-ignore lint/correctness/useExhaustiveDependencies: once per page load
     useEffect(() => {
-        if (page) logQuizEvent("quiz_open", { ...base(), attempt: attempt?.attempt });
+        if (page)
+            logQuizEvent("quiz_open", {
+                ...base(),
+                attempt: attempt?.attempt,
+                ...(only !== null ? { question: quiz.questions[only].id } : {}),
+            });
     }, []);
+
+    // one question's page: that question is the one on screen (its clock), even if
+    // another page of the survey moved the attempt on in the meantime
+    useEffect(() => {
+        if (only === null || !attempt || !ids || attempt.finishedAt) return;
+        if (attempt.answers[quiz.questions[only].id]) return;
+        if (attempt.index !== only) goToQuestion(storeKey, only);
+    }, [only, attempt, ids, quiz, storeKey]);
 
     function openPanel() {
         setOpen(true);
@@ -296,14 +378,45 @@ export function QuizApp({
         logQuizEvent("quiz_close", { ...base(), attempt: attempt?.attempt });
     }
 
-    function start(retry: boolean) {
-        const a = startAttempt(storeKey, fingerprint);
-        logQuizEvent("quiz_start", {
-            ...base(),
-            attempt: a.attempt,
-            total: quiz.questions.length,
-            retry,
-        });
+    /**
+     * The respondent typed their IDs: start the attempt with them (on a question's
+     * page, at that question), or add them to an attempt begun before they were
+     * asked — its question's clock then runs from now, as it is only now shown.
+     */
+    function start(typed: RespondentIds) {
+        if (attempt && !attempt.finishedAt) {
+            setAttemptIds(storeKey, typed);
+            logQuizEvent("quiz_ids", {
+                ...base(),
+                ...idFields(typed),
+                attempt: attempt.attempt,
+            });
+            const at = only ?? attempt.index;
+            if (!attempt.answers[quiz.questions[at].id])
+                goToQuestion(storeKey, at);
+        } else {
+            const a = startAttempt(storeKey, fingerprint, typed);
+            logQuizEvent("quiz_start", {
+                ...base(a),
+                attempt: a.attempt,
+                total: quiz.questions.length,
+                retry: retrying,
+            });
+            if (only !== null && only > 0) goToQuestion(storeKey, only);
+        }
+        setRetrying(false);
+        requestFocus("screen");
+    }
+
+    /** "Answer again": back to the IDs, for a new attempt */
+    function retry() {
+        clearAttempt(storeKey);
+        // the survey page answers one question per page: start again on the first one's
+        if (page) {
+            location.assign(questionPageUrl(0));
+            return;
+        }
+        setRetrying(true);
         requestFocus("screen");
     }
 
@@ -319,7 +432,7 @@ export function QuizApp({
         );
         const durationMs = last - done.startedAt;
         logQuizEvent("quiz_complete", {
-            ...base(),
+            ...base(done),
             attempt: done.attempt,
             correct: score.correct,
             total: score.total,
@@ -332,6 +445,7 @@ export function QuizApp({
             total: score.total,
             answers: done.answers,
             durationMs,
+            ...idsOf(done),
         });
         announce(
             quiz.showFeedback
@@ -342,8 +456,11 @@ export function QuizApp({
     }
 
     function advance(a: Attempt) {
-        if (a.index + 1 < quiz.questions.length) {
-            goToQuestion(storeKey, a.index + 1);
+        // the next question not answered yet (one may have been answered on its own page)
+        // (later ones first, then one skipped earlier); the end when none is left
+        const next = nextUnanswered(quiz, a.answers, a.index);
+        if (next >= 0) {
+            goToQuestion(storeKey, next);
             requestFocus("screen");
         } else finish(a);
     }
@@ -366,7 +483,7 @@ export function QuizApp({
             ms,
         });
         logQuizEvent("quiz_answer", {
-            ...base(),
+            ...base(a),
             attempt: a.attempt,
             question: q.id,
             index: a.index,
@@ -384,7 +501,29 @@ export function QuizApp({
             responseText: text,
             correct,
             ms,
+            ...idsOf(a),
         });
+        if (only !== null) {
+            // one question's page: say it is saved; the whole survey is done once
+            // every question has its answer, whichever page each was answered on
+            setSavedNow(true);
+            const now = currentAttempt(
+                storeKey,
+                fingerprint,
+                quiz.questions.length,
+            );
+            if (
+                now &&
+                !now.finishedAt &&
+                nextUnanswered(quiz, now.answers, only) < 0
+            )
+                finish(now);
+            else {
+                announce(m.savedTitle);
+                requestFocus("screen");
+            }
+            return;
+        }
         if (quiz.showFeedback && correct !== null) {
             announce(
                 correct
@@ -393,18 +532,6 @@ export function QuizApp({
             );
             requestFocus("feedback");
         } else advance(a);
-    }
-
-    function chooseLang(next: QuizLang) {
-        if (next === lang) return;
-        setChosenLang(storeKey, next);
-        logQuizEvent("quiz_lang", {
-            quiz: quiz.id,
-            lang: next,
-            from: lang,
-            attempt: attempt?.attempt,
-        });
-        announce(MESSAGES[next].languageChanged);
     }
 
     function onPanelKeyDown(e: KeyboardEvent<HTMLDivElement>) {
@@ -422,26 +549,73 @@ export function QuizApp({
     // On the survey page the document is the survey: its title and language follow
     useEffect(() => {
         if (!page) return;
-        document.title = title;
+        document.title =
+            only === null
+                ? title
+                : lang === "ja"
+                  ? `${title}（${m.progress(only + 1, total)}）`
+                  : `${title} (${m.progress(only + 1, total)})`;
         document.documentElement.lang = lang;
-    }, [page, title, lang]);
+    }, [page, title, only, total, m]);
 
     let screen: ReactNode;
-    if (!attempt) {
+    // The IDs come first: before a new attempt, and for one begun before they were asked
+    const needIds = !attempt || (!attempt.finishedAt && !ids);
+    if (needIds) {
         screen = (
-            <Intro quiz={quiz} lang={lang} m={m} onStart={() => start(false)} />
+            <Intro
+                quiz={quiz}
+                lang={lang}
+                m={m}
+                resume={attempt !== null}
+                onStart={start}
+            />
         );
-    } else if (attempt.finishedAt) {
+    } else if (only !== null && attempt) {
+        const q = quiz.questions[only];
+        if (attempt.answers[q.id] || attempt.finishedAt) {
+            const next = nextUnanswered(quiz, attempt.answers, only);
+            screen = (
+                <QuestionDone
+                    q={q}
+                    index={only}
+                    total={total}
+                    answered={answered}
+                    record={attempt.answers[q.id]}
+                    savedNow={savedNow}
+                    lang={lang}
+                    m={m}
+                    returnTo={returnTo}
+                    nextIndex={next}
+                />
+            );
+        } else {
+            screen = (
+                <QuestionView
+                    key={`${attempt.attempt}-${q.id}`}
+                    quiz={quiz}
+                    q={q}
+                    attempt={attempt}
+                    index={only}
+                    lang={lang}
+                    m={m}
+                    onSubmit={(r) => submit({ ...attempt, index: only }, q, r)}
+                    onNext={() => {}}
+                />
+            );
+        }
+    } else if (attempt?.finishedAt) {
         screen = (
             <Result
                 quiz={quiz}
                 attempt={attempt}
                 lang={lang}
                 m={m}
-                onRetry={() => start(true)}
+                onRetry={retry}
+                returnTo={page ? returnTo : null}
             />
         );
-    } else {
+    } else if (attempt) {
         const q = quiz.questions[attempt.index];
         screen = (
             <QuestionView
@@ -457,68 +631,21 @@ export function QuizApp({
         );
     }
 
-    return (
+    // Fixed roles (not a ternary on `role`): biome a11y rejects onKeyDown /
+    // aria-modal when the same element can also be a region.
+    const panelInner = (
         <>
-            {!page && (
-            <button
-                ref={toggleRef}
-                id={QUIZ_TOGGLE_ID}
-                lang={lang}
-                type="button"
-                className="unilens-quiz-toggle"
-                aria-expanded={open}
-                aria-controls={QUIZ_PANEL_ID}
-                aria-label={m.toggleLabel(answered, total)}
-                onClick={() => (open ? closePanel() : openPanel())}
-            >
-                <Icon name="quiz" size={20} />
-                <span>{m.toggle}</span>
-                {attempt && (
-                    <span className="unilens-quiz-badge" aria-hidden="true">
-                        {answered}/{total}
-                    </span>
+            <div className="unilens-quiz-header">
+                {page ? (
+                    <h1 id={QUIZ_TITLE_ID} className="unilens-quiz-title">
+                        {title}
+                    </h1>
+                ) : (
+                    <h2 id={QUIZ_TITLE_ID} className="unilens-quiz-title">
+                        {title}
+                    </h2>
                 )}
-            </button>
-            )}
-            <div
-                ref={panelRef}
-                id={QUIZ_PANEL_ID}
-                lang={lang}
-                className="unilens-quiz-panel"
-                role={page ? "region" : "dialog"}
-                aria-modal={page ? undefined : "false"}
-                aria-labelledby={QUIZ_TITLE_ID}
-                hidden={!page && !open}
-                onKeyDown={onPanelKeyDown}
-            >
-                <div className="unilens-quiz-header">
-                    {page ? (
-                        <h1 id={QUIZ_TITLE_ID} className="unilens-quiz-title">
-                            {title}
-                        </h1>
-                    ) : (
-                        <h2 id={QUIZ_TITLE_ID} className="unilens-quiz-title">
-                            {title}
-                        </h2>
-                    )}
-                    <fieldset
-                        className="unilens-quiz-lang"
-                        aria-label={m.language}
-                    >
-                        {QUIZ_LANGS.map((l) => (
-                            <button
-                                key={l}
-                                type="button"
-                                lang={l}
-                                className="unilens-quiz-lang-btn"
-                                aria-pressed={l === lang}
-                                onClick={() => chooseLang(l)}
-                            >
-                                {LANG_NAMES[l]}
-                            </button>
-                        ))}
-                    </fieldset>
-                    {!page && (
+                {!page && (
                     <button
                         type="button"
                         className="unilens-quiz-icon-btn"
@@ -528,58 +655,239 @@ export function QuizApp({
                     >
                         <Icon name="close" size={20} />
                     </button>
-                    )}
-                </div>
-                <div className="unilens-quiz-body">
-                    <ScreenHeadingLevel.Provider value={page ? "h2" : "h3"}>
-                        {screen}
-                    </ScreenHeadingLevel.Provider>
-                </div>
-                <div
-                    ref={(node) => {
-                        liveRegionEl = node;
-                    }}
-                    className="unilens-quiz-sr-only"
-                    role="status"
-                    aria-live="polite"
-                    aria-atomic="true"
-                />
+                )}
             </div>
+            <div className="unilens-quiz-body">
+                {ids && !needIds && (
+                    // who is answering, on every screen after the IDs
+                    <p className="unilens-quiz-ids">
+                        {m.idsShown(ids.userId, ids.surveyId)}
+                    </p>
+                )}
+                <ScreenHeadingLevel.Provider value={page ? "h2" : "h3"}>
+                    {screen}
+                </ScreenHeadingLevel.Provider>
+            </div>
+            <div
+                ref={(node) => {
+                    liveRegionEl = node;
+                }}
+                className="unilens-quiz-sr-only"
+                role="status"
+                aria-live="polite"
+                aria-atomic="true"
+            />
+        </>
+    );
+
+    return (
+        <>
+            {!page && (
+                <button
+                    ref={toggleRef}
+                    id={QUIZ_TOGGLE_ID}
+                    lang={lang}
+                    type="button"
+                    className="unilens-quiz-toggle"
+                    aria-expanded={open}
+                    aria-controls={QUIZ_PANEL_ID}
+                    aria-label={m.toggleLabel(answered, total)}
+                    onClick={() => (open ? closePanel() : openPanel())}
+                >
+                    <Icon name="quiz" size={20} />
+                    <span>{m.toggle}</span>
+                    {attempt && (
+                        <span className="unilens-quiz-badge" aria-hidden="true">
+                            {answered}/{total}
+                        </span>
+                    )}
+                </button>
+            )}
+            {page ? (
+                <section
+                    ref={panelRef}
+                    id={QUIZ_PANEL_ID}
+                    lang={lang}
+                    className="unilens-quiz-panel"
+                    aria-labelledby={QUIZ_TITLE_ID}
+                >
+                    {panelInner}
+                </section>
+            ) : (
+                <div
+                    ref={panelRef as RefObject<HTMLDivElement | null>}
+                    id={QUIZ_PANEL_ID}
+                    lang={lang}
+                    className="unilens-quiz-panel"
+                    role="dialog"
+                    aria-modal="false"
+                    aria-labelledby={QUIZ_TITLE_ID}
+                    hidden={!open}
+                    onKeyDown={onPanelKeyDown}
+                >
+                    {panelInner}
+                </div>
+            )}
         </>
     );
 }
 
 // ── Screens ───────────────────────────────────────────────────────────────
 
+/**
+ * The start: the survey's length and description, then the respondent's user ID
+ * and survey ID, both typed by hand (never filled in from the address), checked
+ * before the first question.
+ */
 function Intro({
     quiz,
     lang,
     m,
+    resume,
     onStart,
 }: {
     quiz: Quiz;
     lang: QuizLang;
     m: QuizMessages;
-    onStart: () => void;
+    /** the attempt had begun before the IDs were asked: "continue" rather than "start" */
+    resume: boolean;
+    onStart: (ids: RespondentIds) => void;
 }) {
     const description = localize(quiz.description, lang);
+    const [userId, setUserId] = useState("");
+    const [surveyId, setSurveyId] = useState("");
+    const [errors, setErrors] = useState<{
+        user: IdError | null;
+        survey: IdError | null;
+    }>({ user: null, survey: null });
+    const userRef = useRef<HTMLInputElement>(null);
+    const surveyRef = useRef<HTMLInputElement>(null);
+
+    const errorText = (e: IdError, label: string) =>
+        e === "missing" ? m.idMissing(label) : m.idInvalid(label);
+
+    function handleSubmit(e: FormEvent) {
+        e.preventDefault();
+        const u = checkId(userId);
+        const sv = checkId(surveyId);
+        setErrors({ user: u.error, survey: sv.error });
+        if (u.error || sv.error) {
+            announce(
+                u.error
+                    ? errorText(u.error, m.userIdLabel)
+                    : errorText(sv.error as IdError, m.surveyIdLabel),
+            );
+            (u.error ? userRef : surveyRef).current?.focus();
+            return;
+        }
+        onStart({ userId: u.value, surveyId: sv.value });
+    }
+
     return (
         <>
-            <ScreenHeading className="unilens-quiz-heading" {...focusProps("screen")}>
+            <ScreenHeading
+                className="unilens-quiz-heading"
+                {...focusProps("screen")}
+            >
                 {m.questionCount(quiz.questions.length)}
             </ScreenHeading>
             {description && <p className="unilens-quiz-text">{description}</p>}
-            <div className="unilens-quiz-actions">
-                <button
-                    type="button"
-                    className="unilens-quiz-btn"
-                    onClick={onStart}
-                >
-                    {m.start}
-                    <Icon name="next" />
-                </button>
-            </div>
+            <p className="unilens-quiz-text">{m.idsLead}</p>
+            <form onSubmit={handleSubmit} noValidate>
+                <p id="unilens-quiz-id-hint" className="unilens-quiz-legend">
+                    {m.idHint}
+                </p>
+                <IdField
+                    id="unilens-quiz-user-id"
+                    label={m.userIdLabel}
+                    value={userId}
+                    onChange={(v) => {
+                        setUserId(v);
+                        setErrors((x) => ({ ...x, user: null }));
+                    }}
+                    error={errors.user && errorText(errors.user, m.userIdLabel)}
+                    inputRef={userRef}
+                />
+                <IdField
+                    id="unilens-quiz-survey-id"
+                    label={m.surveyIdLabel}
+                    value={surveyId}
+                    onChange={(v) => {
+                        setSurveyId(v);
+                        setErrors((x) => ({ ...x, survey: null }));
+                    }}
+                    error={
+                        errors.survey &&
+                        errorText(errors.survey, m.surveyIdLabel)
+                    }
+                    inputRef={surveyRef}
+                />
+                <div className="unilens-quiz-actions">
+                    <button type="submit" className="unilens-quiz-btn">
+                        {resume ? m.resume : m.start}
+                        <Icon name="next" />
+                    </button>
+                </div>
+            </form>
         </>
+    );
+}
+
+function IdField({
+    id,
+    label,
+    value,
+    onChange,
+    error,
+    inputRef,
+}: {
+    id: string;
+    label: string;
+    value: string;
+    onChange: (v: string) => void;
+    error: string | null;
+    inputRef: RefObject<HTMLInputElement | null>;
+}) {
+    const errorId = `${id}-error`;
+    return (
+        <div className="unilens-quiz-field">
+            <label htmlFor={id} className="unilens-quiz-field-label">
+                {label}
+            </label>
+            <input
+                ref={inputRef}
+                id={id}
+                className="unilens-quiz-input"
+                type="text"
+                autoComplete="off"
+                autoCapitalize="none"
+                spellCheck={false}
+                required
+                aria-required="true"
+                aria-invalid={error ? true : undefined}
+                aria-describedby={
+                    error
+                        ? `unilens-quiz-id-hint ${errorId}`
+                        : "unilens-quiz-id-hint"
+                }
+                value={value}
+                onChange={(e) => onChange(e.target.value)}
+                onKeyDown={(e) => {
+                    // Enter that confirms a Japanese IME conversion must not submit
+                    if (
+                        e.key === "Enter" &&
+                        (e.nativeEvent.isComposing || e.keyCode === 229)
+                    )
+                        e.preventDefault();
+                }}
+            />
+            {error && (
+                <p id={errorId} className="unilens-quiz-error">
+                    <Icon name="alert" />
+                    {error}
+                </p>
+            )}
+        </div>
     );
 }
 
@@ -609,6 +917,7 @@ function QuestionView({
     quiz,
     q,
     attempt,
+    index = attempt.index,
     lang,
     m,
     onSubmit,
@@ -617,6 +926,8 @@ function QuestionView({
     quiz: Quiz;
     q: QuizQuestion;
     attempt: Attempt;
+    /** the question's position, when not the attempt's (one question's page) */
+    index?: number;
     lang: QuizLang;
     m: QuizMessages;
     onSubmit: (r: QuizResponse) => void;
@@ -632,7 +943,7 @@ function QuestionView({
     const promptId = `unilens-quiz-prompt-${q.id}`;
     const hintId = `unilens-quiz-hint-${q.id}`;
     const errorId = `unilens-quiz-error-${q.id}`;
-    const isLast = attempt.index + 1 >= quiz.questions.length;
+    const isLast = index + 1 >= quiz.questions.length;
     /** right/wrong is shown for this answer */
     const judged = locked && quiz.showFeedback && record?.correct != null;
 
@@ -664,11 +975,7 @@ function QuestionView({
 
     return (
         <>
-            <Progress
-                index={attempt.index}
-                total={quiz.questions.length}
-                m={m}
-            />
+            <Progress index={index} total={quiz.questions.length} m={m} />
             <ScreenHeading
                 id={promptId}
                 className="unilens-quiz-heading"
@@ -943,12 +1250,14 @@ function Result({
     lang,
     m,
     onRetry,
+    returnTo = null,
 }: {
     quiz: Quiz;
     attempt: Attempt;
     lang: QuizLang;
     m: QuizMessages;
     onRetry: () => void;
+    returnTo?: string | null;
 }) {
     const score = scoreOf(quiz, attempt.answers);
     const pct = score.total
@@ -959,7 +1268,10 @@ function Result({
     const scored = quiz.showFeedback && quiz.questions.some(isGraded);
     return (
         <>
-            <ScreenHeading className="unilens-quiz-heading" {...focusProps("screen")}>
+            <ScreenHeading
+                className="unilens-quiz-heading"
+                {...focusProps("screen")}
+            >
                 {scored ? m.resultTitle : m.doneTitle}
             </ScreenHeading>
             {scored ? (
@@ -1023,19 +1335,126 @@ function Result({
                     );
                 })}
             </ol>
-            {quiz.allowRetry && (
+            {(quiz.allowRetry || returnTo) && (
                 <div className="unilens-quiz-actions">
-                    <button
-                        type="button"
-                        className="unilens-quiz-btn"
-                        data-variant="secondary"
-                        onClick={onRetry}
-                    >
-                        <Icon name="retry" />
-                        {m.retry}
-                    </button>
+                    {returnTo && <BackLink url={returnTo} m={m} />}
+                    {quiz.allowRetry && (
+                        <button
+                            type="button"
+                            className="unilens-quiz-btn"
+                            data-variant="secondary"
+                            onClick={onRetry}
+                        >
+                            <Icon name="retry" />
+                            {m.retry}
+                        </button>
+                    )}
                 </div>
             )}
+        </>
+    );
+}
+
+/** "元のページに戻る": a real link (it can be opened elsewhere), that first lets the answer reach the backend. */
+function BackLink({ url, m }: { url: string; m: QuizMessages }) {
+    return (
+        <a
+            className="unilens-quiz-btn"
+            href={url}
+            onClick={(e) => {
+                if (
+                    e.button !== 0 ||
+                    e.metaKey ||
+                    e.ctrlKey ||
+                    e.shiftKey ||
+                    e.altKey
+                )
+                    return;
+                e.preventDefault();
+                backTo(url);
+            }}
+        >
+            {m.backToPage}
+            <Icon name="next" />
+        </a>
+    );
+}
+
+/**
+ * One question's page, once it is answered: saved (or answered on an earlier
+ * visit), what the visitor answered, how many of the survey's questions are
+ * answered, and the way back to the test page — or, opened without one, to the
+ * next question's page.
+ */
+function QuestionDone({
+    q,
+    index,
+    total,
+    answered,
+    record,
+    savedNow,
+    lang,
+    m,
+    returnTo,
+    nextIndex,
+}: {
+    q: QuizQuestion;
+    index: number;
+    total: number;
+    answered: number;
+    record: AnswerRecord | undefined;
+    savedNow: boolean;
+    lang: QuizLang;
+    m: QuizMessages;
+    returnTo: string | null;
+    nextIndex: number;
+}) {
+    const all = nextIndex < 0;
+    return (
+        <>
+            <ScreenHeading
+                className="unilens-quiz-heading"
+                {...focusProps("screen")}
+            >
+                {savedNow ? m.savedTitle : m.alreadyAnswered}
+            </ScreenHeading>
+            <p className="unilens-quiz-text">
+                {all ? m.allAnswered : m.answeredOf(answered, total)}
+            </p>
+            <ol className="unilens-quiz-review" start={index + 1}>
+                <li>
+                    <p className="unilens-quiz-review-head">
+                        <span>{m.questionN(index + 1)}</span>
+                    </p>
+                    <p className="unilens-quiz-text">
+                        {localize(q.prompt, lang)}
+                    </p>
+                    <dl>
+                        <dt>{m.yourAnswer}</dt>
+                        <dd>
+                            {record
+                                ? record.responseText ||
+                                  responseText(q, record.response, lang, m)
+                                : m.noAnswer}
+                        </dd>
+                    </dl>
+                </li>
+            </ol>
+            {returnTo && !all && (
+                <p className="unilens-quiz-muted">{m.backNote}</p>
+            )}
+            <div className="unilens-quiz-actions">
+                {returnTo && <BackLink url={returnTo} m={m} />}
+                {!returnTo && !all && (
+                    <a
+                        className="unilens-quiz-btn"
+                        href={questionPageUrl(nextIndex)}
+                    >
+                        {m.nextQuestionAt(nextIndex + 1, total)}
+                        <Icon name="next" />
+                    </a>
+                )}
+            </div>
         </>
     );
 }

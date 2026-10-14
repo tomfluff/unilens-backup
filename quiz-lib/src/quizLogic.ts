@@ -122,3 +122,29 @@ export function orderedChoices(
     }
     return out;
 }
+
+/**
+ * The index of the next question to answer after `from` (later ones first, then
+ * any skipped earlier: a question can be answered on its own page), or -1 when
+ * every other question has an answer.
+ */
+export function nextUnanswered(
+    quiz: Quiz,
+    answers: Record<string, unknown>,
+    from: number,
+): number {
+    const n = quiz.questions.length;
+    for (let step = 1; step < n; step++) {
+        const i = (((from + step) % n) + n) % n;
+        if (!answers[quiz.questions[i].id]) return i;
+    }
+    return -1;
+}
+
+/** The first question without an answer, in the survey's order; -1 when all have one. */
+export function firstUnanswered(
+    quiz: Quiz,
+    answers: Record<string, unknown>,
+): number {
+    return quiz.questions.findIndex((q) => !answers[q.id]);
+}

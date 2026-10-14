@@ -34,3 +34,11 @@ export const QUIZ_STORE_KEY = "unilens-quiz";
  * UniLens is not on the page; otherwise it uses UniLens.studyIds() after init.
  */
 export const STUDY_IDS_KEY = "unilens-study";
+/**
+ * localStorage key, on a test page, of the anonymous id link mode gives the
+ * browser when the page names no participant: the survey page logs it as `vid`,
+ * and the button asks the backend for that visitor's progress with it.
+ */
+export const QUIZ_VISITOR_KEY = "unilens-quiz-visitor";
+/** sessionStorage key prefix, on a test page, of the button's last known progress (shown at once on the next page) */
+export const QUIZ_PROGRESS_KEY = "unilens-quiz-progress";

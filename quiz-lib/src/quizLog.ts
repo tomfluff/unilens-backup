@@ -9,7 +9,7 @@
  * page path — no address query, no browser details.
  */
 
-import { STUDY_IDS_KEY } from "./domIds";
+import { QUIZ_VISITOR_KEY, STUDY_IDS_KEY } from "./domIds";
 
 export interface StudyIds {
     pid: string;
@@ -22,9 +22,12 @@ export type QuizEventType =
     | "quiz_start"
     | "quiz_answer"
     | "quiz_complete"
-    | "quiz_lang";
+    /** the respondent typed their IDs into an attempt begun before they were asked */
+    | "quiz_ids";
 
 const PID = /^[A-Za-z0-9_-]{1,24}$/;
+/** an anonymous visitor id (link mode's, carried to the survey page as ?vid=) */
+export const VISITOR_ID = /^[A-Za-z0-9_-]{6,32}$/;
 const SESSION = /^\d{1,3}$/;
 /** how long a retry waits after the network or the backend failed, ms */
 const RETRY_MS = 10_000;
@@ -35,6 +38,8 @@ const BATCH_EVENTS = 50;
 
 let backend = "";
 let ids: StudyIds | null = null;
+/** the survey page's ?vid=: stamped on every event, so the button can find this visitor's progress */
+let visitor: string | null = null;
 let queue: Record<string, unknown>[] = [];
 let timer: number | undefined;
 let seq = 0;
@@ -117,10 +122,44 @@ export function resolveStudyIds(): StudyIds | null {
     return readStudyIds(location.href, storedStudyIdsJson());
 }
 
+/** The anonymous visitor id an address carries (?vid=), or null. */
+export function readVisitorId(href: string): string | null {
+    let vid: string | null | undefined;
+    try {
+        vid = new URL(href).searchParams.get("vid")?.trim();
+    } catch {
+        return null;
+    }
+    return vid && VISITOR_ID.test(vid) ? vid : null;
+}
+
+/**
+ * Link mode, on a page that names no participant: this browser's anonymous id
+ * (made once, kept in the test page's storage), so the survey's answers and the
+ * button's progress can still be matched. Null when storage is blocked.
+ */
+export function browserVisitorId(): string | null {
+    try {
+        const kept = window.localStorage.getItem(QUIZ_VISITOR_KEY);
+        if (kept && VISITOR_ID.test(kept)) return kept;
+        let fresh: string;
+        try {
+            fresh = `v${crypto.randomUUID().replace(/-/g, "").slice(0, 15)}`;
+        } catch {
+            fresh = `v${Math.random().toString(36).slice(2, 14)}`;
+        }
+        window.localStorage.setItem(QUIZ_VISITOR_KEY, fresh);
+        return fresh;
+    } catch {
+        return null;
+    }
+}
+
 /** Start logging to `backendUrl` (empty: no logging). */
 export function initQuizLog(backendUrl: string | undefined) {
     backend = (backendUrl ?? "").trim();
     unsupported = false;
+    visitor = readVisitorId(location.href);
     if (!backend) return;
     ids = resolveStudyIds();
     if (!listening) {
@@ -147,6 +186,7 @@ export function logQuizEvent(
         seq: ++seq,
         type,
         page: pagePath(location.href),
+        ...(visitor ? { vid: visitor } : {}),
         ...fields,
     });
     if (queue.length > MAX_QUEUE) queue = queue.slice(-MAX_QUEUE);
@@ -159,12 +199,15 @@ export function logQuizEvent(
  * Send what is waiting. Plain text, so no CORS preflight, and keepalive, so it
  * also goes as the page closes. A batch that failed on the network or a 5xx/429
  * goes back to the front of the queue; one the backend refused (400) is dropped.
+ * Resolves once the backend has answered (or failed): the survey page waits for
+ * it before taking the visitor back, so the button there already counts the answer.
  */
-export function flushQuizLog() {
+export function flushQuizLog(): Promise<void> {
     window.clearTimeout(timer);
-    if (!backend || unsupported || !queue.length) return;
+    if (!backend || unsupported || !queue.length) return Promise.resolve();
     ids = resolveStudyIds();
     const url = quizLogUrl(backend, ids);
+    const sent: Promise<unknown>[] = [];
     while (queue.length) {
         const batch = queue.splice(0, BATCH_EVENTS);
         const retry = () => {
@@ -173,7 +216,7 @@ export function flushQuizLog() {
             timer = window.setTimeout(flushQuizLog, RETRY_MS);
         };
         try {
-            void fetch(url, {
+            const req = fetch(url, {
                 method: "POST",
                 headers: { "Content-Type": "text/plain" },
                 body: JSON.stringify({ events: batch }),
@@ -190,8 +233,10 @@ export function flushQuizLog() {
                     } else if (r.status >= 500 || r.status === 429) retry();
                 })
                 .catch(retry);
+            sent.push(req);
         } catch {
             retry();
         }
     }
+    return Promise.allSettled(sent).then(() => undefined);
 }
