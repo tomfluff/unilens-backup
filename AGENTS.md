@@ -3,6 +3,7 @@
 - Keep changes minimal, scoped, and verifiable.
 - Preserve existing behavior unless the task explicitly asks for a behavior change.
 - Avoid editing mirrored vendor files in `frontend/softbank-mirror/ext/` unless explicitly requested.
+- When removing "unused" modules, check `accessibility-lib/src/toggleDrag.ts` first: it is a shipped feature (draggable display-adjustment button) referenced from `accessibilityPanel.tsx`. `make test` fails if it is unwired.
 
 ## Fast Repo Map
 - `backend/`: Flask API (`/api/capture`, `/api/chat`, sessions/captures storage).

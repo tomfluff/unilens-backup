@@ -5,6 +5,7 @@
 - 変更は最小限にし、スコープを絞り、検証可能にしておくこと。
 - 明示的に挙動の変更を求められない限り、既存の挙動を維持すること。
 - 明示的な指示がない限り、`frontend/softbank-mirror/ext/` にあるミラーされたベンダーファイルの編集は避けること。
+- 「未使用」モジュールを削除する際は、先に `accessibility-lib/src/toggleDrag.ts` を確認すること。これは提供済みの機能（表示調整ボタンのドラッグ移動）で、`accessibilityPanel.tsx` から参照されている。接続が外れると `make test` が失敗する。
 
 ## リポジトリ簡易マップ
 - `backend/`: Flask API（`/api/capture`、`/api/chat`、セッション/キャプチャの保存先）。
