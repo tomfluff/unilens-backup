@@ -169,6 +169,17 @@ html[data-unilens-a11y-html-filter] #unilens-a11y-page-root [data-unilens-a11y-m
     saturate(var(--unilens-a11y-display-saturate-inv, 1)) hue-rotate(-180deg) invert(1) !important;
 }
 
+/* ── Pictures keep their own colors under a recolored theme ──────────────────
+ * Hosts often tint a tile and set `mix-blend-mode: multiply` on the <img> so a
+ * white-background photo melts into it. The theme repaints every background
+ * (transparent over the dark / high-contrast page color), so multiply would
+ * blend the photo with black and the picture goes dark or disappears. Draw
+ * pictures normally while a theme is applied. (Invert is a filter on <html> and
+ * is a separate matter.) */
+html[data-unilens-a11y-display-active] #unilens-a11y-page-root :is(img, video, picture, canvas) {
+  mix-blend-mode: normal !important;
+}
+
 /* Force color + background-color on every descendant, not just on the root.
  * The host site's own CSS almost always sets `color` explicitly on individual
  * elements (p, span, div, li, ...), which breaks CSS inheritance — so setting
