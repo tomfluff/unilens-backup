@@ -4,6 +4,7 @@ import {
     imageOfLayer,
     isFigureBox,
     isClearGradient,
+    isFlatGradient,
     isPictureSized,
     isSolidFill,
     lineSitsOnMedia,
@@ -11,6 +12,7 @@ import {
     pseudoBox,
     splitCssList,
     toneMaskSvg,
+    withoutFlatGradients,
 } from "./mediaTextGuard";
 
 const box = (left: number, top: number, right: number, bottom: number) => ({
@@ -267,11 +269,79 @@ describe("isClearGradient", () => {
                 "-webkit-linear-gradient(-270deg, rgb(163, 196, 255) 0%, rgb(193, 213, 255) 35%)",
             ),
         ).toEqual({ kind: "generated" });
+        // Two different colours: a real gradient, not a flat fill.
         expect(
             imageOfLayer(
-                "-webkit-linear-gradient(bottom, rgb(255, 255, 255) 97%, rgba(255, 255, 255, 0) 97%)",
+                "linear-gradient(rgb(255, 255, 255) 0%, rgb(0, 0, 0) 100%)",
             ),
         ).toEqual({ kind: "generated" });
+        // A translucent stop fades the colour: not flat either.
+        expect(
+            imageOfLayer(
+                "linear-gradient(rgb(255, 255, 255) 0%, rgba(255, 255, 255, 0.5) 100%)",
+            ),
+        ).toEqual({ kind: "generated" });
+    });
+});
+
+describe("isFlatGradient", () => {
+    // SoftBank price-plan cards: a white fill with a transparent last 3%.
+    const softbankFill =
+        "-webkit-linear-gradient(bottom, rgb(255, 255, 255) 97%, rgba(255, 255, 255, 0) 97%)";
+
+    it("recognises a one-colour gradient as a solid fill", () => {
+        expect(isFlatGradient(softbankFill)).toBe(true);
+        expect(
+            isFlatGradient("linear-gradient(rgb(10, 20, 30), rgb(10, 20, 30))"),
+        ).toBe(true);
+    });
+
+    it("is not a picture: imageOfLayer skips it", () => {
+        expect(imageOfLayer(softbankFill)).toBe(null);
+    });
+
+    it("keeps two-colour and fading gradients", () => {
+        expect(
+            isFlatGradient(
+                "linear-gradient(rgb(163, 196, 255) 0%, rgb(193, 213, 255) 35%)",
+            ),
+        ).toBe(false);
+        expect(
+            isFlatGradient(
+                "linear-gradient(rgb(255, 255, 255), rgba(255, 255, 255, 0.5))",
+            ),
+        ).toBe(false);
+    });
+
+    it("ignores fully clear gradients and other color syntaxes", () => {
+        expect(
+            isFlatGradient(
+                "linear-gradient(rgba(0, 0, 0, 0), rgba(255, 255, 255, 0))",
+            ),
+        ).toBe(false);
+        expect(isFlatGradient("linear-gradient(#fff, #fff)")).toBe(false);
+        expect(isFlatGradient('url("a.png")')).toBe(false);
+    });
+});
+
+describe("withoutFlatGradients", () => {
+    const flat =
+        "-webkit-linear-gradient(bottom, rgb(255, 255, 255) 97%, rgba(255, 255, 255, 0) 97%)";
+
+    it("sets only the flat layer to none and keeps the picture", () => {
+        expect(withoutFlatGradients(`url("top.webp"), ${flat}`)).toBe(
+            'url("top.webp"), none',
+        );
+    });
+
+    it("returns null when nothing is flat", () => {
+        expect(withoutFlatGradients('url("a.png")')).toBe(null);
+        expect(withoutFlatGradients("none")).toBe(null);
+        expect(
+            withoutFlatGradients(
+                "linear-gradient(rgb(0, 0, 0), rgb(255, 255, 255))",
+            ),
+        ).toBe(null);
     });
 });
 

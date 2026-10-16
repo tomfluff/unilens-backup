@@ -148,6 +148,9 @@ function needsToneFilter(
  * Any setting that changes colors on the page. While one is on, text drawn
  * over a picture is found and kept in the host's own colors
  * (mediaTextGuard.ts).
+ *
+ * Not under the invert theme: that one flips the whole page uniformly —
+ * pictures, and the text on them, included.
  */
 export function mediaTextGuardActive(
     s: Pick<
@@ -155,6 +158,7 @@ export function mediaTextGuardActive(
         "theme" | "saturation" | "contrast" | "textStroke" | "linkBackground"
     >,
 ): boolean {
+    if (s.theme === "invert") return false;
     return (
         s.theme !== "standard" ||
         needsToneFilter(s) ||
@@ -192,6 +196,50 @@ function setLevel(el: HTMLElement, name: string, level: number) {
     else el.removeAttribute(name);
 }
 
+/**
+ * Tags a host may append to <body> that never paint: leave them where they
+ * are, so the host's own `body > script` style lookups keep working.
+ */
+const BODY_ADOPT_SKIP_TAGS = new Set([
+    "SCRIPT",
+    "STYLE",
+    "LINK",
+    "META",
+    "NOSCRIPT",
+    "TEMPLATE",
+]);
+
+export function isAdoptableTag(tagName: string): boolean {
+    return !BODY_ADOPT_SKIP_TAGS.has(tagName.toUpperCase());
+}
+
+/**
+ * Every colour rule is scoped to the page root, but a host often appends
+ * more content to <body> after the root was made (a footer injected by its
+ * own script, a jQuery UI menu, a modal). Those landed outside the root and
+ * kept the host's colours under any theme. Move them in.
+ */
+function adoptBodyNode(root: HTMLElement, node: Node) {
+    if (!(node instanceof HTMLElement) || node === root) return;
+    if (node.parentElement !== document.body) return;
+    if (!isAdoptableTag(node.tagName) || isUniLensOverlayNode(node)) return;
+    root.appendChild(node);
+}
+
+let bodyAdoptObserver: MutationObserver | null = null;
+
+function ensureBodyAdoption(root: HTMLElement) {
+    const body = document.body;
+    for (const node of Array.from(body.childNodes)) adoptBodyNode(root, node);
+    if (bodyAdoptObserver || typeof MutationObserver === "undefined") return;
+    bodyAdoptObserver = new MutationObserver((records) => {
+        for (const r of records)
+            for (const node of Array.from(r.addedNodes))
+                adoptBodyNode(root, node);
+    });
+    bodyAdoptObserver.observe(body, { childList: true });
+}
+
 export function ensurePageContentRoot(): HTMLDivElement | null {
     const body = document.body;
     if (!body) return null;
@@ -199,7 +247,10 @@ export function ensurePageContentRoot(): HTMLDivElement | null {
     let root = document.getElementById(
         PAGE_CONTENT_ROOT_ID,
     ) as HTMLDivElement | null;
-    if (root) return root;
+    if (root) {
+        ensureBodyAdoption(root);
+        return root;
+    }
 
     root = document.createElement("div");
     root.id = PAGE_CONTENT_ROOT_ID;
@@ -210,6 +261,7 @@ export function ensurePageContentRoot(): HTMLDivElement | null {
         root?.appendChild(node);
     });
     body.appendChild(root);
+    ensureBodyAdoption(root);
     return root;
 }
 
@@ -226,6 +278,8 @@ function notifyLayoutChange() {
 }
 
 export function restorePageContentRoot() {
+    bodyAdoptObserver?.disconnect();
+    bodyAdoptObserver = null;
     const root = document.getElementById(PAGE_CONTENT_ROOT_ID);
     const body = document.body;
     if (!root || !body) return;

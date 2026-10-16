@@ -153,6 +153,17 @@ export const MEDIA_TEXT_ROOT_ATTR = "data-unilens-a11y-media-text-root";
  */
 export const MEDIA_OWNER_ATTR = "data-unilens-a11y-media-owner";
 
+/**
+ * An element whose background-image holds a flat-colour gradient layer (the
+ * host's way of painting a solid card fill, e.g. `linear-gradient(white 97%,
+ * transparent 97%)`). Under a colour theme that layer is swapped for `none`
+ * (style.css, via FLAT_FILL_IMAGE_VAR) so the card takes the theme surface
+ * instead of staying a white box with theme-coloured text on it.
+ */
+export const FLAT_FILL_ATTR = "data-unilens-a11y-flat-fill";
+/** The element's background-image with each flat-gradient layer set to none. */
+export const FLAT_FILL_IMAGE_VAR = "--unilens-a11y-flat-fill-image";
+
 export const HTML_STYLE_FONT_SCALE = "--unilens-a11y-font-scale";
 
 /** Whole-page text scale (font-size only — images stay at their host size). */

@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { SATURATION_FILTER } from "./accessibilityStoreTypes";
-import { toneFilterCss, toneFilterTarget } from "./documentEffects";
+import {
+    isAdoptableTag,
+    mediaTextGuardActive,
+    toneFilterCss,
+    toneFilterTarget,
+} from "./documentEffects";
 
 const standard = {
     theme: "standard",
@@ -59,5 +64,48 @@ describe("toneFilterCss", () => {
         expect(
             toneFilterCss({ saturation: "standard", contrast: "strong" }),
         ).toBe("saturate(1) contrast(1.4)");
+    });
+});
+
+describe("mediaTextGuardActive", () => {
+    const base = { ...standard, textStroke: false, linkBackground: false };
+
+    it("is off when nothing changes colors", () => {
+        expect(mediaTextGuardActive(base)).toBe(false);
+    });
+
+    it("is on for the dark and high-contrast themes and for tone filters", () => {
+        expect(mediaTextGuardActive({ ...base, theme: "dark" })).toBe(true);
+        expect(mediaTextGuardActive({ ...base, theme: "high-contrast" })).toBe(
+            true,
+        );
+        expect(mediaTextGuardActive({ ...base, saturation: "soft" })).toBe(
+            true,
+        );
+    });
+
+    it("is off under invert: the whole page, pictures and their text, flips alike", () => {
+        expect(mediaTextGuardActive({ ...base, theme: "invert" })).toBe(false);
+        expect(
+            mediaTextGuardActive({
+                ...base,
+                theme: "invert",
+                saturation: "soft",
+                textStroke: true,
+                linkBackground: true,
+            }),
+        ).toBe(false);
+    });
+});
+
+describe("isAdoptableTag", () => {
+    it("moves painted host elements appended to <body> into the page root", () => {
+        for (const tag of ["FOOTER", "DIV", "UL", "dialog"])
+            expect(isAdoptableTag(tag)).toBe(true);
+    });
+
+    it("leaves non-painting tags where the host put them", () => {
+        for (const tag of ["SCRIPT", "STYLE", "LINK", "NOSCRIPT", "template"])
+            expect(isAdoptableTag(tag)).toBe(false);
     });
 });

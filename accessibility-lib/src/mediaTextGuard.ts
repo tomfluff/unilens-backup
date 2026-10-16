@@ -48,6 +48,8 @@
  * not element boxes, so an inline icon next to a sentence never counts.
  */
 import {
+    FLAT_FILL_ATTR,
+    FLAT_FILL_IMAGE_VAR,
     HTML_ATTR_DISPLAY_ACTIVE,
     HTML_ATTR_LINK_BACKGROUND,
     HTML_ATTR_TEXT_PLATE,
@@ -169,6 +171,42 @@ export function isClearGradient(layer: string): boolean {
     });
 }
 
+/**
+ * A gradient that paints one flat colour: every visible stop is the same
+ * colour (the rest are transparent), e.g. `linear-gradient(bottom, white 97%,
+ * transparent 97%)`. Hosts use these as a solid card fill, not as a picture.
+ */
+export function isFlatGradient(layer: string): boolean {
+    if (!/gradient\(/i.test(layer)) return false;
+    if (/\b(?:#|hsla?\(|oklch\(|lab\(|color\()/i.test(layer)) return false;
+    const colors = new Set<string>();
+    for (const m of layer.matchAll(/rgba?\(([^)]*)\)/gi)) {
+        const parts = m[1].split(/[\s,/]+/).filter(Boolean);
+        const a = parts[3] === undefined ? 1 : Number.parseFloat(parts[3]);
+        if (a <= 0.05) continue;
+        // A translucent stop fades the fill: not a flat colour.
+        if (a < 0.95) return false;
+        colors.add(parts.slice(0, 3).join(","));
+    }
+    return colors.size === 1;
+}
+
+/**
+ * `background-image` with every flat-gradient layer replaced by `none`
+ * (keeps the list length, so background-size / -position stay aligned).
+ * Null when no layer is flat.
+ */
+export function withoutFlatGradients(value: string): string | null {
+    if (!/gradient\(/i.test(value)) return null;
+    let changed = false;
+    const layers = splitCssList(value).map((layer) => {
+        if (!isFlatGradient(layer)) return layer;
+        changed = true;
+        return "none";
+    });
+    return changed ? layers.join(", ") : null;
+}
+
 export function imageOfLayer(layer: string): ImageLayer | null {
     const l = layer.trim();
     if (!l || l === "none") return null;
@@ -181,8 +219,12 @@ export function imageOfLayer(layer: string): ImageLayer | null {
     if (!GENERATED_IMAGE_RE.test(l)) return null;
     // Themes keep every gradient (they reset background-color only), so
     // even a faint one stays under the text: only fully clear ones are no
-    // backdrop at all.
-    return isClearGradient(l) ? null : { kind: "generated" };
+    // backdrop at all. Flat-colour ones are the exception, see below.
+    // A flat-colour gradient is a solid fill, not a picture: the colour
+    // themes swap it for the theme surface (syncFlatFills), so the text on it
+    // is themed like text on any other solid fill.
+    if (isClearGradient(l) || isFlatGradient(l)) return null;
+    return { kind: "generated" };
 }
 
 function lengthPx(token: string, basis: number): number | null {
@@ -823,6 +865,48 @@ export function clearMediaTextMarkers(root: ParentNode | null = document) {
         el.removeAttribute(MEDIA_TEXT_ROOT_ATTR);
         unpinHostTextPaint(el);
     });
+    clearFlatFills(root);
+}
+
+/** Drop the flat-fill marks and the variable the stylesheet reads. */
+function clearFlatFills(root: ParentNode) {
+    root.querySelectorAll(`[${FLAT_FILL_ATTR}]`).forEach((el) => {
+        el.removeAttribute(FLAT_FILL_ATTR);
+        const node = styled(el);
+        if (node) restoreHostInlineStyle(node, FLAT_FILL_IMAGE_VAR);
+    });
+}
+
+/**
+ * Mark every element whose background-image has a flat-gradient layer and
+ * hand the stylesheet the same list with that layer set to none. Read under
+ * host paint, so our own override never feeds back into the measurement.
+ */
+function readFlatFills(pageRoot: HTMLElement): Map<Element, string> {
+    const found = new Map<Element, string>();
+    for (const el of Array.from(pageRoot.querySelectorAll("*"))) {
+        if (isUniLensOverlayNode(el)) continue;
+        const next = withoutFlatGradients(getComputedStyle(el).backgroundImage);
+        if (next) found.set(el, next);
+    }
+    return found;
+}
+
+function syncFlatFills(pageRoot: HTMLElement, found: Map<Element, string>) {
+    pageRoot.querySelectorAll(`[${FLAT_FILL_ATTR}]`).forEach((el) => {
+        if (found.has(el)) return;
+        el.removeAttribute(FLAT_FILL_ATTR);
+        const node = styled(el);
+        if (node) restoreHostInlineStyle(node, FLAT_FILL_IMAGE_VAR);
+    });
+    for (const [el, value] of found) {
+        const node = styled(el);
+        if (!node) continue;
+        if (node.style.getPropertyValue(FLAT_FILL_IMAGE_VAR) !== value)
+            setHostInlineStyle(node, FLAT_FILL_IMAGE_VAR, value);
+        if (!el.hasAttribute(FLAT_FILL_ATTR))
+            el.setAttribute(FLAT_FILL_ATTR, "true");
+    }
 }
 
 /** Form controls draw their text from attributes, not text nodes. */
@@ -974,7 +1058,8 @@ export function syncMediaTextMarkers(pageRoot: HTMLElement | null): number {
     };
     // Measure the page as the host styles it: under a theme the background
     // reset and text plates hide the very fills and images we look for.
-    const { regions, paints, owners } = withHostPaint(doc, () => {
+    const { regions, paints, owners, flatFills } = withHostPaint(doc, () => {
+        const flat = readFlatFills(pageRoot);
         const media = collectMedia(pageRoot, viewport);
         const found = findRegions(pageRoot, doc, viewport, media);
         const read = new Map<Element, HostPaint>();
@@ -983,8 +1068,14 @@ export function syncMediaTextMarkers(pageRoot: HTMLElement | null): number {
         const cssOwners = new Set(
             media.filter((m) => !isMediaElement(m.el)).map((m) => m.el),
         );
-        return { regions: found, paints: read, owners: cssOwners };
+        return {
+            regions: found,
+            paints: read,
+            owners: cssOwners,
+            flatFills: flat,
+        };
     });
+    syncFlatFills(pageRoot, flatFills);
     pageRoot.querySelectorAll(`[${MEDIA_OWNER_ATTR}]`).forEach((el) => {
         if (!owners.has(el)) el.removeAttribute(MEDIA_OWNER_ATTR);
     });

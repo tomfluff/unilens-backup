@@ -356,6 +356,15 @@ html[data-unilens-a11y-display-active] #unilens-a11y-page-root :where(
   background-color: var(--unilens-a11y-display-surface) !important;
 }
 
+/* A host card painted with a flat-colour gradient (`linear-gradient(white 97%,
+ * transparent 97%)`): the colour themes reset background-color only, so that
+ * layer would stay a white box under theme-coloured text. mediaTextGuard.ts
+ * marks the element and puts its background-image, flat layers set to none,
+ * in the variable; real pictures in the same list stay. */
+html[data-unilens-a11y-display-active] #unilens-a11y-page-root [data-unilens-a11y-flat-fill]:not([data-unilens-a11y-media-text]) {
+  background-image: var(--unilens-a11y-flat-fill-image) !important;
+}
+
 html[data-unilens-a11y-display-active] #unilens-a11y-page-root a:not([data-unilens-a11y-media-text]) {
   color: var(--unilens-a11y-display-link) !important;
 }
