@@ -97,7 +97,10 @@ export function getEffectivePageFontScale(): number {
 }
 
 function ensureStylesheet() {
-    acquireTextSizeStyles("pageFont");
+    acquireTextSizeStyles("pageFont", () => {
+        if (pageFontActive && getEffectivePageFontScale() !== 1)
+            scanPageFont();
+    });
 }
 
 export function shouldSkipPageFontElement(el: Element): boolean {

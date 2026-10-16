@@ -9,7 +9,7 @@ describe("pictures keep their own colors under a theme", () => {
             "utf8",
         );
         expect(css).toMatch(
-            /html\[data-unilens-a11y-display-active\] #unilens-a11y-page-root :is\(img, video, picture, canvas\)\s*\{\s*mix-blend-mode: normal !important;/,
+            /html\[data-unilens-a11y-display-active\] :is\(body\[data-unilens-page-content\], #unilens-a11y-page-root\) :is\(img, video, picture, canvas\)\s*\{\s*mix-blend-mode: normal !important;/,
         );
     });
 });

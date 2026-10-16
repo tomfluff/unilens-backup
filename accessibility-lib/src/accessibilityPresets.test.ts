@@ -289,6 +289,23 @@ describe("accessibility presets keep the visitor's own choices", () => {
         expect(getA11ySettings().contrast).toBe("max");
     });
 
+    it("re-pressing a preset after a hand change, then turning it off, restores the pre-preset values", () => {
+        patchA11ySettings({ lineHeight: "standard", fontFamily: "standard" });
+        toggleA11yPreset("lowVision");
+        patchA11ySettings({ fontSize: "large" }); // tweak one field by hand
+        expect(toggleA11yPreset("lowVision")).toBe("on"); // re-apply
+        expect(isPresetActive("lowVision")).toBe(true);
+        expect(toggleA11yPreset("lowVision")).toBe("off");
+        const s = getA11ySettings();
+        expect(s.fontFamily).toBe("standard");
+        expect(s.lineHeight).toBe("standard");
+        expect(s.letterSpacing).toBe("standard");
+        expect(s.contrast).toBe("standard");
+        expect(s.linkUnderline).toBe(false);
+        expect(s.focusEnhanceLevel).toBe(0);
+        expect(s.fontSize).toBe("standard");
+    });
+
     it("settings saved before presets were tracked still show and clear", () => {
         patchA11ySettings({ theme: "high-contrast", contrast: "max" });
         patchSettings({ activePreset: undefined, presetRestore: null });

@@ -82,7 +82,10 @@ let bodyTextActive = false;
 let a11yUnsub: (() => void) | null = null;
 
 function ensureStylesheet() {
-    acquireTextSizeStyles("bodyExpand");
+    acquireTextSizeStyles("bodyExpand", () => {
+        if (bodyTextActive && getA11ySettings().bodyTextExpandLevel > 0)
+            lastScan = scanBodyText();
+    });
 }
 
 function isInsideHeading(el: Element): boolean {

@@ -173,6 +173,35 @@ export const useSettings = create<Settings>()(
     }),
 );
 
+/**
+ * Another tab saved settings. Without this, this tab kept its own copy in
+ * memory and its next change wrote the whole copy back, silently discarding
+ * what the visitor changed in the other tab. Re-read storage and re-apply.
+ */
+let storageSyncHandler: ((e: StorageEvent) => void) | null = null;
+
+export function startSettingsSync() {
+    if (storageSyncHandler || typeof window === "undefined") return;
+    storageSyncHandler = (e: StorageEvent) => {
+        if (e.key !== null && e.key !== SETTINGS_PERSIST_KEY) return;
+        try {
+            if (e.storageArea && e.storageArea !== window.localStorage) return;
+        } catch {
+            return;
+        }
+        void Promise.resolve(useSettings.persist.rehydrate()).then(() =>
+            applyA11yToDocument(),
+        );
+    };
+    window.addEventListener("storage", storageSyncHandler);
+}
+
+export function stopSettingsSync() {
+    if (!storageSyncHandler || typeof window === "undefined") return;
+    window.removeEventListener("storage", storageSyncHandler);
+    storageSyncHandler = null;
+}
+
 /** live snapshot for non-React modules */
 export const getSettings = () => useSettings.getState();
 

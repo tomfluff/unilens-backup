@@ -7,6 +7,8 @@
 type StyleBackup = { value: string; priority: string };
 
 const styleBackups = new WeakMap<HTMLElement, Map<string, StyleBackup>>();
+/** Elements that had no `style` attribute before we first wrote one. */
+const hadNoStyleAttr = new WeakSet<HTMLElement>();
 
 /** Overwrite one inline style property, snapshotting the host value on first touch. */
 export function setHostInlineStyle(
@@ -19,6 +21,8 @@ export function setHostInlineStyle(
     if (!map) {
         map = new Map();
         styleBackups.set(el, map);
+        if (typeof el.hasAttribute === "function" && !el.hasAttribute("style"))
+            hadNoStyleAttr.add(el);
     }
     if (!map.has(prop)) {
         map.set(prop, {
@@ -45,7 +49,13 @@ export function restoreHostInlineStyle(el: HTMLElement, prop: string) {
     if (!value && !priority) el.style.removeProperty(prop);
     else el.style.setProperty(prop, value, priority);
     map.delete(prop);
-    if (map.size === 0) styleBackups.delete(el);
+    if (map.size === 0) {
+        styleBackups.delete(el);
+        // Leave no empty `style=""` behind on an element that had none.
+        if (hadNoStyleAttr.has(el) && el.getAttribute("style") === "")
+            el.removeAttribute("style");
+        hadNoStyleAttr.delete(el);
+    }
 }
 
 /** Restore every inline style property we have snapshotted on this element. */

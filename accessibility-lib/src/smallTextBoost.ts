@@ -50,7 +50,10 @@ let smallTextActive = false;
 let a11yUnsub: (() => void) | null = null;
 
 function ensureStylesheet() {
-    acquireTextSizeStyles("smallBoost");
+    acquireTextSizeStyles("smallBoost", () => {
+        if (smallTextActive && getA11ySettings().smallTextBoostLevel > 0)
+            lastScan = scanSmallText();
+    });
 }
 
 function shouldSkip(el: Element): boolean {
@@ -146,6 +149,7 @@ export function clearSmallTextBoost() {
             if (node instanceof HTMLElement) restoreElement(node);
         });
     document.documentElement.removeAttribute(SMALL_BOOST_HTML_ATTR);
+    document.documentElement.removeAttribute(SMALL_BOOST_LEVEL_ATTR);
     lastScan = { scanned: 0, boosted: 0 };
 }
 

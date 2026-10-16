@@ -197,8 +197,8 @@ function setLevel(el: HTMLElement, name: string, level: number) {
 }
 
 /**
- * Tags a host may append to <body> that never paint: leave them where they
- * are, so the host's own `body > script` style lookups keep working.
+ * Tags that never paint. Kept for embedders/tests that used it to decide what
+ * the old page wrapper adopted; the page root is now <body> itself.
  */
 const BODY_ADOPT_SKIP_TAGS = new Set([
     "SCRIPT",
@@ -214,55 +214,28 @@ export function isAdoptableTag(tagName: string): boolean {
 }
 
 /**
- * Every colour rule is scoped to the page root, but a host often appends
- * more content to <body> after the root was made (a footer injected by its
- * own script, a jQuery UI menu, a modal). Those landed outside the root and
- * kept the host's colours under any theme. Move them in.
+ * The element every page-scoped rule is written against.
+ *
+ * This used to be a <div> that every <body> child was moved into, and a body
+ * observer kept moving whatever the host appended later. Moving host nodes
+ * reloaded iframes, dropped focus, broke `body > .x` rules, and made the
+ * host's own `document.body.removeChild(node)` (React portals, toasts) throw.
+ * <body> is now the root itself: it is only marked with an attribute, and
+ * no host node is ever moved. All UniLens overlay UI lives on <html>,
+ * outside <body>, so it stays out of page-scoped rules.
  */
-function adoptBodyNode(root: HTMLElement, node: Node) {
-    if (!(node instanceof HTMLElement) || node === root) return;
-    if (node.parentElement !== document.body) return;
-    if (!isAdoptableTag(node.tagName) || isUniLensOverlayNode(node)) return;
-    root.appendChild(node);
-}
-
-let bodyAdoptObserver: MutationObserver | null = null;
-
-function ensureBodyAdoption(root: HTMLElement) {
-    const body = document.body;
-    for (const node of Array.from(body.childNodes)) adoptBodyNode(root, node);
-    if (bodyAdoptObserver || typeof MutationObserver === "undefined") return;
-    bodyAdoptObserver = new MutationObserver((records) => {
-        for (const r of records)
-            for (const node of Array.from(r.addedNodes))
-                adoptBodyNode(root, node);
-    });
-    bodyAdoptObserver.observe(body, { childList: true });
-}
-
-export function ensurePageContentRoot(): HTMLDivElement | null {
+export function ensurePageContentRoot(): HTMLElement | null {
     const body = document.body;
     if (!body) return null;
+    if (body.getAttribute(PAGE_CONTENT_ATTR) !== "1")
+        body.setAttribute(PAGE_CONTENT_ATTR, "1");
+    return body;
+}
 
-    let root = document.getElementById(
-        PAGE_CONTENT_ROOT_ID,
-    ) as HTMLDivElement | null;
-    if (root) {
-        ensureBodyAdoption(root);
-        return root;
-    }
-
-    root = document.createElement("div");
-    root.id = PAGE_CONTENT_ROOT_ID;
-    root.setAttribute(PAGE_CONTENT_ATTR, "1");
-
-    const nodes = Array.from(body.childNodes);
-    nodes.forEach((node) => {
-        root?.appendChild(node);
-    });
-    body.appendChild(root);
-    ensureBodyAdoption(root);
-    return root;
+/** The marked page root, or null before init / after teardown. */
+export function getPageContentRoot(): HTMLElement | null {
+    const body = document.body;
+    return body && body.getAttribute(PAGE_CONTENT_ATTR) === "1" ? body : null;
 }
 
 export function syncWidgetDisplayIsolation() {
@@ -278,16 +251,15 @@ function notifyLayoutChange() {
 }
 
 export function restorePageContentRoot() {
-    bodyAdoptObserver?.disconnect();
-    bodyAdoptObserver = null;
-    const root = document.getElementById(PAGE_CONTENT_ROOT_ID);
-    const body = document.body;
-    if (!root || !body) return;
-    const nodes = Array.from(root.childNodes);
-    nodes.forEach((node) => {
-        body.insertBefore(node, root);
-    });
-    root.remove();
+    document.body?.removeAttribute(PAGE_CONTENT_ATTR);
+    // Builds before this one wrapped the page in a <div>: unwrap one that is
+    // still in the document (e.g. a page restored from the back/forward cache).
+    const legacy = document.getElementById(PAGE_CONTENT_ROOT_ID);
+    if (legacy?.parentNode) {
+        while (legacy.firstChild)
+            legacy.parentNode.insertBefore(legacy.firstChild, legacy);
+        legacy.remove();
+    }
 }
 
 function ensureUdFontLink() {
@@ -311,8 +283,9 @@ export function toneFilterCss(
 }
 
 function ensureToneLayer(): HTMLElement | null {
-    const body = document.body;
-    if (!body) return null;
+    const html = document.documentElement;
+    // No page (no <body>) means nothing to tone.
+    if (!html || !document.body) return null;
     let layer = document.getElementById(TONE_LAYER_ID);
     if (!layer) {
         layer = document.createElement("div");
@@ -320,8 +293,8 @@ function ensureToneLayer(): HTMLElement | null {
         layer.setAttribute(UI_ATTR, "1");
         layer.setAttribute("aria-hidden", "true");
     }
-    // Keep it outside the page root so it never filters itself or the panel.
-    if (layer.parentNode !== body) body.appendChild(layer);
+    // Keep it outside the page root (<body>) so it never filters itself or the panel.
+    if (layer.parentNode !== html) html.appendChild(layer);
     return layer;
 }
 
@@ -339,10 +312,6 @@ function syncPageDisplayFilters(pageRoot: HTMLElement | null, s: A11ySettings) {
         // Previous builds painted standard-theme tone on media only; always
         // clear so a leftover marker cannot keep filtering just images.
         setFlag(pageRoot, HTML_ATTR_IMAGE_FILTER, false);
-        // Previous builds put the tone filter inline on the page root. A
-        // filtered ancestor re-anchors the host's position:fixed chrome to
-        // itself, so always clear it; the tone layer paints the tone instead.
-        pageRoot.style.removeProperty("filter");
     }
 
     if (target === "page") {
@@ -679,7 +648,7 @@ function attachLayoutListeners(pageRoot: HTMLElement) {
 
 // A background image's size arrived after the pass: run the pass again.
 onMediaTextResync(() => {
-    const root = document.getElementById(PAGE_CONTENT_ROOT_ID);
+    const root = getPageContentRoot();
     if (root && overlayMarkerObserver && surfaceMode.mediaText)
         scheduleDisplaySurfaceSync(root);
 });
@@ -909,7 +878,7 @@ export function clearAppliedA11yDocument() {
     destroyPageFontScale();
     for (const attr of A11Y_HTML_ATTRS) html.removeAttribute(attr);
     restoreAllHostInlineStyles(html);
-    const pageRoot = document.getElementById(PAGE_CONTENT_ROOT_ID);
+    const pageRoot = getPageContentRoot();
     ensurePositionedOverlayObserver(pageRoot, {
         display: false,
         mediaText: false,
@@ -917,7 +886,6 @@ export function clearAppliedA11yDocument() {
     if (pageRoot) {
         pageRoot.removeAttribute(HTML_ATTR_PAGE_FILTER);
         pageRoot.removeAttribute(HTML_ATTR_IMAGE_FILTER);
-        pageRoot.style.removeProperty("filter");
     }
     setToneMaskLayer(null);
     removeToneLayer();

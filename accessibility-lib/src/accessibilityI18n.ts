@@ -87,6 +87,7 @@ const ja = {
     adjReadingGuide: "リーディングガイド",
     adjTextStroke: (name: string) => `縁取り ${name}`,
     adjReduceMotion: "アニメ停止",
+    adjSelectionText: "選択範囲の文字サイズ",
 
     // Choice option names
     theme: {
@@ -532,6 +533,7 @@ const en: A11yMessages = {
     adjReadingGuide: "Reading guide",
     adjTextStroke: (name) => `Outline: ${name}`,
     adjReduceMotion: "Stop motion",
+    adjSelectionText: "Selected text size",
 
     theme: {
         standard: "Standard",

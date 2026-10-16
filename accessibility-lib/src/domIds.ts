@@ -222,6 +222,8 @@ export const SELECTION_FONT_SCALE_ATTR = "data-unilens-font-scale";
 export const SELECTION_FONT_PX_ATTR = "data-unilens-font-px";
 export const SELECTION_FONT_LEVEL_ATTR = "data-unilens-font-level";
 export const SELECTION_FONT_SIZE_VAR = "--unilens-a11y-selection-font-size";
+/** Wrappers made by one "apply" share a group id, so they clear together. */
+export const SELECTION_GROUP_ATTR = "data-unilens-text-resize-group";
 
 export const UNILENS_OVERLAY_ROOT_IDS = [
     A11Y_ROOT_ID,

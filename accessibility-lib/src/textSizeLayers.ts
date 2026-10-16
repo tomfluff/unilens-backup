@@ -38,6 +38,12 @@ import {
 
 export const TEXT_SIZE_STYLE_ID = "unilens-a11y-text-size-style";
 
+/**
+ * While set on <html>, the shared font-size rule is off, so the host's own
+ * sizes can be read (see remeasureTextSizes). Never left on across a paint.
+ */
+export const TEXT_SIZE_PROBE_ATTR = "data-unilens-a11y-text-size-probe";
+
 const PAGE_SEL = `[${PAGE_FONT_ATTR}="true"].${PAGE_FONT_CLASS}`;
 const BODY_SEL = `[${BODY_EXPAND_ATTR}="true"].${BODY_EXPAND_CLASS}`;
 const SMALL_SEL = `[${SMALL_BOOST_ATTR}="true"].${SMALL_BOOST_CLASS}`;
@@ -52,7 +58,7 @@ export const TEXT_SIZE_CSS = `
 ${ANY_SEL}:not(${PAGE_SEL}) { ${PAGE_FONT_TARGET_VAR}: 0px; }
 ${ANY_SEL}:not(${BODY_SEL}) { ${BODY_EXPAND_TARGET_VAR}: 0px; }
 ${ANY_SEL}:not(${SMALL_SEL}) { ${SMALL_BOOST_TARGET_VAR}: 0px; }
-${ANY_SEL} {
+html:not([${TEXT_SIZE_PROBE_ATTR}]) ${ANY_SEL} {
   font-size: max(
     calc(var(${PAGE_FONT_TARGET_VAR}, 0px) * min(var(${HTML_STYLE_FONT_SCALE}, 1), var(${PAGE_FONT_CAP_VAR}, 999))),
     var(${BODY_EXPAND_TARGET_VAR}, 0px),
@@ -64,11 +70,42 @@ ${ANY_SEL} {
 export type TextSizeOwner = "pageFont" | "bodyExpand" | "smallBoost";
 
 const owners = new Set<TextSizeOwner>();
+const rescanners = new Map<TextSizeOwner, () => void>();
+let resizeTimer: number | undefined;
+let resizeBound = false;
 
-/** Injects the shared rule once; each feature registers while it is active. */
-export function acquireTextSizeStyles(owner: TextSizeOwner) {
+const RESIZE_DEBOUNCE_MS = 250;
+
+function onResize() {
+    window.clearTimeout(resizeTimer);
+    resizeTimer = window.setTimeout(remeasureTextSizes, RESIZE_DEBOUNCE_MS);
+}
+
+function bindResize() {
+    if (resizeBound || typeof window === "undefined") return;
+    resizeBound = true;
+    window.addEventListener("resize", onResize, { passive: true });
+}
+
+function unbindResize() {
+    if (!resizeBound || typeof window === "undefined") return;
+    resizeBound = false;
+    window.clearTimeout(resizeTimer);
+    window.removeEventListener("resize", onResize);
+}
+
+/**
+ * Injects the shared rule once; each feature registers while it is active.
+ * `rescan` re-applies the feature after the host sizes were re-measured.
+ */
+export function acquireTextSizeStyles(
+    owner: TextSizeOwner,
+    rescan?: () => void,
+) {
     owners.add(owner);
+    if (rescan) rescanners.set(owner, rescan);
     if (typeof document === "undefined") return;
+    bindResize();
     if (document.getElementById(TEXT_SIZE_STYLE_ID)) return;
     const style = document.createElement("style");
     style.id = TEXT_SIZE_STYLE_ID;
@@ -79,7 +116,9 @@ export function acquireTextSizeStyles(owner: TextSizeOwner) {
 /** Removes the shared rule once no feature uses it any more. */
 export function releaseTextSizeStyles(owner: TextSizeOwner) {
     owners.delete(owner);
+    rescanners.delete(owner);
     if (owners.size > 0 || typeof document === "undefined") return;
+    unbindResize();
     document.getElementById(TEXT_SIZE_STYLE_ID)?.remove();
 }
 
@@ -122,4 +161,38 @@ export function readOriginalFontPx(el: HTMLElement, pageScale = 1): number {
     // back exactly this value and sees the node as already up to date
     // (13.3333 vs a stored 13.33 used to re-apply it on every scan).
     return Math.round(computed * 100) / 100;
+}
+
+/**
+ * Each feature records the host's size the first time it marks a node, and
+ * keeps scaling from that number. When the host's own size changes without a
+ * DOM mutation — a media-query breakpoint after a window resize, or the root
+ * font-size changed by auto text size — that record is stale: text stayed at
+ * the old size, and could end up smaller than the host's new size.
+ *
+ * This reads every marked node's current host size with the shared rule
+ * switched off (one synchronous probe, no paint in between), updates the
+ * records, and lets each active feature rescan.
+ */
+export function remeasureTextSizes() {
+    if (typeof document === "undefined") return;
+    const html = document.documentElement;
+    const marked = Array.from(
+        document.querySelectorAll(ORIGINAL_ATTRS.map((a) => `[${a}]`).join(",")),
+    );
+    if (marked.length > 0) {
+        html.setAttribute(TEXT_SIZE_PROBE_ATTR, "");
+        const sizes = marked.map((el) =>
+            parseFloat(getComputedStyle(el).fontSize),
+        );
+        html.removeAttribute(TEXT_SIZE_PROBE_ATTR);
+        marked.forEach((el, i) => {
+            const px = sizes[i];
+            if (!Number.isFinite(px) || px <= 0) return;
+            const value = String(Math.round(px * 100) / 100);
+            for (const attr of ORIGINAL_ATTRS)
+                if (el.hasAttribute(attr)) el.setAttribute(attr, value);
+        });
+    }
+    for (const rescan of rescanners.values()) rescan();
 }

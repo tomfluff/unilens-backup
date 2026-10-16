@@ -27,6 +27,7 @@ import {
     t,
 } from "./accessibilityI18n";
 import { destroyAccessibilityRuntime } from "./accessibilityLifecycle";
+import { startSettingsSync, stopSettingsSync } from "./settings";
 import {
     configureAccessibilityCssUrl,
     destroyAccessibilityPanel,
@@ -220,6 +221,7 @@ function init(options: UniLensA11yInitOptions = {}) {
     if (options.lang) configureA11yLang(options.lang);
     if (options.followSystemPreferences) applySystemPreferences();
     applyA11yToDocument();
+    startSettingsSync();
 
     if (options.bodyTextExpand !== false) initBodyTextExpand();
     if (options.smallTextBoost !== false) initSmallTextBoost();
@@ -235,6 +237,7 @@ function init(options: UniLensA11yInitOptions = {}) {
 
 function destroy() {
     if (!initialized) return;
+    stopSettingsSync();
     destroyAccessibilityRuntime();
     initialized = false;
 }

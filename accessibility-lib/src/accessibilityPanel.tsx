@@ -76,7 +76,11 @@ import {
     UI_ATTR,
 } from "./domIds";
 import { resolveA11yCssUrl } from "./resolveA11yCssUrl";
-import { clearSelectionFontSize } from "./selectionTextSize";
+import {
+    clearAllSelectionFontSizes,
+    hasSelectionFontSizes,
+    onSelectionWrappersChange,
+} from "./selectionTextSize";
 // Read-aloud disabled — see accessibility-umd.ts init().
 // import { stopSpeech } from './speakSelection'
 import {
@@ -314,6 +318,11 @@ function activeAdjustments(s: Settings): Adjustment[] {
             patchA11ySettings({ smallTextBoostLevel: 0 }),
         );
     }
+    if (hasSelectionFontSizes()) {
+        add("tools", "selectionText", t().adjSelectionText, () => {
+            clearAllSelectionFontSizes();
+        });
+    }
     if (s.autoTextSize && s.autoTextMode !== "off") {
         add(
             "tools",
@@ -450,6 +459,7 @@ type React_MutableRefObject<T> = { current: T };
 
 function AccessibilityPanelApp() {
     useExternalSignal(onA11yLangChange);
+    useExternalSignal(onSelectionWrappersChange);
     const settingsState = useSettings();
 
     const [panelOpen, setPanelOpen] = useState(false);
@@ -527,41 +537,58 @@ function AccessibilityPanelApp() {
 
     useEffect(() => {
         /**
-         * Stops the page's double-click zoom (zoom.ts's smart zoom) from interrupting
-         * accessibility panel interactions, by intercepting dblclick in the relevant cases.
+         * Keeps the page's double-click zoom (unilens-lib zoom.ts) from firing
+         * on accessibility panel interactions:
+         * - a double-click inside the widget, and
+         * - while the panel is open, a double-click that selected a word on the
+         *   page (most likely a selection for "enlarge only the selected text";
+         *   a zoom there would interrupt the gesture).
          *
-         * Two conditions trigger this:
-         * - A double-click inside the widget. Zooming the page just from operating
-         *   the panel would be a misfire.
-         * - A double-click on the page while the panel is open. That's most likely a
-         *   word selection meant for "enlarge only the selected text" — if zoom fires
-         *   there, the selection gesture never completes.
-         *
-         * zoom.ts registers on document's bubble phase, so intercepting during
-         * document's capture phase always runs first regardless of init order.
-         * stopPropagation doesn't block the default action, so double-click word
-         * selection itself still works normally.
+         * zoom.ts listens on `document` (bubble). This listener sits one step
+         * earlier on <html> (bubble), so it can stop the event before it reaches
+         * `document` while every host handler on the target and its ancestors
+         * has already run. It used to stop the event in document's capture
+         * phase, which silently disabled every host dblclick handler on the
+         * page while the panel was open.
          */
         function onDblClick(e: globalThis.MouseEvent) {
             const root = document.getElementById(ROOT_ID);
             const insideWidget =
                 e.target instanceof Node && root?.contains(e.target) === true;
-            if (insideWidget || panelOpenRef.current) e.stopPropagation();
+            if (insideWidget) {
+                e.stopPropagation();
+                return;
+            }
+            if (!panelOpenRef.current) return;
+            const sel = window.getSelection();
+            if (sel && !sel.isCollapsed && sel.toString().trim() !== "")
+                e.stopPropagation();
         }
         function onKeyDown(e: globalThis.KeyboardEvent) {
-            if (e.key === "Escape" && panelOpenRef.current) {
-                e.preventDefault();
-                setPanelOpen(false);
-                setResetArmed(false);
-                window.clearTimeout(resetTimerRef.current);
-                toggleBtnRef.current?.focus();
-            }
+            if (e.key !== "Escape" || !panelOpenRef.current) return;
+            if (e.defaultPrevented) return;
+            // Only Esc meant for the panel: focus inside the widget, or nothing
+            // focused at all. Esc in a host input / dialog belongs to the host.
+            const active = document.activeElement;
+            const root = document.getElementById(ROOT_ID);
+            const inWidget = !!active && root?.contains(active) === true;
+            const nothingFocused =
+                !active ||
+                active === document.body ||
+                active === document.documentElement;
+            if (!inWidget && !nothingFocused) return;
+            e.preventDefault();
+            setPanelOpen(false);
+            setResetArmed(false);
+            window.clearTimeout(resetTimerRef.current);
+            if (inWidget) toggleBtnRef.current?.focus();
         }
+        const html = document.documentElement;
         document.addEventListener("keydown", onKeyDown);
-        document.addEventListener("dblclick", onDblClick, true);
+        html.addEventListener("dblclick", onDblClick);
         return () => {
             document.removeEventListener("keydown", onKeyDown);
-            document.removeEventListener("dblclick", onDblClick, true);
+            html.removeEventListener("dblclick", onDblClick);
         };
     }, []);
 
@@ -606,7 +633,7 @@ function AccessibilityPanelApp() {
         window.clearTimeout(resetTimerRef.current);
         resetA11ySettings();
         runAutoTextAction("reset");
-        clearSelectionFontSize();
+        clearAllSelectionFontSizes();
         // stopSpeech()
         setLastAnalysis(null);
         setLastSelectionMessage(null);

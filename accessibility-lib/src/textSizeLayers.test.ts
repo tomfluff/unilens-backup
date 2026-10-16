@@ -8,9 +8,13 @@ import {
     SMALL_BOOST_TARGET_VAR,
 } from "./domIds";
 import {
+    acquireTextSizeStyles,
     readOriginalFontPx,
+    releaseTextSizeStyles,
+    remeasureTextSizes,
     storedOriginalFontPx,
     TEXT_SIZE_CSS,
+    TEXT_SIZE_PROBE_ATTR,
 } from "./textSizeLayers";
 
 function el(attrs: Record<string, string>, computedPx = 30) {
@@ -59,5 +63,55 @@ describe("readOriginalFontPx", () => {
         // 10pt form controls compute to 13.3333px; the stored original is
         // 13.33, so the first read must agree or every rescan re-applies.
         expect(readOriginalFontPx(el({}, 13.333333))).toBe(13.33);
+    });
+});
+
+describe("re-measuring host sizes (resize / root size change)", () => {
+    it("the shared rule is switched off while probing", () => {
+        expect(TEXT_SIZE_CSS).toContain(`html:not([${TEXT_SIZE_PROBE_ATTR}])`);
+    });
+
+    it("reads each marked node with the rule off, updates its record, and rescans", () => {
+        const htmlAttrs = new Set<string>();
+        const attrs: Record<string, string> = {
+            [PAGE_FONT_ORIGINAL_ATTR]: "20",
+            [SMALL_BOOST_ORIGINAL_ATTR]: "20",
+        };
+        const node = {
+            hasAttribute: (k: string) => k in attrs,
+            setAttribute: (k: string, v: string) => {
+                attrs[k] = v;
+            },
+        };
+        let probedReads = 0;
+        vi.stubGlobal("getComputedStyle", () => {
+            if (htmlAttrs.has(TEXT_SIZE_PROBE_ATTR)) probedReads++;
+            // host's own size after a breakpoint: 12px; enlarged size: 30px
+            return { fontSize: htmlAttrs.has(TEXT_SIZE_PROBE_ATTR) ? "12px" : "30px" };
+        });
+        vi.stubGlobal("document", {
+            documentElement: {
+                setAttribute: (k: string) => htmlAttrs.add(k),
+                removeAttribute: (k: string) => htmlAttrs.delete(k),
+            },
+            querySelectorAll: () => [node],
+            getElementById: () => ({ remove: () => undefined }),
+            head: null,
+        });
+        vi.stubGlobal("window", {
+            addEventListener: () => undefined,
+            removeEventListener: () => undefined,
+            clearTimeout: () => undefined,
+        });
+        const rescan = vi.fn();
+        acquireTextSizeStyles("smallBoost", rescan);
+        remeasureTextSizes();
+        expect(probedReads).toBe(1);
+        expect(htmlAttrs.has(TEXT_SIZE_PROBE_ATTR)).toBe(false);
+        expect(attrs[PAGE_FONT_ORIGINAL_ATTR]).toBe("12");
+        expect(attrs[SMALL_BOOST_ORIGINAL_ATTR]).toBe("12");
+        expect(attrs[BODY_EXPAND_ORIGINAL_ATTR]).toBeUndefined();
+        expect(rescan).toHaveBeenCalledTimes(1);
+        releaseTextSizeStyles("smallBoost");
     });
 });

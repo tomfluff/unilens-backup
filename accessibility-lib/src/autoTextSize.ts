@@ -5,6 +5,7 @@
 
 import { isUniLensOverlayNode, UI_ATTR } from "./domIds";
 import { restoreHostInlineStyle, setHostInlineStyle } from "./hostSurface";
+import { remeasureTextSizes } from "./textSizeLayers";
 import {
     getSettings,
     patchSettings,
@@ -53,9 +54,13 @@ export interface TextAnalysis {
 let appliedScale = 1;
 let resizeTimer: number | undefined;
 let autoTextClassApplied = false;
+/** <html> had no `class` attribute before we added ours. */
+let htmlHadNoClassAttr = false;
 
 const TEXT_SCALE_VAR = "--unilens-text-scale";
 const TEXT_LINE_VAR = "--unilens-text-line";
+/** The host's own root font-size, measured with our rule off. */
+const TEXT_BASE_VAR = "--unilens-text-base";
 
 function clampScale(n: number): number {
     const { autoTextMaxScale } = getSettings();
@@ -165,7 +170,7 @@ function ensureStylesheet() {
     style.id = STYLE_ID;
     style.textContent = `
     html.${HTML_CLASS} {
-      font-size: calc(100% * var(${TEXT_SCALE_VAR}, 1)) !important;
+      font-size: calc(var(${TEXT_BASE_VAR}, 100%) * var(${TEXT_SCALE_VAR}, 1)) !important;
     }
     html.${HTML_CLASS} body {
       line-height: calc(1.5 * var(${TEXT_LINE_VAR}, 1));
@@ -178,23 +183,42 @@ function applyScaleToPage(scale: number) {
     ensureStylesheet();
     appliedScale = scale;
     const html = document.documentElement;
-    if (!html.classList.contains(HTML_CLASS)) {
-        html.classList.add(HTML_CLASS);
-        autoTextClassApplied = true;
-    } else {
-        autoTextClassApplied = false;
-    }
+    // Scale from the host's own root size (e.g. a 62.5% rem layout), read with
+    // our rule switched off, not from the browser default. Re-read on every
+    // apply so a responsive root size is followed on resize.
+    const present = html.classList.contains(HTML_CLASS);
+    if (!present) htmlHadNoClassAttr = !html.hasAttribute("class");
+    if (present) html.classList.remove(HTML_CLASS);
+    const basePx = parseFloat(getComputedStyle(html).fontSize);
+    html.classList.add(HTML_CLASS);
+    // Only the first apply adds the class; re-applies must not forget that we
+    // own it (they used to, and reset then left the class — and its
+    // `font-size: 100% !important` — on the host's <html>).
+    if (!present) autoTextClassApplied = true;
+    if (Number.isFinite(basePx) && basePx > 0)
+        setHostInlineStyle(html, TEXT_BASE_VAR, `${basePx}px`);
     setHostInlineStyle(html, TEXT_SCALE_VAR, String(scale));
     setHostInlineStyle(html, TEXT_LINE_VAR, scale > 1.1 ? "1.08" : "1");
+    // The root size changed: other text-size features re-read host sizes.
+    remeasureTextSizes();
 }
 
 function clearPageScale() {
     appliedScale = 1;
     const html = document.documentElement;
-    if (autoTextClassApplied) html.classList.remove(HTML_CLASS);
+    const wasApplied = autoTextClassApplied;
+    if (autoTextClassApplied) {
+        html.classList.remove(HTML_CLASS);
+        // Leave no empty `class=""` on a host <html> that had none.
+        if (htmlHadNoClassAttr && html.getAttribute("class") === "")
+            html.removeAttribute("class");
+    }
     autoTextClassApplied = false;
+    htmlHadNoClassAttr = false;
+    restoreHostInlineStyle(html, TEXT_BASE_VAR);
     restoreHostInlineStyle(html, TEXT_SCALE_VAR);
     restoreHostInlineStyle(html, TEXT_LINE_VAR);
+    if (wasApplied) remeasureTextSizes();
 }
 
 /** Effective chat font size: auto-synced from page scale or manual setting. */
@@ -303,7 +327,9 @@ export function destroyAutoTextSize() {
     window.removeEventListener("resize", onResize);
     settingsUnsub?.();
     settingsUnsub = null;
+    window.clearTimeout(resizeTimer);
     clearPageScale();
+    document.getElementById(STYLE_ID)?.remove();
 }
 
 /** Mark UniLens UI nodes so page analysis skips them. */

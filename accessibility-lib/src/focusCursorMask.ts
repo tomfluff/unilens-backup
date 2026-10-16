@@ -207,7 +207,9 @@ function attachTracking() {
     if (tracking || typeof window === "undefined") return;
     tracking = true;
     window.addEventListener("pointermove", onPointerMove, { passive: true });
-    window.addEventListener("pointerleave", onPointerLeave);
+    // `pointerleave` never fires on window; <html> gets it when the pointer
+    // leaves the viewport (the root is hit-tested for empty canvas too).
+    document.documentElement.addEventListener("pointerleave", onPointerLeave);
     window.addEventListener("blur", onPointerLeave);
 }
 
@@ -215,7 +217,7 @@ function detachTracking() {
     if (!tracking || typeof window === "undefined") return;
     tracking = false;
     window.removeEventListener("pointermove", onPointerMove);
-    window.removeEventListener("pointerleave", onPointerLeave);
+    document.documentElement.removeEventListener("pointerleave", onPointerLeave);
     window.removeEventListener("blur", onPointerLeave);
 }
 

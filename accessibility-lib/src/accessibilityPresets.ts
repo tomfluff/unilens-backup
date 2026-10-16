@@ -171,9 +171,18 @@ export function applyA11yPreset(id: A11yPresetId) {
     } else if (current && current !== id && presetMatches(current)) {
         undoActivePreset();
     } else if (current !== id || !presetMatches(id)) {
-        // A preset the visitor has since changed by hand: its fields are
-        // theirs now, so drop the saved values instead of restoring them.
-        patchSettings({ activePreset: null, presetRestore: null });
+        const s = getSettings();
+        if (current === id && s.activePreset === id && s.presetRestore) {
+            // Pressing the preset that is on again after changing one of its
+            // fields by hand re-applies it. Keep the values saved when it was
+            // first turned on: re-saving now would record the preset's own
+            // values, and turning it off would then change nothing.
+        } else {
+            // Another preset the visitor has since changed by hand: its
+            // fields are theirs now, so drop the saved values instead of
+            // restoring them.
+            patchSettings({ activePreset: null, presetRestore: null });
+        }
     }
 
     if (getSettings().activePreset !== id) {
