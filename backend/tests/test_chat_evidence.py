@@ -161,6 +161,23 @@ def test_strip_unknown_cites(text, expected):
     assert app_module._strip_unknown_cites(text, {"n1", "n2"}) == expected
 
 
+def test_one_bracket_cites_are_read_and_closed():
+    # P03, 2026-10-17: the model closed its markers with one bracket
+    text = (
+        "The keep is open {{9:00–17:00, with last entry at 16:30}}[[n476], except "
+        "{{29–31 December}}[[n476]. During the Lantern Festival weekend, it stays "
+        "open until {{20:00}}[[n476]."
+    )
+    assert app_module._strip_unknown_cites(text, {"n476"}) == text.replace(
+        "[[n476]", "[[n476]]"
+    )
+    assert app_module._strip_unknown_cites(text, set()) == (
+        "The keep is open {{9:00–17:00, with last entry at 16:30}}, except "
+        "{{29–31 December}}. During the Lantern Festival weekend, it stays "
+        "open until {{20:00}}."
+    )
+
+
 def test_cite_false_strips_every_marker(client, capture, monkeypatch):
     monkeypatch.setitem(app_module.PROVIDERS["stub"], "call", lambda **_: "See [[n2]].")
     assert _reply(client, "/api/chat", capture(), cite=False) == "See."

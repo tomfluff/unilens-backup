@@ -573,7 +573,7 @@ ZOOM_RULES = (
     "[[zoom:reset]] for 100%. The page zooms when your answer is complete: say in a "
     "few words what they will see. Never mention the marker."
 )
-ZOOM_RE = re.compile(r"( ?)\[\[zoom:(n\d+|in|out|reset)\]\]")
+ZOOM_RE = re.compile(r"( ?)\[\[zoom:(n\d+|in|out|reset)\]\]?")
 
 # The assistant takes the user to a place on the page (co-design study, Yotam
 # 2026-10-09): the model decides, the widget scrolls there and outlines it once the
@@ -586,17 +586,18 @@ GOTO_RULES = (
     "scrolls there and outlines it: say in a few words what they will see there. "
     "Never mention the marker."
 )
-GOTO_RE = re.compile(r"( ?)\[\[goto:(n\d+)\]\]")
+GOTO_RE = re.compile(r"( ?)\[\[goto:(n\d+)\]\]?")
 
 # a selection is a few sources at most; their labels are the page's own words
 SELECTION_MAX = 30  # the chat's own cap; the About line says when it cut
 SELECTION_LABEL_MAX = 160
 SELECTION_ID_RE = re.compile(r"n\d{1,9}")
 
-# any n-digits id, so an over-long one is stripped rather than let through
-CITE_RE = re.compile(r"( ?)\[\[(n\d+)\]\]")
+# any n-digits id, so an over-long one is stripped rather than let through; one
+# closed with a single bracket ([[n476], P03 2026-10-17) counts too
+CITE_RE = re.compile(r"( ?)\[\[(n\d+)\]\]?")
 # several ids in one marker, as Gemini writes them: [[n42], [n43]] or [[n42, n43]]
-JOINED_CITE_RE = re.compile(r"\[\[(n\d+(?:\]?\s*,\s*\[?n\d+)+)\]\]")
+JOINED_CITE_RE = re.compile(r"\[\[(n\d+(?:\]?\s*,\s*\[?n\d+)+)\]\]?")
 
 
 def _unjoin_cites(text: str) -> str:
@@ -936,7 +937,7 @@ def _ungoto(text: str) -> str:
     def cite(m: re.Match) -> str:
         # the rules ask for a citation as well: one number, not two (only a marker
         # the chat reads counts; a malformed [n7] is none)
-        if f"[[{m.group(2)}]]" in rest:
+        if any(c.group(2) == m.group(2) for c in CITE_RE.finditer(rest)):
             return ""
         return f"{m.group(1)}[[{m.group(2)}]]"
 
@@ -949,8 +950,8 @@ def _strip_unknown_cites(text: str, ids: set[str]) -> str:
     "$9 [[n99]]." -> "$9." but "See [[n99]]details" -> "See details"."""
 
     def drop(m):
-        if m.group(2) in ids:
-            return m.group(0)
+        if m.group(2) in ids:  # closed in full, so the history never teaches [[n5]
+            return f"{m.group(1)}[[{m.group(2)}]]"
         after = text[m.end() : m.end() + 1]
         return m.group(1) if after and (after.isalnum() or after == "_") else ""
 
