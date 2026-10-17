@@ -804,3 +804,78 @@ describe("speakableWithSources (#28: read aloud says the numbers)", () => {
         );
     });
 });
+
+describe("a source cited several times in a row: only the last number (Yotam, 2026-10-17)", () => {
+    const k = (id: string) => ["n3", "n12", "n476"].includes(id);
+    const chips = (html: string) =>
+        [...html.matchAll(/class="unilens-cite" data-cite="(n\d+)"/g)].map(
+            (c) => c[1],
+        );
+    const p03 =
+        "The keep is open {{daily from 9:00 to 17:00}}[[n476]], with {{last entry at 16:30}}[[n476]]. It is closed {{29–31 December}}[[n476]], and stays open until {{20:00 during the Lantern Festival weekend}}[[n476]].";
+
+    it("one number at the run's end; every phrase keeps its underline", () => {
+        const r = renderCited(p03, k, label, false, undefined, undefined, true);
+        expect(chips(r.html)).toEqual(["n476"]);
+        expect(r.html.match(/class="unilens-cite-end"/g)).toHaveLength(4);
+        expect(r.html).toMatch(
+            /weekend<\/span><button[^>]*>1<\/button><\/span>\.$/,
+        );
+        expect(r.html).toContain(">00</span></span>, with");
+    });
+
+    it("another source between, or a new paragraph or list item, starts a new run", () => {
+        const r = (t: string) => chips(renderCited(t, k, label).html);
+        expect(r("A [[n3]], B [[n12]], C [[n3]].")).toEqual([
+            "n3",
+            "n12",
+            "n3",
+        ]);
+        expect(r("A [[n3]].\n\nB [[n3]].")).toEqual(["n3", "n3"]);
+        expect(r("- A [[n3]]\n- B [[n3]]")).toEqual(["n3", "n3"]);
+        expect(r("A [[n3]], B [[n3]] [[n12]].")).toEqual(["n3", "n12"]);
+    });
+
+    it("both keeps its row; sentence and end are as before", () => {
+        const both = renderCited(
+            "A [[n3]], B [[n3]].",
+            k,
+            label,
+            false,
+            undefined,
+            undefined,
+            false,
+            "both",
+        );
+        expect(chips(both.html)).toEqual(["n3", "n3"]); // once in the text, once in the row
+        const sentence = renderCited(
+            "A [[n3]], B [[n3]]. C [[n3]].",
+            k,
+            label,
+            false,
+            undefined,
+            undefined,
+            false,
+            "sentence",
+        );
+        expect(chips(sentence.html)).toEqual(["n3", "n3"]);
+    });
+
+    it("is read aloud the same way", () => {
+        expect(speakableWithSources("A [[n3]], B [[n3]].", k)).toBe(
+            "A, B (source 1).",
+        );
+        expect(speakableWithSources("A [[n3]].\n\nB [[n3]].", k)).toBe(
+            "A (source 1).\n\nB (source 1).",
+        );
+        // the words keep the gap the number leaves (Codex review)
+        const say = (t: string) => speakableWithSources(t, k);
+        expect(say("A [[n3]]B [[n3]].")).toBe("A B (source 1).");
+        expect(say("A [[n3]] , B [[n3]].")).toBe("A, B (source 1).");
+        expect(say("月額4,378円 [[n3]] なので安い[[n3]]。")).toBe(
+            "月額4,378円なので安い（根拠1）。",
+        );
+        // a line break before a line-leading number starts a new run
+        expect(say("A [[n3]]\n[[n3]] B")).toBe("A (source 1)\n(source 1) B");
+    });
+});
