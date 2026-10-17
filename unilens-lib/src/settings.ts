@@ -112,6 +112,9 @@ export interface Settings {
      *  2026-10-14, for P02): both are drawn, each with its number, unless the outer
      *  adds nothing (the same text, or the inner covers 90% of it). A preset value */
     hlFoldOuter: boolean;
+    /** the numbers on the page grow with UniLens's page zoom, as the outlines and the
+     *  text do (P03, session 2; Yotam, 2026-10-17). Off: a fixed screen size */
+    hlBadgeZoom: boolean;
     /** with Adaptive color on: the thin border and the ring's inner band take the
      *  adapted colour (a black edge round it), and the glow is stronger on a dark
      *  background (Yotam's try-out, 2026-10-12). Off: session 1's black and white
@@ -366,6 +369,7 @@ const DEFAULTS: Settings = {
     hlBadgePos: "corner",
     hlBadgeClamp: false,
     hlFoldOuter: false,
+    hlBadgeZoom: true,
     hlAdaptLine: true,
     altDragInert: true,
     adaptBg: "under-ring",
@@ -485,6 +489,7 @@ export const TOGGLE_LABELS: Record<BoolSettingKey, string> = {
     inventory: "Send page inventory with captures",
     hlBadgeClamp: "Slide a number in at the screen's edge",
     hlFoldOuter: "Fold a place inside a larger one into its outline",
+    hlBadgeZoom: "Numbers grow with the zoom",
     hlAdaptLine:
         "Adaptive color also colors the line (and a stronger glow on dark)",
     altDragInert: "An Alt+drag does nothing when box drawing is off",
@@ -995,6 +1000,7 @@ export const PANEL_TABS: { id: PanelTabId; groups: PanelGroup[] }[] = [
                 more: [
                     "ringWidth",
                     "ringScale",
+                    "hlBadgeZoom",
                     "hlBadgeClamp",
                     "hlFoldOuter",
                     "hlAdaptLine",
