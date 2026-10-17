@@ -216,9 +216,13 @@ function lastOfRuns(t: string, hide: (n: string) => string): string {
             out += m[0];
             return;
         }
-        // the words on either side keep the gap a number taken out leaves (placeSlots)
+        // the words on either side keep the gap a number taken out leaves (placeSlots);
+        // a shown number before it already left its own space
         out +=
-            hide(m[1]) + gap(out.slice(-1), t.charAt(after), /\s/.test(m[0]));
+            hide(m[1]) +
+            (/\s$/.test(out)
+                ? ""
+                : gap(out.slice(-1), t.charAt(after), /\s/.test(m[0])));
     });
     return out + t.slice(from);
 }

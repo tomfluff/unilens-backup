@@ -872,6 +872,17 @@ describe("a source cited several times in a row: only the last number (Yotam, 20
         const say = (t: string) => speakableWithSources(t, k);
         expect(say("A [[n3]]B [[n3]].")).toBe("A B (source 1).");
         expect(say("A [[n3]] , B [[n3]].")).toBe("A, B (source 1).");
+        // a shown number right before a run's start: one space, not two (checker)
+        expect(say("Low price [[n3]] [[n12]] and free shipping [[n12]].")).toBe(
+            "Low price (source 1) and free shipping (source 2).",
+        );
+        const html = renderCited(
+            "Low price [[n3]] [[n12]] and free shipping [[n12]].",
+            k,
+            label,
+        ).html;
+        expect(html).not.toMatch(/\s\s/);
+        expect(html).toMatch(/<\/button>\sand free/); // one (no-break) space
         expect(say("月額4,378円 [[n3]] なので安い[[n3]]。")).toBe(
             "月額4,378円なので安い（根拠1）。",
         );
