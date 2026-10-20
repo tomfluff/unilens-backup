@@ -196,7 +196,9 @@ export function remeasureTextSizes(roots?: Element[]) {
         for (const root of roots) {
             if (!root.isConnected) continue;
             if (root.matches(sel)) set.add(root);
-            root.querySelectorAll(sel).forEach((el) => set.add(el));
+            root.querySelectorAll(sel).forEach((el) => {
+                set.add(el);
+            });
         }
         marked = Array.from(set);
     } else {

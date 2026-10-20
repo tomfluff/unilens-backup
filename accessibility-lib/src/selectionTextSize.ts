@@ -449,7 +449,9 @@ function forgetRun(run: Run) {
     if (run.flow)
         run.flow
             .querySelectorAll(`[${SELECTION_RESIZE_ATTR}]`)
-            .forEach((w) => runOfOurNode.delete(w));
+            .forEach((w) => {
+                runOfOurNode.delete(w);
+            });
     devirtualizeOrigin(run.origin);
     runOfOrigin.delete(run.origin);
     liveRuns.delete(run);

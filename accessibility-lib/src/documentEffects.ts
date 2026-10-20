@@ -876,7 +876,9 @@ function ensurePositionedOverlayObserver(
         clearMediaTextMarkers(pageRoot);
         pageRoot
             ?.querySelectorAll(`[${KEEP_MOTION_ATTR}]`)
-            .forEach((el) => el.removeAttribute(KEEP_MOTION_ATTR));
+            .forEach((el) => {
+                el.removeAttribute(KEEP_MOTION_ATTR);
+            });
         return;
     }
 
