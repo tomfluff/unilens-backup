@@ -77,6 +77,18 @@ export function isHighContrastTheme(theme: string | null): boolean {
     return theme === "high-contrast";
 }
 
+/**
+ * Set or remove a marker, writing only when it changes. Each pass runs after
+ * every host DOM change: rewriting an unchanged value still queues a mutation
+ * record, so every pass sent one per page element to host MutationObservers
+ * (and looped forever with a host observer that answered with a DOM change).
+ */
+function setMark(el: Element, name: string, on: boolean) {
+    if (on) {
+        if (el.getAttribute(name) !== "true") el.setAttribute(name, "true");
+    } else if (el.hasAttribute(name)) el.removeAttribute(name);
+}
+
 export function syncHighContrastTextPlates(pageRoot: HTMLElement | null) {
     if (!pageRoot) return;
     const plateOn = Boolean(
@@ -88,34 +100,35 @@ export function syncHighContrastTextPlates(pageRoot: HTMLElement | null) {
     }
 
     const nodes = pageRoot.querySelectorAll("*");
+    const els: HTMLElement[] = [];
     for (let i = 0; i < nodes.length; i++) {
         const el = nodes[i];
         if (!(el instanceof HTMLElement)) continue;
         if (isUniLensOverlayNode(el)) {
-            el.removeAttribute(TEXT_BG_ATTR);
-            el.removeAttribute(TEXT_BG_BEFORE_ATTR);
-            el.removeAttribute(TEXT_BG_AFTER_ATTR);
-            el.removeAttribute(TEXT_BG_SKIP_ATTR);
+            for (const attr of TEXT_PLATE_ATTRS) setMark(el, attr, false);
             continue;
         }
-        if (hasDirectText(el)) {
-            el.setAttribute(TEXT_BG_ATTR, "true");
-            el.removeAttribute(TEXT_BG_SKIP_ATTR);
-        } else {
-            el.removeAttribute(TEXT_BG_ATTR);
-            // Wrapper-only: keep its own background-image (host photo).
-            el.setAttribute(TEXT_BG_SKIP_ATTR, "true");
-        }
-
-        if (hasGeneratedTextContent(getComputedStyle(el, "::before").content)) {
-            el.setAttribute(TEXT_BG_BEFORE_ATTR, "true");
-        } else {
-            el.removeAttribute(TEXT_BG_BEFORE_ATTR);
-        }
-        if (hasGeneratedTextContent(getComputedStyle(el, "::after").content)) {
-            el.setAttribute(TEXT_BG_AFTER_ATTR, "true");
-        } else {
-            el.removeAttribute(TEXT_BG_AFTER_ATTR);
-        }
+        els.push(el);
+    }
+    // Read every pseudo first, then write: interleaving a write with the next
+    // getComputedStyle forced a style recalc per element.
+    const before: boolean[] = [];
+    const after: boolean[] = [];
+    for (const el of els) {
+        before.push(
+            hasGeneratedTextContent(getComputedStyle(el, "::before").content),
+        );
+        after.push(
+            hasGeneratedTextContent(getComputedStyle(el, "::after").content),
+        );
+    }
+    for (let i = 0; i < els.length; i++) {
+        const el = els[i];
+        const text = hasDirectText(el);
+        setMark(el, TEXT_BG_ATTR, text);
+        // Wrapper-only: keep its own background-image (host photo).
+        setMark(el, TEXT_BG_SKIP_ATTR, !text);
+        setMark(el, TEXT_BG_BEFORE_ATTR, before[i]);
+        setMark(el, TEXT_BG_AFTER_ATTR, after[i]);
     }
 }

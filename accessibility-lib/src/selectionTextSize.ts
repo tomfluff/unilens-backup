@@ -24,6 +24,7 @@ import {
     SELECTION_FONT_LEVEL_ATTR,
     SELECTION_FONT_PX_ATTR,
     SELECTION_FONT_SCALE_ATTR,
+    SELECTION_FLOW_ATTR,
     SELECTION_FONT_SIZE_VAR,
     SELECTION_GROUP_ATTR,
     SELECTION_RESIZE_ATTR,
@@ -67,6 +68,9 @@ const RESIZE_CSS = `
   line-height: 1.35;
   display: inline;
 }
+[${SELECTION_FLOW_ATTR}] {
+  all: unset !important;
+}
 `;
 
 /** Text inside these is never wrapped (not rendered as flow text, or an editor). */
@@ -91,6 +95,12 @@ interface Run {
     origin: Text;
     originData: string;
     ours: Set<Node>;
+    /**
+     * Inside a flex / grid container: the one inline holder of ours that
+     * carries the whole text (the host node is left empty), so the container
+     * still lays it out as a single item. `ours` is then just this holder.
+     */
+    flow: HTMLElement | null;
 }
 
 const runOfOrigin = new WeakMap<Text, Run>();
@@ -362,15 +372,49 @@ export function getSelectionInfo(): SelectionInfo {
     };
 }
 
+// ── Native text accessors ────────────────────────────────────────────────────
+//
+// While a host text node is enlarged it holds only part of its text, so the
+// node is given instance-level accessors that show the host its full text
+// (see virtualizeOrigin). This module itself always goes through the native
+// accessors below.
+
+let dataDesc: PropertyDescriptor | undefined;
+let nextDesc: PropertyDescriptor | undefined;
+
+function realData(t: Text): string {
+    dataDesc ??= Object.getOwnPropertyDescriptor(
+        CharacterData.prototype,
+        "data",
+    );
+    return dataDesc?.get ? (dataDesc.get.call(t) as string) : t.data;
+}
+
+function setRealData(t: Text, value: string) {
+    dataDesc ??= Object.getOwnPropertyDescriptor(
+        CharacterData.prototype,
+        "data",
+    );
+    if (dataDesc?.set) dataDesc.set.call(t, value);
+    else t.data = value;
+}
+
+function realNext(n: Node): Node | null {
+    nextDesc ??= Object.getOwnPropertyDescriptor(Node.prototype, "nextSibling");
+    return nextDesc?.get
+        ? (nextDesc.get.call(n) as Node | null)
+        : n.nextSibling;
+}
+
 // ── Host-change watcher ──────────────────────────────────────────────────────
 
 /** Our nodes of a run, in document order (contiguous siblings after origin). */
 function runNodes(run: Run): Node[] {
     const out: Node[] = [];
-    let cur = run.origin.nextSibling;
+    let cur = realNext(run.origin);
     while (cur && run.ours.has(cur)) {
         out.push(cur);
-        cur = cur.nextSibling;
+        cur = realNext(cur);
     }
     // Anything of ours that is no longer next to the origin (host moved
     // things around) is still ours to clean up.
@@ -378,8 +422,35 @@ function runNodes(run: Run): Node[] {
     return out;
 }
 
+/** The last node of the run that is still contiguous with the origin. */
+function lastRunNode(run: Run): Node {
+    let cur: Node = run.origin;
+    for (
+        let next = realNext(cur);
+        next && run.ours.has(next);
+        next = realNext(cur)
+    )
+        cur = next;
+    return cur;
+}
+
+/** The text the host put in its node: its own part plus everything we split off. */
+function logicalText(run: Run): string {
+    return (
+        realData(run.origin) +
+        runNodes(run)
+            .map((n) => n.textContent ?? "")
+            .join("")
+    );
+}
+
 function forgetRun(run: Run) {
     for (const n of run.ours) runOfOurNode.delete(n);
+    if (run.flow)
+        run.flow
+            .querySelectorAll(`[${SELECTION_RESIZE_ATTR}]`)
+            .forEach((w) => runOfOurNode.delete(w));
+    devirtualizeOrigin(run.origin);
     runOfOrigin.delete(run.origin);
     liveRuns.delete(run);
 }
@@ -395,16 +466,185 @@ function dropRun(run: Run) {
  * is then exactly what it was before anything was enlarged.
  */
 function collapseRun(run: Run) {
-    if (!run.origin.isConnected || run.origin.data !== run.originData) {
+    if (!run.origin.isConnected || realData(run.origin) !== run.originData) {
         dropRun(run);
         return;
     }
     const text = runNodes(run)
         .map((n) => n.textContent ?? "")
         .join("");
-    run.origin.data = run.originData + text;
     for (const n of run.ours) (n as ChildNode).remove();
     forgetRun(run);
+    setRealData(run.origin, run.originData + text);
+}
+
+/** Put the host's full text back into its node now (drops the enlargement). */
+function flattenRun(run: Run) {
+    const full = logicalText(run);
+    for (const n of run.ours) (n as ChildNode).remove();
+    forgetRun(run);
+    setRealData(run.origin, full);
+    discardOwnRecords();
+    if (liveRuns.size === 0) stopHostWatcher();
+    notifyWrappersChanged();
+}
+
+const VIRTUAL_KEYS = [
+    "data",
+    "nodeValue",
+    "textContent",
+    "length",
+    "wholeText",
+    "nextSibling",
+    "appendData",
+    "insertData",
+    "deleteData",
+    "replaceData",
+    "substringData",
+    "splitText",
+    "after",
+    "remove",
+    "replaceWith",
+] as const;
+
+/**
+ * Make an enlarged host text node look unchanged to host code.
+ *
+ * The node keeps only the text before the enlarged part; the rest lives in
+ * our nodes after it. Host code that read or extended the node directly saw
+ * the shortened text: `node.data += chunk` (streamed text) made the enlarged
+ * part and everything after it vanish, and `node.after(el)` /
+ * `parent.insertBefore(el, node.nextSibling)` put the element in the middle of
+ * the sentence. Instance accessors now present the full text and the run's
+ * end as the node's own:
+ * - reads (data, nodeValue, textContent, length, substringData, wholeText)
+ *   return the full text;
+ * - a write replaces the text (the enlargement of this piece is dropped, the
+ *   host's new text is shown);
+ * - appendData extends the text after the enlarged part, which stays;
+ * - insertData / deleteData / replaceData / splitText / replaceWith put the
+ *   full text back first, then run natively;
+ * - nextSibling / after() skip past our nodes; remove() removes ours too.
+ * They are deleted again when the run collapses, so nothing is left behind.
+ */
+function virtualizeOrigin(run: Run) {
+    const origin = run.origin as Text & Record<string, unknown>;
+    if (Object.hasOwn(origin, "data")) return;
+    const live = () => runOfOrigin.get(run.origin) === run;
+    const textProp = {
+        configurable: true,
+        get: () => logicalText(run),
+        set: (v: unknown) => {
+            if (!live()) {
+                setRealData(run.origin, v == null ? "" : String(v));
+                return;
+            }
+            dropRun(run);
+            setRealData(run.origin, v == null ? "" : String(v));
+            discardOwnRecords();
+            if (liveRuns.size === 0) stopHostWatcher();
+            notifyWrappersChanged();
+        },
+    };
+    Object.defineProperty(origin, "data", textProp);
+    Object.defineProperty(origin, "nodeValue", textProp);
+    Object.defineProperty(origin, "textContent", textProp);
+    Object.defineProperty(origin, "length", {
+        configurable: true,
+        get: () => logicalText(run).length,
+    });
+    Object.defineProperty(origin, "wholeText", {
+        configurable: true,
+        get: () => {
+            const whole = Object.getOwnPropertyDescriptor(
+                Text.prototype,
+                "wholeText",
+            )?.get?.call(run.origin) as string | undefined;
+            const own = realData(run.origin);
+            if (whole === undefined) return logicalText(run);
+            return whole.slice(0, whole.length - own.length) + logicalText(run);
+        },
+    });
+    Object.defineProperty(origin, "nextSibling", {
+        configurable: true,
+        get: () => realNext(lastRunNode(run)),
+    });
+    Object.defineProperty(origin, "substringData", {
+        configurable: true,
+        value: (offset: number, count: number) =>
+            logicalText(run).substr(offset, count),
+    });
+    Object.defineProperty(origin, "appendData", {
+        configurable: true,
+        value: (chunk: string) => {
+            const text = String(chunk);
+            if (run.flow) {
+                const last = run.flow.lastChild;
+                if (last && last.nodeType === Node.TEXT_NODE)
+                    (last as Text).appendData(text);
+                else run.flow.appendChild(document.createTextNode(text));
+                return;
+            }
+            const last = lastRunNode(run);
+            if (last !== run.origin && last.nodeType === Node.TEXT_NODE) {
+                (last as Text).appendData(text);
+                return;
+            }
+            const tail = document.createTextNode(text);
+            last.parentNode?.insertBefore(tail, realNext(last));
+            run.ours.add(tail);
+            runOfOurNode.set(tail, run);
+        },
+    });
+    for (const name of [
+        "insertData",
+        "deleteData",
+        "replaceData",
+        "splitText",
+        "replaceWith",
+    ] as const) {
+        Object.defineProperty(origin, name, {
+            configurable: true,
+            value: (...args: unknown[]) => {
+                if (live()) flattenRun(run);
+                const native = (
+                    Text.prototype as unknown as Record<
+                        string,
+                        (...a: unknown[]) => unknown
+                    >
+                )[name];
+                return native.apply(run.origin, args);
+            },
+        });
+    }
+    Object.defineProperty(origin, "after", {
+        configurable: true,
+        value: (...nodes: (Node | string)[]) => {
+            const last = lastRunNode(run);
+            if (last === run.origin)
+                CharacterData.prototype.after.apply(run.origin, nodes);
+            else (last as ChildNode).after(...nodes);
+        },
+    });
+    Object.defineProperty(origin, "remove", {
+        configurable: true,
+        value: () => {
+            if (live()) {
+                dropRun(run);
+                discardOwnRecords();
+                if (liveRuns.size === 0) stopHostWatcher();
+                notifyWrappersChanged();
+            }
+            CharacterData.prototype.remove.call(run.origin);
+        },
+    });
+}
+
+function devirtualizeOrigin(origin: Text) {
+    const o = origin as unknown as Record<string, unknown>;
+    for (const key of VIRTUAL_KEYS) {
+        if (Object.hasOwn(o, key)) delete o[key];
+    }
 }
 
 function discardOwnRecords() {
@@ -419,7 +659,7 @@ function onHostMutations() {
         // Likewise when the host removed our nodes along with their parent.
         const oursGone = Array.from(run.ours).some((n) => !n.isConnected);
         if (
-            run.origin.data !== run.originData ||
+            realData(run.origin) !== run.originData ||
             !run.origin.isConnected ||
             oursGone
         ) {
@@ -461,6 +701,25 @@ function canWrapTextNode(node: Text): boolean {
     return true;
 }
 
+/**
+ * True when the text's parent lays its children out as flex / grid items.
+ * There, every text node is its own item: splitting one node into
+ * text + span + text made three items, with the container's `gap` between
+ * the pieces of one word, and grids pushed the pieces onto new rows.
+ */
+function laysOutChildrenAsItems(parent: Element | null): boolean {
+    let cur = parent;
+    while (cur) {
+        const display = getComputedStyle(cur).display;
+        if (display === "contents") {
+            cur = cur.parentElement;
+            continue;
+        }
+        return /\b(inline-)?(flex|grid)\b/.test(display);
+    }
+    return false;
+}
+
 /** Text nodes the range touches, with the selected offsets inside each. */
 function selectedTextSlices(
     range: Range,
@@ -470,7 +729,10 @@ function selectedTextSlices(
     const consider = (node: Text) => {
         if (!range.intersectsNode(node)) return;
         const start = node === range.startContainer ? range.startOffset : 0;
-        const end = node === range.endContainer ? range.endOffset : node.length;
+        const end =
+            node === range.endContainer
+                ? range.endOffset
+                : realData(node).length;
         if (end <= start) return;
         out.push({ node, start, end });
     };
@@ -485,6 +747,23 @@ function selectedTextSlices(
     return out;
 }
 
+function makeWrapper(
+    parentEl: HTMLElement,
+    selected: string,
+    group: string,
+    level: SelectionFontLevel,
+    scale: number,
+): HTMLElement {
+    const basePx = readUnscaledFontSizePx(parentEl);
+    const span = document.createElement("span");
+    span.setAttribute(SELECTION_RESIZE_ATTR, "1");
+    span.setAttribute(SELECTION_GROUP_ATTR, group);
+    span.classList.add(SELECTION_RESIZE_CLASS);
+    applyWrapperMetrics(span, basePx, scale, level, levelToPx(level, basePx));
+    span.appendChild(document.createTextNode(selected));
+    return span;
+}
+
 function wrapSlice(
     node: Text,
     start: number,
@@ -493,30 +772,61 @@ function wrapSlice(
     level: SelectionFontLevel,
     scale: number,
 ): HTMLElement {
+    const full = realData(node);
+    const before = full.slice(0, start);
+    const selected = full.slice(start, end);
+    const after = full.slice(end);
+    const parentEl = node.parentElement as HTMLElement;
+
+    // Our own text inside a flex/grid holder: split it freely, it is ours.
+    const flowHolder = parentEl.closest(`[${SELECTION_FLOW_ATTR}]`);
+    const flowRun = flowHolder ? runOfOurNode.get(flowHolder) : undefined;
+    if (flowRun) {
+        const span = makeWrapper(parentEl, selected, group, level, scale);
+        const next = realNext(node);
+        setRealData(node, before);
+        parentEl.insertBefore(span, next);
+        if (after) parentEl.insertBefore(document.createTextNode(after), next);
+        runOfOurNode.set(span, flowRun);
+        return span;
+    }
+
     let run = runOfOrigin.get(node) ?? runOfOurNode.get(node);
+    if (!run && laysOutChildrenAsItems(parentEl)) {
+        // Keep the host node where it is (emptied) and hold the whole text in
+        // one inline element of ours, so the container still sees one item.
+        const holder = document.createElement("span");
+        holder.setAttribute(SELECTION_FLOW_ATTR, "1");
+        if (before) holder.appendChild(document.createTextNode(before));
+        const span = makeWrapper(parentEl, selected, group, level, scale);
+        holder.appendChild(span);
+        if (after) holder.appendChild(document.createTextNode(after));
+        run = {
+            origin: node,
+            originData: "",
+            ours: new Set([holder]),
+            flow: holder,
+        };
+        runOfOrigin.set(node, run);
+        runOfOurNode.set(holder, run);
+        runOfOurNode.set(span, run);
+        liveRuns.add(run);
+        parentEl.insertBefore(holder, realNext(node));
+        setRealData(node, "");
+        virtualizeOrigin(run);
+        return span;
+    }
     if (!run) {
-        run = { origin: node, originData: node.data, ours: new Set() };
+        run = { origin: node, originData: full, ours: new Set(), flow: null };
         runOfOrigin.set(node, run);
         liveRuns.add(run);
     }
 
-    const full = node.data;
-    const before = full.slice(0, start);
-    const selected = full.slice(start, end);
-    const after = full.slice(end);
-
-    const basePx = readUnscaledFontSizePx(node.parentElement as HTMLElement);
-    const span = document.createElement("span");
-    span.setAttribute(SELECTION_RESIZE_ATTR, "1");
-    span.setAttribute(SELECTION_GROUP_ATTR, group);
-    span.classList.add(SELECTION_RESIZE_CLASS);
-    applyWrapperMetrics(span, basePx, scale, level, levelToPx(level, basePx));
-    span.appendChild(document.createTextNode(selected));
-
+    const span = makeWrapper(parentEl, selected, group, level, scale);
     const tail = after ? document.createTextNode(after) : null;
     const parent = node.parentNode as Node;
-    const next = node.nextSibling;
-    node.data = before;
+    const next = realNext(node);
+    setRealData(node, before);
     if (node === run.origin) run.originData = before;
     parent.insertBefore(span, next);
     if (tail) parent.insertBefore(tail, next);
@@ -525,7 +835,16 @@ function wrapSlice(
         run.ours.add(n);
         runOfOurNode.set(n, run);
     }
+    virtualizeOrigin(run);
     return span;
+}
+
+/** Length of the text in `root` that comes before `target`. */
+function textOffsetBefore(root: Node, target: Node): number {
+    const r = document.createRange();
+    r.setStart(root, 0);
+    r.setEndBefore(target);
+    return r.toString().length;
 }
 
 /**
@@ -548,9 +867,26 @@ function unwrapResizeWrapper(
         }
         return null;
     }
-    if (!run.origin.isConnected || run.origin.data !== run.originData) {
+    if (!run.origin.isConnected || realData(run.origin) !== run.originData) {
         dropRun(run);
         return null;
+    }
+
+    if (run.flow) {
+        const offset = textOffsetBefore(run.flow, wrapper);
+        const plain = document.createTextNode(selected);
+        wrapper.replaceWith(plain);
+        runOfOurNode.delete(wrapper);
+        if (run.flow.querySelector(`[${SELECTION_RESIZE_ATTR}]`))
+            return { node: plain, start: 0, end: selected.length };
+        const origin = run.origin;
+        const base = run.originData.length;
+        collapseRun(run);
+        return {
+            node: origin,
+            start: base + offset,
+            end: base + offset + selected.length,
+        };
     }
 
     const plain = document.createTextNode(selected);
@@ -672,7 +1008,7 @@ export function applySelectionFontLevel(
                 continue;
             }
             if (!canWrapTextNode(node)) continue;
-            if (node.data.slice(start, end).trim() === "") continue;
+            if (realData(node).slice(start, end).trim() === "") continue;
             touched.push(wrapSlice(node, start, end, group, level, scale));
         }
         discardOwnRecords();
@@ -724,6 +1060,20 @@ export function clearSelectionFontSize(): ApplySelectionResult {
     }
 
     return { ok: true, message: t().selCleared };
+}
+
+/**
+ * The host replaced <body>: the enlarged pieces went with the old one. Forget
+ * them (their nodes are no longer in the page) and stop watching the old body.
+ */
+export function rebindSelectionTextSize() {
+    if (!selectionActive) return;
+    const had = liveRuns.size > 0;
+    for (const run of Array.from(liveRuns)) forgetRun(run);
+    stopHostWatcher();
+    persistedRange = null;
+    activeGroup = null;
+    if (had) notifyWrappersChanged();
 }
 
 export function onSelectionChange(cb: () => void): () => void {

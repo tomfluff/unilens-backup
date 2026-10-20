@@ -34,7 +34,9 @@ import {
     SMALL_BOOST_CLASS,
     SMALL_BOOST_ORIGINAL_ATTR,
     SMALL_BOOST_TARGET_VAR,
+    isUniLensOverlayNode,
 } from "./domIds";
+import { isOwnStyleMutation, removedOwnMarks } from "./ownMutation";
 
 export const TEXT_SIZE_STYLE_ID = "unilens-a11y-text-size-style";
 
@@ -69,8 +71,14 @@ html:not([${TEXT_SIZE_PROBE_ATTR}]) ${ANY_SEL} {
 
 export type TextSizeOwner = "pageFont" | "bodyExpand" | "smallBoost";
 
+/**
+ * Re-applies a feature. `roots` limits the walk to the subtrees the host just
+ * changed; without it the whole page is rescanned.
+ */
+export type TextSizeRescan = (roots?: Element[]) => void;
+
 const owners = new Set<TextSizeOwner>();
-const rescanners = new Map<TextSizeOwner, () => void>();
+const rescanners = new Map<TextSizeOwner, TextSizeRescan>();
 let resizeTimer: number | undefined;
 let resizeBound = false;
 
@@ -100,12 +108,13 @@ function unbindResize() {
  */
 export function acquireTextSizeStyles(
     owner: TextSizeOwner,
-    rescan?: () => void,
+    rescan?: TextSizeRescan,
 ) {
     owners.add(owner);
     if (rescan) rescanners.set(owner, rescan);
     if (typeof document === "undefined") return;
     bindResize();
+    startHostStyleWatch();
     if (document.getElementById(TEXT_SIZE_STYLE_ID)) return;
     const style = document.createElement("style");
     style.id = TEXT_SIZE_STYLE_ID;
@@ -119,6 +128,7 @@ export function releaseTextSizeStyles(owner: TextSizeOwner) {
     rescanners.delete(owner);
     if (owners.size > 0 || typeof document === "undefined") return;
     unbindResize();
+    stopHostStyleWatch();
     document.getElementById(TEXT_SIZE_STYLE_ID)?.remove();
 }
 
@@ -166,20 +176,32 @@ export function readOriginalFontPx(el: HTMLElement, pageScale = 1): number {
 /**
  * Each feature records the host's size the first time it marks a node, and
  * keeps scaling from that number. When the host's own size changes without a
- * DOM mutation — a media-query breakpoint after a window resize, or the root
- * font-size changed by auto text size — that record is stale: text stayed at
- * the old size, and could end up smaller than the host's new size.
+ * DOM mutation — a media-query breakpoint after a window resize, the root
+ * font-size changed by auto text size, or the host switching a class / inline
+ * style that sets font-size — that record is stale: text stayed at the old
+ * size, and could end up smaller than the host's new size.
  *
  * This reads every marked node's current host size with the shared rule
  * switched off (one synchronous probe, no paint in between), updates the
- * records, and lets each active feature rescan.
+ * records, and lets each active feature rescan. `roots` limits both to the
+ * subtrees the host changed.
  */
-export function remeasureTextSizes() {
+export function remeasureTextSizes(roots?: Element[]) {
     if (typeof document === "undefined") return;
     const html = document.documentElement;
-    const marked = Array.from(
-        document.querySelectorAll(ORIGINAL_ATTRS.map((a) => `[${a}]`).join(",")),
-    );
+    const sel = ORIGINAL_ATTRS.map((a) => `[${a}]`).join(",");
+    let marked: Element[];
+    if (roots) {
+        const set = new Set<Element>();
+        for (const root of roots) {
+            if (!root.isConnected) continue;
+            if (root.matches(sel)) set.add(root);
+            root.querySelectorAll(sel).forEach((el) => set.add(el));
+        }
+        marked = Array.from(set);
+    } else {
+        marked = Array.from(document.querySelectorAll(sel));
+    }
     if (marked.length > 0) {
         html.setAttribute(TEXT_SIZE_PROBE_ATTR, "");
         const sizes = marked.map((el) =>
@@ -191,8 +213,93 @@ export function remeasureTextSizes() {
             if (!Number.isFinite(px) || px <= 0) return;
             const value = String(Math.round(px * 100) / 100);
             for (const attr of ORIGINAL_ATTRS)
-                if (el.hasAttribute(attr)) el.setAttribute(attr, value);
+                if (el.hasAttribute(attr) && el.getAttribute(attr) !== value)
+                    el.setAttribute(attr, value);
         });
     }
-    for (const rescan of rescanners.values()) rescan();
+    const live = roots?.filter((r) => r.isConnected);
+    if (live && live.length === 0) return;
+    for (const rescan of rescanners.values()) rescan(live);
+}
+
+// ── Host class / style changes ───────────────────────────────────────────────
+
+/**
+ * The features only watched for added / removed nodes. A host that changed a
+ * size by switching a class (an accordion's `.open { font-size: 24px }`) or an
+ * inline style kept its old recorded size, and a framework re-render that set
+ * `className` to the component's own value removed our class, so the
+ * enlargement fell off that element for good. Host class / style writes now
+ * re-measure and re-apply the changed subtree (our own writes are ignored).
+ */
+const HOST_STYLE_DEBOUNCE_MS = 120;
+let hostStyleWatch: MutationObserver | null = null;
+let hostStyleBody: HTMLElement | null = null;
+let hostStyleTimer: number | undefined;
+const pendingRoots = new Set<Element>();
+
+function topmost(nodes: Iterable<Element>): Element[] {
+    const all = Array.from(nodes).filter((n) => n.isConnected);
+    const set = new Set(all);
+    return all.filter((n) => {
+        for (let p = n.parentElement; p; p = p.parentElement)
+            if (set.has(p)) return false;
+        return true;
+    });
+}
+
+function flushHostStyleChanges() {
+    hostStyleTimer = undefined;
+    const roots = topmost(pendingRoots);
+    pendingRoots.clear();
+    if (roots.length > 0) remeasureTextSizes(roots);
+}
+
+function onHostStyleMutations(records: MutationRecord[]) {
+    for (const r of records) {
+        const el = r.target;
+        if (!(el instanceof Element) || isUniLensOverlayNode(el)) continue;
+        const name = r.attributeName;
+        const now = name ? el.getAttribute(name) : null;
+        if (
+            isOwnStyleMutation(name, r.oldValue, now) &&
+            !removedOwnMarks(name, r.oldValue, now)
+        )
+            continue;
+        pendingRoots.add(el);
+    }
+    if (pendingRoots.size === 0 || typeof window === "undefined") return;
+    window.clearTimeout(hostStyleTimer);
+    hostStyleTimer = window.setTimeout(
+        flushHostStyleChanges,
+        HOST_STYLE_DEBOUNCE_MS,
+    );
+}
+
+function startHostStyleWatch() {
+    if (typeof MutationObserver === "undefined" || !document.body) return;
+    if (hostStyleWatch && hostStyleBody === document.body) return;
+    hostStyleWatch?.disconnect();
+    hostStyleBody = document.body;
+    hostStyleWatch = new MutationObserver(onHostStyleMutations);
+    hostStyleWatch.observe(document.body, {
+        subtree: true,
+        attributes: true,
+        attributeOldValue: true,
+        attributeFilter: ["class", "style"],
+    });
+}
+
+function stopHostStyleWatch() {
+    hostStyleWatch?.disconnect();
+    hostStyleWatch = null;
+    hostStyleBody = null;
+    if (typeof window !== "undefined") window.clearTimeout(hostStyleTimer);
+    pendingRoots.clear();
+}
+
+/** The host replaced <body>: watch the new one. */
+export function rebindTextSizeWatch() {
+    if (owners.size === 0) return;
+    startHostStyleWatch();
 }

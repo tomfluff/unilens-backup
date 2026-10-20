@@ -85,18 +85,21 @@ html[data-unilens-a11y-display-active] :is(body[data-unilens-page-content], #uni
   color: var(--unilens-a11y-display-text) !important;
 }
 
-html[data-unilens-a11y-theme='light'][data-unilens-a11y-display-active],
-html[data-unilens-a11y-theme='dark'][data-unilens-a11y-display-active],
-html[data-unilens-a11y-theme='soft'][data-unilens-a11y-display-active],
-html[data-unilens-a11y-theme='high-contrast'][data-unilens-a11y-display-active] {
+/* Not while the surface pass samples host fills (bg-sample): a dark color
+ * scheme repaints native controls dark, and that would be read as the
+ * host's own fill (fillTone.ts would turn every input into a gray fill). */
+html[data-unilens-a11y-theme='light'][data-unilens-a11y-display-active]:not([data-unilens-a11y-bg-sample]),
+html[data-unilens-a11y-theme='dark'][data-unilens-a11y-display-active]:not([data-unilens-a11y-bg-sample]),
+html[data-unilens-a11y-theme='soft'][data-unilens-a11y-display-active]:not([data-unilens-a11y-bg-sample]),
+html[data-unilens-a11y-theme='high-contrast'][data-unilens-a11y-display-active]:not([data-unilens-a11y-bg-sample]) {
   color-scheme: light;
 }
 
-html[data-unilens-a11y-theme='dark'][data-unilens-a11y-display-active] {
+html[data-unilens-a11y-theme='dark'][data-unilens-a11y-display-active]:not([data-unilens-a11y-bg-sample]) {
   color-scheme: dark;
 }
 
-html[data-unilens-a11y-theme='high-contrast'][data-unilens-a11y-display-active] {
+html[data-unilens-a11y-theme='high-contrast'][data-unilens-a11y-display-active]:not([data-unilens-a11y-bg-sample]) {
   color-scheme: dark;
 }
 
@@ -205,27 +208,37 @@ html[data-unilens-a11y-display-active] :is(body[data-unilens-page-content], #uni
  * !important reset; painting surface keeps menus opaque and theme-aligned.
  * Only the marked node is painted — descendants stay transparent so they
  * show this fill (and keep host background-image icons intact).
- * [data-unilens-a11y-bg-sample] temporarily opts an element out of the
- * transparent reset while markers sample the author background. */
-html[data-unilens-a11y-display-active] :is(body[data-unilens-page-content], #unilens-a11y-page-root) *:not([data-unilens-a11y-bg-sample]):not([data-unilens-a11y-media-text]) {
+ * [data-unilens-a11y-bg-sample] on <html> lifts the transparent reset and the
+ * surface fills for one synchronous read while markers sample the author
+ * background (never across a paint). It used to be set on every page element,
+ * which flooded host MutationObservers with thousands of records per pass.
+ * Every rule below that paints a background-color carries this opt-out:
+ * the sampled color decides the fill tier (fillTone.ts), so it must be the
+ * host's own, never one of ours (a plate's black read as a dark gray fill). */
+html[data-unilens-a11y-display-active]:not([data-unilens-a11y-bg-sample]) :is(body[data-unilens-page-content], #unilens-a11y-page-root) *:not([data-unilens-a11y-media-text]) {
   background-color: transparent !important;
 }
 
 /* Freeze host transitions while sampling. SoftBank `.tab-button` uses
  * `transition: all .3s` between an opaque selected fill and a transparent
  * idle fill; sampling mid-fade would keep the old tab marked (leftover
- * themed ring) and miss the newly selected one. */
-html[data-unilens-a11y-display-active] :is(body[data-unilens-page-content], #unilens-a11y-page-root) [data-unilens-a11y-bg-sample] {
+ * themed ring) and miss the newly selected one.
+ *
+ * Never `animation: none`: removing it again restarts every host animation
+ * (one-shot fade-ins replayed on every host DOM change). And never on an
+ * element whose own transition is running ([data-unilens-a11y-keep-motion],
+ * set by documentEffects.ts): `transition: none` cancels it, so it jumped to
+ * its end state and the host's `transitionend` never came. */
+html[data-unilens-a11y-bg-sample] :is(body[data-unilens-page-content], #unilens-a11y-page-root) *:not([data-unilens-a11y-keep-motion]) {
   transition: none !important;
-  animation: none !important;
 }
 
 /* mediaTextGuard lifts the color attributes off <html> to read host paint
  * (data-unilens-a11y-paint-probe). No host fade may run while it does, nor
  * when the attributes come back. */
-html[data-unilens-a11y-paint-probe] :is(body[data-unilens-page-content], #unilens-a11y-page-root) *,
-html[data-unilens-a11y-paint-probe] :is(body[data-unilens-page-content], #unilens-a11y-page-root) *::before,
-html[data-unilens-a11y-paint-probe] :is(body[data-unilens-page-content], #unilens-a11y-page-root) *::after {
+html[data-unilens-a11y-paint-probe] :is(body[data-unilens-page-content], #unilens-a11y-page-root) *:not([data-unilens-a11y-keep-motion]),
+html[data-unilens-a11y-paint-probe] :is(body[data-unilens-page-content], #unilens-a11y-page-root) *:not([data-unilens-a11y-keep-motion])::before,
+html[data-unilens-a11y-paint-probe] :is(body[data-unilens-page-content], #unilens-a11y-page-root) *:not([data-unilens-a11y-keep-motion])::after {
   transition: none !important;
 }
 
@@ -233,9 +246,9 @@ html[data-unilens-a11y-paint-probe] :is(body[data-unilens-page-content], #unilen
  * author color back to the themed one does not start a host fade
  * (`transition: all .3s`). Only transitions: `animation: none` here would
  * restart host animations. */
-html[data-unilens-a11y-display-active] :is(body[data-unilens-page-content], #unilens-a11y-page-root) [data-unilens-a11y-bg-freeze],
-html[data-unilens-a11y-display-active] :is(body[data-unilens-page-content], #unilens-a11y-page-root) [data-unilens-a11y-bg-freeze]::before,
-html[data-unilens-a11y-display-active] :is(body[data-unilens-page-content], #unilens-a11y-page-root) [data-unilens-a11y-bg-freeze]::after {
+html[data-unilens-a11y-bg-freeze] :is(body[data-unilens-page-content], #unilens-a11y-page-root) *:not([data-unilens-a11y-keep-motion]),
+html[data-unilens-a11y-bg-freeze] :is(body[data-unilens-page-content], #unilens-a11y-page-root) *:not([data-unilens-a11y-keep-motion])::before,
+html[data-unilens-a11y-bg-freeze] :is(body[data-unilens-page-content], #unilens-a11y-page-root) *:not([data-unilens-a11y-keep-motion])::after {
   transition: none !important;
 }
 
@@ -244,8 +257,28 @@ html[data-unilens-a11y-display-active] :is(body[data-unilens-page-content], #uni
   border-color: var(--unilens-a11y-display-border) !important;
 }
 
-html[data-unilens-a11y-display-active] :is(body[data-unilens-page-content], #unilens-a11y-page-root) [data-unilens-a11y-positioned-overlay]:not([data-unilens-a11y-media-text]) {
+html[data-unilens-a11y-display-active]:not([data-unilens-a11y-bg-sample]) :is(body[data-unilens-page-content], #unilens-a11y-page-root) [data-unilens-a11y-positioned-overlay]:not([data-unilens-a11y-media-text]) {
   background-color: var(--unilens-a11y-display-surface) !important;
+}
+
+/* Fills that told things apart keep apart. One surface color for every
+ * opaque fill made a switch on and off, a progress bar and its track, a
+ * selected chip, color swatches, a <mark> and a red badge all look the same.
+ * documentEffects.ts sorts each sampled host fill into surface / muted (mid
+ * gray) / tone (the host hue) and puts the themed color in an inline
+ * variable (fillTone.ts: readable under the theme text color, as far from
+ * the page as that allows). The trailing :not(#id) lifts this above the
+ * high-contrast text plates, which would paint the same element black. */
+html[data-unilens-a11y-display-active]:not([data-unilens-a11y-bg-sample]) :is(body[data-unilens-page-content], #unilens-a11y-page-root) [data-unilens-a11y-fill]:not([data-unilens-a11y-media-text]):not(#unilens-a11y-fill-boost) {
+  background-color: var(--unilens-a11y-fill) !important;
+}
+
+html[data-unilens-a11y-display-active]:not([data-unilens-a11y-bg-sample]) :is(body[data-unilens-page-content], #unilens-a11y-page-root) [data-unilens-a11y-fill-before]:not([data-unilens-a11y-media-text]):not(#unilens-a11y-fill-boost)::before {
+  background-color: var(--unilens-a11y-fill-before) !important;
+}
+
+html[data-unilens-a11y-display-active]:not([data-unilens-a11y-bg-sample]) :is(body[data-unilens-page-content], #unilens-a11y-page-root) [data-unilens-a11y-fill-after]:not([data-unilens-a11y-media-text]):not(#unilens-a11y-fill-boost)::after {
+  background-color: var(--unilens-a11y-fill-after) !important;
 }
 
 /*
@@ -262,7 +295,19 @@ html[data-unilens-a11y-display-active] :is(body[data-unilens-page-content], #uni
   select,
   textarea,
   summary
-) {
+):where(:not(:focus-visible)) {
+  box-shadow: inset 0 0 0 1px var(--unilens-a11y-display-border) !important;
+}
+
+/* High contrast: form controls keep the same 1px ring even when the host
+ * draws them without a fill (a text-only menu button, a bare input) — the
+ * plates paint them black, so the ring is what marks them as controls. */
+html[data-unilens-a11y-text-plate][data-unilens-a11y-display-active] :is(body[data-unilens-page-content], #unilens-a11y-page-root) :is(
+  input:not([type='hidden']):not([type='image']):not([type='checkbox']):not([type='radio']):not([type='range']):not([type='file']),
+  textarea,
+  select,
+  button
+):not([data-unilens-a11y-media-text]):where(:not(:focus-visible)) {
   box-shadow: inset 0 0 0 1px var(--unilens-a11y-display-border) !important;
 }
 
@@ -299,11 +344,11 @@ html[data-unilens-a11y-display-active] :is(body[data-unilens-page-content], #uni
  * own background the same way it already does for real elements and marks
  * the host so we can repaint just these two pseudos with the themed surface.
  */
-html[data-unilens-a11y-display-active] :is(body[data-unilens-page-content], #unilens-a11y-page-root) [data-unilens-a11y-pseudo-overlay-before]:not([data-unilens-a11y-media-text])::before {
+html[data-unilens-a11y-display-active]:not([data-unilens-a11y-bg-sample]) :is(body[data-unilens-page-content], #unilens-a11y-page-root) [data-unilens-a11y-pseudo-overlay-before]:not([data-unilens-a11y-media-text])::before {
   background-color: var(--unilens-a11y-display-surface) !important;
 }
 
-html[data-unilens-a11y-display-active] :is(body[data-unilens-page-content], #unilens-a11y-page-root) [data-unilens-a11y-pseudo-overlay-after]:not([data-unilens-a11y-media-text])::after {
+html[data-unilens-a11y-display-active]:not([data-unilens-a11y-bg-sample]) :is(body[data-unilens-page-content], #unilens-a11y-page-root) [data-unilens-a11y-pseudo-overlay-after]:not([data-unilens-a11y-media-text])::after {
   background-color: var(--unilens-a11y-display-surface) !important;
 }
 
@@ -317,35 +362,35 @@ html[data-unilens-a11y-display-active] :is(body[data-unilens-page-content], #uni
  * is live it will match the same elements too; this block is then a harmless
  * duplicate and can be removed.
  */
-html[data-unilens-a11y-display-active] :is(body[data-unilens-page-content], #unilens-a11y-page-root) .p-graduateArrow:not([data-unilens-a11y-media-text])::after,
-html[data-unilens-a11y-display-active] :is(body[data-unilens-page-content], #unilens-a11y-page-root) .c-hdg:not([data-unilens-a11y-media-text])::after,
-html[data-unilens-a11y-display-active] :is(body[data-unilens-page-content], #unilens-a11y-page-root) .slick-active:not([data-unilens-a11y-media-text])::before {
+html[data-unilens-a11y-display-active]:not([data-unilens-a11y-bg-sample]) :is(body[data-unilens-page-content], #unilens-a11y-page-root) .p-graduateArrow:not([data-unilens-a11y-media-text])::after,
+html[data-unilens-a11y-display-active]:not([data-unilens-a11y-bg-sample]) :is(body[data-unilens-page-content], #unilens-a11y-page-root) .c-hdg:not([data-unilens-a11y-media-text])::after,
+html[data-unilens-a11y-display-active]:not([data-unilens-a11y-bg-sample]) :is(body[data-unilens-page-content], #unilens-a11y-page-root) .slick-active:not([data-unilens-a11y-media-text])::before {
   background-color: var(--unilens-a11y-display-surface) !important;
 }
 
-html[data-unilens-a11y-display-active] :is(body[data-unilens-page-content], #unilens-a11y-page-root) [class*='link-container']:not([data-unilens-a11y-media-text])::after,
-html[data-unilens-a11y-display-active] :is(body[data-unilens-page-content], #unilens-a11y-page-root) [class*='link-container']:not([data-unilens-a11y-media-text])::before {
+html[data-unilens-a11y-display-active]:not([data-unilens-a11y-bg-sample]) :is(body[data-unilens-page-content], #unilens-a11y-page-root) [class*='link-container']:not([data-unilens-a11y-media-text])::after,
+html[data-unilens-a11y-display-active]:not([data-unilens-a11y-bg-sample]) :is(body[data-unilens-page-content], #unilens-a11y-page-root) [class*='link-container']:not([data-unilens-a11y-media-text])::before {
   background-color: var(--unilens-a11y-display-border) !important;
 }
 
 /* SoftBank accordion open-state thickens the same ::after into a white spacer
  * (parent gets `…-lv4--open`). Keep that fill on the surface token. */
-html[data-unilens-a11y-display-active] :is(body[data-unilens-page-content], #unilens-a11y-page-root) [class*='--open'] [class*='link-container']:not([data-unilens-a11y-media-text])::after,
-html[data-unilens-a11y-display-active] :is(body[data-unilens-page-content], #unilens-a11y-page-root) [class*='link-container'][class*='--open']:not([data-unilens-a11y-media-text])::after {
+html[data-unilens-a11y-display-active]:not([data-unilens-a11y-bg-sample]) :is(body[data-unilens-page-content], #unilens-a11y-page-root) [class*='--open'] [class*='link-container']:not([data-unilens-a11y-media-text])::after,
+html[data-unilens-a11y-display-active]:not([data-unilens-a11y-bg-sample]) :is(body[data-unilens-page-content], #unilens-a11y-page-root) [class*='link-container'][class*='--open']:not([data-unilens-a11y-media-text])::after {
   background-color: var(--unilens-a11y-display-surface) !important;
 }
 
 /* SoftBank world-menu trigger paints an open-state plate via ::before with
  * hardcoded #ebebee — unreadable under dark/high-contrast text. Align with
  * the themed surface used for the positioned overlay panel. */
-html[data-unilens-a11y-display-active] :is(body[data-unilens-page-content], #unilens-a11y-page-root) .sb-appshell-v1-header_world-menu-button:not([data-unilens-a11y-media-text])::before {
+html[data-unilens-a11y-display-active]:not([data-unilens-a11y-bg-sample]) :is(body[data-unilens-page-content], #unilens-a11y-page-root) .sb-appshell-v1-header_world-menu-button:not([data-unilens-a11y-media-text])::before {
   background-color: var(--unilens-a11y-display-surface) !important;
 }
 
 /* Re-paint recognizable containers with the elevated "surface" tone for visual
  * hierarchy, layered on top of the blanket reset above. Applies to every
  * active theme (high-contrast's black-on-black is just as possible as dark's). */
-html[data-unilens-a11y-display-active] :is(body[data-unilens-page-content], #unilens-a11y-page-root) :where(
+html[data-unilens-a11y-display-active]:not([data-unilens-a11y-bg-sample]) :is(body[data-unilens-page-content], #unilens-a11y-page-root) :where(
   .hero,
   .card,
   .container,
@@ -357,7 +402,7 @@ html[data-unilens-a11y-display-active] :is(body[data-unilens-page-content], #uni
   nav,
   main,
   aside
-):not(#unilens-a11y-root):not(#unilens-root):not([data-unilens-ui]):not([data-unilens-a11y-media-text]) {
+):not(#unilens-a11y-root):not(#unilens-root):not([data-unilens-ui]):not([data-unilens-a11y-media-text]):not([data-unilens-a11y-fill]) {
   background-color: var(--unilens-a11y-display-surface) !important;
 }
 
@@ -392,15 +437,16 @@ html[data-unilens-a11y-display-active] :is(body[data-unilens-page-content], #uni
  * standard/light/soft/invert, surface is white/cream anyway, so this is a
  * no-op there; it only changes anything for dark and high-contrast.
  */
-html[data-unilens-a11y-display-active] :is(body[data-unilens-page-content], #unilens-a11y-page-root) .c-hdg.vertical.f-font-en:not([data-unilens-a11y-media-text]) {
+html[data-unilens-a11y-display-active]:not([data-unilens-a11y-bg-sample]) :is(body[data-unilens-page-content], #unilens-a11y-page-root) .c-hdg.vertical.f-font-en:not([data-unilens-a11y-media-text]) {
   background-color: var(--unilens-a11y-display-surface) !important;
 }
 
-html[data-unilens-a11y-theme='high-contrast'][data-unilens-a11y-display-active] :is(body[data-unilens-page-content], #unilens-a11y-page-root) .hero:not([data-unilens-a11y-media-text]) {
+/* :not(#…) keeps this deliberate black above the themed fills (fillTone.ts). */
+html[data-unilens-a11y-theme='high-contrast'][data-unilens-a11y-display-active]:not([data-unilens-a11y-bg-sample]) :is(body[data-unilens-page-content], #unilens-a11y-page-root) .hero:not([data-unilens-a11y-media-text]):not(#unilens-a11y-hero-boost) {
   background-color: var(--unilens-a11y-display-bg) !important;
 }
 
-html[data-unilens-a11y-text-plate] :is(body[data-unilens-page-content], #unilens-a11y-page-root) kbd:not([data-unilens-a11y-media-text]) {
+html[data-unilens-a11y-text-plate]:not([data-unilens-a11y-bg-sample]) :is(body[data-unilens-page-content], #unilens-a11y-page-root) kbd:not([data-unilens-a11y-media-text]) {
   background: var(--unilens-a11y-text-plate-bg) !important;
   color: var(--unilens-a11y-text-plate-fg) !important;
   border: 1px solid var(--unilens-a11y-text-plate-fg) !important;
@@ -420,7 +466,7 @@ html[data-unilens-a11y-text-plate] :is(body[data-unilens-page-content], #unilens
  * Tag-listed wrappers that own no text (a card <a> / <li> whose photo is its
  * background-image) are marked text-bg-skip by documentEffects and left alone.
  */
-html[data-unilens-a11y-text-plate]
+html[data-unilens-a11y-text-plate]:not([data-unilens-a11y-bg-sample])
   :is(body[data-unilens-page-content], #unilens-a11y-page-root)
   :is(
     p,
@@ -452,26 +498,26 @@ html[data-unilens-a11y-text-plate]
     i,
     cite,
     a
-  ):not([data-unilens-a11y-bg-sample]):not([data-unilens-a11y-text-bg-skip]):not([data-unilens-a11y-media-text]) {
+  ):not([data-unilens-a11y-text-bg-skip]):not([data-unilens-a11y-media-text]) {
   background-color: var(--unilens-a11y-text-plate-bg) !important;
   color: var(--unilens-a11y-text-plate-fg) !important;
   -webkit-box-decoration-break: clone;
   box-decoration-break: clone;
 }
 
-html[data-unilens-a11y-text-plate]
+html[data-unilens-a11y-text-plate]:not([data-unilens-a11y-bg-sample])
   :is(body[data-unilens-page-content], #unilens-a11y-page-root)
-  [data-unilens-a11y-text-bg]:not([data-unilens-a11y-bg-sample]):not([data-unilens-a11y-media-text]) {
+  [data-unilens-a11y-text-bg]:not([data-unilens-a11y-media-text]) {
   background-color: var(--unilens-a11y-text-plate-bg) !important;
   color: var(--unilens-a11y-text-plate-fg) !important;
   -webkit-box-decoration-break: clone;
   box-decoration-break: clone;
 }
 
-html[data-unilens-a11y-text-plate]
+html[data-unilens-a11y-text-plate]:not([data-unilens-a11y-bg-sample])
   :is(body[data-unilens-page-content], #unilens-a11y-page-root)
   [data-unilens-a11y-text-bg-before]:not([data-unilens-a11y-media-text])::before,
-html[data-unilens-a11y-text-plate]
+html[data-unilens-a11y-text-plate]:not([data-unilens-a11y-bg-sample])
   :is(body[data-unilens-page-content], #unilens-a11y-page-root)
   [data-unilens-a11y-text-bg-after]:not([data-unilens-a11y-media-text])::after {
   background-color: var(--unilens-a11y-text-plate-bg) !important;
@@ -483,7 +529,7 @@ html[data-unilens-a11y-text-plate]
  * ([data-unilens-a11y-media-owner], set by mediaTextGuard.ts): a banner link
  * whose photo is its background-image would otherwise lose the photo. The
  * plate fill then sits under the picture instead of replacing it. */
-html[data-unilens-a11y-text-plate]
+html[data-unilens-a11y-text-plate]:not([data-unilens-a11y-bg-sample])
   :is(body[data-unilens-page-content], #unilens-a11y-page-root)
   :is(
     p,
@@ -515,10 +561,10 @@ html[data-unilens-a11y-text-plate]
     i,
     cite,
     a
-  ):not([data-unilens-a11y-bg-sample]):not([data-unilens-a11y-text-bg-skip]):not([data-unilens-a11y-media-text]):not([data-unilens-a11y-media-owner]),
-html[data-unilens-a11y-text-plate]
+  ):not([data-unilens-a11y-text-bg-skip]):not([data-unilens-a11y-media-text]):not([data-unilens-a11y-media-owner]),
+html[data-unilens-a11y-text-plate]:not([data-unilens-a11y-bg-sample])
   :is(body[data-unilens-page-content], #unilens-a11y-page-root)
-  [data-unilens-a11y-text-bg]:not([data-unilens-a11y-bg-sample]):not([data-unilens-a11y-media-text]):not([data-unilens-a11y-media-owner]) {
+  [data-unilens-a11y-text-bg]:not([data-unilens-a11y-media-text]):not([data-unilens-a11y-media-owner]) {
   background-image: none !important;
 }
 
@@ -531,7 +577,7 @@ html[data-unilens-a11y-text-plate]
   background-image: none !important;
 }
 
-html[data-unilens-a11y-text-plate]
+html[data-unilens-a11y-text-plate]:not([data-unilens-a11y-bg-sample])
   :is(body[data-unilens-page-content], #unilens-a11y-page-root)
   :is(
     input:not([type='hidden']):not([type='image']):not([type='checkbox']):not([type='radio']):not(
@@ -612,8 +658,11 @@ html[data-unilens-a11y-link-background='true'] :is(body[data-unilens-page-conten
     color-mix(in srgb, var(--unilens-a11y-display-link) 55%, white 45%) 68%,
     transparent
   ) !important;
-  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.55);
   border-radius: 2px;
+}
+
+html[data-unilens-a11y-link-background='true'] :is(body[data-unilens-page-content], #unilens-a11y-page-root) a:not([data-unilens-a11y-media-text]):where(:not(:focus-visible)) {
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.55);
 }
 
 /* ── Link border ──────────────────────────────────────────────────────────
@@ -624,7 +673,7 @@ html[data-unilens-a11y-link-background='true'] :is(body[data-unilens-page-conten
    --unilens-a11y-display-link itself is too dark to read against a dark
    host background — see the link-background comment above for why. */
 
-html[data-unilens-a11y-link-border='true'] :is(body[data-unilens-page-content], #unilens-a11y-page-root) a {
+html[data-unilens-a11y-link-border='true'] :is(body[data-unilens-page-content], #unilens-a11y-page-root) a:where(:not(:focus-visible)) {
   outline: 2px solid var(--unilens-a11y-display-link) !important;
   outline-offset: 1px;
   box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.85);
@@ -647,20 +696,55 @@ html[data-unilens-a11y-image-border='true'] :is(body[data-unilens-page-content],
 
 html[data-unilens-a11y-element-highlight='true'] :is(body[data-unilens-page-content], #unilens-a11y-page-root) :where(
   a, button, [role='button'], input, select, textarea, summary
-) {
+):where(:not(:focus-visible)) {
   outline: 1.5px solid var(--unilens-a11y-display-link) !important;
   outline-offset: 1px;
   box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.85);
   border-radius: 2px;
 }
 
+/* ── Keyboard focus stays visible ──────────────────────────────────────────
+ * The color themes force border-color on every element and an inset ring on
+ * filled controls, which wiped out focus styles drawn with box-shadow or a
+ * border color (Bootstrap-style buttons and inputs looked the same focused or
+ * not), and a host outline color was never remapped (a dark ring on a dark
+ * theme). Link border / element highlight put a permanent outline on every
+ * link, and link backgrounds a box-shadow, so the focused one did not stand
+ * out either. While any of these is on, :focus-visible gets its own ring: a
+ * white halo inside a 3px outline in the theme link color, readable on light
+ * and dark pages alike. The rules above leave :focus-visible alone (inside
+ * :where(), so their specificity is what it was).
+ * The focus-enhance rules further down share this specificity and come later,
+ * so the visitor's enhanced ring wins when that is on. */
+html:is(
+    [data-unilens-a11y-display-active],
+    [data-unilens-a11y-link-border='true'],
+    [data-unilens-a11y-element-highlight='true'],
+    [data-unilens-a11y-link-background='true']
+  )
+  :is(body[data-unilens-page-content], #unilens-a11y-page-root)
+  :focus-visible {
+  outline: 3px solid var(--unilens-a11y-display-link) !important;
+  outline-offset: 2px !important;
+  box-shadow: 0 0 0 2px #ffffff !important;
+}
+
 /* ── Reduce motion (mild / sensory) ──────────────────────────────────────── */
 
+/* Motion is finished instantly rather than removed. `animation: none` /
+ * `transition: none` dropped the end state of host animations (a fade-in
+ * from `opacity: 0` with `forwards` stayed invisible) and swallowed
+ * `animationend` / `transitionend`, so host modals and toasts that close on
+ * those events stayed on screen. A near-zero duration jumps straight to the
+ * end state and still fires every event; infinite loops run once and stop. */
 html[data-unilens-a11y-reduce-motion='true'] :is(body[data-unilens-page-content], #unilens-a11y-page-root) *,
 html[data-unilens-a11y-reduce-motion='true'] :is(body[data-unilens-page-content], #unilens-a11y-page-root) *::before,
 html[data-unilens-a11y-reduce-motion='true'] :is(body[data-unilens-page-content], #unilens-a11y-page-root) *::after {
-  animation: none !important;
-  transition: none !important;
+  animation-duration: 0.01ms !important;
+  animation-delay: 0s !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  transition-delay: 0s !important;
   scroll-behavior: auto !important;
 }
 

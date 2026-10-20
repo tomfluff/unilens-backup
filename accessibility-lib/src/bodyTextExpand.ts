@@ -82,9 +82,11 @@ let bodyTextActive = false;
 let a11yUnsub: (() => void) | null = null;
 
 function ensureStylesheet() {
-    acquireTextSizeStyles("bodyExpand", () => {
-        if (bodyTextActive && getA11ySettings().bodyTextExpandLevel > 0)
-            lastScan = scanBodyText();
+    acquireTextSizeStyles("bodyExpand", (roots) => {
+        if (!bodyTextActive || getA11ySettings().bodyTextExpandLevel < 1)
+            return;
+        if (roots) for (const root of roots) scanBodyText(root);
+        else lastScan = scanBodyText();
     });
 }
 
@@ -167,6 +169,8 @@ export function scanBodyText(
         const prevTarget = el.style.getPropertyValue(BODY_EXPAND_TARGET_VAR);
         if (
             el.getAttribute(BODY_EXPAND_ATTR) === "true" &&
+            // A host re-render can overwrite `className` and drop our class.
+            el.classList.contains(BODY_EXPAND_CLASS) &&
             prevTarget === `${targetPx}px` &&
             el.getAttribute(BODY_EXPAND_ORIGINAL_ATTR) ===
                 String(Math.round(px * 100) / 100)
@@ -253,6 +257,15 @@ function startObserver() {
 
 export function getLastBodyTextScan(): BodyTextScanResult {
     return lastScan;
+}
+
+/** The host replaced <body>: observe the new one and re-apply. */
+export function rebindBodyTextExpand() {
+    if (!bodyTextActive) return;
+    observer?.disconnect();
+    observer = null;
+    startObserver();
+    applyEnabledState();
 }
 
 export function initBodyTextExpand() {

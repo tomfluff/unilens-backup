@@ -50,9 +50,11 @@ let smallTextActive = false;
 let a11yUnsub: (() => void) | null = null;
 
 function ensureStylesheet() {
-    acquireTextSizeStyles("smallBoost", () => {
-        if (smallTextActive && getA11ySettings().smallTextBoostLevel > 0)
-            lastScan = scanSmallText();
+    acquireTextSizeStyles("smallBoost", (roots) => {
+        if (!smallTextActive || getA11ySettings().smallTextBoostLevel < 1)
+            return;
+        if (roots) for (const root of roots) scanSmallText(root);
+        else lastScan = scanSmallText();
     });
 }
 
@@ -127,6 +129,8 @@ export function scanSmallText(
         const prevTarget = el.style.getPropertyValue(SMALL_BOOST_TARGET_VAR);
         if (
             el.getAttribute(SMALL_BOOST_ATTR) === "true" &&
+            // A host re-render can overwrite `className` and drop our class.
+            el.classList.contains(SMALL_BOOST_CLASS) &&
             prevTarget === `${targetPx}px` &&
             el.getAttribute(SMALL_BOOST_ORIGINAL_ATTR) ===
                 String(Math.round(px * 100) / 100)
@@ -215,6 +219,15 @@ function startObserver() {
 
 export function getLastSmallTextScan(): SmallTextScanResult {
     return lastScan;
+}
+
+/** The host replaced <body>: observe the new one and re-apply. */
+export function rebindSmallTextBoost() {
+    if (!smallTextActive) return;
+    observer?.disconnect();
+    observer = null;
+    startObserver();
+    applyEnabledState();
 }
 
 export function initSmallTextBoost() {

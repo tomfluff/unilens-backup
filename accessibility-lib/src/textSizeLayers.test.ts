@@ -79,6 +79,7 @@ describe("re-measuring host sizes (resize / root size change)", () => {
         };
         const node = {
             hasAttribute: (k: string) => k in attrs,
+            getAttribute: (k: string) => attrs[k] ?? null,
             setAttribute: (k: string, v: string) => {
                 attrs[k] = v;
             },

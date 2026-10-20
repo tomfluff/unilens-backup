@@ -26,6 +26,12 @@ import {
     BG_FREEZE_ATTR,
     BG_SAMPLE_ATTR,
     BODY_EXPAND_LEVEL_ATTR,
+    FILL_AFTER_ATTR,
+    FILL_AFTER_VAR,
+    FILL_ATTR,
+    FILL_BEFORE_ATTR,
+    FILL_BEFORE_VAR,
+    FILL_VAR,
     HTML_ATTR_CONTRAST,
     HTML_ATTR_DISPLAY_ACTIVE,
     HTML_ATTR_ELEMENT_HIGHLIGHT,
@@ -66,6 +72,7 @@ import {
     HTML_STYLE_TEXT_STROKE_WIDTH,
     HTML_STYLE_WORD_SPACING,
     isUniLensOverlayNode,
+    KEEP_MOTION_ATTR,
     PAGE_CONTENT_ATTR,
     PAGE_CONTENT_ROOT_ID,
     POSITIONED_OVERLAY_ATTR,
@@ -74,6 +81,16 @@ import {
     TONE_LAYER_ID,
     UI_ATTR,
 } from "./domIds";
+import {
+    fillArea,
+    type FillPalette,
+    fillTier,
+    luminance,
+    parseCssColor,
+    type Rgb,
+    saturationCapFor,
+    themedFill,
+} from "./fillTone";
 import { a11yFontSizeToScale } from "./fontScales";
 import {
     clearHighContrastTextPlates,
@@ -90,6 +107,7 @@ import {
     setToneMaskLayer,
     syncMediaTextMarkers,
 } from "./mediaTextGuard";
+import { isOwnStyleMutation, styleChangeKind } from "./ownMutation";
 import { destroyPageFontScale, setPageFontSizeScale } from "./pageFontScale";
 import type { Settings } from "./settings";
 
@@ -238,6 +256,8 @@ export function getPageContentRoot(): HTMLElement | null {
     return body && body.getAttribute(PAGE_CONTENT_ATTR) === "1" ? body : null;
 }
 
+export { isOwnStyleMutation };
+
 export function syncWidgetDisplayIsolation() {
     /* Counter-invert is handled in the bundled page stylesheet via html[data-unilens-a11y-html-filter]. */
 }
@@ -328,7 +348,10 @@ function syncPageDisplayFilters(pageRoot: HTMLElement | null, s: A11ySettings) {
     }
 }
 
-/** Tags that never carry a meaningful page surface fill. */
+/**
+ * Tags that never carry a meaningful page surface fill. (<hr> is not one of
+ * them: a divider drawn with background-color is a fill like any other.)
+ */
 const SKIP_SURFACE_TAGS = new Set([
     "SCRIPT",
     "STYLE",
@@ -338,7 +361,6 @@ const SKIP_SURFACE_TAGS = new Set([
     "HEAD",
     "BR",
     "WBR",
-    "HR",
     "IMG",
     "PICTURE",
     "SOURCE",
@@ -383,6 +405,7 @@ function clearPositionedOverlayMarkers(root: ParentNode | null = document) {
     root.querySelectorAll(`[${POSITIONED_OVERLAY_ATTR}]`).forEach((el) => {
         el.removeAttribute(POSITIONED_OVERLAY_ATTR);
     });
+    // Builds before this one set the probes on every element.
     root.querySelectorAll(`[${BG_SAMPLE_ATTR}]`).forEach((el) => {
         el.removeAttribute(BG_SAMPLE_ATTR);
     });
@@ -395,8 +418,110 @@ function clearPositionedOverlayMarkers(root: ParentNode | null = document) {
     root.querySelectorAll(`[${PSEUDO_OVERLAY_AFTER_ATTR}]`).forEach((el) => {
         el.removeAttribute(PSEUDO_OVERLAY_AFTER_ATTR);
     });
+    for (const [attr, prop] of FILL_SLOTS) {
+        root.querySelectorAll(`[${attr}]`).forEach((el) => {
+            setFill(el, attr, prop, null);
+        });
+    }
     clearBackgroundMediaMarkers(root);
     clearHighContrastTextPlates(root);
+    const html = document.documentElement;
+    html?.removeAttribute(BG_SAMPLE_ATTR);
+    html?.removeAttribute(BG_FREEZE_ATTR);
+}
+
+/** Set or remove a boolean marker, writing only when it changes. */
+function setMarker(el: Element, name: string, on: boolean) {
+    if (on) {
+        if (el.getAttribute(name) !== "true") el.setAttribute(name, "true");
+    } else if (el.hasAttribute(name)) el.removeAttribute(name);
+}
+
+/** Fill marker + inline custom property for the element and its two pseudos. */
+const FILL_SLOTS = [
+    [FILL_ATTR, FILL_VAR],
+    [FILL_BEFORE_ATTR, FILL_BEFORE_VAR],
+    [FILL_AFTER_ATTR, FILL_AFTER_VAR],
+] as const;
+
+/**
+ * Put a themed muted / tone fill on an element (or one of its pseudos), or
+ * take it off with null. Writes only what changed.
+ */
+function setFill(el: Element, attr: string, prop: string, fill: string | null) {
+    const node = el as HTMLElement;
+    if (fill === null) {
+        if (!el.hasAttribute(attr)) return;
+        el.removeAttribute(attr);
+        if (node.style) restoreHostInlineStyle(node, prop);
+        return;
+    }
+    if (node.style && node.style.getPropertyValue(prop) !== fill)
+        setHostInlineStyle(node, prop, fill);
+    if (el.getAttribute(attr) !== "true") el.setAttribute(attr, "true");
+}
+
+/** The theme's text / link colors and saturation cap, read once per pass. */
+function readFillPalette(html: HTMLElement): FillPalette | null {
+    const cs = getComputedStyle(html);
+    const read = (name: string): Rgb | undefined => {
+        const c = parseCssColor(cs.getPropertyValue(name));
+        return c ? [c[0], c[1], c[2]] : undefined;
+    };
+    const text = read("--unilens-a11y-display-text");
+    if (!text) return null;
+    return {
+        text,
+        link: read("--unilens-a11y-display-link"),
+        surface: read("--unilens-a11y-display-surface"),
+        saturationCap: saturationCapFor(html.getAttribute(HTML_ATTR_THEME)),
+    };
+}
+
+/** Themed fill for a sampled host background, or null for a plain surface. */
+function fillFor(
+    color: string,
+    area: () => number,
+    palette: FillPalette | null,
+): string | null {
+    if (!palette) return null;
+    const c = parseCssColor(color);
+    if (!c) return null;
+    const rgb: Rgb = [c[0], c[1], c[2]];
+    let tier = fillTier(rgb, Number.POSITIVE_INFINITY);
+    // Only dark neutrals depend on the size: measure just those.
+    if (tier === "surface" && luminance(rgb) < 0.5)
+        tier = fillTier(rgb, area());
+    return themedFill(tier, rgb, palette);
+}
+
+/**
+ * Mark host elements whose own CSS transition is running, so the probes that
+ * freeze transitions (bg-sample, bg-freeze, the mediaTextGuard paint probe)
+ * leave them alone: `transition: none` cancels a running transition, the
+ * element jumps to its end state, and the host's `transitionend` never fires
+ * (a drawer or modal that closes on it stays open). `getAnimations()` flushes
+ * pending style first, so a transition the host started in this task is seen.
+ * Markers are only written when the set changes.
+ */
+export function syncKeepMotionMarkers(pageRoot: HTMLElement | null) {
+    if (!pageRoot) return;
+    const running = new Set<Element>();
+    const doc = pageRoot.ownerDocument;
+    if (typeof doc?.getAnimations === "function") {
+        for (const anim of doc.getAnimations()) {
+            if (typeof CSSTransition === "undefined") break;
+            if (!(anim instanceof CSSTransition)) continue;
+            if (anim.playState === "finished" || anim.playState === "idle")
+                continue;
+            const target = (anim.effect as KeyframeEffect | null)?.target;
+            if (target && pageRoot.contains(target)) running.add(target);
+        }
+    }
+    pageRoot.querySelectorAll(`[${KEEP_MOTION_ATTR}]`).forEach((el) => {
+        if (!running.has(el)) el.removeAttribute(KEEP_MOTION_ATTR);
+    });
+    for (const el of running) setMarker(el, KEEP_MOTION_ATTR, true);
 }
 
 /**
@@ -410,12 +535,20 @@ function clearPositionedOverlayMarkers(root: ParentNode | null = document) {
  * (it has no bg-sample opt-out), so pseudo-element sampling must see the
  * current plate markers. Walking the page once for plates is enough — the
  * markers pass below never changes what the plate pass reads.
+ *
+ * The probes (bg-sample, bg-freeze) sit on <html> for one synchronous block,
+ * and a marker is only written when its value changes, so a pass over an
+ * unchanged page sends no mutations to host MutationObservers. (Each pass
+ * used to write four attributes on every page element: thousands of records
+ * per host DOM change, and an endless loop with a host observer that reacted
+ * to attribute changes by changing the DOM.)
  */
 export function syncPositionedOverlayMarkers(pageRoot: HTMLElement | null) {
     if (!pageRoot) return;
 
     syncHighContrastTextPlates(pageRoot);
 
+    const html = pageRoot.ownerDocument.documentElement;
     const prev = pageRoot.querySelectorAll(`[${POSITIONED_OVERLAY_ATTR}]`);
     const keep = new Set<Element>();
     const candidates: HTMLElement[] = [];
@@ -429,68 +562,84 @@ export function syncPositionedOverlayMarkers(pageRoot: HTMLElement | null) {
         candidates.push(el);
     }
 
-    // Opt candidates out of the transparent reset (one batch, one reflow) so we
-    // can read the host author’s background-color rather than our own override.
-    // BG_SAMPLE_ATTR also disables transitions so we sample the settled author
-    // color, not a mid-fade value from `transition: all` (SoftBank tab buttons).
-    for (const el of candidates) {
-        el.removeAttribute(POSITIONED_OVERLAY_ATTR);
-        el.setAttribute(BG_SAMPLE_ATTR, "true");
-    }
-    void pageRoot.offsetHeight;
+    // Lift the transparent reset and the surface fills (one attribute on
+    // <html>, one reflow) so we read the host author's background-color
+    // rather than our own override. The probe also disables transitions so
+    // we sample the settled author color, not a mid-fade value from
+    // `transition: all` (SoftBank tab buttons).
+    html.setAttribute(BG_SAMPLE_ATTR, "true");
 
-    // Read every background first, while all probes are still on. Writing
-    // attributes inside this loop would restyle the page on the next read.
-    const overlay: boolean[] = [];
-    const before: boolean[] = [];
-    const after: boolean[] = [];
-    for (const el of candidates) {
-        overlay.push(
-            isOpaqueBackgroundColor(getComputedStyle(el).backgroundColor),
-        );
-        // Pseudo-elements are never touched by the transparent reset (`*`
-        // doesn't match `::before`/`::after`), so no opt-out dance is needed
-        // to read their real background — it's already the host author's
-        // own value. Host chrome frequently paints hairlines/arrows this way
-        // (SoftBank `.p-graduateArrow::after`, `.c-hdg::after`), which would
-        // otherwise keep a stray opaque background under the forced theme
-        // text color (e.g. yellow-on-white in high-contrast mode).
-        before.push(
-            isOpaqueBackgroundColor(
-                getComputedStyle(el, "::before").backgroundColor,
-            ),
-        );
-        after.push(
-            isOpaqueBackgroundColor(
-                getComputedStyle(el, "::after").backgroundColor,
-            ),
-        );
+    // Read every background first, while the probe is on. The themed fills
+    // are worked out here too: sizing a dark fill reads layout, which must
+    // not be interleaved with the marker writes below.
+    const palette = readFillPalette(html);
+    const own: string[] = [];
+    const before: string[] = [];
+    const after: string[] = [];
+    const fills: (string | null)[][] = [];
+    try {
+        for (const el of candidates) {
+            own.push(getComputedStyle(el).backgroundColor);
+            // Host chrome frequently paints hairlines/arrows on pseudos
+            // (SoftBank `.p-graduateArrow::after`, `.c-hdg::after`), which
+            // would otherwise keep a stray opaque background under the forced
+            // theme text color (e.g. yellow-on-white in high-contrast mode).
+            before.push(getComputedStyle(el, "::before").backgroundColor);
+            after.push(getComputedStyle(el, "::after").backgroundColor);
+            const i = own.length - 1;
+            fills.push([
+                isOpaqueBackgroundColor(own[i])
+                    ? fillFor(
+                          own[i],
+                          () => fillArea(el.offsetWidth, el.offsetHeight),
+                          palette,
+                      )
+                    : null,
+                // Pseudo boxes are not measured; they are decorations (dots, knobs).
+                isOpaqueBackgroundColor(before[i])
+                    ? fillFor(before[i], () => 0, palette)
+                    : null,
+                isOpaqueBackgroundColor(after[i])
+                    ? fillFor(after[i], () => 0, palette)
+                    : null,
+            ]);
+        }
+    } finally {
+        // End the probe and freeze transitions in the same batch: the flip
+        // from sampled author color back to the themed color must not start a
+        // host `transition: all` fade (that fade showed the unthemed color).
+        html.setAttribute(BG_FREEZE_ATTR, "true");
+        html.removeAttribute(BG_SAMPLE_ATTR);
     }
 
-    // End the probe and freeze transitions in the same batch: the flip from
-    // sampled author color back to the themed color must not start a host
-    // `transition: all` fade (that fade showed the unthemed color briefly).
     for (let i = 0; i < candidates.length; i++) {
         const el = candidates[i];
-        el.setAttribute(BG_FREEZE_ATTR, "true");
-        el.removeAttribute(BG_SAMPLE_ATTR);
-        if (overlay[i]) {
-            el.setAttribute(POSITIONED_OVERLAY_ATTR, "true");
-            keep.add(el);
-        }
-        if (before[i]) el.setAttribute(PSEUDO_OVERLAY_BEFORE_ATTR, "true");
-        else el.removeAttribute(PSEUDO_OVERLAY_BEFORE_ATTR);
-        if (after[i]) el.setAttribute(PSEUDO_OVERLAY_AFTER_ATTR, "true");
-        else el.removeAttribute(PSEUDO_OVERLAY_AFTER_ATTR);
+        const ownOpaque = isOpaqueBackgroundColor(own[i]);
+        const beforeOpaque = isOpaqueBackgroundColor(before[i]);
+        const afterOpaque = isOpaqueBackgroundColor(after[i]);
+        setMarker(el, POSITIONED_OVERLAY_ATTR, ownOpaque);
+        if (ownOpaque) keep.add(el);
+        setMarker(el, PSEUDO_OVERLAY_BEFORE_ATTR, beforeOpaque);
+        setMarker(el, PSEUDO_OVERLAY_AFTER_ATTR, afterOpaque);
+        for (let k = 0; k < FILL_SLOTS.length; k++)
+            setFill(el, FILL_SLOTS[k][0], FILL_SLOTS[k][1], fills[i][k]);
     }
     // Settle the themed styles with transitions off, then let them run again;
     // nothing changes value at that point, so nothing animates.
     void pageRoot.offsetHeight;
-    for (const el of candidates) el.removeAttribute(BG_FREEZE_ATTR);
+    html.removeAttribute(BG_FREEZE_ATTR);
 
     prev.forEach((el) => {
         if (!keep.has(el)) el.removeAttribute(POSITIONED_OVERLAY_ATTR);
     });
+    // Fills on elements that left the candidate list (now overlay UI, or a
+    // skipped tag) — candidates were all handled above.
+    const seen = new Set<Element>(candidates);
+    for (const [attr, prop] of FILL_SLOTS) {
+        pageRoot.querySelectorAll(`[${attr}]`).forEach((el) => {
+            if (!seen.has(el)) setFill(el, attr, prop, null);
+        });
+    }
 
     clearBackgroundMediaMarkers(pageRoot);
 }
@@ -512,6 +661,9 @@ const surfaceMode = { display: false, mediaText: false };
 let detachLayoutListeners: (() => void) | null = null;
 
 function runSurfacePass(root: HTMLElement | null) {
+    // Before any probe freezes transitions: spare the ones that are running.
+    if (surfaceMode.mediaText || surfaceMode.display)
+        syncKeepMotionMarkers(root);
     // Picture blocks first, so the surface pass below already sees them.
     if (surfaceMode.mediaText) syncMediaTextMarkers(root);
     else clearMediaTextMarkers(root);
@@ -519,12 +671,50 @@ function runSurfacePass(root: HTMLElement | null) {
     else clearPositionedOverlayMarkers(root);
 }
 
+/*
+ * When a pass may run. Settings changes run it after the next paint. Host
+ * changes are rate-limited, because a pass reads every page element:
+ *  - a change that can alter colors (DOM, class, a style that is not just
+ *    motion) runs it after the next paint, but no sooner than a gap after the
+ *    previous pass that grows with what that pass cost (4×, 50ms–1s), so a
+ *    host that changes the DOM every frame cannot keep the main thread busy;
+ *  - a style change that only moves / sizes / fades an element (rAF
+ *    animations, scroll-linked headers, parallax, carousels writing
+ *    `transform` every frame) never changes a color: it only matters where
+ *    text sits over a picture, so it waits until the motion pauses (300ms),
+ *    at most 2s. It used to start a full pass on every frame.
+ */
+const PASS_GAP_MIN_MS = 50;
+const PASS_GAP_MAX_MS = 1000;
+const PASS_GAP_FACTOR = 4;
+const MOTION_IDLE_MS = 300;
+const MOTION_MAX_WAIT_MS = 2000;
+
+let lastPassEnd = Number.NEGATIVE_INFINITY;
+let lastPassCost = 0;
+let gapTimer: ReturnType<typeof setTimeout> | undefined;
+let motionTimer: ReturnType<typeof setTimeout> | undefined;
+let motionSince = 0;
+
+const now = () =>
+    typeof performance !== "undefined" ? performance.now() : Date.now();
+
 const surfaceSync = afterNextPaint(() => {
     const root = surfaceSyncRoot;
     surfaceSyncRoot = null;
     if (!root || !overlayMarkerObserver || !root.isConnected) return;
+    const start = now();
     runSurfacePass(root);
+    lastPassEnd = now();
+    lastPassCost = lastPassEnd - start;
 });
+
+function passGap(): number {
+    return Math.min(
+        PASS_GAP_MAX_MS,
+        Math.max(PASS_GAP_MIN_MS, lastPassCost * PASS_GAP_FACTOR),
+    );
+}
 
 /**
  * Settings that change what the surface pass reads: the theme (display on /
@@ -534,90 +724,101 @@ const surfaceSync = afterNextPaint(() => {
  * background-color, so they no longer re-walk the page.
  */
 export function surfaceInputsKey(
-    s: Pick<A11ySettings, "theme" | "linkBackground">,
+    s: Pick<A11ySettings, "theme" | "linkBackground"> &
+        Partial<Pick<A11ySettings, "textPlateStyle">>,
 ): string {
-    return `${s.theme}|${s.linkBackground ? 1 : 0}`;
+    // The plate pair is the high-contrast text color, which the themed
+    // muted / tone fills are worked out against (fillTone.ts).
+    const plate =
+        s.theme === "high-contrast" ? `|${s.textPlateStyle ?? ""}` : "";
+    return `${s.theme}|${s.linkBackground ? 1 : 0}${plate}`;
 }
 
 /** Runs the surface pass after the next paint; repeated calls coalesce. */
 function scheduleDisplaySurfaceSync(pageRoot: HTMLElement) {
+    clearTimeout(gapTimer);
+    gapTimer = undefined;
     surfaceSyncRoot = pageRoot;
     surfaceSync.schedule();
+}
+
+/** A host change that can alter colors: a pass, rate-limited. */
+function scheduleHostSurfaceSync(pageRoot: HTMLElement) {
+    surfaceSyncRoot = pageRoot;
+    if (surfaceSync.pending || gapTimer !== undefined) return;
+    const wait = lastPassEnd + passGap() - now();
+    if (wait <= 0) {
+        surfaceSync.schedule();
+        return;
+    }
+    gapTimer = setTimeout(() => {
+        gapTimer = undefined;
+        surfaceSync.schedule();
+    }, wait);
+}
+
+/** A host change that only moved things: once the motion pauses. */
+function scheduleMotionSurfaceSync(pageRoot: HTMLElement) {
+    // Only the picture-text guard reads geometry.
+    if (!surfaceMode.mediaText) return;
+    const t = now();
+    if (motionTimer === undefined) motionSince = t;
+    else clearTimeout(motionTimer);
+    const wait = Math.max(
+        0,
+        Math.min(MOTION_IDLE_MS, motionSince + MOTION_MAX_WAIT_MS - t),
+    );
+    motionTimer = setTimeout(() => {
+        motionTimer = undefined;
+        scheduleHostSurfaceSync(pageRoot);
+    }, wait);
 }
 
 function cancelDisplaySurfaceSync() {
     surfaceSync.cancel();
     surfaceSyncRoot = null;
+    clearTimeout(gapTimer);
+    gapTimer = undefined;
+    clearTimeout(motionTimer);
+    motionTimer = undefined;
 }
 
 /** Run a pending surface pass now (embedders / tests that need it settled). */
 export function flushDisplaySurfaceSync() {
+    const root = surfaceSyncRoot ?? getPageContentRoot();
+    if (gapTimer !== undefined || motionTimer !== undefined) {
+        clearTimeout(gapTimer);
+        gapTimer = undefined;
+        clearTimeout(motionTimer);
+        motionTimer = undefined;
+        if (root) {
+            surfaceSyncRoot = root;
+            surfaceSync.schedule();
+        }
+    }
     surfaceSync.flush();
 }
 
-const OWN_CLASS_PREFIX = "unilens-";
-const OWN_STYLE_PREFIX = "--unilens-";
-
-function withoutOwnClasses(value: string): string {
-    let out = "";
-    // classList re-serializes with single spaces, so split on any whitespace.
-    for (const c of value.split(/\s+/)) {
-        if (c === "" || c.startsWith(OWN_CLASS_PREFIX)) continue;
-        out = out === "" ? c : `${out} ${c}`;
-    }
-    return out;
-}
-
-function withoutOwnStyles(value: string): string {
-    let out = "";
-    for (const d of value.split(";")) {
-        // Writing one property re-serializes the attribute ("a:b" → "a: b").
-        const t = d.trim().replace(/\s*:\s*/, ": ");
-        if (t === "" || t.startsWith(OWN_STYLE_PREFIX)) continue;
-        out = out === "" ? t : `${out};${t}`;
-    }
-    return out;
-}
-
-/**
- * True when a class/style mutation only touched what this library writes
- * (`unilens-*` classes, `--unilens-*` custom properties — the text-size
- * features). Those never change a host background, and reacting to them made
- * every text-size change walk the page a second time.
- */
-export function isOwnStyleMutation(
-    attributeName: string | null,
-    oldValue: string | null,
-    newValue: string | null,
-): boolean {
-    if (attributeName !== "class" && attributeName !== "style") return false;
-    const before = oldValue ?? "";
-    const after = newValue ?? "";
-    if (before === after) return true;
-    // Nothing of ours on either side: any difference is the host's.
-    const own = attributeName === "class" ? OWN_CLASS_PREFIX : OWN_STYLE_PREFIX;
-    if (!before.includes(own) && !after.includes(own)) return false;
-    return attributeName === "class"
-        ? withoutOwnClasses(before) === withoutOwnClasses(after)
-        : withoutOwnStyles(before) === withoutOwnStyles(after);
-}
-
 function onHostMutations(records: MutationRecord[], pageRoot: HTMLElement) {
+    let motion = false;
     for (const r of records) {
-        if (
-            r.type === "attributes" &&
-            r.target instanceof Element &&
-            isOwnStyleMutation(
-                r.attributeName,
-                r.oldValue,
-                r.target.getAttribute(r.attributeName ?? ""),
-            )
-        ) {
-            continue;
+        if (r.type === "attributes" && r.target instanceof Element) {
+            const name = r.attributeName ?? "";
+            const value = r.target.getAttribute(name);
+            if (isOwnStyleMutation(name, r.oldValue, value)) continue;
+            if (name === "style") {
+                const kind = styleChangeKind(r.oldValue, value);
+                if (kind === "none") continue;
+                if (kind === "motion") {
+                    motion = true;
+                    continue;
+                }
+            }
         }
-        scheduleDisplaySurfaceSync(pageRoot);
+        scheduleHostSurfaceSync(pageRoot);
         return;
     }
+    if (motion) scheduleMotionSurfaceSync(pageRoot);
 }
 
 /**
@@ -629,10 +830,7 @@ function attachLayoutListeners(pageRoot: HTMLElement) {
     let timer: number | undefined;
     const onResize = () => {
         window.clearTimeout(timer);
-        timer = window.setTimeout(
-            () => scheduleDisplaySurfaceSync(pageRoot),
-            200,
-        );
+        timer = window.setTimeout(() => scheduleHostSurfaceSync(pageRoot), 200);
     };
     const onLoad = (e: Event) => {
         if (e.target instanceof HTMLImageElement) onResize();
@@ -650,7 +848,7 @@ function attachLayoutListeners(pageRoot: HTMLElement) {
 onMediaTextResync(() => {
     const root = getPageContentRoot();
     if (root && overlayMarkerObserver && surfaceMode.mediaText)
-        scheduleDisplaySurfaceSync(root);
+        scheduleHostSurfaceSync(root);
 });
 
 function ensurePositionedOverlayObserver(
@@ -676,6 +874,9 @@ function ensurePositionedOverlayObserver(
         lastSurfaceInputsKey = null;
         clearPositionedOverlayMarkers(pageRoot);
         clearMediaTextMarkers(pageRoot);
+        pageRoot
+            ?.querySelectorAll(`[${KEEP_MOTION_ATTR}]`)
+            .forEach((el) => el.removeAttribute(KEEP_MOTION_ATTR));
         return;
     }
 
@@ -702,6 +903,20 @@ function ensurePositionedOverlayObserver(
         attributeOldValue: true,
         attributeFilter: ["class", "style", "hidden", "aria-hidden", "src"],
     });
+}
+
+/**
+ * The host replaced <body>: drop the observers bound to the old one, so the
+ * next apply marks the new body and observes it.
+ */
+export function rebindDocumentEffects() {
+    overlayMarkerObserver?.disconnect();
+    overlayMarkerObserver = null;
+    detachLayoutListeners?.();
+    detachLayoutListeners = null;
+    cancelDisplaySurfaceSync();
+    lastSurfaceInputsKey = null;
+    applyA11yToDocument();
 }
 
 const A11Y_HTML_ATTRS = [

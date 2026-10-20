@@ -80,20 +80,46 @@ export const HTML_ATTR_IMAGE_FILTER = "data-unilens-a11y-image-filter";
 export const POSITIONED_OVERLAY_ATTR = "data-unilens-a11y-positioned-overlay";
 
 /**
- * Temporary probe flag: opts an element out of the transparent background reset
- * (and freezes transitions) so syncPositionedOverlayMarkers can read the host
- * author’s settled background-color.
+ * Host elements (and their ::before / ::after) whose opaque fill is not a
+ * plain surface: a mid gray ("muted") or a colored fill ("tone"). The themed
+ * color is in the matching inline custom property (fillTone.ts), so states
+ * told apart only by their fill — a switch, a selected chip, a swatch — stay
+ * apart under a color theme.
+ */
+export const FILL_ATTR = "data-unilens-a11y-fill";
+export const FILL_BEFORE_ATTR = "data-unilens-a11y-fill-before";
+export const FILL_AFTER_ATTR = "data-unilens-a11y-fill-after";
+export const FILL_VAR = "--unilens-a11y-fill";
+export const FILL_BEFORE_VAR = "--unilens-a11y-fill-before";
+export const FILL_AFTER_VAR = "--unilens-a11y-fill-after";
+
+/**
+ * Temporary probe flag on <html>: lifts the transparent background reset and
+ * the surface fills (and freezes transitions) so syncPositionedOverlayMarkers
+ * can read the host author’s settled background-color. Set and removed in one
+ * synchronous block, never across a paint. (It used to be set on every page
+ * element, which sent thousands of attribute mutations to host observers on
+ * every pass.)
  */
 export const BG_SAMPLE_ATTR = "data-unilens-a11y-bg-sample";
 
 /**
- * Held for one style flush right after the bg-sample probe ends. Dropping the
- * probe flips an element from its sampled author color back to the themed one;
- * with transitions enabled, a host `transition: all .3s` would fade between the
- * two and flash the unthemed color. Freezing transitions in the same batch that
- * ends the probe means that flip never starts a transition.
+ * Held on <html> for one style flush right after the bg-sample probe ends.
+ * Dropping the probe flips elements from their sampled author color back to
+ * the themed one; with transitions enabled, a host `transition: all .3s` would
+ * fade between the two and flash the unthemed color. Freezing transitions in
+ * the same batch that ends the probe means that flip never starts a transition.
  */
 export const BG_FREEZE_ATTR = "data-unilens-a11y-bg-freeze";
+
+/**
+ * Marks a host element whose own CSS transition is running while a probe
+ * (bg-sample, bg-freeze, mediaTextGuard paint-probe) freezes transitions.
+ * `transition: none` cancels a running transition — the element jumped to its
+ * end state and the host's `transitionend` never fired — so these elements
+ * are left out of the freeze. Written only when the set changes.
+ */
+export const KEEP_MOTION_ATTR = "data-unilens-a11y-keep-motion";
 
 /**
  * Marked on a host element when its own ::before / ::after pseudo-element
@@ -224,6 +250,12 @@ export const SELECTION_FONT_LEVEL_ATTR = "data-unilens-font-level";
 export const SELECTION_FONT_SIZE_VAR = "--unilens-a11y-selection-font-size";
 /** Wrappers made by one "apply" share a group id, so they clear together. */
 export const SELECTION_GROUP_ATTR = "data-unilens-text-resize-group";
+/**
+ * Holder for enlarged text whose parent is a flex / grid container: one
+ * inline element carrying the whole text, so the container still lays it out
+ * as a single item (see selectionTextSize.ts wrapSlice).
+ */
+export const SELECTION_FLOW_ATTR = "data-unilens-text-resize-flow";
 
 export const UNILENS_OVERLAY_ROOT_IDS = [
     A11Y_ROOT_ID,

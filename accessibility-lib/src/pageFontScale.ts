@@ -97,9 +97,10 @@ export function getEffectivePageFontScale(): number {
 }
 
 function ensureStylesheet() {
-    acquireTextSizeStyles("pageFont", () => {
-        if (pageFontActive && getEffectivePageFontScale() !== 1)
-            scanPageFont();
+    acquireTextSizeStyles("pageFont", (roots) => {
+        if (!pageFontActive || getEffectivePageFontScale() === 1) return;
+        if (roots) for (const root of roots) scanPageFont(root);
+        else scanPageFont();
     });
 }
 
@@ -192,6 +193,8 @@ export function scanPageFont(
         const prev = el.style.getPropertyValue(PAGE_FONT_TARGET_VAR);
         if (
             el.getAttribute(PAGE_FONT_ATTR) === "true" &&
+            // A host re-render can overwrite `className` and drop our class.
+            el.classList.contains(PAGE_FONT_CLASS) &&
             prev === `${originalPx}px` &&
             el.getAttribute(PAGE_FONT_ORIGINAL_ATTR) ===
                 String(Math.round(originalPx * 100) / 100) &&
@@ -309,6 +312,15 @@ export function setPageFontSizeScale(scale: number) {
 export function setPageFontExtraScale(scale: number) {
     extraScale = Number.isFinite(scale) && scale > 0 ? scale : 1;
     refreshPageFontScale();
+}
+
+/** The host replaced <body>: observe the new one and scale its text. */
+export function rebindPageFontScale() {
+    if (!pageFontActive) return;
+    observer?.disconnect();
+    observer = null;
+    startObserver();
+    if (getEffectivePageFontScale() !== 1) scanPageFont();
 }
 
 export function initPageFontScale() {

@@ -126,4 +126,14 @@ describe("surfaceInputsKey", () => {
         };
         expect(surfaceInputsKey(withOthers)).toBe(surfaceInputsKey(base));
     });
+
+    it("follows the high-contrast plate pair (the fills are worked out against its text color)", () => {
+        const hc = { theme: "high-contrast", linkBackground: false } as const;
+        expect(
+            surfaceInputsKey({ ...hc, textPlateStyle: "blackYellow" }),
+        ).not.toBe(surfaceInputsKey({ ...hc, textPlateStyle: "blackCyan" }));
+        expect(
+            surfaceInputsKey({ ...base, textPlateStyle: "blackYellow" }),
+        ).toBe(surfaceInputsKey({ ...base, textPlateStyle: "blackCyan" }));
+    });
 });

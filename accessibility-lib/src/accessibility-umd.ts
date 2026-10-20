@@ -27,6 +27,10 @@ import {
     t,
 } from "./accessibilityI18n";
 import { destroyAccessibilityRuntime } from "./accessibilityLifecycle";
+import { stopBodySwapWatch, watchBodySwap } from "./bodySwap";
+import { rebindDocumentEffects } from "./documentEffects";
+import { rebindPageFontScale } from "./pageFontScale";
+import { rebindTextSizeWatch } from "./textSizeLayers";
 import { startSettingsSync, stopSettingsSync } from "./settings";
 import {
     configureAccessibilityCssUrl,
@@ -90,6 +94,7 @@ import {
     afterBodyTextApplied,
     type BodyTextScanResult,
     clearBodyTextExpand,
+    rebindBodyTextExpand,
     computeExpandedFontPx,
     destroyBodyTextExpand,
     getLastBodyTextScan,
@@ -116,6 +121,7 @@ import {
     getSelectionInfo,
     initSelectionTextSize,
     levelToPx,
+    rebindSelectionTextSize,
     onSelectionChange,
     pxToLevel,
     type SelectionFontLevel,
@@ -128,6 +134,7 @@ import {
     destroySmallTextBoost,
     getLastSmallTextScan,
     initSmallTextBoost,
+    rebindSmallTextBoost,
     type SmallTextScanResult,
     scanSmallText,
 } from "./smallTextBoost";
@@ -212,6 +219,16 @@ interface UniLensA11yInitOptions {
 
 let initialized = false;
 
+/** The host replaced <body> (Turbo / pjax): rebind every page feature to it. */
+function onBodySwap() {
+    rebindDocumentEffects();
+    rebindPageFontScale();
+    rebindBodyTextExpand();
+    rebindSmallTextBoost();
+    rebindTextSizeWatch();
+    rebindSelectionTextSize();
+}
+
 function init(options: UniLensA11yInitOptions = {}) {
     if (initialized) return;
     initialized = true;
@@ -233,10 +250,12 @@ function init(options: UniLensA11yInitOptions = {}) {
     // if (options.speech !== false) initSpeakSelection()
     if (options.autoText !== false) initAutoTextSize();
     if (options.panel !== false) initAccessibilityPanel();
+    watchBodySwap(onBodySwap);
 }
 
 function destroy() {
     if (!initialized) return;
+    stopBodySwapWatch();
     stopSettingsSync();
     destroyAccessibilityRuntime();
     initialized = false;

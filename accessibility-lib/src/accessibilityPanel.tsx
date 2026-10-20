@@ -373,12 +373,18 @@ function TabBar({
     >;
 }) {
     return (
-        <ul className="unilens-a11y-tabs" aria-label={t().tabsLabel}>
+        // role="tablist" so screen readers announce the buttons as tabs
+        // ("tab 1 of 2"); the <li> wrappers are presentation only.
+        <ul
+            className="unilens-a11y-tabs"
+            role="tablist"
+            aria-label={t().tabsLabel}
+        >
             {TABS.map((tab, index) => {
                 const selected = activeTab === tab.id;
                 const label = tabLabel(tab.id);
                 return (
-                    <li key={tab.id}>
+                    <li key={tab.id} role="presentation">
                         <button
                             type="button"
                             id={a11yTabId(tab.id)}
