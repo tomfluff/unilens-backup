@@ -15,7 +15,12 @@ export interface SurveyPageExtras {
     vid?: string | null;
     /** the test page to come back to after answering */
     returnTo?: string | null;
+    /** the page opens in a tab of its own: going back closes that tab */
+    tab?: boolean;
 }
+
+/** The window name the test pages' button opens the survey under: one survey tab, reused. */
+export const SURVEY_TAB = "unilens-survey";
 
 const root = (backend: string) => backend.trim().replace(/\/+$/, "");
 
@@ -39,6 +44,7 @@ export function surveyPageUrl(
         params.set("session", study.session);
     } else if (extras.vid) params.set("vid", extras.vid);
     if (extras.returnTo) params.set("return", extras.returnTo);
+    if (extras.tab) params.set("tab", "1");
     return `${root(backend)}/survey?${params}`;
 }
 

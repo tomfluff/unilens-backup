@@ -14,6 +14,7 @@
       pid, session  the participant, as for the study log (optional)
       vid      without a participant: the anonymous id the button gives a browser
       return   the test page to go back to after answering (the button sets it)
+      tab      1: the button opened this page in a tab of its own; going back closes it
       The survey itself is quiz-lib (served at /survey/quiz.js) in its "page" mode,
       in Japanese only (no language switch; a ?lang= in an old link is ignored).
     -->
@@ -123,6 +124,7 @@
           backend: location.origin,
           question: q ? Number(q) : undefined,
           returnTo: params.get("return") || undefined,
+          ownTab: params.get("tab") === "1",
         }).then(function (ok) {
           if (!ok) {
             var what = esc(quiz) + (q ? "</code> の質問 <code>" + esc(q) : "");

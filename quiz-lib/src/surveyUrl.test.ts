@@ -44,6 +44,12 @@ describe("one page per question", () => {
         );
     });
 
+    it("says when the page has a tab of its own", () => {
+        expect(
+            surveyPageUrl("http://h", "s1", null, { question: 1, tab: true }),
+        ).toBe("http://h/survey?quiz=s1&q=1&tab=1");
+    });
+
     it("names the participant rather than the visitor when there is one", () => {
         expect(
             surveyPageUrl(

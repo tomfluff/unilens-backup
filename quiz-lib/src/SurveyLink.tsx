@@ -20,6 +20,7 @@ import { MESSAGES, SURVEY_LANG } from "./quizI18n";
 import { browserVisitorId, resolveStudyIds, type StudyIds } from "./quizLog";
 import {
     parseProgress,
+    SURVEY_TAB,
     type SurveyProgress,
     surveyPageUrl,
     surveyProgressUrl,
@@ -94,15 +95,18 @@ export function SurveyLink({ backend, survey }: SurveyLinkProps) {
         const onShow = (e: PageTransitionEvent) => {
             if (e.persisted) refresh();
         };
+        // back to this tab from the survey's own tab (or window)
         const onVisible = () => {
             if (document.visibilityState === "visible") refresh();
         };
         window.addEventListener("pageshow", onShow);
         document.addEventListener("visibilitychange", onVisible);
+        window.addEventListener("focus", refresh);
         return () => {
             alive = false;
             window.removeEventListener("pageshow", onShow);
             document.removeEventListener("visibilitychange", onVisible);
+            window.removeEventListener("focus", refresh);
         };
     }, [backend, survey]);
 
@@ -114,10 +118,25 @@ export function SurveyLink({ backend, survey }: SurveyLinkProps) {
             question: progress && !progress.completed ? progress.next : null,
             vid,
             returnTo: location.href,
+            tab: true,
         });
     };
+    /**
+     * The survey opens in a tab of its own, so the test page stays as it is in
+     * this one. Opened by script (in the click), the survey tab may close itself
+     * when the participant goes back ("元のページに戻る"). Ctrl / Shift / middle
+     * clicks are left to the browser; a blocked window falls back on the link's
+     * own target, still a new tab.
+     */
     function onClick(e: MouseEvent<HTMLAnchorElement>) {
-        e.currentTarget.href = href();
+        const url = href();
+        e.currentTarget.href = url;
+        if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey)
+            return;
+        const tab = window.open(url, SURVEY_TAB);
+        if (!tab) return;
+        e.preventDefault();
+        tab.focus();
     }
 
     const text = !progress
@@ -137,6 +156,7 @@ export function SurveyLink({ backend, survey }: SurveyLinkProps) {
             lang={lang}
             className="unilens-quiz-toggle"
             href={href()}
+            target={SURVEY_TAB}
             aria-label={label}
             data-progress={
                 progress

@@ -85,6 +85,11 @@ export interface QuizInitOptions extends QuizCallbacks {
     question?: number;
     /** page mode: the test page to go back to after answering (an absolute http(s) address). */
     returnTo?: string;
+    /**
+     * page mode: the page was opened in a tab of its own (the test pages' button
+     * does this): going back closes the tab instead of loading the test page in it.
+     */
+    ownTab?: boolean;
     /** The quiz itself. Either this or `src`. */
     quiz?: QuizInput;
     /** URL of a JSON file holding the quiz (same shape as `quiz`). */
@@ -126,6 +131,7 @@ interface Mounted {
     /** page mode: the one question shown (0-based); null for a finished attempt's answers (or panel mode) */
     question: number | null;
     returnTo: string | null;
+    ownTab: boolean;
     container: HTMLElement;
     root: Root;
     cleanups: (() => void)[];
@@ -173,6 +179,7 @@ function render() {
         callbacks,
         question,
         returnTo,
+        ownTab,
         root,
     } = mounted;
     root.render(
@@ -184,6 +191,7 @@ function render() {
             callbacks={callbacks}
             question={question}
             returnTo={returnTo}
+            ownTab={ownTab}
         />,
     );
 }
@@ -353,6 +361,7 @@ export async function init(options: QuizInitOptions = {}): Promise<boolean> {
         },
         question,
         returnTo: mode === "page" ? safeReturnUrl(options.returnTo) : null,
+        ownTab: mode === "page" && options.ownTab === true,
         container,
         root: createRoot(container),
         cleanups,

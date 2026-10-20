@@ -246,12 +246,32 @@ export function prepareQuestion(
 }
 
 /** Back to the test page, once the answer has reached the backend (its button counts it), or after 2 s at most. */
-function backTo(url: string) {
+function backTo(url: string, ownTab: boolean) {
     void Promise.race([
         flushQuizLog(),
         new Promise((done) => window.setTimeout(done, 2000)),
-    ]).then(() => location.assign(url));
+    ]).then(() => {
+        if (!ownTab) {
+            location.assign(url);
+            return;
+        }
+        // The survey has a tab of its own (opened by the test page's button): close
+        // it, and the test page is there in its tab. A browser that will not let
+        // the page close the tab gets the test page in this one instead.
+        try {
+            window.opener?.focus();
+        } catch {
+            // another origin's window may refuse: closing still brings it back
+        }
+        window.close();
+        window.setTimeout(() => {
+            if (!window.closed) location.assign(url);
+        }, 300);
+    });
 }
+
+/** The survey page was opened in a tab of its own (?tab=1): going back closes it. */
+const OwnTab = createContext(false);
 
 /** This page's address for another question of the same survey (one page per question). */
 function questionPageUrl(index: number): string {
@@ -274,6 +294,8 @@ export interface QuizAppProps {
     question?: number | null;
     /** page mode: the test page to go back to (an absolute http(s) address) */
     returnTo?: string | null;
+    /** page mode: the page has a tab of its own; going back closes it */
+    ownTab?: boolean;
 }
 
 export function QuizApp({
@@ -284,6 +306,7 @@ export function QuizApp({
     callbacks,
     question = null,
     returnTo = null,
+    ownTab = false,
 }: QuizAppProps) {
     const page = mode === "page";
     /** one question's page: its index */
@@ -664,9 +687,11 @@ export function QuizApp({
                         {m.idsShown(ids.userId, ids.surveyId)}
                     </p>
                 )}
-                <ScreenHeadingLevel.Provider value={page ? "h2" : "h3"}>
-                    {screen}
-                </ScreenHeadingLevel.Provider>
+                <OwnTab.Provider value={page && ownTab}>
+                    <ScreenHeadingLevel.Provider value={page ? "h2" : "h3"}>
+                        {screen}
+                    </ScreenHeadingLevel.Provider>
+                </OwnTab.Provider>
             </div>
             <div
                 ref={(node) => {
@@ -1357,6 +1382,7 @@ function Result({
 
 /** "元のページに戻る": a real link (it can be opened elsewhere), that first lets the answer reach the backend. */
 function BackLink({ url, m }: { url: string; m: QuizMessages }) {
+    const ownTab = useContext(OwnTab);
     return (
         <a
             className="unilens-quiz-btn"
@@ -1371,7 +1397,7 @@ function BackLink({ url, m }: { url: string; m: QuizMessages }) {
                 )
                     return;
                 e.preventDefault();
-                backTo(url);
+                backTo(url, ownTab);
             }}
         >
             {m.backToPage}
@@ -1409,6 +1435,7 @@ function QuestionDone({
     returnTo: string | null;
     nextIndex: number;
 }) {
+    const ownTab = useContext(OwnTab);
     const all = nextIndex < 0;
     return (
         <>
@@ -1441,7 +1468,9 @@ function QuestionDone({
                 </li>
             </ol>
             {returnTo && !all && (
-                <p className="unilens-quiz-muted">{m.backNote}</p>
+                <p className="unilens-quiz-muted">
+                    {ownTab ? m.backNoteTab : m.backNote}
+                </p>
             )}
             <div className="unilens-quiz-actions">
                 {returnTo && <BackLink url={returnTo} m={m} />}

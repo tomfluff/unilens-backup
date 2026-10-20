@@ -5,7 +5,7 @@ POST /api/capture  {image: dataURL, meta: {...}, inventory?: [...]} -> {id}
 POST /api/chat     {capture_id, message, cite?}       -> {reply, provider, model}
                    (reply cites inventory elements inline as [[nID]])
 POST /api/locate   {capture_id, question, screenshot} -> {capture_id, answer, highlights}
-GET  /survey?quiz=<id>[&q&pid&session&return]      -> the survey page (quiz-lib, Japanese); q=N: question N only
+GET  /survey?quiz=<id>[&q&pid&session&return&tab] -> the survey page (quiz-lib, Japanese); q=N: question N only
 GET  /api/quiz/<id>                                -> the survey's questions (quizzes/<id>.json)
 POST /api/quiz/log {events: [...]}                 -> {logged, dropped}
 GET  /api/quiz                                     -> {quizzes: [...]}

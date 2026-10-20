@@ -12,9 +12,12 @@ http://127.0.0.1:5000/survey?quiz=unilens-poc&pid=P01&session=1
 Each question has a page of its own (`&q=1`, `&q=2`, …). The test pages carry
 only the green button (link mode), which shows how far the participant is —
 **"アンケート（2/4）"**, the next question to answer of all — and opens that
-question's page, with the participant (`pid` / `session`) and the way back. After the answer the page says it is saved
-and offers "元のページに戻る" (back to the page); the button then shows
-"アンケート（3/4）". Once every question is answered it shows
+question's page **in a new tab** (one survey tab, reused), with the participant
+(`pid` / `session`) and the way back; the test page stays as it is in its own
+tab. After the answer the page says it is saved and offers "元のページに戻る"
+(back to the page), which closes the survey tab; the button then shows
+"アンケート（3/4）". (A survey page opened by its address, not by the button,
+loads the test page in the same tab instead.) Once every question is answered it shows
 "アンケート（完了）" and opens the whole survey, which shows the thank-you and the
 participant's own answers. The survey page never runs on to the next question:
 opened without `&q=` it shows the next question to answer (and adds its `&q=` to
@@ -68,6 +71,7 @@ Unless stated otherwise, commands run from the **UniLens repository root**.
 | `…&q=2` | Question 2 only (one page per question; the button opens the next one to answer) |
 | `…&pid=P01&session=1` | The participant: answers go to the quiz log with these, and to their study log |
 | `…&return=<address>` | The test page to go back to after answering (the button sets it) |
+| `…&tab=1` | The page has a tab of its own (the button sets it): going back closes the tab |
 | `…&vid=<id>` | Without a participant: the anonymous id the button gives the browser, so its progress can still be found |
 
 How the button knows the progress: the survey page lives on the backend, so the
@@ -212,6 +216,7 @@ visitors afresh rather than grading them against moved answers.
 | `container` | end of `<body>` | Page mode: the element, or a selector, to fill. |
 | `question` | next to answer | Page mode: show only this question (1-based). Without it, the first question not answered yet (the page never runs through several). `init()` resolves false for a question the survey does not have. |
 | `returnTo` | — | Page mode: the page to go back to after answering (absolute http(s) only). |
+| `ownTab` | `false` | Page mode: the page was opened in a tab of its own; going back closes it (and falls back to loading `returnTo` if the browser will not let it close). |
 | `position` | `'top-left'` | `'top-left'`, `'top-right'`, `'bottom-left'`, `'bottom-right'`. The panel opens from the toggle. The display panel's button sits bottom-right and UniLens' settings gear bottom-left: the bottom corners overlap them. |
 | `open` | `false` | Open the panel once ready. |
 | `followDisplayPanel` | `true` | Follow `accessibility-lib`'s high-contrast theme and text size (large → 24px, extra large → 30px). |

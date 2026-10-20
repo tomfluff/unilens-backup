@@ -27,6 +27,8 @@ export interface QuizMessages {
     allAnswered: string;
     backToPage: string;
     backNote: string;
+    /** the same, when the survey has a tab of its own (going back closes it) */
+    backNoteTab: string;
     nextQuestionAt: (next: number, total: number) => string;
     /** before the first question: the respondent types two IDs */
     idsLead: string;
@@ -74,19 +76,20 @@ export interface QuizMessages {
 const ja: QuizMessages = {
     toggle: "アンケート",
     toggleLabel: (a, t) => `アンケート（全${t}問中${a}問回答済み）`,
-    openSurvey: "アンケートに回答する（アンケートのページへ移動）",
+    openSurvey: "アンケートに回答する（新しいタブでアンケートのページを開く）",
     surveyAt: (n, t) => `アンケート（${n}/${t}）`,
     surveyDone: "アンケート（完了）",
     surveyAtLabel: (n, t) =>
-        `アンケート（${n}/${t}）：${t}問中${n}問目に回答する（アンケートのページへ移動）`,
-    surveyDoneLabel:
-        "アンケート（完了）：回答内容を見る（アンケートのページへ移動）",
+        `アンケート（${n}/${t}）：${t}問中${n}問目に回答する（新しいタブで開く）`,
+    surveyDoneLabel: "アンケート（完了）：回答内容を見る（新しいタブで開く）",
     savedTitle: "回答を記録しました",
     alreadyAnswered: "この質問には回答済みです",
     answeredOf: (a, t) => `${t}問中 ${a}問に回答済み`,
     allAnswered: "すべての質問に回答しました。ご協力ありがとうございました。",
     backToPage: "元のページに戻る",
     backNote: "元のページに戻って、作業を続けてください。",
+    backNoteTab:
+        "「元のページに戻る」でこのタブを閉じ、元のページで作業を続けてください。",
     nextQuestionAt: (n, t) => `次の質問へ（${n}/${t}）`,
     idsLead: "回答を始める前に、ユーザーIDとアンケートIDを入力してください。",
     userIdLabel: "ユーザーID",
@@ -130,18 +133,21 @@ const ja: QuizMessages = {
 const en: QuizMessages = {
     toggle: "Survey",
     toggleLabel: (a, t) => `Survey (${a} of ${t} answered)`,
-    openSurvey: "Survey: answer it (opens the survey page)",
+    openSurvey: "Survey: answer it (opens the survey in a new tab)",
     surveyAt: (n, t) => `Survey (${n}/${t})`,
     surveyDone: "Survey (done)",
     surveyAtLabel: (n, t) =>
-        `Survey (${n}/${t}): answer question ${n} of ${t} (opens the survey page)`,
-    surveyDoneLabel: "Survey (done): see your answers (opens the survey page)",
+        `Survey (${n}/${t}): answer question ${n} of ${t} (opens the survey in a new tab)`,
+    surveyDoneLabel:
+        "Survey (done): see your answers (opens the survey in a new tab)",
     savedTitle: "Your answer is saved",
     alreadyAnswered: "You have answered this question",
     answeredOf: (a, t) => `${a} of ${t} questions answered`,
     allAnswered: "You have answered every question. Thank you for taking part.",
     backToPage: "Back to the page",
     backNote: "Please go back to the page and carry on.",
+    backNoteTab:
+        "“Back to the page” closes this tab; carry on in the page you came from.",
     nextQuestionAt: (n, t) => `Next question (${n}/${t})`,
     idsLead: "Before you start, enter your user ID and survey ID.",
     userIdLabel: "User ID",
