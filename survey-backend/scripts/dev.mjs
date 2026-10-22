@@ -8,7 +8,8 @@ import { fileURLToPath } from "node:url";
 import * as esbuild from "esbuild";
 
 const root = join(fileURLToPath(new URL(".", import.meta.url)), "..");
-const outfile = join(root, "dist", "server.js");
+const outdir = join(root, "dist");
+const outfile = join(outdir, "server.js");
 let server = null;
 
 function restart() {
@@ -24,8 +25,10 @@ function restart() {
 
 const ctx = await esbuild.context({
     entryPoints: [join(root, "src/server.ts")],
-    outfile,
+    outdir,
     bundle: true,
+    // the AWS SDK's part stays in its own chunk, loaded only with SURVEY_STORE=dynamodb
+    splitting: true,
     platform: "node",
     format: "esm",
     packages: "external",

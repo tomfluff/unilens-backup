@@ -33,7 +33,7 @@ make test-target survey-backend
 | `GET /api/quiz/<id>/results` | Each attempt with its answers and timings. Filters `?pid=`, `?session=`, `?attempt=`, `?user_id=`, `?survey_id=`, `?completed=1` |
 | `GET /api/quiz/<id>/results.csv` | The same, one row per attempt, for Excel (UTF-8 with BOM) |
 | `GET /api/quiz/<id>/progress?pid=&session=` (or `?vid=`) | One visitor's progress, for the test pages' button |
-| `GET /health` | `{"status": "ok"}` |
+| `GET /health` | `{"status": "ok", "store": "jsonl"}` (or `"dynamodb"`) |
 
 ## Configuration
 
@@ -46,18 +46,60 @@ All optional; relative paths are from this folder.
 | `SURVEY_DEFINITIONS_DIR` | `quizzes` | The surveys' questions |
 | `SURVEY_PAGE` | `survey.html` | The survey page |
 | `QUIZ_LIB_DIST` | `../quiz-lib/dist` | quiz-lib's build |
+| `SURVEY_STORE` | `jsonl` | Where the answers go: `jsonl` (files in `SURVEY_LOGS_DIR`) or `dynamodb` |
+| `SURVEY_TABLE` | `unilens-survey` | With `dynamodb`: the table |
+| `DYNAMODB_ENDPOINT` | — | With `dynamodb`: DynamoDB Local's address (`http://localhost:8100`); unset for AWS |
+| `AWS_REGION` | `ap-northeast-1` | With `dynamodb` on AWS: the region (credentials come from the AWS SDK's usual chain) |
 
 To add a survey, put `quizzes/<id>.json` (format in `quiz-lib/README.md`; the
 file name is the id its answers are logged under). The answers the Flask backend
 collected before the move are in `backend/quiz-logs/`; copy them into
 `quiz-logs/` to keep them in the results (the format is the same).
 
+## The answers in DynamoDB
+
+The answers can go to a DynamoDB table instead of the JSONL files. Locally that
+is DynamoDB Local in Docker (`docker-compose.yml`, port 8100: the mirror has
+8000); `dynamodb-local.env` holds the settings the commands below use.
+
+```bash
+npm run db:up            # start DynamoDB Local (make db-up)
+npm run db:table         # create the table, once (make db-table)
+npm run db:import        # optional: copy quiz-logs/*.jsonl in; safe to run again (make db-import)
+npm run dev:dynamodb     # the server on DynamoDB Local (make serve-dynamodb)
+npm run db:down          # stop DynamoDB Local; its data stays in a Docker volume
+```
+
+`http://localhost:5100/health` then says `"store": "dynamodb"`. The tests run
+against DynamoDB Local too when its address is set (PowerShell:
+`$env:DYNAMODB_ENDPOINT="http://localhost:8100"; npm test`); otherwise those are
+skipped and the store is tested against an in-memory DynamoDB.
+
+The table (`tableDefinition` in `src/store/dynamoSdk.ts`, on-demand billing):
+
+| `quiz` (partition key) | `seq` (sort key) | Other attributes |
+|---|---|---|
+| the survey id | `<arrival time>#<place in its batch>#<random>` | `event`: the event as JSON text; `pid`, `vid` when it has them |
+| `#quizzes` | a survey id | — (the surveys that have answers) |
+
+The sort key starts with the time the event arrived, so a survey's events read
+back in arrival order, as the results need. Events are kept as JSON text so
+they read back exactly as they came; `pid` and `vid` are copied out for an
+index later (the progress button reads a whole survey for now). Reads are
+strongly consistent: the button asks for progress right after an answer is
+written. If DynamoDB keeps refusing part of a batch after retries, the request
+fails and quiz-lib sends the batch again, so some events can be logged twice;
+the results count a repeated answer once.
+
 ## Layout
 
 ```
 src/
   core/      the survey's logic: what is logged, attempts, progress, CSV (no I/O)
-  store/     where data lives: JsonlStore (answers), FileDefinitions (questions)
+  store/     where data lives: JsonlStore or DynamoStore (answers), FileDefinitions (questions)
+             dynamoSdk.ts, the only file that uses the AWS SDK
+  tools/     createTable.ts, importJsonl.ts (npm run db:table / db:import)
+  deps.ts    the stores the configuration asks for
   handlers/  the API, Lambda-shaped: (request, deps) -> {statusCode, headers, body}
              write.ts  POST /api/quiz/log
              read.ts   every GET under /api/quiz
@@ -67,8 +109,9 @@ src/
 
 The handlers know nothing about Express, so they can later run behind API
 Gateway as Lambda functions unchanged. The answers' storage is the
-`QuizEventStore` interface (`store/types.ts`): a DynamoDB store replaces
-`JsonlStore` without touching the handlers.
+`QuizEventStore` interface (`store/types.ts`), so JSONL and DynamoDB are
+interchangeable: a test sends the same random requests to both and checks
+every read API answers the same.
 
 ## Compared with the Flask backend's survey routes
 

@@ -1,0 +1,16 @@
+# DynamoDB Local for the survey server: `docker compose up -d` here.
+# On port 8100, since the mirror frontend has 8000. -sharedDb: one database
+# whatever the credentials; the data volume keeps it across restarts.
+services:
+  dynamodb:
+    image: amazon/dynamodb-local:latest
+    command: -jar DynamoDBLocal.jar -sharedDb -dbPath /home/dynamodblocal/data
+    # the image's own user cannot write to a fresh named volume
+    user: root
+    ports:
+      - "8100:8000"
+    volumes:
+      - dynamodb-data:/home/dynamodblocal/data
+
+volumes:
+  dynamodb-data:

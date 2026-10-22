@@ -95,7 +95,10 @@ describe("the survey page", () => {
     });
 
     it("reports itself healthy", async () => {
-        expect(await (await s.get("/health")).json()).toEqual({ status: "ok" });
+        expect(await (await s.get("/health")).json()).toEqual({
+            status: "ok",
+            store: "jsonl",
+        });
     });
 });
 
@@ -119,5 +122,20 @@ describe("the defaults", () => {
         expect(config.port).toBe(5200);
         expect(config.logsDir).toBe(resolve("/srv/answers"));
         expect(configFromEnv({ SURVEY_PORT: "x" }).port).toBe(5100);
+    });
+
+    it("choose the answers' store, and refuse an unknown one", () => {
+        expect(configFromEnv({}).store).toBe("jsonl");
+        const dynamo = configFromEnv({
+            SURVEY_STORE: "dynamodb",
+            DYNAMODB_ENDPOINT: "http://localhost:8100",
+        });
+        expect(dynamo.store).toBe("dynamodb");
+        expect(dynamo.dynamo).toEqual({
+            table: "unilens-survey",
+            endpoint: "http://localhost:8100",
+            region: undefined,
+        });
+        expect(() => configFromEnv({ SURVEY_STORE: "dynamo" })).toThrow();
     });
 });

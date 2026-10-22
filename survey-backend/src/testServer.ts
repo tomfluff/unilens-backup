@@ -11,6 +11,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { createApp } from "./app.ts";
 import { configFromEnv, type SurveyConfig } from "./config.ts";
+import { depsFromConfig } from "./deps.ts";
 
 export interface TestServer {
     config: SurveyConfig;
@@ -32,7 +33,8 @@ export async function startServer(): Promise<TestServer> {
         surveysDir: join(root, "quizzes"),
         quizLibDist: join(root, "quiz-dist"),
     };
-    const server: Server = createApp(config).listen(0, "127.0.0.1");
+    const deps = await depsFromConfig(config);
+    const server: Server = createApp(config, deps).listen(0, "127.0.0.1");
     await once(server, "listening");
     const { port } = server.address() as AddressInfo;
     const url = (path: string) => `http://127.0.0.1:${port}${path}`;

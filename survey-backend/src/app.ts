@@ -21,21 +21,11 @@ import {
     listSurveys,
 } from "./handlers/read.ts";
 import { postQuizLog } from "./handlers/write.ts";
-import { FileDefinitions } from "./store/fileDefinitions.ts";
-import { JsonlStore } from "./store/jsonlStore.ts";
 
 /** quiz-lib's build, the only files served from its dist/ */
 const QUIZ_LIB_ASSETS = new Set(["quiz.js", "quiz.js.map"]);
 /** as the Flask backend's limit: an absurd payload is refused, not read */
 const MAX_BODY = "25mb";
-
-export function defaultDeps(config: SurveyConfig): Deps {
-    return {
-        events: new JsonlStore(config.logsDir),
-        surveys: new FileDefinitions(config.surveysDir),
-        now: () => new Date(),
-    };
-}
 
 /**
  * Any page may call the API: the test pages ask for progress from their own
@@ -56,7 +46,8 @@ const cors: RequestHandler = (req, res, next) => {
     res.status(200).end();
 };
 
-export function createApp(config: SurveyConfig, deps = defaultDeps(config)) {
+/** The server, on the stores in `deps` (deps.ts builds them from the configuration). */
+export function createApp(config: SurveyConfig, deps: Deps) {
     const app = express();
     app.disable("x-powered-by");
     // Flask sent none; a 304 on the progress button's fetch would only add a round trip
@@ -116,7 +107,7 @@ export function createApp(config: SurveyConfig, deps = defaultDeps(config)) {
     });
 
     app.get("/health", (_req, res) => {
-        res.json({ status: "ok" });
+        res.json({ status: "ok", store: config.store });
     });
 
     app.use((_req, res) => {
