@@ -82,7 +82,7 @@ const ja: QuizMessages = {
     surveyDone: "アンケート（完了）",
     surveyAtLabel: (n, t) =>
         `アンケート（${n}/${t}）：${t}問中${n}問目に回答する（新しいタブで開く）`,
-    surveyDoneLabel: "アンケート（完了）：回答内容を見る（新しいタブで開く）",
+    surveyDoneLabel: "アンケート（完了）：お礼のページを開く（新しいタブで開く）",
     savedTitle: "回答を記録しました",
     alreadyAnswered: "この質問には回答済みです",
     answeredOf: (a, t) => `${t}問中 ${a}問に回答済み`,
@@ -140,7 +140,7 @@ const en: QuizMessages = {
     surveyAtLabel: (n, t) =>
         `Survey (${n}/${t}): answer question ${n} of ${t} (opens the survey in a new tab)`,
     surveyDoneLabel:
-        "Survey (done): see your answers (opens the survey in a new tab)",
+        "Survey (done): open the thank-you page (opens the survey in a new tab)",
     savedTitle: "Your answer is saved",
     alreadyAnswered: "You have answered this question",
     answeredOf: (a, t) => `${a} of ${t} questions answered`,
