@@ -216,13 +216,15 @@ serve-frontend:
 			$(foreach t,$(JS_TARGETS),--ignore '$(FRONTEND_DIR)/$(WORD_2)/$(call get_target_dist,$(t))'.map) \
 			-c '$(MAKE) bundle'"
 
-# Runs backend, builds and runs frontend from {target_dir}, watches for changes in backend or frontend
+# Runs backend and survey server, builds and runs frontend from {target_dir}, watches for changes in backend or frontend
 serve:
 	$(call require-arg,serve)
 	echo "Serving backend to 'localhost:$(FLASK_PORT)'"
+	echo "Serving survey to 'localhost:$(SURVEY_PORT)'"
 	echo "Serving frontend from '$(WORD_2)' to localhost:$(call get_frontend_port_num,$(WORD_2))"
 	$(NPX) concurrently \
 		"$(MAKE) serve-backend" \
+		"$(MAKE) serve-survey" \
 		"$(MAKE) serve-frontend $(WORD_2)"
 
 # Runs the backend and every frontend at once.
@@ -232,9 +234,11 @@ serve:
 serve-all:
 	$(MAKE) bundle
 	@echo "Serving backend to 'localhost:$(FLASK_PORT)'"
+	@echo "Serving survey to 'localhost:$(SURVEY_PORT)'"
 	@$(foreach t,$(FRONTEND_TARGETS),echo "  Serving frontend '$(t)' to localhost:$(frontend_port_$(t))";)
 	$(NPX) concurrently \
 		"$(MAKE) serve-backend" \
+		"$(MAKE) serve-survey" \
 		$(foreach t,$(FRONTEND_TARGETS),"$(MAKE) run $(t)") \
 		"$(NPX) chokidar $(foreach t,$(JS_TARGETS),'$(t)/src/**') -c '$(MAKE) bundle'"
 

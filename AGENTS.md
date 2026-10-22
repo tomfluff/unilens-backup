@@ -18,7 +18,7 @@
 - `make format`
 
 ## Useful Run Commands
-- `make serve <target>` (backend + one frontend)
+- `make serve <target>` (backend + survey server + one frontend)
 - `make serve-backend`
 - `make serve-survey`
 - `make serve-frontend <target>`

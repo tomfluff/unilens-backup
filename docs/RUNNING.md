@@ -21,8 +21,8 @@ If `make init` fails with `ensurepip is not available`, see [Troubleshooting](#t
 ## Run
 
 ```bash
-make serve softbank-mirror     # backend + one frontend, rebuild on save. The usual one.
-make serve-all                 # backend + every frontend in make-targets.mk
+make serve softbank-mirror     # backend + survey server + one frontend, rebuild on save. The usual one.
+make serve-all                 # backend + survey server + every frontend in make-targets.mk
 make run dev-demo              # one frontend, no build, no backend
 make serve-backend             # backend only
 make serve-survey              # the survey server only (port 5100)
@@ -122,6 +122,7 @@ esbuild's `--watch` stops when stdin closes; that is how it notices its parent
 `make` is gone and avoids orphaning itself. For `nohup`/CI, opt out with
 `make serve-target unilens-lib WATCH=--watch=forever` and kill it by PID when done.
 
-**Sharing a local run.** `./restart-tunnels.sh` opens two cloudflared tunnels
-(backend `:5000`, mirror `:8000`) and rewrites `backend:` in
-`frontend/softbank-mirror/index.html`. Windows/Git Bash paths are hardcoded.
+**Sharing a local run.** `./restart-tunnels.sh` opens three cloudflared tunnels
+(backend `:5000`, survey `:5100`, mirror `:8000`) and rewrites `backend:` in
+`frontend/softbank-mirror/index.html`: `UniLens.init` to the backend's, the
+survey button's `UniLensQuiz.init` to the survey's. Windows/Git Bash paths are hardcoded.
