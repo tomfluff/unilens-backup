@@ -2,10 +2,10 @@
 
 日本語版は [README.ja.md](README.ja.md) を参照してください。
 
-The survey's own server (Express + TypeScript), taking the survey routes out of
-the Flask backend. Same URLs, same answers, same log format: quiz-lib only needs
-its `backend` address pointed here to move. The rest of the backend (chat,
-capture, read-aloud) stays in Flask.
+The survey's own server (Express + TypeScript): the survey page, quiz-lib's
+build and `/api/quiz/*`. It took these over from the Flask backend with the same
+URLs, answers and log format, so quiz-lib only had its `backend` address
+changed. The rest of the backend (chat, capture, read-aloud) is Flask's.
 
 The survey's log is its own: nothing here writes to the study's
 per-participant logs (`backend/study-logs/`). The participant (`pid`,
@@ -25,7 +25,7 @@ make test-target survey-backend
 
 | Endpoint | Description |
 |---|---|
-| `GET /survey?quiz=<id>[&q=&pid=&session=&vid=&return=&tab=]` | The survey page (`backend/survey.html`, quiz-lib in page mode). Without `quiz`, the list of surveys |
+| `GET /survey?quiz=<id>[&q=&pid=&session=&vid=&return=&tab=]` | The survey page (`survey.html`, quiz-lib in page mode). Without `quiz`, the list of surveys |
 | `GET /survey/quiz.js` | quiz-lib's build (`quiz-lib/dist/`); 503 until `make build` |
 | `POST /api/quiz/log[?pid=&session=]` | quiz-lib's events, `{"events": [...]}` as text/plain; appended to `<logs>/<quiz id>.jsonl` |
 | `GET /api/quiz/<id>` | A survey's questions |
@@ -43,15 +43,14 @@ All optional; relative paths are from this folder.
 |---|---|---|
 | `SURVEY_PORT` | `5100` | The port |
 | `SURVEY_LOGS_DIR` | `quiz-logs` | The answers' log (git-ignored) |
-| `SURVEY_DEFINITIONS_DIR` | `../backend/quizzes` | The surveys' questions |
-| `SURVEY_PAGE` | `../backend/survey.html` | The survey page |
+| `SURVEY_DEFINITIONS_DIR` | `quizzes` | The surveys' questions |
+| `SURVEY_PAGE` | `survey.html` | The survey page |
 | `QUIZ_LIB_DIST` | `../quiz-lib/dist` | quiz-lib's build |
 
-The questions and the page stay in `backend/` while both backends serve the
-survey, so there is one copy of each; they move here when Flask's survey routes
-are removed. To keep the answers already collected, copy
-`backend/quiz-logs/*.jsonl` into `quiz-logs/` (the format is the same), or point
-`SURVEY_LOGS_DIR` at `../backend/quiz-logs`.
+To add a survey, put `quizzes/<id>.json` (format in `quiz-lib/README.md`; the
+file name is the id its answers are logged under). The answers the Flask backend
+collected before the move are in `backend/quiz-logs/`; copy them into
+`quiz-logs/` to keep them in the results (the format is the same).
 
 ## Layout
 
@@ -71,9 +70,9 @@ Gateway as Lambda functions unchanged. The answers' storage is the
 `QuizEventStore` interface (`store/types.ts`): a DynamoDB store replaces
 `JsonlStore` without touching the handlers.
 
-## Differences from the Flask backend
+## Compared with the Flask backend's survey routes
 
-Checked by sending the same requests to both (about 130,000 responses and the
+Checked before the move by sending the same requests to both (about 130,000 responses and the
 log files byte for byte, plus the real `unilens-poc` log): no differences, except
 on purpose:
 

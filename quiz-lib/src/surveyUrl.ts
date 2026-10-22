@@ -1,8 +1,8 @@
 /**
  * Link mode: the survey's own button on a test page only takes the participant
- * to the survey page on the backend (backend/survey.html), carrying who they
- * are. The survey itself, its progress and its log live there; the button asks
- * the backend how far this visitor is (surveyProgressUrl) to show "アンケート（2/4）"
+ * to the survey page on the survey server (survey-backend/survey.html), carrying
+ * who they are. The survey itself, its progress and its log live there; the
+ * button asks that server how far this visitor is (surveyProgressUrl) to show "アンケート（2/4）"
  * and open the next question's page.
  */
 

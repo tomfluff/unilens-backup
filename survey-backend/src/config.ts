@@ -1,11 +1,7 @@
 /**
  * Where the survey server listens and what it reads, from the environment.
- *
- * The questions (backend/quizzes/) and the page (backend/survey.html) stay
- * where the Flask backend reads them while both backends serve the survey, so
- * there is one copy of each; they move here once Flask's survey routes go. The
- * answers' log is this server's own: it does not share the Flask backend's
- * files.
+ * By default everything is in this package: the questions (quizzes/), the page
+ * (survey.html) and the answers' log (quiz-logs/, git-ignored).
  */
 
 import { resolve } from "node:path";
@@ -37,8 +33,8 @@ export function configFromEnv(
     return {
         port: Number.isInteger(port) && port > 0 ? port : DEFAULT_PORT,
         logsDir: path(env.SURVEY_LOGS_DIR, "quiz-logs"),
-        surveysDir: path(env.SURVEY_DEFINITIONS_DIR, "../backend/quizzes"),
-        surveyPage: path(env.SURVEY_PAGE, "../backend/survey.html"),
+        surveysDir: path(env.SURVEY_DEFINITIONS_DIR, "quizzes"),
+        surveyPage: path(env.SURVEY_PAGE, "survey.html"),
         quizLibDist: path(env.QUIZ_LIB_DIST, "../quiz-lib/dist"),
     };
 }

@@ -7,7 +7,7 @@
     <!--
       The survey page (GET /survey). The address says what to show:
         /survey?quiz=unilens-poc&q=2&pid=P01&session=1
-      quiz     the survey: backend/quizzes/<quiz>.json (required; without it, a list)
+      quiz     the survey: survey-backend/quizzes/<quiz>.json (required; without it, a list)
       q        1, 2, …: that question (one page per question; the test pages' button
                opens the next one to answer). Without it, the next question to answer:
                the page never runs on through several.
@@ -85,7 +85,7 @@
             .then(function (data) {
               var items = (data.quizzes || []).filter(function (q) { return q.defined; });
               if (!items.length) {
-                note("<h1>アンケート一覧</h1><p>アンケートがありません。<code>backend/quizzes/&lt;id&gt;.json</code> を置いてください。</p>");
+                note("<h1>アンケート一覧</h1><p>アンケートがありません。<code>survey-backend/quizzes/&lt;id&gt;.json</code> を置いてください。</p>");
                 return;
               }
               note(

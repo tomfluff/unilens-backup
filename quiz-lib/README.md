@@ -3,10 +3,10 @@
 日本語版は [README.ja.md](README.ja.md) を参照してください。
 
 A questionnaire for the UniLens studies. The study uses it as **a page of its
-own on the backend**, opened by its address:
+own on the survey server** (`survey-backend/`, port 5100), opened by its address:
 
 ```
-http://127.0.0.1:5000/survey?quiz=unilens-poc&pid=P01&session=1
+http://127.0.0.1:5100/survey?quiz=unilens-poc&pid=P01&session=1
 ```
 
 Each question has a page of its own (`&q=1`, `&q=2`, …). The test pages carry
@@ -32,7 +32,7 @@ panel (`mode: "panel"`, below). By default nothing on screen says whether an ans
 verdicts, correct answers, explanations or score. Questions may carry an answer
 key; it is then graded in the log only (or on screen with `showFeedback: true`).
 
-- On the survey page the questions come from `backend/quizzes/<id>.json`; in
+- On the survey page the questions come from `survey-backend/quizzes/<id>.json`; in
   panel mode, from the host page (inline, or a JSON file).
 - Single choice, multiple choice and typed answers.
 - Japanese only: there is no language switch, and the page's or browser's
@@ -49,9 +49,9 @@ key; it is then graded in the log only (or on screen with `showFeedback: true`).
 - Progress is kept in the browser: a reload resumes the attempt. It is kept per
   participant (`pid` / `session`), so on a shared lab laptop the next participant
   starts afresh.
-- With `backend`, every answer is logged to the UniLens backend
-  (`backend/quiz-logs/<quiz id>.jsonl`), and into the study log when the page
-  names a participant (`?pid=P01&session=1`).
+- With `backend` (the survey server), every answer is logged to its log
+  (`survey-backend/quiz-logs/<quiz id>.jsonl`), with the participant when the
+  page names one (`?pid=P01&session=1`).
 - Accessibility follows the display panel: 44px targets, keyboard and
   screen-reader support, right/wrong (when shown) never by colour alone, high contrast
   (`prefers-contrast: more`, and the display panel's high-contrast theme).
@@ -69,19 +69,19 @@ Unless stated otherwise, commands run from the **UniLens repository root**.
 | Address | Shows |
 |---|---|
 | `/survey` | The list of surveys, with a ready-made participant address for each (for the facilitator) |
-| `/survey?quiz=<id>` | The survey in `backend/quizzes/<id>.json`: its next question to answer (one per visit), or, once all are answered, the thank-you |
+| `/survey?quiz=<id>` | The survey in `survey-backend/quizzes/<id>.json`: its next question to answer (one per visit), or, once all are answered, the thank-you |
 | `…&q=2` | Question 2 only (one page per question; the button opens the next one to answer) |
-| `…&pid=P01&session=1` | The participant: answers go to the quiz log with these, and to their study log |
+| `…&pid=P01&session=1` | The participant: answers go to the survey's log with these |
 | `…&return=<address>` | The test page to go back to after answering (the button sets it) |
 | `…&tab=1` | The page has a tab of its own (the button sets it): going back closes the tab |
 | `…&vid=<id>` | Without a participant: the anonymous id the button gives the browser, so its progress can still be found |
 
-How the button knows the progress: the survey page lives on the backend, so the
-button asks it (`GET /api/quiz/<id>/progress?pid=&session=`, or `?vid=` without
+How the button knows the progress: the survey page lives on the survey server,
+so the button asks it (`GET /api/quiz/<id>/progress?pid=&session=`, or `?vid=` without
 a participant) when the page loads and whenever it is shown again (back from
 the survey, with the page's link or the browser's Back). It counts the
 participant's latest attempt; a question answered on its own page counts
-wherever it was answered. Until the backend answers (or when it is down) the
+wherever it was answered. Until the survey server answers (or when it is down) the
 button reads just "アンケート" and opens `/survey?quiz=<id>`, which shows the next
 question to answer all the same.
 
@@ -90,7 +90,7 @@ The button on a test page (after `accessibility.js` and `unilens.js`):
 ```html
 <script src="quiz.js"></script>
 <script>
-  UniLensQuiz.init({ mode: "link", survey: "unilens-poc", backend: "http://127.0.0.1:5000" })
+  UniLensQuiz.init({ mode: "link", survey: "unilens-poc", backend: "http://127.0.0.1:5100" })
 </script>
 ```
 
@@ -98,9 +98,9 @@ The button on a test page (after `accessibility.js` and `unilens.js`):
 (`softbank-mirror`, `softbank-mirror-recruit`, `dev-demo`; see
 `scripts/sync-dist.mjs`).
 
-To add a survey, put `backend/quizzes/<id>.json` (format below; the file name is
-the id the answers are logged under) and open `/survey?quiz=<id>`. The page
-loads `quiz-lib/dist/quiz.js` from the backend (`/survey/quiz.js`), so run
+To add a survey, put `survey-backend/quizzes/<id>.json` (format below; the file
+name is the id the answers are logged under) and open `/survey?quiz=<id>`. The
+page loads `quiz-lib/dist/quiz.js` from the survey server (`/survey/quiz.js`), so run
 `make build` once after a change to quiz-lib.
 
 ## Build and run
@@ -108,7 +108,7 @@ loads `quiz-lib/dist/quiz.js` from the backend (`/survey/quiz.js`), so run
 ```sh
 make init-target quiz-lib          # npm install
 make build                         # typecheck + bundle every library, copy into frontend/*
-make serve-backend                 # then open http://127.0.0.1:5000/survey
+make serve-survey                  # then open http://127.0.0.1:5100/survey
 ```
 
 | Command | What it does |
@@ -131,7 +131,7 @@ panel over any page.
 <script>
   UniLensQuiz.init({
     src: "quiz.json",                    // or quiz: { ... } inline
-    backend: "http://127.0.0.1:5000",    // omit to keep answers in the browser only
+    backend: "http://127.0.0.1:5100",    // the survey server; omit to keep answers in the browser only
   })
 </script>
 ```
@@ -146,7 +146,7 @@ its high-contrast theme:
 <script>
   Accessibility.init()
   UniLens.init({ backend: "http://127.0.0.1:5000", mouseWindow: 5 })
-  UniLensQuiz.init({ src: "quiz.json", backend: "http://127.0.0.1:5000" })
+  UniLensQuiz.init({ src: "quiz.json", backend: "http://127.0.0.1:5100" })
 </script>
 ```
 
@@ -210,9 +210,9 @@ visitors afresh rather than grading them against moved answers.
 |---|---|---|
 | `quiz` | — | The quiz object. Either this or `src`. |
 | `src` | — | URL of a JSON file with the quiz. |
-| `backend` | — | UniLens backend to log answers to. |
+| `backend` | — | The survey server to log answers to (`survey-backend`, port 5100). |
 | `mode` | `'panel'` | `'link'`: only the button, opening the survey page (test pages). `'page'`: the survey fills `container` (the survey page). `'panel'`: button and floating panel. |
-| `survey` | — | Link mode: the survey's id (`backend/quizzes/<id>.json`). |
+| `survey` | — | Link mode: the survey's id (`survey-backend/quizzes/<id>.json`). |
 | `container` | end of `<body>` | Page mode: the element, or a selector, to fill. |
 | `question` | next to answer | Page mode: show only this question (1-based). Without it, the first question not answered yet (the page never runs through several). `init()` resolves false for a question the survey does not have. |
 | `returnTo` | — | Page mode: the page to go back to after answering (absolute http(s) only). |
@@ -234,7 +234,7 @@ browser's progress), `getResult()`, `isOpen()`,
 
 `POST /api/quiz/log` (plain-text JSON, `{ "events": [...] }`, optional
 `?pid=&session=`) appends one line per event to
-`backend/quiz-logs/<quiz id>.jsonl`:
+`survey-backend/quiz-logs/<quiz id>.jsonl`:
 
 | `type` | Fields |
 |---|---|
@@ -247,13 +247,13 @@ browser's progress), `getResult()`, `isOpen()`,
 
 Every line also has `t`, `seq`, `quiz`, `lang`, `page` (path only), the typed
 `user_id` / `survey_id` once entered, and `pid` /
-`session` when the page named a participant (else `vid`, the button's anonymous id, when there is one); then the same events also go to
-`backend/study-logs/<pid>/session-<n>.jsonl`. Nothing else about the visitor is
-sent.
+`session` when the page named a participant (else `vid`, the button's anonymous id, when there is one).
+Nothing else about the visitor is sent, and nothing goes to the study's
+per-participant logs (`backend/study-logs/`).
 
 ## Reading the results
 
-The backend folds the log into one record per attempt.
+The survey server folds the log into one record per attempt.
 
 | Endpoint | Returns |
 |---|---|
@@ -263,8 +263,8 @@ The backend folds the log into one record per attempt.
 | `GET /api/quiz/<quiz id>/results.csv` | The same, one row per attempt, for Excel: the totals, then for each question `<id>_ms`, `<id>_s`, `<id>_answer`, `<id>_correct`. Same filters. |
 
 ```sh
-curl "http://127.0.0.1:5000/api/quiz/dev-demo/results?pid=P01&completed=1"
-curl -o results.csv "http://127.0.0.1:5000/api/quiz/unilens-poc/results.csv?completed=1"
+curl "http://127.0.0.1:5100/api/quiz/dev-demo/results?pid=P01&completed=1"
+curl -o results.csv "http://127.0.0.1:5100/api/quiz/unilens-poc/results.csv?completed=1"
 ```
 
 The survey list (`/survey`) links each survey's CSV.

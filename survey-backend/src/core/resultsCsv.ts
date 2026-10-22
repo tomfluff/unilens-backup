@@ -2,7 +2,7 @@
  * The results as a spreadsheet (GET /api/quiz/<id>/results.csv): one row per
  * attempt and, for each question in the survey's order, its time, the answer in
  * words and whether it was right. Same columns and cells as the Flask
- * backend's _quiz_results_csv, so existing analysis sheets keep working.
+ * backend's export had, so existing analysis sheets keep working.
  */
 
 import { type Attempt, questionOrder } from "./attempts.ts";

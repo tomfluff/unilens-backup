@@ -3,10 +3,10 @@
  * toggle, as a link to the survey page. It shows how far the visitor is —
  * "アンケート（2/4）": the next question to answer, of all — and leads to that
  * question's own page; once every question is answered, "アンケート（完了）" leads
- * to the visitor's answers.
+ * to the thank-you page.
  *
- * The progress comes from the backend (GET /api/quiz/<id>/progress), since the
- * survey page lives on the backend's origin and keeps its own storage there. It
+ * The progress comes from the survey server (GET /api/quiz/<id>/progress), since
+ * the survey page lives on that server's origin and keeps its own storage there. It
  * is asked again whenever the page is shown (back from the survey, a tab coming
  * to the front), and the last answer is kept for the session so the next page
  * shows it at once. The address is built at the click, so a participant named

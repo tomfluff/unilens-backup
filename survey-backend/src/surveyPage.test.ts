@@ -100,7 +100,7 @@ describe("the survey page", () => {
 });
 
 describe("the defaults", () => {
-    it("read the surveys the Flask backend ships", async () => {
+    it("read the survey shipped in quizzes/", async () => {
         const { surveysDir } = configFromEnv({});
         const path = join(surveysDir, "unilens-poc.json");
         const data = JSON.parse(await readFile(path, "utf8"));

@@ -2,7 +2,7 @@
 
 > [README.md](README.md) の日本語訳です。正典は英語版であり、両者が食い違った場合は英語版が優先されます。
 
-アンケート専用のサーバー（Express + TypeScript）です。Flask バックエンドからアンケートのルートを切り出したもので、URL・応答・ログ形式は同じです。quiz-lib は `backend` のアドレスをここに向けるだけで移行できます。それ以外（chat、capture、読み上げ）は Flask に残ります。
+アンケート専用のサーバー（Express + TypeScript）です。アンケートページ、quiz-lib のビルド、`/api/quiz/*` を担当します。Flask バックエンドから URL・応答・ログ形式を変えずに引き継いだので、quiz-lib は `backend` のアドレスを変えただけで移行しました。それ以外（chat、capture、読み上げ）は Flask の担当です。
 
 アンケートのログは独立しています。研究用の参加者別ログ（`backend/study-logs/`）には何も書きません。参加者（`pid`、`session`）は各行に残るので、後から突き合わせられます。
 
@@ -20,7 +20,7 @@ make test-target survey-backend
 
 | エンドポイント | 説明 |
 |---|---|
-| `GET /survey?quiz=<id>[&q=&pid=&session=&vid=&return=&tab=]` | アンケートページ（`backend/survey.html`、quiz-lib の page モード）。`quiz` がなければアンケート一覧 |
+| `GET /survey?quiz=<id>[&q=&pid=&session=&vid=&return=&tab=]` | アンケートページ（`survey.html`、quiz-lib の page モード）。`quiz` がなければアンケート一覧 |
 | `GET /survey/quiz.js` | quiz-lib のビルド（`quiz-lib/dist/`）。`make build` 前は 503 |
 | `POST /api/quiz/log[?pid=&session=]` | quiz-lib のイベント。`{"events": [...]}` を text/plain で受け、`<ログ>/<quiz id>.jsonl` に追記 |
 | `GET /api/quiz/<id>` | アンケートの質問 |
@@ -38,11 +38,11 @@ make test-target survey-backend
 |---|---|---|
 | `SURVEY_PORT` | `5100` | ポート |
 | `SURVEY_LOGS_DIR` | `quiz-logs` | 回答ログ（git 管理外） |
-| `SURVEY_DEFINITIONS_DIR` | `../backend/quizzes` | アンケートの質問 |
-| `SURVEY_PAGE` | `../backend/survey.html` | アンケートページ |
+| `SURVEY_DEFINITIONS_DIR` | `quizzes` | アンケートの質問 |
+| `SURVEY_PAGE` | `survey.html` | アンケートページ |
 | `QUIZ_LIB_DIST` | `../quiz-lib/dist` | quiz-lib のビルド |
 
-両方のバックエンドがアンケートを配信している間は、質問とページを `backend/` に置いたままにして 1 か所で管理します。Flask のアンケート用ルートを消すときに、ここへ移します。これまでの回答を引き継ぐには、`backend/quiz-logs/*.jsonl` を `quiz-logs/` にコピーしてください（形式は同じです）。`SURVEY_LOGS_DIR` を `../backend/quiz-logs` に向けても構いません。
+アンケートを追加するときは `quizzes/<id>.json` を置きます（書式は `quiz-lib/README.ja.md`。ファイル名が回答ログで使われる id になります）。移行前に Flask バックエンドが集めた回答は `backend/quiz-logs/` にあります。結果に含めるには `quiz-logs/` にコピーしてください（形式は同じです）。
 
 ## 構成
 
@@ -59,9 +59,9 @@ src/
 
 ハンドラは Express に依存しないので、後で API Gateway の裏の Lambda としてそのまま動かせます。回答の保存先は `QuizEventStore` インターフェース（`store/types.ts`）です。DynamoDB 版のストアを作れば、ハンドラを変えずに `JsonlStore` と差し替えられます。
 
-## Flask バックエンドとの違い
+## Flask バックエンドのアンケート用ルートとの比較
 
-同じリクエストを両方に送って確認しました（応答約 13 万件、ログファイルはバイト単位、加えて実際の `unilens-poc` のログ）。違いは次の意図的なものだけです。
+移行前に、同じリクエストを両方に送って確認しました（応答約 13 万件、ログファイルはバイト単位、加えて実際の `unilens-poc` のログ）。違いは次の意図的なものだけです。
 
 - study-logs への書き込みがない（上記）。
 - U+2028／U+2029／U+0085 を含む回答も残る。Flask はこれらをそのまま書き込み、読み戻すときにその行を分割してしまうため、イベントが失われます。ここではエスケープして書き込み、Flask が書いた行も 1 行として読みます。

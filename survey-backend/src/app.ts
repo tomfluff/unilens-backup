@@ -1,8 +1,8 @@
 /**
  * The survey's HTTP server: the page and quiz-lib's build, and the API routes,
- * each handed to a framework-free handler (handlers/). The same URLs and
- * answers as the Flask backend's survey routes, so quiz-lib only needs its
- * `backend` address changed to move.
+ * each handed to a framework-free handler (handlers/). The URLs and answers
+ * are those the Flask backend's survey routes had, so quiz-lib only needed its
+ * `backend` address changed when the survey moved here.
  */
 
 import { STATUS_CODES } from "node:http";
@@ -86,7 +86,7 @@ export function createApp(config: SurveyConfig, deps = defaultDeps(config)) {
     app.get("/api/quiz/:quiz/results.csv", route(getResultsCsv));
     app.get("/api/quiz/:quiz/progress", route(getProgress));
 
-    // The survey page (Japanese only); its address names the survey (backend/survey.html has the parameters).
+    // The survey page (Japanese only); its address names the survey (survey.html has the parameters).
     app.get("/survey", (_req, res, next) => {
         res.sendFile(
             config.surveyPage,

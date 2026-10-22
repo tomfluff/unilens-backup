@@ -1,7 +1,7 @@
 /**
  * The answers' log as the Flask backend kept it: one append-only JSONL file per
- * survey, <dir>/<quiz id>.jsonl, a line per event. Either backend can read the
- * other's files, which is what lets the move be checked against real logs.
+ * survey, <dir>/<quiz id>.jsonl, a line per event, so the logs it wrote
+ * (backend/quiz-logs/) can be copied in and read as they are.
  */
 
 import { appendFile, mkdir, readdir, readFile } from "node:fs/promises";
@@ -17,9 +17,9 @@ import type { QuizEventStore } from "./types.ts";
 
 /**
  * One line of the log. Python's json.dumps leaves U+0085, U+2028 and U+2029 as
- * they are, but Python's str.splitlines() breaks a line at them, so the Flask
- * backend would drop such a line when reading it back; escaped, it is the same
- * JSON on one line for both readers.
+ * they are, but Python's str.splitlines() breaks a line at them (the Flask
+ * backend lost such answers that way); escaped, it is the same JSON on one line
+ * for any reader that splits lines.
  */
 function line(ev: QuizEvent): string {
     const json = pyDumps(ev).replace(
@@ -79,7 +79,7 @@ export class JsonlStore implements QuizEventStore {
             throw err;
         }
         const events: QuizEvent[] = [];
-        // CRLF too: the Flask backend on Windows writes its lines in text mode
+        // CRLF too: the Flask backend on Windows wrote its lines in text mode
         for (const raw of text.split(/\r\n|\r|\n/)) {
             try {
                 const ev: unknown = JSON.parse(raw);

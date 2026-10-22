@@ -1,8 +1,8 @@
 /**
- * Sends quiz events to the UniLens backend (POST /api/quiz/log), which appends
- * them to backend/quiz-logs/<quiz id>.jsonl — and, when the page names a study
- * participant, to that participant's study log as well, so answers sit on the
- * same timeline as their chat (unilens-lib/src/studyLog.ts).
+ * Sends quiz events to the survey server (POST /api/quiz/log), which appends
+ * them to survey-backend/quiz-logs/<quiz id>.jsonl, with the study participant
+ * when the page names one (the same pid and session as unilens-lib's study log,
+ * so the two can be joined).
  *
  * Only with `init({ backend })`; without it nothing leaves the page. Events
  * carry the quiz, an anonymous attempt id, the answers and timings, and the

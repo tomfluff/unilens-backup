@@ -4,21 +4,21 @@
  * The build (dist/quiz.js) exposes window.UniLensQuiz (and window.Quiz, when
  * the page has no global of that name already). Two ways to show a survey:
  *
- * - "page" (how the study uses it): the backend's survey page,
- *   /survey?quiz=<id>&q=2&pid=P01&session=1 (backend/survey.html), runs
+ * - "page" (how the study uses it): the survey server's survey page,
+ *   /survey?quiz=<id>&q=2&pid=P01&session=1 (survey-backend/survey.html), runs
  *     UniLensQuiz.init({ mode: "page", container: "#survey", src: "/api/quiz/<id>", backend, question: 2 })
  *   and the survey fills the page: no floating button, nothing on the test pages.
  *   The page holds one question: `question`, else the next one to answer.
  * - "link" (on the test pages): only the "アンケート（2/4）" button, showing the
  *   next question to answer; a click opens that question's page, carrying the
  *   participant and the way back (the survey is in Japanese only),
- *     UniLensQuiz.init({ mode: "link", survey: "unilens-poc", backend: "http://127.0.0.1:5000" })
+ *     UniLensQuiz.init({ mode: "link", survey: "unilens-poc", backend: "http://127.0.0.1:5100" })
  * - "panel": a button and floating panel over any host page,
- *     UniLensQuiz.init({ src: "quiz.json", backend: "http://127.0.0.1:5000" })
+ *     UniLensQuiz.init({ src: "quiz.json", backend: "http://127.0.0.1:5100" })
  *
  * The quiz comes from the host — inline (`quiz: {...}`) or as a JSON file
  * (`src`). Answers are kept in this browser so a reload resumes the attempt,
- * and, with `backend`, logged to the UniLens backend (quizLog.ts).
+ * and, with `backend`, logged to the survey server (quizLog.ts).
  *
  * Widget CSS is bundled into the script and injected on init.
  */
@@ -73,11 +73,11 @@ export type QuizMode = "panel" | "page" | "link";
 export interface QuizInitOptions extends QuizCallbacks {
     /**
      * "panel" (default): a button and floating panel over the host page.
-     * "page": the survey fills `container` — the backend's survey page.
+     * "page": the survey fills `container` — the survey server's survey page.
      * "link": only the button; it opens the survey page (`survey` on `backend`).
      */
     mode?: QuizMode;
-    /** link mode: the survey to open, by id (backend/quizzes/<id>.json). */
+    /** link mode: the survey to open, by id (survey-backend/quizzes/<id>.json). */
     survey?: string;
     /** page mode: the element (or a selector for it) to fill. Default: a new one at the end of <body>. */
     container?: HTMLElement | string;
@@ -95,7 +95,7 @@ export interface QuizInitOptions extends QuizCallbacks {
     /** URL of a JSON file holding the quiz (same shape as `quiz`). */
     src?: string;
     /**
-     * UniLens backend to log answers to, e.g. "http://127.0.0.1:5000".
+     * The survey server to log answers to, e.g. "http://127.0.0.1:5100".
      * Omit to keep everything in the browser.
      */
     backend?: string;

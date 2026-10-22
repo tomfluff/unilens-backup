@@ -3,9 +3,10 @@
  * kept of it: events of known types naming a valid survey id, each small
  * enough, stamped with the participant when the request names one.
  *
- * The survey's log is its own: unlike the Flask backend, nothing here writes to
- * the study's per-participant logs (backend/study-logs). The participant still
- * goes on every line, so the two logs can be joined later by pid and session.
+ * The survey's log is its own: unlike the Flask backend's survey routes did,
+ * nothing here writes to the study's per-participant logs (backend/study-logs).
+ * The participant still goes on every line, so the two logs can be joined later
+ * by pid and session.
  */
 
 import { pyDumps, pyLen } from "./pyCompat.ts";

@@ -1,8 +1,8 @@
 /**
  * A survey's log read back: folded into one record per attempt (results and
- * CSV), filtered, and one visitor's progress (the test pages' button). A port
- * of backend/app.py's _quiz_attempts, _filter_attempts and _quiz_progress, kept
- * to the same output so the survey's pages and exports do not change.
+ * CSV), filtered, and one visitor's progress (the test pages' button). Ported
+ * from the Flask backend's survey code (since removed) to the same output, so
+ * the survey's pages and exports did not change in the move.
  */
 
 import { pyRound, pyStr, pyTruthy } from "./pyCompat.ts";

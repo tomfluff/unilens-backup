@@ -16,13 +16,8 @@
 | `GET /health` | Health check for confirming the active provider |
 | `POST /api/tts/stream` | Reads `text` aloud as the POST's own answer: 16-bit mono PCM at 24 kHz, sent as it is made (OpenAI or Gemini), for the widget to play with WebAudio. A quick tunnel passes a POST's body on at once but holds a GET's until it is complete |
 | `POST /api/study/log?pid=&session=` | The widget's events for a study participant, appended to `study-logs/<pid>/session-<n>.jsonl` (see Storage) |
-| `GET /survey?quiz=<id>[&q=&pid=&session=&return=]` | The survey page (`survey.html`, running `quiz-lib` in page mode, Japanese only); with `q=N`, question N only (one page per question). Without `quiz`, a list of the surveys for the facilitator |
-| `GET /api/quiz/<id>` | A survey's questions, from `quizzes/<id>.json` |
-| `POST /api/quiz/log[?pid=&session=]` | The quiz widget's (`quiz-lib`) events, appended to `quiz-logs/<quiz id>.jsonl`; with a participant, also to their study log |
-| `GET /api/quiz` | The surveys (in `quizzes/` or with a log): title, attempt and completion counts |
-| `GET /api/quiz/<id>/results` | Each attempt at a quiz: its answers (`response`, `response_text`, `correct` — `null` for a question without an answer key), time per question (`ms`) and in all (`duration_ms`). Each carries the `user_id` and `survey_id` the respondent typed before the survey. Filters `?pid=`, `?session=`, `?attempt=`, `?user_id=`, `?survey_id=`, `?completed=1` (see `quiz-lib/README.md`) |
-| `GET /api/quiz/<id>/progress?pid=&session=` (or `?vid=`) | One visitor's progress through a survey, for the test pages' button ("アンケート（2/4）"): `total`, `answered`, `next` (1-based, null once all are answered), `completed` |
-| `GET /api/quiz/<id>/results.csv` | The same as a CSV for Excel (UTF-8 with BOM), one row per attempt: totals, then `<question>_ms`, `_s`, `_answer`, `_correct` for each question in the survey's order. Same filters |
+
+The survey (`/survey` and `/api/quiz/*`) is served by `survey-backend/`, not here.
 
 ## LLM provider selection
 
@@ -44,7 +39,6 @@ Switched automatically via environment variables (`_provider()`):
 
 - `captures/<id>/`: `capture.png` (full annotated image), `viewport.png` (close-up, optional), `meta.json`, `chat.json` (one-off chat history outside of a session)
 - `sessions/<sid>.json`: per-session history
-- `quizzes/<id>.json`: the surveys shown at `/survey?quiz=<id>` (format in `quiz-lib/README.md`). In the repository.
-- `quiz-logs/<quiz id>.jsonl`: every answer to a survey (`quiz-lib`), one event per line, append-only, with `pid`/`session` when the page named a participant. Git-ignored.
+- `quiz-logs/<quiz id>.jsonl`: the survey's answers from before it moved to `survey-backend/`. No longer written; copy them into `survey-backend/quiz-logs/` to keep them in its results. Git-ignored.
 - `study-logs/<pid>/session-<n>.jsonl`: a study participant's interaction log, one event per line, append-only. Written only when the page address named a participant (`?pid=P03&session=1`); the widget then adds `pid` and `session` to every request. The widget sends its events (clicks, questions, answers, source presses, the microphone, read-aloud, outlines, errors) to `POST /api/study/log`, and the routes add the capture saved, the model's answer and latency, a transcript and a read-aloud request. Git-ignored. `study_export.py` turns them into a CSV and a Markdown timeline per session and a `summary.csv` (`.venv/bin/python study_export.py [pid…]`, into `study-logs/export/`).
 

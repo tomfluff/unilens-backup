@@ -1,6 +1,6 @@
 /**
  * A survey server for the tests: its own temporary folders, on a free port.
- * The page is the real backend/survey.html, as the server serves by default.
+ * The page is the real survey.html, as the server serves by default.
  */
 
 import { once } from "node:events";

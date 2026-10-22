@@ -1,9 +1,9 @@
 /**
  * Python's formatting where the Flask backend's output depends on it: the JSON a
  * log line is written as (and measured by), str() in a CSV cell, round() and
- * "{:.1f}". The survey's logs and CSV were defined by backend/app.py; matching
- * it byte for byte lets the two backends read each other's logs and lets their
- * results be compared during the move.
+ * "{:.1f}". The survey's logs and CSV were first written by the Flask backend;
+ * matching it byte for byte keeps the logs it wrote readable and the exports
+ * unchanged, and let the two be compared during the move.
  *
  * Ceiling: JSON.parse forgets whether a number was written 1 or 1.0, and loses
  * integers past 2^53, so those print as Python would print an int. quiz-lib

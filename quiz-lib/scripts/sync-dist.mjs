@@ -3,7 +3,7 @@
  * Used after one-shot builds and by the dev watcher.
  *
  * Those pages show only the "アンケート" button (link mode), which opens the
- * survey page on the backend (/survey, backend/survey.html); that page loads
+ * survey page on the survey server (/survey, survey-backend/survey.html); that page loads
  * dist/quiz.js straight from here.
  */
 import { copyFileSync, existsSync } from "node:fs";
