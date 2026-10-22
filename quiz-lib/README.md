@@ -18,8 +18,8 @@ tab. After the answer the page says it is saved and offers "元のページに�
 (back to the page), which closes the survey tab; the button then shows
 "アンケート（3/4）". (A survey page opened by its address, not by the button,
 loads the test page in the same tab instead.) Once every question is answered it shows
-"アンケート（完了）" and opens the whole survey, which shows the thank-you and the
-participant's own answers. The survey page never runs on to the next question:
+"アンケート（完了）" and opens the survey page, which says thank you (the answers
+are not listed again, and there is no "answer again"). The survey page never runs on to the next question:
 opened without `&q=` it shows the next question to answer (and adds its `&q=` to
 the address), so every visit is one question, then back to the page.
 
@@ -43,7 +43,7 @@ key; it is then graded in the log only (or on screen with `showFeedback: true`).
   digits, `-` and `_`, up to 32 (full-width input is converted). They belong to
   the attempt, so the pages of one survey (one per question) ask only once; every
   later screen shows them, and every logged event carries them (`user_id`,
-  `survey_id`). "Answer again" asks for them afresh.
+  `survey_id`).
 - Progress is kept in the browser: a reload resumes the attempt. It is kept per
   participant (`pid` / `session`), so on a shared lab laptop the next participant
   starts afresh.
@@ -67,7 +67,7 @@ Unless stated otherwise, commands run from the **UniLens repository root**.
 | Address | Shows |
 |---|---|
 | `/survey` | The list of surveys, with a ready-made participant address for each (for the facilitator) |
-| `/survey?quiz=<id>` | The survey in `backend/quizzes/<id>.json`: its next question to answer (one per visit), or, once all are answered, the thank-you and the answers |
+| `/survey?quiz=<id>` | The survey in `backend/quizzes/<id>.json`: its next question to answer (one per visit), or, once all are answered, the thank-you |
 | `…&q=2` | Question 2 only (one page per question; the button opens the next one to answer) |
 | `…&pid=P01&session=1` | The participant: answers go to the quiz log with these, and to their study log |
 | `…&return=<address>` | The test page to go back to after answering (the button sets it) |
@@ -157,7 +157,6 @@ its high-contrast theme:
   "description": "Three questions about this page.",
   "showFeedback": true,
   "shuffleChoices": false,
-  "allowRetry": true,
   "questions": [
     {
       "id": "team-price",
@@ -198,7 +197,6 @@ its high-contrast theme:
 | question `id` | Default `q1`, `q2`, … Set it yourself if you will reorder questions: the log refers to it. |
 | `showFeedback` | Default false: the visitor never sees right/wrong, correct answers, explanations or a score. true: a verdict and explanation after each graded answer, and the score at the end. |
 | `shuffleChoices` | Default false. Shuffled once per attempt; a reload keeps the order. |
-| `allowRetry` | Default true. Offers "try again" on the result screen. |
 
 Invalid questions are skipped with a console warning; a quiz with no valid
 question is not shown. Editing a quiz (any change to its content) starts

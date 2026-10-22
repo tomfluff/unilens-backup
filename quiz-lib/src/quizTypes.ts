@@ -74,15 +74,13 @@ export interface QuizInput {
     questions: QuizQuestionInput[];
     /**
      * Show whether answers were right: the verdict and explanation after each
-     * answer, and the score on the last screen. Default false — the visitor only
-     * sees their own answers (a survey); grading, when there is an answer key,
-     * still goes to the log.
+     * answer, and the score on the last screen. Default false — the visitor sees
+     * no verdict (a survey); grading, when there is an answer key, still goes to
+     * the log.
      */
     showFeedback?: boolean;
     /** Shuffle the choices, once per attempt. Default false. */
     shuffleChoices?: boolean;
-    /** Offer "try again" on the result screen. Default true. */
-    allowRetry?: boolean;
 }
 
 // ── Normalized ───────────────────────────────────────────────────────────
@@ -129,7 +127,6 @@ export interface Quiz {
     questions: QuizQuestion[];
     showFeedback: boolean;
     shuffleChoices: boolean;
-    allowRetry: boolean;
 }
 
 /** single: a choice id; multiple: choice ids; text: what was typed */
@@ -322,7 +319,6 @@ export function normalizeQuiz(raw: unknown): {
             questions,
             showFeedback: raw.showFeedback === true,
             shuffleChoices: raw.shuffleChoices === true,
-            allowRetry: raw.allowRetry !== false,
         },
         errors,
     };

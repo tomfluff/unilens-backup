@@ -60,14 +60,13 @@ export interface QuizMessages {
     explanation: string;
     next: string;
     seeResult: string;
-    /** last screen with feedback off: thanks, then the visitor's own answers */
+    /** last screen with feedback off: thanks (the answers are not listed again) */
     doneTitle: string;
     doneNote: string;
     /** last screen with feedback on: the score */
     resultTitle: string;
     score: (correct: number, total: number) => string;
     percent: (p: number) => string;
-    retry: string;
     questionN: (n: number) => string;
     choiceCorrectMark: string;
     choicePickedMark: string;
@@ -120,11 +119,10 @@ const ja: QuizMessages = {
     next: "次の質問へ",
     seeResult: "結果を見る",
     doneTitle: "回答ありがとうございました",
-    doneNote: "回答内容は次のとおりです。",
+    doneNote: "すべての質問への回答を記録しました。",
     resultTitle: "結果",
     score: (c, t) => `${t}問中 ${c}問正解`,
     percent: (p) => `正答率 ${p}%`,
-    retry: "もう一度回答する",
     questionN: (n) => `質問 ${n}`,
     choiceCorrectMark: "正解",
     choicePickedMark: "あなたの回答",
@@ -178,11 +176,10 @@ const en: QuizMessages = {
     next: "Next question",
     seeResult: "See results",
     doneTitle: "Thank you for your answers",
-    doneNote: "Here is what you answered.",
+    doneNote: "All your answers are recorded.",
     resultTitle: "Results",
     score: (c, t) => `${c} of ${t} correct`,
     percent: (p) => `${p}% correct`,
-    retry: "Answer again",
     questionN: (n) => `Question ${n}`,
     choiceCorrectMark: "Correct answer",
     choicePickedMark: "Your answer",

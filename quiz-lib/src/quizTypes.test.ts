@@ -24,7 +24,6 @@ describe("normalizeQuiz", () => {
             ],
             showFeedback: false,
             shuffleChoices: false,
-            allowRetry: true,
         });
     });
 

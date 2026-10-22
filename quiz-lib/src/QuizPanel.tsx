@@ -47,7 +47,6 @@ import {
 import {
     type AnswerRecord,
     type Attempt,
-    clearAttempt,
     currentAttempt,
     finishAttempt,
     goToQuestion,
@@ -123,14 +122,7 @@ function safeCall<T>(fn: ((arg: T) => void) | undefined, arg: T) {
 
 // ── Icons (no emoji as interface icons: PRODUCT.md) ───────────────────────
 
-type IconName =
-    | "quiz"
-    | "close"
-    | "check"
-    | "cross"
-    | "next"
-    | "retry"
-    | "alert";
+type IconName = "quiz" | "close" | "check" | "cross" | "next" | "alert";
 
 const ICON_PATHS: Record<IconName, string> = {
     // a clipboard with lines: a form to fill in
@@ -139,7 +131,6 @@ const ICON_PATHS: Record<IconName, string> = {
     check: '<path d="M20 6 9 17l-5-5"/>',
     cross: '<path d="M17 7 7 17M7 7l10 10"/>',
     next: '<path d="M5 12h14"/><path d="m13 6 6 6-6 6"/>',
-    retry: '<path d="M3 12a9 9 0 1 0 2.6-6.4L3 8"/><path d="M3 3v5h5"/>',
     alert: '<circle cx="12" cy="12" r="9"/><path d="M12 7.5v5.5"/><path d="M12 16.5h.01"/>',
 };
 
@@ -342,8 +333,6 @@ export function QuizApp({
     const shownAt = useRef(Date.now());
     /** one question's page: answered here, now (not on an earlier visit) */
     const [savedNow, setSavedNow] = useState(false);
-    /** "answer again" was pressed: the next start is a retry (after the IDs) */
-    const [retrying, setRetrying] = useState(false);
     const ids = idsOf(attempt);
 
     useEffect(() => {
@@ -423,23 +412,10 @@ export function QuizApp({
                 ...base(a),
                 attempt: a.attempt,
                 total: quiz.questions.length,
-                retry: retrying,
+                retry: false,
             });
             if (only !== null && only > 0) goToQuestion(storeKey, only);
         }
-        setRetrying(false);
-        requestFocus("screen");
-    }
-
-    /** "Answer again": back to the IDs, for a new attempt */
-    function retry() {
-        clearAttempt(storeKey);
-        // the survey page answers one question per page: start again on the first one's
-        if (page) {
-            location.assign(questionPageUrl(0));
-            return;
-        }
-        setRetrying(true);
         requestFocus("screen");
     }
 
@@ -632,9 +608,7 @@ export function QuizApp({
             <Result
                 quiz={quiz}
                 attempt={attempt}
-                lang={lang}
                 m={m}
-                onRetry={retry}
                 returnTo={page ? returnTo : null}
             />
         );
@@ -1269,26 +1243,26 @@ function Choices({
     );
 }
 
+/**
+ * The end, once every question is answered: thanks (or, with feedback on, the
+ * score), and the way back to the test page. No list of the answers and no
+ * "answer again": the survey is answered once.
+ */
 function Result({
     quiz,
     attempt,
-    lang,
     m,
-    onRetry,
     returnTo = null,
 }: {
     quiz: Quiz;
     attempt: Attempt;
-    lang: QuizLang;
     m: QuizMessages;
-    onRetry: () => void;
     returnTo?: string | null;
 }) {
     const score = scoreOf(quiz, attempt.answers);
     const pct = score.total
         ? Math.round((score.correct / score.total) * 100)
         : 0;
-    const sep = lang === "ja" ? "：" : ": ";
     // the score only counts when there was something to grade
     const scored = quiz.showFeedback && quiz.questions.some(isGraded);
     return (
@@ -1309,71 +1283,9 @@ function Result({
             ) : (
                 <p className="unilens-quiz-muted">{m.doneNote}</p>
             )}
-            <ol className="unilens-quiz-review">
-                {quiz.questions.map((q, i) => {
-                    const rec = attempt.answers[q.id];
-                    const ok = rec?.correct === true;
-                    // verdicts only with feedback on, and only for graded questions
-                    const judged = quiz.showFeedback && isGraded(q);
-                    return (
-                        <li key={q.id}>
-                            <p className="unilens-quiz-review-head">
-                                <span>{m.questionN(i + 1)}</span>
-                                {judged && (
-                                    <span
-                                        className="unilens-quiz-mark"
-                                        data-kind={ok ? "correct" : "wrong"}
-                                    >
-                                        <Icon
-                                            name={ok ? "check" : "cross"}
-                                            size={14}
-                                        />
-                                        {ok ? m.correct : m.incorrect}
-                                    </span>
-                                )}
-                            </p>
-                            <p className="unilens-quiz-text">
-                                {localize(q.prompt, lang)}
-                            </p>
-                            <dl>
-                                <dt>{m.yourAnswer}</dt>
-                                <dd>
-                                    {responseText(q, rec?.response, lang, m)}
-                                </dd>
-                                {judged && !ok && (
-                                    <>
-                                        <dt>{m.correctAnswer}</dt>
-                                        <dd>{correctText(q, lang)}</dd>
-                                    </>
-                                )}
-                            </dl>
-                            {quiz.showFeedback && q.explanation && (
-                                <p className="unilens-quiz-text">
-                                    <span className="unilens-quiz-label">
-                                        {m.explanation}
-                                        {sep}
-                                    </span>
-                                    {localize(q.explanation, lang)}
-                                </p>
-                            )}
-                        </li>
-                    );
-                })}
-            </ol>
-            {(quiz.allowRetry || returnTo) && (
+            {returnTo && (
                 <div className="unilens-quiz-actions">
-                    {returnTo && <BackLink url={returnTo} m={m} />}
-                    {quiz.allowRetry && (
-                        <button
-                            type="button"
-                            className="unilens-quiz-btn"
-                            data-variant="secondary"
-                            onClick={onRetry}
-                        >
-                            <Icon name="retry" />
-                            {m.retry}
-                        </button>
-                    )}
+                    <BackLink url={returnTo} m={m} />
                 </div>
             )}
         </>
