@@ -1285,15 +1285,19 @@ function Result({
             )}
             {returnTo && (
                 <div className="unilens-quiz-actions">
-                    <BackLink url={returnTo} m={m} />
+                    <BackLink url={returnTo} label={m.finishSurvey} />
                 </div>
             )}
         </>
     );
 }
 
-/** "元のページに戻る": a real link (it can be opened elsewhere), that first lets the answer reach the backend. */
-function BackLink({ url, m }: { url: string; m: QuizMessages }) {
+/**
+ * The way back to the test page ("元のページに戻る", or "アンケートを終了する" on
+ * the last page): a real link (it can be opened elsewhere), that first lets the
+ * answer reach the backend.
+ */
+function BackLink({ url, label }: { url: string; label: string }) {
     const ownTab = useContext(OwnTab);
     return (
         <a
@@ -1312,7 +1316,7 @@ function BackLink({ url, m }: { url: string; m: QuizMessages }) {
                 backTo(url, ownTab);
             }}
         >
-            {m.backToPage}
+            {label}
             <Icon name="next" />
         </a>
     );
@@ -1385,7 +1389,12 @@ function QuestionDone({
                 </p>
             )}
             <div className="unilens-quiz-actions">
-                {returnTo && <BackLink url={returnTo} m={m} />}
+                {returnTo && (
+                    <BackLink
+                        url={returnTo}
+                        label={all ? m.finishSurvey : m.backToPage}
+                    />
+                )}
                 {!returnTo && !all && (
                     <a
                         className="unilens-quiz-btn"

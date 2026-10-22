@@ -17,7 +17,9 @@ question's page **in a new tab** (one survey tab, reused), with the participant
 tab. After the answer the page says it is saved and offers "元のページに戻る"
 (back to the page), which closes the survey tab; the button then shows
 "アンケート（3/4）". (A survey page opened by its address, not by the button,
-loads the test page in the same tab instead.) Once every question is answered it shows
+loads the test page in the same tab instead.) On the last question's page, with every
+question answered, the same button reads "アンケートを終了する" (finish the survey).
+Once every question is answered it shows
 "アンケート（完了）" and opens the survey page, which says thank you (the answers
 are not listed again, and there is no "answer again"). The survey page never runs on to the next question:
 opened without `&q=` it shows the next question to answer (and adds its `&q=` to

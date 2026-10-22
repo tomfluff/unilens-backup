@@ -26,6 +26,8 @@ export interface QuizMessages {
     answeredOf: (answered: number, total: number) => string;
     allAnswered: string;
     backToPage: string;
+    /** the same way back, on the last page (every question answered) */
+    finishSurvey: string;
     backNote: string;
     /** the same, when the survey has a tab of its own (going back closes it) */
     backNoteTab: string;
@@ -86,6 +88,7 @@ const ja: QuizMessages = {
     answeredOf: (a, t) => `${t}問中 ${a}問に回答済み`,
     allAnswered: "すべての質問に回答しました。ご協力ありがとうございました。",
     backToPage: "元のページに戻る",
+    finishSurvey: "アンケートを終了する",
     backNote: "元のページに戻って、作業を続けてください。",
     backNoteTab:
         "「元のページに戻る」でこのタブを閉じ、元のページで作業を続けてください。",
@@ -143,6 +146,7 @@ const en: QuizMessages = {
     answeredOf: (a, t) => `${a} of ${t} questions answered`,
     allAnswered: "You have answered every question. Thank you for taking part.",
     backToPage: "Back to the page",
+    finishSurvey: "Finish the survey",
     backNote: "Please go back to the page and carry on.",
     backNoteTab:
         "“Back to the page” closes this tab; carry on in the page you came from.",
