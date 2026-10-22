@@ -1,0 +1,26 @@
+{
+  "name": "survey-backend",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "tsc -b && esbuild src/server.ts --outfile=dist/server.js --bundle --platform=node --format=esm --packages=external --sourcemap",
+    "dev": "node scripts/dev.mjs",
+    "start": "node --enable-source-maps dist/server.js",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "express": "^5.1.0"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.5.11",
+    "@types/express": "^5.0.3",
+    "@types/node": "^24.13.2",
+    "esbuild": "^0.28.1",
+    "typescript": "^7.0.2",
+    "vitest": "^4.1.10"
+  }
+}

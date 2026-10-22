@@ -10,6 +10,7 @@
 - `unilens-lib/`: Main embeddable React + TypeScript widget.
 - `accessibility-lib/`: Accessibility-focused embeddable widget.
 - `quiz-lib/`: Survey widget; the study's survey page is served by the backend (`/survey?quiz=<id>`, questions in `backend/quizzes/`), answers logged at `/api/quiz/log`.
+- `survey-backend/`: Express + TypeScript server for the survey, being moved out of Flask (same routes; its own answers log, nothing in the study logs).
 - `frontend/`: Static test targets (`dev-demo`, `softbank-mirror`).
 
 ## Required Checks
@@ -19,6 +20,7 @@
 ## Useful Run Commands
 - `make serve <target>` (backend + one frontend)
 - `make serve-backend`
+- `make serve-survey`
 - `make serve-frontend <target>`
 
 ## Before Finishing Any Change

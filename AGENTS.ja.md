@@ -12,6 +12,7 @@
 - `unilens-lib/`: 埋め込み型のメイン React + TypeScript ウィジェット。
 - `accessibility-lib/`: アクセシビリティに特化した埋め込み型ウィジェット。
 - `quiz-lib/`: アンケートウィジェット。研究用のアンケートページは backend が配信（`/survey?quiz=<id>`、質問は `backend/quizzes/`）、回答は `/api/quiz/log` に記録。
+- `survey-backend/`: アンケート用の Express + TypeScript サーバー。Flask から移行中（ルートは同じ。回答ログは独立しており、研究用ログには書かない）。
 - `frontend/`: 静的テストターゲット（`dev-demo`、`softbank-mirror`）。
 
 ## 必須チェック
@@ -21,6 +22,7 @@
 ## 便利な実行コマンド
 - `make serve <target>` (バックエンド + 対象フロントエンド 1 つ)
 - `make serve-backend`
+- `make serve-survey`
 - `make serve-frontend <target>`
 
 ## 変更完了前の確認事項

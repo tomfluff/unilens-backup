@@ -39,7 +39,7 @@ endef
 
 # Backend wrappers
 
-.PHONY: init-backend clean-backend serve-backend
+.PHONY: init-backend clean-backend serve-backend serve-survey
 
 init-backend:
 	cd $(BACKEND_DIR) && $(MAKE) init
@@ -49,6 +49,10 @@ clean-backend:
 
 serve-backend:
 	cd $(BACKEND_DIR) && $(MAKE) serve
+
+# The survey server alone (survey-backend/, port SURVEY_PORT)
+serve-survey:
+	cd $(SURVEY_DIR) && $(MAKE) serve
 
 format-backend:
 	cd $(BACKEND_DIR) && $(MAKE) format
@@ -103,7 +107,7 @@ init-self:
 	$(NPM) install
 
 init-all:
-	@for item in $(JS_TARGETS); do \
+	@for item in $(JS_TARGETS) $(SERVICE_TARGETS); do \
 		$(MAKE) init-target $$item || exit 1; \
 	done
 
@@ -117,7 +121,7 @@ clean-self:
 
 # Clean all js targets
 clean-all:
-	@for item in $(JS_TARGETS); do \
+	@for item in $(JS_TARGETS) $(SERVICE_TARGETS); do \
 		$(MAKE) clean-target $$item || exit 1; \
 	done
 
@@ -162,8 +166,8 @@ bundle-all:
 
 # Build all js targets
 build-all:
-	echo "Targets: $(JS_TARGETS)"
-	@for item in $(JS_TARGETS); do \
+	echo "Targets: $(JS_TARGETS) $(SERVICE_TARGETS)"
+	@for item in $(JS_TARGETS) $(SERVICE_TARGETS); do \
 		$(MAKE) build-target $$item || exit 1; \
 	done
 
@@ -240,8 +244,8 @@ serve-all:
 
 # Typecheck all js targets
 lint-all:
-	echo "Targets: $(JS_TARGETS)"
-	@for item in $(JS_TARGETS); do \
+	echo "Targets: $(JS_TARGETS) $(SERVICE_TARGETS)"
+	@for item in $(JS_TARGETS) $(SERVICE_TARGETS); do \
 		$(MAKE) lint-target $$item || exit 1; \
 	done
 
@@ -250,8 +254,8 @@ lint: lint-all
 
 # Format all js targets
 format-all:
-	echo "Targets: $(JS_TARGETS)"
-	@for item in $(JS_TARGETS); do \
+	echo "Targets: $(JS_TARGETS) $(SERVICE_TARGETS)"
+	@for item in $(JS_TARGETS) $(SERVICE_TARGETS); do \
 		$(MAKE) format-target $$item || exit 1; \
 	done
 
@@ -260,8 +264,8 @@ format: format-backend format-all
 
 # Fix all JS targets
 fix-all:
-	echo "Targets: $(JS_TARGETS)"
-	@for item in $(JS_TARGETS); do \
+	echo "Targets: $(JS_TARGETS) $(SERVICE_TARGETS)"
+	@for item in $(JS_TARGETS) $(SERVICE_TARGETS); do \
 		$(MAKE) fix-target $$item || exit 1; \
 	done 
 

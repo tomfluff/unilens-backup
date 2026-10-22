@@ -5,6 +5,7 @@ Everything runs through `make` from the repo root. Requires Node 20+ and Python 
 | Part | Dir | What it is |
 |---|---|---|
 | Backend | `backend/` | Flask API, port `5000` |
+| Survey server | `survey-backend/` | Express (TypeScript), port `5100`: the survey's routes, taken out of Flask (see its README) |
 | JS libs | `unilens-lib/`, `accessibility-lib/`, `quiz-lib/` | esbuild bundles, copied into frontends as `unilens.js` / `accessibility.js` / `quiz.js` (the survey button); the backend's survey page (`/survey`) loads `quiz-lib/dist/quiz.js` |
 | Frontends | `frontend/softbank-mirror` (8000), `frontend/dev-demo` (8001), `frontend/softbank-mirror-recruit` (8002), six `frontend/study-*` mock sites (8031–8036; see `frontend/STUDY-SITES.md`) | static sites served by `live-server` |
 
@@ -24,6 +25,7 @@ make serve softbank-mirror     # backend + one frontend, rebuild on save. The us
 make serve-all                 # backend + every frontend in make-targets.mk
 make run dev-demo              # one frontend, no build, no backend
 make serve-backend             # backend only
+make serve-survey              # the survey server only (port 5100)
 ```
 
 ### Without make (study mock sites, ports 8031–8036)
@@ -71,8 +73,8 @@ not `unilens`).
 
 No env vars in the build; two files:
 
-- `make-include.mk` — `FLASK_PORT=5000`, binary names, dir names.
-- `make-targets.mk` — `JS_TARGETS`, `FRONTEND_TARGETS`, `TEST_TARGETS`, and
+- `make-include.mk` — `FLASK_PORT=5000`, `SURVEY_PORT=5100`, binary names, dir names.
+- `make-targets.mk` — `JS_TARGETS`, `SERVICE_TARGETS`, `FRONTEND_TARGETS`, `TEST_TARGETS`, and
   `frontend_port_<name>=<port>`. Add a frontend by dropping it in `frontend/`,
   appending its name and a port line.
 

@@ -3,8 +3,12 @@
 # Define all targets here, this allows us to iterate through them
 JS_TARGETS:= unilens-lib accessibility-lib quiz-lib
 
+# Node servers: set up, typechecked, built, formatted and tested like the JS
+# targets, but never copied into a frontend
+SERVICE_TARGETS:= survey-backend
+
 # Targets with unit tests; add a target here once it has some
-TEST_TARGETS:= backend unilens-lib accessibility-lib quiz-lib
+TEST_TARGETS:= backend unilens-lib accessibility-lib quiz-lib survey-backend
 
 target_dist_unilens-lib=unilens.js
 target_dist_accessibility-lib=accessibility.js
