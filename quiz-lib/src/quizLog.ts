@@ -46,6 +46,12 @@ let seq = 0;
 /** the backend has no quiz log (404/405): nothing more is sent */
 let unsupported = false;
 let listening = false;
+/**
+ * Sends the backend has not answered yet. A flush waits for these too: an
+ * answer goes out on the next tick, so by the time the survey page flushes to
+ * go back, it is usually already on its way rather than in the queue.
+ */
+const inflight = new Set<Promise<unknown>>();
 
 /**
  * The participant and session, as unilens-lib reads them: the address first
@@ -199,15 +205,19 @@ export function logQuizEvent(
  * Send what is waiting. Plain text, so no CORS preflight, and keepalive, so it
  * also goes as the page closes. A batch that failed on the network or a 5xx/429
  * goes back to the front of the queue; one the backend refused (400) is dropped.
- * Resolves once the backend has answered (or failed): the survey page waits for
- * it before taking the visitor back, so the button there already counts the answer.
+ * Resolves once the backend has answered (or failed) everything sent so far,
+ * this flush's batches and any still on their way: the survey page waits for it
+ * before taking the visitor back, so the button there already counts the answer.
  */
 export function flushQuizLog(): Promise<void> {
     window.clearTimeout(timer);
-    if (!backend || unsupported || !queue.length) return Promise.resolve();
+    if (backend && !unsupported && queue.length) send();
+    return Promise.allSettled([...inflight]).then(() => undefined);
+}
+
+function send() {
     ids = resolveStudyIds();
     const url = quizLogUrl(backend, ids);
-    const sent: Promise<unknown>[] = [];
     while (queue.length) {
         const batch = queue.splice(0, BATCH_EVENTS);
         const retry = () => {
@@ -232,11 +242,11 @@ export function flushQuizLog(): Promise<void> {
                         queue = [];
                     } else if (r.status >= 500 || r.status === 429) retry();
                 })
-                .catch(retry);
-            sent.push(req);
+                .catch(retry)
+                .finally(() => inflight.delete(req));
+            inflight.add(req);
         } catch {
             retry();
         }
     }
-    return Promise.allSettled(sent).then(() => undefined);
 }
