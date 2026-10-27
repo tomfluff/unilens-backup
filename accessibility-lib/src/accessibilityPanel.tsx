@@ -509,6 +509,18 @@ function Footer({
 // namespace form — see accessibilityPanelUI.tsx's MutableRefObject.
 type React_MutableRefObject<T> = { current: T };
 
+/**
+ * Back to the ♿ button after closing. On small and short screens the button
+ * is hidden while the panel is open, and the open class only comes off after
+ * React re-renders — focusing it before that silently failed and focus fell
+ * to <body>. Drop the class first so the button can take focus. (Outside the
+ * component: the Esc listener, registered once, calls it.)
+ */
+function focusToggleAfterClose(toggle: HTMLButtonElement | null) {
+    document.getElementById(ROOT_ID)?.classList.remove(A11Y_OPEN_CLASS);
+    toggle?.focus();
+}
+
 function AccessibilityPanelApp() {
     useExternalSignal(onA11yLangChange);
     useExternalSignal(onSelectionWrappersChange);
@@ -633,7 +645,7 @@ function AccessibilityPanelApp() {
             setPanelOpen(false);
             setResetArmed(false);
             window.clearTimeout(resetTimerRef.current);
-            if (inWidget) focusToggleAfterClose();
+            if (inWidget) focusToggleAfterClose(toggleBtnRef.current);
         }
         const html = document.documentElement;
         document.addEventListener("keydown", onKeyDown);
@@ -643,17 +655,6 @@ function AccessibilityPanelApp() {
             html.removeEventListener("dblclick", onDblClick);
         };
     }, []);
-
-    /**
-     * Back to the ♿ button after closing. On small and short screens the
-     * button is hidden while the panel is open, and the open class only comes
-     * off after React re-renders — focusing it before that silently failed and
-     * focus fell to <body>. Drop the class first so the button can take focus.
-     */
-    function focusToggleAfterClose() {
-        document.getElementById(ROOT_ID)?.classList.remove(A11Y_OPEN_CLASS);
-        toggleBtnRef.current?.focus();
-    }
 
     function switchTab(tab: PanelTab) {
         if (tab === activeTab) return;
@@ -673,7 +674,7 @@ function AccessibilityPanelApp() {
         setPanelOpen(false);
         setResetArmed(false);
         window.clearTimeout(resetTimerRef.current);
-        if (hadFocusInside) focusToggleAfterClose();
+        if (hadFocusInside) focusToggleAfterClose(toggleBtnRef.current);
     }
 
     function togglePanel() {
