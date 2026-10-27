@@ -19,6 +19,7 @@ import {
 } from "./domIds";
 import { resetFocusCursorMemory } from "./focusCursorMemory";
 import { appendA11yStyle } from "./cspStyle";
+import { registerTopLayer, unregisterTopLayer } from "./topLayer";
 
 /** Default clear band height (medium). */
 export const FOCUS_CURSOR_BAND_PX = FOCUS_CURSOR_DEFAULT_BAND_PX;
@@ -39,6 +40,14 @@ const MASK_CSS = `
 #${FOCUS_CURSOR_ID} {
   position: fixed;
   inset: 0;
+  /* a manual popover while the host has a top-layer element (topLayer.ts):
+     undo the popover UA box (fit-content size, Canvas background) */
+  width: auto;
+  height: auto;
+  max-width: none;
+  max-height: none;
+  background: transparent;
+  color: inherit;
   margin: 0;
   padding: 0;
   border: none;
@@ -151,6 +160,9 @@ function ensureMask(): HTMLElement | null {
         root.setAttribute(UI_ATTR, "1");
         root.setAttribute("aria-hidden", "true");
         document.documentElement.appendChild(root);
+        // Above a host modal / popover while one is open; otherwise it stays
+        // under the ♿ panel, which it must not dim.
+        registerTopLayer(root, "withHost");
     }
     ensureChild(root, FOCUS_CURSOR_TOP_ID);
     ensureChild(root, FOCUS_CURSOR_BOTTOM_ID);
@@ -253,7 +265,9 @@ export function destroyFocusCursorMask() {
     a11yUnsub = null;
     detachTracking();
     lastY = Number.NaN;
-    document.getElementById(FOCUS_CURSOR_ID)?.remove();
+    const mask = document.getElementById(FOCUS_CURSOR_ID);
+    unregisterTopLayer(mask);
+    mask?.remove();
     document.getElementById(STYLE_ID)?.remove();
     resetFocusCursorMemory();
 }

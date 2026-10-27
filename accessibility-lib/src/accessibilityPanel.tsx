@@ -39,7 +39,11 @@ import {
     TABS,
     tabLabel,
 } from "./accessibilityPanelOptions";
-import { WIDGET_CSS } from "./accessibilityPanelStyles";
+import {
+    WIDGET_CSS,
+    WIDGET_HOST_CSS,
+    WIDGET_SHADOW_CSS,
+} from "./accessibilityPanelStyles";
 import { ToolsTab, VisualTab } from "./accessibilityPanelTabs";
 import {
     announce,
@@ -91,7 +95,7 @@ import {
 } from "./settings";
 import { namedTextAdjustLevel } from "./textAdjustLevels";
 import pageCss from "./unilens-a11y/style.css";
-import { appendA11yStyle } from "./cspStyle";
+import { appendA11yStyle, getCspNonce } from "./cspStyle";
 
 const RESET_CONFIRM_MS = 4000;
 
@@ -149,10 +153,51 @@ function ensureExternalCssLink() {
     link.href = externalCssUrl;
 }
 
+/**
+ * The panel renders into a shadow root, out of reach of the host page's CSS
+ * (an `!important` rule, or `svg { width: 100% }`, used to break it). Where
+ * shadow DOM is missing it falls back to the light DOM.
+ */
+function shadowSupported(): boolean {
+    return (
+        typeof HTMLElement !== "undefined" &&
+        typeof HTMLElement.prototype.attachShadow === "function"
+    );
+}
+
+/**
+ * The panel's rules inside its shadow root: a constructed sheet (CSP does
+ * not restrict it), else a <style>.
+ */
+function addShadowStyles(shadow: ShadowRoot) {
+    const canAdopt =
+        typeof CSSStyleSheet === "function" &&
+        "adoptedStyleSheets" in shadow &&
+        typeof CSSStyleSheet.prototype.replaceSync === "function";
+    if (canAdopt) {
+        try {
+            const sheet = new CSSStyleSheet();
+            sheet.replaceSync(WIDGET_SHADOW_CSS);
+            shadow.adoptedStyleSheets = [sheet];
+            return;
+        } catch {
+            // fall through to a <style>
+        }
+    }
+    const style = document.createElement("style");
+    const nonce = getCspNonce();
+    if (nonce) style.nonce = nonce;
+    style.textContent = WIDGET_SHADOW_CSS;
+    shadow.appendChild(style);
+}
+
 function ensureStyles() {
     // Host-page theme rules travel inside accessibility.js (single dist file).
     ensureStyleTag(A11Y_PAGE_STYLE_ID, pageCss);
-    ensureStyleTag(A11Y_WIDGET_STYLE_ID, WIDGET_CSS);
+    ensureStyleTag(
+        A11Y_WIDGET_STYLE_ID,
+        shadowSupported() ? WIDGET_HOST_CSS : WIDGET_CSS,
+    );
     ensureExternalCssLink();
 }
 
@@ -588,7 +633,7 @@ function AccessibilityPanelApp() {
             setPanelOpen(false);
             setResetArmed(false);
             window.clearTimeout(resetTimerRef.current);
-            if (inWidget) toggleBtnRef.current?.focus();
+            if (inWidget) focusToggleAfterClose();
         }
         const html = document.documentElement;
         document.addEventListener("keydown", onKeyDown);
@@ -598,6 +643,17 @@ function AccessibilityPanelApp() {
             html.removeEventListener("dblclick", onDblClick);
         };
     }, []);
+
+    /**
+     * Back to the ♿ button after closing. On small and short screens the
+     * button is hidden while the panel is open, and the open class only comes
+     * off after React re-renders — focusing it before that silently failed and
+     * focus fell to <body>. Drop the class first so the button can take focus.
+     */
+    function focusToggleAfterClose() {
+        document.getElementById(ROOT_ID)?.classList.remove(A11Y_OPEN_CLASS);
+        toggleBtnRef.current?.focus();
+    }
 
     function switchTab(tab: PanelTab) {
         if (tab === activeTab) return;
@@ -617,7 +673,7 @@ function AccessibilityPanelApp() {
         setPanelOpen(false);
         setResetArmed(false);
         window.clearTimeout(resetTimerRef.current);
-        if (hadFocusInside) toggleBtnRef.current?.focus();
+        if (hadFocusInside) focusToggleAfterClose();
     }
 
     function togglePanel() {
@@ -743,8 +799,20 @@ export function initAccessibilityPanel() {
     container.addEventListener("mousedown", panelAltPointerDown, true);
     container.addEventListener("click", panelAltPointerDown, true);
 
+    // React renders inside a shadow root, into a wrapper with the root's id
+    // (display: contents) so the widget stylesheet's selectors match there.
+    let mount: HTMLElement = container;
+    if (shadowSupported()) {
+        const shadow = container.attachShadow({ mode: "open" });
+        addShadowStyles(shadow);
+        mount = document.createElement("div");
+        mount.id = ROOT_ID;
+        mount.setAttribute(UI_ATTR, "1");
+        shadow.appendChild(mount);
+    }
+
     panelDomRoot = container;
-    panelReactRoot = createRoot(container);
+    panelReactRoot = createRoot(mount);
     panelReactRoot.render(<AccessibilityPanelApp />);
 }
 

@@ -191,6 +191,8 @@ Main options for `Accessibility.init()` / `UniLensA11y.init()`. Omitted keys use
 
 The initial panel language is inferred from `<html lang>` and browser languages. A language chosen in the panel is persisted and reused on later visits.
 
+The ♿ button and panel render inside a shadow root, so the site's CSS (including `!important` rules) does not reach them — and cannot be used to restyle them either.
+
 On a site whose Content-Security-Policy refuses inline styles and no nonce is available, the rules are applied through constructed stylesheets (`document.adoptedStyleSheets`, which CSP does not restrict) instead; the browser then reports one CSP violation for the first refused `<style>` only.
 
 See the repository-root `README.md` for the full build and serve workflow.

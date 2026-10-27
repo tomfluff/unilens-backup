@@ -25,6 +25,7 @@ import {
     UI_ATTR,
 } from "./domIds";
 import { appendA11yStyle } from "./cspStyle";
+import { registerTopLayer, unregisterTopLayer } from "./topLayer";
 
 export {
     isPointerHaloViewportPct,
@@ -57,6 +58,12 @@ const STYLE_ID = "unilens-a11y-cursor-halo-style";
 const HALO_CSS = `
 #${CURSOR_HALO_ID} {
   position: fixed;
+  /* a manual popover in the top layer (topLayer.ts): undo the popover UA box */
+  inset: auto;
+  overflow: visible;
+  max-width: none;
+  max-height: none;
+  color: inherit;
   top: 0;
   left: 0;
   width: var(${CURSOR_HALO_SIZE_VAR}, 20px);
@@ -110,6 +117,9 @@ function ensureHalo(): HTMLElement | null {
     el.setAttribute(UI_ATTR, "1");
     el.setAttribute("aria-hidden", "true");
     document.documentElement.appendChild(el);
+    // Above a host modal / popover, and outside the invert filter on <html>
+    // (which turned the fluorescent fill gray).
+    registerTopLayer(el, "always");
     return el;
 }
 
@@ -199,7 +209,9 @@ export function destroyCursorHalo() {
     detachTracking();
     lastX = Number.NaN;
     lastY = Number.NaN;
-    document.getElementById(CURSOR_HALO_ID)?.remove();
+    const halo = document.getElementById(CURSOR_HALO_ID);
+    unregisterTopLayer(halo);
+    halo?.remove();
     document.getElementById(STYLE_ID)?.remove();
     resetPointerHaloMemory();
 }

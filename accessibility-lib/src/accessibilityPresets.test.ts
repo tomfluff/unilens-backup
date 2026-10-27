@@ -19,6 +19,8 @@ import {
 
 vi.mock("./autoTextSize", () => ({
     runAutoTextAction: vi.fn(),
+    getAppliedTextScale: vi.fn(() => 1),
+    restoreAutoText: vi.fn(),
 }));
 
 /** Sets up the minimal DOM that applyA11yToDocument touches (vitest has no DOM by default). */

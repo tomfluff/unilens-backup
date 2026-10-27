@@ -73,11 +73,22 @@ function tokenBlock(selector: string, tokens: Tokens): string {
     return `${selector} {\n${body}\n}`;
 }
 
+/**
+ * The panel lives in a shadow root (accessibilityPanel.tsx), so no host page
+ * rule reaches it — not even an `!important` one, or a `svg { width: 100% }`,
+ * both of which used to break it. The shadow host is the `#unilens-a11y-root`
+ * element under <html>; inside the shadow root a wrapper with the same id and
+ * `display: contents` carries the tokens, so every `#unilens-a11y-root …`
+ * selector below works in either place.
+ *
+ * Where shadow DOM is missing the panel falls back to the light DOM, styled
+ * by the same rules plus a revert of everything the host page may set.
+ *
+ * Positioning stays outside the shadow root (HOST_CSS, in the document): an
+ * outer rule beats a `:host` rule, so a host `div { … }` would otherwise move
+ * the panel; an id selector in the document does not lose to it.
+ */
 const R = `#${ROOT_ID}`;
-/** element rules that must outrank the revert below (1,0,2) but not any class rule (1,1,0):
- *  `html #root button` is (1,0,2) and comes later; `*` adds nothing, so a universal rule
- *  repeats the :not()s to reach (1,0,3) */
-const B = `html ${R}`;
 /** focus must outrank the page's focus-enhance rule, which reverts focus styles inside the widget */
 const F = `${R}${R}`;
 const SYS = `system-ui, -apple-system, "Segoe UI", "Hiragino Sans", "Yu Gothic UI", Meiryo, sans-serif`;
@@ -85,13 +96,52 @@ const SYS = `system-ui, -apple-system, "Segoe UI", "Hiragino Sans", "Yu Gothic U
 /** shorthand for a token */
 const v = (name: string) => `var(--unilens-a11y-panel-${name})`;
 
+type WidgetMode = "light" | "shadow";
+
+/**
+ * Where the panel sits on screen. In the document, on the root (the shadow
+ * host): see the note above R.
+ */
+const HOST_CSS = `
+${R} {
+  position: fixed; bottom: 16px; right: 16px; top: auto; z-index: 2147483646;
+  display: flex; flex-direction: column-reverse; align-items: flex-end;
+  margin: 0; padding: 0; border: 0; background: none;
+  width: auto; height: auto; min-width: 0; min-height: 0; max-width: none; max-height: none;
+}
+${R}[data-unilens-a11y-down] { flex-direction: column; }
+${R}[data-unilens-a11y-start] { align-items: flex-start; }
+@media (max-width: 560px) {
+  ${R} { bottom: 14px; right: 14px; }
+  ${R}.unilens-a11y-open {
+    left: 8px !important; right: 8px !important;
+    top: auto !important; bottom: 8px !important;
+  }
+}
+@media (max-height: 560px) {
+  ${R}.unilens-a11y-open { top: 8px !important; bottom: 8px !important; }
+}
+`;
+
 /**
  * Overlay uses a stable theme. Page display filters never restyle the panel.
  */
-const LAYOUT_CSS = `
-/* Host pages reach the widget's light DOM (\`button {…}\`, \`h3 {…}\`): every element
+function layoutCss(mode: WidgetMode): string {
+    const shadow = mode === "shadow";
+    /** a state class / attribute on the root, then the panel content: `${S(".x")} .y` */
+    const S = (state: string) =>
+        shadow ? `:host(${state}) ${R}` : `${R}${state}`;
+    /** element rules that must outrank the light-DOM revert below (1,0,3) but no class rule (1,1,0) */
+    const B = shadow ? R : `html ${R}`;
+    return `
+${
+    shadow
+        ? `/* the wrapper inside the shadow root: tokens only, no box of its own */
+${R} { display: contents; }`
+        : `/* Host pages reach the widget's light DOM (\`button {…}\`, \`h3 {…}\`): every element
    but SVG goes back to the browser defaults first, then is styled below. */
-${R} *:not(svg):not(svg *) { all: revert; }
+${R} *:not(svg):not(svg *) { all: revert; }`
+}
 ${B} *:not(svg):not(svg *), ${B} *::before, ${B} *::after { box-sizing: border-box; }
 ${B} button { font: inherit; color: inherit; margin: 0; cursor: pointer; }
 /* a host \`svg { fill: currentColor }\` (the recruit mirror) beats the icons' fill attribute */
@@ -107,8 +157,6 @@ ${R} {
   --unilens-a11y-panel-contrast: 1;
   /* every target stays at least 44px, whatever the text size */
   --unilens-a11y-panel-tap: max(44px, 2.9em);
-  position: fixed; bottom: 16px; right: 16px; top: auto; z-index: 2147483646;
-  display: flex; flex-direction: column-reverse; align-items: flex-end;
   font-family: ${v("font-family")};
   font-size: calc(${v("base")} * ${v("font-scale")});
   line-height: ${v("line-height")};
@@ -144,9 +192,7 @@ ${R} .unilens-a11y-toggle {
    (inline left/right/top/bottom), and the panel opens toward the screen centre. */
 ${R} .unilens-a11y-toggle { touch-action: none; user-select: none; -webkit-user-select: none; cursor: grab; }
 ${R} .unilens-a11y-toggle[data-unilens-a11y-dragging] { cursor: grabbing; }
-${R}[data-unilens-a11y-down] { flex-direction: column; }
-${R}[data-unilens-a11y-down] .unilens-a11y-panel { margin-bottom: 0; margin-top: 10px; }
-${R}[data-unilens-a11y-start] { align-items: flex-start; }
+${S("[data-unilens-a11y-down]")} .unilens-a11y-panel { margin-bottom: 0; margin-top: 10px; }
 ${R} .unilens-a11y-toggle[aria-expanded="true"] {
   box-shadow: 0 0 0 2px ${v("bg")}, 0 0 0 4px ${v("accent")}, ${v("shadow-toggle")};
 }
@@ -537,32 +583,64 @@ ${F} [tabindex]:focus-visible {
 
 /* ── Small screens (smartphones) ───────────────────────────────────────────
    Move the toggle button to the bottom right, within thumb reach, and switch
-   the panel to a sheet that slides up from the bottom. Keeping it pinned to
-   the top would leave too little vertical room and force more scrolling. */
+   the panel to a sheet along the bottom. Keeping it pinned to the top would
+   leave too little vertical room and force more scrolling.
+   The sheet is the root itself stretched across the screen while open (not a
+   position: fixed panel): under the invert theme the root carries a counter
+   filter, which makes it the containing block of fixed descendants, and the
+   fixed sheet was squeezed to the root's 100px. The root's inline position
+   (set by toggleDrag) is overridden only while open. */
 @media (max-width: 560px) {
-  ${R} { bottom: 14px; right: 14px; }
-  /* The sheet overlaps the toggle button, so hide it while open (× and Esc still close it). */
-  ${R}.unilens-a11y-open .unilens-a11y-toggle { visibility: hidden; }
+  /* The root's own position: HOST_CSS. The sheet covers the toggle button, so
+     it goes while open (× and Esc still close it). */
+  ${S(".unilens-a11y-open")} .unilens-a11y-toggle { display: none; }
   ${R} .unilens-a11y-panel {
-    position: fixed; left: 8px; right: 8px; bottom: 8px; top: auto;
-    width: auto; margin-top: 0;
+    width: 100%; margin: 0;
     max-height: min(80vh, calc(100vh - 16px));
   }
   ${R} .unilens-a11y-body { padding-bottom: calc(0.9em + env(safe-area-inset-bottom, 0px)); }
 }
 
+/* ── Short screens (phone in landscape, 200% zoom, a small window) ──────────
+   With the header, tabs and footer fixed, the settings list got what was
+   left: 80px on a phone in landscape, 50px at 200% zoom, 17px at 256px. So
+   while open the root takes the full height (the toggle goes; × and Esc
+   close), and the whole panel scrolls with only the header (and its ×) kept
+   in view. */
+@media (max-height: 560px) {
+  ${S(".unilens-a11y-open")} .unilens-a11y-toggle { display: none; }
+  ${R} .unilens-a11y-panel {
+    max-height: 100%; margin: 0;
+    overflow-y: auto; overscroll-behavior: contain;
+    scrollbar-width: thin; scrollbar-color: ${v("scroll")} transparent;
+  }
+  ${R} .unilens-a11y-header { position: sticky; top: 0; z-index: 2; background: ${v("bg")}; }
+  ${R} .unilens-a11y-body { flex: none; overflow: visible; }
+  ${R} .unilens-a11y-hint { display: none; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   ${R} *, ${R} *::after { transition: none !important; animation: none !important; }
 }
-${R}[data-unilens-a11y-reduce-motion="true"] *,
-${R}[data-unilens-a11y-reduce-motion="true"] *::before,
-${R}[data-unilens-a11y-reduce-motion="true"] *::after {
+${S('[data-unilens-a11y-reduce-motion="true"]')} *,
+${S('[data-unilens-a11y-reduce-motion="true"]')} *::before,
+${S('[data-unilens-a11y-reduce-motion="true"]')} *::after {
   transition: none !important; animation: none !important;
 }
 `;
+}
 
-export const WIDGET_CSS = [
-    tokenBlock(R, LIGHT),
-    `@media (prefers-contrast: more) {\n${tokenBlock(R, HIGH_CONTRAST)}\n}`,
-    LAYOUT_CSS,
-].join("\n");
+function widgetCss(mode: WidgetMode): string {
+    return [
+        tokenBlock(R, LIGHT),
+        `@media (prefers-contrast: more) {\n${tokenBlock(R, HIGH_CONTRAST)}\n}`,
+        layoutCss(mode),
+    ].join("\n");
+}
+
+/** The whole panel stylesheet for the light-DOM fallback (no shadow DOM): in the document. */
+export const WIDGET_CSS = [HOST_CSS, widgetCss("light")].join("\n");
+/** With shadow DOM: the document gets the root's position only… */
+export const WIDGET_HOST_CSS = HOST_CSS;
+/** …and the shadow root gets the rest. */
+export const WIDGET_SHADOW_CSS = widgetCss("shadow");

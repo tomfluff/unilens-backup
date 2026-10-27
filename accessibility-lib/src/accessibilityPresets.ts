@@ -21,7 +21,11 @@ import {
     A11Y_PRESET_ID_LIST,
     type A11yPresetId,
 } from "./accessibilityStoreTypes";
-import { runAutoTextAction } from "./autoTextSize";
+import {
+    getAppliedTextScale,
+    restoreAutoText,
+    runAutoTextAction,
+} from "./autoTextSize";
 
 export type { A11yPresetId } from "./accessibilityStoreTypes";
 
@@ -142,7 +146,16 @@ function undoActivePreset() {
     const s = getSettings();
     const id = activePresetId();
     const saved = s.activePreset === undefined ? null : s.presetRestore;
-    patchSettings({ activePreset: null, presetRestore: null });
+    const autoText = s.presetAutoTextRestore;
+    patchSettings({
+        activePreset: null,
+        presetRestore: null,
+        presetAutoTextRestore: null,
+    });
+    // The preset turned automatic text size off; put it back unless the
+    // visitor has turned it on again themselves meanwhile.
+    if (autoText && !getSettings().autoTextSize)
+        restoreAutoText(autoText.autoTextMode, autoText.scale);
     if (!id) return;
 
     const current = getA11ySettings();
@@ -194,8 +207,24 @@ export function applyA11yPreset(id: A11yPresetId) {
         patchSettings({ activePreset: id, presetRestore: saved });
     }
     patchA11ySettings({ ...A11Y_PRESETS[id] });
-    // Low-vision and senior tend to break when stacked with auto-adjustment, so turn it off.
-    if (id === "lowVision" || id === "senior") runAutoTextAction("reset");
+    // Low-vision and senior tend to break when stacked with auto-adjustment,
+    // so turn it off — remembering how it was, for when the preset goes off.
+    if (id === "lowVision" || id === "senior") {
+        const live = getSettings();
+        if (
+            live.autoTextSize &&
+            live.autoTextMode !== "off" &&
+            !live.presetAutoTextRestore
+        ) {
+            patchSettings({
+                presetAutoTextRestore: {
+                    autoTextMode: live.autoTextMode,
+                    scale: getAppliedTextScale(),
+                },
+            });
+        }
+        runAutoTextAction("reset");
+    }
 }
 
 /** Turns a preset off if it is the one in effect; otherwise does nothing. */

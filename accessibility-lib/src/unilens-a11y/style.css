@@ -135,7 +135,8 @@ html[data-unilens-a11y-html-filter]
     #unilens-root > *,
     #unilens-settings-root > *,
     #unilens-debug-root > *,
-    [data-unilens-ui]
+    /* followers in the top layer are outside the <html> filter already */
+    [data-unilens-ui]:not([data-unilens-a11y-top-layer])
 ) {
   filter: invert(1) hue-rotate(180deg) saturate(var(--unilens-a11y-display-saturate))
     contrast(var(--unilens-a11y-display-contrast));
@@ -609,28 +610,11 @@ html[data-unilens-a11y-text-plate]
  * Do not also scale `body { font-size }` — that double-applies on em text
  * and made page-wide 150% look larger than selection 150%. */
 
-/* Line spacing — only when the visitor chose “wide”. */
-html[data-unilens-a11y-line-height='wide'] body {
-  line-height: var(--unilens-a11y-line-height, 2) !important;
-}
-
-/* Force the chosen typeface only when the visitor actually picked one
- * (UD / custom). Must not rewrite the host site's own font-family.
- * Pseudo-elements are left out, but they inherit the element's font, so icon
- * fonts are kept apart by iconFontGuard.ts: it marks icon-font elements with
- * data-unilens-a11y-keep-font, and switches this rule off with
- * data-unilens-a11y-font-probe on <html> while it reads the host's own fonts. */
-html[data-unilens-a11y-font-family='ud']:not([data-unilens-a11y-font-probe]) :is(body[data-unilens-page-content], #unilens-a11y-page-root),
-html[data-unilens-a11y-font-family='ud']:not([data-unilens-a11y-font-probe]) :is(body[data-unilens-page-content], #unilens-a11y-page-root) *:not([data-unilens-a11y-keep-font], [data-unilens-a11y-keep-font] *),
-html[data-unilens-a11y-font-family='custom']:not([data-unilens-a11y-font-probe]) :is(body[data-unilens-page-content], #unilens-a11y-page-root),
-html[data-unilens-a11y-font-family='custom']:not([data-unilens-a11y-font-probe]) :is(body[data-unilens-page-content], #unilens-a11y-page-root) *:not([data-unilens-a11y-keep-font], [data-unilens-a11y-keep-font] *) {
-  font-family: var(--unilens-a11y-font-family, system-ui, sans-serif) !important;
-}
-
-html[data-unilens-a11y-letter-spacing='wide'] body {
-  letter-spacing: var(--unilens-a11y-letter-spacing, 0.12em) !important;
-  word-spacing: var(--unilens-a11y-word-spacing, 0.16em) !important;
-}
+/* Line spacing, typeface and letter / word spacing: in text-options.css,
+ * which documentEffects.ts puts in the document only while one of them is on.
+ * Those rules have to reach every element, and as part of this sheet they
+ * were matched on every style recalc of every page, even with all three off
+ * (a page re-classing <body> recalculated 30–40% slower). */
 
 /* ── Link underline (color is not the only cue) ──────────────────────────── */
 
@@ -750,6 +734,14 @@ html[data-unilens-a11y-reduce-motion='true'] :is(body[data-unilens-page-content]
   scroll-behavior: auto !important;
 }
 
+/* Smooth scrolling is usually turned on at the root (`html { scroll-behavior:
+ * smooth }`), which the rule above (the page's descendants) never reached:
+ * in-page links still glided thousands of pixels. */
+html[data-unilens-a11y-reduce-motion='true'],
+html[data-unilens-a11y-reduce-motion='true'] body {
+  scroll-behavior: auto !important;
+}
+
 /* ── Focus / cursor enhance (low vision: where am I?) ──────────────────────
    Attribute value is 1|2|3 (absent = off). Level 2 matches the previous
    48px cursor. The widget itself is excluded here since it shows focus
@@ -763,7 +755,7 @@ html[data-unilens-a11y-focus-enhance] :is(body[data-unilens-page-content], #unil
   --unilens-a11y-focus-halo: 2px;
 }
 
-html[data-unilens-a11y-focus-enhance='1'] :is(body[data-unilens-page-content], #unilens-a11y-page-root) {
+html[data-unilens-a11y-focus-enhance='1']:not([data-unilens-a11y-cursor-probe]) :is(body[data-unilens-page-content], #unilens-a11y-page-root) {
   --unilens-a11y-focus-outline: 3px;
   --unilens-a11y-focus-offset: 2px;
   --unilens-a11y-focus-halo: 1.5px;
@@ -772,29 +764,29 @@ html[data-unilens-a11y-focus-enhance='1'] :is(body[data-unilens-page-content], #
     auto;
 }
 
-html[data-unilens-a11y-focus-enhance='1'] :is(body[data-unilens-page-content], #unilens-a11y-page-root) :where(
+html[data-unilens-a11y-focus-enhance='1']:not([data-unilens-a11y-cursor-probe]) :is(body[data-unilens-page-content], #unilens-a11y-page-root) :where(
   a, button, [role='button'], input, select, textarea, summary, label
-) {
+):not([data-unilens-a11y-host-cursor], input:not([type='button' i], [type='submit' i], [type='reset' i], [type='checkbox' i], [type='radio' i], [type='range' i], [type='color' i], [type='file' i], [type='image' i]), textarea) {
   cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 48 48'%3E%3Cpath d='M8 4v34l9.5-9.2 6.2 14.6 5.4-2.3-6.3-14.8L36 26.5Z' fill='%23000' stroke='%23fff' stroke-width='3' stroke-linejoin='round'/%3E%3C/svg%3E")
       4 3,
     pointer;
 }
 
-html[data-unilens-a11y-focus-enhance='2'] :is(body[data-unilens-page-content], #unilens-a11y-page-root) {
+html[data-unilens-a11y-focus-enhance='2']:not([data-unilens-a11y-cursor-probe]) :is(body[data-unilens-page-content], #unilens-a11y-page-root) {
   cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 48 48'%3E%3Cpath d='M8 4v34l9.5-9.2 6.2 14.6 5.4-2.3-6.3-14.8L36 26.5Z' fill='%23000' stroke='%23fff' stroke-width='3' stroke-linejoin='round'/%3E%3C/svg%3E")
       6 4,
     auto;
 }
 
-html[data-unilens-a11y-focus-enhance='2'] :is(body[data-unilens-page-content], #unilens-a11y-page-root) :where(
+html[data-unilens-a11y-focus-enhance='2']:not([data-unilens-a11y-cursor-probe]) :is(body[data-unilens-page-content], #unilens-a11y-page-root) :where(
   a, button, [role='button'], input, select, textarea, summary, label
-) {
+):not([data-unilens-a11y-host-cursor], input:not([type='button' i], [type='submit' i], [type='reset' i], [type='checkbox' i], [type='radio' i], [type='range' i], [type='color' i], [type='file' i], [type='image' i]), textarea) {
   cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 48 48'%3E%3Cpath d='M8 4v34l9.5-9.2 6.2 14.6 5.4-2.3-6.3-14.8L36 26.5Z' fill='%23000' stroke='%23fff' stroke-width='3' stroke-linejoin='round'/%3E%3C/svg%3E")
       6 4,
     pointer;
 }
 
-html[data-unilens-a11y-focus-enhance='3'] :is(body[data-unilens-page-content], #unilens-a11y-page-root) {
+html[data-unilens-a11y-focus-enhance='3']:not([data-unilens-a11y-cursor-probe]) :is(body[data-unilens-page-content], #unilens-a11y-page-root) {
   --unilens-a11y-focus-outline: 6px;
   --unilens-a11y-focus-offset: 4px;
   --unilens-a11y-focus-halo: 3px;
@@ -803,12 +795,23 @@ html[data-unilens-a11y-focus-enhance='3'] :is(body[data-unilens-page-content], #
     auto;
 }
 
-html[data-unilens-a11y-focus-enhance='3'] :is(body[data-unilens-page-content], #unilens-a11y-page-root) :where(
+html[data-unilens-a11y-focus-enhance='3']:not([data-unilens-a11y-cursor-probe]) :is(body[data-unilens-page-content], #unilens-a11y-page-root) :where(
   a, button, [role='button'], input, select, textarea, summary, label
-) {
+):not([data-unilens-a11y-host-cursor], input:not([type='button' i], [type='submit' i], [type='reset' i], [type='checkbox' i], [type='radio' i], [type='range' i], [type='color' i], [type='file' i], [type='image' i]), textarea) {
   cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='72' height='72' viewBox='0 0 48 48'%3E%3Cpath d='M8 4v34l9.5-9.2 6.2 14.6 5.4-2.3-6.3-14.8L36 26.5Z' fill='%23000' stroke='%23fff' stroke-width='3' stroke-linejoin='round'/%3E%3C/svg%3E")
       9 6,
     pointer;
+}
+
+/* The host's own meaningful cursors stay (not-allowed on a disabled button,
+ * grab, zoom-in …): hostCursorGuard.ts marks those controls with
+ * data-unilens-a11y-host-cursor, read while data-unilens-a11y-cursor-probe
+ * switches the rules above off. Text fields keep the I-beam rather than
+ * inheriting the large arrow from <body>. */
+html[data-unilens-a11y-focus-enhance]:not([data-unilens-a11y-cursor-probe]) :is(body[data-unilens-page-content], #unilens-a11y-page-root) :where(
+  input:not([type='button' i], [type='submit' i], [type='reset' i], [type='checkbox' i], [type='radio' i], [type='range' i], [type='color' i], [type='file' i], [type='image' i]), textarea
+):not([data-unilens-a11y-host-cursor]) {
+  cursor: auto;
 }
 
 html[data-unilens-a11y-focus-enhance] :is(body[data-unilens-page-content], #unilens-a11y-page-root) :focus-visible {

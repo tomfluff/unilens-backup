@@ -1,5 +1,6 @@
 /**
- * Icon fonts keep their own typeface under the UD / custom font setting.
+ * Icon fonts keep their own typeface under the UD / custom font setting
+ * (and their own spacing under wide line / letter spacing).
  *
  * The typeface setting forces `font-family` on every element of the page.
  * Icon fonts put the glyph in that element's font: Material Icons spell the
@@ -128,11 +129,16 @@ function scan(elements: Element[]) {
         html.removeAttribute(FONT_PROBE_ATTR);
     }
     for (const [el, icon] of verdicts) {
-        // Write only on a change, so an unchanged page sends nothing to host observers.
-        if (icon && !el.hasAttribute(KEEP_FONT_ATTR))
-            el.setAttribute(KEEP_FONT_ATTR, "");
-        else if (!icon && el.hasAttribute(KEEP_FONT_ATTR))
-            el.removeAttribute(KEEP_FONT_ATTR);
+        // The stylesheet tests the mark on the element itself only (cheap to
+        // match on every recalc), so an icon's insides are marked too.
+        const targets = icon ? [el, ...el.querySelectorAll("*")] : [el];
+        for (const t of targets) {
+            // Write only on a change, so an unchanged page sends nothing to host observers.
+            if (icon && !t.hasAttribute(KEEP_FONT_ATTR))
+                t.setAttribute(KEEP_FONT_ATTR, "");
+            else if (!icon && t.hasAttribute(KEEP_FONT_ATTR))
+                t.removeAttribute(KEEP_FONT_ATTR);
+        }
     }
 }
 
@@ -179,7 +185,8 @@ function clearMarks(from: HTMLElement | null) {
 }
 
 /**
- * Called on every settings apply. `active` = a UD / custom typeface is forced.
+ * Called on every settings apply. `active` = a UD / custom typeface, or wide
+ * line / letter spacing, is forced on the page.
  */
 export function syncIconFontGuard(
     pageRoot: HTMLElement | null,

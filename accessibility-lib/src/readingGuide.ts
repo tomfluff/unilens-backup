@@ -21,6 +21,7 @@ import {
     UI_ATTR,
 } from "./domIds";
 import { appendA11yStyle } from "./cspStyle";
+import { registerTopLayer, unregisterTopLayer } from "./topLayer";
 
 export {
     normalizeReadingGuidePosition,
@@ -65,6 +66,12 @@ const STYLE_ID = "unilens-a11y-reading-guide-style";
 const GUIDE_CSS = `
 #${READING_GUIDE_ID} {
   position: fixed;
+  /* a manual popover in the top layer (topLayer.ts): undo the popover UA box */
+  inset: auto;
+  overflow: visible;
+  max-width: none;
+  max-height: none;
+  color: inherit;
   top: 0;
   left: 0;
   width: ${READING_GUIDE_WIDTH_PX}px;
@@ -183,6 +190,8 @@ function ensureGuide(): HTMLElement | null {
     el.setAttribute(UI_ATTR, "1");
     el.setAttribute("aria-hidden", "true");
     document.documentElement.appendChild(el);
+    // Above a host modal / popover, and outside the invert filter on <html>.
+    registerTopLayer(el, "always");
     return el;
 }
 
@@ -273,6 +282,8 @@ export function destroyReadingGuide() {
     detachTracking();
     lastX = Number.NaN;
     lastY = Number.NaN;
-    document.getElementById(READING_GUIDE_ID)?.remove();
+    const guide = document.getElementById(READING_GUIDE_ID);
+    unregisterTopLayer(guide);
+    guide?.remove();
     document.getElementById(STYLE_ID)?.remove();
 }

@@ -23,6 +23,8 @@ export const A11Y_CSS_LINK_ID = "unilens-a11y-stylesheet";
 export const A11Y_PAGE_STYLE_ID = "unilens-a11y-page-styles";
 export const A11Y_WIDGET_STYLE_ID = "unilens-a11y-widget-styles";
 export const A11Y_UD_FONT_LINK_ID = "unilens-a11y-ud-font";
+/** text-options.css, present only while line spacing / typeface / letter spacing is changed. */
+export const A11Y_TEXT_OPTIONS_STYLE_ID = "unilens-a11y-text-options-styles";
 
 export const PAGE_CONTENT_ROOT_ID = "unilens-a11y-page-root";
 /**

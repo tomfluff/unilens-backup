@@ -13,6 +13,7 @@ import {
     useSettings,
 } from "./settings";
 import { appendA11yStyle } from "./cspStyle";
+import type { AutoTextMode } from "./accessibilityStoreTypes";
 
 export type { AutoTextMode } from "./accessibilityStoreTypes";
 
@@ -286,6 +287,18 @@ export function runAutoTextAction(
     });
     saveSettings();
     return refreshAutoTextSize();
+}
+
+/**
+ * Puts automatic text size back as a preset found it (see
+ * presetAutoTextRestore): the mode, and the scale it had, which may have
+ * been bumped by hand.
+ */
+export function restoreAutoText(mode: AutoTextMode, scale: number) {
+    patchSettings({ autoTextSize: true, autoTextMode: mode });
+    saveSettings();
+    const next = clampScale(scale);
+    if (next !== appliedScale) applyScaleToPage(next);
 }
 
 function onResize() {

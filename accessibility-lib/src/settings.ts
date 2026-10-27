@@ -65,6 +65,18 @@ export interface Settings extends A11ySettings {
     activePreset: A11yPresetId | null | undefined;
     /** Values the active preset replaced, put back when it is turned off. */
     presetRestore: Partial<A11ySettings> | null;
+    /**
+     * Automatic text size as it was before a preset that turns it off
+     * (low vision / senior) was turned on; put back when that preset is
+     * turned off. null = nothing to put back.
+     */
+    presetAutoTextRestore: PresetAutoTextRestore | null;
+}
+
+export interface PresetAutoTextRestore {
+    autoTextMode: AutoTextMode;
+    /** The applied scale, which may have been bumped by hand. */
+    scale: number;
 }
 
 const AUX_DEFAULTS = {
@@ -80,6 +92,7 @@ const AUX_DEFAULTS = {
     panelTab: "visual" as PanelTab,
     activePreset: undefined as A11yPresetId | null | undefined,
     presetRestore: null as Partial<A11ySettings> | null,
+    presetAutoTextRestore: null as PresetAutoTextRestore | null,
 };
 
 export const SETTINGS_DEFAULTS: Settings = {
@@ -161,6 +174,24 @@ function normalizeSettings(s: Settings): void {
         (typeof s.presetRestore !== "object" || Array.isArray(s.presetRestore))
     )
         s.presetRestore = null;
+    const autoRestore = s.presetAutoTextRestore as unknown;
+    if (autoRestore != null) {
+        const r = autoRestore as Partial<PresetAutoTextRestore>;
+        const modeOk =
+            r.autoTextMode === "viewport" ||
+            r.autoTextMode === "content" ||
+            r.autoTextMode === "combined";
+        s.presetAutoTextRestore =
+            typeof r === "object" &&
+            modeOk &&
+            typeof r.scale === "number" &&
+            Number.isFinite(r.scale)
+                ? {
+                      autoTextMode: r.autoTextMode as AutoTextMode,
+                      scale: r.scale,
+                  }
+                : null;
+    }
     if (
         s.panelLang != null &&
         !(A11Y_LANG_CODES as readonly string[]).includes(s.panelLang)
@@ -304,6 +335,7 @@ export function resetA11ySettings() {
         ...A11Y_DEFAULTS,
         activePreset: null,
         presetRestore: null,
+        presetAutoTextRestore: null,
     });
     applyA11yToDocument();
 }

@@ -22,6 +22,7 @@ import {
 import { afterNextPaint } from "./afterPaint";
 import { clearBackgroundMediaMarkers } from "./backgroundMediaOverlay";
 import {
+    A11Y_TEXT_OPTIONS_STYLE_ID,
     A11Y_UD_FONT_LINK_ID,
     BG_FREEZE_ATTR,
     BG_SAMPLE_ATTR,
@@ -111,6 +112,9 @@ import { isOwnStyleMutation, styleChangeKind } from "./ownMutation";
 import { destroyPageFontScale, setPageFontSizeScale } from "./pageFontScale";
 import type { Settings } from "./settings";
 import { stopIconFontGuard, syncIconFontGuard } from "./iconFontGuard";
+import { stopHostCursorGuard, syncHostCursorGuard } from "./hostCursorGuard";
+import { appendA11yStyle } from "./cspStyle";
+import textOptionsCss from "./unilens-a11y/text-options.css";
 
 let readSettings: () => Settings = () => ({}) as Settings;
 
@@ -281,6 +285,24 @@ export function restorePageContentRoot() {
             legacy.parentNode.insertBefore(legacy.firstChild, legacy);
         legacy.remove();
     }
+}
+
+/**
+ * text-options.css is in the document only while one of the text options is
+ * on: its rules reach every element, and as part of the page sheet they were
+ * matched on every style recalc even with the options off.
+ */
+function syncTextOptionStyles(on: boolean) {
+    const existing = document.getElementById(A11Y_TEXT_OPTIONS_STYLE_ID);
+    if (!on) {
+        existing?.remove();
+        return;
+    }
+    if (existing) return;
+    const style = document.createElement("style");
+    style.id = A11Y_TEXT_OPTIONS_STYLE_ID;
+    style.textContent = textOptionsCss;
+    appendA11yStyle(style);
 }
 
 function ensureUdFontLink() {
@@ -1075,7 +1097,22 @@ export function applyA11yToDocument() {
     if (s.fontFamily === "ud") ensureUdFontLink();
     else removeUdFontLink();
     // Icon fonts keep their own typeface under the forced UD / custom font.
-    syncIconFontGuard(pageRoot, s.fontFamily !== "standard");
+    syncTextOptionStyles(
+        s.fontFamily !== "standard" ||
+            s.lineHeight === "wide" ||
+            s.letterSpacing === "wide",
+    );
+    // Also under wide line / letter spacing, which reach every element and
+    // would stretch an icon's box or break a ligature icon apart.
+    syncIconFontGuard(
+        pageRoot,
+        s.fontFamily !== "standard" ||
+            s.lineHeight === "wide" ||
+            s.letterSpacing === "wide",
+    );
+    // The large cursor leaves the host's meaningful cursors alone
+    // (not-allowed, grab …).
+    syncHostCursorGuard(pageRoot, s.focusEnhanceLevel > 0);
 
     syncPageDisplayFilters(pageRoot, s);
     const mode = {
@@ -1111,6 +1148,8 @@ export function clearAppliedA11yDocument() {
     removeToneLayer();
     html.removeAttribute(BODY_EXPAND_LEVEL_ATTR);
     stopIconFontGuard();
+    syncTextOptionStyles(false);
+    stopHostCursorGuard();
     restorePageContentRoot();
     removeUdFontLink();
 }
