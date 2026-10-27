@@ -20,6 +20,7 @@ import {
     READING_GUIDE_TIP_ATTR,
     UI_ATTR,
 } from "./domIds";
+import { appendA11yStyle } from "./cspStyle";
 
 export {
     normalizeReadingGuidePosition,
@@ -170,7 +171,7 @@ function ensureStylesheet() {
     const style = document.createElement("style");
     style.id = STYLE_ID;
     style.textContent = GUIDE_CSS;
-    document.head?.appendChild(style);
+    appendA11yStyle(style);
 }
 
 function ensureGuide(): HTMLElement | null {

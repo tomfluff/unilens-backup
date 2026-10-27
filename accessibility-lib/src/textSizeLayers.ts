@@ -37,6 +37,7 @@ import {
     isUniLensOverlayNode,
 } from "./domIds";
 import { isOwnStyleMutation, removedOwnMarks } from "./ownMutation";
+import { appendA11yStyle } from "./cspStyle";
 
 export const TEXT_SIZE_STYLE_ID = "unilens-a11y-text-size-style";
 
@@ -119,7 +120,7 @@ export function acquireTextSizeStyles(
     const style = document.createElement("style");
     style.id = TEXT_SIZE_STYLE_ID;
     style.textContent = TEXT_SIZE_CSS;
-    document.head?.appendChild(style);
+    appendA11yStyle(style);
 }
 
 /** Removes the shared rule once no feature uses it any more. */

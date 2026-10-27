@@ -40,6 +40,7 @@ import {
 } from "./fontScales";
 import { readUnscaledFontSizePx } from "./pageFontScale";
 import { saveSettings, updateSetting } from "./settings";
+import { appendA11yStyle } from "./cspStyle";
 
 export { FONT_SCALE_LEVELS };
 export type SelectionFontLevel = FontScaleLevel;
@@ -171,7 +172,7 @@ function ensureResizeStylesheet() {
     const style = document.createElement("style");
     style.id = SELECTION_RESIZE_STYLE_ID;
     style.textContent = RESIZE_CSS;
-    document.head.appendChild(style);
+    appendA11yStyle(style);
 }
 
 export function levelToPx(level: SelectionFontLevel, basePx?: number): number {

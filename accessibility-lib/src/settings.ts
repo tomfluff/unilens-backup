@@ -3,7 +3,11 @@
  * React reads via useSettings(); imperative modules via getSettings().
  */
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import {
+    createJSONStorage,
+    persist,
+    type StateStorage,
+} from "zustand/middleware";
 import {
     A11Y_DEFAULTS,
     A11Y_LANG_CODES,
@@ -164,9 +168,58 @@ function normalizeSettings(s: Settings): void {
         s.panelLang = null;
 }
 
+/**
+ * localStorage that never throws. Writing can fail (the quota is full — the
+ * host page may have used it up — or a private mode refuses writes), and
+ * reading can fail (the visitor blocks site data). zustand's persist passed a
+ * write error straight out of setState, so pressing "Dark" in the panel threw
+ * and the page never changed. Settings still apply; what could not be stored
+ * is kept for this page in memory (and read back from it), so the next
+ * setting does not undo the previous one.
+ */
+const memoryStore = new Map<string, string>();
+
+function browserStorage(): Storage | null {
+    try {
+        return typeof window === "undefined" ? null : window.localStorage;
+    } catch {
+        return null;
+    }
+}
+
+export const safeSettingsStorage: StateStorage = {
+    getItem(name) {
+        if (memoryStore.has(name)) return memoryStore.get(name) ?? null;
+        try {
+            return browserStorage()?.getItem(name) ?? null;
+        } catch {
+            return null;
+        }
+    },
+    setItem(name, value) {
+        try {
+            const storage = browserStorage();
+            if (!storage) throw new Error("no storage");
+            storage.setItem(name, value);
+            memoryStore.delete(name);
+        } catch {
+            memoryStore.set(name, value);
+        }
+    },
+    removeItem(name) {
+        memoryStore.delete(name);
+        try {
+            browserStorage()?.removeItem(name);
+        } catch {
+            // nothing stored that we could remove
+        }
+    },
+};
+
 export const useSettings = create<Settings>()(
     persist(() => ({ ...SETTINGS_DEFAULTS }), {
         name: SETTINGS_PERSIST_KEY,
+        storage: createJSONStorage(() => safeSettingsStorage),
         onRehydrateStorage: () => (state: Settings | undefined) => {
             if (state) normalizeSettings(state);
         },

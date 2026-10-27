@@ -91,6 +91,7 @@ import {
 } from "./settings";
 import { namedTextAdjustLevel } from "./textAdjustLevels";
 import pageCss from "./unilens-a11y/style.css";
+import { appendA11yStyle } from "./cspStyle";
 
 const RESET_CONFIRM_MS = 4000;
 
@@ -128,7 +129,7 @@ function ensureStyleTag(id: string, css: string) {
     const style = document.createElement("style");
     style.id = id;
     style.textContent = css;
-    document.head.appendChild(style);
+    appendA11yStyle(style);
 }
 
 function ensureExternalCssLink() {

@@ -26,6 +26,7 @@ import {
     speechRateValue,
     splitSpeechChunks,
 } from "./speechLevels";
+import { appendA11yStyle } from "./cspStyle";
 
 export type SpeechState = "idle" | "speaking" | "paused";
 
@@ -142,7 +143,7 @@ function ensureHighlightStyle() {
         `html[${SPEAKING_ATTR}] ::selection{` +
             `background-color:transparent !important;color:${HIGHLIGHT_TEXT_COLOR} !important;}`,
     ].join("");
-    document.head.appendChild(style);
+    appendA11yStyle(style);
 }
 
 function highlightEnabled(): boolean {

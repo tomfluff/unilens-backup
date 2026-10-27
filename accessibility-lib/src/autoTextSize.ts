@@ -12,6 +12,7 @@ import {
     saveSettings,
     useSettings,
 } from "./settings";
+import { appendA11yStyle } from "./cspStyle";
 
 export type { AutoTextMode } from "./accessibilityStoreTypes";
 
@@ -176,7 +177,7 @@ function ensureStylesheet() {
       line-height: calc(1.5 * var(${TEXT_LINE_VAR}, 1));
     }
   `;
-    document.head.appendChild(style);
+    appendA11yStyle(style);
 }
 
 function applyScaleToPage(scale: number) {

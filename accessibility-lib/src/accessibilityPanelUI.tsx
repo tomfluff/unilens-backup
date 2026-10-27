@@ -109,7 +109,7 @@ const ICON_PATHS: Record<IconName, string> = {
     link: '<path d="M10 13a5 5 0 0 0 7.07 0l2.12-2.12a5 5 0 0 0-7.07-7.07L11 5"/><path d="M14 11a5 5 0 0 0-7.07 0L4.8 13.12a5 5 0 0 0 7.07 7.07L13 19"/>',
     cursor: '<path d="M5 3v16l5.2-5 3.2 7.5 2.8-1.2-3.3-7.6L19 11.5Z"/>',
     pointerHalo:
-        '<circle cx="12" cy="12" r="12.6" style="fill:currentColor;stroke:none;opacity:0.14"/><circle cx="12" cy="12" r="12.6"/><path d="M7.8 6.6 7.8 16.2 10.9 13.2 12.8 17.7 14.5 17 12.5 12.4 16.2 11.2Z"/>',
+        '<circle cx="12" cy="12" r="12.6" class="unilens-a11y-icon-tint" fill="currentColor" stroke="none" opacity="0.14"/><circle cx="12" cy="12" r="12.6"/><path d="M7.8 6.6 7.8 16.2 10.9 13.2 12.8 17.7 14.5 17 12.5 12.4 16.2 11.2Z"/>',
     focusCursor:
         '<rect x="4" y="4" width="16" height="16" rx="2"/><path d="M4 10h16M4 14h16"/>',
     readingGuide: '<path d="M3 12h18"/>',
@@ -119,12 +119,12 @@ const ICON_PATHS: Record<IconName, string> = {
     pause: '<path d="M9.5 5v14M14.5 5v14"/>',
     stop: '<rect x="6" y="6" width="12" height="12" rx="2.5"/>',
     underline: '<path d="M6 4v8a6 6 0 0 0 12 0V4"/><path d="M4 20h16"/>',
-    fill: '<rect x="4" y="6" width="16" height="12" rx="2.5" style="fill:currentColor;stroke:none;opacity:0.28"/><rect x="4" y="6" width="16" height="12" rx="2.5"/>',
+    fill: '<rect x="4" y="6" width="16" height="12" rx="2.5" class="unilens-a11y-icon-tint" fill="currentColor" stroke="none" opacity="0.28"/><rect x="4" y="6" width="16" height="12" rx="2.5"/>',
     frame: '<rect x="4" y="6" width="16" height="12" rx="2.5"/>',
     image: '<rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8.5" cy="10" r="1.6"/><path d="m21 16-5.2-5.2-12.8 8"/>',
     textStroke: '<path d="M7 19 12 5l5 14"/><path d="M8.6 14.2h6.8"/>',
     textPlate:
-        '<rect x="4" y="7" width="16" height="12" rx="2" style="fill:currentColor;stroke:none;opacity:0.28"/><rect x="4" y="7" width="16" height="12" rx="2"/><path d="M8.2 16 12 8.5 15.8 16M9.5 13.4h5"/>',
+        '<rect x="4" y="7" width="16" height="12" rx="2" class="unilens-a11y-icon-tint" fill="currentColor" stroke="none" opacity="0.28"/><rect x="4" y="7" width="16" height="12" rx="2"/><path d="M8.2 16 12 8.5 15.8 16M9.5 13.4h5"/>',
 };
 
 export function Icon({ name, size = 18 }: { name: IconName; size?: number }) {

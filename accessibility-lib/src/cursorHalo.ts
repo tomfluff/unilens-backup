@@ -24,6 +24,7 @@ import {
     CURSOR_HALO_SIZE_VAR,
     UI_ATTR,
 } from "./domIds";
+import { appendA11yStyle } from "./cspStyle";
 
 export {
     isPointerHaloViewportPct,
@@ -97,7 +98,7 @@ function ensureStylesheet() {
     const style = document.createElement("style");
     style.id = STYLE_ID;
     style.textContent = HALO_CSS;
-    document.head?.appendChild(style);
+    appendA11yStyle(style);
 }
 
 function ensureHalo(): HTMLElement | null {

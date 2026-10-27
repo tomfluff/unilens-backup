@@ -96,6 +96,8 @@ ${B} *:not(svg):not(svg *), ${B} *::before, ${B} *::after { box-sizing: border-b
 ${B} button { font: inherit; color: inherit; margin: 0; cursor: pointer; }
 /* a host \`svg { fill: currentColor }\` (the recruit mirror) beats the icons' fill attribute */
 ${R} svg[fill="none"] { fill: none; }
+/* the tinted backdrop shape of a few icons — a class, not a style attribute, which a strict CSP refuses */
+${R} svg .unilens-a11y-icon-tint { fill: currentColor; stroke: none; }
 ${R} {
   --unilens-a11y-panel-base: 15px;
   --unilens-a11y-panel-font-scale: 1;

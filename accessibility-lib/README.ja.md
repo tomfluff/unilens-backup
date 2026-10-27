@@ -194,7 +194,10 @@ npm run build
 | `smallTextBoost` | `true` | 16px 未満の文字の底上げ |
 | `followSystemPreferences` | `false` | 初回のみ OS の表示設定を反映 |
 | `lang` | 自動検出 | パネル言語（`'ja'` / `'en'`）。パネルでの選択は常に優先 |
+| `cspNonce` | 読み込み元 `<script>` の nonce | Content-Security-Policy で `style-src` を制限しているサイト向けに、差し込む `<style>` に付ける nonce |
 
 パネル言語の初期値は `<html lang>` とブラウザ言語から推定されます。パネルで選んだ言語は保存され、次回以降も使われます。
+
+インライン style を禁止する CSP のサイトで nonce が使えない場合は、構築スタイルシート（`document.adoptedStyleSheets`。CSP の制限対象外）で同じルールを適用します。このときブラウザが報告する CSP 違反は、最初に拒否された `<style>` の 1 件だけです。
 
 全体のビルド／serve はリポジトリルートの `README.md` も参照してください。

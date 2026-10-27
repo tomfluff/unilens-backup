@@ -110,6 +110,7 @@ import {
 import { isOwnStyleMutation, styleChangeKind } from "./ownMutation";
 import { destroyPageFontScale, setPageFontSizeScale } from "./pageFontScale";
 import type { Settings } from "./settings";
+import { stopIconFontGuard, syncIconFontGuard } from "./iconFontGuard";
 
 let readSettings: () => Settings = () => ({}) as Settings;
 
@@ -1073,6 +1074,8 @@ export function applyA11yToDocument() {
 
     if (s.fontFamily === "ud") ensureUdFontLink();
     else removeUdFontLink();
+    // Icon fonts keep their own typeface under the forced UD / custom font.
+    syncIconFontGuard(pageRoot, s.fontFamily !== "standard");
 
     syncPageDisplayFilters(pageRoot, s);
     const mode = {
@@ -1107,6 +1110,7 @@ export function clearAppliedA11yDocument() {
     setToneMaskLayer(null);
     removeToneLayer();
     html.removeAttribute(BODY_EXPAND_LEVEL_ATTR);
+    stopIconFontGuard();
     restorePageContentRoot();
     removeUdFontLink();
 }

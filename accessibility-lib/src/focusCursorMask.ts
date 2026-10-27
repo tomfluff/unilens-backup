@@ -18,6 +18,7 @@ import {
     UI_ATTR,
 } from "./domIds";
 import { resetFocusCursorMemory } from "./focusCursorMemory";
+import { appendA11yStyle } from "./cspStyle";
 
 /** Default clear band height (medium). */
 export const FOCUS_CURSOR_BAND_PX = FOCUS_CURSOR_DEFAULT_BAND_PX;
@@ -115,13 +116,18 @@ let lastY = Number.NaN;
 
 function ensureStylesheet() {
     if (typeof document === "undefined") return;
-    let style = document.getElementById(STYLE_ID);
-    if (!(style instanceof HTMLStyleElement)) {
-        style = document.createElement("style");
-        style.id = STYLE_ID;
-        document.head?.appendChild(style);
+    const existing = document.getElementById(STYLE_ID);
+    // A <style>, or the <unilens-style> handle cspStyle.ts puts in its
+    // place under a strict CSP.
+    if (existing) {
+        existing.textContent = MASK_CSS;
+        return;
     }
+    const style = document.createElement("style");
+    style.id = STYLE_ID;
+    // Text first: appendA11yStyle() checks whether the page's CSP refused it.
     style.textContent = MASK_CSS;
+    appendA11yStyle(style);
 }
 
 function ensureChild(root: HTMLElement, id: string): HTMLElement {

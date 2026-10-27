@@ -179,6 +179,7 @@ import {
     smallTextBoostHint,
     TEXT_ADJUST_LEVELS,
 } from "./textAdjustLevels";
+import { setCspNonce } from "./cspStyle";
 
 interface UniLensA11yInitOptions {
     /**
@@ -215,6 +216,14 @@ interface UniLensA11yInitOptions {
      * always wins over this value.
      */
     lang?: A11yLang;
+    /**
+     * Nonce for the <style> elements this script injects, for sites whose
+     * Content-Security-Policy restricts `style-src`. Default: the nonce of the
+     * <script> tag that loaded this file, if any. Without a usable nonce the
+     * rules are applied through constructed stylesheets instead, which CSP
+     * does not restrict.
+     */
+    cspNonce?: string;
 }
 
 let initialized = false;
@@ -233,6 +242,7 @@ function init(options: UniLensA11yInitOptions = {}) {
     if (initialized) return;
     initialized = true;
 
+    if (options.cspNonce) setCspNonce(options.cspNonce);
     if (options.cssUrl) configureAccessibilityCssUrl(options.cssUrl);
     ensureAccessibilityStyles();
     if (options.lang) configureA11yLang(options.lang);
