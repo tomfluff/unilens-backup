@@ -955,7 +955,11 @@ export function contentDrawsText(content: string): boolean {
     if (/^(?:url|image-set|-webkit-image-set)\(/i.test(v)) return false;
     // One quoted string of nothing but whitespace (incl. NBSP, ideographic
     // and zero-width spaces). Counters, attr() and real glyphs still count.
-    const quoted = v.match(/^(["'])([\s\u200b\u200c\u200d\u2060\ufeff]*)\1$/);
+    // An alternation, not a character class: a class holding the zero-width
+    // joiner trips biome's noMisleadingCharacterClass.
+    const quoted = v.match(
+        /^(["'])(?:\s|\u200b|\u200c|\u200d|\u2060|\ufeff)*\1$/,
+    );
     return !quoted;
 }
 
