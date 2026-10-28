@@ -7,7 +7,9 @@ import type { A11yFontSize } from "./accessibilityStoreTypes";
 import {
     type A11ySettings,
     CONTRAST_FILTER,
+    type HcTextScope,
     LETTER_SPACING_EM,
+    normalizeHcTextScope,
     normalizeTextPlateStyle,
     normalizeTextStrokeStyle,
     SATURATION_FILTER,
@@ -27,18 +29,29 @@ import {
     BG_FREEZE_ATTR,
     BG_SAMPLE_ATTR,
     BODY_EXPAND_LEVEL_ATTR,
+    BORDER_AFTER_ATTR,
+    BORDER_AFTER_VAR,
+    BORDER_ATTR,
+    BORDER_BEFORE_ATTR,
+    BORDER_BEFORE_VAR,
+    BORDER_VAR,
+    CLIP_TEXT_ATTR,
     FILL_AFTER_ATTR,
     FILL_AFTER_VAR,
     FILL_ATTR,
     FILL_BEFORE_ATTR,
     FILL_BEFORE_VAR,
     FILL_VAR,
+    GRADIENT_OFF_ATTR,
+    HOST_COLOR_VAR,
+    HOST_PART_ATTR,
     HTML_ATTR_CONTRAST,
     HTML_ATTR_DISPLAY_ACTIVE,
     HTML_ATTR_ELEMENT_HIGHLIGHT,
     HTML_ATTR_FOCUS_ENHANCE,
     HTML_ATTR_FONT_FAMILY,
     HTML_ATTR_FONT_SIZE,
+    HTML_ATTR_HC_SCOPE,
     HTML_ATTR_HTML_FILTER,
     HTML_ATTR_IMAGE_BORDER,
     HTML_ATTR_IMAGE_FILTER,
@@ -83,13 +96,19 @@ import {
     UI_ATTR,
 } from "./domIds";
 import {
+    type BorderSide,
     fillArea,
     type FillPalette,
     fillTier,
+    isGradientOnly,
+    isSmallPart,
+    largeToneIsSurfaceFor,
     luminance,
     parseCssColor,
     type Rgb,
+    reachDecision,
     saturationCapFor,
+    themedBorderColor,
     themedFill,
 } from "./fillTone";
 import { a11yFontSizeToScale } from "./fontScales";
@@ -148,6 +167,7 @@ function pickA11y(s: Settings): A11ySettings {
         textStroke: s.textStroke,
         textStrokeStyle: s.textStrokeStyle,
         textPlateStyle: s.textPlateStyle,
+        hcTextScope: s.hcTextScope,
         reduceMotion: s.reduceMotion,
         smallTextBoostLevel: s.smallTextBoostLevel,
         bodyTextExpandLevel: s.bodyTextExpandLevel,
@@ -179,9 +199,13 @@ export function mediaTextGuardActive(
     s: Pick<
         A11ySettings,
         "theme" | "saturation" | "contrast" | "textStroke" | "linkBackground"
-    >,
+    > &
+        Partial<Pick<A11ySettings, "hcTextScope">>,
 ): boolean {
     if (s.theme === "invert") return false;
+    // High contrast reaching everything: text over pictures gets a plate
+    // like all other text instead of keeping the host colors.
+    if (s.theme === "high-contrast" && s.hcTextScope === "all") return false;
     return (
         s.theme !== "standard" ||
         needsToneFilter(s) ||
@@ -441,9 +465,18 @@ function clearPositionedOverlayMarkers(root: ParentNode | null = document) {
     root.querySelectorAll(`[${PSEUDO_OVERLAY_AFTER_ATTR}]`).forEach((el) => {
         el.removeAttribute(PSEUDO_OVERLAY_AFTER_ATTR);
     });
-    for (const [attr, prop] of FILL_SLOTS) {
+    for (const [attr, prop] of [
+        ...FILL_SLOTS,
+        ...BORDER_SLOTS,
+        ...HOST_PART_SLOTS,
+    ]) {
         root.querySelectorAll(`[${attr}]`).forEach((el) => {
             setFill(el, attr, prop, null);
+        });
+    }
+    for (const attr of [GRADIENT_OFF_ATTR, CLIP_TEXT_ATTR]) {
+        root.querySelectorAll(`[${attr}]`).forEach((el) => {
+            el.removeAttribute(attr);
         });
     }
     clearBackgroundMediaMarkers(root);
@@ -466,6 +499,58 @@ const FILL_SLOTS = [
     [FILL_BEFORE_ATTR, FILL_BEFORE_VAR],
     [FILL_AFTER_ATTR, FILL_AFTER_VAR],
 ] as const;
+
+/** Border marker + inline custom property for the element and its pseudos. */
+const BORDER_SLOTS = [
+    [BORDER_ATTR, BORDER_VAR],
+    [BORDER_BEFORE_ATTR, BORDER_BEFORE_VAR],
+    [BORDER_AFTER_ATTR, BORDER_AFTER_VAR],
+] as const;
+
+/** High contrast reach "text": host part marker + its pinned host color. */
+const HOST_PART_SLOTS = [[HOST_PART_ATTR, HOST_COLOR_VAR]] as const;
+
+const BORDER_SIDES = ["Top", "Right", "Bottom", "Left"] as const;
+
+/**
+ * Themed border-color for one element or pseudo (fillTone.ts
+ * `themedBorderColor`), or null for the plain theme border. Reads only the
+ * sides that are drawn; most elements have none, so this is one read each.
+ */
+function borderFor(
+    cs: CSSStyleDeclaration,
+    palette: FillPalette | null,
+): string | null {
+    if (!palette) return null;
+    let drawn = false;
+    const sides: BorderSide[] = BORDER_SIDES.map((side) => {
+        const style = cs.getPropertyValue(
+            `border-${side.toLowerCase()}-style`,
+        );
+        const width =
+            style === "none" || style === "hidden"
+                ? 0
+                : parseFloat(
+                      cs.getPropertyValue(`border-${side.toLowerCase()}-width`),
+                  ) || 0;
+        if (width > 0) drawn = true;
+        return {
+            width,
+            color:
+                width > 0
+                    ? cs.getPropertyValue(`border-${side.toLowerCase()}-color`)
+                    : "",
+        };
+    });
+    if (!drawn) return null;
+    return themedBorderColor(sides, cs.color, palette);
+}
+
+/** A ::before / ::after that is rendered at all. */
+function pseudoRendered(cs: CSSStyleDeclaration): boolean {
+    const c = cs.content;
+    return Boolean(c) && c !== "none" && c !== "normal" && cs.display !== "none";
+}
 
 /**
  * Put a themed muted / tone fill on an element (or one of its pseudos), or
@@ -493,11 +578,13 @@ function readFillPalette(html: HTMLElement): FillPalette | null {
     };
     const text = read("--unilens-a11y-display-text");
     if (!text) return null;
+    const theme = html.getAttribute(HTML_ATTR_THEME);
     return {
         text,
         link: read("--unilens-a11y-display-link"),
         surface: read("--unilens-a11y-display-surface"),
-        saturationCap: saturationCapFor(html.getAttribute(HTML_ATTR_THEME)),
+        saturationCap: saturationCapFor(theme),
+        largeToneIsSurface: largeToneIsSurfaceFor(theme),
     };
 }
 
@@ -512,10 +599,117 @@ function fillFor(
     if (!c) return null;
     const rgb: Rgb = [c[0], c[1], c[2]];
     let tier = fillTier(rgb, Number.POSITIVE_INFINITY);
-    // Only dark neutrals depend on the size: measure just those.
+    // Only dark neutrals, and in high contrast colored fills, depend on the
+    // size: measure just those.
     if (tier === "surface" && luminance(rgb) < 0.5)
         tier = fillTier(rgb, area());
+    else if (tier === "tone" && palette.largeToneIsSurface)
+        tier = fillTier(rgb, area(), true);
     return themedFill(tier, rgb, palette);
+}
+
+/** High contrast reach on <html> (HcTextScope); null outside high contrast. */
+function readReach(html: HTMLElement): HcTextScope | null {
+    const v = html.getAttribute(HTML_ATTR_HC_SCOPE);
+    return v === "text" || v === "parts" || v === "all" ? v : null;
+}
+
+/** Controls and control roles: a colored one is a part at any width. */
+const PART_TAGS = new Set([
+    "A",
+    "BUTTON",
+    "LABEL",
+    "SUMMARY",
+    "INPUT",
+    "SELECT",
+    "TEXTAREA",
+]);
+const PART_ROLES = new Set([
+    "button",
+    "link",
+    "tab",
+    "menuitem",
+    "option",
+    "switch",
+    "checkbox",
+    "radio",
+]);
+
+/** Text, or a form control that draws its own (value, label). */
+function holdsText(el: HTMLElement): boolean {
+    if (
+        el.tagName === "INPUT" ||
+        el.tagName === "SELECT" ||
+        el.tagName === "TEXTAREA"
+    )
+        return true;
+    return /\S/.test(el.textContent ?? "");
+}
+
+/**
+ * One part (keeps the host colors, text included, under reach "text"): a
+ * small colored box, or a control with a colored fill that is not a whole
+ * card (a full-width phone button is a part, a 300px tall card link is not).
+ */
+function isPartBox(el: HTMLElement): boolean {
+    const w = el.offsetWidth;
+    const h = el.offsetHeight;
+    if (isSmallPart(w, h, window.innerWidth)) return true;
+    const role = el.getAttribute("role");
+    const control =
+        PART_TAGS.has(el.tagName) || (role !== null && PART_ROLES.has(role));
+    return control && h <= 120;
+}
+
+/**
+ * The element's own host fill under a high contrast reach: the fill to put
+ * in the inline variable (null = themed surface), and for a host part the
+ * host text color to pin (null = not a part).
+ */
+function ownFillFor(
+    el: HTMLElement,
+    cs: CSSStyleDeclaration,
+    color: string,
+    palette: FillPalette | null,
+    reach: HcTextScope | null,
+): { fill: string | null; part: string | null } {
+    const area = () => fillArea(el.offsetWidth, el.offsetHeight);
+    if (!reach || !palette)
+        return { fill: fillFor(color, area, palette), part: null };
+    const c = parseCssColor(color);
+    if (!c) return { fill: null, part: null };
+    const rgb: Rgb = [c[0], c[1], c[2]];
+    // The tier without the large-colored-band rule: the reach decides that.
+    let tier = fillTier(rgb, Number.POSITIVE_INFINITY);
+    if (tier === "surface" && luminance(rgb) < 0.5)
+        tier = fillTier(rgb, area());
+    const text = tier === "surface" ? false : holdsText(el);
+    switch (reachDecision(reach, tier, text)) {
+        case "surface":
+            return { fill: null, part: null };
+        case "host":
+            return {
+                fill: `rgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})`,
+                part: text && isPartBox(el) ? cs.color : null,
+            };
+        default:
+            return { fill: fillFor(color, area, palette), part: null };
+    }
+}
+
+/** A pseudo's fill under the reach: host color under "text", else themed. */
+function pseudoFillFor(
+    color: string,
+    palette: FillPalette | null,
+    reach: HcTextScope | null,
+): string | null {
+    if (reach !== "text" || !palette) return fillFor(color, () => 0, palette);
+    const c = parseCssColor(color);
+    if (!c) return null;
+    const rgb: Rgb = [c[0], c[1], c[2]];
+    return fillTier(rgb, 0) === "surface"
+        ? null
+        : `rgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})`;
 }
 
 /**
@@ -596,34 +790,59 @@ export function syncPositionedOverlayMarkers(pageRoot: HTMLElement | null) {
     // are worked out here too: sizing a dark fill reads layout, which must
     // not be interleaved with the marker writes below.
     const palette = readFillPalette(html);
+    const reach = readReach(html);
     const own: string[] = [];
+    // High contrast reach: pinned host text color of a part (reach "text"),
+    // gradient-only backgrounds to drop (reach "all").
+    const parts: (string | null)[] = [];
+    const gradients: boolean[] = [];
+    const clipTexts: boolean[] = [];
     const before: string[] = [];
     const after: string[] = [];
     const fills: (string | null)[][] = [];
+    const borders: (string | null)[][] = [];
     try {
         for (const el of candidates) {
-            own.push(getComputedStyle(el).backgroundColor);
+            const cs = getComputedStyle(el);
+            const bcs = getComputedStyle(el, "::before");
+            const acs = getComputedStyle(el, "::after");
+            own.push(cs.backgroundColor);
             // Host chrome frequently paints hairlines/arrows on pseudos
             // (SoftBank `.p-graduateArrow::after`, `.c-hdg::after`), which
             // would otherwise keep a stray opaque background under the forced
             // theme text color (e.g. yellow-on-white in high-contrast mode).
-            before.push(getComputedStyle(el, "::before").backgroundColor);
-            after.push(getComputedStyle(el, "::after").backgroundColor);
+            before.push(bcs.backgroundColor);
+            after.push(acs.backgroundColor);
+            // Borders drawn as shapes or left transparent (the probe lifts
+            // the theme border color too, so these are the host's own).
+            borders.push([
+                borderFor(cs, palette),
+                pseudoRendered(bcs) ? borderFor(bcs, palette) : null,
+                pseudoRendered(acs) ? borderFor(acs, palette) : null,
+            ]);
             const i = own.length - 1;
+            const ownFill = isOpaqueBackgroundColor(own[i])
+                ? ownFillFor(el, cs, own[i], palette, reach)
+                : { fill: null, part: null };
+            parts.push(ownFill.part);
+            const clipText =
+                reach === "all" &&
+                (cs.backgroundClip === "text" ||
+                    cs.getPropertyValue("-webkit-background-clip") === "text");
+            clipTexts.push(clipText);
+            gradients.push(
+                reach === "all" &&
+                    !clipText &&
+                    isGradientOnly(cs.backgroundImage),
+            );
             fills.push([
-                isOpaqueBackgroundColor(own[i])
-                    ? fillFor(
-                          own[i],
-                          () => fillArea(el.offsetWidth, el.offsetHeight),
-                          palette,
-                      )
-                    : null,
+                ownFill.fill,
                 // Pseudo boxes are not measured; they are decorations (dots, knobs).
                 isOpaqueBackgroundColor(before[i])
-                    ? fillFor(before[i], () => 0, palette)
+                    ? pseudoFillFor(before[i], palette, reach)
                     : null,
                 isOpaqueBackgroundColor(after[i])
-                    ? fillFor(after[i], () => 0, palette)
+                    ? pseudoFillFor(after[i], palette, reach)
                     : null,
             ]);
         }
@@ -646,6 +865,11 @@ export function syncPositionedOverlayMarkers(pageRoot: HTMLElement | null) {
         setMarker(el, PSEUDO_OVERLAY_AFTER_ATTR, afterOpaque);
         for (let k = 0; k < FILL_SLOTS.length; k++)
             setFill(el, FILL_SLOTS[k][0], FILL_SLOTS[k][1], fills[i][k]);
+        for (let k = 0; k < BORDER_SLOTS.length; k++)
+            setFill(el, BORDER_SLOTS[k][0], BORDER_SLOTS[k][1], borders[i][k]);
+        setFill(el, HOST_PART_ATTR, HOST_COLOR_VAR, parts[i]);
+        setMarker(el, GRADIENT_OFF_ATTR, gradients[i]);
+        setMarker(el, CLIP_TEXT_ATTR, clipTexts[i]);
     }
     // Settle the themed styles with transitions off, then let them run again;
     // nothing changes value at that point, so nothing animates.
@@ -658,9 +882,18 @@ export function syncPositionedOverlayMarkers(pageRoot: HTMLElement | null) {
     // Fills on elements that left the candidate list (now overlay UI, or a
     // skipped tag) — candidates were all handled above.
     const seen = new Set<Element>(candidates);
-    for (const [attr, prop] of FILL_SLOTS) {
+    for (const [attr, prop] of [
+        ...FILL_SLOTS,
+        ...BORDER_SLOTS,
+        ...HOST_PART_SLOTS,
+    ]) {
         pageRoot.querySelectorAll(`[${attr}]`).forEach((el) => {
             if (!seen.has(el)) setFill(el, attr, prop, null);
+        });
+    }
+    for (const attr of [GRADIENT_OFF_ATTR, CLIP_TEXT_ATTR]) {
+        pageRoot.querySelectorAll(`[${attr}]`).forEach((el) => {
+            if (!seen.has(el)) el.removeAttribute(attr);
         });
     }
 
@@ -748,12 +981,15 @@ function passGap(): number {
  */
 export function surfaceInputsKey(
     s: Pick<A11ySettings, "theme" | "linkBackground"> &
-        Partial<Pick<A11ySettings, "textPlateStyle">>,
+        Partial<Pick<A11ySettings, "textPlateStyle" | "hcTextScope">>,
 ): string {
     // The plate pair is the high-contrast text color, which the themed
-    // muted / tone fills are worked out against (fillTone.ts).
+    // muted / tone fills are worked out against (fillTone.ts); the reach
+    // decides which fills keep the host color or take the surface.
     const plate =
-        s.theme === "high-contrast" ? `|${s.textPlateStyle ?? ""}` : "";
+        s.theme === "high-contrast"
+            ? `|${s.textPlateStyle ?? ""}|${s.hcTextScope ?? ""}`
+            : "";
     return `${s.theme}|${s.linkBackground ? 1 : 0}${plate}`;
 }
 
@@ -962,6 +1198,7 @@ const A11Y_HTML_ATTRS = [
     HTML_ATTR_REDUCE_MOTION,
     HTML_ATTR_TEXT_STROKE,
     HTML_ATTR_TEXT_PLATE,
+    HTML_ATTR_HC_SCOPE,
     HTML_ATTR_HTML_FILTER,
 ];
 
@@ -1001,12 +1238,14 @@ function restoreDisplayPaletteVars(html: HTMLElement) {
 function syncTextPlate(
     html: HTMLElement,
     pageRoot: HTMLElement | null,
-    s: Pick<A11ySettings, "theme" | "textPlateStyle">,
+    s: Pick<A11ySettings, "theme" | "textPlateStyle"> &
+        Partial<Pick<A11ySettings, "hcTextScope">>,
 ) {
     const style = normalizeTextPlateStyle(s.textPlateStyle);
     const pair = textPlatePairCss(style);
     if (!textPlateActive(s.theme)) {
         html.removeAttribute(HTML_ATTR_TEXT_PLATE);
+        html.removeAttribute(HTML_ATTR_HC_SCOPE);
         restoreHostInlineStyle(html, HTML_STYLE_TEXT_PLATE_BG);
         restoreHostInlineStyle(html, HTML_STYLE_TEXT_PLATE_FG);
         restoreDisplayPaletteVars(html);
@@ -1014,6 +1253,7 @@ function syncTextPlate(
         return;
     }
     html.setAttribute(HTML_ATTR_TEXT_PLATE, style);
+    html.setAttribute(HTML_ATTR_HC_SCOPE, normalizeHcTextScope(s.hcTextScope));
     setHostInlineStyle(html, HTML_STYLE_TEXT_PLATE_BG, pair.bg);
     setHostInlineStyle(html, HTML_STYLE_TEXT_PLATE_FG, pair.fg);
     setHostInlineStyle(html, HTML_STYLE_DISPLAY_BG, pair.bg);

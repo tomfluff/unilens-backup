@@ -26,11 +26,12 @@
         <h2>main 取り込み後の確認項目</h2>
         <ul>
           <li><strong>表示調整</strong> — 右上の ♿ パネル（<code>Accessibility.init()</code>）。</li>
+          <li><strong>高コントラストの適用範囲（3 パターン）</strong> — 表示調整パネルの「Lab」タブ →「高コントラスト時の文字背景と文字の色」→「高コントラストを当てる範囲」で <em>本文のみ</em>／<em>本文＋部品</em>（既定）／<em>すべて</em> を切り替え。カラーモードが「高コントラスト」のとき有効。</li>
           <li><strong>設定パネル</strong> — 左下のギア。変更内容が分かる UI（main の設定パネル）。</li>
           <li><strong>チャット</strong> — <kbd>Alt</kbd> + クリック（<code>make serve-backend</code>、ポート 5000）。</li>
           <li><strong>共同デザイン用プリセット</strong> — URL に <code>?unilens-preset=initial</code>、またはファシリテータ <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>B</kbd>。</li>
           <li><strong>研究ログ</strong> — <code>?pid=P01&amp;session=1</code>（バックエンド起動時）。</li>
-          <li><strong>アンケート</strong> — 左上の緑の「アンケート」ボタンを押すと、backend のアンケートページ（<code>/survey?quiz=unilens-poc</code>）へ移動します。このページの <code>pid</code> / <code>session</code> と言語を引き継ぎます。</li>
+          <li><strong>アンケート</strong> — 左上の緑の「アンケート」ボタンを押すと、アンケートサーバーのページ（<code>http://127.0.0.1:5100/survey?quiz=unilens-poc</code>、<code>make serve-survey</code>）が新しいタブで開きます。このページの <code>pid</code> / <code>session</code> を引き継ぎます。</li>
         </ul>
         <p>他の検証用フロント（<code>make serve-all</code> または <code>make serve-frontend …</code>）：</p>
         <ul>

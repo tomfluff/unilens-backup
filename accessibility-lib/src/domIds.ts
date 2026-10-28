@@ -71,6 +71,11 @@ export const HTML_ATTR_FOCUS_ENHANCE = "data-unilens-a11y-focus-enhance";
 export const HTML_ATTR_REDUCE_MOTION = "data-unilens-a11y-reduce-motion";
 export const HTML_ATTR_TEXT_STROKE = "data-unilens-a11y-text-stroke";
 export const HTML_ATTR_TEXT_PLATE = "data-unilens-a11y-text-plate";
+/**
+ * High contrast only: how far it reaches (HcTextScope: text / parts / all).
+ * The stylesheet and the surface pass read it.
+ */
+export const HTML_ATTR_HC_SCOPE = "data-unilens-a11y-hc-scope";
 export const HTML_ATTR_PAGE_FILTER = "data-unilens-a11y-page-filter";
 /** Legacy: standard-theme tone used to hit media only. Always cleared. */
 export const HTML_ATTR_IMAGE_FILTER = "data-unilens-a11y-image-filter";
@@ -94,6 +99,42 @@ export const FILL_AFTER_ATTR = "data-unilens-a11y-fill-after";
 export const FILL_VAR = "--unilens-a11y-fill";
 export const FILL_BEFORE_VAR = "--unilens-a11y-fill-before";
 export const FILL_AFTER_VAR = "--unilens-a11y-fill-after";
+
+/**
+ * High contrast, reach "text": a small colored part (button, tag, chip) or a
+ * control with a colored fill keeps the host's colors, its text included.
+ * Every theme rule skips the marked element and its subtree (style.css);
+ * the variable pins the host text color on the part itself, so a part with
+ * no color of its own does not inherit the themed one.
+ */
+export const HOST_PART_ATTR = "data-unilens-a11y-host-part";
+export const HOST_COLOR_VAR = "--unilens-a11y-host-color";
+/**
+ * High contrast, reach "all": a background-image made only of gradients
+ * (a promo card, a gradient header or button) is dropped, so the element
+ * takes the themed surface.
+ */
+export const GRADIENT_OFF_ATTR = "data-unilens-a11y-gradient-off";
+/**
+ * High contrast, reach "all": text painted by its background
+ * (`background-clip: text`, a star rating drawn as a gradient) keeps that
+ * background over its plate; dropping it would leave the glyphs invisible.
+ */
+export const CLIP_TEXT_ATTR = "data-unilens-a11y-clip-text";
+
+/**
+ * Host elements (and their ::before / ::after) whose border is not a plain
+ * themed line: a transparent side (the hidden sides of a CSS triangle, the
+ * idle underline of a tab) or a thick colored side drawn as a shape (a
+ * ribbon, an arrow head). The themed `border-color` (four values) is in the
+ * matching inline custom property (fillTone.ts `themedBorderColor`).
+ */
+export const BORDER_ATTR = "data-unilens-a11y-border";
+export const BORDER_BEFORE_ATTR = "data-unilens-a11y-border-before";
+export const BORDER_AFTER_ATTR = "data-unilens-a11y-border-after";
+export const BORDER_VAR = "--unilens-a11y-border";
+export const BORDER_BEFORE_VAR = "--unilens-a11y-border-before";
+export const BORDER_AFTER_VAR = "--unilens-a11y-border-after";
 
 /**
  * Temporary probe flag on <html>: lifts the transparent background reset and

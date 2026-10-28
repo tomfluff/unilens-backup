@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
     compositeBackdrop,
+    contentDrawsText,
     imageOfLayer,
     isFigureBox,
     isClearGradient,
@@ -366,5 +367,24 @@ describe("compositeBackdrop", () => {
         expect(compositeBackdrop(["rgba(0, 0, 0, 0)"])).toBe(
             "rgb(255, 255, 255)",
         );
+    });
+});
+
+describe("contentDrawsText", () => {
+    it("counts glyphs, counters and attr() as text", () => {
+        expect(contentDrawsText('"NEW"')).toBe(true);
+        expect(contentDrawsText('"\u203a"')).toBe(true);
+        expect(contentDrawsText("counter(item)")).toBe(true);
+        expect(contentDrawsText('attr(data-label)')).toBe(true);
+    });
+
+    it("ignores none, empty strings and images", () => {
+        for (const c of ["none", "normal", "", '""', "''", 'url("a.svg")'])
+            expect(contentDrawsText(c)).toBe(false);
+    });
+
+    it("ignores strings of only spaces (icon boxes like yukoyuko's external-link mark)", () => {
+        for (const c of ['" "', "' '", '"\u00a0"', '"  "', '"\u3000"', '"\u200b"'])
+            expect(contentDrawsText(c)).toBe(false);
     });
 });

@@ -1,10 +1,13 @@
 /**
  * Lab card: five background/foreground pairs used when high-contrast
- * paints a solid plate under host glyphs.
+ * paints a solid plate under host glyphs, and how far high contrast reaches
+ * (body text / + parts / everything).
  */
 import { t } from "./accessibilityI18n";
 import { announce, Card, ChoiceGroup } from "./accessibilityPanelUI";
 import {
+    HC_TEXT_SCOPES,
+    type HcTextScope,
     patchA11ySettings,
     TEXT_PLATE_PAIRS,
     TEXT_PLATE_STYLES,
@@ -36,6 +39,7 @@ function TextPlatePreview({
 
 export function TextPlateCard() {
     const plateStyle = useSettings((s) => s.textPlateStyle);
+    const scope = useSettings((s) => s.hcTextScope);
     return (
         <Card title={t().textPlateTitle} iconName="textPlate">
             <ChoiceGroup<TextPlateStyle>
@@ -67,6 +71,26 @@ export function TextPlateCard() {
                     );
                 }}
             />
+            <ChoiceGroup<HcTextScope>
+                label={t().hcTextScopeGroup}
+                columns={3}
+                focusPrefix="hcTextScope"
+                current={scope}
+                options={HC_TEXT_SCOPES.map((value) => ({
+                    value,
+                    label: t().hcTextScope[value],
+                    ariaLabel: t().hcTextScopeAria(t().hcTextScope[value]),
+                }))}
+                onSelect={(value) => {
+                    patchA11ySettings({ hcTextScope: value });
+                    announce(t().hcTextScopeAnnounce(t().hcTextScope[value]));
+                }}
+            />
+            {/* The choice cards keep their labels on one line, so what the
+                selected reach changes is spelled out below them. */}
+            <p className="unilens-a11y-card-desc">
+                {t().hcTextScopeHint[scope]}
+            </p>
         </Card>
     );
 }

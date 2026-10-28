@@ -406,6 +406,33 @@ export function textPlateActive(theme: string): boolean {
     return theme === "high-contrast";
 }
 
+/**
+ * How far high contrast reaches, three steps (chosen in Lab next to the
+ * plate colors):
+ *  - text:  body text only. Colored fills (buttons, tags, bands, gray
+ *           chips) keep the host color; small parts and controls keep the
+ *           host text colors inside them too. Pictures, gradients and SVG
+ *           keep the host colors.
+ *  - parts: body text and every fill that holds text: the fill takes the
+ *           plate background, so the text inside sits on one color (no
+ *           patchwork of plates over a colored button), at any width.
+ *           Fills without text (switch tracks, swatches, progress bars)
+ *           keep their tone. Pictures, gradients and SVG as in `text`.
+ *  - all:   `parts`, and text over pictures gets a plate under each line,
+ *           gradient backgrounds are dropped, SVG text takes the plate
+ *           text color with a plate-colored outline.
+ */
+export const HC_TEXT_SCOPES = ["text", "parts", "all"] as const;
+export type HcTextScope = (typeof HC_TEXT_SCOPES)[number];
+export const HC_TEXT_SCOPE_DEFAULT = "parts" satisfies HcTextScope;
+
+export function normalizeHcTextScope(n: unknown): HcTextScope {
+    for (const scope of HC_TEXT_SCOPES) {
+        if (n === scope) return scope;
+    }
+    return HC_TEXT_SCOPE_DEFAULT;
+}
+
 export type AutoTextMode = "off" | "viewport" | "content" | "combined";
 
 export interface A11ySettings {
@@ -445,6 +472,8 @@ export interface A11ySettings {
     textStrokeStyle: TextStrokeStyle;
     /** High-contrast plate background + type pair, chosen in Lab. */
     textPlateStyle: TextPlateStyle;
+    /** What high contrast repaints: body text / + parts / everything. */
+    hcTextScope: HcTextScope;
     reduceMotion: boolean;
     smallTextBoostLevel: TextAdjustLevel;
     bodyTextExpandLevel: TextAdjustLevel;
@@ -475,6 +504,7 @@ export const A11Y_DEFAULTS: A11ySettings = {
     textStroke: false,
     textStrokeStyle: TEXT_STROKE_DEFAULT_STYLE,
     textPlateStyle: TEXT_PLATE_DEFAULT_STYLE,
+    hcTextScope: HC_TEXT_SCOPE_DEFAULT,
     reduceMotion: false,
     smallTextBoostLevel: 0,
     bodyTextExpandLevel: 0,
@@ -534,6 +564,7 @@ export const A11Y_SETTING_KEYS = [
     "textStroke",
     "textStrokeStyle",
     "textPlateStyle",
+    "hcTextScope",
     "reduceMotion",
     "smallTextBoostLevel",
     "bodyTextExpandLevel",

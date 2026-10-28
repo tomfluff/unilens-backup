@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
+    HC_TEXT_SCOPE_DEFAULT,
+    HC_TEXT_SCOPES,
+    normalizeHcTextScope,
     normalizeTextPlateStyle,
     TEXT_PLATE_DEFAULT_STYLE,
     TEXT_PLATE_PAIRS,
@@ -64,5 +67,19 @@ describe("text plate pairs", () => {
         for (const style of TEXT_PLATE_STYLES) {
             expect(TEXT_PLATE_PAIRS[style]).toEqual(textPlatePairCss(style));
         }
+    });
+});
+
+describe("high contrast reach", () => {
+    it("offers three steps, body text / + parts / everything, parts by default", () => {
+        expect([...HC_TEXT_SCOPES]).toEqual(["text", "parts", "all"]);
+        expect(HC_TEXT_SCOPE_DEFAULT).toBe("parts");
+    });
+
+    it("normalizes unknown stored values to the default", () => {
+        expect(normalizeHcTextScope("all")).toBe("all");
+        expect(normalizeHcTextScope("text")).toBe("text");
+        expect(normalizeHcTextScope("nope")).toBe(HC_TEXT_SCOPE_DEFAULT);
+        expect(normalizeHcTextScope(undefined)).toBe(HC_TEXT_SCOPE_DEFAULT);
     });
 });

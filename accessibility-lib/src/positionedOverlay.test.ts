@@ -136,4 +136,17 @@ describe("surfaceInputsKey", () => {
             surfaceInputsKey({ ...base, textPlateStyle: "blackYellow" }),
         ).toBe(surfaceInputsKey({ ...base, textPlateStyle: "blackCyan" }));
     });
+
+    it("follows the high-contrast reach, and only in high contrast", () => {
+        const hc = { theme: "high-contrast", linkBackground: false } as const;
+        expect(surfaceInputsKey({ ...hc, hcTextScope: "text" })).not.toBe(
+            surfaceInputsKey({ ...hc, hcTextScope: "parts" }),
+        );
+        expect(surfaceInputsKey({ ...hc, hcTextScope: "parts" })).not.toBe(
+            surfaceInputsKey({ ...hc, hcTextScope: "all" }),
+        );
+        expect(surfaceInputsKey({ ...base, hcTextScope: "text" })).toBe(
+            surfaceInputsKey({ ...base, hcTextScope: "all" }),
+        );
+    });
 });

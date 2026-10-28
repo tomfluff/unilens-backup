@@ -16,6 +16,13 @@
  *    theme's text color readable on it and stays as far from the page
  *    background as that allows
  *
+ * High contrast only: a chromatic fill with a side longer than
+ * SMALL_FILL_SIDE_PX (a page band, a section background) takes the black
+ * surface instead of a tone. A tone is only held to 4.6:1 against the theme
+ * text, so a page-wide blue band left yellow text at the AA floor where the
+ * black surface gives ~19:1. Small colored marks (switches, badges, chips,
+ * brand buttons) keep their hue so states told apart by fill stay apart.
+ *
  * Text drawn on muted / tone fills keeps the theme text and link colors
  * (they are set on every element), so tone fills are computed against them:
  * text at 4.6:1, links at 3:1, as far from the page as that allows. The
@@ -130,10 +137,20 @@ export function isChromatic([r, g, b]: Rgb): boolean {
 
 /**
  * Tier of an opaque host fill. `area` is the element's box in CSS px²
- * (Infinity when unknown and the element may be large).
+ * (Infinity when unknown and the element may be large; fillArea also gives
+ * Infinity for a box with a side longer than SMALL_FILL_SIDE_PX).
+ * `largeToneIsSurface` (high contrast): chromatic fills that large are
+ * surface, not tone.
  */
-export function fillTier(rgb: Rgb, area: number): FillTier {
-    if (isChromatic(rgb)) return "tone";
+export function fillTier(
+    rgb: Rgb,
+    area: number,
+    largeToneIsSurface = false,
+): FillTier {
+    if (isChromatic(rgb))
+        return largeToneIsSurface && area === Number.POSITIVE_INFINITY
+            ? "surface"
+            : "tone";
     const l = luminance(rgb);
     if (l >= 0.75) return "surface";
     if (l >= 0.1) return "muted";
@@ -192,6 +209,8 @@ export interface FillPalette {
     surface?: Rgb;
     /** Highest saturation a tone fill keeps (lower for the calm theme). */
     saturationCap: number;
+    /** Large chromatic fills take the surface (high contrast). */
+    largeToneIsSurface?: boolean;
 }
 
 /** The themed color for a muted / tone fill, as `rgb(r, g, b)`. */
@@ -218,7 +237,130 @@ export function themedFill(
     return `rgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})`;
 }
 
+/** The theme's own border color: what a plain border line gets. */
+export const THEME_BORDER = "var(--unilens-a11y-display-border)";
+/** The theme's surface: what a light neutral shape gets (like its fill). */
+export const THEME_SURFACE = "var(--unilens-a11y-display-surface)";
+/**
+ * A border side at least this wide is paint, not a line: ribbons, arrow
+ * heads and CSS triangles are drawn from thick borders.
+ */
+export const SHAPE_BORDER_PX = 4;
+
+export interface BorderSide {
+    /** Computed border-*-color, read with the theme's border color lifted. */
+    color: string;
+    /** Computed border-*-width in px. */
+    width: number;
+}
+
+/**
+ * Themed `border-color` (four sides) for a host border that is not a plain
+ * line, or null when the theme border applies to every side as before.
+ *
+ * The themes used to give every side of every border the theme border
+ * color, so the hidden sides of a CSS triangle showed (a sort arrow became
+ * a square), a tab's transparent idle underline appeared on every tab, and a
+ * ribbon drawn from 11px red borders turned into a yellow block over its
+ * yellow label in high contrast. Now:
+ *  - a transparent side stays transparent;
+ *  - a thick side (SHAPE_BORDER_PX+) is painted like a fill of that color:
+ *    a colored one keeps the host hue (tone), a mid gray gets the muted
+ *    gray and a light one the surface, so a ribbon or speech-bubble tail
+ *    matches the fill it extends; a dark neutral one (an arrow head, which
+ *    tracks the text) and one in the text color (currentColor) keep the
+ *    theme border, which is readable on the page;
+ *  - a thin opaque side keeps the theme border color.
+ * `text` is the element's computed color, to tell currentColor sides.
+ */
+export function themedBorderColor(
+    sides: readonly BorderSide[],
+    text: string,
+    palette: FillPalette | null,
+): string | null {
+    if (!palette || sides.length !== 4) return null;
+    let special = false;
+    const out = sides.map(({ color, width }) => {
+        if (!(width > 0)) return THEME_BORDER;
+        const c = parseCssColor(color);
+        if (!c) return THEME_BORDER;
+        if (c[3] <= 0.1) {
+            special = true;
+            return "transparent";
+        }
+        if (width < SHAPE_BORDER_PX) return THEME_BORDER;
+        if (color.replace(/\s/g, "") === (text ?? "").replace(/\s/g, ""))
+            return THEME_BORDER;
+        const rgb: Rgb = [c[0], c[1], c[2]];
+        if (!isChromatic(rgb) && luminance(rgb) < 0.1) return THEME_BORDER;
+        special = true;
+        // Shapes are marks, whatever box they sit on: never the large-fill
+        // rule (high contrast), so a ribbon keeps the hue of its label.
+        return themedFill(fillTier(rgb, 0), rgb, palette) ?? THEME_SURFACE;
+    });
+    return special ? out.join(" ") : null;
+}
+
+/**
+ * Whether large chromatic fills (page bands) take the surface: only in high
+ * contrast, where the surface is black and the text needs more than a tone
+ * fill's 4.6:1.
+ */
+export function largeToneIsSurfaceFor(theme: string | null): boolean {
+    return theme === "high-contrast";
+}
+
 /** Saturation cap per theme: the calm (soft) theme keeps fills muted. */
 export function saturationCapFor(theme: string | null): number {
     return theme === "soft" ? 0.35 : 0.6;
+}
+
+/**
+ * High contrast reach (HcTextScope in accessibilityStoreTypes.ts) for one
+ * element's own host fill, given its tier (size rule for dark neutrals
+ * applied, the large-colored-band rule not) and whether it holds text:
+ *  - "default": the themed fill as in every other theme (fillFor)
+ *  - "surface": the themed surface (the plate background in high contrast)
+ *  - "host":    the host's own color
+ * Reach "text" keeps every colored / gray fill the host's. Reach "parts" and
+ * "all" put every fill that holds text on the surface, at any size, so the
+ * text plates inside do not patch a colored box; fills without text
+ * (switch tracks, swatches, bars) keep their tone so states stay apart.
+ */
+export type ReachDecision = "default" | "surface" | "host";
+
+export function reachDecision(
+    reach: "text" | "parts" | "all" | null,
+    tier: FillTier,
+    holdsText: boolean,
+): ReachDecision {
+    if (!reach) return "default";
+    if (tier === "surface") return "surface";
+    if (reach === "text") return "host";
+    return holdsText ? "surface" : "default";
+}
+
+/**
+ * A colored box small enough to be one part (button, tag, chip, badge)
+ * rather than a band: no side longer than SMALL_FILL_SIDE_PX, nor than
+ * 60% of the viewport width (on a phone, a full-width 390px header bar is
+ * a band, not a part).
+ */
+export function isSmallPart(
+    width: number,
+    height: number,
+    viewportWidth: number,
+): boolean {
+    const limit = Math.min(SMALL_FILL_SIDE_PX, viewportWidth * 0.6);
+    return width <= limit && height <= SMALL_FILL_SIDE_PX;
+}
+
+/**
+ * A computed background-image painted only by gradients (no url() picture):
+ * a promo card, a gradient header or button. Clear gradients count too;
+ * dropping them changes nothing.
+ */
+export function isGradientOnly(value: string): boolean {
+    if (!value || value === "none") return false;
+    return /gradient\(/i.test(value) && !/url\(/i.test(value);
 }

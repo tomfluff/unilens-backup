@@ -26,6 +26,7 @@ import {
     normalizePointerHaloPx,
     normalizeReadingGuidePosition,
     normalizeReadingGuideStyle,
+    normalizeHcTextScope,
     normalizeTextPlateStyle,
     normalizeTextStrokeStyle,
     PANEL_TABS,
@@ -151,6 +152,7 @@ function normalizeA11yFields(s: A11ySettings): void {
     s.textStroke = s.textStroke === true;
     s.textStrokeStyle = normalizeTextStrokeStyle(s.textStrokeStyle);
     s.textPlateStyle = normalizeTextPlateStyle(s.textPlateStyle);
+    s.hcTextScope = normalizeHcTextScope(s.hcTextScope);
     s.reduceMotion = s.reduceMotion === true;
     s.smallTextBoostLevel = normalizeTextAdjustLevel(s.smallTextBoostLevel);
     s.bodyTextExpandLevel = normalizeTextAdjustLevel(s.bodyTextExpandLevel);

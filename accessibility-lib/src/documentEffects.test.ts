@@ -84,6 +84,22 @@ describe("mediaTextGuardActive", () => {
         );
     });
 
+    it("is off for high contrast reaching everything (text on pictures gets plates)", () => {
+        const hc = { ...base, theme: "high-contrast" } as const;
+        expect(mediaTextGuardActive({ ...hc, hcTextScope: "all" })).toBe(false);
+        expect(mediaTextGuardActive({ ...hc, hcTextScope: "parts" })).toBe(
+            true,
+        );
+        expect(mediaTextGuardActive({ ...hc, hcTextScope: "text" })).toBe(true);
+        expect(
+            mediaTextGuardActive({
+                ...base,
+                theme: "dark",
+                hcTextScope: "all",
+            }),
+        ).toBe(true);
+    });
+
     it("is off under invert: the whole page, pictures and their text, flips alike", () => {
         expect(mediaTextGuardActive({ ...base, theme: "invert" })).toBe(false);
         expect(

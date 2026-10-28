@@ -941,12 +941,22 @@ function controlDrawsText(el: Element): boolean {
     );
 }
 
-/** True when CSS `content` paints glyphs (not none / empty / an image). */
-function contentDrawsText(content: string): boolean {
+/**
+ * True when CSS `content` paints glyphs (not none / empty / an image).
+ * A string of only spaces (`content: " "`, `"\00a0"`) paints nothing either:
+ * icon pseudos use it to get a box for their background image (yukoyuko's
+ * external-link icon after a nav link). Counted as text, that 10px icon was
+ * "text on a picture", and the whole link kept its host colors under every
+ * theme (a red block with white text in high contrast).
+ */
+export function contentDrawsText(content: string): boolean {
     const v = (content ?? "").trim();
-    if (!v || v === "none" || v === "normal" || v === '""' || v === "''")
-        return false;
-    return !/^(?:url|image-set|-webkit-image-set)\(/i.test(v);
+    if (!v || v === "none" || v === "normal") return false;
+    if (/^(?:url|image-set|-webkit-image-set)\(/i.test(v)) return false;
+    // One quoted string of nothing but whitespace (incl. NBSP, ideographic
+    // and zero-width spaces). Counters, attr() and real glyphs still count.
+    const quoted = v.match(/^(["'])([\s\u200b\u200c\u200d\u2060\ufeff]*)\1$/);
+    return !quoted;
 }
 
 interface TextRun {
