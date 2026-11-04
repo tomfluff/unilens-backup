@@ -6,7 +6,8 @@
  * commands a user can type instead of clicking ("next", "show the second one").
  */
 
-const MARKER = /\s?\[\[(n\d{1,5})\]\]/g;
+/** a marker the model closed with one bracket ([[n476], P03 2026-10-17) counts too */
+const MARKER = /\s?\[\[(n\d{1,5})\]\]?/g;
 /** an unfinished marker at the end of a streaming reply stays hidden until it completes */
 const PARTIAL = /\s?\[(\[(n\d{0,5}(\](?!\]))?)?)?$/;
 /** several ids in one marker, as Gemini writes them: [[n42], [n43]] or [[n42, n43]] */
@@ -16,7 +17,7 @@ const PARTIAL_JOINED = /\s?\[\[n\d{1,5}\]?(?:\s*,\s*\[?(?:n\d{0,5}\]?)?)+$/;
 
 /** the assistant asks for a zoom (R1 of the 2026-09-27 report): into an element, a
  *  step in or out, or back to 100%. Acted on once the answer is complete */
-const ZOOM = /\s?\[\[zoom:(n\d{1,5}|in|out|reset)\]\]/g;
+const ZOOM = /\s?\[\[zoom:(n\d{1,5}|in|out|reset)\]\]?/g;
 /** ...and one still streaming in */
 const PARTIAL_ZOOM = /\s?\[\[z(o(o(m(:[a-z0-9]*\]?)?)?)?)?$/;
 export type ZoomAsk = { id: string } | { change: "in" | "out" | "reset" };
@@ -30,7 +31,7 @@ export function zoomAsked(text: string): ZoomAsk | null {
 }
 /** the assistant takes the user to an element (co-design study, 2026-10-09): acted on
  *  once the answer is complete, whenever the model adds it */
-const GOTO = /\s?\[\[goto:(n\d{1,5})\]\]/g;
+const GOTO = /\s?\[\[goto:(n\d{1,5})\]\]?/g;
 /** ...and one still streaming in */
 const PARTIAL_GOTO = /\s?\[\[g(o(t(o(:[a-z0-9]*\]?)?)?)?)?$/;
 /** the element an answer takes the user to (its first go-to), or null */
@@ -40,7 +41,7 @@ export function gotoAsked(text: string): string | null {
 /** an element cited in the text by a marker the chat renders ([[n5]], [[n4, n5]],
  *  [[n4], [n5]]); a malformed one ([n5]) is no citation */
 const citedIn = (text: string, id: string) =>
-    unjoin(text).includes(`[[${id}]]`);
+    [...unjoin(text).matchAll(MARKER)].some((m) => m[1] === id);
 /** go-to markers out of the text: each is its element's citation, unless the answer
  *  cites that element already (the rules ask for both: one number, not two) */
 const ungoto = (text: string) => {
@@ -126,13 +127,16 @@ export function renderCited(
      *  Underlines need them where the model put them, and only there */
     placement: CitePlacement = "inline",
 ): Cited {
-    let t = unjoin(ungoto(unzoom(text.replace(/[\uE0FC-\uE0FF]/g, ""))));
+    let t = text.replace(/[\uE0FC-\uE0FF]/g, "");
+    // an unfinished marker goes before any is read: a one-bracket [[zoom:n5] or
+    // [[n5], [n6 would otherwise count already (as a chip, or as the go-to's citation)
     if (streaming)
         t = t
             .replace(PARTIAL_GOTO, "")
             .replace(PARTIAL_ZOOM, "")
             .replace(PARTIAL_JOINED, "")
             .replace(PARTIAL, "");
+    t = unjoin(ungoto(unzoom(t)));
     const ids: string[] = [];
     t = t.replace(MARKER, (m, id: string) => {
         if (!known(id)) return "";

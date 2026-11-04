@@ -103,6 +103,27 @@ describe("joined markers (Gemini's [[n42], [n43]])", () => {
     });
 });
 
+describe("a marker closed with one bracket (P03, 2026-10-17)", () => {
+    const text =
+        "The keep is open {{9:00–17:00, with last entry at 16:30}}[[n476], except {{29–31 December}}[[n476]. During the Lantern Festival weekend, it stays open until {{20:00}}[[n476].";
+
+    it("is a citation, and never shows or is read aloud", () => {
+        const r = renderCited(text, (id) => id === "n476", label);
+        expect(r.ids).toEqual(["n476"]);
+        expect(r.html).not.toContain("[");
+        expect(speakable(text)).not.toContain("[");
+    });
+
+    it("still waits while a marker streams in", () => {
+        const ids = (s: string) => renderCited(s, known, label, true).ids;
+        expect(ids("Here [[n12]")).toEqual([]);
+        expect(ids("Here [[zoom:n12]")).toEqual([]);
+        expect(ids("Here [[goto:n12]")).toEqual([]);
+        // an unfinished joined marker never takes the go-to's citation away
+        expect(ids("Here [[goto:n12]] and [[n12], [n3")).toEqual(["n12"]);
+    });
+});
+
 describe("sourcesIn (a chosen source, sent with a newer capture)", () => {
     const a = document.createElement("p");
     const b = document.createElement("p");
