@@ -72,7 +72,7 @@ export const HTML_ATTR_REDUCE_MOTION = "data-unilens-a11y-reduce-motion";
 export const HTML_ATTR_TEXT_STROKE = "data-unilens-a11y-text-stroke";
 export const HTML_ATTR_TEXT_PLATE = "data-unilens-a11y-text-plate";
 /**
- * High contrast only: how far it reaches (HcTextScope: text / parts / all).
+ * High contrast only: how far it reaches (HcTextScope: parts / all).
  * The stylesheet and the surface pass read it.
  */
 export const HTML_ATTR_HC_SCOPE = "data-unilens-a11y-hc-scope";
@@ -100,15 +100,6 @@ export const FILL_VAR = "--unilens-a11y-fill";
 export const FILL_BEFORE_VAR = "--unilens-a11y-fill-before";
 export const FILL_AFTER_VAR = "--unilens-a11y-fill-after";
 
-/**
- * High contrast, reach "text": a small colored part (button, tag, chip) or a
- * control with a colored fill keeps the host's colors, its text included.
- * Every theme rule skips the marked element and its subtree (style.css);
- * the variable pins the host text color on the part itself, so a part with
- * no color of its own does not inherit the themed one.
- */
-export const HOST_PART_ATTR = "data-unilens-a11y-host-part";
-export const HOST_COLOR_VAR = "--unilens-a11y-host-color";
 /**
  * High contrast, reach "all": a background-image made only of gradients
  * (a promo card, a gradient header or button) is dropped, so the element

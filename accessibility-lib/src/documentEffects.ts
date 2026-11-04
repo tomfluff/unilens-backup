@@ -43,8 +43,6 @@ import {
     FILL_BEFORE_VAR,
     FILL_VAR,
     GRADIENT_OFF_ATTR,
-    HOST_COLOR_VAR,
-    HOST_PART_ATTR,
     HTML_ATTR_CONTRAST,
     HTML_ATTR_DISPLAY_ACTIVE,
     HTML_ATTR_ELEMENT_HIGHLIGHT,
@@ -101,7 +99,6 @@ import {
     type FillPalette,
     fillTier,
     isGradientOnly,
-    isSmallPart,
     largeToneIsSurfaceFor,
     luminance,
     parseCssColor,
@@ -468,7 +465,6 @@ function clearPositionedOverlayMarkers(root: ParentNode | null = document) {
     for (const [attr, prop] of [
         ...FILL_SLOTS,
         ...BORDER_SLOTS,
-        ...HOST_PART_SLOTS,
     ]) {
         root.querySelectorAll(`[${attr}]`).forEach((el) => {
             setFill(el, attr, prop, null);
@@ -506,9 +502,6 @@ const BORDER_SLOTS = [
     [BORDER_BEFORE_ATTR, BORDER_BEFORE_VAR],
     [BORDER_AFTER_ATTR, BORDER_AFTER_VAR],
 ] as const;
-
-/** High contrast reach "text": host part marker + its pinned host color. */
-const HOST_PART_SLOTS = [[HOST_PART_ATTR, HOST_COLOR_VAR]] as const;
 
 const BORDER_SIDES = ["Top", "Right", "Bottom", "Left"] as const;
 
@@ -611,29 +604,8 @@ function fillFor(
 /** High contrast reach on <html> (HcTextScope); null outside high contrast. */
 function readReach(html: HTMLElement): HcTextScope | null {
     const v = html.getAttribute(HTML_ATTR_HC_SCOPE);
-    return v === "text" || v === "parts" || v === "all" ? v : null;
+    return v === "parts" || v === "all" ? v : null;
 }
-
-/** Controls and control roles: a colored one is a part at any width. */
-const PART_TAGS = new Set([
-    "A",
-    "BUTTON",
-    "LABEL",
-    "SUMMARY",
-    "INPUT",
-    "SELECT",
-    "TEXTAREA",
-]);
-const PART_ROLES = new Set([
-    "button",
-    "link",
-    "tab",
-    "menuitem",
-    "option",
-    "switch",
-    "checkbox",
-    "radio",
-]);
 
 /** Text, or a form control that draws its own (value, label). */
 function holdsText(el: HTMLElement): boolean {
@@ -647,69 +619,28 @@ function holdsText(el: HTMLElement): boolean {
 }
 
 /**
- * One part (keeps the host colors, text included, under reach "text"): a
- * small colored box, or a control with a colored fill that is not a whole
- * card (a full-width phone button is a part, a 300px tall card link is not).
- */
-function isPartBox(el: HTMLElement): boolean {
-    const w = el.offsetWidth;
-    const h = el.offsetHeight;
-    if (isSmallPart(w, h, window.innerWidth)) return true;
-    const role = el.getAttribute("role");
-    const control =
-        PART_TAGS.has(el.tagName) || (role !== null && PART_ROLES.has(role));
-    return control && h <= 120;
-}
-
-/**
  * The element's own host fill under a high contrast reach: the fill to put
- * in the inline variable (null = themed surface), and for a host part the
- * host text color to pin (null = not a part).
+ * in the inline variable (null = themed surface).
  */
 function ownFillFor(
     el: HTMLElement,
-    cs: CSSStyleDeclaration,
     color: string,
     palette: FillPalette | null,
     reach: HcTextScope | null,
-): { fill: string | null; part: string | null } {
+): string | null {
     const area = () => fillArea(el.offsetWidth, el.offsetHeight);
-    if (!reach || !palette)
-        return { fill: fillFor(color, area, palette), part: null };
+    if (!reach || !palette) return fillFor(color, area, palette);
     const c = parseCssColor(color);
-    if (!c) return { fill: null, part: null };
+    if (!c) return null;
     const rgb: Rgb = [c[0], c[1], c[2]];
     // The tier without the large-colored-band rule: the reach decides that.
     let tier = fillTier(rgb, Number.POSITIVE_INFINITY);
     if (tier === "surface" && luminance(rgb) < 0.5)
         tier = fillTier(rgb, area());
     const text = tier === "surface" ? false : holdsText(el);
-    switch (reachDecision(reach, tier, text)) {
-        case "surface":
-            return { fill: null, part: null };
-        case "host":
-            return {
-                fill: `rgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})`,
-                part: text && isPartBox(el) ? cs.color : null,
-            };
-        default:
-            return { fill: fillFor(color, area, palette), part: null };
-    }
-}
-
-/** A pseudo's fill under the reach: host color under "text", else themed. */
-function pseudoFillFor(
-    color: string,
-    palette: FillPalette | null,
-    reach: HcTextScope | null,
-): string | null {
-    if (reach !== "text" || !palette) return fillFor(color, () => 0, palette);
-    const c = parseCssColor(color);
-    if (!c) return null;
-    const rgb: Rgb = [c[0], c[1], c[2]];
-    return fillTier(rgb, 0) === "surface"
+    return reachDecision(reach, tier, text) === "surface"
         ? null
-        : `rgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})`;
+        : fillFor(color, area, palette);
 }
 
 /**
@@ -792,9 +723,8 @@ export function syncPositionedOverlayMarkers(pageRoot: HTMLElement | null) {
     const palette = readFillPalette(html);
     const reach = readReach(html);
     const own: string[] = [];
-    // High contrast reach: pinned host text color of a part (reach "text"),
-    // gradient-only backgrounds to drop (reach "all").
-    const parts: (string | null)[] = [];
+    // High contrast reach "all": gradient-only backgrounds to drop, and
+    // text painted by its own background to keep.
     const gradients: boolean[] = [];
     const clipTexts: boolean[] = [];
     const before: string[] = [];
@@ -822,9 +752,8 @@ export function syncPositionedOverlayMarkers(pageRoot: HTMLElement | null) {
             ]);
             const i = own.length - 1;
             const ownFill = isOpaqueBackgroundColor(own[i])
-                ? ownFillFor(el, cs, own[i], palette, reach)
-                : { fill: null, part: null };
-            parts.push(ownFill.part);
+                ? ownFillFor(el, own[i], palette, reach)
+                : null;
             const clipText =
                 reach === "all" &&
                 (cs.backgroundClip === "text" ||
@@ -836,13 +765,13 @@ export function syncPositionedOverlayMarkers(pageRoot: HTMLElement | null) {
                     isGradientOnly(cs.backgroundImage),
             );
             fills.push([
-                ownFill.fill,
+                ownFill,
                 // Pseudo boxes are not measured; they are decorations (dots, knobs).
                 isOpaqueBackgroundColor(before[i])
-                    ? pseudoFillFor(before[i], palette, reach)
+                    ? fillFor(before[i], () => 0, palette)
                     : null,
                 isOpaqueBackgroundColor(after[i])
-                    ? pseudoFillFor(after[i], palette, reach)
+                    ? fillFor(after[i], () => 0, palette)
                     : null,
             ]);
         }
@@ -867,7 +796,6 @@ export function syncPositionedOverlayMarkers(pageRoot: HTMLElement | null) {
             setFill(el, FILL_SLOTS[k][0], FILL_SLOTS[k][1], fills[i][k]);
         for (let k = 0; k < BORDER_SLOTS.length; k++)
             setFill(el, BORDER_SLOTS[k][0], BORDER_SLOTS[k][1], borders[i][k]);
-        setFill(el, HOST_PART_ATTR, HOST_COLOR_VAR, parts[i]);
         setMarker(el, GRADIENT_OFF_ATTR, gradients[i]);
         setMarker(el, CLIP_TEXT_ATTR, clipTexts[i]);
     }
@@ -885,7 +813,6 @@ export function syncPositionedOverlayMarkers(pageRoot: HTMLElement | null) {
     for (const [attr, prop] of [
         ...FILL_SLOTS,
         ...BORDER_SLOTS,
-        ...HOST_PART_SLOTS,
     ]) {
         pageRoot.querySelectorAll(`[${attr}]`).forEach((el) => {
             if (!seen.has(el)) setFill(el, attr, prop, null);

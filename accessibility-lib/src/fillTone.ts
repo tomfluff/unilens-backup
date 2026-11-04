@@ -321,38 +321,21 @@ export function saturationCapFor(theme: string | null): number {
  * applied, the large-colored-band rule not) and whether it holds text:
  *  - "default": the themed fill as in every other theme (fillFor)
  *  - "surface": the themed surface (the plate background in high contrast)
- *  - "host":    the host's own color
- * Reach "text" keeps every colored / gray fill the host's. Reach "parts" and
- * "all" put every fill that holds text on the surface, at any size, so the
- * text plates inside do not patch a colored box; fills without text
- * (switch tracks, swatches, bars) keep their tone so states stay apart.
+ * Both reaches ("parts", "all") put every fill that holds text on the
+ * surface, at any size, so the text plates inside do not patch a colored
+ * box; fills without text (switch tracks, swatches, bars) keep their tone
+ * so states stay apart.
  */
-export type ReachDecision = "default" | "surface" | "host";
+export type ReachDecision = "default" | "surface";
 
 export function reachDecision(
-    reach: "text" | "parts" | "all" | null,
+    reach: "parts" | "all" | null,
     tier: FillTier,
     holdsText: boolean,
 ): ReachDecision {
     if (!reach) return "default";
     if (tier === "surface") return "surface";
-    if (reach === "text") return "host";
     return holdsText ? "surface" : "default";
-}
-
-/**
- * A colored box small enough to be one part (button, tag, chip, badge)
- * rather than a band: no side longer than SMALL_FILL_SIDE_PX, nor than
- * 60% of the viewport width (on a phone, a full-width 390px header bar is
- * a band, not a part).
- */
-export function isSmallPart(
-    width: number,
-    height: number,
-    viewportWidth: number,
-): boolean {
-    const limit = Math.min(SMALL_FILL_SIDE_PX, viewportWidth * 0.6);
-    return width <= limit && height <= SMALL_FILL_SIDE_PX;
 }
 
 /**

@@ -359,7 +359,7 @@ const FEATURES = {
     },
     textPlate: {
         id: "textPlate",
-        title: "Text plate (solid background + type color, 5 pairs; reach: text / parts / all)",
+        title: "Text plate (solid background + type color, 5 pairs; reach: parts / all)",
         keys: ["textPlateStyle", "hcTextScope"] as const,
     },
 } as const;

@@ -318,12 +318,10 @@ const ja = {
         `下地と文字の色を${name}にしました`,
     hcTextScopeGroup: "高コントラストを当てる範囲",
     hcTextScope: {
-        text: "本文のみ",
         parts: "本文＋部品",
         all: "すべて",
     },
     hcTextScopeHint: {
-        text: "ボタン・タグ・帯・写真・図はサイトの色のまま",
         parts: "ボタン・タグ・帯も黒地に。写真・図はサイトの色のまま",
         all: "写真・グラデーション・グラフの上の文字まで黒地に",
     },
@@ -775,12 +773,10 @@ const en: A11yMessages = {
     textPlateStyleAnnounce: (name) => `Plate and type set to ${name}`,
     hcTextScopeGroup: "High contrast reaches",
     hcTextScope: {
-        text: "Body text",
         parts: "Text + parts",
         all: "Everything",
     },
     hcTextScopeHint: {
-        text: "Buttons, tags, bands, photos and charts keep the site colors",
         parts: "Buttons, tags and bands go dark too; photos and charts keep the site colors",
         all: "Text on photos, gradients and charts gets a plate too",
     },

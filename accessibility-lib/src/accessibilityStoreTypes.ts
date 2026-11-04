@@ -407,22 +407,20 @@ export function textPlateActive(theme: string): boolean {
 }
 
 /**
- * How far high contrast reaches, three steps (chosen in Lab next to the
- * plate colors):
- *  - text:  body text only. Colored fills (buttons, tags, bands, gray
- *           chips) keep the host color; small parts and controls keep the
- *           host text colors inside them too. Pictures, gradients and SVG
- *           keep the host colors.
+ * How far high contrast reaches, two steps (chosen in Lab next to the plate
+ * colors):
  *  - parts: body text and every fill that holds text: the fill takes the
  *           plate background, so the text inside sits on one color (no
  *           patchwork of plates over a colored button), at any width.
  *           Fills without text (switch tracks, swatches, progress bars)
- *           keep their tone. Pictures, gradients and SVG as in `text`.
+ *           keep their tone. Text over pictures, gradients and SVG keeps
+ *           the host colors.
  *  - all:   `parts`, and text over pictures gets a plate under each line,
  *           gradient backgrounds are dropped, SVG text takes the plate
  *           text color with a plate-colored outline.
+ * A stored "text" (body text only, removed) falls back to the default.
  */
-export const HC_TEXT_SCOPES = ["text", "parts", "all"] as const;
+export const HC_TEXT_SCOPES = ["parts", "all"] as const;
 export type HcTextScope = (typeof HC_TEXT_SCOPES)[number];
 export const HC_TEXT_SCOPE_DEFAULT = "parts" satisfies HcTextScope;
 
@@ -472,7 +470,7 @@ export interface A11ySettings {
     textStrokeStyle: TextStrokeStyle;
     /** High-contrast plate background + type pair, chosen in Lab. */
     textPlateStyle: TextPlateStyle;
-    /** What high contrast repaints: body text / + parts / everything. */
+    /** What high contrast repaints: body text + parts / everything. */
     hcTextScope: HcTextScope;
     reduceMotion: boolean;
     smallTextBoostLevel: TextAdjustLevel;

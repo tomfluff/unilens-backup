@@ -71,14 +71,16 @@ describe("text plate pairs", () => {
 });
 
 describe("high contrast reach", () => {
-    it("offers three steps, body text / + parts / everything, parts by default", () => {
-        expect([...HC_TEXT_SCOPES]).toEqual(["text", "parts", "all"]);
+    it("offers two steps, body text + parts / everything, parts by default", () => {
+        expect([...HC_TEXT_SCOPES]).toEqual(["parts", "all"]);
         expect(HC_TEXT_SCOPE_DEFAULT).toBe("parts");
     });
 
     it("normalizes unknown stored values to the default", () => {
         expect(normalizeHcTextScope("all")).toBe("all");
-        expect(normalizeHcTextScope("text")).toBe("text");
+        expect(normalizeHcTextScope("parts")).toBe("parts");
+        // "text" (body text only) was removed: a stored value falls back.
+        expect(normalizeHcTextScope("text")).toBe(HC_TEXT_SCOPE_DEFAULT);
         expect(normalizeHcTextScope("nope")).toBe(HC_TEXT_SCOPE_DEFAULT);
         expect(normalizeHcTextScope(undefined)).toBe(HC_TEXT_SCOPE_DEFAULT);
     });

@@ -1,7 +1,7 @@
 /**
  * Lab card: five background/foreground pairs used when high-contrast
  * paints a solid plate under host glyphs, and how far high contrast reaches
- * (body text / + parts / everything).
+ * (body text and parts / everything).
  */
 import { t } from "./accessibilityI18n";
 import { announce, Card, ChoiceGroup } from "./accessibilityPanelUI";
@@ -73,7 +73,7 @@ export function TextPlateCard() {
             />
             <ChoiceGroup<HcTextScope>
                 label={t().hcTextScopeGroup}
-                columns={3}
+                columns={2}
                 focusPrefix="hcTextScope"
                 current={scope}
                 options={HC_TEXT_SCOPES.map((value) => ({

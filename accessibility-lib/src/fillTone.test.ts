@@ -5,7 +5,6 @@ import {
     fillTier,
     isChromatic,
     isGradientOnly,
-    isSmallPart,
     largeToneIsSurfaceFor,
     parseCssColor,
     type Rgb,
@@ -284,28 +283,14 @@ describe("high contrast reach", () => {
         expect(reachDecision(null, "muted", false)).toBe("default");
     });
 
-    it("text: every colored or gray fill keeps the host color", () => {
-        expect(reachDecision("text", "tone", true)).toBe("host");
-        expect(reachDecision("text", "muted", false)).toBe("host");
-        expect(reachDecision("text", "surface", true)).toBe("surface");
-    });
-
     it("parts / all: a fill holding text takes the surface at any size, one without keeps its tone", () => {
         for (const reach of ["parts", "all"] as const) {
             expect(reachDecision(reach, "tone", true)).toBe("surface");
             expect(reachDecision(reach, "muted", true)).toBe("surface");
             expect(reachDecision(reach, "tone", false)).toBe("default");
             expect(reachDecision(reach, "muted", false)).toBe("default");
+            expect(reachDecision(reach, "surface", false)).toBe("surface");
         }
-    });
-
-    it("a part is small on both sides and narrower than 60% of the viewport", () => {
-        expect(isSmallPart(320, 60, 1280)).toBe(true);
-        expect(isSmallPart(401, 60, 1280)).toBe(false);
-        expect(isSmallPart(300, 401, 1280)).toBe(false);
-        // A full-width phone header bar is a band, not a part.
-        expect(isSmallPart(390, 45, 390)).toBe(false);
-        expect(isSmallPart(120, 30, 390)).toBe(true);
     });
 
     it("drops only gradient-only backgrounds", () => {

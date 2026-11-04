@@ -90,7 +90,6 @@ describe("mediaTextGuardActive", () => {
         expect(mediaTextGuardActive({ ...hc, hcTextScope: "parts" })).toBe(
             true,
         );
-        expect(mediaTextGuardActive({ ...hc, hcTextScope: "text" })).toBe(true);
         expect(
             mediaTextGuardActive({
                 ...base,
