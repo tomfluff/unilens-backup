@@ -190,6 +190,7 @@ npm run build
 | `selection` | `true` | 選択範囲の文字サイズ変更 |
 | `speech` | `true` | 選択テキストの読み上げ |
 | `autoText` | `true` | ページ文字サイズの自動分析 |
+| `oppZoom` | `true` | Lab の「崩れない範囲で拡大」（ページ全体を崩れる手前まで拡大。Bigham, UIST 2014）を使えるようにする。オンにするのは利用者 |
 | `bodyTextExpand` | `true` | 本文のみの拡大（見出し除外） |
 | `smallTextBoost` | `true` | 16px 未満の文字の底上げ |
 | `followSystemPreferences` | `false` | 初回のみ OS の表示設定を反映 |

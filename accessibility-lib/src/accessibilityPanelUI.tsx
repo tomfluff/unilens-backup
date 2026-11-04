@@ -74,7 +74,8 @@ export type IconName =
     | "frame"
     | "image"
     | "textStroke"
-    | "textPlate";
+    | "textPlate"
+    | "zoom";
 
 const ICON_PATHS: Record<IconName, string> = {
     contrast:
@@ -125,6 +126,8 @@ const ICON_PATHS: Record<IconName, string> = {
     textStroke: '<path d="M7 19 12 5l5 14"/><path d="M8.6 14.2h6.8"/>',
     textPlate:
         '<rect x="4" y="7" width="16" height="12" rx="2" class="unilens-a11y-icon-tint" fill="currentColor" stroke="none" opacity="0.28"/><rect x="4" y="7" width="16" height="12" rx="2"/><path d="M8.2 16 12 8.5 15.8 16M9.5 13.4h5"/>',
+    // a magnifier with a plus: the whole page grows
+    zoom: '<circle cx="10.5" cy="10.5" r="6.5"/><path d="m20 20-4.6-4.6"/><path d="M10.5 7.8v5.4M7.8 10.5h5.4"/>',
 };
 
 export function Icon({ name, size = 18 }: { name: IconName; size?: number }) {

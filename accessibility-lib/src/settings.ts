@@ -52,6 +52,11 @@ export interface Settings extends A11ySettings {
     autoTextMode: AutoTextMode;
     autoTextMinPx: number;
     autoTextMaxScale: number;
+    /**
+     * Lab: magnify the whole page as far as it goes without breaking
+     * (opportunisticZoom.ts, after Bigham, UIST 2014).
+     */
+    oppZoom: boolean;
     selectionFontLevel: number;
     speechRateLevel: number;
     speechHighlight: boolean;
@@ -86,6 +91,7 @@ const AUX_DEFAULTS = {
     autoTextMode: "off" as AutoTextMode,
     autoTextMinPx: 16,
     autoTextMaxScale: 1.8,
+    oppZoom: false,
     selectionFontLevel: 2,
     speechRateLevel: DEFAULT_SPEECH_RATE_LEVEL,
     speechHighlight: true,
@@ -165,6 +171,7 @@ function normalizeSettings(s: Settings): void {
         s.selectionFontLevel = 2;
     s.speechRateLevel = normalizeSpeechRateLevel(s.speechRateLevel);
     s.speechHighlight = s.speechHighlight !== false;
+    s.oppZoom = s.oppZoom === true;
     const panelTab = s.panelTab as string;
     if (panelTab === "text" || !(PANEL_TABS as readonly string[]).includes(panelTab))
         s.panelTab = "visual";

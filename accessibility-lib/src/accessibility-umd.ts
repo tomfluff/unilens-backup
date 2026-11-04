@@ -105,6 +105,17 @@ import {
 import { initCursorHalo } from "./cursorHalo";
 import { initFocusCursorMask } from "./focusCursorMask";
 import {
+    clearOpportunisticZoom,
+    destroyOpportunisticZoom,
+    getAppliedOppZoom,
+    getLastOppZoomResult,
+    initOpportunisticZoom,
+    type OppZoomResult,
+    rebindOpportunisticZoom,
+    refreshOpportunisticZoom,
+    resetOpportunisticZoom,
+} from "./opportunisticZoom";
+import {
     a11yFontSizeToScale,
     FONT_SCALE_LEVELS,
     type FontScaleLevel,
@@ -200,6 +211,12 @@ interface UniLensA11yInitOptions {
     speech?: boolean;
     /** Auto page text size analysis. Default: true */
     autoText?: boolean;
+    /**
+     * Lab: whole-page zoom that stops just before the layout breaks
+     * (Bigham, UIST 2014). Only makes the switch available; the visitor
+     * turns it on in the panel. Default: true
+     */
+    oppZoom?: boolean;
     /** Body-text-only expand (headings excluded). Default: true */
     bodyTextExpand?: boolean;
     /** Small text (<16px) floor boost. Default: true */
@@ -236,6 +253,7 @@ function onBodySwap() {
     rebindSmallTextBoost();
     rebindTextSizeWatch();
     rebindSelectionTextSize();
+    rebindOpportunisticZoom();
 }
 
 function init(options: UniLensA11yInitOptions = {}) {
@@ -259,6 +277,7 @@ function init(options: UniLensA11yInitOptions = {}) {
     // Read-aloud disabled: speechSynthesis is shared with unilens-lib on the same page.
     // if (options.speech !== false) initSpeakSelection()
     if (options.autoText !== false) initAutoTextSize();
+    if (options.oppZoom !== false) initOpportunisticZoom();
     if (options.panel !== false) initAccessibilityPanel();
     watchBodySwap(onBodySwap);
 }
@@ -351,6 +370,11 @@ const FEATURES = {
         id: "autoTextSize",
         title: "Automatic text size (viewport / content / combined)",
         modes: ["off", "viewport", "content", "combined"] as const,
+    },
+    oppZoom: {
+        id: "oppZoom",
+        title: "Opportunistic zoom (whole page, up to just before layout breaks; Lab)",
+        key: "oppZoom" as const,
     },
     textStroke: {
         id: "textStroke",
@@ -483,6 +507,15 @@ const UniLensA11y = {
     initAutoTextSize,
     destroyAutoTextSize,
 
+    // Opportunistic zoom (Lab)
+    refreshOpportunisticZoom,
+    clearOpportunisticZoom,
+    resetOpportunisticZoom,
+    getAppliedOppZoom,
+    getLastOppZoomResult,
+    initOpportunisticZoom,
+    destroyOpportunisticZoom,
+
     // UniLens auxiliary settings (auto-text / selection level)
     settings,
     saveSettings,
@@ -512,6 +545,7 @@ export type {
     DisplaySaturation,
     DisplayTheme,
     FontScaleLevel,
+    OppZoomResult,
     SelectionFontLevel,
     SelectionInfo,
     Settings,

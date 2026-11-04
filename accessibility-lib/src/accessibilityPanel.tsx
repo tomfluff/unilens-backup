@@ -70,6 +70,11 @@ import {
 } from "./accessibilityStoreTypes";
 import { pointerHaloOn, rememberPointerHaloOnPx } from "./cursorHalo";
 import {
+    getAppliedOppZoom,
+    onOppZoomChange,
+    resetOpportunisticZoom,
+} from "./opportunisticZoom";
+import {
     A11Y_CSS_LINK_ID,
     A11Y_OPEN_CLASS,
     A11Y_PAGE_STYLE_ID,
@@ -379,6 +384,16 @@ function activeAdjustments(s: Settings): Adjustment[] {
             },
         );
     }
+    if (s.oppZoom) {
+        add(
+            "tools",
+            "oppZoom",
+            t().adjOppZoom(getAppliedOppZoom().toFixed(1)),
+            () => {
+                resetOpportunisticZoom();
+            },
+        );
+    }
     return list;
 }
 
@@ -524,6 +539,8 @@ function focusToggleAfterClose(toggle: HTMLButtonElement | null) {
 function AccessibilityPanelApp() {
     useExternalSignal(onA11yLangChange);
     useExternalSignal(onSelectionWrappersChange);
+    // The zoom is measured after the switch repaints; update its chip then.
+    useExternalSignal(onOppZoomChange);
     const settingsState = useSettings();
 
     const [panelOpen, setPanelOpen] = useState(false);
@@ -697,6 +714,7 @@ function AccessibilityPanelApp() {
         window.clearTimeout(resetTimerRef.current);
         resetA11ySettings();
         runAutoTextAction("reset");
+        resetOpportunisticZoom();
         clearAllSelectionFontSizes();
         // stopSpeech()
         setLastAnalysis(null);

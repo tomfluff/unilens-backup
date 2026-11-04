@@ -106,6 +106,16 @@ import {
     rememberFocusCursorBandPx,
 } from "./focusCursorMemory";
 import {
+    afterOppZoomApplied,
+    getAppliedOppZoom,
+    getLastOppZoomResult,
+    isOppZoomPending,
+    type OppZoomResult,
+    onOppZoomChange,
+    type PageHealth,
+    remeasureOpportunisticZoom,
+} from "./opportunisticZoom";
+import {
     isPointerHaloViewportPct,
     lastOnPointerHaloPx,
     normalizePointerHaloPx,
@@ -1720,6 +1730,134 @@ function AutoTextCard({
     );
 }
 
+/** "×1.6", the precision the zoom is searched at. */
+function zoomText(scale: number): string {
+    return scale.toFixed(1);
+}
+
+function percentOfPage(h: PageHealth, area: number): string {
+    return `${h.pageArea > 0 ? ((area / h.pageArea) * 100).toFixed(1) : "0.0"}%`;
+}
+
+function announceOppZoom() {
+    const result = getLastOppZoomResult();
+    if (!result) return;
+    announce(
+        t().oppZoomOnAnnounce(
+            zoomText(result.scale),
+            t().oppZoomStop[result.stopReason],
+        ),
+    );
+}
+
+function oppZoomRows(result: OppZoomResult): [string, string][] {
+    const rows: [string, string][] = [
+        [t().oppZoomMetricScale, `×${zoomText(result.scale)}`],
+    ];
+    const reason = t().oppZoomStopShort[result.stopReason];
+    rows.push([
+        t().oppZoomMetricStop,
+        result.failed
+            ? t().oppZoomStopAt(reason, zoomText(result.failed.scale))
+            : reason,
+    ]);
+    if (result.baseline && result.final)
+        rows.push([
+            t().oppZoomMetricHealth,
+            `${result.baseline.health.toFixed(3)} → ${result.final.health.toFixed(3)}`,
+        ]);
+    if (result.failed) {
+        const h = result.failed.health;
+        const at = zoomText(result.failed.scale);
+        rows.push([t().oppZoomMetricFailed(at), h.health.toFixed(3)]);
+        rows.push([
+            t().oppZoomMetricParts(at),
+            t().oppZoomPartsValue(
+                percentOfPage(h, h.overflow),
+                percentOfPage(h, h.overlap),
+                percentOfPage(h, h.narrow),
+            ),
+        ]);
+    }
+    if (!result.fromCache)
+        rows.push([
+            t().oppZoomMetricCost,
+            t().oppZoomCostValue(result.trials, result.ms),
+        ]);
+    return rows;
+}
+
+/**
+ * Lab: the page zoom of Bigham (UIST 2014) — as large as the page allows
+ * before it starts to break. The measuring itself is in opportunisticZoom.ts.
+ */
+function OppZoomCard() {
+    useExternalSignal(onOppZoomChange);
+    const on = useSettings((s) => s.oppZoom);
+    const result = getLastOppZoomResult();
+    const scale = getAppliedOppZoom();
+
+    return (
+        <Card
+            title={t().oppZoomTitle}
+            iconName="zoom"
+            desc={t().oppZoomDesc}
+            badge={on ? `×${zoomText(scale)}` : undefined}
+        >
+            <SwitchRow
+                label={t().oppZoomSwitch}
+                hint={on ? t().oppZoomHintOn : t().oppZoomHintOff}
+                checked={on}
+                focusKey="opp-zoom"
+                onChange={(checked) => {
+                    patchSettings({ oppZoom: checked });
+                    saveSettings();
+                    if (checked) afterOppZoomApplied(announceOppZoom);
+                    else announce(t().oppZoomOffAnnounce);
+                }}
+            />
+
+            {on && (
+                <>
+                    {result && !isOppZoomPending() ? (
+                        <>
+                            <Note
+                                text={
+                                    result.fromCache
+                                        ? t().oppZoomCachedNote
+                                        : t().oppZoomStop[result.stopReason]
+                                }
+                                tone={
+                                    result.stopReason === "empty"
+                                        ? "neutral"
+                                        : "info"
+                                }
+                                iconName="check"
+                            />
+                            <Metrics rows={oppZoomRows(result)} />
+                        </>
+                    ) : (
+                        <Note text={t().oppZoomMeasuring} tone="info" />
+                    )}
+                    <ButtonRow>
+                        <Button
+                            label={t().oppZoomRemeasure}
+                            iconName="refresh"
+                            variant="secondary"
+                            ariaLabel={t().oppZoomRemeasureAria}
+                            focusKey="opp-zoom-remeasure"
+                            onClick={() => {
+                                remeasureOpportunisticZoom();
+                                afterOppZoomApplied(announceOppZoom);
+                            }}
+                        />
+                    </ButtonRow>
+                </>
+            )}
+        </Card>
+    );
+}
+
 export interface ToolsTabProps {
     lastAnalysis: TextAnalysis | null;
     setLastAnalysis: (v: TextAnalysis | null) => void;
@@ -1755,6 +1893,7 @@ export function ToolsTab({
                 lastAnalysis={lastAnalysis}
                 setLastAnalysis={setLastAnalysis}
             />
+            <OppZoomCard />
         </>
     );
 }

@@ -10,6 +10,7 @@ import { destroyBodyTextExpand } from "./bodyTextExpand";
 // import { destroySpeakSelection } from './speakSelection'
 import { destroyCursorHalo } from "./cursorHalo";
 import { destroyFocusCursorMask } from "./focusCursorMask";
+import { destroyOpportunisticZoom } from "./opportunisticZoom";
 import { destroyReadingGuide } from "./readingGuide";
 import { destroySelectionTextSize } from "./selectionTextSize";
 import { destroySmallTextBoost } from "./smallTextBoost";
@@ -18,6 +19,7 @@ import { destroySmallTextBoost } from "./smallTextBoost";
 export function destroyAccessibilityRuntime() {
     destroyAccessibilityPanel();
     destroyAutoTextSize();
+    destroyOpportunisticZoom();
     destroyBodyTextExpand();
     destroySmallTextBoost();
     destroyCursorHalo();

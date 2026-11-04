@@ -291,6 +291,11 @@ export const SELECTION_GROUP_ATTR = "data-unilens-text-resize-group";
  */
 export const SELECTION_FLOW_ATTR = "data-unilens-text-resize-flow";
 
+/** Opportunistic zoom (Lab) — stylesheet, <html> marker, zoom variable. */
+export const OPP_ZOOM_STYLE_ID = "unilens-a11y-opp-zoom-style";
+export const OPP_ZOOM_HTML_ATTR = "data-unilens-a11y-opp-zoom";
+export const OPP_ZOOM_VAR = "--unilens-a11y-opp-zoom";
+
 export const UNILENS_OVERLAY_ROOT_IDS = [
     A11Y_ROOT_ID,
     CURSOR_HALO_ID,

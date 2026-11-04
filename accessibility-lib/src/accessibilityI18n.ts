@@ -74,6 +74,7 @@ const ja = {
     adjBodyExpand: (name: string) => `本文拡大 ${name}`,
     adjSmallBoost: (name: string) => `小文字底上げ ${name}`,
     adjAutoSize: (scale: string) => `自動サイズ ×${scale}`,
+    adjOppZoom: (scale: string) => `自動拡大 ×${scale}`,
     adjLetterSpacing: "文字間隔 広め",
     adjLinkUnderline: "リンク下線",
     adjLinkBackground: "リンク背景色",
@@ -480,6 +481,48 @@ const ja = {
     metricSmallRatio: "小さい文字の割合",
     metricScale: "適用中の倍率",
 
+    // Opportunistic zoom (Lab; Bigham, UIST 2014)
+    oppZoomTitle: "崩れない範囲で拡大",
+    oppZoomDesc:
+        "ページ全体を 0.1 倍ずつ大きくし、横スクロール・文字の重なり・極端に短い行が増える手前で止めます（Bigham, UIST 2014 の方式）",
+    oppZoomSwitch: "ページ全体を自動で拡大",
+    oppZoomHintOn: "画面の幅や文字の設定が変わると測り直します",
+    oppZoomHintOff: "画像も含めてページ全体が大きくなります",
+    oppZoomOnAnnounce: (scale: string, reason: string) =>
+        `ページを ×${scale} に拡大しました。${reason}`,
+    oppZoomOffAnnounce: "ページの自動拡大をオフにしました",
+    oppZoomMeasuring: "ページを測っています",
+    oppZoomRemeasure: "測り直す",
+    oppZoomRemeasureAria: "このページの崩れない倍率を測り直す",
+    oppZoomStop: {
+        overflow: "これ以上大きくすると横スクロールが出ます",
+        overlap: "これ以上大きくすると文字が重なります",
+        narrow: "これ以上大きくすると行が極端に短くなります",
+        max: "上限の ×3.0 まで崩れずに拡大できました",
+        empty: "測れる文字が見つかりませんでした",
+        cached: "前回この画面幅で測った倍率を使っています",
+    },
+    oppZoomStopShort: {
+        overflow: "横スクロール",
+        overlap: "文字の重なり",
+        narrow: "短い行",
+        max: "上限 ×3.0",
+        empty: "文字なし",
+        cached: "前回の結果",
+    },
+    oppZoomMetricScale: "適用中の倍率",
+    oppZoomMetricStop: "止めた理由",
+    oppZoomStopAt: (reason: string, scale: string) => `${reason}（×${scale}）`,
+    oppZoomMetricHealth: "健全性 等倍 → 適用後",
+    oppZoomMetricFailed: (scale: string) => `×${scale} の健全性`,
+    oppZoomMetricParts: (scale: string) => `×${scale} の内訳`,
+    oppZoomPartsValue: (overflow: string, overlap: string, narrow: string) =>
+        `はみ出し ${overflow}・重なり ${overlap}・短い行 ${narrow}`,
+    oppZoomMetricCost: "計測",
+    oppZoomCostValue: (trials: number, ms: number) => `${trials} 回・${ms} ms`,
+    oppZoomCachedNote:
+        "前回この画面幅で測った倍率です。いまの状態で測るには「測り直す」を押してください",
+
     // Selection resize (operation results returned by selectionTextSize.ts)
     selNeedSelection: "先にページ上の文字をドラッグして選択してください",
     selUiBlocked: "UniLens の UI 内の文字は変更できません",
@@ -532,6 +575,7 @@ const en: A11yMessages = {
     adjBodyExpand: (name) => `Body text: ${name}`,
     adjSmallBoost: (name) => `Small text: ${name}`,
     adjAutoSize: (scale) => `Auto size ×${scale}`,
+    adjOppZoom: (scale) => `Auto zoom ×${scale}`,
     adjLetterSpacing: "Letter spacing: wide",
     adjLinkUnderline: "Link underlines",
     adjLinkBackground: "Link background",
@@ -927,6 +971,47 @@ const en: A11yMessages = {
     metricMinMax: "Min / max",
     metricSmallRatio: "Small text share",
     metricScale: "Current scale",
+
+    oppZoomTitle: "Zoom as far as it fits",
+    oppZoomDesc:
+        "Enlarges the whole page 0.1 at a time and stops just before horizontal scrolling, overlapping text or very short lines increase (the method of Bigham, UIST 2014)",
+    oppZoomSwitch: "Zoom the whole page automatically",
+    oppZoomHintOn: "Measures again when the window width or text settings change",
+    oppZoomHintOff: "Everything on the page grows, images included",
+    oppZoomOnAnnounce: (scale, reason) =>
+        `Page zoomed to ×${scale}. ${reason}`,
+    oppZoomOffAnnounce: "Automatic page zoom off",
+    oppZoomMeasuring: "Measuring the page",
+    oppZoomRemeasure: "Measure again",
+    oppZoomRemeasureAria: "Measure the largest safe zoom for this page again",
+    oppZoomStop: {
+        overflow: "Any larger and the page would scroll sideways",
+        overlap: "Any larger and text would overlap",
+        narrow: "Any larger and lines would become very short",
+        max: "Reached the ×3.0 limit without breaking the layout",
+        empty: "No text to measure was found",
+        cached: "Using the zoom measured last time at this window width",
+    },
+    oppZoomStopShort: {
+        overflow: "Sideways scrolling",
+        overlap: "Overlapping text",
+        narrow: "Short lines",
+        max: "Limit ×3.0",
+        empty: "No text",
+        cached: "Last result",
+    },
+    oppZoomMetricScale: "Current zoom",
+    oppZoomMetricStop: "Stopped by",
+    oppZoomStopAt: (reason, scale) => `${reason} (×${scale})`,
+    oppZoomMetricHealth: "Health 1x → now",
+    oppZoomMetricFailed: (scale) => `Health at ×${scale}`,
+    oppZoomMetricParts: (scale) => `Problems at ×${scale}`,
+    oppZoomPartsValue: (overflow, overlap, narrow) =>
+        `outside ${overflow}, overlap ${overlap}, short lines ${narrow}`,
+    oppZoomMetricCost: "Measuring",
+    oppZoomCostValue: (trials, ms) => `${trials} tries, ${ms} ms`,
+    oppZoomCachedNote:
+        "Measured last time at this window width. Press Measure again to measure the page as it is now",
 
     selNeedSelection: "First, drag to select some text on the page",
     selUiBlocked: "Text inside the UniLens UI cannot be changed",

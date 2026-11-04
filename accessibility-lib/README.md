@@ -183,6 +183,7 @@ Main options for `Accessibility.init()` / `UniLensA11y.init()`. Omitted keys use
 | `selection` | `true` | Resize text in the current selection |
 | `speech` | `true` | Read selected text aloud |
 | `autoText` | `true` | Automatic page text-size analysis |
+| `oppZoom` | `true` | Makes Lab's "Zoom as far as it fits" available (whole-page zoom up to just before the layout breaks; Bigham, UIST 2014). The visitor turns it on |
 | `bodyTextExpand` | `true` | Expand body text only (headings excluded) |
 | `smallTextBoost` | `true` | Raise a floor for text under 16px |
 | `followSystemPreferences` | `false` | On first run only, adopt OS display preferences |
