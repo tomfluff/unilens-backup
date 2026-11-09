@@ -1,0 +1,1285 @@
+/*----------------------------------------
+  Variables
+----------------------------------------*/
+/*----------------------------------------
+  Mixin
+----------------------------------------*/
+/*----------------------------------------
+  Reset
+----------------------------------------*/
+#contents-area,
+.lyt-col-1 #contents-body {
+  width: 100%;
+  padding: 0;
+  margin: 0 auto 0;
+}
+
+p {
+  margin: 0;
+}
+
+a {
+  color: #007EC4;
+}
+@media screen and (min-width: 769px) {
+  a {
+    transition: 0.3s all;
+  }
+  a:hover {
+    opacity: 0.7;
+    text-decoration: none;
+  }
+}
+a:visited {
+  color: #007EC4;
+}
+
+.newwindowicon {
+  display: none;
+}
+
+/*----------------------------------------
+  SCSS Contents
+----------------------------------------*/
+#benefit {
+  padding: 52px 0 0;
+  position: relative;
+  font-family: Meiryo, "Hiragino Kaku Gothic ProN", "Hiragino Sans", system-ui, sans-serif;
+  /*----------------------------------------
+    Nav
+  ----------------------------------------*/
+  /*----------------------------------------
+    Information
+  ----------------------------------------*/
+  /*----------------------------------------
+    summary
+  ----------------------------------------*/
+  /*----------------------------------------
+    schedule
+  ----------------------------------------*/
+  /*----------------------------------------
+    request
+  ----------------------------------------*/
+  /*----------------------------------------
+    faq
+  ----------------------------------------*/
+  /*----------------------------------------
+    event
+  ----------------------------------------*/
+}
+#benefit * {
+  box-sizing: border-box;
+}
+#benefit sup {
+  font-size: 55%;
+  vertical-align: super;
+  line-height: 1;
+}
+#benefit .pc-only {
+  display: block !important;
+}
+#benefit .sp-only {
+  display: none !important;
+}
+#benefit h1 {
+  margin-bottom: 60px;
+  font-size: 40px;
+  font-weight: bold;
+  text-align: center;
+}
+#benefit a[target=_blank].blank-wh,
+#benefit a[target=_blank].blank-bk {
+  position: relative;
+  padding-right: 20px;
+}
+#benefit a[target=_blank].blank-wh::after,
+#benefit a[target=_blank].blank-bk::after {
+  content: "";
+  position: absolute;
+  right: 4px;
+  top: 47%;
+  transform: translateY(-50%);
+  width: 13px;
+  height: 11px;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+#benefit a[target=_blank].blank-wh.blank-wh::after,
+#benefit a[target=_blank].blank-bk.blank-wh::after {
+  background-image: url("/corp/set/data/ir/investor/benefit/img/shared/icon-newwindow-wh.svg");
+}
+#benefit a[target=_blank].blank-wh.blank-bk::after,
+#benefit a[target=_blank].blank-bk.blank-bk::after {
+  background-image: url("/corp/set/data/ir/investor/benefit/img/shared/icon-newwindow-bk.svg");
+}
+#benefit .sticky-nav {
+  width: 990px;
+  margin: 0 auto 40px;
+  padding: 20px;
+  position: sticky;
+  top: 105px;
+  z-index: 10;
+  background: #fff;
+}
+#benefit .sticky-nav nav {
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+#benefit .sticky-nav nav a {
+  height: 50px;
+  padding: 4px 25px 0 30px;
+  border-left: 1px solid #007EC4;
+  font-size: 16px;
+  font-weight: bold;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  gap: 0 10px;
+  position: relative;
+  text-decoration: none;
+  outline: none;
+}
+@media screen and (min-width: 769px) {
+  #benefit .sticky-nav nav a {
+    transition: 0.3s all;
+  }
+  #benefit .sticky-nav nav a:hover {
+    opacity: 0.7;
+    text-decoration: none;
+  }
+}
+#benefit .sticky-nav nav a::before {
+  width: 40px;
+  height: 40px;
+  content: "";
+  display: block;
+}
+#benefit .sticky-nav nav a:last-child {
+  border-right: 1px solid #007EC4;
+}
+#benefit .sticky-nav nav a.summary::before {
+  content: "";
+  background: url("/corp/set/data/ir/investor/benefit/img/shared/icon-summary.svg") no-repeat center center;
+  background-size: contain;
+}
+#benefit .sticky-nav nav a.schedule::before {
+  content: "";
+  background: url("/corp/set/data/ir/investor/benefit/img/shared/icon-schedule.svg") no-repeat center center;
+  background-size: contain;
+}
+#benefit .sticky-nav nav a.request::before {
+  content: "";
+  background: url("/corp/set/data/ir/investor/benefit/img/shared/icon-request.svg") no-repeat center center;
+  background-size: contain;
+}
+#benefit .sticky-nav nav a.faq::before {
+  content: "";
+  background: url("/corp/set/data/ir/investor/benefit/img/shared/icon-faq.svg") no-repeat center center;
+  background-size: contain;
+}
+#benefit .sticky-nav nav a.event::before {
+  content: "";
+  background: url("/corp/set/data/ir/investor/benefit/img/shared/icon-event.svg") no-repeat center center;
+  background-size: contain;
+}
+#benefit .information .inner {
+  width: 950px;
+  margin: 0 auto;
+  border: 1px solid #F24F4F;
+  padding: 40px 20px;
+}
+#benefit .information .inner .title {
+  color: #F24F4F;
+  font-size: 20px;
+  text-align: center;
+}
+#benefit .information .inner .contents .text {
+  margin-top: 20px;
+  font-size: 16px;
+  line-height: 24px;
+  text-align: center;
+}
+#benefit #summary {
+  margin-top: 120px;
+}
+#benefit .summary .inner {
+  padding: 0 0 120px;
+}
+#benefit .summary .inner h2 {
+  margin: 0 auto 77px;
+  font-size: 40px;
+  line-height: 1;
+  text-align: center;
+  color: #007EC4;
+  font-weight: normal;
+}
+#benefit .summary .inner h2::after {
+  content: "";
+  display: block;
+  width: 80px;
+  height: 4px;
+  background: #007EC4;
+  margin: 30px auto 0;
+}
+#benefit .summary .inner .contents {
+  width: 990px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+#benefit .summary .inner .contents .summary-contents .summary-item {
+  display: flex;
+  border-bottom: 1px solid #D8DADC;
+  font-size: 16px;
+}
+#benefit .summary .inner .contents .summary-contents .summary-item:first-child {
+  border-top: 1px solid #D8DADC;
+}
+#benefit .summary .inner .contents .summary-contents .summary-item .summary-item-title {
+  width: 194px;
+  flex-shrink: 0;
+  padding: 20px 20px 20px 25px;
+  border-right: 1px solid #D8DADC;
+  background: #F4F5F6;
+}
+#benefit .summary .inner .contents .summary-contents .summary-item .summary-item-content {
+  padding: 19px 20px;
+}
+#benefit .summary .inner .contents .summary-contents .summary-item .summary-item-content .notes.large .note-list {
+  font-size: 16px;
+  line-height: 24px;
+}
+#benefit .summary .inner .contents .summary-contents .summary-item .summary-item-content .notes.large .note-title {
+  font-size: 16px;
+  line-height: 24px;
+}
+#benefit .summary .inner .contents .summary-contents .summary-item .summary-item-content .notes .note-title {
+  margin-bottom: 7px;
+  font-size: 14px;
+  line-height: 20px;
+}
+#benefit .summary .inner .contents .summary-contents .summary-item .summary-item-content .notes .note-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px 0;
+  font-size: 14px;
+  line-height: 20px;
+}
+#benefit .summary .inner .contents .summary-contents .summary-item .summary-item-content .notes .note-list .note-item {
+  width: 100%;
+  display: flex;
+  gap: 0;
+}
+#benefit .summary .inner .contents .summary-contents .summary-item .summary-item-content .notes .note-list .note-item .note-symbol {
+  width: 35px;
+  flex-shrink: 0;
+}
+#benefit .summary .inner .contents .summary-contents .summary-item .summary-item-content .notes .note-list .note-item .note-text .note-child-list {
+  margin-top: 5px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 0;
+}
+#benefit .summary .inner .contents .summary-contents .summary-item .summary-item-content .notes .note-list .note-item .note-text .note-child-list .note-child-item {
+  width: 100%;
+  display: flex;
+  gap: 0 8px;
+}
+#benefit .summary .inner .contents .summary-contents .summary-item .summary-item-content .notes .note-list .note-item .note-text .note-child-list .note-child-item .note-text {
+  letter-spacing: 0;
+}
+#benefit .summary .inner .contents .summary-contents .summary-item .summary-item-content .notes + .notes {
+  margin-top: 20px;
+}
+#benefit .summary .inner .contents .summary-contents .summary-item .summary-item-content p + .notes {
+  margin-top: 20px;
+}
+#benefit .schedule .inner {
+  padding: 0 0 120px;
+}
+#benefit .schedule .inner h2 {
+  margin: 0 auto 50px;
+  font-size: 40px;
+  line-height: 1;
+  text-align: center;
+  color: #007EC4;
+  font-weight: normal;
+}
+#benefit .schedule .inner h2::after {
+  content: "";
+  display: block;
+  width: 80px;
+  height: 4px;
+  background: #007EC4;
+  margin: 30px auto 0;
+}
+#benefit .schedule .inner .contents {
+  width: 990px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+#benefit .schedule .inner .contents .read-text {
+  margin-bottom: 37px;
+  font-size: 16px;
+  text-align: center;
+}
+#benefit .schedule .inner .contents h3 {
+  margin: 0 auto 40px;
+  font-size: 32px;
+  text-align: center;
+  font-weight: normal;
+}
+#benefit .schedule .inner .contents h3 + .schedule-table {
+  margin-bottom: 40px;
+}
+#benefit .schedule .inner .contents .schedule-table {
+  margin: 0 auto 60px;
+  display: flex;
+  border-top: 1px solid #D8DADC;
+}
+#benefit .schedule .inner .contents .schedule-table .schedule-table-line {
+  display: flex;
+  flex-flow: column;
+  border-right: 1px solid #D8DADC;
+}
+#benefit .schedule .inner .contents .schedule-table .schedule-table-line:last-child {
+  border-right: none;
+}
+#benefit .schedule .inner .contents .schedule-table .schedule-table-line .schedule-table-cell {
+  padding: 21px 25px;
+  font-size: 16px;
+  line-height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-bottom: 1px solid #D8DADC;
+}
+#benefit .schedule .inner .contents .schedule-table .schedule-table-line .schedule-table-cell p {
+  line-height: 24px;
+}
+#benefit .schedule .inner .contents .schedule-table .schedule-table-line .schedule-table-cell:first-child {
+  background: #F4F5F6;
+}
+#benefit .schedule .inner .contents .schedule-table .schedule-table-line:nth-child(1) .schedule-table-cell {
+  min-width: 65px;
+}
+#benefit .schedule .inner .contents .schedule-table .schedule-table-line:nth-child(2) .schedule-table-cell, #benefit .schedule .inner .contents .schedule-table .schedule-table-line:nth-child(4) .schedule-table-cell, #benefit .schedule .inner .contents .schedule-table .schedule-table-line:nth-child(5) .schedule-table-cell {
+  min-width: 175px;
+}
+#benefit .schedule .inner .contents .schedule-table .schedule-table-line:nth-child(3) {
+  flex-grow: 1;
+}
+#benefit .schedule .inner .contents .schedule-image {
+  margin: 0 auto 40px;
+  gap: 40px 0;
+  display: flex;
+  flex-wrap: wrap;
+}
+#benefit .schedule .inner .contents .notes.large .note-list {
+  font-size: 16px;
+  line-height: 24px;
+}
+#benefit .schedule .inner .contents .notes.large .note-title {
+  font-size: 16px;
+  line-height: 24px;
+}
+#benefit .schedule .inner .contents .notes .note-title {
+  margin-bottom: 5px;
+  font-size: 14px;
+  line-height: 20px;
+}
+#benefit .schedule .inner .contents .notes .note-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px 0;
+  font-size: 14px;
+  line-height: 20px;
+}
+#benefit .schedule .inner .contents .notes .note-list .note-item {
+  width: 100%;
+  display: flex;
+  gap: 0;
+}
+#benefit .schedule .inner .contents .notes .note-list .note-item .note-symbol {
+  width: 35px;
+  flex-shrink: 0;
+}
+#benefit .schedule .inner .contents .notes .note-list .note-item .note-text .note-child-list {
+  margin-top: 5px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 0;
+}
+#benefit .schedule .inner .contents .notes .note-list .note-item .note-text .note-child-list .note-child-item {
+  width: 100%;
+  display: flex;
+  gap: 0 8px;
+}
+#benefit .schedule .inner .contents .notes .note-list .note-item .note-text .note-child-list .note-child-item .note-text {
+  letter-spacing: 0;
+}
+#benefit .request .inner {
+  padding: 0 0 120px;
+}
+#benefit .request .inner h2 {
+  margin: 0 auto 50px;
+  font-size: 40px;
+  line-height: 1;
+  text-align: center;
+  color: #007EC4;
+  font-weight: normal;
+}
+#benefit .request .inner h2::after {
+  content: "";
+  display: block;
+  width: 80px;
+  height: 4px;
+  background: #007EC4;
+  margin: 30px auto 0;
+}
+#benefit .request .inner .contents {
+  width: 990px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+#benefit .request .inner .contents .read-text {
+  margin-bottom: 60px;
+  font-size: 16px;
+  text-align: center;
+}
+#benefit .request .inner .contents .request-contents + .request-contents {
+  margin-top: 60px;
+}
+#benefit .request .inner .contents .request-contents .contents-title {
+  font-size: 32px;
+  font-weight: normal;
+  margin-bottom: 40px;
+  text-align: center;
+}
+#benefit .request .inner .contents .request-contents .step-contents {
+  margin-bottom: 22px;
+  padding-top: 27px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 44px 40px;
+}
+#benefit .request .inner .contents .request-contents .step-contents .step {
+  background: #F4F8FC;
+  border-radius: 20px;
+  position: relative;
+}
+#benefit .request .inner .contents .request-contents .step-contents .step::before {
+  width: 90px;
+  height: 90px;
+  display: block;
+  content: "";
+  position: absolute;
+  top: -27px;
+  left: 20px;
+}
+#benefit .request .inner .contents .request-contents .step-contents .step .step-title {
+  margin-bottom: 28px;
+  font-size: 18px;
+  line-height: 27px;
+  font-weight: bold;
+}
+#benefit .request .inner .contents .request-contents .step-contents .step .step-title span {
+  display: inline-block !important;
+}
+#benefit .request .inner .contents .request-contents .step-contents .step.step01 {
+  width: 100%;
+  padding: 50px 30px 40px;
+}
+#benefit .request .inner .contents .request-contents .step-contents .step.step01::before {
+  background: url("/corp/set/data/ir/investor/benefit/img/shared/icon-request-step01.png") no-repeat center center;
+  background-size: contain;
+}
+#benefit .request .inner .contents .request-contents .step-contents .step.step01 .step-title {
+  max-width: 532px;
+  margin-bottom: 18px;
+  padding-top: 30px;
+}
+#benefit .request .inner .contents .request-contents .step-contents .step.step01 .step-link {
+  max-width: 532px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0 20px;
+}
+#benefit .request .inner .contents .request-contents .step-contents .step.step01 .step-link .btn {
+  max-width: 385px;
+  min-width: 220px;
+  padding: 16px 38px;
+  background: #007EC4;
+  color: #fff;
+  font-size: 18px;
+  font-weight: bold;
+  text-align: center;
+  border-radius: 8px;
+}
+#benefit .request .inner .contents .request-contents .step-contents .step.step01 .step-link .btn[target=_blank]::after {
+  right: 25px;
+}
+#benefit .request .inner .contents .request-contents .step-contents .step.step01 .step-image {
+  width: 282px;
+  position: absolute;
+  bottom: 0;
+  right: 80px;
+}
+#benefit .request .inner .contents .request-contents .step-contents .step.step01 .step-image img {
+  width: 100%;
+  display: block;
+}
+#benefit .request .inner .contents .request-contents .step-contents .step.step01 .notes {
+  max-width: 532px;
+}
+#benefit .request .inner .contents .request-contents .step-contents .step.step02, #benefit .request .inner .contents .request-contents .step-contents .step.step03 {
+  width: 455px;
+  padding: 80px 30px 40px;
+}
+#benefit .request .inner .contents .request-contents .step-contents .step.step02 .step-image, #benefit .request .inner .contents .request-contents .step-contents .step.step03 .step-image {
+  width: 260px;
+  margin: 0 auto 20px;
+  text-align: center;
+}
+#benefit .request .inner .contents .request-contents .step-contents .step.step02 .step-image img, #benefit .request .inner .contents .request-contents .step-contents .step.step03 .step-image img {
+  width: 100%;
+  display: block;
+}
+#benefit .request .inner .contents .request-contents .step-contents .step.step02::before {
+  background: url("/corp/set/data/ir/investor/benefit/img/shared/icon-request-step02.png") no-repeat center center;
+  background-size: contain;
+}
+#benefit .request .inner .contents .request-contents .step-contents .step.step03::before {
+  background: url("/corp/set/data/ir/investor/benefit/img/shared/icon-request-step03.png") no-repeat center center;
+  background-size: contain;
+}
+#benefit .request .inner .contents .request-contents .text-wait {
+  width: auto;
+  margin: 0 auto 20px;
+  display: block;
+  background: url("/corp/set/data/ir/investor/benefit/img/shared/icon-request-text-wait.svg") no-repeat center center;
+  background-size: contain;
+  font-size: 16px;
+  line-height: 68px;
+  text-align: center;
+  font-weight: bold;
+  color: #007EC4;
+}
+#benefit .request .inner .contents .request-contents .acceptance {
+  margin-bottom: 120px;
+  border-radius: 20px;
+  border: 2px solid #007EC4;
+  overflow: hidden;
+  position: relative;
+}
+#benefit .request .inner .contents .request-contents .acceptance .acceptance-title {
+  margin-bottom: 40px;
+  font-size: 24px;
+  line-height: 67px;
+  font-weight: bold;
+  text-align: center;
+  background: #F4F8FC;
+}
+#benefit .request .inner .contents .request-contents .acceptance .acceptance-content {
+  padding: 0 50px 40px 290px;
+}
+#benefit .request .inner .contents .request-contents .acceptance .acceptance-content .acceptance-text {
+  margin-bottom: 20px;
+  font-size: 16px;
+  line-height: 24px;
+  font-weight: bold;
+}
+#benefit .request .inner .contents .request-contents .acceptance .acceptance-content .acceptance-image {
+  width: 198px;
+  position: absolute;
+  bottom: 0;
+  left: 50px;
+}
+#benefit .request .inner .contents .request-contents .acceptance .acceptance-content .acceptance-image img {
+  width: 100%;
+  display: block;
+}
+#benefit .request .inner .contents .request-contents .paypay {
+  padding: 80px 30px;
+  border-radius: 56px;
+  overflow: hidden;
+  background: #FFF2F2;
+}
+#benefit .request .inner .contents .request-contents .paypay .paypay-title {
+  margin-bottom: 63px;
+  font-size: 40px;
+  text-align: center;
+  font-weight: normal;
+}
+#benefit .request .inner .contents .request-contents .paypay .paypay-content + .paypay-content {
+  margin-top: 60px;
+}
+#benefit .request .inner .contents .request-contents .paypay .paypay-content .paypay-subtitle {
+  margin-bottom: 43px;
+  font-size: 32px;
+  color: #F24F4F;
+  font-weight: bold;
+  text-align: center;
+}
+#benefit .request .inner .contents .request-contents .paypay .paypay-content .paypay-text {
+  margin-bottom: 22px;
+  font-size: 16px;
+  text-align: center;
+}
+#benefit .request .inner .contents .request-contents .paypay .paypay-content.create .paypay-step {
+  margin-bottom: 20px;
+  padding: 40px 25px;
+  font-size: 16px;
+  display: flex;
+  gap: 0 30px;
+  flex-wrap: wrap;
+  background: #fff;
+  border-radius: 30px;
+}
+#benefit .request .inner .contents .request-contents .paypay .paypay-content.create .paypay-step .paypay-step-item {
+  width: 140px;
+  position: relative;
+}
+#benefit .request .inner .contents .request-contents .paypay .paypay-content.create .paypay-step .paypay-step-item + .paypay-step-item::before {
+  content: "";
+  display: block;
+  width: 10px;
+  height: 12px;
+  background: url("/corp/set/data/ir/investor/benefit/img/shared/request-paypay-create-arrow.svg") no-repeat center center;
+  background-size: contain;
+  position: absolute;
+  top: 102px;
+  left: -15px;
+}
+#benefit .request .inner .contents .request-contents .paypay .paypay-content.create .paypay-step .paypay-step-item.download {
+  width: 160px;
+}
+#benefit .request .inner .contents .request-contents .paypay .paypay-content.create .paypay-step .paypay-step-item.download .appstore {
+  width: 123px;
+  margin: 0 auto 9px;
+  display: block;
+}
+#benefit .request .inner .contents .request-contents .paypay .paypay-content.create .paypay-step .paypay-step-item.download .googleplay {
+  width: 100%;
+  margin: 0 auto 7px;
+  display: block;
+}
+#benefit .request .inner .contents .request-contents .paypay .paypay-content.create .paypay-step .paypay-step-item.download .qr {
+  width: 90px;
+  margin: 0 auto;
+  display: block;
+}
+#benefit .request .inner .contents .request-contents .paypay .paypay-content.create .paypay-step .paypay-step-item img {
+  width: 100%;
+  display: block;
+}
+#benefit .request .inner .contents .request-contents .paypay .paypay-content.create .paypay-step .paypay-step-item .step-text {
+  margin-top: 18px;
+  line-height: 24px;
+}
+#benefit .request .inner .contents .request-contents .paypay .paypay-content.create .paypay-step .bottom-text {
+  width: 100%;
+  margin-top: 20px;
+  font-size: 16px;
+  text-align: right;
+}
+#benefit .request .inner .contents .request-contents .paypay .paypay-content.about .paypay-step {
+  padding: 50px 0 35px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 50px 20px;
+}
+#benefit .request .inner .contents .request-contents .paypay .paypay-content.about .paypay-step .paypay-step-item {
+  width: 283px;
+  padding: 30px 20px 26px;
+  background: #fff;
+  border-radius: 30px;
+  position: relative;
+}
+#benefit .request .inner .contents .request-contents .paypay .paypay-content.about .paypay-step .paypay-step-item::before {
+  content: "";
+  display: block;
+  position: absolute;
+  top: -17px;
+  left: 22px;
+}
+#benefit .request .inner .contents .request-contents .paypay .paypay-content.about .paypay-step .paypay-step-item:nth-child(1)::before {
+  width: 46px;
+  height: 36px;
+  background: url("/corp/set/data/ir/investor/benefit/img/shared/icon-request-paypay-step01.png") no-repeat center center;
+  background-size: contain;
+}
+#benefit .request .inner .contents .request-contents .paypay .paypay-content.about .paypay-step .paypay-step-item:nth-child(2)::before {
+  width: 52px;
+  height: 36px;
+  background: url("/corp/set/data/ir/investor/benefit/img/shared/icon-request-paypay-step02.png") no-repeat center center;
+  background-size: contain;
+}
+#benefit .request .inner .contents .request-contents .paypay .paypay-content.about .paypay-step .paypay-step-item:nth-child(3)::before {
+  width: 52px;
+  height: 36px;
+  background: url("/corp/set/data/ir/investor/benefit/img/shared/icon-request-paypay-step03.png") no-repeat center center;
+  background-size: contain;
+}
+#benefit .request .inner .contents .request-contents .paypay .paypay-content.about .paypay-step .paypay-step-item:nth-child(4)::before {
+  width: 52px;
+  height: 36px;
+  background: url("/corp/set/data/ir/investor/benefit/img/shared/icon-request-paypay-step04.png") no-repeat center center;
+  background-size: contain;
+}
+#benefit .request .inner .contents .request-contents .paypay .paypay-content.about .paypay-step .paypay-step-item:nth-child(5)::before {
+  width: 52px;
+  height: 36px;
+  background: url("/corp/set/data/ir/investor/benefit/img/shared/icon-request-paypay-step05.png") no-repeat center center;
+  background-size: contain;
+}
+#benefit .request .inner .contents .request-contents .paypay .paypay-content.about .paypay-step .paypay-step-item img {
+  width: 200px;
+  margin: 0 auto 10px;
+  display: block;
+}
+#benefit .request .inner .contents .request-contents .paypay .paypay-content.about .paypay-step .paypay-step-item .step-title {
+  margin-top: 26px;
+  font-size: 20px;
+  line-height: 28px;
+  font-weight: bold;
+  letter-spacing: 0.05em;
+}
+#benefit .request .inner .contents .request-contents .paypay .paypay-content.about .paypay-step .paypay-step-item .step-text {
+  margin-top: 18px;
+  font-size: 16px;
+  line-height: 24px;
+}
+#benefit .request .inner .contents .request-contents .notes.large .note-list {
+  font-size: 16px;
+  line-height: 24px;
+}
+#benefit .request .inner .contents .request-contents .notes.large .note-list.spcl {
+  margin-top: 7px;
+  font-size: 14px;
+  line-height: 20px;
+}
+#benefit .request .inner .contents .request-contents .notes.large .note-title {
+  font-size: 16px;
+  line-height: 24px;
+}
+#benefit .request .inner .contents .request-contents .notes .note-title {
+  margin-bottom: 5px;
+  font-size: 14px;
+  line-height: 20px;
+}
+#benefit .request .inner .contents .request-contents .notes .note-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px 0;
+  font-size: 14px;
+  line-height: 20px;
+}
+#benefit .request .inner .contents .request-contents .notes .note-list .note-item {
+  width: 100%;
+  display: flex;
+  gap: 0;
+}
+#benefit .request .inner .contents .request-contents .notes .note-list .note-item .note-symbol {
+  width: 35px;
+  flex-shrink: 0;
+}
+#benefit .request .inner .contents .request-contents .notes .note-list .note-item .note-text .note-child-list {
+  margin-top: 5px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 0;
+}
+#benefit .request .inner .contents .request-contents .notes .note-list .note-item .note-text .note-child-list .note-child-item {
+  width: 100%;
+  display: flex;
+  gap: 0 8px;
+}
+#benefit .request .inner .contents .request-contents .notes .note-list .note-item .note-text .note-child-list .note-child-item .note-text {
+  letter-spacing: 0;
+}
+#benefit .request .inner .contents .request-contents .notes + .notes {
+  margin-top: 20px;
+}
+#benefit .faq .inner h2 {
+  margin: 0 auto 50px;
+  font-size: 40px;
+  line-height: 1;
+  text-align: center;
+  color: #007EC4;
+  font-weight: normal;
+}
+#benefit .faq .inner h2::after {
+  content: "";
+  display: block;
+  width: 80px;
+  height: 4px;
+  background: #007EC4;
+  margin: 30px auto 0;
+}
+#benefit .faq .inner .contents {
+  width: 990px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+#benefit .faq .inner .contents .faq-list .faq-item:last-child {
+  border-bottom: 1px solid #D8DADC;
+}
+#benefit .faq .inner .contents .faq-list .faq-item .question {
+  padding: 20px 60px 20px 63px;
+  font-size: 16px;
+  font-weight: bold;
+  border-top: 1px solid #D8DADC;
+  position: relative;
+  cursor: pointer;
+}
+@media screen and (min-width: 769px) {
+  #benefit .faq .inner .contents .faq-list .faq-item .question {
+    transition: 0.3s all;
+  }
+  #benefit .faq .inner .contents .faq-list .faq-item .question:hover {
+    opacity: 0.7;
+    text-decoration: none;
+  }
+}
+#benefit .faq .inner .contents .faq-list .faq-item .question::before {
+  width: 13px;
+  height: 24px;
+  content: "";
+  display: block;
+  background: url("/corp/set/data/ir/investor/benefit/img/shared/icon-q.svg") no-repeat center center;
+  background-size: contain;
+  position: absolute;
+  top: 20px;
+  left: 30px;
+}
+#benefit .faq .inner .contents .faq-list .faq-item .question::after {
+  content: "";
+  display: block;
+  width: 12px;
+  height: 12px;
+  background: url("/corp/set/data/ir/investor/benefit/img/shared/icon-plus.svg") no-repeat center center;
+  background-size: contain;
+  position: absolute;
+  top: 26px;
+  right: 20px;
+}
+#benefit .faq .inner .contents .faq-list .faq-item .question.open::after {
+  background: url("/corp/set/data/ir/investor/benefit/img/shared/icon-minus.svg") no-repeat center center;
+}
+#benefit .faq .inner .contents .faq-list .faq-item .answer {
+  padding: 20px 55px 20px 63px;
+  font-size: 16px;
+  border-top: 1px solid #D8DADC;
+  background: #F4F5F6;
+  position: relative;
+  font-size: 16px;
+  line-height: 24px;
+}
+#benefit .faq .inner .contents .faq-list .faq-item .answer p {
+  font-size: 16px;
+  line-height: 24px;
+}
+#benefit .faq .inner .contents .faq-list .faq-item .answer p + .notes, #benefit .faq .inner .contents .faq-list .faq-item .answer p + p {
+  margin-top: 20px;
+}
+#benefit .faq .inner .contents .faq-list .faq-item .answer .bold {
+  font-weight: bold;
+  display: block;
+  margin-bottom: -5px;
+}
+#benefit .faq .inner .contents .faq-list .faq-item .answer::before {
+  width: 13px;
+  height: 24px;
+  content: "";
+  display: block;
+  background: url("/corp/set/data/ir/investor/benefit/img/shared/icon-a.svg") no-repeat center center;
+  background-size: contain;
+  position: absolute;
+  top: 20px;
+  left: 30px;
+}
+#benefit .faq .inner .contents .faq-list .faq-item .answer .notes.large .note-list {
+  font-size: 16px;
+  line-height: 24px;
+}
+#benefit .faq .inner .contents .faq-list .faq-item .answer .notes.large .note-title {
+  font-size: 16px;
+  line-height: 24px;
+}
+#benefit .faq .inner .contents .faq-list .faq-item .answer .notes .note-title {
+  margin-bottom: 5px;
+  font-size: 14px;
+  line-height: 20px;
+}
+#benefit .faq .inner .contents .faq-list .faq-item .answer .notes .note-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px 0;
+  font-size: 14px;
+  line-height: 20px;
+}
+#benefit .faq .inner .contents .faq-list .faq-item .answer .notes .note-list .note-item {
+  width: 100%;
+  display: flex;
+  gap: 0;
+}
+#benefit .faq .inner .contents .faq-list .faq-item .answer .notes .note-list .note-item .note-symbol {
+  width: 35px;
+  flex-shrink: 0;
+}
+#benefit .faq .inner .contents .faq-list .faq-item .answer .notes .note-list .note-item .note-text .note-child-list {
+  margin-top: 5px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 0;
+}
+#benefit .faq .inner .contents .faq-list .faq-item .answer .notes .note-list .note-item .note-text .note-child-list .note-child-item {
+  width: 100%;
+  display: flex;
+  gap: 0 8px;
+}
+#benefit .faq .inner .contents .faq-list .faq-item .answer .notes .note-list .note-item .note-text .note-child-list .note-child-item .note-text {
+  letter-spacing: 0;
+}
+#benefit .faq .inner .contents .faq-list .faq-item .answer .notes + p, #benefit .faq .inner .contents .faq-list .faq-item .answer .notes + .notes {
+  margin-top: 20px;
+}
+#benefit .faq .inner .contents .faq-list .faq-item .answer img.dividend-statement {
+  width: 600px;
+  margin: 20px auto;
+  display: block;
+}
+#benefit .faq .inner .contents .faq-list .faq-item .answer .faq-table {
+  margin: 20px auto;
+  display: flex;
+  flex-wrap: wrap;
+  border-top: 1px solid #D8DADC;
+}
+#benefit .faq .inner .contents .faq-list .faq-item .answer .faq-table .faq-table-line {
+  width: 100%;
+  display: flex;
+}
+#benefit .faq .inner .contents .faq-list .faq-item .answer .faq-table .faq-table-line .faq-table-cell {
+  padding: 20px;
+  font-size: 16px;
+  line-height: 24px;
+  display: flex;
+  flex-wrap: wrap;
+  border-left: 1px solid #D8DADC;
+  border-bottom: 1px solid #D8DADC;
+  background: #fff;
+}
+#benefit .faq .inner .contents .faq-list .faq-item .answer .faq-table .faq-table-line .faq-table-cell.bold {
+  font-weight: normal !important;
+}
+#benefit .faq .inner .contents .faq-list .faq-item .answer .faq-table .faq-table-line .faq-table-cell:first-child {
+  padding: 20px 25px;
+  flex-shrink: 0;
+  background: #E6E8EB;
+  border-left: none;
+}
+#benefit .faq .inner .contents .faq-list .faq-item .answer .faq-table .faq-table-line .faq-table-cell:last-child {
+  flex: 1;
+}
+#benefit .faq .inner .contents .faq-list .faq-item .answer .faq-table .faq-table-line .faq-table-cell.small {
+  width: 88px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+#benefit .faq .inner .contents .faq-list .faq-item .answer .faq-table.qa-eligible .faq-table-cell:first-child {
+  width: 130px;
+}
+#benefit .faq .inner .contents .faq-list .faq-item .answer .faq-table.qa-mail .faq-table-cell:first-child, #benefit .faq .inner .contents .faq-list .faq-item .answer .faq-table.qa-lost-dividend-statement .faq-table-cell:first-child, #benefit .faq .inner .contents .faq-list .faq-item .answer .faq-table.qa-login-information .faq-table-cell:first-child {
+  width: 200px;
+}
+#benefit .faq .inner .contents .faq-list .faq-item .answer .faq-table.qa-mail-magazine-stop .faq-table-cell:first-child {
+  width: 42%;
+}
+#benefit .faq .inner .contents .contact-list .contact-table {
+  margin: 0 auto 40px;
+  display: flex;
+  flex-wrap: wrap;
+  border-top: 1px solid #D8DADC;
+}
+#benefit .faq .inner .contents .contact-list .contact-table .contact-table-line {
+  width: 100%;
+  display: flex;
+}
+#benefit .faq .inner .contents .contact-list .contact-table .contact-table-line:nth-child(2) .contact-table-cell:first-child {
+  border-bottom: none;
+}
+#benefit .faq .inner .contents .contact-list .contact-table .contact-table-line .contact-table-cell {
+  padding: 20px 15px;
+  font-size: 16px;
+  line-height: 24px;
+  display: flex;
+  flex-wrap: wrap;
+  border-left: 1px solid #D8DADC;
+  border-bottom: 1px solid #D8DADC;
+}
+#benefit .faq .inner .contents .contact-list .contact-table .contact-table-line .contact-table-cell.contact-table-cell-space {
+  padding: 20px;
+}
+#benefit .faq .inner .contents .contact-list .contact-table .contact-table-line .contact-table-cell .notes {
+  margin-top: 20px;
+}
+#benefit .faq .inner .contents .contact-list .contact-table .contact-table-line .contact-table-cell.bold {
+  font-weight: normal !important;
+}
+#benefit .faq .inner .contents .contact-list .contact-table .contact-table-line .contact-table-cell:first-child {
+  width: 284px;
+  padding: 20px 30px;
+  flex-shrink: 0;
+  background: #F4F5F6;
+  border-left: none;
+}
+#benefit .faq .inner .contents .contact-list .contact-table .contact-table-line .contact-table-cell:last-child {
+  flex: 1;
+}
+#benefit .faq .inner .contents .contact-list .contact-table .contact-table-line .contact-table-cell.small {
+  width: 88px;
+  flex-shrink: 0;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
+#benefit .faq .inner .contents .contact-list .notes.large .note-list {
+  font-size: 16px;
+  line-height: 24px;
+}
+#benefit .faq .inner .contents .contact-list .notes.large .note-title {
+  font-size: 16px;
+  line-height: 24px;
+}
+#benefit .faq .inner .contents .contact-list .notes .note-title {
+  margin-bottom: 5px;
+  font-size: 14px;
+  line-height: 20px;
+}
+#benefit .faq .inner .contents .contact-list .notes .note-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px 0;
+  font-size: 14px;
+  line-height: 20px;
+}
+#benefit .faq .inner .contents .contact-list .notes .note-list .note-item {
+  width: 100%;
+  display: flex;
+  gap: 0;
+}
+#benefit .faq .inner .contents .contact-list .notes .note-list .note-item .note-symbol {
+  width: 35px;
+  flex-shrink: 0;
+}
+#benefit .faq .inner .contents .contact-list .notes .note-list .note-item .note-text .note-child-list {
+  margin-top: 5px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 0;
+}
+#benefit .faq .inner .contents .contact-list .notes .note-list .note-item .note-text .note-child-list .note-child-item {
+  width: 100%;
+  display: flex;
+  gap: 0 8px;
+}
+#benefit .faq .inner .contents .contact-list .notes .note-list .note-item .note-text .note-child-list .note-child-item .note-text {
+  letter-spacing: 0;
+}
+#benefit .mail-magazine {
+  margin: 0 auto;
+  padding: 40px 30px;
+  background: #F4F8FC;
+  border-radius: 20px;
+}
+#benefit .mail-magazine .mail-magazine-title {
+  margin-bottom: 40px;
+  font-size: 32px;
+  line-height: 1.2;
+  font-weight: normal;
+  color: #007EC4;
+  text-align: center;
+}
+#benefit .mail-magazine .mail-magazine-title span {
+  font-size: 24px;
+}
+#benefit .mail-magazine .mail-magazine-text {
+  margin-bottom: 20px;
+  font-size: 16px;
+  line-height: 24px;
+  text-align: center;
+}
+#benefit .mail-magazine .link {
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0 20px;
+}
+#benefit .mail-magazine .link .btn {
+  max-width: 582px;
+  min-width: 300px;
+  padding: 16px 38px;
+  background: #007EC4;
+  color: #fff;
+  font-size: 18px;
+  font-weight: bold;
+  text-align: center;
+  border-radius: 8px;
+}
+#benefit .mail-magazine .qr-code {
+  width: 120px;
+  height: 120px;
+}
+#benefit .mail-magazine .link .btn[target=_blank]::after {
+  right: 25px;
+}
+#benefit .mail-magazine .notes.large .note-list {
+  font-size: 16px;
+  line-height: 24px;
+}
+#benefit .mail-magazine .notes.large .note-title {
+  font-size: 16px;
+  line-height: 24px;
+}
+#benefit .mail-magazine .notes .note-title {
+  margin-bottom: 5px;
+  font-size: 14px;
+  line-height: 20px;
+}
+#benefit .mail-magazine .notes .note-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px 0;
+  font-size: 14px;
+  line-height: 20px;
+}
+#benefit .mail-magazine .notes .note-list .note-item {
+  width: 100%;
+  display: flex;
+  gap: 0;
+}
+#benefit .mail-magazine .notes .note-list .note-item .note-symbol {
+  width: 35px;
+  flex-shrink: 0;
+}
+#benefit .mail-magazine .notes .note-list .note-item .note-text .note-child-list {
+  margin-top: 5px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 0;
+}
+#benefit .mail-magazine .notes .note-list .note-item .note-text .note-child-list .note-child-item {
+  width: 100%;
+  display: flex;
+  gap: 0 8px;
+}
+#benefit .mail-magazine .notes .note-list .note-item .note-text .note-child-list .note-child-item .note-text {
+  letter-spacing: 0;
+}
+#benefit .event .inner {
+  padding: 0 0 120px;
+}
+#benefit .event .inner h2 {
+  margin: 0 auto 50px;
+  font-size: 40px;
+  line-height: 1;
+  text-align: center;
+  color: #007EC4;
+  font-weight: normal;
+}
+#benefit .event .inner h2::after {
+  content: "";
+  display: block;
+  width: 80px;
+  height: 4px;
+  background: #007EC4;
+  margin: 30px auto 0;
+}
+#benefit .event .inner .contents {
+  width: 990px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+#benefit .event .inner .contents .read-text {
+  margin-bottom: 60px;
+  font-size: 16px;
+  line-height: 24px;
+  text-align: center;
+}
+#benefit .event .inner .contents .contents-title {
+  font-size: 32px;
+  font-weight: normal;
+  margin-bottom: 60px;
+  text-align: center;
+}
+#benefit .event .inner .contents .event-image {
+  margin-bottom: 40px;
+}
+#benefit .event .inner .contents .event-image a[href$=".pdf"]::after {
+    content: unset;
+}
+#benefit .event .inner .contents .event-image img {
+  width: 80%;
+  margin: 0 auto;
+}
+#benefit .event .inner .contents .event-image + .read-text {
+  margin-bottom: 20px;
+  text-align: left;
+}
+#benefit .event .inner .contents .notes.large .note-list {
+  font-size: 16px;
+  line-height: 24px;
+}
+#benefit .event .inner .contents .notes.large .note-title {
+  font-size: 16px;
+  line-height: 24px;
+}
+#benefit .event .inner .contents .notes .note-title {
+  margin-bottom: 5px;
+  font-size: 14px;
+  line-height: 20px;
+}
+#benefit .event .inner .contents .notes .note-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px 0;
+  font-size: 14px;
+  line-height: 20px;
+}
+#benefit .event .inner .contents .notes .note-list .note-item {
+  width: 100%;
+  display: flex;
+  gap: 0;
+}
+#benefit .event .inner .contents .notes .note-list .note-item .note-symbol {
+  width: 35px;
+  flex-shrink: 0;
+}
+#benefit .event .inner .contents .notes .note-list .note-item .note-text .note-child-list {
+  margin-top: 5px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 0;
+}
+#benefit .event .inner .contents .notes .note-list .note-item .note-text .note-child-list .note-child-item {
+  width: 100%;
+  display: flex;
+  gap: 0 8px;
+}
+#benefit .event .inner .contents .notes .note-list .note-item .note-text .note-child-list .note-child-item .note-text {
+  letter-spacing: 0;
+}
+#benefit .event .inner .contents .notes + .notes {
+  margin-top: 20px;
+}
+#benefit .event .inner .contents a + .notes {
+  margin-top: 40px;
+}

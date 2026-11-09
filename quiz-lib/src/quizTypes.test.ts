@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { normalizeQuiz, toLocalizedText } from "./quizTypes";
+import { nextSurveyHref, normalizeQuiz, toLocalizedText } from "./quizTypes";
 
 describe("normalizeQuiz", () => {
     it("fills in ids, the default type and the defaults", () => {
@@ -136,5 +136,48 @@ describe("toLocalizedText", () => {
         });
         expect(toLocalizedText({ fr: "x" })).toBeNull();
         expect(toLocalizedText(3)).toBeNull();
+    });
+});
+
+describe("next survey", () => {
+    const questions = [{ prompt: "?", choices: ["a", "b"] }];
+    const form =
+        "https://docs.google.com/forms/d/e/FORM/viewform?usp=pp_url&entry.111={user_id}&entry.222={survey_id}";
+    const ids = { userId: "P01", surveyId: "S01" };
+
+    it("keeps an http(s) address and fills in the user ID and survey ID", () => {
+        const { quiz, errors } = normalizeQuiz({
+            id: "q",
+            questions,
+            next: { url: ` ${form} `, label: { ja: "次へ" } },
+        });
+        expect(errors).toEqual([]);
+        expect(quiz?.next).toEqual({ url: form, label: { ja: "次へ" } });
+        if (!quiz?.next) throw new Error("no next survey");
+        expect(nextSurveyHref(quiz.next, ids)).toBe(
+            "https://docs.google.com/forms/d/e/FORM/viewform?usp=pp_url&entry.111=P01&entry.222=S01",
+        );
+        // every placeholder, URL-encoded; an address without one stays as it is
+        expect(
+            nextSurveyHref(
+                { url: "https://x.test/?a={user_id}&b={user_id}&c={survey_id}" },
+                { userId: "a b", surveyId: "s&1" },
+            ),
+        ).toBe("https://x.test/?a=a%20b&b=a%20b&c=s%261");
+        expect(nextSurveyHref({ url: "https://x.test/form" }, ids)).toBe(
+            "https://x.test/form",
+        );
+    });
+
+    it("has none without next, and drops one that is not an http(s) address", () => {
+        expect(normalizeQuiz({ id: "q", questions }).quiz).not.toHaveProperty(
+            "next",
+        );
+        for (const next of [{ url: "javascript:alert(1)" }, { url: "nope" }, {}, "x"]) {
+            const { quiz, errors } = normalizeQuiz({ id: "q", questions, next });
+            expect(quiz).not.toBeNull();
+            expect(quiz).not.toHaveProperty("next");
+            expect(errors).toHaveLength(1);
+        }
     });
 });

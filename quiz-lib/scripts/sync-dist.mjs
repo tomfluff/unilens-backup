@@ -15,7 +15,12 @@ const distJs = join(root, "dist", "quiz.js");
 const distMap = join(root, "dist", "quiz.js.map");
 
 /** frontends whose pages carry the survey button */
-const FRONTENDS = ["softbank-mirror", "softbank-mirror-recruit", "dev-demo"];
+const FRONTENDS = [
+    "softbank-mirror",
+    "softbank-mirror-recruit",
+    "softbank-mirror-1",
+    "dev-demo",
+];
 
 export function syncDist() {
     for (const fe of FRONTENDS) {

@@ -6,6 +6,7 @@
     "bundle:unilens": "node scripts/bundle-unilens.mjs",
     "bundle": "npm run build --prefix accessibility-lib && npm run build --prefix quiz-lib && node scripts/bundle-unilens.mjs",
     "serve:study": "node scripts/serve-study-sites.mjs",
+    "serve:mirrors": "node scripts/serve-softbank-mirrors.mjs",
     "rebuild:study": "node scripts/rebuild-study-sites.mjs"
   },
   "dependencies": {

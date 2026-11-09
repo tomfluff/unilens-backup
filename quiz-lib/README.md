@@ -199,6 +199,7 @@ its high-contrast theme:
 | question `id` | Default `q1`, `q2`, … Set it yourself if you will reorder questions: the log refers to it. |
 | `showFeedback` | Default false: the visitor never sees right/wrong, correct answers, explanations or a score. true: a verdict and explanation after each graded answer, and the score at the end. |
 | `shuffleChoices` | Default false. Shuffled once per attempt; a reload keeps the order. |
+| `next` | Optional. A "次のアンケートへ進む" (go on to the next survey) button on the screens after every question is answered (the last question's page and the thank-you page): `{ "url": "…", "label": "…" }` (`label` optional). `{user_id}` and `{survey_id}` in `url` become the user ID and survey ID the respondent typed (the answers, `pid` and `session` are not passed on). With them as the values in a Google Form's pre-filled link, the form opens with both IDs filled in. Example: `"next": { "url": "https://docs.google.com/forms/d/e/<form id>/viewform?usp=pp_url&entry.123456={user_id}&entry.654321={survey_id}" }`. On the survey page this tab goes to the form, once the last answer has reached the survey server. A URL that is not http(s) is ignored. |
 
 Invalid questions are skipped with a console warning; a quiz with no valid
 question is not shown. Editing a quiz (any change to its content) starts

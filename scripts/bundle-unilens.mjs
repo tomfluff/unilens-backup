@@ -14,6 +14,7 @@ const root = join(fileURLToPath(new URL(".", import.meta.url)), "..");
 const ALL_FRONTENDS = [
     "softbank-mirror",
     "softbank-mirror-recruit",
+    "softbank-mirror-1",
     "dev-demo",
     ...STUDY_SITES.map((s) => s.id),
 ];

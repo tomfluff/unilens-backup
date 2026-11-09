@@ -28,6 +28,8 @@ export interface QuizMessages {
     backToPage: string;
     /** the same way back, on the last page (every question answered) */
     finishSurvey: string;
+    /** the way on to the next survey (quiz.next), when the quiz has none of its own */
+    nextSurvey: string;
     backNote: string;
     /** the same, when the survey has a tab of its own (going back closes it) */
     backNoteTab: string;
@@ -89,6 +91,7 @@ const ja: QuizMessages = {
     allAnswered: "すべての質問に回答しました。ご協力ありがとうございました。",
     backToPage: "元のページに戻る",
     finishSurvey: "アンケートを終了する",
+    nextSurvey: "次のアンケートへ進む",
     backNote: "元のページに戻って、作業を続けてください。",
     backNoteTab:
         "「元のページに戻る」でこのタブを閉じ、元のページで作業を続けてください。",
@@ -147,6 +150,7 @@ const en: QuizMessages = {
     allAnswered: "You have answered every question. Thank you for taking part.",
     backToPage: "Back to the page",
     finishSurvey: "Finish the survey",
+    nextSurvey: "Go on to the next survey",
     backNote: "Please go back to the page and carry on.",
     backNoteTab:
         "“Back to the page” closes this tab; carry on in the page you came from.",

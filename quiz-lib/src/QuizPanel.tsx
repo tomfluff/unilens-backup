@@ -56,12 +56,13 @@ import {
     startAttempt,
     useQuizStore,
 } from "./quizStore";
-import type {
-    ChoiceQuestion,
-    Quiz,
-    QuizLang,
-    QuizQuestion,
-    QuizResponse,
+import {
+    type ChoiceQuestion,
+    nextSurveyHref,
+    type Quiz,
+    type QuizLang,
+    type QuizQuestion,
+    type QuizResponse,
 } from "./quizTypes";
 import {
     checkId,
@@ -261,6 +262,56 @@ function backTo(url: string, ownTab: boolean) {
     });
 }
 
+/** The way on to the next survey (quiz.next), for this respondent. */
+interface NextWay {
+    href: string;
+    label: string;
+}
+
+/**
+ * The way on to the next survey, once every question is answered. On the survey
+ * page this tab goes there, once the last answer has reached the backend (or after
+ * 2 s); in a panel over a test page, a new tab, so the test page stays.
+ */
+function NextLink({ next, page }: { next: NextWay; page: boolean }) {
+    if (!page)
+        return (
+            <a
+                className="unilens-quiz-btn"
+                href={next.href}
+                target="_blank"
+                rel="noopener noreferrer"
+            >
+                {next.label}
+                <Icon name="next" />
+            </a>
+        );
+    return (
+        <a
+            className="unilens-quiz-btn"
+            href={next.href}
+            onClick={(e) => {
+                if (
+                    e.button !== 0 ||
+                    e.metaKey ||
+                    e.ctrlKey ||
+                    e.shiftKey ||
+                    e.altKey
+                )
+                    return;
+                e.preventDefault();
+                void Promise.race([
+                    flushQuizLog(),
+                    new Promise((done) => window.setTimeout(done, 2000)),
+                ]).then(() => location.assign(next.href));
+            }}
+        >
+            {next.label}
+            <Icon name="next" />
+        </a>
+    );
+}
+
 /** The survey page was opened in a tab of its own (?tab=1): going back closes it. */
 const OwnTab = createContext(false);
 
@@ -334,6 +385,16 @@ export function QuizApp({
     /** one question's page: answered here, now (not on an earlier visit) */
     const [savedNow, setSavedNow] = useState(false);
     const ids = idsOf(attempt);
+    /** the way on to the next survey, with this respondent's IDs filled in */
+    const nextWay: NextWay | null =
+        quiz.next && ids
+            ? {
+                  href: nextSurveyHref(quiz.next, ids),
+                  label: quiz.next.label
+                      ? localize(quiz.next.label, lang)
+                      : m.nextSurvey,
+              }
+            : null;
 
     useEffect(() => {
         if (!focusReq || !open) return;
@@ -573,7 +634,7 @@ export function QuizApp({
     } else if (only !== null && attempt) {
         const q = quiz.questions[only];
         if (attempt.answers[q.id] || attempt.finishedAt) {
-            const next = nextUnanswered(quiz, attempt.answers, only);
+            const nextQ = nextUnanswered(quiz, attempt.answers, only);
             screen = (
                 <QuestionDone
                     q={q}
@@ -585,7 +646,9 @@ export function QuizApp({
                     lang={lang}
                     m={m}
                     returnTo={returnTo}
-                    nextIndex={next}
+                    nextIndex={nextQ}
+                    next={nextWay}
+                    page={page}
                 />
             );
         } else {
@@ -610,6 +673,8 @@ export function QuizApp({
                 attempt={attempt}
                 m={m}
                 returnTo={page ? returnTo : null}
+                next={nextWay}
+                page={page}
             />
         );
     } else if (attempt) {
@@ -1253,11 +1318,15 @@ function Result({
     attempt,
     m,
     returnTo = null,
+    next = null,
+    page = false,
 }: {
     quiz: Quiz;
     attempt: Attempt;
     m: QuizMessages;
     returnTo?: string | null;
+    next?: NextWay | null;
+    page?: boolean;
 }) {
     const score = scoreOf(quiz, attempt.answers);
     const pct = score.total
@@ -1283,9 +1352,16 @@ function Result({
             ) : (
                 <p className="unilens-quiz-muted">{m.doneNote}</p>
             )}
-            {returnTo && (
+            {(next || returnTo) && (
                 <div className="unilens-quiz-actions">
-                    <BackLink url={returnTo} label={m.finishSurvey} />
+                    {next && <NextLink next={next} page={page} />}
+                    {returnTo && (
+                        <BackLink
+                            url={returnTo}
+                            label={m.finishSurvey}
+                            secondary={next !== null}
+                        />
+                    )}
                 </div>
             )}
         </>
@@ -1297,11 +1373,20 @@ function Result({
  * the last page): a real link (it can be opened elsewhere), that first lets the
  * answer reach the backend.
  */
-function BackLink({ url, label }: { url: string; label: string }) {
+function BackLink({
+    url,
+    label,
+    secondary = false,
+}: {
+    url: string;
+    label: string;
+    secondary?: boolean;
+}) {
     const ownTab = useContext(OwnTab);
     return (
         <a
             className="unilens-quiz-btn"
+            data-variant={secondary ? "secondary" : undefined}
             href={url}
             onClick={(e) => {
                 if (
@@ -1339,6 +1424,8 @@ function QuestionDone({
     m,
     returnTo,
     nextIndex,
+    next = null,
+    page = true,
 }: {
     q: QuizQuestion;
     index: number;
@@ -1350,6 +1437,8 @@ function QuestionDone({
     m: QuizMessages;
     returnTo: string | null;
     nextIndex: number;
+    next?: NextWay | null;
+    page?: boolean;
 }) {
     const ownTab = useContext(OwnTab);
     const all = nextIndex < 0;
@@ -1389,10 +1478,12 @@ function QuestionDone({
                 </p>
             )}
             <div className="unilens-quiz-actions">
+                {all && next && <NextLink next={next} page={page} />}
                 {returnTo && (
                     <BackLink
                         url={returnTo}
                         label={all ? m.finishSurvey : m.backToPage}
+                        secondary={all && next !== null}
                     />
                 )}
                 {!returnTo && !all && (

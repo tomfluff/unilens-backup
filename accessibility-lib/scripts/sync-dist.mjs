@@ -14,6 +14,7 @@ const distMap = join(root, "dist", "accessibility.js.map");
 const FRONTENDS = [
     "softbank-mirror",
     "softbank-mirror-recruit",
+    "softbank-mirror-1",
     "dev-demo",
     "study-support",
     "study-wiki",
@@ -39,4 +40,4 @@ export function syncDist() {
 if (process.argv[1]?.endsWith("sync-dist.mjs")) {
     syncDist();
 }
-
+

@@ -15,12 +15,14 @@ target_dist_accessibility-lib=accessibility.js
 target_dist_quiz-lib=quiz.js
 
 # Frontend build targets
-FRONTEND_TARGETS:= softbank-mirror softbank-mirror-recruit dev-demo study-support study-wiki study-shop study-transit study-news study-recipes
+FRONTEND_TARGETS:= softbank-mirror softbank-mirror-recruit softbank-mirror-1 dev-demo study-support study-wiki study-shop study-transit study-news study-recipes
 
 # To add a target, use the format `frontend_port_{subdir name}=<PORT>`
 frontend_port_softbank-mirror=8000
 frontend_port_dev-demo=8001
 frontend_port_softbank-mirror-recruit=8002
+# copy of softbank-mirror whose survey button follows ?p=1..4 (unilens-poc-p<N>)
+frontend_port_softbank-mirror-1=8003
 # mock sites for user studies (frontend/STUDY-SITES.md)
 frontend_port_study-support=8031
 frontend_port_study-wiki=8032

@@ -1,0 +1,200 @@
+{
+  "id": "unilens-poc-p1",
+  "title": {
+    "ja": "UniLens PoC アンケート（p=1）",
+    "en": "UniLens PoC survey (p=1)"
+  },
+  "next": {
+    "url": "https://docs.google.com/forms/d/e/1FAIpQLSdWHrjUfFA8GnXwOBumaXZqChyQ2Y7SnaFIys9PWJhCNY5q8w/viewform?usp=pp_url&entry.659490342={user_id}&entry.679443900={survey_id}"
+  },
+  "questions": [
+    {
+      "id": "q1",
+      "type": "multiple",
+      "prompt": {
+        "ja": "株主優待の申請を正常に完了していても、PayPayマネーライトを受け取れない可能性があるケースをすべて選んでください。",
+        "en": "Even after successfully applying for the shareholder benefit, in which cases might you not receive PayPay Money Lite? Select all that apply."
+      },
+      "choices": [
+        {
+          "id": "a",
+          "text": {
+            "ja": "株価が購入時より下落している",
+            "en": "The share price has fallen below your purchase price"
+          }
+        },
+        {
+          "id": "b",
+          "text": {
+            "ja": "連携したPayPayアカウントが無効になっている",
+            "en": "The linked PayPay account has been deactivated"
+          }
+        },
+        {
+          "id": "c",
+          "text": {
+            "ja": "SoftBankの携帯電話を契約していない",
+            "en": "You don't have a SoftBank mobile plan"
+          }
+        },
+        {
+          "id": "d",
+          "text": {
+            "ja": "PayPayマネーライトの保有上限に達している",
+            "en": "Your PayPay Money Lite balance has reached its upper limit"
+          }
+        },
+        {
+          "id": "e",
+          "text": {
+            "ja": "わからなかった",
+            "en": "I couldn't find the answer"
+          }
+        }
+      ],
+      "answer": [
+        "b",
+        "d"
+      ]
+    },
+    {
+      "id": "q2",
+      "type": "multiple",
+      "prompt": {
+        "ja": "PayPayとの連携が正常に完了しているか確認したい場合、正しい確認方法をすべて選んでください。",
+        "en": "How can you confirm that PayPay linking succeeded? Select all that apply."
+      },
+      "choices": [
+        {
+          "id": "a",
+          "text": {
+            "ja": "株主優待サイトの「申請情報確認・変更」でPayPayアカウント情報を確認する",
+            "en": "Check the PayPay info in \"Review/Change Application\" on the benefits site"
+          }
+        },
+        {
+          "id": "b",
+          "text": {
+            "ja": "PayPayアプリの「アカウント ＞ 外部サービス連携」で「ソフトバンク株式会社（株主優待）」を確認する",
+            "en": "PayPay app: find \"SoftBank Corp. (Shareholder Benefits)\" under \"Account > Linked Services\""
+          }
+        },
+        {
+          "id": "c",
+          "text": {
+            "ja": "PayPayアプリの残高が1,000円増えているか確認する",
+            "en": "Check if your PayPay balance rose by ¥1,000"
+          }
+        },
+        {
+          "id": "d",
+          "text": {
+            "ja": "ソフトバンクからSMSが届いているか確認する",
+            "en": "Check whether you received an SMS from SoftBank"
+          }
+        },
+        {
+          "id": "e",
+          "text": {
+            "ja": "わからなかった",
+            "en": "I couldn't find the answer"
+          }
+        }
+      ],
+      "answer": [
+        "a",
+        "b"
+      ]
+    },
+    {
+      "id": "q3",
+      "prompt": {
+        "ja": "2026年2月28日にSBの株を保有開始し、優待はいつ進呈されますか。",
+        "en": "You bought SoftBank shares on Feb 28, 2026. When will you receive the benefit?"
+      },
+      "choices": [
+        {
+          "id": "a",
+          "text": {
+            "ja": "同年の6月",
+            "en": "June of the same year"
+          }
+        },
+        {
+          "id": "b",
+          "text": {
+            "ja": "同年の11月",
+            "en": "November of the same year"
+          }
+        },
+        {
+          "id": "c",
+          "text": {
+            "ja": "翌年の5月",
+            "en": "May of the following year"
+          }
+        },
+        {
+          "id": "d",
+          "text": {
+            "ja": "翌年の11月",
+            "en": "November of the following year"
+          }
+        },
+        {
+          "id": "e",
+          "text": {
+            "ja": "わからなかった",
+            "en": "I couldn't find the answer"
+          }
+        }
+      ],
+      "answer": "c"
+    },
+    {
+      "id": "q4",
+      "prompt": {
+        "ja": "株主優待を申請したいのですが、配当金計算書を紛失してしまい、株主番号も分かりません。どの対応が正しいですか？",
+        "en": "You want to apply for the benefit, but you lost your dividend statement and don't know your shareholder number. What should you do?"
+      },
+      "choices": [
+        {
+          "id": "a",
+          "text": {
+            "ja": "ソフトバンクショップで確認する",
+            "en": "Ask at a SoftBank store"
+          }
+        },
+        {
+          "id": "b",
+          "text": {
+            "ja": "みずほ信託銀行に問い合わせる",
+            "en": "Contact Mizuho Trust & Banking"
+          }
+        },
+        {
+          "id": "c",
+          "text": {
+            "ja": "PayPayのサポート窓口に問い合わせる",
+            "en": "Contact PayPay customer support"
+          }
+        },
+        {
+          "id": "d",
+          "text": {
+            "ja": "証券会社から新しい株主番号を発行してもらう",
+            "en": "Ask your brokerage to issue a new shareholder number"
+          }
+        },
+        {
+          "id": "e",
+          "text": {
+            "ja": "わからなかった",
+            "en": "I couldn't find the answer"
+          }
+        }
+      ],
+      "answer": "b"
+    }
+  ]
+}

@@ -7,7 +7,7 @@ Everything runs through `make` from the repo root. Requires Node 20+ and Python 
 | Backend | `backend/` | Flask API, port `5000` |
 | Survey server | `survey-backend/` | Express (TypeScript), port `5100`: the survey page, `/api/quiz/*` and the answers' log (see its README) |
 | JS libs | `unilens-lib/`, `accessibility-lib/`, `quiz-lib/` | esbuild bundles, copied into frontends as `unilens.js` / `accessibility.js` / `quiz.js` (the survey button); the survey server's page (`/survey`) loads `quiz-lib/dist/quiz.js` |
-| Frontends | `frontend/softbank-mirror` (8000), `frontend/dev-demo` (8001), `frontend/softbank-mirror-recruit` (8002), six `frontend/study-*` mock sites (8031–8036; see `frontend/STUDY-SITES.md`) | static sites served by `live-server` |
+| Frontends | `frontend/softbank-mirror` (8000), `frontend/dev-demo` (8001), `frontend/softbank-mirror-recruit` (8002), a copy of the IR mirror `frontend/softbank-mirror-1` (8003; `?p=1`…`?p=4` picks the survey `unilens-poc-p1`…`p4`; `npm run serve:mirrors`), six `frontend/study-*` mock sites (8031–8036; see `frontend/STUDY-SITES.md`) | static sites served by `live-server` |
 
 ## Setup
 

@@ -81,6 +81,23 @@ export interface QuizInput {
     showFeedback?: boolean;
     /** Shuffle the choices, once per attempt. Default false. */
     shuffleChoices?: boolean;
+    /**
+     * The way on to the next survey (a Google Form, say), offered on the last
+     * screen once every question is answered. See NextSurveyInput.
+     */
+    next?: NextSurveyInput;
+}
+
+/**
+ * The next survey: its address, where `{user_id}` and `{survey_id}` become the
+ * IDs the respondent typed. A Google Form's pre-filled link
+ * (…/viewform?usp=pp_url&entry.123456={user_id}&entry.654321={survey_id}) then
+ * opens with them filled in. Nothing else (answers, pid, session) is passed on.
+ */
+export interface NextSurveyInput {
+    url: string;
+    /** The button's text. Default: "次のアンケートへ進む". */
+    label?: LocalizedText;
 }
 
 // ── Normalized ───────────────────────────────────────────────────────────
@@ -127,6 +144,28 @@ export interface Quiz {
     questions: QuizQuestion[];
     showFeedback: boolean;
     shuffleChoices: boolean;
+    next?: NextSurvey;
+}
+
+export interface NextSurvey {
+    url: string;
+    label?: LocalizedText;
+}
+
+/** In NextSurvey.url: replaced by the respondent's user ID and survey ID. */
+export const NEXT_SURVEY_USER_ID = "{user_id}";
+export const NEXT_SURVEY_SURVEY_ID = "{survey_id}";
+
+/** The next survey's address for this respondent: both IDs filled in (URL-encoded). */
+export function nextSurveyHref(
+    next: NextSurvey,
+    ids: { userId: string; surveyId: string },
+): string {
+    return next.url
+        .split(NEXT_SURVEY_USER_ID)
+        .join(encodeURIComponent(ids.userId))
+        .split(NEXT_SURVEY_SURVEY_ID)
+        .join(encodeURIComponent(ids.surveyId));
 }
 
 /** single: a choice id; multiple: choice ids; text: what was typed */
@@ -272,6 +311,30 @@ function normalizeQuestion(
     return null;
 }
 
+/** A quiz's `next`: an http(s) address and an optional label, or undefined. */
+function normalizeNext(
+    raw: unknown,
+    errors: string[],
+): NextSurvey | undefined {
+    if (raw === undefined) return undefined;
+    const url = isRecord(raw) ? raw.url : undefined;
+    let ok = false;
+    if (typeof url === "string" && url.trim()) {
+        try {
+            const { protocol } = new URL(url.trim());
+            ok = protocol === "https:" || protocol === "http:";
+        } catch {
+            ok = false;
+        }
+    }
+    if (!ok || !isRecord(raw)) {
+        errors.push('quiz: "next.url" must be an http(s) address; no next survey');
+        return undefined;
+    }
+    const label = toLocalizedText(raw.label) ?? undefined;
+    return { url: (url as string).trim(), ...(label ? { label } : {}) };
+}
+
 /**
  * Check and normalize a host-provided quiz. Returns null when nothing usable is
  * left (bad id, or no valid question); `errors` lists every problem found.
@@ -311,6 +374,7 @@ export function normalizeQuiz(raw: unknown): {
     }
     const title = toLocalizedText(raw.title) ?? undefined;
     const description = toLocalizedText(raw.description) ?? undefined;
+    const next = normalizeNext(raw.next, errors);
     return {
         quiz: {
             id,
@@ -319,6 +383,7 @@ export function normalizeQuiz(raw: unknown): {
             questions,
             showFeedback: raw.showFeedback === true,
             shuffleChoices: raw.shuffleChoices === true,
+            ...(next ? { next } : {}),
         },
         errors,
     };
