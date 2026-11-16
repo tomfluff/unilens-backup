@@ -84,6 +84,8 @@ const INITIAL = {
     hlBadgeClamp: true,
     // a place inside another cited place folds into the larger outline (session 1)
     hlFoldOuter: true,
+    // the numbers a fixed screen size at any page zoom (session 1)
+    hlBadgeZoom: false,
     // the ring and thin border black and white whatever the colour (session 1)
     hlAdaptLine: false,
     // an Alt+drag's release counted as an Alt+click (session 1)
@@ -198,6 +200,8 @@ export const PRESETS = {
             // section; only an outer that adds nothing folds (Yotam, 2026-10-14, for
             // P02). Not in the panel
             hlFoldOuter: false,
+            // the numbers a fixed size, as session 2 ran. Not in the panel
+            hlBadgeZoom: false,
             // every answer looks like an answer; notes and errors alone are dotted
             // (Yotam's try-out, 2026-10-12). Not in the panel
             quietNotFound: false,

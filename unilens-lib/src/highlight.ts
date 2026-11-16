@@ -456,9 +456,18 @@ const BADGE_SIZE = {
     large: { h: 42, font: 25, off: 23 },
 } as const;
 
+/** how much a page number grows with UniLens's page zoom (hlBadgeZoom): as the text
+ *  does, in tenths (a smooth zoom rebuilds it a few times, not every frame), never
+ *  smaller than its size at 100% */
+const badgeZoom = () =>
+    getSettings().hlBadgeZoom
+        ? Math.max(1, Math.round(getZoom().scale * 10) / 10)
+        : 1;
+
 function makeBadge(
     text: string,
     size: keyof typeof BADGE_SIZE = "small",
+    scale = 1,
 ): HTMLDivElement {
     const style = getSettings().chatStyle;
     // station codes read "U1", like the chips; a folded pair reads "1·2" (or "U1·U2")
@@ -468,6 +477,7 @@ function makeBadge(
             .map((t) => (style === "station" ? `U${t}` : t))
             .join("·"),
         size,
+        scale,
     );
     badge.className = `${CLASS}-badge`;
     return badge;
@@ -478,8 +488,14 @@ function makeBadge(
 export function numberLike(
     text: string,
     size: keyof typeof BADGE_SIZE = "small",
+    /** times its size (the page zoom, hlBadgeZoom) */
+    scale = 1,
 ): HTMLDivElement {
-    const z = BADGE_SIZE[size];
+    const z = {
+        h: Math.round(BADGE_SIZE[size].h * scale),
+        font: Math.round(BADGE_SIZE[size].font * scale),
+        off: Math.round(BADGE_SIZE[size].off * scale),
+    };
     const style = getSettings().chatStyle;
     const badge = document.createElement("div");
     badge.textContent = text;
@@ -514,7 +530,11 @@ function decorate(
     w: number,
     part: Part = "all",
 ) {
-    const key = `${outline}|${look.badges}|${look.badgeSize}|${look.badgePos}|${look.color}|${w}|${getSettings().chatStyle}|${part}`;
+    const layer = entry.box.parentElement;
+    const onPage = Boolean(layer?.hasAttribute("data-unilens-layer"));
+    // a preview's numbers stay their size: only the page is zoomed
+    const scale = onPage ? badgeZoom() : 1;
+    const key = `${outline}|${look.badges}|${look.badgeSize}|${look.badgePos}|${look.color}|${w}|${getSettings().chatStyle}|${part}|${scale}`;
     if (entry.decoKey === key) return;
     entry.decoKey = key;
     entry.box.replaceChildren();
@@ -522,9 +542,8 @@ function decorate(
     entry.badgeEl = undefined;
     (entry as { badgeSide?: BadgeSide }).badgeSide = undefined;
     if (look.badges && entry.badge && part !== "tint") {
-        const badge = makeBadge(entry.badge, look.badgeSize);
-        const layer = entry.box.parentElement;
-        if (layer?.hasAttribute("data-unilens-layer")) {
+        const badge = makeBadge(entry.badge, look.badgeSize, scale);
+        if (layer && onPage) {
             // placed by paintBox, above every box
             badge.style.position = "fixed";
             // over the lasting click marks too (z-index 2 here, clickMarks.ts): a

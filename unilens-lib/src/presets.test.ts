@@ -171,6 +171,10 @@ describe("session 2 (2026-10-09)", () => {
         expect(PRESETS.initial.values.hlAdaptLine).toBe(false);
         expect(PRESETS.initial.values.quietNotFound).toBe(true);
         expect(PRESETS.initial.values.hlBadgeClamp).toBe(true);
+        // the numbers grow with the page zoom only after session 2 (Yotam, 2026-10-17)
+        expect(PRESETS.initial.values.hlBadgeZoom).toBe(false);
+        expect(PRESETS.session2.values.hlBadgeZoom).toBe(false);
+        expect(defaultOf("hlBadgeZoom")).toBe(true);
         expect(PRESETS.initial.values.answerFromStart).toBe(false);
         expect(PRESETS.session2.panel as readonly string[]).not.toContain(
             "answerFromStart",
