@@ -19,6 +19,7 @@ import {
     unionRects,
 } from "./highlight";
 import { updateSetting, useSettings } from "./settings";
+import * as zoom from "./zoom";
 
 const rect = (left: number, top: number, width: number, height: number) => ({
     left,
@@ -554,6 +555,30 @@ describe("layered look", () => {
             (document.querySelector(".unilens-hl-badge") as HTMLElement).style
                 .zIndex,
         ).toBe("3");
+    });
+
+    it("the numbers grow with the page zoom when hlBadgeZoom is on (P03)", () => {
+        const at = vi
+            .spyOn(zoom, "getZoom")
+            .mockReturnValue({ scale: 2, layoutW: 1000, layoutH: 800 });
+        const badge = () =>
+            document.querySelector(".unilens-hl-badge") as HTMLElement;
+        updateSetting("hlBadgeZoom", true);
+        one();
+        expect(badge().style.height).toBe("48px");
+        expect(badge().style.font).toContain("28px");
+        clearHighlights();
+        // off: the size at 100%, whatever the zoom
+        updateSetting("hlBadgeZoom", false);
+        one();
+        expect(badge().style.height).toBe("24px");
+        clearHighlights();
+        // zoomed out, never smaller than at 100%
+        updateSetting("hlBadgeZoom", true);
+        at.mockReturnValue({ scale: 0.5, layoutW: 1000, layoutH: 800 });
+        one();
+        expect(badge().style.height).toBe("24px");
+        at.mockRestore();
     });
 
     it("spotlight feathers the holes and overshoots the screen edges", () => {

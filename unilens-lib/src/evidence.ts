@@ -142,8 +142,12 @@ export function renderCited(
         if (!known(id)) return "";
         let n = ids.indexOf(id) + 1;
         if (!n) n = ids.push(id);
-        return `${m.startsWith("[") ? "" : " "}\uE0FF${n}\uE0FF`;
+        return `${m.startsWith("[") ? "" : m.startsWith("\n") ? "\n" : " "}\uE0FF${n}\uE0FF`;
     });
+    // a repeat keeps its slot, as 0n, so its words keep their underline and link; it
+    // shows no number
+    if (placement === "inline" || placement === "both")
+        t = lastOfRuns(t, (n) => `\uE0FF0${n}\uE0FF`);
     // the numbers elsewhere than the model put them: no words are joined to them
     if (placement === "both") {
         // where the model put them, and every one again after the answer (P04)
@@ -178,6 +182,7 @@ export function renderCited(
             (_, grouped: string | undefined, run: string) => {
                 // each number as its chip, the spacing between them as the model wrote it
                 const chips = run.replace(SLOT, (__, n: string) => {
+                    if (n.startsWith("0")) return ""; // a repeat (lastOfRuns)
                     const id = ids[Number(n) - 1];
                     const raw = labelOf(id);
                     const label = escapeHtml(raw);
@@ -193,6 +198,34 @@ export function renderCited(
 }
 
 export type CitePlacement = "inline" | "sentence" | "end" | "both";
+
+/** a source cited several times in a row (no other between, in one paragraph or list
+ *  item): only the run's last number stays (Yotam, 2026-10-17). Each earlier slot
+ *  becomes `hide(n)`, its spaces the gap the words need */
+function lastOfRuns(t: string, hide: (n: string) => string): string {
+    const slots = [...t.matchAll(SPACED_SLOT)];
+    let out = "";
+    let from = 0;
+    slots.forEach((m, i) => {
+        const at = m.index ?? 0;
+        const after = at + m[0].length;
+        const next = slots[i + 1];
+        out += t.slice(from, at);
+        from = after;
+        if (next?.[1] !== m[1] || t.slice(after, next.index).includes("\n")) {
+            out += m[0];
+            return;
+        }
+        // the words on either side keep the gap a number taken out leaves (placeSlots);
+        // a shown number before it already left its own space
+        out +=
+            hide(m[1]) +
+            (/\s$/.test(out)
+                ? ""
+                : gap(out.slice(-1), t.charAt(after), /\s/.test(m[0])));
+    });
+    return out + t.slice(from);
+}
 
 /** a citation's slot with the spaces (not line breaks) around it */
 const SPACED_SLOT = /[^\S\n]*\uE0FF(\d+)\uE0FF[^\S\n]*/g;
@@ -442,13 +475,14 @@ export function speakableWithSources(
         if (!known(id)) return "";
         let n = ids.indexOf(id) + 1;
         if (!n) n = ids.push(id);
-        return `${m.startsWith("[") ? "" : " "}\uE0FF${n}\uE0FF`;
+        return `${m.startsWith("[") ? "" : m.startsWith("\n") ? "\n" : " "}\uE0FF${n}\uE0FF`;
     });
     // the braces go once the markers are read, as in the chat (one inside a marker
     // never makes it one)
     t = t.replace(/\{\{|\}\}/g, "");
     if (placement === "sentence" || placement === "end")
         t = placeSlots(t, placement);
+    else t = lastOfRuns(t, () => "");
     return t.replace(
         /([^\S\n]*)(\uE0FF\d+\uE0FF(?:[^\S\n]*\uE0FF\d+\uE0FF)*)/g,
         (all: string, lead: string, run: string, at: number, whole: string) => {
