@@ -107,9 +107,13 @@ Make が無い場合：`cd quiz-lib && npm install && npm run build`
 | `choices` | 文字列、または `{ "id", "text" }`。id の既定は `c1`、`c2`、… |
 | `answer` | 省略可（正解の設定）。single：選択肢の id か 0 始まりの番号。multiple：そのリスト。text：正解とする文字列（複数可）。省略すると通常のアンケート設問になり、ログの `correct` は `null` です。 |
 | `caseSensitive` | text のみ。既定 false。比較は常に Unicode NFKC 正規化と前後の空白除去の後に行うため、全角の `２５` も `25` と一致します。 |
+| `optional` | text のみ。既定 false。true にすると空欄のままでも送信できます（感想欄など）。空欄の回答はログに `（未回答）` と記録します。 |
+| `multiline` | text のみ。既定 false。true にすると 1 行の入力欄ではなく、複数行の入力欄を表示します。 |
 | 問題の `id` | 既定は `q1`、`q2`、… ログが参照するので、問題を並べ替える予定があれば明示してください。 |
 | `showFeedback` | 既定 false：正誤・正解・解説・得点を画面に表示しません。true：正解を設定した設問で回答ごとに正誤と解説を、最後に得点を表示します。 |
 | `shuffleChoices` | 既定 false。挑戦ごとに 1 回だけ並べ替え、再読み込みしても順序は変わりません。 |
+| `askIds` | 既定 true。false にすると、最初のユーザーID・アンケートIDの入力画面を出さず、質問から始めます。ログと結果に `user_id`・`survey_id` は入らず、`next.url` の `{user_id}`・`{survey_id}` は空欄になります。 |
+| `askProfile` | 既定 false。true にすると、ユーザーIDとアンケートIDの次の画面で **お名前** と **開始時刻**（`08:30` の形）を入力してもらってから質問に進みます。どちらも必須で、挑戦ごとに 1 回だけ聞きます（ほかの質問のページでは聞き直しません）。 |
 | `next` | 省略可。すべての質問に回答した後の画面（最後の質問のページとお礼のページ）に「次のアンケートへ進む」ボタンを出します。`{ "url": "…", "label": "…" }`（`label` は省略可）。`url` の中の `{user_id}` と `{survey_id}` は、回答者が入力したユーザーIDとアンケートIDに置き換わります（回答内容や `pid`・`session` は渡しません）。Google フォームの「事前入力した URL」の値をそれぞれ `{user_id}`・`{survey_id}` にしておくと、2 つの ID が入った状態でフォームが開きます。例：`"next": { "url": "https://docs.google.com/forms/d/e/<フォームID>/viewform?usp=pp_url&entry.123456={user_id}&entry.654321={survey_id}" }`。アンケートページではこのタブがフォームに移ります（最後の回答をアンケートサーバーに送ってから）。http(s) 以外の URL は無視します。 |
 
 不正な問題は console に警告を出して読み飛ばします。有効な問題が 1 つも無いクイズは表示しません。クイズの内容を変更すると、保存済みの進捗は破棄され最初からになります。
@@ -149,8 +153,9 @@ Make が無い場合：`cd quiz-lib && npm install && npm run build`
 | `quiz_complete` | `attempt`、`correct`、`total`、`ms`（開始から最後の回答まで） |
 | `quiz_lang` | 現在は送信しません（日本語のみのため）。以前のログには `lang`（切り替え後の言語）、`from`、`attempt` が残っています |
 | `quiz_ids` | `attempt`：ID を聞く前に始まっていた挑戦（以前の版で開始したもの）に ID を入力した |
+| `quiz_profile` | `attempt`、`name`、`start_time`：お名前と開始時刻を入力した（`askProfile` のアンケートのみ） |
 
-各行には `t`、`seq`、`quiz`、`lang`、`page`（パスのみ）、入力後は `user_id`・`survey_id`、参加者が指定されていれば `pid`・`session` も入ります（指定がなくボタンの匿名 ID があれば `vid`）。それ以外の訪問者の情報は送信せず、研究用の参加者別ログ（`backend/study-logs/`）にも記録しません。
+各行には `t`、`seq`、`quiz`、`lang`、`page`（パスのみ）、入力後は `user_id`・`survey_id`（`askProfile` のアンケートでは `name`・`start_time` も）、参加者が指定されていれば `pid`・`session` も入ります（指定がなくボタンの匿名 ID があれば `vid`）。それ以外の訪問者の情報は送信せず、研究用の参加者別ログ（`backend/study-logs/`）にも記録しません。
 
 ## 結果の取得
 
@@ -170,7 +175,7 @@ curl -o results.csv "http://127.0.0.1:5100/api/quiz/unilens-poc/results.csv?comp
 
 アンケート一覧（`/survey`）にも各アンケートの CSV へのリンクがあります。
 
-CSV の列は `attempt, user_id, survey_id, pid, session, lang, started_at, completed_at, completed, answered, correct, duration_ms, duration_s` のあと、アンケートの問題順に 4 列ずつ（`q1_ms, q1_s, q1_answer, q1_correct, q2_ms, …`）です。未回答の問題は空欄になります。BOM 付き UTF-8 なので、Excel で開いても日本語が文字化けしません。
+CSV の列は `attempt, user_id, survey_id, name, start_time, pid, session, lang, started_at, completed_at, completed, answered, correct, duration_ms, duration_s` のあと、アンケートの問題順に 4 列ずつ（`q1_ms, q1_s, q1_answer, q1_correct, q2_ms, …`）です。未回答の問題は空欄になります。BOM 付き UTF-8 なので、Excel で開いても日本語が文字化けしません。
 
 返り値の例は [README.md](README.md#reading-the-results) を参照してください。各挑戦の `question_ms` に問題 id ごとの所要時間（ミリ秒）がまとまっています。
 

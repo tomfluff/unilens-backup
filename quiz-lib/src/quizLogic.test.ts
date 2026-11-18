@@ -102,6 +102,13 @@ describe("isAnswerable", () => {
         expect(isAnswerable(many, ["c1"])).toBe(true);
         expect(isAnswerable(typed, "   ")).toBe(false);
     });
+
+    it("lets an optional text question go blank", () => {
+        const comment = { ...typed, optional: true as const };
+        expect(isAnswerable(comment, undefined)).toBe(true);
+        expect(isAnswerable(comment, "")).toBe(true);
+        expect(isAnswerable(comment, "とても難しかった")).toBe(true);
+    });
 });
 
 describe("scoreOf", () => {

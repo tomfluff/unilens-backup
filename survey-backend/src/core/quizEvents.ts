@@ -27,6 +27,10 @@ export const STUDY_SESSION = /^\d{1,3}$/;
 export const QUIZ_VISITOR = /^[A-Za-z0-9_-]{6,32}$/;
 /** the user ID and survey ID a respondent types before the survey (quiz-lib respondentIds.ts) */
 export const RESPONDENT_ID = /^[A-Za-z0-9_-]{1,32}$/;
+/** the name typed after the IDs, when the survey asks (quiz-lib `askProfile`): up to 64 characters */
+export const RESPONDENT_NAME_MAX = 64;
+/** the start time typed with it: "HH:MM", 24-hour */
+export const START_TIME = /^([01]\d|2[0-3]):[0-5]\d$/;
 
 export const QUIZ_EVENT_TYPES: ReadonlySet<string> = new Set([
     "quiz_open",
@@ -37,6 +41,8 @@ export const QUIZ_EVENT_TYPES: ReadonlySet<string> = new Set([
     // the survey is Japanese only now, but an older quiz.js (a cached page) may still send it
     "quiz_lang",
     "quiz_ids",
+    // the name and start time, typed after the IDs (a survey with askProfile)
+    "quiz_profile",
 ]);
 export const QUIZ_MAX_EVENTS = 100;
 /** measured as the Flask backend measured it: Python's json.dumps, in code points */

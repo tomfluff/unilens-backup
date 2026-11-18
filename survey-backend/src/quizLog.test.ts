@@ -666,3 +666,57 @@ describe("typed IDs", () => {
         expect([row.user_id, row.survey_id]).toEqual(["U01", "3"]);
     });
 });
+
+// ── The name and start time, typed after the IDs ─────────────────────────────
+
+describe("name and start time", () => {
+    it("are kept from any event, and odd ones are ignored", async () => {
+        const profile = {
+            t: "2026-10-08T01:00:01.500Z",
+            type: "quiz_profile",
+            quiz: "ir-basics",
+            attempt: "a1",
+            user_id: "U01",
+            survey_id: "3",
+            name: " 山田 太郎 ",
+            start_time: "08:30",
+        };
+        await s.post("", { events: [...attempt("a1"), profile] });
+        await s.post("", {
+            events: attempt("a2").map((e) => ({
+                ...e,
+                name: "x".repeat(65),
+                start_time: "8時半",
+            })),
+        });
+        const rows = Object.fromEntries(
+            (await attempts()).map((a) => [a.attempt, a]),
+        );
+        expect([rows.a1.name, rows.a1.start_time]).toEqual([
+            "山田 太郎",
+            "08:30",
+        ]);
+        expect([rows.a2.name, rows.a2.start_time]).toEqual([null, null]);
+    });
+
+    it("follow the IDs in the CSV", async () => {
+        await s.post("", {
+            events: attempt("a1").map((e) => ({
+                ...e,
+                user_id: "U01",
+                survey_id: "3",
+                name: "山田",
+                start_time: "13:05",
+            })),
+        });
+        const [row] = await csvRows();
+        expect(Object.keys(row).slice(0, 5)).toEqual([
+            "attempt",
+            "user_id",
+            "survey_id",
+            "name",
+            "start_time",
+        ]);
+        expect([row.name, row.start_time]).toEqual(["山田", "13:05"]);
+    });
+});

@@ -248,6 +248,8 @@ ${R} .unilens-quiz-input {
   background: ${v("bg")}; color: ${v("text")};
 }
 ${R} .unilens-quiz-input[readonly] { background: ${v("soft")}; }
+/* a comment box (a multiline text question): room for a few lines, the font of the page */
+${R} textarea.unilens-quiz-input { min-height: 7em; resize: vertical; font: inherit; line-height: 1.6; }
 /* the IDs typed before the first question */
 ${R} .unilens-quiz-field { display: flex; flex-direction: column; gap: 0.3em; margin: 0 0 0.9em; max-width: 24em; }
 ${R} .unilens-quiz-field-label { font-weight: 700; }

@@ -43,6 +43,15 @@ export interface QuizMessages {
     idInvalid: (label: string) => string;
     /** on every screen after: who is answering */
     idsShown: (userId: string, surveyId: string) => string;
+    /** the screen after the IDs (a quiz with `askProfile`): name and start time */
+    profileLead: string;
+    nameLabel: string;
+    startTimeLabel: string;
+    startTimeHint: string;
+    nameTooLong: (label: string) => string;
+    startTimeInvalid: (label: string) => string;
+    /** the button that goes on from that screen to the question */
+    toQuestion: string;
     /** the start button, when the attempt had begun before the IDs were asked */
     resume: string;
     close: string;
@@ -53,6 +62,8 @@ export interface QuizMessages {
     chooseOne: string;
     chooseAll: string;
     typeAnswer: string;
+    /** an optional text question */
+    typeAnswerOptional: string;
     submit: string;
     needAnswer: string;
     correct: string;
@@ -77,14 +88,14 @@ export interface QuizMessages {
 }
 
 const ja: QuizMessages = {
-    toggle: "アンケート",
-    toggleLabel: (a, t) => `アンケート（全${t}問中${a}問回答済み）`,
-    openSurvey: "アンケートに回答する（新しいタブでアンケートのページを開く）",
-    surveyAt: (n, t) => `アンケート（${n}/${t}）`,
-    surveyDone: "アンケート（完了）",
+    toggle: "クイズ",
+    toggleLabel: (a, t) => `クイズ（全${t}問中${a}問回答済み）`,
+    openSurvey: "クイズに回答する（新しいタブでクイズのページを開く）",
+    surveyAt: (n, t) => `クイズ（${n}/${t}）`,
+    surveyDone: "クイズ（完了）",
     surveyAtLabel: (n, t) =>
-        `アンケート（${n}/${t}）：${t}問中${n}問目に回答する（新しいタブで開く）`,
-    surveyDoneLabel: "アンケート（完了）：お礼のページを開く（新しいタブで開く）",
+        `クイズ（${n}/${t}）：${t}問中${n}問目に回答する（新しいタブで開く）`,
+    surveyDoneLabel: "クイズ（完了）：お礼のページを開く（新しいタブで開く）",
     savedTitle: "回答を記録しました",
     alreadyAnswered: "この質問には回答済みです",
     answeredOf: (a, t) => `${t}問中 ${a}問に回答済み`,
@@ -104,6 +115,13 @@ const ja: QuizMessages = {
     idInvalid: (l) =>
         `${l}は半角英数字と「-」「_」で入力してください（32文字まで）`,
     idsShown: (u, s) => `ユーザーID：${u}　アンケートID：${s}`,
+    profileLead: "お名前と開始時刻を入力してください。",
+    nameLabel: "お名前",
+    startTimeLabel: "開始時刻",
+    startTimeHint: "「時:分」で入力してください（例：08:30）。",
+    nameTooLong: (l) => `${l}は64文字までで入力してください`,
+    startTimeInvalid: (l) => `${l}は「08:30」のように時:分で入力してください`,
+    toQuestion: "質問へ進む",
     resume: "回答を続ける",
     close: "閉じる",
     defaultTitle: "アンケート",
@@ -113,6 +131,7 @@ const ja: QuizMessages = {
     chooseOne: "1つ選んでください",
     chooseAll: "当てはまるものをすべて選んでください",
     typeAnswer: "回答を入力してください",
+    typeAnswerOptional: "回答を入力してください（任意。空欄のままでも送信できます）",
     submit: "回答する",
     needAnswer: "まだ回答されていません",
     correct: "正解",
@@ -163,6 +182,13 @@ const en: QuizMessages = {
     idInvalid: (l) =>
         `${l}: use letters, digits, - and _ only (up to 32 characters)`,
     idsShown: (u, s) => `User ID: ${u} · Survey ID: ${s}`,
+    profileLead: "Enter your name and the time you started.",
+    nameLabel: "Name",
+    startTimeLabel: "Start time",
+    startTimeHint: "Enter it as hours:minutes (e.g. 08:30).",
+    nameTooLong: (l) => `${l}: up to 64 characters`,
+    startTimeInvalid: (l) => `${l}: enter it as hours:minutes, like 08:30`,
+    toQuestion: "Go to the question",
     resume: "Continue",
     close: "Close",
     defaultTitle: "Survey",
@@ -172,6 +198,7 @@ const en: QuizMessages = {
     chooseOne: "Choose one",
     chooseAll: "Choose all that apply",
     typeAnswer: "Type your answer",
+    typeAnswerOptional: "Type your answer (optional; you may leave it blank)",
     submit: "Submit answer",
     needAnswer: "Not answered yet",
     correct: "Correct",

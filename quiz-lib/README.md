@@ -196,9 +196,13 @@ its high-contrast theme:
 | `choices` | Strings, or `{ "id", "text" }`. Default ids: `c1`, `c2`, … |
 | `answer` | Optional answer key. single: a choice id or 0-based index. multiple: a list of them. text: one or more accepted strings. Omit it for a plain survey question: the log then has `correct: null`. |
 | `caseSensitive` | text only. Default false. Answers are always compared after Unicode NFKC and space trimming, so full-width `２５` matches `25`. |
+| `optional` | text only. Default false. true: it may be sent blank (a comment box, say); a blank answer is logged as `（未回答）`. |
+| `multiline` | text only. Default false. true: a box of several lines instead of one line. |
 | question `id` | Default `q1`, `q2`, … Set it yourself if you will reorder questions: the log refers to it. |
 | `showFeedback` | Default false: the visitor never sees right/wrong, correct answers, explanations or a score. true: a verdict and explanation after each graded answer, and the score at the end. |
 | `shuffleChoices` | Default false. Shuffled once per attempt; a reload keeps the order. |
+| `askIds` | Default true. false: no user ID / survey ID screen; the survey starts at the question. The log and results then have no `user_id` / `survey_id`, and `{user_id}` / `{survey_id}` in `next.url` become blank. |
+| `askProfile` | Default false. true: after the user ID and survey ID, a screen of its own asks the respondent's **name** (お名前) and **start time** (開始時刻, as `08:30`) before the question. Both are required, and asked once per attempt (not again on the other questions' pages). |
 | `next` | Optional. A "次のアンケートへ進む" (go on to the next survey) button on the screens after every question is answered (the last question's page and the thank-you page): `{ "url": "…", "label": "…" }` (`label` optional). `{user_id}` and `{survey_id}` in `url` become the user ID and survey ID the respondent typed (the answers, `pid` and `session` are not passed on). With them as the values in a Google Form's pre-filled link, the form opens with both IDs filled in. Example: `"next": { "url": "https://docs.google.com/forms/d/e/<form id>/viewform?usp=pp_url&entry.123456={user_id}&entry.654321={survey_id}" }`. On the survey page this tab goes to the form, once the last answer has reached the survey server. A URL that is not http(s) is ignored. |
 
 Invalid questions are skipped with a console warning; a quiz with no valid
@@ -245,9 +249,10 @@ browser's progress), `getResult()`, `isOpen()`,
 | `quiz_complete` | `attempt`, `correct`, `total`, `ms` (start to last answer) |
 | `quiz_lang` | No longer sent (the survey is Japanese only). Older logs have it: `lang` (the new language), `from`, `attempt` |
 | `quiz_ids` | `attempt`: the IDs were typed into an attempt begun before they were asked (one started by an earlier version) |
+| `quiz_profile` | `attempt`, `name`, `start_time`: the name and start time were typed (a survey with `askProfile`) |
 
 Every line also has `t`, `seq`, `quiz`, `lang`, `page` (path only), the typed
-`user_id` / `survey_id` once entered, and `pid` /
+`user_id` / `survey_id` once entered (and `name` / `start_time` with `askProfile`), and `pid` /
 `session` when the page named a participant (else `vid`, the button's anonymous id, when there is one).
 Nothing else about the visitor is sent, and nothing goes to the study's
 per-participant logs (`backend/study-logs/`).
@@ -270,7 +275,7 @@ curl -o results.csv "http://127.0.0.1:5100/api/quiz/unilens-poc/results.csv?comp
 
 The survey list (`/survey`) links each survey's CSV.
 
-CSV columns: `attempt, user_id, survey_id, pid, session, lang, started_at, completed_at, completed,
+CSV columns: `attempt, user_id, survey_id, name, start_time, pid, session, lang, started_at, completed_at, completed,
 answered, correct, duration_ms, duration_s`, then the four columns per question,
 in the survey's order (`q1_ms, q1_s, q1_answer, q1_correct, q2_ms, …`). A
 question not answered leaves its columns empty. The file is UTF-8 with a BOM, so

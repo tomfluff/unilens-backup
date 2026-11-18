@@ -181,3 +181,55 @@ describe("next survey", () => {
         }
     });
 });
+
+describe("the name-and-start-time screen and optional comment boxes", () => {
+    const questions = [{ prompt: "p", choices: ["a", "b"] }];
+
+    it("asks the name and start time only when the quiz says so", () => {
+        expect(
+            normalizeQuiz({ id: "q", questions, askProfile: true }).quiz
+                ?.askProfile,
+        ).toBe(true);
+        for (const askProfile of [undefined, false, "yes"]) {
+            expect(
+                normalizeQuiz({ id: "q", questions, askProfile }).quiz,
+            ).not.toHaveProperty("askProfile");
+        }
+    });
+
+    it("lets a text question be optional and several lines long", () => {
+        const { quiz } = normalizeQuiz({
+            id: "q",
+            questions: [
+                {
+                    id: "comment",
+                    type: "text",
+                    prompt: "p",
+                    optional: true,
+                    multiline: true,
+                },
+                { id: "plain", type: "text", prompt: "p" },
+            ],
+        });
+        const [comment, plain] = quiz?.questions ?? [];
+        expect(comment).toMatchObject({ optional: true, multiline: true });
+        // unset: not there at all, so a quiz without them keeps its fingerprint
+        expect(plain).not.toHaveProperty("optional");
+        expect(plain).not.toHaveProperty("multiline");
+    });
+});
+
+describe("a survey that asks no IDs", () => {
+    const questions = [{ prompt: "p", choices: ["a", "b"] }];
+
+    it("is marked only when askIds is false", () => {
+        expect(
+            normalizeQuiz({ id: "q", questions, askIds: false }).quiz?.askIds,
+        ).toBe(false);
+        for (const askIds of [undefined, true, "no"]) {
+            expect(
+                normalizeQuiz({ id: "q", questions, askIds }).quiz,
+            ).not.toHaveProperty("askIds");
+        }
+    });
+});

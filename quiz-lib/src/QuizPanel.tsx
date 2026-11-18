@@ -52,6 +52,7 @@ import {
     goToQuestion,
     recordAnswer,
     setAttemptIds,
+    setAttemptProfile,
     setOpen,
     startAttempt,
     useQuizStore,
@@ -66,10 +67,15 @@ import {
 } from "./quizTypes";
 import {
     checkId,
+    checkName,
+    checkStartTime,
     type IdError,
     idFields,
     idsOf,
+    profileFields,
+    profileOf,
     type RespondentIds,
+    type RespondentProfile,
 } from "./respondentIds";
 
 // ── Public callback payloads ──────────────────────────────────────────────
@@ -189,7 +195,8 @@ function responseText(
     m: QuizMessages,
 ): string {
     if (r === undefined) return m.noAnswer;
-    if (q.type === "text") return typeof r === "string" ? r : m.noAnswer;
+    if (q.type === "text")
+        return typeof r === "string" && r.trim() ? r : m.noAnswer;
     const ids = Array.isArray(r) ? r : [r];
     return ids.length
         ? ids
@@ -232,7 +239,7 @@ export function prepareQuestion(
     index: number,
 ) {
     const a = currentAttempt(storeKey, fingerprint, quiz.questions.length);
-    if (!a || !idsOf(a) || a.finishedAt) return;
+    if (!a || (quiz.askIds !== false && !idsOf(a)) || a.finishedAt) return;
     if (a.answers[quiz.questions[index].id]) return;
     if (a.index !== index) goToQuestion(storeKey, index);
 }
@@ -385,11 +392,16 @@ export function QuizApp({
     /** one question's page: answered here, now (not on an earlier visit) */
     const [savedNow, setSavedNow] = useState(false);
     const ids = idsOf(attempt);
-    /** the way on to the next survey, with this respondent's IDs filled in */
+    /** false: the survey asks no IDs and starts at the question (quiz `askIds`) */
+    const askIds = quiz.askIds !== false;
+    /** the way on to the next survey, with this respondent's IDs filled in (blank when none are asked) */
     const nextWay: NextWay | null =
-        quiz.next && ids
+        quiz.next && (ids || !askIds)
             ? {
-                  href: nextSurveyHref(quiz.next, ids),
+                  href: nextSurveyHref(
+                      quiz.next,
+                      ids ?? { userId: "", surveyId: "" },
+                  ),
                   label: quiz.next.label
                       ? localize(quiz.next.label, lang)
                       : m.nextSurvey,
@@ -413,11 +425,15 @@ export function QuizApp({
         shownAt.current = Date.now();
     }, [questionIndex, attempt?.attempt]);
 
-    /** what every event carries: the quiz, the language, and the respondent's IDs once typed */
+    /**
+     * what every event carries: the quiz, the language, and the respondent's IDs
+     * (and, when the quiz asks, name and start time) once typed
+     */
     const base = (a: Attempt | null = attempt) => ({
         quiz: quiz.id,
         lang,
         ...idFields(idsOf(a)),
+        ...profileFields(profileOf(a)),
     });
 
     // The survey page is opened by its address: that counts as opening the survey.
@@ -434,10 +450,18 @@ export function QuizApp({
     // one question's page: that question is the one on screen (its clock), even if
     // another page of the survey moved the attempt on in the meantime
     useEffect(() => {
-        if (only === null || !attempt || !ids || attempt.finishedAt) return;
+        if (only === null || !attempt || (askIds && !ids) || attempt.finishedAt)
+            return;
         if (attempt.answers[quiz.questions[only].id]) return;
         if (attempt.index !== only) goToQuestion(storeKey, only);
-    }, [only, attempt, ids, quiz, storeKey]);
+    }, [only, attempt, ids, askIds, quiz, storeKey]);
+
+    // A survey that asks no IDs: one question's page starts the attempt by
+    // itself, so the question is the first thing on screen.
+    // biome-ignore lint/correctness/useExhaustiveDependencies: only when there is no attempt yet
+    useEffect(() => {
+        if (!askIds && only !== null && !attempt) start(null);
+    }, [askIds, only, attempt]);
 
     function openPanel() {
         setOpen(true);
@@ -456,8 +480,8 @@ export function QuizApp({
      * page, at that question), or add them to an attempt begun before they were
      * asked — its question's clock then runs from now, as it is only now shown.
      */
-    function start(typed: RespondentIds) {
-        if (attempt && !attempt.finishedAt) {
+    function start(typed: RespondentIds | null) {
+        if (typed && attempt && !attempt.finishedAt) {
             setAttemptIds(storeKey, typed);
             logQuizEvent("quiz_ids", {
                 ...base(),
@@ -468,7 +492,7 @@ export function QuizApp({
             if (!attempt.answers[quiz.questions[at].id])
                 goToQuestion(storeKey, at);
         } else {
-            const a = startAttempt(storeKey, fingerprint, typed);
+            const a = startAttempt(storeKey, fingerprint, typed ?? undefined);
             logQuizEvent("quiz_start", {
                 ...base(a),
                 attempt: a.attempt,
@@ -477,6 +501,24 @@ export function QuizApp({
             });
             if (only !== null && only > 0) goToQuestion(storeKey, only);
         }
+        requestFocus("screen");
+    }
+
+    /**
+     * The respondent typed their name and start time (the screen after the IDs):
+     * keep them with the attempt, then show the question — its clock runs from
+     * now, as it is only now shown.
+     */
+    function saveProfile(typed: RespondentProfile) {
+        if (!attempt || attempt.finishedAt) return;
+        setAttemptProfile(storeKey, typed);
+        logQuizEvent("quiz_profile", {
+            ...base(attempt),
+            ...profileFields(typed),
+            attempt: attempt.attempt,
+        });
+        const at = only ?? attempt.index;
+        if (!attempt.answers[quiz.questions[at].id]) goToQuestion(storeKey, at);
         requestFocus("screen");
     }
 
@@ -620,7 +662,14 @@ export function QuizApp({
 
     let screen: ReactNode;
     // The IDs come first: before a new attempt, and for one begun before they were asked
-    const needIds = !attempt || (!attempt.finishedAt && !ids);
+    const needIds = askIds && (!attempt || (!attempt.finishedAt && !ids));
+    // then, when the quiz asks, the name and start time on a screen of their own
+    const needProfile =
+        !needIds &&
+        quiz.askProfile === true &&
+        attempt !== null &&
+        !attempt.finishedAt &&
+        !profileOf(attempt);
     if (needIds) {
         screen = (
             <Intro
@@ -631,6 +680,20 @@ export function QuizApp({
                 onStart={start}
             />
         );
+    } else if (!attempt && only === null) {
+        // a survey without IDs, shown whole (the panel): its start screen, with no fields
+        screen = (
+            <Intro
+                quiz={quiz}
+                lang={lang}
+                m={m}
+                resume={false}
+                askIds={false}
+                onStart={start}
+            />
+        );
+    } else if (needProfile) {
+        screen = <ProfileForm m={m} onSave={saveProfile} />;
     } else if (only !== null && attempt) {
         const q = quiz.questions[only];
         if (attempt.answers[q.id] || attempt.finishedAt) {
@@ -808,6 +871,7 @@ function Intro({
     lang,
     m,
     resume,
+    askIds = true,
     onStart,
 }: {
     quiz: Quiz;
@@ -815,7 +879,9 @@ function Intro({
     m: QuizMessages;
     /** the attempt had begun before the IDs were asked: "continue" rather than "start" */
     resume: boolean;
-    onStart: (ids: RespondentIds) => void;
+    /** default true; false: only the start button (the survey asks no IDs) */
+    askIds?: boolean;
+    onStart: (ids: RespondentIds | null) => void;
 }) {
     const description = localize(quiz.description, lang);
     const [userId, setUserId] = useState("");
@@ -832,6 +898,10 @@ function Intro({
 
     function handleSubmit(e: FormEvent) {
         e.preventDefault();
+        if (!askIds) {
+            onStart(null);
+            return;
+        }
         const u = checkId(userId);
         const sv = checkId(surveyId);
         setErrors({ user: u.error, survey: sv.error });
@@ -856,36 +926,46 @@ function Intro({
                 {m.questionCount(quiz.questions.length)}
             </ScreenHeading>
             {description && <p className="unilens-quiz-text">{description}</p>}
-            <p className="unilens-quiz-text">{m.idsLead}</p>
+            {askIds && <p className="unilens-quiz-text">{m.idsLead}</p>}
             <form onSubmit={handleSubmit} noValidate>
-                <p id="unilens-quiz-id-hint" className="unilens-quiz-legend">
-                    {m.idHint}
-                </p>
-                <IdField
-                    id="unilens-quiz-user-id"
-                    label={m.userIdLabel}
-                    value={userId}
-                    onChange={(v) => {
-                        setUserId(v);
-                        setErrors((x) => ({ ...x, user: null }));
-                    }}
-                    error={errors.user && errorText(errors.user, m.userIdLabel)}
-                    inputRef={userRef}
-                />
-                <IdField
-                    id="unilens-quiz-survey-id"
-                    label={m.surveyIdLabel}
-                    value={surveyId}
-                    onChange={(v) => {
-                        setSurveyId(v);
-                        setErrors((x) => ({ ...x, survey: null }));
-                    }}
-                    error={
-                        errors.survey &&
-                        errorText(errors.survey, m.surveyIdLabel)
-                    }
-                    inputRef={surveyRef}
-                />
+                {askIds && (
+                    <>
+                        <p
+                            id="unilens-quiz-id-hint"
+                            className="unilens-quiz-legend"
+                        >
+                            {m.idHint}
+                        </p>
+                        <IdField
+                            id="unilens-quiz-user-id"
+                            label={m.userIdLabel}
+                            value={userId}
+                            onChange={(v) => {
+                                setUserId(v);
+                                setErrors((x) => ({ ...x, user: null }));
+                            }}
+                            error={
+                                errors.user &&
+                                errorText(errors.user, m.userIdLabel)
+                            }
+                            inputRef={userRef}
+                        />
+                        <IdField
+                            id="unilens-quiz-survey-id"
+                            label={m.surveyIdLabel}
+                            value={surveyId}
+                            onChange={(v) => {
+                                setSurveyId(v);
+                                setErrors((x) => ({ ...x, survey: null }));
+                            }}
+                            error={
+                                errors.survey &&
+                                errorText(errors.survey, m.surveyIdLabel)
+                            }
+                            inputRef={surveyRef}
+                        />
+                    </>
+                )}
                 <div className="unilens-quiz-actions">
                     <button type="submit" className="unilens-quiz-btn">
                         {resume ? m.resume : m.start}
@@ -894,6 +974,165 @@ function Intro({
                 </div>
             </form>
         </>
+    );
+}
+
+/**
+ * The screen after the IDs, when the quiz asks (`askProfile`): the respondent's
+ * name and the time they started, both required, checked before the question.
+ */
+function ProfileForm({
+    m,
+    onSave,
+}: {
+    m: QuizMessages;
+    onSave: (p: RespondentProfile) => void;
+}) {
+    const [name, setName] = useState("");
+    const [startTime, setStartTime] = useState("");
+    const [errors, setErrors] = useState<{
+        name: string | null;
+        time: string | null;
+    }>({ name: null, time: null });
+    const nameRef = useRef<HTMLInputElement>(null);
+    const timeRef = useRef<HTMLInputElement>(null);
+
+    function handleSubmit(e: FormEvent) {
+        e.preventDefault();
+        const n = checkName(name);
+        const t = checkStartTime(startTime);
+        const nameError =
+            n.error === "missing"
+                ? m.idMissing(m.nameLabel)
+                : n.error
+                  ? m.nameTooLong(m.nameLabel)
+                  : null;
+        const timeError =
+            t.error === "missing"
+                ? m.idMissing(m.startTimeLabel)
+                : t.error
+                  ? m.startTimeInvalid(m.startTimeLabel)
+                  : null;
+        setErrors({ name: nameError, time: timeError });
+        if (nameError || timeError) {
+            announce((nameError ?? timeError) as string);
+            (nameError ? nameRef : timeRef).current?.focus();
+            return;
+        }
+        onSave({ name: n.value, startTime: t.value });
+    }
+
+    return (
+        <>
+            <ScreenHeading
+                className="unilens-quiz-heading"
+                {...focusProps("screen")}
+            >
+                {m.profileLead}
+            </ScreenHeading>
+            <form onSubmit={handleSubmit} noValidate>
+                <TextField
+                    id="unilens-quiz-name"
+                    label={m.nameLabel}
+                    value={name}
+                    onChange={(v) => {
+                        setName(v);
+                        setErrors((x) => ({ ...x, name: null }));
+                    }}
+                    error={errors.name}
+                    inputRef={nameRef}
+                    autoComplete="name"
+                />
+                <TextField
+                    id="unilens-quiz-start-time"
+                    label={m.startTimeLabel}
+                    type="time"
+                    hint={m.startTimeHint}
+                    value={startTime}
+                    onChange={(v) => {
+                        setStartTime(v);
+                        setErrors((x) => ({ ...x, time: null }));
+                    }}
+                    error={errors.time}
+                    inputRef={timeRef}
+                />
+                <div className="unilens-quiz-actions">
+                    <button type="submit" className="unilens-quiz-btn">
+                        {m.toQuestion}
+                        <Icon name="next" />
+                    </button>
+                </div>
+            </form>
+        </>
+    );
+}
+
+/** One labelled field of the name-and-start-time screen, with its hint and error. */
+function TextField({
+    id,
+    label,
+    type = "text",
+    hint,
+    value,
+    onChange,
+    error,
+    inputRef,
+    autoComplete = "off",
+}: {
+    id: string;
+    label: string;
+    type?: "text" | "time";
+    hint?: string;
+    value: string;
+    onChange: (v: string) => void;
+    error: string | null;
+    inputRef: RefObject<HTMLInputElement | null>;
+    autoComplete?: string;
+}) {
+    const hintId = `${id}-hint`;
+    const errorId = `${id}-error`;
+    const describedBy =
+        [hint ? hintId : "", error ? errorId : ""].filter(Boolean).join(" ") ||
+        undefined;
+    return (
+        <div className="unilens-quiz-field">
+            <label htmlFor={id} className="unilens-quiz-field-label">
+                {label}
+            </label>
+            {hint && (
+                <p id={hintId} className="unilens-quiz-legend">
+                    {hint}
+                </p>
+            )}
+            <input
+                ref={inputRef}
+                id={id}
+                className="unilens-quiz-input"
+                type={type}
+                autoComplete={autoComplete}
+                spellCheck={false}
+                required
+                aria-required="true"
+                aria-invalid={error ? true : undefined}
+                aria-describedby={describedBy}
+                value={value}
+                onChange={(e) => onChange(e.target.value)}
+                onKeyDown={(e) => {
+                    // Enter that confirms a Japanese IME conversion must not submit
+                    if (
+                        e.key === "Enter" &&
+                        (e.nativeEvent.isComposing || e.keyCode === 229)
+                    )
+                        e.preventDefault();
+                }}
+            />
+            {error && (
+                <p id={errorId} className="unilens-quiz-error">
+                    <Icon name="alert" />
+                    {error}
+                </p>
+            )}
+        </div>
     );
 }
 
@@ -1004,6 +1243,8 @@ function QuestionView({
     );
     const [missing, setMissing] = useState(false);
     const firstInput = useRef<HTMLInputElement>(null);
+    /** a multiline text question's box */
+    const box = useRef<HTMLTextAreaElement>(null);
     const promptId = `unilens-quiz-prompt-${q.id}`;
     const hintId = `unilens-quiz-hint-${q.id}`;
     const errorId = `unilens-quiz-error-${q.id}`;
@@ -1023,10 +1264,11 @@ function QuestionView({
         if (!isAnswerable(q, draft)) {
             setMissing(true);
             announce(m.needAnswer);
-            firstInput.current?.focus();
+            (firstInput.current ?? box.current)?.focus();
             return;
         }
-        onSubmit(draft as QuizResponse);
+        // an optional text question left untouched goes as blank
+        onSubmit((draft ?? "") as QuizResponse);
     }
 
     const hint =
@@ -1034,7 +1276,9 @@ function QuestionView({
             ? m.chooseOne
             : q.type === "multiple"
               ? m.chooseAll
-              : m.typeAnswer;
+              : q.optional
+                ? m.typeAnswerOptional
+                : m.typeAnswer;
     const describedBy = missing ? `${hintId} ${errorId}` : hintId;
 
     return (
@@ -1048,7 +1292,26 @@ function QuestionView({
                 {localize(q.prompt, lang)}
             </ScreenHeading>
             <form onSubmit={handleSubmit} noValidate>
-                {q.type === "text" ? (
+                {q.type === "text" && q.multiline ? (
+                    <>
+                        <p id={hintId} className="unilens-quiz-legend">
+                            {hint}
+                        </p>
+                        <textarea
+                            ref={box}
+                            className="unilens-quiz-input"
+                            rows={5}
+                            autoComplete="off"
+                            aria-labelledby={promptId}
+                            aria-describedby={describedBy}
+                            aria-invalid={missing || undefined}
+                            aria-required={q.optional ? undefined : true}
+                            readOnly={locked}
+                            value={typeof draft === "string" ? draft : ""}
+                            onChange={(e) => update(e.target.value)}
+                        />
+                    </>
+                ) : q.type === "text" ? (
                     <>
                         <p id={hintId} className="unilens-quiz-legend">
                             {hint}

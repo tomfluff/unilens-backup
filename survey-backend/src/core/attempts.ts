@@ -12,6 +12,8 @@ import {
     type Query,
     type QuizEvent,
     RESPONDENT_ID,
+    RESPONDENT_NAME_MAX,
+    START_TIME,
     STUDY_PID,
     STUDY_SESSION,
 } from "./quizEvents.ts";
@@ -34,6 +36,10 @@ export interface Attempt {
     /** typed by the respondent before the first question */
     user_id: string | null;
     survey_id: string | null;
+    /** typed after the IDs, when the survey asks for them (quiz-lib `askProfile`) */
+    name: string | null;
+    /** "HH:MM", as the respondent typed it */
+    start_time: string | null;
     pid: unknown;
     session: unknown;
     vid: unknown;
@@ -117,6 +123,8 @@ function newAttempt(id: string): Folding {
         attempt: id,
         user_id: null,
         survey_id: null,
+        name: null,
+        start_time: null,
         pid: null,
         session: null,
         vid: null,
@@ -158,6 +166,16 @@ export function quizAttempts(events: readonly QuizEvent[]): Attempt[] {
             const v = field(ev, key);
             if (typeof v === "string" && RESPONDENT_ID.test(v)) a[key] = v;
         }
+        const name = field(ev, "name");
+        if (
+            typeof name === "string" &&
+            name.trim() &&
+            [...name].length <= RESPONDENT_NAME_MAX
+        )
+            a.name = name.trim();
+        const startTime = field(ev, "start_time");
+        if (typeof startTime === "string" && START_TIME.test(startTime))
+            a.start_time = startTime;
         const t = field(ev, "t");
         if (typeof t === "string" && t > (a.last_event_at ?? ""))
             a.last_event_at = t;

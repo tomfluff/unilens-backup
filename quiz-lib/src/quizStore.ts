@@ -11,7 +11,7 @@ import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import { QUIZ_STORE_KEY } from "./domIds";
 import type { QuizResponse } from "./quizTypes";
-import type { RespondentIds } from "./respondentIds";
+import type { RespondentIds, RespondentProfile } from "./respondentIds";
 
 export interface AnswerRecord {
     response: QuizResponse;
@@ -44,6 +44,10 @@ export interface Attempt {
     /** typed by the respondent before the first question (respondentIds.ts) */
     userId?: string;
     surveyId?: string;
+    /** typed on the screen after the IDs, when the quiz asks (`askProfile`) */
+    name?: string;
+    /** "HH:MM", as the respondent typed it (not a clock reading) */
+    startTime?: string;
 }
 
 interface QuizState {
@@ -169,6 +173,11 @@ export function recordAnswer(
 /** The respondent's IDs, for an attempt started before they were asked. */
 export function setAttemptIds(quizId: string, ids: RespondentIds) {
     patchAttempt(quizId, { userId: ids.userId, surveyId: ids.surveyId });
+}
+
+/** The respondent's name and start time, typed on the screen after the IDs. */
+export function setAttemptProfile(quizId: string, profile: RespondentProfile) {
+    patchAttempt(quizId, { name: profile.name, startTime: profile.startTime });
 }
 
 export function goToQuestion(quizId: string, index: number) {

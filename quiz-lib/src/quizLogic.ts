@@ -16,11 +16,16 @@ export function normalizeTextAnswer(s: string, caseSensitive = false): string {
     return caseSensitive ? t : t.toLowerCase();
 }
 
-/** Whether a response is complete enough to submit (something picked or typed). */
+/**
+ * Whether a response is complete enough to submit (something picked or typed).
+ * An optional text question may be sent blank.
+ */
 export function isAnswerable(
     q: QuizQuestion,
     r: QuizResponse | undefined,
 ): boolean {
+    if (q.type === "text" && q.optional)
+        return r === undefined || typeof r === "string";
     if (r === undefined) return false;
     if (q.type === "multiple") return Array.isArray(r) && r.length > 0;
     return typeof r === "string" && r.trim() !== "";

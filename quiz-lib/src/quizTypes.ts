@@ -59,6 +59,10 @@ export interface TextQuestionInput extends QuestionInputBase {
     answer?: string | string[];
     /** Default false: "Tokyo" and "tokyo" are the same answer. */
     caseSensitive?: boolean;
+    /** Default false. True: the question may be left blank (a comment box, say). */
+    optional?: boolean;
+    /** Default false. True: a box of several lines rather than one line. */
+    multiline?: boolean;
 }
 
 export type QuizQuestionInput =
@@ -86,6 +90,19 @@ export interface QuizInput {
      * screen once every question is answered. See NextSurveyInput.
      */
     next?: NextSurveyInput;
+    /**
+     * Default false. True: after the IDs, a screen of its own asks the
+     * respondent's name (お名前) and start time (開始時刻), before the first
+     * question. Both are required, kept with the attempt and logged.
+     */
+    askProfile?: boolean;
+    /**
+     * Default true: before the first question, the respondent types a user ID
+     * and survey ID. False: no such screen — the survey starts at the question
+     * (the log and results then have no `user_id` / `survey_id`, and `next.url`
+     * gets them blank).
+     */
+    askIds?: boolean;
 }
 
 /**
@@ -132,6 +149,9 @@ export interface TextQuestion extends QuestionBase {
     /** empty: not graded */
     accepted: string[];
     caseSensitive: boolean;
+    /** present only when true (so other quizzes keep their fingerprint) */
+    optional?: true;
+    multiline?: true;
 }
 
 export type QuizQuestion = SingleQuestion | MultipleQuestion | TextQuestion;
@@ -145,6 +165,10 @@ export interface Quiz {
     showFeedback: boolean;
     shuffleChoices: boolean;
     next?: NextSurvey;
+    /** present only when true (so other quizzes keep their fingerprint) */
+    askProfile?: true;
+    /** present only when false (so other quizzes keep their fingerprint) */
+    askIds?: false;
 }
 
 export interface NextSurvey {
@@ -284,12 +308,18 @@ function normalizeQuestion(
     }
 
     if (type === "text") {
+        // only when set, so a quiz without them keeps its fingerprint (stored progress)
+        const box = {
+            ...(raw.optional === true ? { optional: true as const } : {}),
+            ...(raw.multiline === true ? { multiline: true as const } : {}),
+        };
         if (raw.answer === undefined)
             return {
                 ...base,
                 type,
                 accepted: [],
                 caseSensitive: raw.caseSensitive === true,
+                ...box,
             };
         const list = Array.isArray(raw.answer) ? raw.answer : [raw.answer];
         const accepted = list.filter(
@@ -304,6 +334,7 @@ function normalizeQuestion(
             type,
             accepted,
             caseSensitive: raw.caseSensitive === true,
+            ...box,
         };
     }
 
@@ -384,6 +415,8 @@ export function normalizeQuiz(raw: unknown): {
             showFeedback: raw.showFeedback === true,
             shuffleChoices: raw.shuffleChoices === true,
             ...(next ? { next } : {}),
+            ...(raw.askProfile === true ? { askProfile: true as const } : {}),
+            ...(raw.askIds === false ? { askIds: false as const } : {}),
         },
         errors,
     };

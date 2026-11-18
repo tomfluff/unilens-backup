@@ -23,7 +23,9 @@ export type QuizEventType =
     | "quiz_answer"
     | "quiz_complete"
     /** the respondent typed their IDs into an attempt begun before they were asked */
-    | "quiz_ids";
+    | "quiz_ids"
+    /** the respondent typed their name and start time (a quiz with `askProfile`) */
+    | "quiz_profile";
 
 const PID = /^[A-Za-z0-9_-]{1,24}$/;
 /** an anonymous visitor id (link mode's, carried to the survey page as ?vid=) */

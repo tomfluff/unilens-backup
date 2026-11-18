@@ -43,3 +43,63 @@ export function idsOf(
 export function idFields(ids: RespondentIds | null): Record<string, string> {
     return ids ? { user_id: ids.userId, survey_id: ids.surveyId } : {};
 }
+
+// ── The name and start time, asked after the IDs (a quiz's `askProfile`) ──
+
+/** The respondent's name and the time they say they started, typed on the screen after the IDs. */
+export interface RespondentProfile {
+    name: string;
+    /** "HH:MM", 24-hour, as an `<input type="time">` gives it */
+    startTime: string;
+}
+
+/** A name long enough for anyone's, short enough for one spreadsheet cell. */
+export const NAME_MAX = 64;
+/** "08:30": what an `<input type="time">` gives (seconds are not asked) */
+export const START_TIME = /^([01]\d|2[0-3]):[0-5]\d$/;
+
+/** A typed name: spaces around it go, inner runs of space become one; must be there and not too long. */
+export function checkName(raw: string): {
+    value: string;
+    error: IdError | null;
+} {
+    const value = raw.trim().replace(/\s+/g, " ");
+    if (!value) return { value, error: "missing" };
+    return { value, error: [...value].length <= NAME_MAX ? null : "invalid" };
+}
+
+/**
+ * A typed start time. A time field gives "08:30"; a browser without one gives
+ * whatever was typed, so "8:30" and full-width "８：３０" are read as well.
+ */
+export function checkStartTime(raw: string): {
+    value: string;
+    error: IdError | null;
+} {
+    const t = raw.normalize("NFKC").trim();
+    if (!t) return { value: t, error: "missing" };
+    const m = /^(\d{1,2}):(\d{2})(?::\d{2})?$/.exec(t);
+    const value = m ? `${m[1].padStart(2, "0")}:${m[2]}` : t;
+    return { value, error: START_TIME.test(value) ? null : "invalid" };
+}
+
+/** The name and start time, when a stored attempt has valid ones. */
+export function profileOf(
+    a: { name?: unknown; startTime?: unknown } | null | undefined,
+): RespondentProfile | null {
+    if (!a) return null;
+    const { name, startTime } = a;
+    return typeof name === "string" &&
+        checkName(name).error === null &&
+        typeof startTime === "string" &&
+        START_TIME.test(startTime)
+        ? { name, startTime }
+        : null;
+}
+
+/** The name and start time as the log names them. */
+export function profileFields(
+    p: RespondentProfile | null,
+): Record<string, string> {
+    return p ? { name: p.name, start_time: p.startTime } : {};
+}

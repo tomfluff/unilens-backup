@@ -107,10 +107,12 @@ describe("the defaults", () => {
         const { surveysDir } = configFromEnv({});
         const path = join(surveysDir, "unilens-poc.json");
         const data = JSON.parse(await readFile(path, "utf8"));
-        expect(data.questions).toHaveLength(4);
+        expect(data.questions).toHaveLength(6);
+        // Japanese only, starting at the question (no IDs, no name or start time)
+        expect(data.askIds).toBe(false);
         for (const q of data.questions) {
-            expect(q.prompt.ja).toBeTruthy();
-            expect(q.prompt.en).toBeTruthy();
+            expect(typeof q.prompt).toBe("string");
+            expect(q.prompt).toBeTruthy();
         }
     });
 
