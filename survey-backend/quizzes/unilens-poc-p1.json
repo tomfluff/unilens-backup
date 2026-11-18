@@ -1,55 +1,90 @@
 {
   "id": "unilens-poc-p1",
-  "title": {
-    "ja": "UniLens PoC アンケート（p=1）",
-    "en": "UniLens PoC survey (p=1)"
-  },
+  "title": "UniLens PoC｜探し物課題（ソフトバンク株主優待）（p=1）",
+  "description": "指定されたWebサイトを参照して各設問に回答してください。参照先：https://www.softbank.jp/corp/ir/investor/benefit/ 「すべて選んでください」と書かれた問題は複数選択してください。",
+  "askIds": false,
   "next": {
-    "url": "https://docs.google.com/forms/d/e/1FAIpQLSdWHrjUfFA8GnXwOBumaXZqChyQ2Y7SnaFIys9PWJhCNY5q8w/viewform?usp=pp_url&entry.659490342={user_id}&entry.679443900={survey_id}"
+    "url": "https://docs.google.com/forms/d/e/1FAIpQLSdWHrjUfFA8GnXwOBumaXZqChyQ2Y7SnaFIys9PWJhCNY5q8w/viewform?usp=pp_url&entry.659490342={user_id}"
   },
   "questions": [
     {
-      "id": "q1",
-      "type": "multiple",
-      "prompt": {
-        "ja": "株主優待の申請を正常に完了していても、PayPayマネーライトを受け取れない可能性があるケースをすべて選んでください。",
-        "en": "Even after successfully applying for the shareholder benefit, in which cases might you not receive PayPay Money Lite? Select all that apply."
-      },
+      "id": "q1_amount",
+      "prompt": "株主優待として進呈されるPayPayマネーライトはいくら分ですか。",
       "choices": [
         {
           "id": "a",
-          "text": {
-            "ja": "株価が購入時より下落している",
-            "en": "The share price has fallen below your purchase price"
-          }
+          "text": "500円分"
         },
         {
           "id": "b",
-          "text": {
-            "ja": "連携したPayPayアカウントが無効になっている",
-            "en": "The linked PayPay account has been deactivated"
-          }
+          "text": "1,000円分"
         },
         {
           "id": "c",
-          "text": {
-            "ja": "SoftBankの携帯電話を契約していない",
-            "en": "You don't have a SoftBank mobile plan"
-          }
+          "text": "2,000円分"
         },
         {
           "id": "d",
-          "text": {
-            "ja": "PayPayマネーライトの保有上限に達している",
-            "en": "Your PayPay Money Lite balance has reached its upper limit"
-          }
+          "text": "5,000円分"
         },
         {
           "id": "e",
-          "text": {
-            "ja": "わからなかった",
-            "en": "I couldn't find the answer"
-          }
+          "text": "わからなかった"
+        }
+      ],
+      "answer": "b"
+    },
+    {
+      "id": "q2_shares",
+      "prompt": "株主優待の対象となるためには、ソフトバンクの普通株式を何株以上保有する必要がありますか。",
+      "choices": [
+        {
+          "id": "a",
+          "text": "10株以上"
+        },
+        {
+          "id": "b",
+          "text": "50株以上"
+        },
+        {
+          "id": "c",
+          "text": "100株以上"
+        },
+        {
+          "id": "d",
+          "text": "1,000株以上"
+        },
+        {
+          "id": "e",
+          "text": "わからなかった"
+        }
+      ],
+      "answer": "c"
+    },
+    {
+      "id": "q3_not_received",
+      "type": "multiple",
+      "prompt": "株主優待の申請を正常に完了していても、PayPayマネーライトを受け取れない可能性があるケースをすべて選んでください。",
+      "choices": [
+        {
+          "id": "a",
+          "text": "株価が購入時より下落している"
+        },
+        {
+          "id": "b",
+          "text": "連携したPayPayアカウントが無効になっている"
+        },
+        {
+          "id": "c",
+          "text": "SoftBankの携帯電話を契約していない"
+        },
+        {
+          "id": "d",
+          "text": "PayPayマネーライトの保有上限に達している"
+        },
+        {
+          "id": "e",
+          "text": "わからなかった"
         }
       ],
       "answer": [
@@ -58,47 +93,29 @@
       ]
     },
     {
-      "id": "q2",
+      "id": "q4_link_check",
       "type": "multiple",
-      "prompt": {
-        "ja": "PayPayとの連携が正常に完了しているか確認したい場合、正しい確認方法をすべて選んでください。",
-        "en": "How can you confirm that PayPay linking succeeded? Select all that apply."
-      },
+      "prompt": "PayPayとの連携が正常に完了しているか確認したい場合、正しい確認方法をすべて選んでください。",
       "choices": [
         {
           "id": "a",
-          "text": {
-            "ja": "株主優待サイトの「申請情報確認・変更」でPayPayアカウント情報を確認する",
-            "en": "Check the PayPay info in \"Review/Change Application\" on the benefits site"
-          }
+          "text": "株主優待サイトの「申請情報確認・変更」でPayPayアカウント情報を確認する"
         },
         {
           "id": "b",
-          "text": {
-            "ja": "PayPayアプリの「アカウント ＞ 外部サービス連携」で「ソフトバンク株式会社（株主優待）」を確認する",
-            "en": "PayPay app: find \"SoftBank Corp. (Shareholder Benefits)\" under \"Account > Linked Services\""
-          }
+          "text": "PayPayアプリの「アカウント ＞ 外部サービス連携」で「ソフトバンク株式会社（株主優待）」を確認する"
         },
         {
           "id": "c",
-          "text": {
-            "ja": "PayPayアプリの残高が1,000円増えているか確認する",
-            "en": "Check if your PayPay balance rose by ¥1,000"
-          }
+          "text": "PayPayアプリの残高が1,000円増えているか確認する"
         },
         {
           "id": "d",
-          "text": {
-            "ja": "ソフトバンクからSMSが届いているか確認する",
-            "en": "Check whether you received an SMS from SoftBank"
-          }
+          "text": "ソフトバンクからSMSが届いているか確認する"
         },
         {
           "id": "e",
-          "text": {
-            "ja": "わからなかった",
-            "en": "I couldn't find the answer"
-          }
+          "text": "わからなかった"
         }
       ],
       "answer": [
@@ -107,94 +124,38 @@
       ]
     },
     {
-      "id": "q3",
-      "prompt": {
-        "ja": "2026年2月28日にSBの株を保有開始し、優待はいつ進呈されますか。",
-        "en": "You bought SoftBank shares on Feb 28, 2026. When will you receive the benefit?"
-      },
+      "id": "q5_grant",
+      "prompt": "Aさんは普通株式を100株保有し、2025年9月30日から2026年9月30日まで同一の株主番号で継続保有しています。2026年9月30日までに申請も完了しました。受け取れる優待内容と進呈時期はどれですか。",
       "choices": [
         {
           "id": "a",
-          "text": {
-            "ja": "同年の6月",
-            "en": "June of the same year"
-          }
+          "text": "PayPayマネーライト500円分 ／ 2026年9月"
         },
         {
           "id": "b",
-          "text": {
-            "ja": "同年の11月",
-            "en": "November of the same year"
-          }
+          "text": "PayPayマネーライト1,000円分 ／ 2026年9月"
         },
         {
           "id": "c",
-          "text": {
-            "ja": "翌年の5月",
-            "en": "May of the following year"
-          }
+          "text": "PayPayマネーライト1,000円分 ／ 2026年11月"
         },
         {
           "id": "d",
-          "text": {
-            "ja": "翌年の11月",
-            "en": "November of the following year"
-          }
+          "text": "PayPayマネーライト2,000円分 ／ 2026年11月"
         },
         {
           "id": "e",
-          "text": {
-            "ja": "わからなかった",
-            "en": "I couldn't find the answer"
-          }
+          "text": "わからなかった"
         }
       ],
       "answer": "c"
     },
     {
-      "id": "q4",
-      "prompt": {
-        "ja": "株主優待を申請したいのですが、配当金計算書を紛失してしまい、株主番号も分かりません。どの対応が正しいですか？",
-        "en": "You want to apply for the benefit, but you lost your dividend statement and don't know your shareholder number. What should you do?"
-      },
-      "choices": [
-        {
-          "id": "a",
-          "text": {
-            "ja": "ソフトバンクショップで確認する",
-            "en": "Ask at a SoftBank store"
-          }
-        },
-        {
-          "id": "b",
-          "text": {
-            "ja": "みずほ信託銀行に問い合わせる",
-            "en": "Contact Mizuho Trust & Banking"
-          }
-        },
-        {
-          "id": "c",
-          "text": {
-            "ja": "PayPayのサポート窓口に問い合わせる",
-            "en": "Contact PayPay customer support"
-          }
-        },
-        {
-          "id": "d",
-          "text": {
-            "ja": "証券会社から新しい株主番号を発行してもらう",
-            "en": "Ask your brokerage to issue a new shareholder number"
-          }
-        },
-        {
-          "id": "e",
-          "text": {
-            "ja": "わからなかった",
-            "en": "I couldn't find the answer"
-          }
-        }
-      ],
-      "answer": "b"
+      "id": "q6_comment",
+      "type": "text",
+      "optional": true,
+      "multiline": true,
+      "prompt": "課題についてのご意見や感想を教えてください。（難しすぎる、簡単すぎる など）"
     }
   ]
 }
