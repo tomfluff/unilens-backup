@@ -403,6 +403,7 @@ export const NAMES_JA: Partial<Record<keyof Settings, string>> = {
     debugShortcut: "Ctrl＋Shift＋D でデバッグ表示を開く",
     assistantZoom: "頼まれたらアシスタントがページを拡大する",
     assistantZoomStep: "画面の幅いっぱいのものを拡大する量 (%)",
+    assistantZoomFitMax: "幅いっぱいのものの中身を拡大する上限 (%)",
     assistantGoTo: "アシスタントがページ上の場所へ連れて行く",
     associateText: "回答と根拠を結ぶ（根拠が支える語句に下線）",
     settingsButton: "設定ボタン（隠しても Ctrl＋Alt＋Shift＋S で設定を開く）",

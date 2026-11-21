@@ -254,6 +254,10 @@ export interface Settings {
      *  fills the screen's width, its words too: fitting it would change nothing
      *  (Yotam, 2026-11-21) */
     assistantZoomStep: number;
+    /** the most (%) the assistant zooms when it fits something's contents, its words
+     *  inside a page-wide bar: a short heading would fill the screen at 500% (Yotam,
+     *  2026-11-21) */
+    assistantZoomFitMax: number;
     /** the assistant takes the user to a place on the page when it decides they asked
      *  (a go-to marker in the chat: scroll there and outline it) */
     assistantGoTo: boolean;
@@ -430,6 +434,7 @@ const DEFAULTS: Settings = {
     debugShortcut: true,
     assistantZoom: true,
     assistantZoomStep: 50,
+    assistantZoomFitMax: 300,
     assistantGoTo: false,
     associateText: false,
     citePlacement: "inline",
@@ -632,6 +637,12 @@ export const NUMBER_KNOBS: Record<
         min: 10,
         max: 200,
         step: 10,
+    },
+    assistantZoomFitMax: {
+        label: "Zoom into the words inside something that wide at most to (%)",
+        min: 100,
+        max: 500,
+        step: 25,
     },
     voicePauseMs: {
         label: "Pause that ends a voice message (ms)",
@@ -1103,6 +1114,7 @@ export const PANEL_TABS: { id: PanelTabId; groups: PanelGroup[] }[] = [
                     "lensPan",
                     "assistantZoom",
                     "assistantZoomStep",
+                    "assistantZoomFitMax",
                 ],
             },
             {

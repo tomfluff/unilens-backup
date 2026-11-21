@@ -924,14 +924,21 @@ export function assistantZoom(to: Element | "in" | "out" | "reset"): number {
     let z = fitted(r);
     let c = clientToContent(r.left + r.width / 2, r.top + r.height / 2);
     // as wide as the screen (a page-wide heading's bar): fitting it changes nothing,
-    // so fit what is inside it, its words; when they fill the width too, a step in
-    // (Yotam, 2026-11-21: the 申請方法 heading stayed at 100% in a video take)
-    if (z <= targetScale + 0.01) {
+    // so fit what is inside it, its words (at most assistantZoomFitMax); when they
+    // fill the width too, or the cap is reached, a step in (Yotam, 2026-11-21: the
+    // 申請方法 heading stayed at 100% in a video take)
+    // (wide at its own size, not against the zoom now: a narrow box zoomed into
+    // already stays as it was, and is not stepped past the screen's edges)
+    if (fitted(r) <= MIN_ZOOM + 0.01) {
         aimed = true;
         const inner = contentBoxOf(to, r);
         if (inner) {
             box = inner;
-            z = fitted(inner);
+            // at most the cap: a short heading's words would fill the screen
+            z = Math.min(
+                fitted(inner),
+                Math.max(MIN_ZOOM, getSettings().assistantZoomFitMax / 100),
+            );
             c = clientToContent(
                 inner.left + inner.width / 2,
                 inner.top + inner.height / 2,
