@@ -299,12 +299,14 @@ LIVE_GO_DESCRIPTION = (
 LIVE_ZOOM_DESCRIPTION = (
     "Zoom the page, only when the user asks. Give either id, to zoom into one "
     "element (an id from the page inventory), or change: in or out a step, or "
-    "reset to 100%."
+    "reset to 100%. Its result says where the zoom went; when it says unchanged, "
+    "the page did not zoom."
 )
 LIVE_ZOOM = (
     "When the user asks you to zoom (into something, in, out, or back to normal "
     "size), call zoom: with the id of what to zoom into, or with change set to in, "
-    "out or reset. "
+    "out or reset. Say only the zoom its result gives: when it is unchanged, say the "
+    "page did not zoom, never that it did. "
 )
 
 

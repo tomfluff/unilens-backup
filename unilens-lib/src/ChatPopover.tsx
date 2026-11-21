@@ -69,6 +69,7 @@ import {
     type PointResult,
     startLive,
     type ToolCall,
+    zoomSaid,
 } from "./live";
 import {
     goToPlace,
@@ -880,6 +881,7 @@ export default function ChatPopover({
             // a zoom a step in or out, or back to 100%: no element; the reply that
             // asked shows Back under it
             if (call.change) {
+                const was = Math.round(getTargetZoom() * 100);
                 const z = Math.round(assistantZoom(call.change) * 100);
                 act("move", T.sZoomed(z));
                 setReturnable(canReturn());
@@ -890,7 +892,7 @@ export default function ChatPopover({
                         ),
                     );
                 else zoomedNext = true;
-                return { ...none, zoom: `${z}%` };
+                return { ...none, zoom: zoomSaid(was, z) };
             }
             const valid = call.ids
                 .slice(0, call.act === "light" ? undefined : 1)
@@ -910,6 +912,7 @@ export default function ChatPopover({
             if (!valid.length) return { shown: [], sources };
             // zoomed into: the zoom first, so the chat's step aside
             // measures where the element lands
+            const was = Math.round(getTargetZoom() * 100);
             const zoom = zooms
                 ? Math.round(
                       assistantZoom(src.registry.get(valid[0]) as Element) *
@@ -945,7 +948,7 @@ export default function ChatPopover({
             // model took for a failure ("I tried to bring it up")
             return zoom === null
                 ? { shown: valid, sources }
-                : { shown: valid, sources, zoom: `${zoom}%` };
+                : { shown: valid, sources, zoom: zoomSaid(was, zoom) };
         };
         /** a zoom called before the turn's words were in: done if they ask for it */
         let zoomWaiting: {

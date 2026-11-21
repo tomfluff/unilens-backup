@@ -57,9 +57,15 @@ export interface LiveEvents {
 export interface PointResult {
     shown: string[];
     sources: string[];
-    /** after a zoom: where it went, as "250%" */
+    /** after a zoom: where it went and from where, or that it stayed (zoomSaid) */
     zoom?: string;
 }
+
+/** a zoom's result as the model is told it: where it went from, or that it did not
+ *  change (at the most already), so it never says it zoomed when it did not (it said
+ *  「少し拡大して」 at 100% in the 申請方法 take, 2026-11-21) */
+export const zoomSaid = (was: number, now: number) =>
+    now === was ? `unchanged, still ${now}%` : `${now}%, from ${was}%`;
 
 export interface ToolCall {
     ids: string[];

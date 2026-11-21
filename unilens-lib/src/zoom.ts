@@ -840,6 +840,40 @@ function zoomRunEnd() {
               };
 }
 
+/** the box of what is inside an element (its words and its children), without its
+ *  own empty sides: each piece clipped to the element's box first (a menu's hidden
+ *  panels lie far outside it); null when nothing inside renders there */
+function contentBoxOf(el: Element, own: ClientRect): ClientRect | null {
+    const range = document.createRange();
+    range.selectNodeContents(el);
+    const right = own.left + own.width;
+    const bottom = own.top + own.height;
+    let box: { l: number; t: number; r: number; b: number } | null = null;
+    for (const p of range.getClientRects()) {
+        const l = Math.max(p.left, own.left);
+        const t = Math.max(p.top, own.top);
+        const r = Math.min(p.right, right);
+        const b = Math.min(p.bottom, bottom);
+        if (r <= l || b <= t) continue;
+        box = box
+            ? {
+                  l: Math.min(box.l, l),
+                  t: Math.min(box.t, t),
+                  r: Math.max(box.r, r),
+                  b: Math.max(box.b, b),
+              }
+            : { l, t, r, b };
+    }
+    return box
+        ? {
+              left: box.l,
+              top: box.t,
+              width: box.r - box.l,
+              height: box.b - box.t,
+          }
+        : null;
+}
+
 /** a zoom step for "zoom in" and "zoom out": the Ctrl + and Ctrl − step */
 const ZOOM_STEP = 1.25;
 
@@ -876,21 +910,53 @@ export function assistantZoom(to: Element | "in" | "out" | "reset"): number {
         zoomRunEnd();
         return z;
     }
-    const c = clientToContent(r.left + r.width / 2, r.top + r.height / 2);
     // the element's content size fitted to the screen, with a margin, like smart zoom
-    const z = clamp(
-        Math.min(
-            (W - 48) / Math.max(1, r.width / scale),
-            (H - 48) / Math.max(1, r.height / scale),
-        ),
-    );
+    const fitted = (b: ClientRect) =>
+        clamp(
+            Math.min(
+                (W - 48) / Math.max(1, b.width / scale),
+                (H - 48) / Math.max(1, b.height / scale),
+            ),
+        );
+    let box = r;
+    /** aimed at its contents or its start, not its box's middle */
+    let aimed = false;
+    let z = fitted(r);
+    let c = clientToContent(r.left + r.width / 2, r.top + r.height / 2);
+    // as wide as the screen (a page-wide heading's bar): fitting it changes nothing,
+    // so fit what is inside it, its words; when they fill the width too, a step in
+    // (Yotam, 2026-11-21: the 申請方法 heading stayed at 100% in a video take)
+    if (z <= targetScale + 0.01) {
+        aimed = true;
+        const inner = contentBoxOf(to, r);
+        if (inner) {
+            box = inner;
+            z = fitted(inner);
+            c = clientToContent(
+                inner.left + inner.width / 2,
+                inner.top + inner.height / 2,
+            );
+        }
+        if (z <= targetScale + 0.01) {
+            z = clamp(targetScale + getSettings().assistantZoomStep / 100);
+            // around where it starts, as much of it as the zoomed screen holds: a
+            // long block's middle may be far from its first words
+            const at = clientToContent(box.left, box.top);
+            c = {
+                x: at.x + Math.min(box.width / scale, (W - 48) / z) / 2,
+                y: at.y + Math.min(box.height / scale, (H - 48) / z) / 2,
+            };
+        }
+    }
     // already there and settled: a pan (revealElement keeps its own Back); mid-zoom,
     // a new anchor (else the running zoom's anchor pulls the view back)
     if (
         Math.abs(z - targetScale) < 0.01 &&
         Math.abs(scale - targetScale) < 0.01
     ) {
-        revealElement(to, undefined, { always: true });
+        // fitted by its contents or a step: to the same place, not the bar's middle
+        if (aimed) revealPoint(c.x, c.y);
+        else revealElement(to, undefined, { always: true });
         return z;
     }
     rememberView(W, H);
