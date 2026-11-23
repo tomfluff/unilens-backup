@@ -9,14 +9,20 @@
 //
 //   node scripts/check-no-trackers.mjs [DIR ...]
 // With no DIR: all of frontend/ (its root files too: the study pages' shared template)
-// except softbank-mirror-1 (Kinjo's IR mirror, left to him in #49). The frozen study build runs it on its copy too (freeze.sh).
+// except softbank-mirror-1 (Kinjo's IR mirror, left to him in #49) and the recruit
+// mirror's unmodified snapshot (below). The frozen study build runs it on its copy too (freeze.sh).
 import { readdirSync, readFileSync, statSync } from "node:fs";
-import { dirname, join, relative } from "node:path";
+import { dirname, join, relative, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parse } from "parse5";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
+const FRONT = join(ROOT, "frontend");
 const SKIP = new Set(["softbank-mirror-1", "node_modules"]);
+// the recruit mirror's unmodified snapshot, kept as fetched for diffs (its README);
+// its tags are live, and it is served at /original/ though nothing links to it
+// (left to its owners: noted in the PR)
+const SKIP_PATHS = new Set(["softbank-mirror-recruit/original"]);
 const TAG = /googletagmanager|\bGTM-[A-Z0-9]{4,}\b/gi;
 const SCANNED = /\.(html?|m?js|css)$/i;
 
@@ -82,8 +88,9 @@ function* files(dir) {
         return;
     }
     for (const name of readdirSync(dir)) {
-        if (SKIP.has(name)) continue;
         const p = join(dir, name);
+        if (SKIP.has(name) || SKIP_PATHS.has(relative(FRONT, p).split(sep).join("/")))
+            continue;
         if (statSync(p).isDirectory()) yield* files(p);
         else if (SCANNED.test(name)) yield p;
     }
@@ -138,12 +145,11 @@ function selfTest() {
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
     selfTest();
-    const front = join(ROOT, "frontend");
     const dirs = process.argv.slice(2).length
         ? process.argv.slice(2)
-        : readdirSync(front)
+        : readdirSync(FRONT)
               .filter((d) => !SKIP.has(d))
-              .map((d) => join(front, d));
+              .map((d) => join(FRONT, d));
     let bad = 0;
     let seen = 0;
     for (const dir of dirs)
