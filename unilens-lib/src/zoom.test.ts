@@ -83,6 +83,25 @@ describe("revealElement", () => {
         });
     });
 
+    it("centres a point in the visual viewport under browser pinch zoom", () => {
+        const scroll = vi.fn();
+        window.scrollTo = scroll as unknown as typeof window.scrollTo;
+        Object.defineProperty(window, "visualViewport", {
+            configurable: true,
+            value: { offsetLeft: 300, offsetTop: 200, width: 400, height: 300 },
+        });
+        revealPoint(1000, 900);
+        expect(scroll).toHaveBeenLastCalledWith({
+            left: 1000 - 500,
+            top: 900 - 350,
+            behavior: "instant",
+        });
+        Object.defineProperty(window, "visualViewport", {
+            configurable: true,
+            value: undefined,
+        });
+    });
+
     it("centres an on-screen element too when asked to always", () => {
         const scroll = vi.fn();
         window.scrollTo = scroll as unknown as typeof window.scrollTo;

@@ -6,6 +6,7 @@ import {
     startLive,
     to16k,
     toolCall,
+    zoomSaid,
 } from "./live";
 
 describe("to16k", () => {
@@ -68,6 +69,14 @@ describe("toolCall", () => {
             ids: [],
             act: "light",
         });
+    });
+});
+
+describe("zoomSaid", () => {
+    // the 申請方法 take (2026-11-21): told "100%", the model said it had zoomed
+    it("says where a zoom went from, and when it did not move", () => {
+        expect(zoomSaid(100, 150)).toBe("150%, from 100%");
+        expect(zoomSaid(500, 500)).toBe("unchanged, still 500%");
     });
 });
 
