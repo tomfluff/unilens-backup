@@ -18,25 +18,52 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const SKIP = new Set(["softbank-mirror-1", "node_modules"]);
 const TAG = /googletagmanager|\bGTM-[A-Z0-9]{4,}\b/gi;
 
+/** an opening tag's attributes, names lower-cased: { name: value } */
+function attrs(open) {
+    const out = {};
+    const body = open.replace(/^<[a-z]+/i, "").replace(/\/?>$/, "");
+    for (const m of body.matchAll(
+        /([^\s"'=<>/]+)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'=<>`]+)))?/g,
+    ))
+        out[m[1].toLowerCase()] ??= m[2] ?? m[3] ?? m[4] ?? "";
+    return out;
+}
+
 /** the places in one file where a GTM tag is live, as line numbers */
 export function liveTags(text, isHtml) {
     if (!isHtml) return [...text.matchAll(TAG)].map((m) => lineOf(text, m.index));
-    // blank out comments and disabled scripts (keeping lines), then every mention
-    // left must sit inside a data-src attribute's value
-    const blank = (s) => s.replace(/[^\n]/g, " ");
-    const t = text
-        .replace(/<!--[\s\S]*?-->/g, blank)
-        .replace(
-            /<script\b[^>]*\btype\s*=\s*["']?text\/plain["']?[^>]*>[\s\S]*?<\/script\s*>/gi,
-            blank,
-        );
+    // Parts are blanked (lines kept) once judged; every mention left is live.
+    const blank = (x) => x.replace(/[^\n]/g, " ");
     const out = [];
-    for (const m of t.matchAll(TAG)) {
-        const before = t.slice(Math.max(0, m.index - 400), m.index);
-        if (/\bdata-src\s*=\s*(["'])[^"'<>]*$/i.test(before)) continue;
-        out.push(lineOf(text, m.index));
-    }
-    return out;
+    const flag = (from, x) => {
+        for (const m of x.matchAll(TAG)) out.push(lineOf(text, from + m.index));
+    };
+    // 1. scripts first (an HTML comment inside one is JavaScript, and runs): one is
+    //    inert only when its own type attribute is text/plain; any other is judged
+    //    whole, its src and its code
+    let t = text.replace(
+        /<script\b[^>]*>[\s\S]*?(?:<\/script\s*>|$)/gi,
+        (el, at) => {
+            const open = el.match(/^<script\b[^>]*>/i)[0];
+            const type = (attrs(open).type ?? "").trim().toLowerCase();
+            if (type !== "text/plain") flag(at, el);
+            return blank(el);
+        },
+    );
+    // 2. the disabled fallback only: an iframe marked data-local-disabled="gtm"
+    //    inside <noscript>, its address in data-src and no src
+    t = t.replace(/<noscript\b[^>]*>[\s\S]*?<\/noscript\s*>/gi, (ns) =>
+        ns.replace(/<iframe\b[^>]*>/gi, (open) => {
+            const a = attrs(open);
+            return a["data-local-disabled"] === "gtm" && !("src" in a)
+                ? blank(open)
+                : open;
+        }),
+    );
+    // 3. real HTML comments (outside scripts now)
+    t = t.replace(/<!--[\s\S]*?-->/g, blank);
+    flag(0, t);
+    return out.sort((a, b) => a - b);
 }
 
 const lineOf = (text, i) => text.slice(0, i).split("\n").length;
@@ -55,11 +82,20 @@ function selfTest() {
         "<script>(function(){j.src='https://www.googletagmanager.com/gtm.js?id='+i})(window,document,'script','dataLayer','GTM-BMSW');</script>",
         '<noscript><iframe src="//www.googletagmanager.com/ns.html?id=GTM-BMSW"></iframe></noscript>',
         '<script async src="https://www.googletagmanager.com/gtag/js?id=G-X"></script>',
+        // Codex's three (2026-11-23): data-type isn't type; a data-src outside the
+        // disabled fallback can feed a loader; a legacy <!-- wrapper still runs
+        '<script data-type="text/plain" src="https://www.googletagmanager.com/gtm.js?id=GTM-BMSW"></script>',
+        '<div data-src="https://www.googletagmanager.com/gtm.js?id=GTM-BMSW"></div>',
+        "<script><!--\nj.src='//www.googletagmanager.com/gtm.js?id=GTM-BMSW';\n//--></script>",
+        '<noscript><iframe data-local-disabled="gtm" src="//www.googletagmanager.com/ns.html"></iframe></noscript>',
+        '<iframe data-local-disabled="gtm" data-src="//www.googletagmanager.com/ns.html"></iframe>',
+        "<script type=\"text/plain\"></script><script>gtm('GTM-BMSW')</script>",
     ];
     const off = [
         '<script type="text/plain" data-local-disabled="gtm">j.src="//www.googletagmanager.com/gtm.js?id=GTM-BMSW"</script>',
         '<noscript><iframe data-local-disabled="gtm" data-src="//www.googletagmanager.com/ns.html?id=GTM-BMSW"></iframe></noscript>',
         "<!-- Google Tag Manager: GTM-BMSW -->",
+        "<SCRIPT TYPE='TEXT/PLAIN'>gtm('GTM-BMSW')</SCRIPT>",
     ];
     for (const s of live)
         if (!liveTags(s, true).length) throw new Error(`self-test missed: ${s}`);
