@@ -33,8 +33,9 @@ const SCANNED = /\.(html?|m?js|css)$/i;
  * breaks a browser drops from a URL dropped) are what the browser sees. A page is
  * parsed twice, with JavaScript on (<noscript> is text) and off (it is markup), and
  * a tag live in either counts.
- * - A <script> is inert only when its own type attribute is text/plain; any other
- *   is judged on its attributes and its code (a legacy <!-- wrapper included).
+ * - A <script> is inert only when its own type attribute is text/plain and it has
+ *   our data-local-disabled marker; any other is judged on its attributes and its
+ *   code (a legacy <!-- wrapper included).
  * - The disabled fallback: in an <iframe data-local-disabled="gtm"> inside
  *   <noscript>, with no src, only data-src may hold the address.
  * - Every other element's attributes are judged, and <style> text; comments and
@@ -53,7 +54,12 @@ export function liveTags(text, isHtml) {
             const where = node.sourceCodeLocation;
             const line = (attr) =>
                 where?.attrs?.[attr]?.startLine ?? where?.startLine ?? 0;
-            const inert = name === "script" && (at.type ?? "").trim().toLowerCase() === "text/plain";
+            // text/plain and our marker: a consent manager also parks scripts as
+            // text/plain, and runs them after opt-in
+            const inert =
+                name === "script" &&
+                (at.type ?? "").trim().toLowerCase() === "text/plain" &&
+                Boolean(at["data-local-disabled"]);
             if (inert) return;
             const fallback =
                 name === "iframe" &&
@@ -122,12 +128,14 @@ function selfTest() {
         // only with JavaScript off; an encoded line break a URL drops
         '<noscript><iframe data-local-disabled="gtm" data-src="//x.test/" /></noscript><script src="https://www.googletagmanager.com/gtm.js"></script>',
         '<script src="https://www.googletag&#10;manager.com/gtm.js"></script>',
+        // and its seventh: a consent manager's parked script runs after opt-in
+        '<script type="text/plain" data-cookieconsent="marketing">gtm("GTM-BMSW")</script>',
     ];
     const off = [
         '<script type="text/plain" data-local-disabled="gtm">j.src="//www.googletagmanager.com/gtm.js?id=GTM-BMSW"</script>',
         '<noscript><iframe data-local-disabled="gtm" data-src="//www.googletagmanager.com/ns.html?id=GTM-BMSW"></iframe></noscript>',
         "<!-- Google Tag Manager: GTM-BMSW -->",
-        "<SCRIPT TYPE='TEXT/PLAIN'>gtm('GTM-BMSW')</SCRIPT>",
+        "<SCRIPT TYPE='TEXT/PLAIN' DATA-LOCAL-DISABLED='gtm'>gtm('GTM-BMSW')</SCRIPT>",
         "<!-- <script>gtm('GTM-BMSW')</script> -->",
     ];
     // in a body, where the mirrors have them (a <noscript> in <head> can't hold an
