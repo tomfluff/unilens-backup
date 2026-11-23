@@ -11,7 +11,7 @@
 // With no DIR: all of frontend/ (its root files too: the study pages' shared template)
 // except softbank-mirror-1 (Kinjo's IR mirror, left to him in #49) and the recruit
 // mirror's unmodified snapshot (below). The frozen study build runs it on its copy too (freeze.sh).
-import { readdirSync, readFileSync, statSync } from "node:fs";
+import { readdirSync, readFileSync, realpathSync, statSync } from "node:fs";
 import { dirname, join, relative, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parse } from "parse5";
@@ -143,7 +143,15 @@ function selfTest() {
         throw new Error("self-test missed a .css mention");
 }
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
+// run as a script (through a symlink too), not imported
+const self = (p) => {
+    try {
+        return realpathSync(p);
+    } catch {
+        return p;
+    }
+};
+if (process.argv[1] && self(process.argv[1]) === self(fileURLToPath(import.meta.url))) {
     selfTest();
     const dirs = process.argv.slice(2).length
         ? process.argv.slice(2)
@@ -163,7 +171,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
         }
     if (bad) {
         console.error(
-            `${bad} live tag(s). Disable each as the recruit mirror does (#49): ` +
+            `A live tag on ${bad} line(s). Disable each as the recruit mirror does (#49): ` +
                 'the loader as <script type="text/plain" data-local-disabled="gtm">, ' +
                 "the iframe's src as data-src.",
         );
