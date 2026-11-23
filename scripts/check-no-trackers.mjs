@@ -13,60 +13,59 @@
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
+import { parse } from "parse5";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const SKIP = new Set(["softbank-mirror-1", "node_modules"]);
 const TAG = /googletagmanager|\bGTM-[A-Z0-9]{4,}\b/gi;
 
-/** an opening tag's attributes, names lower-cased: { name: value } */
-function attrs(open) {
-    const out = {};
-    const body = open.replace(/^<[a-z]+/i, "").replace(/\/?>$/, "");
-    for (const m of body.matchAll(
-        /([^\s"'=<>/]+)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'=<>`]+)))?/g,
-    ))
-        out[m[1].toLowerCase()] ??= m[2] ?? m[3] ?? m[4] ?? "";
-    return out;
-}
-
-/** the places in one file where a GTM tag is live, as line numbers */
+/**
+ * The places in one file where a GTM tag is live, as line numbers. An HTML page is
+ * parsed as a browser parses it (parse5, the parser jsdom uses), so comments, script
+ * bodies and attribute values (character references decoded) are what the browser
+ * sees. <noscript> is parsed as markup, as a browser with JavaScript off does.
+ * - A <script> is inert only when its own type attribute is text/plain; any other
+ *   is judged on its attributes and its code (a legacy <!-- wrapper included).
+ * - The disabled fallback: in an <iframe data-local-disabled="gtm"> inside
+ *   <noscript>, with no src, only data-src may hold the address.
+ * - Every other element's attributes are judged, and <style> text; comments and
+ *   page text load nothing.
+ */
 export function liveTags(text, isHtml) {
     if (!isHtml) return [...text.matchAll(TAG)].map((m) => lineOf(text, m.index));
-    // Parts are blanked (lines kept) once judged; every mention left is live.
-    const blank = (x) => x.replace(/[^\n]/g, " ");
+    const doc = parse(text, { scriptingEnabled: false, sourceCodeLocationInfo: true });
     const out = [];
-    const flag = (from, x) => {
-        for (const m of x.matchAll(TAG)) out.push(lineOf(text, from + m.index));
+    const has = (v) => TAG.test(v) && ((TAG.lastIndex = 0), true);
+    const walk = (node, inNoscript) => {
+        const name = node.tagName;
+        if (name) {
+            const at = Object.fromEntries(node.attrs.map((a) => [a.name, a.value]));
+            const where = node.sourceCodeLocation;
+            const line = (attr) =>
+                where?.attrs?.[attr]?.startLine ?? where?.startLine ?? 0;
+            const inert = name === "script" && (at.type ?? "").trim().toLowerCase() === "text/plain";
+            if (inert) return;
+            const fallback =
+                name === "iframe" &&
+                inNoscript &&
+                at["data-local-disabled"] === "gtm" &&
+                !("src" in at);
+            for (const a of node.attrs)
+                if (!(fallback && a.name === "data-src") && has(a.value)) out.push(line(a.name));
+            if (name === "script" || name === "style")
+                for (const c of node.childNodes)
+                    if (c.nodeName === "#text" && has(c.value))
+                        for (const m of c.value.matchAll(TAG))
+                            out.push(
+                                (c.sourceCodeLocation?.startLine ?? where?.startLine ?? 0) +
+                                    c.value.slice(0, m.index).split("\n").length -
+                                    1,
+                            );
+        }
+        const kids = name === "template" ? node.content.childNodes : node.childNodes;
+        for (const c of kids ?? []) walk(c, inNoscript || name === "noscript");
     };
-    // 1. comments and scripts in one pass, whichever starts first, as a browser
-    //    reads them: a comment is dropped (a <script> written inside it is text); a
-    //    script's contents are code, a legacy <!-- wrapper included. A script is
-    //    inert only when its own type attribute is text/plain; any other is judged
-    //    whole, its src and its code
-    let t = text.replace(
-        /<!--[\s\S]*?(?:-->|$)|<script\b[^>]*>[\s\S]*?(?:<\/script\s*>|$)/gi,
-        (el, at) => {
-            if (el.startsWith("<!--")) return blank(el);
-            const open = el.match(/^<script\b[^>]*>/i)[0];
-            const type = (attrs(open).type ?? "").trim().toLowerCase();
-            if (type !== "text/plain") flag(at, el);
-            return blank(el);
-        },
-    );
-    // 2. the disabled fallback: in an iframe marked data-local-disabled="gtm" inside
-    //    <noscript>, with no src, only its data-src value is exempt (its other
-    //    attributes, srcdoc say, are still judged)
-    t = t.replace(/<noscript\b[^>]*>[\s\S]*?<\/noscript\s*>/gi, (ns) =>
-        ns.replace(/<iframe\b[^>]*>/gi, (open) => {
-            const a = attrs(open);
-            if (a["data-local-disabled"] !== "gtm" || "src" in a) return open;
-            return open.replace(
-                /(\sdata-src\s*=\s*)("[^"]*"|'[^']*'|[^\s"'=<>`]+)/i,
-                (_, k, v) => k + blank(v),
-            );
-        }),
-    );
-    flag(0, t);
+    walk(doc, false);
     return out.sort((a, b) => a - b);
 }
 
@@ -102,6 +101,11 @@ function selfTest() {
         // real one; a marked iframe's other attributes are still judged
         '<!-- <script type="text/plain"> --><script>gtm("GTM-BMSW")</script>',
         '<noscript><iframe data-local-disabled="gtm" srcdoc="<script src=//www.googletagmanager.com/gtm.js></script>"></iframe></noscript>',
+        // and its third: a script opener quoted in an attribute isn't a script; an
+        // address written with character references is what the browser fetches
+        '<div title="<script type=text/plain>"></div><script>gtm("GTM-BMSW")</script>',
+        '<script src="https://www.googletag&#109;anager.com/gtm.js"></script>',
+        '<style>@import url("https://www.googletagmanager.com/x.css");</style>',
     ];
     const off = [
         '<script type="text/plain" data-local-disabled="gtm">j.src="//www.googletagmanager.com/gtm.js?id=GTM-BMSW"</script>',
@@ -110,10 +114,13 @@ function selfTest() {
         "<SCRIPT TYPE='TEXT/PLAIN'>gtm('GTM-BMSW')</SCRIPT>",
         "<!-- <script>gtm('GTM-BMSW')</script> -->",
     ];
+    // in a body, where the mirrors have them (a <noscript> in <head> can't hold an
+    // iframe, so a parser moves it out)
+    const page = (s) => `<!doctype html><html><head></head><body>${s}</body></html>`;
     for (const s of live)
-        if (!liveTags(s, true).length) throw new Error(`self-test missed: ${s}`);
+        if (!liveTags(page(s), true).length) throw new Error(`self-test missed: ${s}`);
     for (const s of off)
-        if (liveTags(s, true).length) throw new Error(`self-test flagged: ${s}`);
+        if (liveTags(page(s), true).length) throw new Error(`self-test flagged: ${s}`);
     if (!liveTags("x='googletagmanager.com'", false).length)
         throw new Error("self-test missed a .js mention");
 }
