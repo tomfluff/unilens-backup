@@ -9,7 +9,8 @@ import { depsFromConfig } from "./deps.ts";
 
 const config = configFromEnv();
 const deps = await depsFromConfig(config);
-createApp(config, deps).listen(config.port, (err?: Error) => {
+// this machine only: the results routes have no login
+createApp(config, deps).listen(config.port, "127.0.0.1", (err?: Error) => {
     if (err) {
         // most often the port is taken: SURVEY_PORT picks another
         console.error(`[survey-backend] cannot listen on ${config.port}:`, err);
