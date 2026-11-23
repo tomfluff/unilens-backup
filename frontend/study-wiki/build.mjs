@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { charts, maps, MAP_PLACES } from './charts.mjs';
+import { UNILENS_A11Y_BODY_SCRIPTS } from '../unilens-embed.mjs';
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const C = (...p) => path.join(ROOT, 'content', ...p);
@@ -524,8 +525,7 @@ ${extraHead}</head>
 </footer>
 <div class="toast" hidden></div>
 <script src="${P}assets/wiki.js"></script>
-<script src="/unilens.js"></script>
-<script>UniLens.init({ backend: 'http://127.0.0.1:5000', mouseWindow: 5 })</script>
+${UNILENS_A11Y_BODY_SCRIPTS}
 </body>
 </html>
 `;
@@ -639,8 +639,7 @@ ${box('mp-tfp', M.picture.title, potd)}${box('mp-other', M.portalsTitle, other)}
 write('index.html', `<!DOCTYPE html>
 <html lang="en"><head><meta charset="utf-8"><title>Openpedia</title><meta http-equiv="refresh" content="0; url=en/index.html"></head>
 <body><p><a href="en/index.html">Openpedia (English)</a> · <a href="ja/index.html">オープンペディア（日本語）</a></p>
-<script src="/unilens.js"></script>
-<script>UniLens.init({ backend: 'http://127.0.0.1:5000', mouseWindow: 5 })</script>
+${UNILENS_A11Y_BODY_SCRIPTS}
 </body></html>
 `);
 for (const lang of LANGS) {

@@ -4,57 +4,59 @@
  */
 
 :root {
-    --unilens-a11y-display-bg: #f5f5f5;
-    --unilens-a11y-display-text: #222222;
-    --unilens-a11y-display-surface: #ffffff;
-    --unilens-a11y-display-link: #0f3460;
-    --unilens-a11y-display-border: #cccccc;
-    --unilens-a11y-display-saturate: 1;
-    --unilens-a11y-display-contrast: 1;
+  --unilens-a11y-display-bg: #f5f5f5;
+  --unilens-a11y-display-text: #222222;
+  --unilens-a11y-display-surface: #ffffff;
+  --unilens-a11y-display-link: #0f3460;
+  --unilens-a11y-display-border: #cccccc;
+  --unilens-a11y-display-saturate: 1;
+  --unilens-a11y-display-contrast: 1;
+  --unilens-a11y-text-plate-bg: #000000;
+  --unilens-a11y-text-plate-fg: #ffff00;
 }
 
 /* ── Color modes (CSS variables) ─────────────────────────────────────────── */
 
-html[data-unilens-a11y-theme="light"] {
-    --unilens-a11y-display-bg: #f5f5f5;
-    --unilens-a11y-display-text: #222222;
-    --unilens-a11y-display-surface: #ffffff;
-    --unilens-a11y-display-link: #0f3460;
-    --unilens-a11y-display-border: #cccccc;
+html[data-unilens-a11y-theme='light'] {
+  --unilens-a11y-display-bg: #f5f5f5;
+  --unilens-a11y-display-text: #222222;
+  --unilens-a11y-display-surface: #ffffff;
+  --unilens-a11y-display-link: #0f3460;
+  --unilens-a11y-display-border: #cccccc;
 }
 
-html[data-unilens-a11y-theme="dark"] {
-    --unilens-a11y-display-bg: #1a1a2e;
-    --unilens-a11y-display-text: #f0f0f0;
-    --unilens-a11y-display-surface: #26263e;
-    --unilens-a11y-display-link: #77ddff;
-    /* Keep borders readable against surface (#26263e); #444 was nearly invisible. */
-    --unilens-a11y-display-border: #9a9ab0;
+html[data-unilens-a11y-theme='dark'] {
+  --unilens-a11y-display-bg: #1a1a2e;
+  --unilens-a11y-display-text: #f0f0f0;
+  --unilens-a11y-display-surface: #26263e;
+  --unilens-a11y-display-link: #77ddff;
+  /* Keep borders readable against surface (#26263e); #444 was nearly invisible. */
+  --unilens-a11y-display-border: #9a9ab0;
 }
 
 /* Mild (low sensory stimulation): cream background × dark gray text */
-html[data-unilens-a11y-theme="soft"] {
-    --unilens-a11y-display-bg: #f5f2eb;
-    --unilens-a11y-display-text: #2b2b2b;
-    --unilens-a11y-display-surface: #faf8f3;
-    --unilens-a11y-display-link: #3d5a40;
-    --unilens-a11y-display-border: #c9c2b4;
+html[data-unilens-a11y-theme='soft'] {
+  --unilens-a11y-display-bg: #f5f2eb;
+  --unilens-a11y-display-text: #2b2b2b;
+  --unilens-a11y-display-surface: #faf8f3;
+  --unilens-a11y-display-link: #3d5a40;
+  --unilens-a11y-display-border: #c9c2b4;
 }
 
-html[data-unilens-a11y-theme="high-contrast"] {
-    --unilens-a11y-display-bg: #000000;
-    --unilens-a11y-display-text: #ffff00;
-    --unilens-a11y-display-surface: #000000;
-    --unilens-a11y-display-link: #ffff00;
-    --unilens-a11y-display-border: #ffff00;
+html[data-unilens-a11y-theme='high-contrast'] {
+  --unilens-a11y-display-bg: #000000;
+  --unilens-a11y-display-text: #ffff00;
+  --unilens-a11y-display-surface: #000000;
+  --unilens-a11y-display-link: #ffff00;
+  --unilens-a11y-display-border: #ffff00;
 }
 
-html[data-unilens-a11y-theme="invert"] {
-    --unilens-a11y-display-bg: #f5f5f5;
-    --unilens-a11y-display-text: #222222;
-    --unilens-a11y-display-surface: #ffffff;
-    --unilens-a11y-display-link: #0f3460;
-    --unilens-a11y-display-border: #cccccc;
+html[data-unilens-a11y-theme='invert'] {
+  --unilens-a11y-display-bg: #f5f5f5;
+  --unilens-a11y-display-text: #222222;
+  --unilens-a11y-display-surface: #ffffff;
+  --unilens-a11y-display-link: #0f3460;
+  --unilens-a11y-display-border: #cccccc;
 }
 
 /* ── Saturation / contrast ───────────────────────────────────────────────────
@@ -66,57 +68,61 @@ html[data-unilens-a11y-theme="invert"] {
    The data-unilens-a11y-saturation / data-unilens-a11y-contrast attributes are still set, as a hook
    for the embedding page to apply its own CSS. */
 
+/* Page root: <body> marked with data-unilens-page-content (no wrapper element).
+ * Every page rule is written as
+ *   :is(body[data-unilens-page-content], #unilens-a11y-page-root)
+ * — :is() takes the specificity of its most specific argument, so these rules
+ * keep the id-level specificity (1,0,0) they had when the root was a <div id>.
+ */
 /* ── Page application (page content root — overlay widget stays outside) ── */
 
 html[data-unilens-a11y-display-active] body {
-    background-color: var(--unilens-a11y-display-bg) !important;
+  background-color: var(--unilens-a11y-display-bg) !important;
 }
 
-html[data-unilens-a11y-display-active] #unilens-a11y-page-root {
-    background-color: var(--unilens-a11y-display-bg) !important;
-    color: var(--unilens-a11y-display-text) !important;
-    min-height: 100%;
+html[data-unilens-a11y-display-active] :is(body[data-unilens-page-content], #unilens-a11y-page-root) {
+  background-color: var(--unilens-a11y-display-bg) !important;
+  color: var(--unilens-a11y-display-text) !important;
 }
 
-html[data-unilens-a11y-theme="light"][data-unilens-a11y-display-active],
-html[data-unilens-a11y-theme="dark"][data-unilens-a11y-display-active],
-html[data-unilens-a11y-theme="soft"][data-unilens-a11y-display-active],
-html[data-unilens-a11y-theme="high-contrast"][data-unilens-a11y-display-active] {
-    color-scheme: light;
+/* Not while the surface pass samples host fills (bg-sample): a dark color
+ * scheme repaints native controls dark, and that would be read as the
+ * host's own fill (fillTone.ts would turn every input into a gray fill). */
+html[data-unilens-a11y-theme='light'][data-unilens-a11y-display-active]:not([data-unilens-a11y-bg-sample]),
+html[data-unilens-a11y-theme='dark'][data-unilens-a11y-display-active]:not([data-unilens-a11y-bg-sample]),
+html[data-unilens-a11y-theme='soft'][data-unilens-a11y-display-active]:not([data-unilens-a11y-bg-sample]),
+html[data-unilens-a11y-theme='high-contrast'][data-unilens-a11y-display-active]:not([data-unilens-a11y-bg-sample]) {
+  color-scheme: light;
 }
 
-html[data-unilens-a11y-theme="dark"][data-unilens-a11y-display-active] {
-    color-scheme: dark;
+html[data-unilens-a11y-theme='dark'][data-unilens-a11y-display-active]:not([data-unilens-a11y-bg-sample]) {
+  color-scheme: dark;
 }
 
-html[data-unilens-a11y-theme="high-contrast"][data-unilens-a11y-display-active] {
-    color-scheme: dark;
+html[data-unilens-a11y-theme='high-contrast'][data-unilens-a11y-display-active]:not([data-unilens-a11y-bg-sample]) {
+  color-scheme: dark;
 }
 
-/* Saturation / contrast filters apply to page content only (not the overlay). */
-html[data-unilens-a11y-display-active]
-#unilens-a11y-page-root[data-unilens-a11y-page-filter] {
-    filter: saturate(var(--unilens-a11y-display-saturate))
-        contrast(var(--unilens-a11y-display-contrast));
-}
-
-/* Theme = standard: leave host UI colors alone; tone filter hits media only.
- * picture gets the filter once; nested img is excluded to avoid double-applying. */
-#unilens-a11y-page-root[data-unilens-a11y-image-filter] :is(img, video),
-#unilens-a11y-page-root[data-unilens-a11y-image-filter] picture {
-    filter: saturate(var(--unilens-a11y-display-saturate))
-        contrast(var(--unilens-a11y-display-contrast));
-}
-
-#unilens-a11y-page-root[data-unilens-a11y-image-filter] picture img {
-    filter: none;
+/* Saturation / contrast apply to everything under the tone layer (not the
+ * overlay UI above it). Independent of color remapping — theme = standard
+ * still uses this when the visitor changes saturation or contrast.
+ * backdrop-filter on a separate fixed layer, not filter on the page root: a
+ * filtered ancestor becomes the containing block of position:fixed host
+ * chrome, which made fixed headers scroll away with the page. */
+#unilens-a11y-tone-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483640;
+  pointer-events: none;
+  background: transparent;
+  -webkit-backdrop-filter: saturate(var(--unilens-a11y-display-saturate)) contrast(var(--unilens-a11y-display-contrast));
+  backdrop-filter: saturate(var(--unilens-a11y-display-saturate)) contrast(var(--unilens-a11y-display-contrast));
 }
 
 /* Invert uses <html> filter so fixed headers stay viewport-anchored; overlay counter-inverts. */
 html[data-unilens-a11y-html-filter] {
-    filter: invert(1) hue-rotate(180deg)
-        saturate(var(--unilens-a11y-display-saturate))
-        contrast(var(--unilens-a11y-display-contrast));
+  filter: invert(1) hue-rotate(180deg) saturate(var(--unilens-a11y-display-saturate))
+    contrast(var(--unilens-a11y-display-contrast));
 }
 
 /* Counter-invert every UniLens overlay so invert on <html> never flips panel / minimap UI. */
@@ -129,17 +135,64 @@ html[data-unilens-a11y-html-filter]
     #unilens-root > *,
     #unilens-settings-root > *,
     #unilens-debug-root > *,
-    [data-unilens-ui]
+    /* followers in the top layer are outside the <html> filter already */
+    [data-unilens-ui]:not([data-unilens-a11y-top-layer])
 ) {
-    filter: invert(1) hue-rotate(180deg)
-        saturate(var(--unilens-a11y-display-saturate))
-        contrast(var(--unilens-a11y-display-contrast));
+  filter: invert(1) hue-rotate(180deg) saturate(var(--unilens-a11y-display-saturate))
+    contrast(var(--unilens-a11y-display-contrast));
+}
+
+/* ── Text over pictures keeps the host's colors ──────────────────────────────
+ * mediaTextGuard.ts marks each picture block that has text drawn on it
+ * (an <img>/<video>/CSS background-image plus the text on top) with
+ * [data-unilens-a11y-media-text] (block + descendants) and
+ * [data-unilens-a11y-media-text-root] (the block). Every color rule in this
+ * file skips the former, so the designer's text-on-photo colors stay.
+ *
+ * Color is inherited, so the block's own text paint is pinned to the value
+ * the host gives it (read by mediaTextGuard with these attributes lifted);
+ * otherwise an uncolored heading would inherit the themed parent color. */
+html:is(
+    [data-unilens-a11y-display-active],
+    [data-unilens-a11y-text-stroke],
+    [data-unilens-a11y-text-plate],
+    [data-unilens-a11y-link-background]
+  )
+  :is(body[data-unilens-page-content], #unilens-a11y-page-root)
+  [data-unilens-a11y-media-text-root] {
+  /* The host backdrop too: a transparent image (tag outline, frame) must not
+   * show the theme's page color behind the host-colored text. */
+  background-color: var(--unilens-a11y-media-text-backdrop) !important;
+  color: var(--unilens-a11y-media-text-color) !important;
+  -webkit-text-fill-color: var(--unilens-a11y-media-text-fill) !important;
+  -webkit-text-stroke-width: var(--unilens-a11y-media-text-stroke-width) !important;
+  -webkit-text-stroke-color: var(--unilens-a11y-media-text-stroke-color) !important;
+}
+
+/* Invert: undo the <html> filter on the block — the same steps, inverted, in
+ * reverse order. Saturation 0 (mono) cannot be undone, so under mono + invert
+ * the block is un-inverted but stays gray. (Saturation / contrast without
+ * invert are cut out of #unilens-a11y-tone-layer's mask instead.) */
+html[data-unilens-a11y-html-filter] :is(body[data-unilens-page-content], #unilens-a11y-page-root) [data-unilens-a11y-media-text-root] {
+  filter: contrast(var(--unilens-a11y-display-contrast-inv, 1))
+    saturate(var(--unilens-a11y-display-saturate-inv, 1)) hue-rotate(-180deg) invert(1) !important;
+}
+
+/* ── Pictures keep their own colors under a recolored theme ──────────────────
+ * Hosts often tint a tile and set `mix-blend-mode: multiply` on the <img> so a
+ * white-background photo melts into it. The theme repaints every background
+ * (transparent over the dark / high-contrast page color), so multiply would
+ * blend the photo with black and the picture goes dark or disappears. Draw
+ * pictures normally while a theme is applied. (Invert is a filter on <html> and
+ * is a separate matter.) */
+html[data-unilens-a11y-display-active] :is(body[data-unilens-page-content], #unilens-a11y-page-root) :is(img, video, picture, canvas) {
+  mix-blend-mode: normal !important;
 }
 
 /* Force color + background-color on every descendant, not just on the root.
  * The host site's own CSS almost always sets `color` explicitly on individual
  * elements (p, span, div, li, ...), which breaks CSS inheritance — so setting
- * color/background only on #unilens-a11y-page-root left those elements with
+ * color/background only on :is(body[data-unilens-page-content], #unilens-a11y-page-root) left those elements with
  * their *original* text color sitting on top of our *new* background, which
  * is how a dark theme could end up rendering black text on a near-black
  * background. Background resets to transparent so the (guaranteed readable)
@@ -156,23 +209,83 @@ html[data-unilens-a11y-html-filter]
  * !important reset; painting surface keeps menus opaque and theme-aligned.
  * Only the marked node is painted — descendants stay transparent so they
  * show this fill (and keep host background-image icons intact).
- * [data-unilens-a11y-bg-sample] temporarily opts an element out of the
- * transparent reset while markers sample the author background. */
-html[data-unilens-a11y-display-active]
-    #unilens-a11y-page-root
-    *:not([data-unilens-a11y-bg-sample]) {
-    background-color: transparent !important;
+ * [data-unilens-a11y-bg-sample] on <html> lifts the transparent reset and the
+ * surface fills for one synchronous read while markers sample the author
+ * background (never across a paint). It used to be set on every page element,
+ * which flooded host MutationObservers with thousands of records per pass.
+ * Every rule below that paints a background-color carries this opt-out:
+ * the sampled color decides the fill tier (fillTone.ts), so it must be the
+ * host's own, never one of ours (a plate's black read as a dark gray fill). */
+html[data-unilens-a11y-display-active]:not([data-unilens-a11y-bg-sample]) :is(body[data-unilens-page-content], #unilens-a11y-page-root) *:not([data-unilens-a11y-media-text]) {
+  background-color: transparent !important;
 }
 
-html[data-unilens-a11y-display-active] #unilens-a11y-page-root * {
-    color: var(--unilens-a11y-display-text) !important;
-    border-color: var(--unilens-a11y-display-border) !important;
+/* Freeze host transitions while sampling. SoftBank `.tab-button` uses
+ * `transition: all .3s` between an opaque selected fill and a transparent
+ * idle fill; sampling mid-fade would keep the old tab marked (leftover
+ * themed ring) and miss the newly selected one.
+ *
+ * Never `animation: none`: removing it again restarts every host animation
+ * (one-shot fade-ins replayed on every host DOM change). And never on an
+ * element whose own transition is running ([data-unilens-a11y-keep-motion],
+ * set by documentEffects.ts): `transition: none` cancels it, so it jumped to
+ * its end state and the host's `transitionend` never came. */
+html[data-unilens-a11y-bg-sample] :is(body[data-unilens-page-content], #unilens-a11y-page-root) *:not([data-unilens-a11y-keep-motion]) {
+  transition: none !important;
 }
 
-html[data-unilens-a11y-display-active]
-    #unilens-a11y-page-root
-    [data-unilens-a11y-positioned-overlay] {
-    background-color: var(--unilens-a11y-display-surface) !important;
+/* mediaTextGuard lifts the color attributes off <html> to read host paint
+ * (data-unilens-a11y-paint-probe). No host fade may run while it does, nor
+ * when the attributes come back. */
+html[data-unilens-a11y-paint-probe] :is(body[data-unilens-page-content], #unilens-a11y-page-root) *:not([data-unilens-a11y-keep-motion]),
+html[data-unilens-a11y-paint-probe] :is(body[data-unilens-page-content], #unilens-a11y-page-root) *:not([data-unilens-a11y-keep-motion])::before,
+html[data-unilens-a11y-paint-probe] :is(body[data-unilens-page-content], #unilens-a11y-page-root) *:not([data-unilens-a11y-keep-motion])::after {
+  transition: none !important;
+}
+
+/* Held for one style flush when a probe ends, so the flip from the sampled
+ * author color back to the themed one does not start a host fade
+ * (`transition: all .3s`). Only transitions: `animation: none` here would
+ * restart host animations. */
+html[data-unilens-a11y-bg-freeze] :is(body[data-unilens-page-content], #unilens-a11y-page-root) *:not([data-unilens-a11y-keep-motion]),
+html[data-unilens-a11y-bg-freeze] :is(body[data-unilens-page-content], #unilens-a11y-page-root) *:not([data-unilens-a11y-keep-motion])::before,
+html[data-unilens-a11y-bg-freeze] :is(body[data-unilens-page-content], #unilens-a11y-page-root) *:not([data-unilens-a11y-keep-motion])::after {
+  transition: none !important;
+}
+
+html[data-unilens-a11y-display-active] :is(body[data-unilens-page-content], #unilens-a11y-page-root) *:not([data-unilens-a11y-media-text]) {
+  color: var(--unilens-a11y-display-text) !important;
+}
+
+/* The border color is lifted while sampling ([data-unilens-a11y-bg-sample]),
+ * so documentEffects.ts reads the host's own borders: transparent sides and
+ * thick sides drawn as shapes get their own color below. */
+html[data-unilens-a11y-display-active]:not([data-unilens-a11y-bg-sample]) :is(body[data-unilens-page-content], #unilens-a11y-page-root) *:not([data-unilens-a11y-media-text]) {
+  border-color: var(--unilens-a11y-display-border) !important;
+}
+
+html[data-unilens-a11y-display-active]:not([data-unilens-a11y-bg-sample]) :is(body[data-unilens-page-content], #unilens-a11y-page-root) [data-unilens-a11y-positioned-overlay]:not([data-unilens-a11y-media-text]) {
+  background-color: var(--unilens-a11y-display-surface) !important;
+}
+
+/* Fills that told things apart keep apart. One surface color for every
+ * opaque fill made a switch on and off, a progress bar and its track, a
+ * selected chip, color swatches, a <mark> and a red badge all look the same.
+ * documentEffects.ts sorts each sampled host fill into surface / muted (mid
+ * gray) / tone (the host hue) and puts the themed color in an inline
+ * variable (fillTone.ts: readable under the theme text color, as far from
+ * the page as that allows). The trailing :not(#id) lifts this above the
+ * high-contrast text plates, which would paint the same element black. */
+html[data-unilens-a11y-display-active]:not([data-unilens-a11y-bg-sample]) :is(body[data-unilens-page-content], #unilens-a11y-page-root) [data-unilens-a11y-fill]:not([data-unilens-a11y-media-text]):not(#unilens-a11y-fill-boost) {
+  background-color: var(--unilens-a11y-fill) !important;
+}
+
+html[data-unilens-a11y-display-active]:not([data-unilens-a11y-bg-sample]) :is(body[data-unilens-page-content], #unilens-a11y-page-root) [data-unilens-a11y-fill-before]:not([data-unilens-a11y-media-text]):not(#unilens-a11y-fill-boost)::before {
+  background-color: var(--unilens-a11y-fill-before) !important;
+}
+
+html[data-unilens-a11y-display-active]:not([data-unilens-a11y-bg-sample]) :is(body[data-unilens-page-content], #unilens-a11y-page-root) [data-unilens-a11y-fill-after]:not([data-unilens-a11y-media-text]):not(#unilens-a11y-fill-boost)::after {
+  background-color: var(--unilens-a11y-fill-after) !important;
 }
 
 /*
@@ -181,19 +294,36 @@ html[data-unilens-a11y-display-active]
  * adjacent same-surface controls stay separable. Limited to controls — not
  * every opaque surface — to avoid framing decorative panels.
  */
-html[data-unilens-a11y-display-active]
-    #unilens-a11y-page-root
-    [data-unilens-a11y-positioned-overlay]:is(
-        a,
-        button,
-        [role="button"],
-        input:not([type="hidden"]),
-        select,
-        textarea,
-        summary
-    ) {
-    box-shadow: inset 0 0 0 1px var(--unilens-a11y-display-border) !important;
+html[data-unilens-a11y-display-active] :is(body[data-unilens-page-content], #unilens-a11y-page-root) [data-unilens-a11y-positioned-overlay]:not([data-unilens-a11y-media-text]):is(
+  a,
+  button,
+  [role='button'],
+  input:not([type='hidden']),
+  select,
+  textarea,
+  summary
+):where(:not(:focus-visible)) {
+  box-shadow: inset 0 0 0 1px var(--unilens-a11y-display-border) !important;
 }
+
+/* High contrast: form controls keep the same 1px ring even when the host
+ * draws them without a fill (a text-only menu button, a bare input) — the
+ * plates paint them black, so the ring is what marks them as controls. */
+html[data-unilens-a11y-text-plate][data-unilens-a11y-display-active] :is(body[data-unilens-page-content], #unilens-a11y-page-root) :is(
+  input:not([type='hidden']):not([type='image']):not([type='checkbox']):not([type='radio']):not([type='range']):not([type='file']),
+  textarea,
+  select,
+  button
+):not([data-unilens-a11y-media-text]):where(:not(:focus-visible)) {
+  box-shadow: inset 0 0 0 1px var(--unilens-a11y-display-border) !important;
+}
+
+/*
+ * High-contrast yellow type used to sit on leftover light pixels in photos
+ * and CSS background-image (those are never remapped). Text now gets its own
+ * black plate (see [data-unilens-a11y-text-bg] below), so host photos stay at
+ * their original brightness — do not dim them here.
+ */
 
 /*
  * Host chrome often draws chevrons / plus icons / hairlines on ::before|::after
@@ -204,79 +334,331 @@ html[data-unilens-a11y-display-active]
  * onto pseudos. background-color is limited to likely hairline containers so
  * large decorative ::before blocks (header bars, contact icons) are left alone.
  */
-html[data-unilens-a11y-display-active] #unilens-a11y-page-root *::before,
-html[data-unilens-a11y-display-active] #unilens-a11y-page-root *::after {
-    border-color: var(--unilens-a11y-display-border) !important;
-    color: var(--unilens-a11y-display-text) !important;
+html[data-unilens-a11y-display-active] :is(body[data-unilens-page-content], #unilens-a11y-page-root) *:not([data-unilens-a11y-media-text])::before,
+html[data-unilens-a11y-display-active] :is(body[data-unilens-page-content], #unilens-a11y-page-root) *:not([data-unilens-a11y-media-text])::after {
+  color: var(--unilens-a11y-display-text) !important;
 }
 
-html[data-unilens-a11y-display-active]
-    #unilens-a11y-page-root
-    [class*="link-container"]::after,
-html[data-unilens-a11y-display-active]
-    #unilens-a11y-page-root
-    [class*="link-container"]::before {
-    background-color: var(--unilens-a11y-display-border) !important;
+html[data-unilens-a11y-display-active]:not([data-unilens-a11y-bg-sample]) :is(body[data-unilens-page-content], #unilens-a11y-page-root) *:not([data-unilens-a11y-media-text])::before,
+html[data-unilens-a11y-display-active]:not([data-unilens-a11y-bg-sample]) :is(body[data-unilens-page-content], #unilens-a11y-page-root) *:not([data-unilens-a11y-media-text])::after {
+  border-color: var(--unilens-a11y-display-border) !important;
+}
+
+/* Borders that are not a plain line keep apart (P5): a transparent side stays
+ * transparent (the hidden sides of a CSS triangle, a tab's idle underline)
+ * and a thick side drawn as a shape (a ribbon, an arrow head) is painted
+ * like a fill of its color. documentEffects.ts puts the four themed side
+ * colors in an inline variable (fillTone.ts `themedBorderColor`); the
+ * trailing :not(#id) lifts this above the blanket border rules. */
+html[data-unilens-a11y-display-active]:not([data-unilens-a11y-bg-sample]) :is(body[data-unilens-page-content], #unilens-a11y-page-root) [data-unilens-a11y-border]:not([data-unilens-a11y-media-text]):not(#unilens-a11y-border-boost) {
+  border-color: var(--unilens-a11y-border) !important;
+}
+
+html[data-unilens-a11y-display-active]:not([data-unilens-a11y-bg-sample]) :is(body[data-unilens-page-content], #unilens-a11y-page-root) [data-unilens-a11y-border-before]:not([data-unilens-a11y-media-text]):not(#unilens-a11y-border-boost)::before {
+  border-color: var(--unilens-a11y-border-before) !important;
+}
+
+html[data-unilens-a11y-display-active]:not([data-unilens-a11y-bg-sample]) :is(body[data-unilens-page-content], #unilens-a11y-page-root) [data-unilens-a11y-border-after]:not([data-unilens-a11y-media-text]):not(#unilens-a11y-border-boost)::after {
+  border-color: var(--unilens-a11y-border-after) !important;
+}
+
+/* Host chrome sometimes paints an opaque background-color directly on a
+ * ::before/::after (SoftBank `.p-graduateArrow::after`, `.c-hdg::after`,
+ * slick dot markers) — hairlines/arrows built from a solid pseudo box, not a
+ * background-image. The rule above already forces their `color`, but the
+ * blanket transparent reset a few rules up only matches real elements, so
+ * these were left with the host's original (often white) fill under the
+ * forced theme text color — e.g. yellow-on-white in high-contrast mode.
+ * syncPositionedOverlayMarkers() (documentEffects.ts) samples each pseudo's
+ * own background the same way it already does for real elements and marks
+ * the host so we can repaint just these two pseudos with the themed surface.
+ */
+html[data-unilens-a11y-display-active]:not([data-unilens-a11y-bg-sample]) :is(body[data-unilens-page-content], #unilens-a11y-page-root) [data-unilens-a11y-pseudo-overlay-before]:not([data-unilens-a11y-media-text])::before {
+  background-color: var(--unilens-a11y-display-surface) !important;
+}
+
+html[data-unilens-a11y-display-active]:not([data-unilens-a11y-bg-sample]) :is(body[data-unilens-page-content], #unilens-a11y-page-root) [data-unilens-a11y-pseudo-overlay-after]:not([data-unilens-a11y-media-text])::after {
+  background-color: var(--unilens-a11y-display-surface) !important;
+}
+
+/* Immediate, JS-free fallback for the exact instances confirmed on the
+ * disability recruit page (/recruit/disability/) while syncPositionedOverlayMarkers()'s
+ * pseudo-element detection above is waiting on an accessibility.js rebuild:
+ * SoftBank's own hardcoded white fills on `.p-graduateArrow::after` (card
+ * link chevrons), `.c-hdg::after` (heading underline), and the slick
+ * carousel's active-dot `::before`. Only background-color is touched here —
+ * nothing else about these elements changes. Once the JS-driven rule above
+ * is live it will match the same elements too; this block is then a harmless
+ * duplicate and can be removed.
+ */
+html[data-unilens-a11y-display-active]:not([data-unilens-a11y-bg-sample]) :is(body[data-unilens-page-content], #unilens-a11y-page-root) .p-graduateArrow:not([data-unilens-a11y-media-text])::after,
+html[data-unilens-a11y-display-active]:not([data-unilens-a11y-bg-sample]) :is(body[data-unilens-page-content], #unilens-a11y-page-root) .c-hdg:not([data-unilens-a11y-media-text])::after,
+html[data-unilens-a11y-display-active]:not([data-unilens-a11y-bg-sample]) :is(body[data-unilens-page-content], #unilens-a11y-page-root) .slick-active:not([data-unilens-a11y-media-text])::before {
+  background-color: var(--unilens-a11y-display-surface) !important;
+}
+
+html[data-unilens-a11y-display-active]:not([data-unilens-a11y-bg-sample]) :is(body[data-unilens-page-content], #unilens-a11y-page-root) [class*='link-container']:not([data-unilens-a11y-media-text])::after,
+html[data-unilens-a11y-display-active]:not([data-unilens-a11y-bg-sample]) :is(body[data-unilens-page-content], #unilens-a11y-page-root) [class*='link-container']:not([data-unilens-a11y-media-text])::before {
+  background-color: var(--unilens-a11y-display-border) !important;
 }
 
 /* SoftBank accordion open-state thickens the same ::after into a white spacer
  * (parent gets `…-lv4--open`). Keep that fill on the surface token. */
-html[data-unilens-a11y-display-active]
-    #unilens-a11y-page-root
-    [class*="--open"]
-    [class*="link-container"]::after,
-html[data-unilens-a11y-display-active]
-    #unilens-a11y-page-root
-    [class*="link-container"][class*="--open"]::after {
-    background-color: var(--unilens-a11y-display-surface) !important;
+html[data-unilens-a11y-display-active]:not([data-unilens-a11y-bg-sample]) :is(body[data-unilens-page-content], #unilens-a11y-page-root) [class*='--open'] [class*='link-container']:not([data-unilens-a11y-media-text])::after,
+html[data-unilens-a11y-display-active]:not([data-unilens-a11y-bg-sample]) :is(body[data-unilens-page-content], #unilens-a11y-page-root) [class*='link-container'][class*='--open']:not([data-unilens-a11y-media-text])::after {
+  background-color: var(--unilens-a11y-display-surface) !important;
 }
 
 /* SoftBank world-menu trigger paints an open-state plate via ::before with
  * hardcoded #ebebee — unreadable under dark/high-contrast text. Align with
  * the themed surface used for the positioned overlay panel. */
-html[data-unilens-a11y-display-active]
-    #unilens-a11y-page-root
-    .sb-appshell-v1-header_world-menu-button::before {
-    background-color: var(--unilens-a11y-display-surface) !important;
+html[data-unilens-a11y-display-active]:not([data-unilens-a11y-bg-sample]) :is(body[data-unilens-page-content], #unilens-a11y-page-root) .sb-appshell-v1-header_world-menu-button:not([data-unilens-a11y-media-text])::before {
+  background-color: var(--unilens-a11y-display-surface) !important;
 }
 
 /* Re-paint recognizable containers with the elevated "surface" tone for visual
  * hierarchy, layered on top of the blanket reset above. Applies to every
  * active theme (high-contrast's black-on-black is just as possible as dark's). */
-html[data-unilens-a11y-display-active]
-    #unilens-a11y-page-root
-    :where(
-        .hero,
-        .card,
-        .container,
-        .demo-section,
-        section,
-        article,
-        header,
-        footer,
-        nav,
-        main,
-        aside
-    ):not(#unilens-a11y-root):not(#unilens-root):not([data-unilens-ui]) {
-    background-color: var(--unilens-a11y-display-surface) !important;
+html[data-unilens-a11y-display-active]:not([data-unilens-a11y-bg-sample]) :is(body[data-unilens-page-content], #unilens-a11y-page-root) :where(
+  .hero,
+  .card,
+  .container,
+  .demo-section,
+  section,
+  article,
+  header,
+  footer,
+  nav,
+  main,
+  aside
+):not(#unilens-a11y-root):not(#unilens-root):not([data-unilens-ui]):not([data-unilens-a11y-media-text]):not([data-unilens-a11y-fill]) {
+  background-color: var(--unilens-a11y-display-surface) !important;
 }
 
-html[data-unilens-a11y-display-active] #unilens-a11y-page-root a {
-    color: var(--unilens-a11y-display-link) !important;
+/* A host card painted with a flat-colour gradient (`linear-gradient(white 97%,
+ * transparent 97%)`): the colour themes reset background-color only, so that
+ * layer would stay a white box under theme-coloured text. mediaTextGuard.ts
+ * marks the element and puts its background-image, flat layers set to none,
+ * in the variable; real pictures in the same list stay. */
+html[data-unilens-a11y-display-active] :is(body[data-unilens-page-content], #unilens-a11y-page-root) [data-unilens-a11y-flat-fill]:not([data-unilens-a11y-media-text]) {
+  background-image: var(--unilens-a11y-flat-fill-image) !important;
 }
 
-html[data-unilens-a11y-theme="high-contrast"][data-unilens-a11y-display-active]
-    #unilens-a11y-page-root
-    .hero {
-    background-color: var(--unilens-a11y-display-bg) !important;
+html[data-unilens-a11y-display-active] :is(body[data-unilens-page-content], #unilens-a11y-page-root) a:not([data-unilens-a11y-media-text]) {
+  color: var(--unilens-a11y-display-link) !important;
 }
 
-html[data-unilens-a11y-theme="high-contrast"][data-unilens-a11y-display-active]
-    #unilens-a11y-page-root
-    kbd {
-    background: #000 !important;
-    color: #ff0 !important;
-    border: 1px solid #ff0 !important;
+/* SoftBank repeats each section name as an oversized pale watermark image
+ * (`*_wh.png` — special_wh.png, people_wh.png, crosstalk_wh.png,
+ * project_wh.png, company_wh.png) with the real, readable heading layered on
+ * top in black (`.c-hdg.vertical.f-font-en`, e.g. "SPECIAL", "PEOPLE"). The
+ * blanket text-color rule above assumes text sits on our own themed page
+ * background, but this heading's actual backdrop is that untouched image —
+ * images are never recolored by the theme — so dark theme's near-white text
+ * and high-contrast's yellow both become unreadable against the pale
+ * watermark. Rather than pin the text to black (which would break the
+ * high-contrast black-bg/yellow-text convention used everywhere else on the
+ * page), paint a themed surface plate behind just this tight text box, same
+ * as the positioned-overlay treatment already used for real opaque-background
+ * elements — the heading keeps following the normal theme text color
+ * (yellow in high-contrast, near-white in dark, ...) but now always sits on
+ * a matching themed backdrop instead of the untouched pale image. In
+ * standard/light/soft/invert, surface is white/cream anyway, so this is a
+ * no-op there; it only changes anything for dark and high-contrast.
+ */
+html[data-unilens-a11y-display-active]:not([data-unilens-a11y-bg-sample]) :is(body[data-unilens-page-content], #unilens-a11y-page-root) .c-hdg.vertical.f-font-en:not([data-unilens-a11y-media-text]) {
+  background-color: var(--unilens-a11y-display-surface) !important;
+}
+
+/* :not(#…) keeps this deliberate black above the themed fills (fillTone.ts). */
+html[data-unilens-a11y-theme='high-contrast'][data-unilens-a11y-display-active]:not([data-unilens-a11y-bg-sample]) :is(body[data-unilens-page-content], #unilens-a11y-page-root) .hero:not([data-unilens-a11y-media-text]):not(#unilens-a11y-hero-boost) {
+  background-color: var(--unilens-a11y-display-bg) !important;
+}
+
+/* ── High contrast reach (HcTextScope: parts / all) ─────────────────────────
+ * <html data-unilens-a11y-hc-scope> is set with the high-contrast theme.
+ *
+ * "parts": fills holding text take the surface (documentEffects.ts), so the
+ * plates inside sit on one color. Nothing here.
+ *
+ * "all": as "parts", plus the rules below — gradient-only backgrounds are
+ * dropped, SVG text takes the plate text color over a plate-colored outline
+ * (plates cannot be painted under SVG text). Text over pictures gets plates
+ * because the picture-text guard is off at this reach. Text painted by its
+ * own background (background-clip: text, [data-unilens-a11y-clip-text])
+ * keeps that background over its plate (the plate rules skip it). */
+html[data-unilens-a11y-hc-scope='all'][data-unilens-a11y-display-active]:not([data-unilens-a11y-bg-sample]) :is(body[data-unilens-page-content], #unilens-a11y-page-root) [data-unilens-a11y-gradient-off] {
+  background-image: none !important;
+}
+
+html[data-unilens-a11y-hc-scope='all'][data-unilens-a11y-display-active] :is(body[data-unilens-page-content], #unilens-a11y-page-root) svg :is(text, tspan, textPath) {
+  fill: var(--unilens-a11y-text-plate-fg) !important;
+  stroke: var(--unilens-a11y-text-plate-bg) !important;
+  stroke-width: 3px !important;
+  stroke-linejoin: round !important;
+  paint-order: stroke fill !important;
+}
+
+/* Text kept in the host colors over a picture: native controls in it (a
+ * carousel arrow button with no color of its own) draw in the host's light
+ * scheme. Under the theme's dark scheme their default text turned white on
+ * the host's white button. */
+html[data-unilens-a11y-theme='high-contrast'][data-unilens-a11y-display-active]:not([data-unilens-a11y-bg-sample]) :is(body[data-unilens-page-content], #unilens-a11y-page-root) [data-unilens-a11y-media-text-root] {
+  color-scheme: normal;
+}
+
+html[data-unilens-a11y-text-plate]:not([data-unilens-a11y-bg-sample]) :is(body[data-unilens-page-content], #unilens-a11y-page-root) kbd:not([data-unilens-a11y-media-text]) {
+  background: var(--unilens-a11y-text-plate-bg) !important;
+  color: var(--unilens-a11y-text-plate-fg) !important;
+  border: 1px solid var(--unilens-a11y-text-plate-fg) !important;
+}
+
+/*
+ * Text plates: leftover light pixels (photos, CSS background-image, unmarked
+ * white fills) made yellow type unreadable. Every text run gets a solid plate,
+ * then the pair's glyph color on top. Wrapper-only layers stay transparent so
+ * host photos remain visible around the type.
+ *
+ * High-contrast always sets data-unilens-a11y-text-plate. Lab can set it on
+ * other color modes. :is() (not :where) is required so this beats the
+ * transparent background reset above. Tag list is a JS-free first paint;
+ * documentEffects then marks any other node that directly owns text.
+ * Do not CSS-target all span/div — icon wrappers and photo wrappers stay open.
+ * Tag-listed wrappers that own no text (a card <a> / <li> whose photo is its
+ * background-image) are marked text-bg-skip by documentEffects and left alone.
+ */
+html[data-unilens-a11y-text-plate]:not([data-unilens-a11y-bg-sample])
+  :is(body[data-unilens-page-content], #unilens-a11y-page-root)
+  :is(
+    p,
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6,
+    li,
+    td,
+    th,
+    dt,
+    dd,
+    label,
+    figcaption,
+    blockquote,
+    legend,
+    caption,
+    summary,
+    pre,
+    code,
+    kbd,
+    small,
+    time,
+    em,
+    strong,
+    b,
+    i,
+    cite,
+    a
+  ):not([data-unilens-a11y-text-bg-skip]):not([data-unilens-a11y-media-text]) {
+  background-color: var(--unilens-a11y-text-plate-bg) !important;
+  color: var(--unilens-a11y-text-plate-fg) !important;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+
+html[data-unilens-a11y-text-plate]:not([data-unilens-a11y-bg-sample])
+  :is(body[data-unilens-page-content], #unilens-a11y-page-root)
+  [data-unilens-a11y-text-bg]:not([data-unilens-a11y-media-text]) {
+  background-color: var(--unilens-a11y-text-plate-bg) !important;
+  color: var(--unilens-a11y-text-plate-fg) !important;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+
+html[data-unilens-a11y-text-plate]:not([data-unilens-a11y-bg-sample])
+  :is(body[data-unilens-page-content], #unilens-a11y-page-root)
+  [data-unilens-a11y-text-bg-before]:not([data-unilens-a11y-media-text])::before,
+html[data-unilens-a11y-text-plate]:not([data-unilens-a11y-bg-sample])
+  :is(body[data-unilens-page-content], #unilens-a11y-page-root)
+  [data-unilens-a11y-text-bg-after]:not([data-unilens-a11y-media-text])::after {
+  background-color: var(--unilens-a11y-text-plate-bg) !important;
+  color: var(--unilens-a11y-text-plate-fg) !important;
+}
+
+/* Plates drop leftover background images (light textures under the type) —
+ * except a picture the element paints as its own background
+ * ([data-unilens-a11y-media-owner], set by mediaTextGuard.ts): a banner link
+ * whose photo is its background-image would otherwise lose the photo. The
+ * plate fill then sits under the picture instead of replacing it. */
+html[data-unilens-a11y-text-plate]:not([data-unilens-a11y-bg-sample])
+  :is(body[data-unilens-page-content], #unilens-a11y-page-root)
+  :is(
+    p,
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6,
+    li,
+    td,
+    th,
+    dt,
+    dd,
+    label,
+    figcaption,
+    blockquote,
+    legend,
+    caption,
+    summary,
+    pre,
+    code,
+    kbd,
+    small,
+    time,
+    em,
+    strong,
+    b,
+    i,
+    cite,
+    a
+  ):not([data-unilens-a11y-text-bg-skip]):not([data-unilens-a11y-media-text]):not([data-unilens-a11y-media-owner]):not([data-unilens-a11y-clip-text]),
+html[data-unilens-a11y-text-plate]:not([data-unilens-a11y-bg-sample])
+  :is(body[data-unilens-page-content], #unilens-a11y-page-root)
+  [data-unilens-a11y-text-bg]:not([data-unilens-a11y-media-text]):not([data-unilens-a11y-media-owner]):not([data-unilens-a11y-clip-text]) {
+  background-image: none !important;
+}
+
+html[data-unilens-a11y-text-plate]
+  :is(body[data-unilens-page-content], #unilens-a11y-page-root)
+  [data-unilens-a11y-text-bg-before]:not([data-unilens-a11y-media-text]):not([data-unilens-a11y-media-owner])::before,
+html[data-unilens-a11y-text-plate]
+  :is(body[data-unilens-page-content], #unilens-a11y-page-root)
+  [data-unilens-a11y-text-bg-after]:not([data-unilens-a11y-media-text]):not([data-unilens-a11y-media-owner])::after {
+  background-image: none !important;
+}
+
+html[data-unilens-a11y-text-plate]:not([data-unilens-a11y-bg-sample])
+  :is(body[data-unilens-page-content], #unilens-a11y-page-root)
+  :is(
+    input:not([type='hidden']):not([type='image']):not([type='checkbox']):not([type='radio']):not(
+        [type='range']
+      ):not([type='file']),
+    textarea,
+    select,
+    button,
+    option
+  ):not([data-unilens-a11y-media-text]) {
+  background-color: var(--unilens-a11y-text-plate-bg) !important;
+  color: var(--unilens-a11y-text-plate-fg) !important;
+  caret-color: var(--unilens-a11y-text-plate-fg);
+}
+
+html[data-unilens-a11y-text-plate]
+  :is(body[data-unilens-page-content], #unilens-a11y-page-root)
+  :not([data-unilens-a11y-media-text])::placeholder {
+  color: var(--unilens-a11y-text-plate-fg) !important;
+  opacity: 1;
 }
 
 /* ── Widget UI ────────────────────────────────────────────────────────────
@@ -284,43 +666,22 @@ html[data-unilens-a11y-theme="high-contrast"][data-unilens-a11y-display-active]
  * It's kept separate from the page's display adjustments and always rendered in a stable light theme.
  * ------------------------------------------------------------------------ */
 
-/* Text size — body only (keeps the overlay widget scale stable). */
-html[data-unilens-a11y-font-size="large"] body,
-html[data-unilens-a11y-font-size="xlarge"] body {
-    font-size: calc(100% * var(--unilens-a11y-font-scale, 1));
-}
+/* Text size is applied per element by pageFontScale.ts so images stay put.
+ * Do not also scale `body { font-size }` — that double-applies on em text
+ * and made page-wide 150% look larger than selection 150%. */
 
-/* Line spacing — only when the visitor chose “wide”. */
-html[data-unilens-a11y-line-height="wide"] body {
-    line-height: var(--unilens-a11y-line-height, 2) !important;
-}
-
-/* Force the chosen typeface only when the visitor actually picked one
- * (UD / custom). Must not rewrite the host site's own font-family.
- * Pseudo-elements are deliberately left out so icon fonts via ::before/::after
- * keep rendering correctly. */
-html[data-unilens-a11y-font-family="ud"] #unilens-a11y-page-root,
-html[data-unilens-a11y-font-family="ud"] #unilens-a11y-page-root *,
-html[data-unilens-a11y-font-family="custom"] #unilens-a11y-page-root,
-html[data-unilens-a11y-font-family="custom"] #unilens-a11y-page-root * {
-    font-family: var(
-        --unilens-a11y-font-family,
-        system-ui,
-        sans-serif
-    ) !important;
-}
-
-html[data-unilens-a11y-letter-spacing="wide"] body {
-    letter-spacing: var(--unilens-a11y-letter-spacing, 0.12em) !important;
-    word-spacing: var(--unilens-a11y-word-spacing, 0.16em) !important;
-}
+/* Line spacing, typeface and letter / word spacing: in text-options.css,
+ * which documentEffects.ts puts in the document only while one of them is on.
+ * Those rules have to reach every element, and as part of this sheet they
+ * were matched on every style recalc of every page, even with all three off
+ * (a page re-classing <body> recalculated 30–40% slower). */
 
 /* ── Link underline (color is not the only cue) ──────────────────────────── */
 
-html[data-unilens-a11y-link-underline="true"] #unilens-a11y-page-root a {
-    text-decoration: underline !important;
-    text-underline-offset: 0.2em;
-    text-decoration-thickness: 0.12em;
+html[data-unilens-a11y-link-underline='true'] :is(body[data-unilens-page-content], #unilens-a11y-page-root) a {
+  text-decoration: underline !important;
+  text-underline-offset: 0.2em;
+  text-decoration-thickness: 0.12em;
 }
 
 /* ── Link background (color is not the only cue) ───────────────────────────
@@ -337,14 +698,17 @@ html[data-unilens-a11y-link-underline="true"] #unilens-a11y-page-root a {
    opacity just keeps it reading as a translucent tint rather than a solid
    block on light hosts. */
 
-html[data-unilens-a11y-link-background="true"] #unilens-a11y-page-root a {
-    background-color: color-mix(
-        in srgb,
-        color-mix(in srgb, var(--unilens-a11y-display-link) 55%, white 45%) 68%,
-        transparent
-    ) !important;
-    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.55);
-    border-radius: 2px;
+html[data-unilens-a11y-link-background='true'] :is(body[data-unilens-page-content], #unilens-a11y-page-root) a:not([data-unilens-a11y-media-text]) {
+  background-color: color-mix(
+    in srgb,
+    color-mix(in srgb, var(--unilens-a11y-display-link) 55%, white 45%) 68%,
+    transparent
+  ) !important;
+  border-radius: 2px;
+}
+
+html[data-unilens-a11y-link-background='true'] :is(body[data-unilens-page-content], #unilens-a11y-page-root) a:not([data-unilens-a11y-media-text]):where(:not(:focus-visible)) {
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.55);
 }
 
 /* ── Link border ──────────────────────────────────────────────────────────
@@ -355,20 +719,20 @@ html[data-unilens-a11y-link-background="true"] #unilens-a11y-page-root a {
    --unilens-a11y-display-link itself is too dark to read against a dark
    host background — see the link-background comment above for why. */
 
-html[data-unilens-a11y-link-border="true"] #unilens-a11y-page-root a {
-    outline: 2px solid var(--unilens-a11y-display-link) !important;
-    outline-offset: 1px;
-    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.85);
-    border-radius: 2px;
+html[data-unilens-a11y-link-border='true'] :is(body[data-unilens-page-content], #unilens-a11y-page-root) a:where(:not(:focus-visible)) {
+  outline: 2px solid var(--unilens-a11y-display-link) !important;
+  outline-offset: 1px;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.85);
+  border-radius: 2px;
 }
 
 /* ── Image border ─────────────────────────────────────────────────────────
    Negative offset keeps the outline inside the image's own box, so it can't
    overlap or shift neighboring inline content. */
 
-html[data-unilens-a11y-image-border="true"] #unilens-a11y-page-root img {
-    outline: 2px solid var(--unilens-a11y-display-border) !important;
-    outline-offset: -2px;
+html[data-unilens-a11y-image-border='true'] :is(body[data-unilens-page-content], #unilens-a11y-page-root) img {
+  outline: 2px solid var(--unilens-a11y-display-border) !important;
+  outline-offset: -2px;
 }
 
 /* ── Element highlight (always on, not just while focused) ─────────────────
@@ -376,78 +740,205 @@ html[data-unilens-a11y-image-border="true"] #unilens-a11y-page-root img {
    itself an interactive control, so outlining it would just add noise).
    Same white halo as link-border, for the same dark-host-page reason. */
 
-html[data-unilens-a11y-element-highlight="true"]
-    #unilens-a11y-page-root
-    :where(a, button, [role="button"], input, select, textarea, summary) {
-    outline: 1.5px solid var(--unilens-a11y-display-link) !important;
-    outline-offset: 1px;
-    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.85);
-    border-radius: 2px;
+html[data-unilens-a11y-element-highlight='true'] :is(body[data-unilens-page-content], #unilens-a11y-page-root) :where(
+  a, button, [role='button'], input, select, textarea, summary
+):where(:not(:focus-visible)) {
+  outline: 1.5px solid var(--unilens-a11y-display-link) !important;
+  outline-offset: 1px;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.85);
+  border-radius: 2px;
+}
+
+/* ── Keyboard focus stays visible ──────────────────────────────────────────
+ * The color themes force border-color on every element and an inset ring on
+ * filled controls, which wiped out focus styles drawn with box-shadow or a
+ * border color (Bootstrap-style buttons and inputs looked the same focused or
+ * not), and a host outline color was never remapped (a dark ring on a dark
+ * theme). Link border / element highlight put a permanent outline on every
+ * link, and link backgrounds a box-shadow, so the focused one did not stand
+ * out either. While any of these is on, :focus-visible gets its own ring: a
+ * white halo inside a 3px outline in the theme link color, readable on light
+ * and dark pages alike. The rules above leave :focus-visible alone (inside
+ * :where(), so their specificity is what it was).
+ * The focus-enhance rules further down share this specificity and come later,
+ * so the visitor's enhanced ring wins when that is on. */
+html:is(
+    [data-unilens-a11y-display-active],
+    [data-unilens-a11y-link-border='true'],
+    [data-unilens-a11y-element-highlight='true'],
+    [data-unilens-a11y-link-background='true']
+  )
+  :is(body[data-unilens-page-content], #unilens-a11y-page-root)
+  :focus-visible {
+  outline: 3px solid var(--unilens-a11y-display-link) !important;
+  outline-offset: 2px !important;
+  box-shadow: 0 0 0 2px #ffffff !important;
 }
 
 /* ── Reduce motion (mild / sensory) ──────────────────────────────────────── */
 
-html[data-unilens-a11y-reduce-motion="true"] #unilens-a11y-page-root *,
-html[data-unilens-a11y-reduce-motion="true"] #unilens-a11y-page-root *::before,
-html[data-unilens-a11y-reduce-motion="true"] #unilens-a11y-page-root *::after {
-    animation: none !important;
-    transition: none !important;
-    scroll-behavior: auto !important;
+/* Motion is finished instantly rather than removed. `animation: none` /
+ * `transition: none` dropped the end state of host animations (a fade-in
+ * from `opacity: 0` with `forwards` stayed invisible) and swallowed
+ * `animationend` / `transitionend`, so host modals and toasts that close on
+ * those events stayed on screen. A near-zero duration jumps straight to the
+ * end state and still fires every event; infinite loops run once and stop. */
+html[data-unilens-a11y-reduce-motion='true'] :is(body[data-unilens-page-content], #unilens-a11y-page-root) *,
+html[data-unilens-a11y-reduce-motion='true'] :is(body[data-unilens-page-content], #unilens-a11y-page-root) *::before,
+html[data-unilens-a11y-reduce-motion='true'] :is(body[data-unilens-page-content], #unilens-a11y-page-root) *::after {
+  animation-duration: 0.01ms !important;
+  animation-delay: 0s !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  transition-delay: 0s !important;
+  scroll-behavior: auto !important;
+}
+
+/* Smooth scrolling is usually turned on at the root (`html { scroll-behavior:
+ * smooth }`), which the rule above (the page's descendants) never reached:
+ * in-page links still glided thousands of pixels. */
+html[data-unilens-a11y-reduce-motion='true'],
+html[data-unilens-a11y-reduce-motion='true'] body {
+  scroll-behavior: auto !important;
 }
 
 /* ── Focus / cursor enhance (low vision: where am I?) ──────────────────────
-   The widget itself is excluded here since it shows focus using the panel's
-   own tokens. The cursor uses an asset-free SVG data URI (black arrow + white outline). */
+   Attribute value is 1|2|3 (absent = off). Level 2 matches the previous
+   48px cursor. The widget itself is excluded here since it shows focus
+   using the panel's own tokens. The cursor uses an asset-free SVG data URI
+   (black arrow + white outline). */
 
-html[data-unilens-a11y-focus-enhance="true"] #unilens-a11y-page-root {
-    --unilens-a11y-focus-ring: #ffcc00;
-    cursor:
-        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 48 48'%3E%3Cpath d='M8 4v34l9.5-9.2 6.2 14.6 5.4-2.3-6.3-14.8L36 26.5Z' fill='%23000' stroke='%23fff' stroke-width='3' stroke-linejoin='round'/%3E%3C/svg%3E")
-        6 4,
-        auto;
+html[data-unilens-a11y-focus-enhance] :is(body[data-unilens-page-content], #unilens-a11y-page-root) {
+  --unilens-a11y-focus-ring: #ffcc00;
+  --unilens-a11y-focus-outline: 4px;
+  --unilens-a11y-focus-offset: 3px;
+  --unilens-a11y-focus-halo: 2px;
 }
 
-html[data-unilens-a11y-focus-enhance="true"]
-    #unilens-a11y-page-root
-    :where(
-        a,
-        button,
-        [role="button"],
-        input,
-        select,
-        textarea,
-        summary,
-        label
-    ) {
-    cursor:
-        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 48 48'%3E%3Cpath d='M8 4v34l9.5-9.2 6.2 14.6 5.4-2.3-6.3-14.8L36 26.5Z' fill='%23000' stroke='%23fff' stroke-width='3' stroke-linejoin='round'/%3E%3C/svg%3E")
-        6 4,
-        pointer;
+html[data-unilens-a11y-focus-enhance='1']:not([data-unilens-a11y-cursor-probe]) :is(body[data-unilens-page-content], #unilens-a11y-page-root) {
+  --unilens-a11y-focus-outline: 3px;
+  --unilens-a11y-focus-offset: 2px;
+  --unilens-a11y-focus-halo: 1.5px;
+  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 48 48'%3E%3Cpath d='M8 4v34l9.5-9.2 6.2 14.6 5.4-2.3-6.3-14.8L36 26.5Z' fill='%23000' stroke='%23fff' stroke-width='3' stroke-linejoin='round'/%3E%3C/svg%3E")
+      4 3,
+    auto;
 }
 
-html[data-unilens-a11y-focus-enhance="true"]
-    #unilens-a11y-page-root
-    :focus-visible {
-    outline: 4px solid var(--unilens-a11y-focus-ring, #ffcc00) !important;
-    outline-offset: 3px !important;
-    box-shadow: 0 0 0 2px #000 !important;
+html[data-unilens-a11y-focus-enhance='1']:not([data-unilens-a11y-cursor-probe]) :is(body[data-unilens-page-content], #unilens-a11y-page-root) :where(
+  a, button, [role='button'], input, select, textarea, summary, label
+):not([data-unilens-a11y-host-cursor], input:not([type='button' i], [type='submit' i], [type='reset' i], [type='checkbox' i], [type='radio' i], [type='range' i], [type='color' i], [type='file' i], [type='image' i]), textarea) {
+  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 48 48'%3E%3Cpath d='M8 4v34l9.5-9.2 6.2 14.6 5.4-2.3-6.3-14.8L36 26.5Z' fill='%23000' stroke='%23fff' stroke-width='3' stroke-linejoin='round'/%3E%3C/svg%3E")
+      4 3,
+    pointer;
 }
 
-html[data-unilens-a11y-focus-enhance="true"] #unilens-a11y-root :focus-visible,
-html[data-unilens-a11y-focus-enhance="true"] #unilens-root :focus-visible {
-    outline: revert-layer;
-    outline-offset: revert-layer;
-    box-shadow: revert-layer;
+html[data-unilens-a11y-focus-enhance='2']:not([data-unilens-a11y-cursor-probe]) :is(body[data-unilens-page-content], #unilens-a11y-page-root) {
+  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 48 48'%3E%3Cpath d='M8 4v34l9.5-9.2 6.2 14.6 5.4-2.3-6.3-14.8L36 26.5Z' fill='%23000' stroke='%23fff' stroke-width='3' stroke-linejoin='round'/%3E%3C/svg%3E")
+      6 4,
+    auto;
+}
+
+html[data-unilens-a11y-focus-enhance='2']:not([data-unilens-a11y-cursor-probe]) :is(body[data-unilens-page-content], #unilens-a11y-page-root) :where(
+  a, button, [role='button'], input, select, textarea, summary, label
+):not([data-unilens-a11y-host-cursor], input:not([type='button' i], [type='submit' i], [type='reset' i], [type='checkbox' i], [type='radio' i], [type='range' i], [type='color' i], [type='file' i], [type='image' i]), textarea) {
+  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 48 48'%3E%3Cpath d='M8 4v34l9.5-9.2 6.2 14.6 5.4-2.3-6.3-14.8L36 26.5Z' fill='%23000' stroke='%23fff' stroke-width='3' stroke-linejoin='round'/%3E%3C/svg%3E")
+      6 4,
+    pointer;
+}
+
+html[data-unilens-a11y-focus-enhance='3']:not([data-unilens-a11y-cursor-probe]) :is(body[data-unilens-page-content], #unilens-a11y-page-root) {
+  --unilens-a11y-focus-outline: 6px;
+  --unilens-a11y-focus-offset: 4px;
+  --unilens-a11y-focus-halo: 3px;
+  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='72' height='72' viewBox='0 0 48 48'%3E%3Cpath d='M8 4v34l9.5-9.2 6.2 14.6 5.4-2.3-6.3-14.8L36 26.5Z' fill='%23000' stroke='%23fff' stroke-width='3' stroke-linejoin='round'/%3E%3C/svg%3E")
+      9 6,
+    auto;
+}
+
+html[data-unilens-a11y-focus-enhance='3']:not([data-unilens-a11y-cursor-probe]) :is(body[data-unilens-page-content], #unilens-a11y-page-root) :where(
+  a, button, [role='button'], input, select, textarea, summary, label
+):not([data-unilens-a11y-host-cursor], input:not([type='button' i], [type='submit' i], [type='reset' i], [type='checkbox' i], [type='radio' i], [type='range' i], [type='color' i], [type='file' i], [type='image' i]), textarea) {
+  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='72' height='72' viewBox='0 0 48 48'%3E%3Cpath d='M8 4v34l9.5-9.2 6.2 14.6 5.4-2.3-6.3-14.8L36 26.5Z' fill='%23000' stroke='%23fff' stroke-width='3' stroke-linejoin='round'/%3E%3C/svg%3E")
+      9 6,
+    pointer;
+}
+
+/* The host's own meaningful cursors stay (not-allowed on a disabled button,
+ * grab, zoom-in …): hostCursorGuard.ts marks those controls with
+ * data-unilens-a11y-host-cursor, read while data-unilens-a11y-cursor-probe
+ * switches the rules above off. Text fields keep the I-beam rather than
+ * inheriting the large arrow from <body>. */
+html[data-unilens-a11y-focus-enhance]:not([data-unilens-a11y-cursor-probe]) :is(body[data-unilens-page-content], #unilens-a11y-page-root) :where(
+  input:not([type='button' i], [type='submit' i], [type='reset' i], [type='checkbox' i], [type='radio' i], [type='range' i], [type='color' i], [type='file' i], [type='image' i]), textarea
+):not([data-unilens-a11y-host-cursor]) {
+  cursor: auto;
+}
+
+html[data-unilens-a11y-focus-enhance] :is(body[data-unilens-page-content], #unilens-a11y-page-root) :focus-visible {
+  outline: var(--unilens-a11y-focus-outline) solid var(--unilens-a11y-focus-ring, #ffcc00) !important;
+  outline-offset: var(--unilens-a11y-focus-offset) !important;
+  box-shadow: 0 0 0 var(--unilens-a11y-focus-halo) #000 !important;
+}
+
+html[data-unilens-a11y-focus-enhance] #unilens-a11y-root :focus-visible,
+html[data-unilens-a11y-focus-enhance] #unilens-root :focus-visible {
+  outline: revert-layer;
+  outline-offset: revert-layer;
+  box-shadow: revert-layer;
 }
 
 /* ── Small text boost (16px floor) ───────────────────────────────────────── */
 
-[data-unilens-a11y-scaled="true"].unilens-a11y-small-text-boost {
-    font-size: var(--unilens-a11y-target-size, 16px) !important;
+/* Off while textSizeLayers re-measures the host's sizes (same probe as the shared rule). */
+html:not([data-unilens-a11y-text-size-probe]) [data-unilens-a11y-scaled="true"].unilens-a11y-small-text-boost {
+  font-size: var(--unilens-a11y-target-size, 16px) !important;
 }
 
 /* ── Body text expand (headings excluded, 1.25×, min 16px) ───────────────── */
 
-[data-unilens-a11y-body-expanded="true"].unilens-a11y-body-text-expand {
-    font-size: var(--unilens-a11y-body-target-size, 16px) !important;
+html:not([data-unilens-a11y-text-size-probe]) [data-unilens-a11y-body-expanded="true"].unilens-a11y-body-text-expand {
+  font-size: var(--unilens-a11y-body-target-size, 16px) !important;
+}
+
+/* ── Text outline (Lab) ────────────────────────────────────────────────────
+ * Fill + -webkit-text-stroke so glyphs stay readable on photos and mixed
+ * backgrounds. paint-order paints the fill on top so the stroke does not
+ * eat into the letter. Colors come from CSS variables set by
+ * documentEffects (five pairs). Specificity matches the theme `color`
+ * reset so this wins when both are on — the visitor asked for an outline.
+ * Media and SVG chrome are skipped; generated ::before/::after text is
+ * included because host sites often put captions there. */
+html[data-unilens-a11y-text-stroke] :is(body[data-unilens-page-content], #unilens-a11y-page-root),
+html[data-unilens-a11y-text-stroke] :is(body[data-unilens-page-content], #unilens-a11y-page-root) *:not(img, video, canvas, svg, iframe, picture, source):not([data-unilens-a11y-media-text]) {
+  color: var(--unilens-a11y-text-stroke-fill, rgb(255, 255, 255)) !important;
+  -webkit-text-fill-color: var(--unilens-a11y-text-stroke-fill, rgb(255, 255, 255)) !important;
+  -webkit-text-stroke-width: var(--unilens-a11y-text-stroke-width, 0.1em) !important;
+  -webkit-text-stroke-color: var(--unilens-a11y-text-stroke-edge, rgb(0, 0, 0)) !important;
+  paint-order: stroke fill;
+}
+
+/* Icons drawn with currentColor take the fill color above, but
+ * -webkit-text-stroke never reaches SVG: a white icon kept no edge and
+ * vanished on a white button. Those icons get the same edge as the text, as
+ * a 1px ring of drop-shadows. Only SVGs that paint with currentColor — a
+ * picture or logo with colors of its own keeps them and gets no ring. */
+html[data-unilens-a11y-text-stroke] :is(body[data-unilens-page-content], #unilens-a11y-page-root) svg:is(
+  [fill='currentColor' i],
+  [stroke='currentColor' i],
+  :has([fill='currentColor' i], [stroke='currentColor' i])
+):not([data-unilens-a11y-media-text]) {
+  filter:
+    drop-shadow(1px 0 0 var(--unilens-a11y-text-stroke-edge, rgb(0, 0, 0)))
+    drop-shadow(-1px 0 0 var(--unilens-a11y-text-stroke-edge, rgb(0, 0, 0)))
+    drop-shadow(0 1px 0 var(--unilens-a11y-text-stroke-edge, rgb(0, 0, 0)))
+    drop-shadow(0 -1px 0 var(--unilens-a11y-text-stroke-edge, rgb(0, 0, 0))) !important;
+}
+
+html[data-unilens-a11y-text-stroke] :is(body[data-unilens-page-content], #unilens-a11y-page-root) *:not([data-unilens-a11y-media-text])::before,
+html[data-unilens-a11y-text-stroke] :is(body[data-unilens-page-content], #unilens-a11y-page-root) *:not([data-unilens-a11y-media-text])::after {
+  color: var(--unilens-a11y-text-stroke-fill, rgb(255, 255, 255)) !important;
+  -webkit-text-fill-color: var(--unilens-a11y-text-stroke-fill, rgb(255, 255, 255)) !important;
+  -webkit-text-stroke-width: var(--unilens-a11y-text-stroke-width, 0.1em) !important;
+  -webkit-text-stroke-color: var(--unilens-a11y-text-stroke-edge, rgb(0, 0, 0)) !important;
+  paint-order: stroke fill;
 }

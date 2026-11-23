@@ -5,6 +5,7 @@
  *   <script src="accessibility.js"></script>
  *   <script>Accessibility.init()</script>
  *
+ * Page theme CSS is bundled into the script and injected on init.
  * UniLensA11y is also exposed for compatibility with the previous UMD build.
  */
 

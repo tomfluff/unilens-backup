@@ -6,11 +6,13 @@ Making web-browsing accessible with in-page AI-partners.
 
 ## Structure
 
-There are four managed packages:
+There are five managed packages:
 
 * `backend` - Flask server managed by python `venv`. See `backend/Makefile` for details
 * `unilens-lib` - Unilens library managed by `npm`. See `unilens-lib/Makefile` for details
 * `accessibility-lib` - Accessibility library managed by `npm`. See `accessibility-lib/Makefile` for details
+* `quiz-lib` - Survey widget managed by `npm`; the survey server serves it as the survey page (`/survey?quiz=<id>`). See `quiz-lib/README.md` for details
+* `survey-backend` - The survey server (Express + TypeScript, port 5100) managed by `npm`: the survey page and `/api/quiz/*`. See `survey-backend/README.md` for details
 * `.` - Root dir managed by `npm`. Very small package which is used to serve sample sites such as `softbank-mirror`. `./Makefile` manages all packages
 
 Note that for `.`, the choice of `npm` vs `venv` is relatively arbitrary. We choose `npm` to stay consistent with the client builds.
@@ -24,6 +26,8 @@ backend, and opens a chat popover at the cursor backed by an LLM/VLM.
 ```
 unilens-lib/          React + TS — builds a single embeddable dist/unilens.js using esbuild
 accessibility-lib/    React + TS — builds a single embeddable dist/accessibility.js using esbuild
+quiz-lib/             React + TS — builds dist/quiz.js (esbuild); the survey server's page loads it
+survey-backend/       Express + TS — the survey page, /api/quiz/* and the answers' log (port 5100)
 backend/           Flask — stores captures, /api/chat with OpenAI / Gemini / stub
 frontend/softbank-mirror/          Static copy of softbank.jp IR benefit page (port 8000)
 frontend/softbank-mirror-recruit/  Static copy of softbank.jp recruit/disability page (port 8002)
@@ -68,6 +72,7 @@ This will watch for changes in any of the three directories and will automatical
 * `backend` - server code
 * `unilens-lib` - Unilens javascript library source code
 * `accessibility-lib` - Accessibility javascript library source code
+* `quiz-lib` - Quiz javascript library source code
 * `frontend/{target}` - base HTML and source of client (excluding unilens.js dist)
 
 ### Backend Only
@@ -92,7 +97,7 @@ make serve-frontend softbank-mirror
 ```
 make serve-frontend softbank-mirror-recruit
 # Serves `frontend/softbank-mirror-recruit` to localhost:8002
-# `/` redirects to /recruit/disability/
+# Open http://localhost:8002/recruit/disability/ (root `/` redirects there)
 ```
 
 ### Javascript Libs Only
@@ -170,16 +175,18 @@ To add new javascript targets or new frontend targets, update `make-targets.mk`:
 # JS build targets
 
 # Define all targets here, this allows us to iterate through them
-JS_TARGETS:= unilens-lib accessibility-lib
+JS_TARGETS:= unilens-lib accessibility-lib quiz-lib
 
 target_dist_unilens-lib=unilens.js
 target_dist_accessibility-lib=accessibility.js
+target_dist_quiz-lib=quiz.js
 
 # Frontend build targets
-FRONTEND_TARGETS:= softbank-mirror dev-demo
+FRONTEND_TARGETS:= softbank-mirror softbank-mirror-recruit dev-demo
 
 # To add a target, use the format `frontend_port_{subdir name}=<PORT>`
 frontend_port_softbank-mirror=8000
+frontend_port_softbank-mirror-recruit=8002
 frontend_port_dev-demo=8001
 ```
 

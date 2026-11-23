@@ -183,7 +183,11 @@
 </footer>
 <div class="cookie" id="cookie" hidden><p>マルケタでは、購入手続き、おすすめの表示、サイト利用状況の分析のためにCookieや類似のツールを使用しています。すべてを許可するか、サイトの運営に必要なものだけを許可するかを選べます。 <a href="/ja/help/faq.html">Cookieについて</a></p><div><button class="btn" data-cookie="essential">必要なもののみ</button><button class="btn btn-y" data-cookie="all">すべて許可</button></div></div>
 <script src="/assets/js/site.js"></script>
+<script src="/accessibility.js"></script>
 <script src="/unilens.js"></script>
-<script>UniLens.init({ backend: 'http://127.0.0.1:5000', mouseWindow: 5 })</script>
+<script>
+  Accessibility.init()
+  UniLens.init({ backend: 'http://127.0.0.1:5000', mouseWindow: 5 })
+</script>
 </body>
 </html>

@@ -1,0 +1,280 @@
+/**
+ * Reading-focus mask: a full-width clear band centered on the pointer.
+ * The rest of the viewport is slightly dimmed. The OS cursor is unchanged.
+ * The top and bottom of the clear band are solid blue.
+ */
+import { getA11ySettings, onA11yChange } from "./accessibilityStore";
+import {
+    FOCUS_CURSOR_DEFAULT_BAND_PX,
+    focusCursorOn,
+    normalizeFocusCursorBandPx,
+} from "./accessibilityStoreTypes";
+import { appendA11yStyle } from "./cspStyle";
+import {
+    FOCUS_CURSOR_BOTTOM_ID,
+    FOCUS_CURSOR_EDGE_BOTTOM_ID,
+    FOCUS_CURSOR_EDGE_TOP_ID,
+    FOCUS_CURSOR_ID,
+    FOCUS_CURSOR_TOP_ID,
+    UI_ATTR,
+} from "./domIds";
+import { resetFocusCursorMemory } from "./focusCursorMemory";
+import { registerTopLayer, unregisterTopLayer } from "./topLayer";
+
+/** Default clear band height (medium). */
+export const FOCUS_CURSOR_BAND_PX = FOCUS_CURSOR_DEFAULT_BAND_PX;
+
+/** Blue tint along the top and bottom of the clear band. */
+export const FOCUS_CURSOR_EDGE_PX = 10;
+
+/** Dim overlay outside the band (about 65% black). */
+export const FOCUS_CURSOR_DIM = "rgba(0, 0, 0, 0.65)";
+
+/** Solid blue bars on the top and bottom of the clear band. */
+export const FOCUS_CURSOR_EDGE = "rgb(0, 102, 255)";
+
+const STYLE_ID = "unilens-a11y-focus-cursor-style";
+const HALO_Z = 2147483645;
+
+const MASK_CSS = `
+#${FOCUS_CURSOR_ID} {
+  position: fixed;
+  inset: 0;
+  /* a manual popover while the host has a top-layer element (topLayer.ts):
+     undo the popover UA box (fit-content size, Canvas background) */
+  width: auto;
+  height: auto;
+  max-width: none;
+  max-height: none;
+  background: transparent;
+  color: inherit;
+  margin: 0;
+  padding: 0;
+  border: none;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: ${HALO_Z};
+  display: none;
+}
+#${FOCUS_CURSOR_ID}[data-unilens-a11y-focus-cursor="on"] {
+  display: block;
+}
+#${FOCUS_CURSOR_TOP_ID},
+#${FOCUS_CURSOR_BOTTOM_ID},
+#${FOCUS_CURSOR_EDGE_TOP_ID},
+#${FOCUS_CURSOR_EDGE_BOTTOM_ID} {
+  position: absolute;
+  left: 0;
+  right: 0;
+  margin: 0;
+  padding: 0;
+  border: none;
+  pointer-events: none;
+}
+#${FOCUS_CURSOR_TOP_ID},
+#${FOCUS_CURSOR_BOTTOM_ID} {
+  background: ${FOCUS_CURSOR_DIM};
+}
+#${FOCUS_CURSOR_EDGE_TOP_ID},
+#${FOCUS_CURSOR_EDGE_BOTTOM_ID} {
+  height: ${FOCUS_CURSOR_EDGE_PX}px;
+  background: ${FOCUS_CURSOR_EDGE};
+}
+#${FOCUS_CURSOR_TOP_ID} { top: 0; height: 0; }
+#${FOCUS_CURSOR_BOTTOM_ID} { top: 0; bottom: 0; }
+#${FOCUS_CURSOR_EDGE_TOP_ID},
+#${FOCUS_CURSOR_EDGE_BOTTOM_ID} { top: 0; }
+`;
+
+/** Top edge of the clear band, in viewport Y. */
+export function focusCursorBandTop(
+    clientY: number,
+    bandPx: number = FOCUS_CURSOR_DEFAULT_BAND_PX,
+): number {
+    return clientY - bandPx / 2;
+}
+
+/** Bottom edge of the clear band, in viewport Y. */
+export function focusCursorBandBottom(
+    clientY: number,
+    bandPx: number = FOCUS_CURSOR_DEFAULT_BAND_PX,
+): number {
+    return clientY + bandPx / 2;
+}
+
+/** Top of the blue tint at the upper edge of the clear band. */
+export function focusCursorEdgeTop(
+    clientY: number,
+    bandPx: number = FOCUS_CURSOR_DEFAULT_BAND_PX,
+): number {
+    return focusCursorBandTop(clientY, bandPx);
+}
+
+/** Top of the blue tint at the lower edge of the clear band. */
+export function focusCursorEdgeBottom(
+    clientY: number,
+    bandPx: number = FOCUS_CURSOR_DEFAULT_BAND_PX,
+): number {
+    return focusCursorBandBottom(clientY, bandPx) - FOCUS_CURSOR_EDGE_PX;
+}
+
+let active = false;
+let tracking = false;
+let a11yUnsub: (() => void) | null = null;
+let lastY = Number.NaN;
+
+function ensureStylesheet() {
+    if (typeof document === "undefined") return;
+    const existing = document.getElementById(STYLE_ID);
+    // A <style>, or the <unilens-style> handle cspStyle.ts puts in its
+    // place under a strict CSP.
+    if (existing) {
+        existing.textContent = MASK_CSS;
+        return;
+    }
+    const style = document.createElement("style");
+    style.id = STYLE_ID;
+    // Text first: appendA11yStyle() checks whether the page's CSP refused it.
+    style.textContent = MASK_CSS;
+    appendA11yStyle(style);
+}
+
+function ensureChild(root: HTMLElement, id: string): HTMLElement {
+    const existing = document.getElementById(id);
+    if (existing instanceof HTMLElement && existing.parentElement === root) {
+        return existing;
+    }
+    existing?.remove();
+    const el = document.createElement("div");
+    el.id = id;
+    root.appendChild(el);
+    return el;
+}
+
+function ensureMask(): HTMLElement | null {
+    if (typeof document === "undefined") return null;
+    let root = document.getElementById(FOCUS_CURSOR_ID);
+    if (!(root instanceof HTMLElement)) {
+        root = document.createElement("div");
+        root.id = FOCUS_CURSOR_ID;
+        root.setAttribute(UI_ATTR, "1");
+        root.setAttribute("aria-hidden", "true");
+        document.documentElement.appendChild(root);
+        // Above a host modal / popover while one is open; otherwise it stays
+        // under the ♿ panel, which it must not dim.
+        registerTopLayer(root, "withHost");
+    }
+    ensureChild(root, FOCUS_CURSOR_TOP_ID);
+    ensureChild(root, FOCUS_CURSOR_BOTTOM_ID);
+    ensureChild(root, FOCUS_CURSOR_EDGE_TOP_ID);
+    ensureChild(root, FOCUS_CURSOR_EDGE_BOTTOM_ID);
+    return root;
+}
+
+function hideMask() {
+    const root = document.getElementById(FOCUS_CURSOR_ID);
+    if (!(root instanceof HTMLElement)) return;
+    root.removeAttribute("data-unilens-a11y-focus-cursor");
+}
+
+function paintMask() {
+    const bandPx = normalizeFocusCursorBandPx(
+        getA11ySettings().focusCursorBandPx,
+    );
+    if (!focusCursorOn(bandPx)) {
+        hideMask();
+        return;
+    }
+    if (!Number.isFinite(lastY)) {
+        hideMask();
+        return;
+    }
+    const root = ensureMask();
+    if (!root) return;
+    const topEl = document.getElementById(FOCUS_CURSOR_TOP_ID);
+    const bottomEl = document.getElementById(FOCUS_CURSOR_BOTTOM_ID);
+    const edgeTopEl = document.getElementById(FOCUS_CURSOR_EDGE_TOP_ID);
+    const edgeBottomEl = document.getElementById(FOCUS_CURSOR_EDGE_BOTTOM_ID);
+    if (
+        !(topEl instanceof HTMLElement) ||
+        !(bottomEl instanceof HTMLElement) ||
+        !(edgeTopEl instanceof HTMLElement) ||
+        !(edgeBottomEl instanceof HTMLElement)
+    ) {
+        return;
+    }
+    const bandTop = focusCursorBandTop(lastY, bandPx);
+    const bandBottom = focusCursorBandBottom(lastY, bandPx);
+    topEl.style.height = `${Math.max(0, bandTop)}px`;
+    bottomEl.style.top = `${Math.max(0, bandBottom)}px`;
+    edgeTopEl.style.top = `${bandTop}px`;
+    edgeBottomEl.style.top = `${focusCursorEdgeBottom(lastY, bandPx)}px`;
+    root.setAttribute("data-unilens-a11y-focus-cursor", "on");
+}
+
+function onPointerMove(e: PointerEvent) {
+    lastY = e.clientY;
+    paintMask();
+}
+
+function onPointerLeave() {
+    hideMask();
+}
+
+function attachTracking() {
+    if (tracking || typeof window === "undefined") return;
+    tracking = true;
+    window.addEventListener("pointermove", onPointerMove, { passive: true });
+    // `pointerleave` never fires on window; <html> gets it when the pointer
+    // leaves the viewport (the root is hit-tested for empty canvas too).
+    document.documentElement.addEventListener("pointerleave", onPointerLeave);
+    window.addEventListener("blur", onPointerLeave);
+}
+
+function detachTracking() {
+    if (!tracking || typeof window === "undefined") return;
+    tracking = false;
+    window.removeEventListener("pointermove", onPointerMove);
+    document.documentElement.removeEventListener(
+        "pointerleave",
+        onPointerLeave,
+    );
+    window.removeEventListener("blur", onPointerLeave);
+}
+
+function syncFromSettings() {
+    if (
+        focusCursorOn(
+            normalizeFocusCursorBandPx(getA11ySettings().focusCursorBandPx),
+        )
+    ) {
+        ensureStylesheet();
+        attachTracking();
+        paintMask();
+        return;
+    }
+    hideMask();
+    detachTracking();
+    lastY = Number.NaN;
+}
+
+export function initFocusCursorMask() {
+    if (active) return;
+    active = true;
+    syncFromSettings();
+    a11yUnsub = onA11yChange(syncFromSettings);
+}
+
+export function destroyFocusCursorMask() {
+    if (!active) return;
+    active = false;
+    a11yUnsub?.();
+    a11yUnsub = null;
+    detachTracking();
+    lastY = Number.NaN;
+    const mask = document.getElementById(FOCUS_CURSOR_ID);
+    unregisterTopLayer(mask);
+    mask?.remove();
+    document.getElementById(STYLE_ID)?.remove();
+    resetFocusCursorMemory();
+}

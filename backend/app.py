@@ -7,6 +7,8 @@ POST /api/chat     {capture_id, message, cite?}       -> {reply, provider, model
 POST /api/locate   {capture_id, question, screenshot} -> {capture_id, answer, highlights}
 GET  /health
 
+The survey (quiz-lib's page and /api/quiz/*) is served by survey-backend/, not here.
+
 Captures stored under captures/<id>/ (capture.png + meta.json + chat.json,
 plus inventory.json when the client sent a page inventory).
 LLM/VLM provider picked by env: OPENAI_API_KEY -> OpenAI, else GOOGLE_API_KEY

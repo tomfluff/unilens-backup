@@ -3,6 +3,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { UNILENS_A11Y_BODY_SCRIPTS } from '../unilens-embed.mjs';
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const imp = (p) => import(pathToFileURL(path.join(ROOT, p)).href);
@@ -192,8 +193,7 @@ ${o.body}
 ${footer(lang)}
 <div class="cookie" id="cookie" hidden><p>${L(lang, 'We use cookies and similar tools to make purchases, show recommendations and measure how you use Marketa. You can accept all cookies or only the ones we need to run the site.', 'マルケタでは、購入手続き、おすすめの表示、サイト利用状況の分析のためにCookieや類似のツールを使用しています。すべてを許可するか、サイトの運営に必要なものだけを許可するかを選べます。')} <a href="${u(lang, 'help/faq.html')}">${L(lang, 'Cookie notice', 'Cookieについて')}</a></p><div><button class="btn" data-cookie="essential">${L(lang, 'Essential only', '必要なもののみ')}</button><button class="btn btn-y" data-cookie="all">${L(lang, 'Accept all', 'すべて許可')}</button></div></div>
 <script src="/assets/js/site.js"></script>
-<script src="/unilens.js"></script>
-<script>UniLens.init({ backend: 'http://127.0.0.1:5000', mouseWindow: 5 })</script>
+${UNILENS_A11Y_BODY_SCRIPTS}
 </body>
 </html>
 `;
@@ -583,7 +583,7 @@ for (const lang of LANGS) {
   fs.writeFileSync(path.join(ROOT, `assets/data/index-${lang}.json`), JSON.stringify(indexJson(lang)));
 }
 for (const pg of pages) { fs.mkdirSync(path.dirname(pg.file), { recursive: true }); fs.writeFileSync(pg.file, pg.html); }
-fs.writeFileSync(path.join(ROOT, 'index.html'), `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta http-equiv="refresh" content="0; url=/en/index.html"><title>Marketa</title></head><body><a href="/en/index.html">Marketa</a></body></html>\n`);
+fs.writeFileSync(path.join(ROOT, 'index.html'), `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta http-equiv="refresh" content="0; url=/en/index.html"><title>Marketa</title></head><body><a href="/en/index.html">Marketa</a>${UNILENS_A11Y_BODY_SCRIPTS}</body></html>\n`);
 fs.writeFileSync(path.join(ROOT, 'assets/img/favicon.svg'), '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="8" fill="#ff7a45"/><path d="M8 12h16l-1.6 11.2a2 2 0 0 1-2 1.8h-8.8a2 2 0 0 1-2-1.8z" fill="#fff"/><path d="M12 12a4 4 0 0 1 8 0" stroke="#fff" stroke-width="2.2" fill="none"/></svg>\n');
 if (fs.existsSync(SRC)) fs.writeFileSync(path.join(SRC, 'price-history.json'), JSON.stringify(historyLog, null, 1));
 validate();

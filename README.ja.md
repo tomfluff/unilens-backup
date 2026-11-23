@@ -6,11 +6,13 @@
 
 ## 構成
 
-管理対象のパッケージは 4 つです:
+管理対象のパッケージは 5 つです:
 
 * `backend` - Python `venv` で管理する Flask サーバ。詳細は `backend/Makefile` を参照
 * `unilens-lib` - `npm` で管理する Unilens ライブラリ。詳細は `unilens-lib/Makefile` を参照
 * `accessibility-lib` - `npm` で管理する Unilens ライブラリ。詳細は `unilens-lib/Makefile` を参照
+* `quiz-lib` - `npm` で管理するアンケートウィジェット。アンケートサーバーがアンケートページ（`/survey?quiz=<id>`）として配信。詳細は `quiz-lib/README.ja.md` を参照
+* `survey-backend` - `npm` で管理するアンケートサーバー（Express + TypeScript、ポート 5100）。アンケートページと `/api/quiz/*` を担当。詳細は `survey-backend/README.ja.md` を参照
 * `.` - `npm` で管理するルートディレクトリ。`softbank-mirror` のようなサンプルサイトの配信に使う、ごく小さなパッケージ。`./Makefile` が全パッケージを管理する
 
 `.` については `npm` と `venv` のどちらを使うかは比較的恣意的な選択です。クライアントビルドと一貫性を保つために `npm` を選んでいます。
@@ -24,9 +26,11 @@
 ```
 unilens-lib/          React + TS — esbuild で単一の埋め込み用 dist/unilens.js をビルド
 accessibility-lib/    React + TS — esbuild で単一の埋め込み用 dist/accessibility.js をビルド
+quiz-lib/             React + TS — esbuild で dist/quiz.js をビルド（アンケートサーバーのページが読み込む）
+survey-backend/       Express + TS — アンケートページ、/api/quiz/*、回答ログ（ポート 5100）
 backend/           Flask — キャプチャを保存し、OpenAI / Gemini / スタブで /api/chat を提供
 softbank-mirror/   softbank.jp の IR ベネフィットページの静的コピー（テスト対象）
-softbank-mirror-recruit/  softbank.jp の recruit/disability ページの静的コピー（テスト対象。配信ルートは `site/`）
+softbank-mirror-recruit/  softbank.jp の recruit/disability ページの静的コピー（テスト対象）
 ```
 ## セットアップとクリーンアップ
 バックエンド、unilens lib、ビルドシステムをセットアップする:
@@ -58,6 +62,7 @@ make serve softbank-mirror
 * `backend` - サーバコード
 * `unilens-lib` - Unilens の JavaScript ライブラリソース
 * `accessibility-lib` - Accessibility の JavaScript ライブラリソース
+* `quiz-lib` - クイズの JavaScript ライブラリソース
 * `frontend/{target}` - クライアントの基本 HTML とソース（unilens.js の dist を除く）
 
 ### バックエンドのみ
@@ -68,6 +73,19 @@ make serve softbank-mirror
 make serve-backend
 # Flask サーバを http://127.0.0.1:5000 に配信
 ```
+
+### make なしで研究用モック 6 サイトを起動
+
+リポジトリルートで（`docs/RUNNING.md` も参照）:
+
+```powershell
+npm install
+npm run bundle
+npm run serve:study
+# 1 サイトだけ: npm run serve:study -- study-wiki
+```
+
+PowerShell: `.\scripts\bundle.ps1` → `.\scripts\serve-study-sites.ps1`
 
 ### フロントエンドのみ
 
@@ -80,7 +98,8 @@ make serve-frontend softbank-mirror
 
 ```
 make serve-frontend softbank-mirror-recruit
-# `frontend/softbank-mirror-recruit/site` を localhost:8002 に配信
+# `frontend/softbank-mirror-recruit` を localhost:8002 に配信
+# http://localhost:8002/recruit/disability/ （ルート `/` からリダイレクト）
 ```
 
 ### JavaScript ライブラリのみ
@@ -152,10 +171,11 @@ SoftBank ミラーに対してテストする場合: `unilens-lib/dist/unilens.j
 # JS build targets
 
 # Define all targets here, this allows us to iterate through them
-JS_TARGETS:= unilens-lib accessibility-lib
+JS_TARGETS:= unilens-lib accessibility-lib quiz-lib
 
 target_dist_unilens-lib=unilens.js
 target_dist_accessibility-lib=accessibility.js
+target_dist_quiz-lib=quiz.js
 
 # Frontend build targets
 FRONTEND_TARGETS:= softbank-mirror dev-demo

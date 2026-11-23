@@ -2,10 +2,12 @@
 node_modules/
 frontend/**/accessibility.js
 frontend/**/unilens.js
+frontend/**/quiz.js
 backend/.venv/
 backend/captures/
 backend/sessions/
 backend/study-logs/
+backend/quiz-logs/
 backend/.env
 *.log
 *.bkp

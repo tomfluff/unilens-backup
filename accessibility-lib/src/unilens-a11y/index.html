@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ja" data-theme="light" data-saturation="standard" data-contrast="standard">
+<html lang="ja" data-unilens-a11y-theme="standard" data-unilens-a11y-saturation="standard" data-unilens-a11y-contrast="standard">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -73,7 +73,7 @@
       <section class="demo-section">
         <h2>埋め込み例</h2>
         <pre><code>&lt;script src="accessibility.js"&gt;&lt;/script&gt;
-      &lt;script&gt;Accessibility.init()&lt;/script&gt;</code></pre>
+&lt;script&gt;Accessibility.init()&lt;/script&gt;</code></pre>
         <p class="fine-print">
           パネルの言語は <code>&lt;html lang&gt;</code> とブラウザの設定から自動で決まります。
           既定を明示したいときは <code>init({ lang: 'en' })</code> を渡してください。
@@ -104,11 +104,13 @@
         <h2>含まれる機能</h2>
         <ul>
           <li>カラーモード / 彩度 / コントラスト</li>
+          <li>高コントラストを当てる範囲（本文＋部品／すべて。Lab タブ）</li>
           <li>ページ全体の文字（サイズ・UDフォント・行間）</li>
           <li>本文のみ拡大（見出し除外・3段階）</li>
           <li>16px未満の小さな文字底上げ（3段階）</li>
           <li>選択文字サイズ（100% / 150% / 200%）</li>
           <li>自動文字サイズ（分析・適用）</li>
+          <li>見つけやすさの手がかり（リンク下線、ポインターハイライト、フォーカスガイド、リーディングガイド など）</li>
         </ul>
         <p>設定は <code>localStorage</code> に保存され、リロード後も復元されます。</p>
       </section>

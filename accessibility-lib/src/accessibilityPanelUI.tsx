@@ -9,6 +9,7 @@
  */
 import {
     type CSSProperties,
+    Fragment,
     type KeyboardEvent,
     type ReactNode,
     useEffect,
@@ -61,10 +62,20 @@ export type IconName =
     | "preset"
     | "link"
     | "cursor"
+    | "pointerHalo"
+    | "focusCursor"
+    | "readingGuide"
     | "speaker"
     | "play"
     | "pause"
-    | "stop";
+    | "stop"
+    | "underline"
+    | "fill"
+    | "frame"
+    | "image"
+    | "textStroke"
+    | "textPlate"
+    | "zoom";
 
 const ICON_PATHS: Record<IconName, string> = {
     contrast:
@@ -85,7 +96,8 @@ const ICON_PATHS: Record<IconName, string> = {
     access: '<circle cx="12" cy="4" r="1.8"/><path d="M4.5 8.4 12 9.8l7.5-1.4"/><path d="m9.2 21 1.5-7.2M14.8 21l-1.5-7.2"/><path d="M9.6 13.8h4.8"/>',
     selection:
         '<path d="M9 4h6M9 20h6M12 4v16"/><path d="M4 8V6a2 2 0 0 1 2-2h1M20 8V6a2 2 0 0 0-2-2h-1M4 16v2a2 2 0 0 0 2 2h1M20 16v2a2 2 0 0 1-2 2h-1"/>',
-    auto: '<path d="m12 3 1.8 4.4L18 9.2l-4.2 1.8L12 15.4l-1.8-4.4L6 9.2l4.2-1.8z"/><path d="m18 15.4.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8z"/>',
+    // the letter A inside a turning arrow: adjusts itself (no sparkle: DESIGN.md)
+    auto: '<path d="M19.4 9A8 8 0 1 0 20 12"/><path d="M20 4.5V9h-4.5"/><path d="m9.2 15.5 2.8-7 2.8 7"/><path d="M10.2 13h3.6"/>',
     expand: '<path d="M3 19 8 6l5 13"/><path d="M4.8 14.6h6.4"/><path d="M18 20V9"/><path d="m14.8 12.2 3.2-3.2 3.2 3.2"/>',
     boost: '<path d="M4 19 8 9l4 10"/><path d="M5.6 15.4h4.8"/><path d="M17.5 20v-6.5"/><path d="m14.8 16.2 2.7-2.7 2.7 2.7"/>',
     chevron: '<path d="m6 9 6 6 6-6"/>',
@@ -93,14 +105,29 @@ const ICON_PATHS: Record<IconName, string> = {
         '<path d="M12 3a9 9 0 1 0 0 18 2 2 0 0 0 1.6-3.2 2 2 0 0 1 1.6-3.2H18a3 3 0 0 0 3-3A9 9 0 0 0 12 3Z"/><circle cx="7.5" cy="12" r="1"/><circle cx="9.8" cy="7.9" r="1"/><circle cx="14.4" cy="7.5" r="1"/>',
     type: '<path d="M4 7V5h16v2"/><path d="M12 5v14"/><path d="M9 19h6"/>',
     globe: '<circle cx="12" cy="12" r="9"/><path d="M3.2 9h17.6M3.2 15h17.6"/><path d="M12 3c2.3 2.5 3.5 5.6 3.5 9s-1.2 6.5-3.5 9c-2.3-2.5-3.5-5.6-3.5-9s1.2-6.5 3.5-9Z"/>',
-    preset: '<path d="m12 3 1.6 4.8L18.5 9.5l-4.9 1.7L12 16l-1.6-4.8L5.5 9.5l4.9-1.7z"/><path d="M18.5 15.5 19.3 18l2.5.8-2.5.8-.8 2.5-.8-2.5-2.5-.8 2.5-.8z"/>',
+    // a bookmark: settings kept to reuse (no sparkle: DESIGN.md)
+    preset: '<path d="M7 3.5h10a1 1 0 0 1 1 1V21l-6-4.2L6 21V4.5a1 1 0 0 1 1-1Z"/>',
     link: '<path d="M10 13a5 5 0 0 0 7.07 0l2.12-2.12a5 5 0 0 0-7.07-7.07L11 5"/><path d="M14 11a5 5 0 0 0-7.07 0L4.8 13.12a5 5 0 0 0 7.07 7.07L13 19"/>',
     cursor: '<path d="M5 3v16l5.2-5 3.2 7.5 2.8-1.2-3.3-7.6L19 11.5Z"/>',
+    pointerHalo:
+        '<circle cx="12" cy="12" r="12.6" class="unilens-a11y-icon-tint" fill="currentColor" stroke="none" opacity="0.14"/><circle cx="12" cy="12" r="12.6"/><path d="M7.8 6.6 7.8 16.2 10.9 13.2 12.8 17.7 14.5 17 12.5 12.4 16.2 11.2Z"/>',
+    focusCursor:
+        '<rect x="4" y="4" width="16" height="16" rx="2"/><path d="M4 10h16M4 14h16"/>',
+    readingGuide: '<path d="M3 12h18"/>',
     speaker:
         '<path d="M11 5 6.5 8.8H3v6.4h3.5L11 19z"/><path d="M15 9.4a3.6 3.6 0 0 1 0 5.2"/><path d="M17.8 6.6a7.6 7.6 0 0 1 0 10.8"/>',
     play: '<path d="M7.5 4.8v14.4L19.5 12z"/>',
     pause: '<path d="M9.5 5v14M14.5 5v14"/>',
     stop: '<rect x="6" y="6" width="12" height="12" rx="2.5"/>',
+    underline: '<path d="M6 4v8a6 6 0 0 0 12 0V4"/><path d="M4 20h16"/>',
+    fill: '<rect x="4" y="6" width="16" height="12" rx="2.5" class="unilens-a11y-icon-tint" fill="currentColor" stroke="none" opacity="0.28"/><rect x="4" y="6" width="16" height="12" rx="2.5"/>',
+    frame: '<rect x="4" y="6" width="16" height="12" rx="2.5"/>',
+    image: '<rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8.5" cy="10" r="1.6"/><path d="m21 16-5.2-5.2-12.8 8"/>',
+    textStroke: '<path d="M7 19 12 5l5 14"/><path d="M8.6 14.2h6.8"/>',
+    textPlate:
+        '<rect x="4" y="7" width="16" height="12" rx="2" class="unilens-a11y-icon-tint" fill="currentColor" stroke="none" opacity="0.28"/><rect x="4" y="7" width="16" height="12" rx="2"/><path d="M8.2 16 12 8.5 15.8 16M9.5 13.4h5"/>',
+    // a magnifier with a plus: the whole page grows
+    zoom: '<circle cx="10.5" cy="10.5" r="6.5"/><path d="m20 20-4.6-4.6"/><path d="M10.5 7.8v5.4M7.8 10.5h5.4"/>',
 };
 
 export function Icon({ name, size = 18 }: { name: IconName; size?: number }) {
@@ -116,7 +143,15 @@ export function Icon({ name, size = 18 }: { name: IconName; size?: number }) {
             strokeLinejoin="round"
             aria-hidden="true"
             focusable="false"
-            // biome-ignore lint/security/noDangerouslySetInnerHtml: Static SVG path definitions from ICON_PATHS
+            overflow="visible"
+            // Host pages sometimes ship a global `svg { fill: ... }` reset (e.g. an
+            // icon-sprite system). A plain element selector like that beats these
+            // presentation attributes in the cascade, so every unfilled shape
+            // (rect/circle outlines) would render as a solid blob. Pin fill/stroke
+            // via inline style, which wins over any non-!important stylesheet rule.
+            style={{ fill: "none", stroke: "currentColor" }}
+            // Paths are compile-time constants in ICON_PATHS, never host/user input.
+            // biome-ignore lint/security/noDangerouslySetInnerHtml: static SVG fragments
             dangerouslySetInnerHTML={{ __html: ICON_PATHS[name] }}
         />
     );
@@ -234,6 +269,8 @@ export interface ChoiceOption<T extends string> {
     ariaLabel: string;
     /** A preview element that shows the result of choosing this option. */
     preview?: () => ReactNode;
+    /** Hide the visible label; keep ariaLabel for assistive tech. */
+    hideLabel?: boolean;
     /**
      * A language tag for when the option label itself is written in a
      * different language (e.g. "English" in the language switcher).
@@ -270,6 +307,8 @@ export function ChoiceGroup<T extends string>({
 }: ChoiceGroupProps<T>) {
     const btnRefs = useRef<(HTMLButtonElement | null)[]>([]);
     const cols = columns ?? (options.length >= 4 ? 4 : options.length);
+    const selectedIndex = options.findIndex((opt) => opt.value === current);
+    const tabbableIndex = selectedIndex === -1 ? 0 : selectedIndex;
 
     const moveTo = (index: number) => {
         btnRefs.current[index]?.focus();
@@ -288,18 +327,22 @@ export function ChoiceGroup<T extends string>({
                 {options.map((opt, i) => {
                     const selected = opt.value === current;
                     return (
-                        // biome-ignore lint/a11y/useSemanticElements: ARIA radio button pattern with roving tabindex for custom segmented control
+                        /* biome-ignore lint/a11y/useSemanticElements: styled choice cards, WAI-ARIA radiogroup */
                         <button
                             key={opt.value}
                             ref={(node: HTMLButtonElement | null) => {
                                 btnRefs.current[i] = node;
                             }}
                             type="button"
-                            className="unilens-a11y-choice"
+                            className={
+                                opt.hideLabel
+                                    ? "unilens-a11y-choice unilens-a11y-choice--swatch"
+                                    : "unilens-a11y-choice"
+                            }
                             role="radio"
                             aria-checked={selected}
                             aria-label={opt.ariaLabel}
-                            tabIndex={selected ? 0 : -1}
+                            tabIndex={i === tabbableIndex ? 0 : -1}
                             disabled={disabled}
                             lang={opt.lang}
                             data-unilens-a11y-focus-key={`${focusPrefix}:${opt.value}`}
@@ -316,9 +359,11 @@ export function ChoiceGroup<T extends string>({
                                 <Icon name="check" size={12} />
                             </span>
                             {opt.preview?.()}
-                            <span className="unilens-a11y-choice-label">
-                                {opt.label}
-                            </span>
+                            {!opt.hideLabel && (
+                                <span className="unilens-a11y-choice-label">
+                                    {opt.label}
+                                </span>
+                            )}
                             {opt.hint && (
                                 <span className="unilens-a11y-choice-hint">
                                     {opt.hint}
@@ -327,6 +372,96 @@ export function ChoiceGroup<T extends string>({
                         </button>
                     );
                 })}
+            </div>
+        </fieldset>
+    );
+}
+
+// ── Independent toggles (same visual as ChoiceGroup, press again to turn off) ─
+
+export interface ToggleOption {
+    value: string;
+    label: string;
+    ariaLabel?: string;
+    iconName?: IconName;
+    hint?: string;
+    checked: boolean;
+    focusKey: string;
+    /** If set, used instead of flipping checked. */
+    onActivate?: () => void;
+    /** Rendered immediately under this option in a stacked list. */
+    after?: ReactNode;
+}
+
+export interface ToggleGroupProps {
+    label: string;
+    columns?: number;
+    options: ToggleOption[];
+    onToggle: (value: string, next: boolean) => void;
+}
+
+/** Independent on/off buttons. Unlike ChoiceGroup, pressing the active one turns it off. */
+export function ToggleGroup({
+    label,
+    columns = 2,
+    options,
+    onToggle,
+}: ToggleGroupProps) {
+    return (
+        <fieldset className="unilens-a11y-group">
+            <legend className="unilens-a11y-group-label">{label}</legend>
+            <div
+                className={
+                    columns === 1
+                        ? "unilens-a11y-choices unilens-a11y-choices--stack"
+                        : "unilens-a11y-choices"
+                }
+                style={
+                    { "--unilens-a11y-panel-cols": columns } as CSSProperties
+                }
+            >
+                {options.map((opt) => (
+                    <Fragment key={opt.value}>
+                        <button
+                            type="button"
+                            className="unilens-a11y-choice"
+                            aria-pressed={opt.checked}
+                            aria-label={opt.ariaLabel ?? opt.label}
+                            data-unilens-a11y-focus-key={opt.focusKey}
+                            onMouseDown={keepSelection}
+                            onClick={() => {
+                                if (opt.onActivate) opt.onActivate();
+                                else onToggle(opt.value, !opt.checked);
+                            }}
+                        >
+                            <span
+                                className="unilens-a11y-choice-check"
+                                aria-hidden="true"
+                            >
+                                <Icon name="check" size={12} />
+                            </span>
+                            {opt.iconName && (
+                                <span
+                                    className="unilens-a11y-choice-icon"
+                                    aria-hidden="true"
+                                >
+                                    <Icon name={opt.iconName} size={32} />
+                                </span>
+                            )}
+                            <span className="unilens-a11y-choice-copy">
+                                <span className="unilens-a11y-choice-label">
+                                    {opt.label}
+                                </span>
+                                {opt.hint && (
+                                    <span className="unilens-a11y-choice-hint">
+                                        {opt.hint}
+                                    </span>
+                                )}
+                            </span>
+                        </button>
+                        {opt.after}
+                    </Fragment>
+                ))}
             </div>
         </fieldset>
     );
@@ -464,7 +599,7 @@ export function LevelControl({
                 {options.map((opt, i) => {
                     const selected = opt.value === current;
                     return (
-                        // biome-ignore lint/a11y/useSemanticElements: ARIA radio button pattern with roving tabindex for custom segmented control
+                        /* biome-ignore lint/a11y/useSemanticElements: styled level cards, WAI-ARIA radiogroup */
                         <button
                             key={opt.value}
                             ref={(node: HTMLButtonElement | null) => {

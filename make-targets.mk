@@ -1,21 +1,28 @@
 # JS build targets
 
 # Define all targets here, this allows us to iterate through them
-JS_TARGETS:= unilens-lib accessibility-lib
+JS_TARGETS:= unilens-lib accessibility-lib quiz-lib
+
+# Node servers: set up, typechecked, built, formatted and tested like the JS
+# targets, but never copied into a frontend
+SERVICE_TARGETS:= survey-backend
 
 # Targets with unit tests; add a target here once it has some
-TEST_TARGETS:= backend unilens-lib accessibility-lib
+TEST_TARGETS:= backend unilens-lib accessibility-lib quiz-lib survey-backend
 
 target_dist_unilens-lib=unilens.js
 target_dist_accessibility-lib=accessibility.js
+target_dist_quiz-lib=quiz.js
 
 # Frontend build targets
-FRONTEND_TARGETS:= softbank-mirror softbank-mirror-recruit dev-demo study-support study-wiki study-shop study-transit study-news study-recipes
+FRONTEND_TARGETS:= softbank-mirror softbank-mirror-recruit softbank-mirror-1 dev-demo study-support study-wiki study-shop study-transit study-news study-recipes
 
 # To add a target, use the format `frontend_port_{subdir name}=<PORT>`
 frontend_port_softbank-mirror=8000
 frontend_port_dev-demo=8001
 frontend_port_softbank-mirror-recruit=8002
+# copy of softbank-mirror whose survey button follows ?p=1..4 (unilens-poc-p<N>)
+frontend_port_softbank-mirror-1=8003
 # mock sites for user studies (frontend/STUDY-SITES.md)
 frontend_port_study-support=8031
 frontend_port_study-wiki=8032

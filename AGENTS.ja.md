@@ -5,11 +5,14 @@
 - 変更は最小限にし、スコープを絞り、検証可能にしておくこと。
 - 明示的に挙動の変更を求められない限り、既存の挙動を維持すること。
 - 明示的な指示がない限り、`frontend/softbank-mirror/ext/` にあるミラーされたベンダーファイルの編集は避けること。
+- 「未使用」モジュールを削除する際は、先に `accessibility-lib/src/toggleDrag.ts` を確認すること。これは提供済みの機能（表示調整ボタンのドラッグ移動）で、`accessibilityPanel.tsx` から参照されている。接続が外れると `make test` が失敗する。
 
 ## リポジトリ簡易マップ
 - `backend/`: Flask API（`/api/capture`、`/api/chat`、セッション/キャプチャの保存先）。
 - `unilens-lib/`: 埋め込み型のメイン React + TypeScript ウィジェット。
 - `accessibility-lib/`: アクセシビリティに特化した埋め込み型ウィジェット。
+- `quiz-lib/`: アンケートウィジェット。研究用のアンケートページは `survey-backend/` が配信（`/survey?quiz=<id>`）、回答は `/api/quiz/log` に記録。
+- `survey-backend/`: アンケート用の Express + TypeScript サーバー（ポート 5100）。アンケートページ、`/api/quiz/*`、質問（`survey-backend/quizzes/`）、独立した回答ログ（研究用ログには書かない）を担当。
 - `frontend/`: 静的テストターゲット（`dev-demo`、`softbank-mirror`）。
 
 ## 必須チェック
@@ -19,6 +22,7 @@
 ## 便利な実行コマンド
 - `make serve <target>` (バックエンド + 対象フロントエンド 1 つ)
 - `make serve-backend`
+- `make serve-survey` (アンケートが必要なときだけ。`make serve` では起動しません)
 - `make serve-frontend <target>`
 
 ## 変更完了前の確認事項

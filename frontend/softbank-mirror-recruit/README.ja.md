@@ -13,6 +13,8 @@ make serve softbank-mirror-recruit
 
 http://localhost:8002/recruit/disability/ （ルート `/` は静的な `index.html` により自動リダイレクト）
 
+main 取り込み後の検証チェックリスト（`dev-demo` と同内容）: http://localhost:8002/verify.html
+
 カスタムサーバなしの単純な静的サイトとして配信される。`live-server` がこのディレクトリをそのまま
 ドキュメントルートとして配信し、ミラー内の絶対パス（`/recruit/...`）とディレクトリ構造が一致する。
 

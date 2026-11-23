@@ -24,7 +24,13 @@ import {
     useState,
 } from "react";
 import { createRoot } from "react-dom/client";
-import { getA11yLang, onA11yLangChange, t } from "./accessibilityI18n";
+import {
+    focusCursorBandName,
+    getA11yLang,
+    onA11yLangChange,
+    pointerHaloSizeName,
+    t,
+} from "./accessibilityI18n";
 import {
     bodyExpandLevelLabels,
     type PanelTab,
@@ -32,8 +38,12 @@ import {
     TABS,
     tabLabel,
 } from "./accessibilityPanelOptions";
-import { WIDGET_CSS } from "./accessibilityPanelStyles";
-import { TextTab, ToolsTab, VisualTab } from "./accessibilityPanelTabs";
+import {
+    WIDGET_CSS,
+    WIDGET_HOST_CSS,
+    WIDGET_SHADOW_CSS,
+} from "./accessibilityPanelStyles";
+import { ToolsTab, VisualTab } from "./accessibilityPanelTabs";
 import {
     announce,
     Button,
@@ -43,40 +53,66 @@ import {
     useExternalSignal,
 } from "./accessibilityPanelUI";
 import {
-    a11ySettings,
     applyA11yToDocument,
-    onA11yChange,
     patchA11ySettings,
     resetA11ySettings,
     syncWidgetDisplayIsolation,
 } from "./accessibilityStore";
 import {
+    focusCursorOn,
+    normalizeFocusCursorBandPx,
+} from "./accessibilityStoreTypes";
+import {
     getAppliedTextScale,
     runAutoTextAction,
     type TextAnalysis,
 } from "./autoTextSize";
+import { appendA11yStyle, getCspNonce } from "./cspStyle";
+import { pointerHaloOn, rememberPointerHaloOnPx } from "./cursorHalo";
 import {
+    A11Y_CSS_LINK_ID,
     A11Y_OPEN_CLASS,
     A11Y_PAGE_STYLE_ID,
     A11Y_WIDGET_STYLE_ID,
+    a11yTabId,
+    a11yTabpanelId,
     REDUCE_MOTION_ATTR,
     UI_ATTR,
 } from "./domIds";
-import { clearSelectionFontSize } from "./selectionTextSize";
+import {
+    getAppliedOppZoom,
+    onOppZoomChange,
+    resetOpportunisticZoom,
+} from "./opportunisticZoom";
+import { resolveA11yCssUrl } from "./resolveA11yCssUrl";
+import {
+    clearAllSelectionFontSizes,
+    hasSelectionFontSizes,
+    onSelectionWrappersChange,
+} from "./selectionTextSize";
 // Read-aloud disabled — see accessibility-umd.ts init().
 // import { stopSpeech } from './speakSelection'
-import { onSettingsChange, settings, updateSetting } from "./settings";
-import PAGE_CSS from "./unilens-a11y/style.css";
+import {
+    getSettings,
+    type Settings,
+    updateSetting,
+    useSettings,
+} from "./settings";
+import { namedTextAdjustLevel } from "./textAdjustLevels";
+import { installToggleDrag } from "./toggleDrag";
+import pageCss from "./unilens-a11y/style.css";
 
 const RESET_CONFIRM_MS = 4000;
 
+/** Optional extra stylesheet from `init({ cssUrl })`. Page theme CSS is bundled. */
+let externalCssUrl: string | null = null;
 let panelDomRoot: HTMLElement | null = null;
 let panelReactRoot: ReturnType<typeof createRoot> | null = null;
 let panelAltPointerDown: ((e: globalThis.MouseEvent) => void) | null = null;
 
 /** Restores the previously-open tab (many visitors keep working on the same adjustment). */
 function restoreActiveTab(): PanelTab {
-    const tab = settings.panelTab;
+    const tab = getSettings().panelTab;
     if (TABS.some((t) => t.id === tab)) return tab;
     return "visual";
 }
@@ -85,34 +121,102 @@ function persistActiveTab(tab: PanelTab) {
     updateSetting("panelTab", tab);
 }
 
-function ensureStyles() {
-    const pageStyle = document.getElementById(A11Y_PAGE_STYLE_ID);
-    if (pageStyle) {
-        pageStyle.textContent = PAGE_CSS;
-    } else {
-        const style = document.createElement("style");
-        style.id = A11Y_PAGE_STYLE_ID;
-        style.textContent = PAGE_CSS;
-        document.head.appendChild(style);
-    }
-    const existing = document.getElementById(A11Y_WIDGET_STYLE_ID);
+export function configureAccessibilityCssUrl(url: string) {
+    externalCssUrl = resolveA11yCssUrl(url);
+    const link = document.getElementById(
+        A11Y_CSS_LINK_ID,
+    ) as HTMLLinkElement | null;
+    if (link) link.href = externalCssUrl;
+}
+
+function ensureStyleTag(id: string, css: string) {
+    const existing = document.getElementById(id);
     if (existing) {
-        existing.textContent = WIDGET_CSS;
+        existing.textContent = css;
         return;
     }
     const style = document.createElement("style");
-    style.id = A11Y_WIDGET_STYLE_ID;
-    style.textContent = WIDGET_CSS;
-    document.head.appendChild(style);
+    style.id = id;
+    style.textContent = css;
+    appendA11yStyle(style);
+}
+
+function ensureExternalCssLink() {
+    if (!externalCssUrl) {
+        document.getElementById(A11Y_CSS_LINK_ID)?.remove();
+        return;
+    }
+    let link = document.getElementById(
+        A11Y_CSS_LINK_ID,
+    ) as HTMLLinkElement | null;
+    if (!link) {
+        link = document.createElement("link");
+        link.id = A11Y_CSS_LINK_ID;
+        link.rel = "stylesheet";
+        document.head.appendChild(link);
+    }
+    link.href = externalCssUrl;
+}
+
+/**
+ * The panel renders into a shadow root, out of reach of the host page's CSS
+ * (an `!important` rule, or `svg { width: 100% }`, used to break it). Where
+ * shadow DOM is missing it falls back to the light DOM.
+ */
+function shadowSupported(): boolean {
+    return (
+        typeof HTMLElement !== "undefined" &&
+        typeof HTMLElement.prototype.attachShadow === "function"
+    );
+}
+
+/**
+ * The panel's rules inside its shadow root: a constructed sheet (CSP does
+ * not restrict it), else a <style>.
+ */
+function addShadowStyles(shadow: ShadowRoot) {
+    const canAdopt =
+        typeof CSSStyleSheet === "function" &&
+        "adoptedStyleSheets" in shadow &&
+        typeof CSSStyleSheet.prototype.replaceSync === "function";
+    if (canAdopt) {
+        try {
+            const sheet = new CSSStyleSheet();
+            sheet.replaceSync(WIDGET_SHADOW_CSS);
+            shadow.adoptedStyleSheets = [sheet];
+            return;
+        } catch {
+            // fall through to a <style>
+        }
+    }
+    const style = document.createElement("style");
+    const nonce = getCspNonce();
+    if (nonce) style.nonce = nonce;
+    style.textContent = WIDGET_SHADOW_CSS;
+    shadow.appendChild(style);
+}
+
+function ensureStyles() {
+    // Host-page theme rules travel inside accessibility.js (single dist file).
+    ensureStyleTag(A11Y_PAGE_STYLE_ID, pageCss);
+    ensureStyleTag(
+        A11Y_WIDGET_STYLE_ID,
+        shadowSupported() ? WIDGET_HOST_CSS : WIDGET_CSS,
+    );
+    ensureExternalCssLink();
+}
+
+/** Inject bundled page + widget CSS. Safe to call with the panel off. */
+export function ensureAccessibilityStyles() {
+    ensureStyles();
 }
 
 /** Page display settings must not restyle the overlay — only invert counter-filter and reduce-motion. */
-function syncOverlayIsolation() {
+function syncOverlayIsolation(reduceMotion: boolean) {
     syncWidgetDisplayIsolation();
     const root = document.getElementById(ROOT_ID);
     if (!root) return;
-    if (a11ySettings.reduceMotion)
-        root.setAttribute(REDUCE_MOTION_ATTR, "true");
+    if (reduceMotion) root.setAttribute(REDUCE_MOTION_ATTR, "true");
     else root.removeAttribute(REDUCE_MOTION_ATTR);
 }
 
@@ -126,8 +230,7 @@ interface Adjustment {
 }
 
 /** The list of adjustments currently in effect. Used to decide whether resetting is offered. */
-function activeAdjustments(): Adjustment[] {
-    const s = a11ySettings;
+function activeAdjustments(s: Settings): Adjustment[] {
     const list: Adjustment[] = [];
     const add = (
         tab: PanelTab,
@@ -137,35 +240,41 @@ function activeAdjustments(): Adjustment[] {
     ) => list.push({ tab, key, label, clear });
 
     if (s.theme !== "standard") {
-        add("text", "theme", t().theme[s.theme], () =>
+        add("visual", "theme", t().theme[s.theme], () =>
             patchA11ySettings({ theme: "standard" }),
         );
     }
     if (s.saturation !== "standard") {
         add(
-            "text",
+            "visual",
             "saturation",
             t().adjSaturation(t().saturation[s.saturation]),
             () => patchA11ySettings({ saturation: "standard" }),
         );
     }
     if (s.contrast !== "standard") {
-        add("text", "contrast", t().adjContrast(t().contrast[s.contrast]), () =>
-            patchA11ySettings({ contrast: "standard" }),
+        add(
+            "visual",
+            "contrast",
+            t().adjContrast(t().contrast[s.contrast]),
+            () => patchA11ySettings({ contrast: "standard" }),
         );
     }
     if (s.fontSize !== "standard") {
-        add("text", "fontSize", t().adjFontSize(t().fontSize[s.fontSize]), () =>
-            patchA11ySettings({ fontSize: "standard" }),
+        add(
+            "visual",
+            "fontSize",
+            t().adjFontSize(t().fontSize[s.fontSize]),
+            () => patchA11ySettings({ fontSize: "standard" }),
         );
     }
     if (s.fontFamily === "ud") {
-        add("text", "fontFamily", t().adjUdFont, () =>
+        add("visual", "fontFamily", t().adjUdFont, () =>
             patchA11ySettings({ fontFamily: "standard" }),
         );
     }
     if (s.fontFamily === "custom" && s.customFontFamily) {
-        add("text", "fontFamily", t().adjCustomFont(s.customFontFamily), () =>
+        add("visual", "fontFamily", t().adjCustomFont(s.customFontFamily), () =>
             patchA11ySettings({
                 fontFamily: "standard",
                 customFontFamily: null,
@@ -173,12 +282,12 @@ function activeAdjustments(): Adjustment[] {
         );
     }
     if (s.lineHeight === "wide") {
-        add("text", "lineHeight", t().adjLineHeight, () =>
+        add("visual", "lineHeight", t().adjLineHeight, () =>
             patchA11ySettings({ lineHeight: "standard" }),
         );
     }
     if (s.letterSpacing === "wide") {
-        add("text", "letterSpacing", t().adjLetterSpacing, () =>
+        add("visual", "letterSpacing", t().adjLetterSpacing, () =>
             patchA11ySettings({ letterSpacing: "standard" }),
         );
     }
@@ -207,9 +316,46 @@ function activeAdjustments(): Adjustment[] {
             patchA11ySettings({ elementHighlight: false }),
         );
     }
-    if (s.focusEnhance) {
-        add("visual", "focusEnhance", t().adjFocusEnhance, () =>
-            patchA11ySettings({ focusEnhance: false }),
+    if (s.focusEnhanceLevel > 0) {
+        const name = namedTextAdjustLevel(
+            t().focusEnhanceLevelName,
+            s.focusEnhanceLevel,
+        );
+        add("tools", "focusEnhanceLevel", t().adjFocusEnhance(name), () =>
+            patchA11ySettings({ focusEnhanceLevel: 0 }),
+        );
+    }
+    if (pointerHaloOn(s.pointerHaloPx)) {
+        add(
+            "visual",
+            "pointerHaloPx",
+            t().adjPointerHalo(pointerHaloSizeName(s.pointerHaloPx)),
+            () => {
+                rememberPointerHaloOnPx(s.pointerHaloPx);
+                patchA11ySettings({ pointerHaloPx: 0 });
+            },
+        );
+    }
+    const focusBandPx = normalizeFocusCursorBandPx(s.focusCursorBandPx);
+    if (focusCursorOn(focusBandPx)) {
+        add(
+            "visual",
+            "focusCursorBandPx",
+            t().adjFocusCursor(focusCursorBandName(focusBandPx)),
+            () => patchA11ySettings({ focusCursorBandPx: 0 }),
+        );
+    }
+    if (s.readingGuide) {
+        add("visual", "readingGuide", t().adjReadingGuide, () =>
+            patchA11ySettings({ readingGuide: false }),
+        );
+    }
+    if (s.textStroke) {
+        add(
+            "tools",
+            "textStroke",
+            t().adjTextStroke(t().textStrokeStyle[s.textStrokeStyle]),
+            () => patchA11ySettings({ textStroke: false }),
         );
     }
     if (s.reduceMotion) {
@@ -219,23 +365,38 @@ function activeAdjustments(): Adjustment[] {
     }
     if (s.bodyTextExpandLevel > 0) {
         const name = bodyExpandLevelLabels()[s.bodyTextExpandLevel][0];
-        add("text", "bodyTextExpandLevel", t().adjBodyExpand(name), () =>
+        add("tools", "bodyTextExpandLevel", t().adjBodyExpand(name), () =>
             patchA11ySettings({ bodyTextExpandLevel: 0 }),
         );
     }
     if (s.smallTextBoostLevel > 0) {
         const name = smallBoostLevelLabels()[s.smallTextBoostLevel][0];
-        add("text", "smallTextBoostLevel", t().adjSmallBoost(name), () =>
+        add("tools", "smallTextBoostLevel", t().adjSmallBoost(name), () =>
             patchA11ySettings({ smallTextBoostLevel: 0 }),
         );
     }
-    if (settings.autoTextSize && settings.autoTextMode !== "off") {
+    if (hasSelectionFontSizes()) {
+        add("tools", "selectionText", t().adjSelectionText, () => {
+            clearAllSelectionFontSizes();
+        });
+    }
+    if (s.autoTextSize && s.autoTextMode !== "off") {
         add(
             "tools",
             "autoTextSize",
             t().adjAutoSize(getAppliedTextScale().toFixed(2)),
             () => {
                 runAutoTextAction("reset");
+            },
+        );
+    }
+    if (s.oppZoom) {
+        add(
+            "tools",
+            "oppZoom",
+            t().adjOppZoom(getAppliedOppZoom().toFixed(1)),
+            () => {
+                resetOpportunisticZoom();
             },
         );
     }
@@ -247,14 +408,11 @@ function activeAdjustments(): Adjustment[] {
 function Header({ onClose }: { onClose: () => void }) {
     return (
         <div className="unilens-a11y-header">
-            <span className="unilens-a11y-header-icon" aria-hidden="true">
-                <Icon name="access" size={20} />
-            </span>
+            {/* the name only, as the UniLens chat's header (DESIGN.md: Assistant has no subtitle) */}
             <div className="unilens-a11y-header-text">
                 <h2 id="unilens-a11y-title" className="unilens-a11y-title">
                     {t().panelTitle}
                 </h2>
-                <p className="unilens-a11y-subtitle">{t().panelSubtitle}</p>
             </div>
             <button
                 type="button"
@@ -282,19 +440,26 @@ function TabBar({
     >;
 }) {
     return (
-        <ul className="unilens-a11y-tabs" aria-label={t().tabsLabel}>
+        // role="tablist" so screen readers announce the buttons as tabs
+        // ("tab 1 of 2"); the <li> wrappers are presentation only.
+        <ul
+            className="unilens-a11y-tabs"
+            // biome-ignore lint/a11y/noNoninteractiveElementToInteractiveRole: the tab bar must stay a tablist; make check's --unsafe fix would strip the role
+            role="tablist"
+            aria-label={t().tabsLabel}
+        >
             {TABS.map((tab, index) => {
                 const selected = activeTab === tab.id;
                 const label = tabLabel(tab.id);
                 return (
-                    <li key={tab.id}>
+                    <li key={tab.id} role="presentation">
                         <button
                             type="button"
-                            id={`da-tab-${tab.id}`}
+                            id={a11yTabId(tab.id)}
                             className="unilens-a11y-tab"
                             role="tab"
                             aria-selected={selected}
-                            aria-controls={`da-tabpanel-${tab.id}`}
+                            aria-controls={a11yTabpanelId(tab.id)}
                             aria-label={label}
                             tabIndex={selected ? 0 : -1}
                             data-unilens-a11y-focus-key={`tab:${tab.id}`}
@@ -366,10 +531,24 @@ function Footer({
 // namespace form — see accessibilityPanelUI.tsx's MutableRefObject.
 type React_MutableRefObject<T> = { current: T };
 
+/**
+ * Back to the ♿ button after closing. On small and short screens the button
+ * is hidden while the panel is open, and the open class only comes off after
+ * React re-renders — focusing it before that silently failed and focus fell
+ * to <body>. Drop the class first so the button can take focus. (Outside the
+ * component: the Esc listener, registered once, calls it.)
+ */
+function focusToggleAfterClose(toggle: HTMLButtonElement | null) {
+    document.getElementById(ROOT_ID)?.classList.remove(A11Y_OPEN_CLASS);
+    toggle?.focus();
+}
+
 function AccessibilityPanelApp() {
-    useExternalSignal(onA11yChange);
-    useExternalSignal(onSettingsChange);
     useExternalSignal(onA11yLangChange);
+    useExternalSignal(onSelectionWrappersChange);
+    // The zoom is measured after the switch repaints; update its chip then.
+    useExternalSignal(onOppZoomChange);
+    const settingsState = useSettings();
 
     const [panelOpen, setPanelOpen] = useState(false);
     const [activeTab, setActiveTab] = useState<PanelTab>(() =>
@@ -394,14 +573,32 @@ function AccessibilityPanelApp() {
     const panelOpenRef = useRef(false);
     panelOpenRef.current = panelOpen;
 
-    const adjustments = activeAdjustments();
+    const adjustments = activeAdjustments(settingsState);
 
     // Reflects the widget's language and display-isolation flags into the
     // mount point's own attributes (set outside React — see the file header).
     useEffect(() => {
+        const btn = toggleBtnRef.current;
+        const root = document.getElementById(ROOT_ID);
+        if (!btn || !root) return;
+        return installToggleDrag(btn, root);
+    }, []);
+
+    useEffect(() => {
         document.getElementById(ROOT_ID)?.setAttribute("lang", getA11yLang());
-        syncOverlayIsolation();
-    });
+    }, []);
+
+    useEffect(() => {
+        const syncLang = () =>
+            document
+                .getElementById(ROOT_ID)
+                ?.setAttribute("lang", getA11yLang());
+        return onA11yLangChange(syncLang);
+    }, []);
+
+    useEffect(() => {
+        syncOverlayIsolation(settingsState.reduceMotion);
+    }, [settingsState.reduceMotion]);
 
     useEffect(() => {
         document
@@ -409,12 +606,12 @@ function AccessibilityPanelApp() {
             ?.classList.toggle(A11Y_OPEN_CLASS, panelOpen);
     }, [panelOpen]);
 
+    // Only the open transition should move focus — switching tabs while
+    // already open is handled by the tab bar's own click/keydown handlers.
+    // biome-ignore lint/correctness/useExhaustiveDependencies: activeTab is read on open, not a trigger
     useEffect(() => {
         if (panelOpen) tabBtnRefs.current[activeTab]?.focus();
-        // Only the open transition should move focus — switching tabs while
-        // already open is handled by the tab bar's own click/keydown handlers.
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [panelOpen, activeTab]);
+    }, [panelOpen]);
 
     // A destructive action was reset out from under the confirmation state
     // (e.g. everything got cleared some other way) — don't leave a stale
@@ -428,41 +625,58 @@ function AccessibilityPanelApp() {
 
     useEffect(() => {
         /**
-         * Stops the page's double-click zoom (zoom.ts's smart zoom) from interrupting
-         * display-adjustment interactions, by intercepting dblclick in the relevant cases.
+         * Keeps the page's double-click zoom (unilens-lib zoom.ts) from firing
+         * on accessibility panel interactions:
+         * - a double-click inside the widget, and
+         * - while the panel is open, a double-click that selected a word on the
+         *   page (most likely a selection for "enlarge only the selected text";
+         *   a zoom there would interrupt the gesture).
          *
-         * Two conditions trigger this:
-         * - A double-click inside the widget. Zooming the page just from operating
-         *   the panel would be a misfire.
-         * - A double-click on the page while the panel is open. That's most likely a
-         *   word selection meant for "enlarge only the selected text" — if zoom fires
-         *   there, the selection gesture never completes.
-         *
-         * zoom.ts registers on document's bubble phase, so intercepting during
-         * document's capture phase always runs first regardless of init order.
-         * stopPropagation doesn't block the default action, so double-click word
-         * selection itself still works normally.
+         * zoom.ts listens on `document` (bubble). This listener sits one step
+         * earlier on <html> (bubble), so it can stop the event before it reaches
+         * `document` while every host handler on the target and its ancestors
+         * has already run. It used to stop the event in document's capture
+         * phase, which silently disabled every host dblclick handler on the
+         * page while the panel was open.
          */
         function onDblClick(e: globalThis.MouseEvent) {
             const root = document.getElementById(ROOT_ID);
             const insideWidget =
                 e.target instanceof Node && root?.contains(e.target) === true;
-            if (insideWidget || panelOpenRef.current) e.stopPropagation();
+            if (insideWidget) {
+                e.stopPropagation();
+                return;
+            }
+            if (!panelOpenRef.current) return;
+            const sel = window.getSelection();
+            if (sel && !sel.isCollapsed && sel.toString().trim() !== "")
+                e.stopPropagation();
         }
         function onKeyDown(e: globalThis.KeyboardEvent) {
-            if (e.key === "Escape" && panelOpenRef.current) {
-                e.preventDefault();
-                setPanelOpen(false);
-                setResetArmed(false);
-                window.clearTimeout(resetTimerRef.current);
-                toggleBtnRef.current?.focus();
-            }
+            if (e.key !== "Escape" || !panelOpenRef.current) return;
+            if (e.defaultPrevented) return;
+            // Only Esc meant for the panel: focus inside the widget, or nothing
+            // focused at all. Esc in a host input / dialog belongs to the host.
+            const active = document.activeElement;
+            const root = document.getElementById(ROOT_ID);
+            const inWidget = !!active && root?.contains(active) === true;
+            const nothingFocused =
+                !active ||
+                active === document.body ||
+                active === document.documentElement;
+            if (!inWidget && !nothingFocused) return;
+            e.preventDefault();
+            setPanelOpen(false);
+            setResetArmed(false);
+            window.clearTimeout(resetTimerRef.current);
+            if (inWidget) focusToggleAfterClose(toggleBtnRef.current);
         }
+        const html = document.documentElement;
         document.addEventListener("keydown", onKeyDown);
-        document.addEventListener("dblclick", onDblClick, true);
+        html.addEventListener("dblclick", onDblClick);
         return () => {
             document.removeEventListener("keydown", onKeyDown);
-            document.removeEventListener("dblclick", onDblClick, true);
+            html.removeEventListener("dblclick", onDblClick);
         };
     }, []);
 
@@ -484,7 +698,7 @@ function AccessibilityPanelApp() {
         setPanelOpen(false);
         setResetArmed(false);
         window.clearTimeout(resetTimerRef.current);
-        if (hadFocusInside) toggleBtnRef.current?.focus();
+        if (hadFocusInside) focusToggleAfterClose(toggleBtnRef.current);
     }
 
     function togglePanel() {
@@ -507,7 +721,8 @@ function AccessibilityPanelApp() {
         window.clearTimeout(resetTimerRef.current);
         resetA11ySettings();
         runAutoTextAction("reset");
-        clearSelectionFontSize();
+        resetOpportunisticZoom();
+        clearAllSelectionFontSizes();
         // stopSpeech()
         setLastAnalysis(null);
         setLastSelectionMessage(null);
@@ -552,21 +767,19 @@ function AccessibilityPanelApp() {
                     {TABS.map(({ id }) => (
                         <div
                             key={id}
-                            id={`da-tabpanel-${id}`}
+                            id={a11yTabpanelId(id)}
                             className={
                                 id === activeTab
-                                    ? "da-tabpanel unilens-a11y-tabpanel-active"
-                                    : "da-tabpanel"
+                                    ? "unilens-a11y-tabpanel unilens-a11y-tabpanel-active"
+                                    : "unilens-a11y-tabpanel"
                             }
                             role="tabpanel"
-                            aria-labelledby={`da-tab-${id}`}
+                            aria-labelledby={a11yTabId(id)}
                             hidden={id !== activeTab}
                         >
                             {openedTabs.has(id) &&
                                 (id === "visual" ? (
                                     <VisualTab />
-                                ) : id === "text" ? (
-                                    <TextTab />
                                 ) : (
                                     <ToolsTab
                                         lastAnalysis={lastAnalysis}
@@ -612,8 +825,20 @@ export function initAccessibilityPanel() {
     container.addEventListener("mousedown", panelAltPointerDown, true);
     container.addEventListener("click", panelAltPointerDown, true);
 
+    // React renders inside a shadow root, into a wrapper with the root's id
+    // (display: contents) so the widget stylesheet's selectors match there.
+    let mount: HTMLElement = container;
+    if (shadowSupported()) {
+        const shadow = container.attachShadow({ mode: "open" });
+        addShadowStyles(shadow);
+        mount = document.createElement("div");
+        mount.id = ROOT_ID;
+        mount.setAttribute(UI_ATTR, "1");
+        shadow.appendChild(mount);
+    }
+
     panelDomRoot = container;
-    panelReactRoot = createRoot(container);
+    panelReactRoot = createRoot(mount);
     panelReactRoot.render(<AccessibilityPanelApp />);
 }
 
@@ -633,4 +858,6 @@ export function destroyAccessibilityPanel() {
     panelAltPointerDown = null;
     document.getElementById(A11Y_WIDGET_STYLE_ID)?.remove();
     document.getElementById(A11Y_PAGE_STYLE_ID)?.remove();
+    document.getElementById(A11Y_CSS_LINK_ID)?.remove();
+    externalCssUrl = null;
 }

@@ -4,8 +4,10 @@ import {
     A11Y_LANGS,
     A11Y_MESSAGES,
     type A11yLang,
+    focusCursorBandName,
     fontScaleLabel,
     getA11yLang,
+    pointerHaloSizeName,
     setA11yLang,
     t,
 } from "./accessibilityI18n";
@@ -56,9 +58,9 @@ describe("language dictionary coverage", () => {
                 if (typeof value === "string" && value.trim() === "")
                     empty.push(path);
                 else if (typeof value === "object" && value !== null) {
-                    for (const [key, v] of Object.entries(value)) {
+                    Object.entries(value).forEach(([key, v]) => {
                         walk(v, path ? `${path}.${key}` : key);
-                    }
+                    });
                 }
             };
             walk(A11Y_MESSAGES[lang], "");
@@ -119,5 +121,61 @@ describe("combining with language-independent values", () => {
         expect(fontScaleLabel(2)).toBe("Large 150%");
         setA11yLang("ja");
         expect(fontScaleLabel(2)).toBe("大 150%");
+    });
+
+    it("focus cursor band sizes are small / medium / large", () => {
+        setA11yLang("ja");
+        expect(focusCursorBandName(80)).toBe("小");
+        expect(focusCursorBandName(150)).toBe("中");
+        expect(focusCursorBandName(240)).toBe("大");
+        setA11yLang("en");
+        expect(focusCursorBandName(80)).toBe("Small");
+        expect(focusCursorBandName(150)).toBe("Medium");
+        expect(focusCursorBandName(240)).toBe("Large");
+    });
+
+    it("pointer halo sizes are small / medium / large, or a screen percent", () => {
+        setA11yLang("ja");
+        expect(pointerHaloSizeName(20)).toBe("小");
+        expect(pointerHaloSizeName(40)).toBe("中");
+        expect(pointerHaloSizeName(80)).toBe("大");
+        expect(pointerHaloSizeName("5%")).toBe("5%");
+        expect(pointerHaloSizeName("15%")).toBe("15%");
+        expect(pointerHaloSizeName(0)).toBe("");
+        setA11yLang("en");
+        expect(pointerHaloSizeName(20)).toBe("Small");
+        expect(pointerHaloSizeName(40)).toBe("Medium");
+        expect(pointerHaloSizeName(80)).toBe("Large");
+        expect(pointerHaloSizeName("10%")).toBe("10%");
+    });
+
+    it("text-stroke pair names exist in every language", () => {
+        A11Y_LANGS.forEach((lang) => {
+            setA11yLang(lang);
+            expect(Object.keys(t().textStrokeStyle).sort()).toEqual([
+                "blackCyan",
+                "blackWhite",
+                "blueYellow",
+                "greenWhite",
+                "navyYellow",
+                "orangeWhite",
+                "whiteBlack",
+                "whiteMagenta",
+                "yellowBlue",
+            ]);
+        });
+    });
+
+    it("text-plate pair names exist in every language", () => {
+        A11Y_LANGS.forEach((lang) => {
+            setA11yLang(lang);
+            expect(Object.keys(t().textPlateStyle).sort()).toEqual([
+                "blackCyan",
+                "blackWhite",
+                "blackYellow",
+                "greenWhite",
+                "navyYellow",
+            ]);
+        });
     });
 });

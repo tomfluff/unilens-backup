@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="11" height="9" viewBox="0 0 11 9">
+  <defs>
+    <clipPath id="clip-path">
+      <rect id="長方形_3018" data-name="長方形 3018" width="11" height="9" transform="translate(715 3920)" fill="#fff" stroke="#707070" stroke-width="1"/>
+    </clipPath>
+    <pattern id="pattern" preserveAspectRatio="xMidYMid slice" width="100%" height="100%" viewBox="0 0 34 28">
+      <image width="34" height="28" xlink:href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACIAAAAcAQMAAAA++f9cAAAABlBMVEX///9fbn5+4aDhAAAAAXRSTlMAQObYZgAAACZJREFUeAFjIAbw//+DlfzDwAMnzxBBngfqgpEHgBBG/v8PI3ECAKEIHVlENTCsAAAAAElFTkSuQmCC"/>
+    </pattern>
+  </defs>
+  <g id="マスクグループ_3" data-name="マスクグループ 3" transform="translate(-715 -3920)" clip-path="url(#clip-path)">
+    <rect id="icon-newwindow_3" width="17" height="14" transform="translate(715 3917)" fill="url(#pattern)"/>
+  </g>
+</svg>

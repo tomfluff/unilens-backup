@@ -5,6 +5,8 @@ import {
     bodyTextExpandHint,
     computeBodyTextTargetPx,
     computeSmallTextTargetPx,
+    namedTextAdjustLevel,
+    nextTextAdjustLevel,
     normalizeTextAdjustLevel,
     SMALL_TEXT_BOOST_CONFIG,
     smallTextBoostConfig,
@@ -12,6 +14,26 @@ import {
     TEXT_ADJUST_LEVELS,
     type TextAdjustLevel,
 } from "./textAdjustLevels";
+
+describe("nextTextAdjustLevel", () => {
+    it("cycles off → 1 → 2 → 3 → off", () => {
+        expect(nextTextAdjustLevel(0)).toBe(1);
+        expect(nextTextAdjustLevel(1)).toBe(2);
+        expect(nextTextAdjustLevel(2)).toBe(3);
+        expect(nextTextAdjustLevel(3)).toBe(0);
+    });
+});
+
+describe("namedTextAdjustLevel", () => {
+    const names = { 1: "小", 2: "中", 3: "大" } as const;
+
+    it("returns the matching label for 1–3 and empty when off", () => {
+        expect(namedTextAdjustLevel(names, 0)).toBe("");
+        expect(namedTextAdjustLevel(names, 1)).toBe("小");
+        expect(namedTextAdjustLevel(names, 2)).toBe("中");
+        expect(namedTextAdjustLevel(names, 3)).toBe("大");
+    });
+});
 
 describe("normalizeTextAdjustLevel", () => {
     it("passes 0–3 through unchanged", () => {

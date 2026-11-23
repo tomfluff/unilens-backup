@@ -3,8 +3,17 @@
  * Prototype: viewport / content / combined modes with a tab panel for testing.
  */
 
+import type { AutoTextMode } from "./accessibilityStoreTypes";
+import { appendA11yStyle } from "./cspStyle";
 import { isUniLensOverlayNode, UI_ATTR } from "./domIds";
-import { onSettingsChange, saveSettings, settings } from "./settings";
+import { restoreHostInlineStyle, setHostInlineStyle } from "./hostSurface";
+import {
+    getSettings,
+    patchSettings,
+    saveSettings,
+    useSettings,
+} from "./settings";
+import { remeasureTextSizes } from "./textSizeLayers";
 
 export type { AutoTextMode } from "./accessibilityStoreTypes";
 
@@ -46,12 +55,18 @@ export interface TextAnalysis {
 
 let appliedScale = 1;
 let resizeTimer: number | undefined;
+let autoTextClassApplied = false;
+/** <html> had no `class` attribute before we added ours. */
+let htmlHadNoClassAttr = false;
+
+const TEXT_SCALE_VAR = "--unilens-text-scale";
+const TEXT_LINE_VAR = "--unilens-text-line";
+/** The host's own root font-size, measured with our rule off. */
+const TEXT_BASE_VAR = "--unilens-text-base";
 
 function clampScale(n: number): number {
-    return Math.min(
-        settings.autoTextMaxScale,
-        Math.max(1, Math.round(n * 100) / 100),
-    );
+    const { autoTextMaxScale } = getSettings();
+    return Math.min(autoTextMaxScale, Math.max(1, Math.round(n * 100) / 100));
 }
 
 function viewportScale(): number {
@@ -98,7 +113,7 @@ export function analyzePageText(): TextAnalysis {
     }
 
     const vpScale = viewportScale();
-    const targetMin = settings.autoTextMinPx;
+    const targetMin = getSettings().autoTextMinPx;
 
     if (samples.length === 0) {
         const scale = clampScale(vpScale);
@@ -130,9 +145,10 @@ export function analyzePageText(): TextAnalysis {
     contentScale = clampScale(contentScale);
 
     let suggestedScale = 1;
-    if (settings.autoTextMode === "viewport") suggestedScale = vpScale;
-    else if (settings.autoTextMode === "content") suggestedScale = contentScale;
-    else if (settings.autoTextMode === "combined")
+    const { autoTextMode } = getSettings();
+    if (autoTextMode === "viewport") suggestedScale = vpScale;
+    else if (autoTextMode === "content") suggestedScale = contentScale;
+    else if (autoTextMode === "combined")
         suggestedScale = clampScale(Math.max(vpScale, contentScale));
 
     suggestedScale = clampScale(suggestedScale);
@@ -156,41 +172,62 @@ function ensureStylesheet() {
     style.id = STYLE_ID;
     style.textContent = `
     html.${HTML_CLASS} {
-      font-size: calc(100% * var(--unilens-text-scale, 1)) !important;
+      font-size: calc(var(${TEXT_BASE_VAR}, 100%) * var(${TEXT_SCALE_VAR}, 1)) !important;
     }
     html.${HTML_CLASS} body {
-      line-height: calc(1.5 * var(--unilens-text-line, 1));
+      line-height: calc(1.5 * var(${TEXT_LINE_VAR}, 1));
     }
   `;
-    document.head.appendChild(style);
+    appendA11yStyle(style);
 }
 
 function applyScaleToPage(scale: number) {
     ensureStylesheet();
     appliedScale = scale;
-    document.documentElement.classList.add(HTML_CLASS);
-    document.documentElement.style.setProperty(
-        "--unilens-text-scale",
-        String(scale),
-    );
-    document.documentElement.style.setProperty(
-        "--unilens-text-line",
-        scale > 1.1 ? "1.08" : "1",
-    );
+    const html = document.documentElement;
+    // Scale from the host's own root size (e.g. a 62.5% rem layout), read with
+    // our rule switched off, not from the browser default. Re-read on every
+    // apply so a responsive root size is followed on resize.
+    const present = html.classList.contains(HTML_CLASS);
+    if (!present) htmlHadNoClassAttr = !html.hasAttribute("class");
+    if (present) html.classList.remove(HTML_CLASS);
+    const basePx = parseFloat(getComputedStyle(html).fontSize);
+    html.classList.add(HTML_CLASS);
+    // Only the first apply adds the class; re-applies must not forget that we
+    // own it (they used to, and reset then left the class — and its
+    // `font-size: 100% !important` — on the host's <html>).
+    if (!present) autoTextClassApplied = true;
+    if (Number.isFinite(basePx) && basePx > 0)
+        setHostInlineStyle(html, TEXT_BASE_VAR, `${basePx}px`);
+    setHostInlineStyle(html, TEXT_SCALE_VAR, String(scale));
+    setHostInlineStyle(html, TEXT_LINE_VAR, scale > 1.1 ? "1.08" : "1");
+    // The root size changed: other text-size features re-read host sizes.
+    remeasureTextSizes();
 }
 
 function clearPageScale() {
     appliedScale = 1;
-    document.documentElement.classList.remove(HTML_CLASS);
-    document.documentElement.style.removeProperty("--unilens-text-scale");
-    document.documentElement.style.removeProperty("--unilens-text-line");
+    const html = document.documentElement;
+    const wasApplied = autoTextClassApplied;
+    if (autoTextClassApplied) {
+        html.classList.remove(HTML_CLASS);
+        // Leave no empty `class=""` on a host <html> that had none.
+        if (htmlHadNoClassAttr && html.getAttribute("class") === "")
+            html.removeAttribute("class");
+    }
+    autoTextClassApplied = false;
+    htmlHadNoClassAttr = false;
+    restoreHostInlineStyle(html, TEXT_BASE_VAR);
+    restoreHostInlineStyle(html, TEXT_SCALE_VAR);
+    restoreHostInlineStyle(html, TEXT_LINE_VAR);
+    if (wasApplied) remeasureTextSizes();
 }
 
 /** Effective chat font size: auto-synced from page scale or manual setting. */
 export function getEffectiveChatFontSize(): number {
-    if (!settings.autoTextSize || settings.autoTextMode === "off")
-        return settings.chatFontSize;
-    const base = settings.chatFontSize;
+    const s = getSettings();
+    if (!s.autoTextSize || s.autoTextMode === "off") return s.chatFontSize;
+    const base = s.chatFontSize;
     const boosted = Math.round(base * appliedScale);
     return Math.min(28, Math.max(base, boosted));
 }
@@ -201,8 +238,9 @@ export function getAppliedTextScale(): number {
 
 export function refreshAutoTextSize(): TextAnalysis {
     const analysis = analyzePageText();
+    const s = getSettings();
 
-    if (!settings.autoTextSize || settings.autoTextMode === "off") {
+    if (!s.autoTextSize || s.autoTextMode === "off") {
         clearPageScale();
         return { ...analysis, appliedScale: 1 };
     }
@@ -217,16 +255,19 @@ export function runAutoTextAction(
     action: "analyze" | "apply" | "reset" | "bumpUp" | "bumpDown",
 ): TextAnalysis {
     if (action === "reset") {
-        settings.autoTextSize = false;
-        settings.autoTextMode = "off";
+        patchSettings({ autoTextSize: false, autoTextMode: "off" });
         saveSettings();
         clearPageScale();
         return analyzePageText();
     }
 
     if (action === "bumpUp" || action === "bumpDown") {
-        settings.autoTextSize = true;
-        if (settings.autoTextMode === "off") settings.autoTextMode = "combined";
+        const s = getSettings();
+        patchSettings({
+            autoTextSize: true,
+            autoTextMode:
+                s.autoTextMode === "off" ? "combined" : s.autoTextMode,
+        });
         const next = clampScale(
             appliedScale + (action === "bumpUp" ? 0.1 : -0.1),
         );
@@ -239,17 +280,32 @@ export function runAutoTextAction(
 
     if (action === "analyze") return analyzePageText();
 
-    settings.autoTextSize = true;
-    if (settings.autoTextMode === "off") settings.autoTextMode = "combined";
+    const s = getSettings();
+    patchSettings({
+        autoTextSize: true,
+        autoTextMode: s.autoTextMode === "off" ? "combined" : s.autoTextMode,
+    });
     saveSettings();
     return refreshAutoTextSize();
+}
+
+/**
+ * Puts automatic text size back as a preset found it (see
+ * presetAutoTextRestore): the mode, and the scale it had, which may have
+ * been bumped by hand.
+ */
+export function restoreAutoText(mode: AutoTextMode, scale: number) {
+    patchSettings({ autoTextSize: true, autoTextMode: mode });
+    saveSettings();
+    const next = clampScale(scale);
+    if (next !== appliedScale) applyScaleToPage(next);
 }
 
 function onResize() {
     clearTimeout(resizeTimer);
     resizeTimer = window.setTimeout(() => {
-        if (settings.autoTextSize && settings.autoTextMode !== "off")
-            refreshAutoTextSize();
+        const s = getSettings();
+        if (s.autoTextSize && s.autoTextMode !== "off") refreshAutoTextSize();
     }, 250);
 }
 
@@ -260,11 +316,20 @@ export function initAutoTextSize() {
     if (autoTextActive) return;
     autoTextActive = true;
     ensureStylesheet();
-    if (settings.autoTextSize && settings.autoTextMode !== "off")
-        refreshAutoTextSize();
+    const s = getSettings();
+    if (s.autoTextSize && s.autoTextMode !== "off") refreshAutoTextSize();
     window.addEventListener("resize", onResize);
-    settingsUnsub = onSettingsChange(() => {
-        if (settings.autoTextSize && settings.autoTextMode !== "off")
+    // Re-measure only when an auto-text setting changes. Reacting to every
+    // panel setting re-read the layout of the whole page on each click.
+    settingsUnsub = useSettings.subscribe((live, prev) => {
+        if (
+            live.autoTextSize === prev.autoTextSize &&
+            live.autoTextMode === prev.autoTextMode &&
+            live.autoTextMinPx === prev.autoTextMinPx &&
+            live.autoTextMaxScale === prev.autoTextMaxScale
+        )
+            return;
+        if (live.autoTextSize && live.autoTextMode !== "off")
             refreshAutoTextSize();
         else clearPageScale();
     });
@@ -276,7 +341,9 @@ export function destroyAutoTextSize() {
     window.removeEventListener("resize", onResize);
     settingsUnsub?.();
     settingsUnsub = null;
+    window.clearTimeout(resizeTimer);
     clearPageScale();
+    document.getElementById(STYLE_ID)?.remove();
 }
 
 /** Mark UniLens UI nodes so page analysis skips them. */

@@ -1,7 +1,8 @@
 /**
  * Expand body / annotation text only — headings and text ≥18px are excluded.
  */
-import { a11ySettings, onA11yChange } from "./accessibilityStore";
+import { getA11ySettings } from "./accessibilityStore";
+import { afterNextPaint } from "./afterPaint";
 import {
     BODY_EXPAND_ATTR,
     BODY_EXPAND_CLASS,
@@ -10,15 +11,20 @@ import {
     BODY_EXPAND_ORIGINAL_ATTR,
     BODY_EXPAND_TARGET_VAR,
     isUniLensOverlayNode,
-    SMALL_BOOST_ORIGINAL_ATTR,
 } from "./domIds";
+import { restoreHostInlineStyle, setHostInlineStyle } from "./hostSurface";
+import { getEffectivePageFontScale } from "./pageFontScale";
+import { useSettings } from "./settings";
 import {
     bodyTextExpandConfig,
     computeBodyTextTargetPx,
     type TextAdjustLevel,
 } from "./textAdjustLevels";
-
-const STYLE_ID = "unilens-body-text-expand-style";
+import {
+    acquireTextSizeStyles,
+    readOriginalFontPx,
+    releaseTextSizeStyles,
+} from "./textSizeLayers";
 
 /** Text at or above this computed size is left unchanged. */
 export const LARGE_TEXT_PX = 18;
@@ -75,18 +81,13 @@ let rescanTimer: number | undefined;
 let bodyTextActive = false;
 let a11yUnsub: (() => void) | null = null;
 
-const EXPAND_CSS = `
-[${BODY_EXPAND_ATTR}="true"].${BODY_EXPAND_CLASS} {
-  font-size: var(${BODY_EXPAND_TARGET_VAR}, 16px) !important;
-}
-`;
-
 function ensureStylesheet() {
-    if (document.getElementById(STYLE_ID)) return;
-    const style = document.createElement("style");
-    style.id = STYLE_ID;
-    style.textContent = EXPAND_CSS;
-    document.head.appendChild(style);
+    acquireTextSizeStyles("bodyExpand", (roots) => {
+        if (!bodyTextActive || getA11ySettings().bodyTextExpandLevel < 1)
+            return;
+        if (roots) for (const root of roots) scanBodyText(root);
+        else lastScan = scanBodyText();
+    });
 }
 
 function isInsideHeading(el: Element): boolean {
@@ -105,23 +106,13 @@ function shouldSkip(el: Element): boolean {
 
 export function computeExpandedFontPx(
     originalPx: number,
-    level: TextAdjustLevel = a11ySettings.bodyTextExpandLevel,
+    level: TextAdjustLevel = getA11ySettings().bodyTextExpandLevel,
 ): number {
     return computeBodyTextTargetPx(originalPx, level);
 }
 
 function readOriginalPx(el: HTMLElement): number {
-    const stored = el.getAttribute(BODY_EXPAND_ORIGINAL_ATTR);
-    if (stored) {
-        const parsed = parseFloat(stored);
-        if (Number.isFinite(parsed) && parsed > 0) return parsed;
-    }
-    const fromSmallBoost = el.getAttribute(SMALL_BOOST_ORIGINAL_ATTR);
-    if (fromSmallBoost) {
-        const parsed = parseFloat(fromSmallBoost);
-        if (Number.isFinite(parsed) && parsed > 0) return parsed;
-    }
-    return parseFloat(getComputedStyle(el).fontSize);
+    return readOriginalFontPx(el, getEffectivePageFontScale());
 }
 
 function applyExpand(
@@ -136,32 +127,37 @@ function applyExpand(
         String(Math.round(originalPx * 100) / 100),
     );
     el.classList.add(BODY_EXPAND_CLASS);
-    el.style.setProperty(BODY_EXPAND_TARGET_VAR, `${targetPx}px`);
+    setHostInlineStyle(el, BODY_EXPAND_TARGET_VAR, `${targetPx}px`);
 }
 
 function restoreElement(el: HTMLElement) {
     el.removeAttribute(BODY_EXPAND_ATTR);
     el.removeAttribute(BODY_EXPAND_ORIGINAL_ATTR);
     el.classList.remove(BODY_EXPAND_CLASS);
-    el.style.removeProperty(BODY_EXPAND_TARGET_VAR);
+    restoreHostInlineStyle(el, BODY_EXPAND_TARGET_VAR);
 }
 
 export function scanBodyText(
     root: Element = document.body,
 ): BodyTextScanResult {
     const result: BodyTextScanResult = { scanned: 0, expanded: 0 };
-    const level = a11ySettings.bodyTextExpandLevel;
+    const level = getA11ySettings().bodyTextExpandLevel;
     if (level < 1 || !document.body) return result;
 
     const nodes: Element[] = [root, ...Array.from(root.querySelectorAll("*"))];
 
+    // Read every original size before writing any: expanding a parent first
+    // would make an inheriting child read the parent's enlarged size and get
+    // expanded twice.
+    const reads: { el: HTMLElement; px: number }[] = [];
     for (const el of nodes) {
         if (shouldSkip(el)) continue;
         if (!(el instanceof HTMLElement)) continue;
-
         result.scanned++;
+        reads.push({ el, px: readOriginalPx(el) });
+    }
 
-        const px = readOriginalPx(el);
+    for (const { el, px } of reads) {
         if (!Number.isFinite(px) || px <= 0) continue;
         if (px >= LARGE_TEXT_PX) {
             if (el.getAttribute(BODY_EXPAND_ATTR) === "true")
@@ -173,6 +169,8 @@ export function scanBodyText(
         const prevTarget = el.style.getPropertyValue(BODY_EXPAND_TARGET_VAR);
         if (
             el.getAttribute(BODY_EXPAND_ATTR) === "true" &&
+            // A host re-render can overwrite `className` and drop our class.
+            el.classList.contains(BODY_EXPAND_CLASS) &&
             prevTarget === `${targetPx}px` &&
             el.getAttribute(BODY_EXPAND_ORIGINAL_ATTR) ===
                 String(Math.round(px * 100) / 100)
@@ -202,7 +200,7 @@ export function clearBodyTextExpand() {
 function applyEnabledState() {
     ensureStylesheet();
     clearBodyTextExpand();
-    const level = a11ySettings.bodyTextExpandLevel;
+    const level = getA11ySettings().bodyTextExpandLevel;
     if (level > 0 && bodyTextExpandConfig(level)) {
         document.documentElement.setAttribute(BODY_EXPAND_HTML_ATTR, "true");
         document.documentElement.setAttribute(
@@ -213,17 +211,46 @@ function applyEnabledState() {
     }
 }
 
+const scanListeners = new Set<() => void>();
+let appliedCallbacks: (() => void)[] = [];
+
+const deferredApply = afterNextPaint(() => {
+    applyEnabledState();
+    const callbacks = appliedCallbacks;
+    appliedCallbacks = [];
+    for (const cb of callbacks) cb();
+    for (const listener of scanListeners) listener();
+});
+
+/** Notified after a level change has been applied to the page. */
+export function onBodyTextScan(listener: () => void): () => void {
+    scanListeners.add(listener);
+    return () => {
+        scanListeners.delete(listener);
+    };
+}
+
+/**
+ * Runs `cb` once the level just set has been applied to the page — after the
+ * next paint when a change is pending, otherwise right away. Lets the panel
+ * announce the final count without waiting inside the click.
+ */
+export function afterBodyTextApplied(cb: () => void) {
+    if (deferredApply.pending) appliedCallbacks.push(cb);
+    else cb();
+}
+
 function scheduleRescan() {
     clearTimeout(rescanTimer);
     rescanTimer = window.setTimeout(() => {
-        if (a11ySettings.bodyTextExpandLevel > 0) scanBodyText();
+        if (getA11ySettings().bodyTextExpandLevel > 0) scanBodyText();
     }, 300);
 }
 
 function startObserver() {
     if (observer || !document.body) return;
     observer = new MutationObserver(() => {
-        if (a11ySettings.bodyTextExpandLevel > 0) scheduleRescan();
+        if (getA11ySettings().bodyTextExpandLevel > 0) scheduleRescan();
     });
     observer.observe(document.body, { childList: true, subtree: true });
 }
@@ -232,13 +259,28 @@ export function getLastBodyTextScan(): BodyTextScanResult {
     return lastScan;
 }
 
+/** The host replaced <body>: observe the new one and re-apply. */
+export function rebindBodyTextExpand() {
+    if (!bodyTextActive) return;
+    observer?.disconnect();
+    observer = null;
+    startObserver();
+    applyEnabledState();
+}
+
 export function initBodyTextExpand() {
     if (bodyTextActive) return;
     bodyTextActive = true;
     ensureStylesheet();
     startObserver();
     applyEnabledState();
-    a11yUnsub = onA11yChange(applyEnabledState);
+    // Only this feature's level changes what it marks; other panel settings
+    // used to clear and rescan every text node on each click. The rescan
+    // runs after the next paint so the panel button repaints first.
+    a11yUnsub = useSettings.subscribe((state, prev) => {
+        if (state.bodyTextExpandLevel !== prev.bodyTextExpandLevel)
+            deferredApply.schedule();
+    });
 }
 
 export function destroyBodyTextExpand() {
@@ -249,6 +291,8 @@ export function destroyBodyTextExpand() {
     window.clearTimeout(rescanTimer);
     a11yUnsub?.();
     a11yUnsub = null;
+    deferredApply.cancel();
+    appliedCallbacks = [];
     clearBodyTextExpand();
-    document.getElementById(STYLE_ID)?.remove();
+    releaseTextSizeStyles("bodyExpand");
 }

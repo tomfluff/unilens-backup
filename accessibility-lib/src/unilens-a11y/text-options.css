@@ -1,0 +1,98 @@
+/*
+ * Line spacing, typeface and letter / word spacing (the visitor's text
+ * options). Injected by documentEffects.ts (syncTextOptionStyles) only while
+ * one of them is on — see the note in style.css — and removed when all are
+ * off. The <html> attributes still gate each rule, so the sheet is harmless
+ * while present.
+ */
+
+/* Line spacing — only when the visitor chose “wide”.
+ * Body text gets it whatever the host set: the <body> value alone only
+ * reached text that inherits it, and most sites give paragraphs, list items
+ * and links a line-height of their own (study-news: 44% of its text did not
+ * change). So every body-text block (paragraphs, list items, table cells,
+ * quotes, captions …) and everything inside one. Headings, banners and other
+ * boxes keep the host's value — they are often sized to their lines, and
+ * doubling those pushed a hero's button out of its fixed-height box. Also
+ * left alone: form controls and buttons, SVG text and icon-font glyphs
+ * (iconFontGuard.ts marks them and their insides). UniLens' own UI is outside
+ * <body>. One selector per element name (the browser files rules by their
+ * last element name) and only conditions on the element itself in :not():
+ * a universal `* :not(svg *)` form was matched against every element on
+ * every style recalc, even while off, and slowed the display passes. Form
+ * controls and SVG text are simply not in the lists. */
+html[data-unilens-a11y-line-height='wide'] body,
+html[data-unilens-a11y-line-height='wide'] :is(body[data-unilens-page-content], #unilens-a11y-page-root) p:not([role='button'], [data-unilens-a11y-keep-font]),
+html[data-unilens-a11y-line-height='wide'] :is(body[data-unilens-page-content], #unilens-a11y-page-root) li:not([role='button'], [data-unilens-a11y-keep-font]),
+html[data-unilens-a11y-line-height='wide'] :is(body[data-unilens-page-content], #unilens-a11y-page-root) dt:not([role='button'], [data-unilens-a11y-keep-font]),
+html[data-unilens-a11y-line-height='wide'] :is(body[data-unilens-page-content], #unilens-a11y-page-root) dd:not([role='button'], [data-unilens-a11y-keep-font]),
+html[data-unilens-a11y-line-height='wide'] :is(body[data-unilens-page-content], #unilens-a11y-page-root) td:not([role='button'], [data-unilens-a11y-keep-font]),
+html[data-unilens-a11y-line-height='wide'] :is(body[data-unilens-page-content], #unilens-a11y-page-root) th:not([role='button'], [data-unilens-a11y-keep-font]),
+html[data-unilens-a11y-line-height='wide'] :is(body[data-unilens-page-content], #unilens-a11y-page-root) blockquote:not([role='button'], [data-unilens-a11y-keep-font]),
+html[data-unilens-a11y-line-height='wide'] :is(body[data-unilens-page-content], #unilens-a11y-page-root) figcaption:not([role='button'], [data-unilens-a11y-keep-font]),
+html[data-unilens-a11y-line-height='wide'] :is(body[data-unilens-page-content], #unilens-a11y-page-root) caption:not([role='button'], [data-unilens-a11y-keep-font]),
+html[data-unilens-a11y-line-height='wide'] :is(body[data-unilens-page-content], #unilens-a11y-page-root) address:not([role='button'], [data-unilens-a11y-keep-font]),
+html[data-unilens-a11y-line-height='wide'] :is(body[data-unilens-page-content], #unilens-a11y-page-root) label:not([role='button'], [data-unilens-a11y-keep-font]),
+html[data-unilens-a11y-line-height='wide'] :is(body[data-unilens-page-content], #unilens-a11y-page-root) summary:not([role='button'], [data-unilens-a11y-keep-font]),
+html[data-unilens-a11y-line-height='wide'] :is(body[data-unilens-page-content], #unilens-a11y-page-root) :is(p, li, dt, dd, td, th, blockquote, figcaption, caption, address, label, summary) a:not([role='button'], [data-unilens-a11y-keep-font]),
+html[data-unilens-a11y-line-height='wide'] :is(body[data-unilens-page-content], #unilens-a11y-page-root) :is(p, li, dt, dd, td, th, blockquote, figcaption, caption, address, label, summary) span:not([role='button'], [data-unilens-a11y-keep-font]),
+html[data-unilens-a11y-line-height='wide'] :is(body[data-unilens-page-content], #unilens-a11y-page-root) :is(p, li, dt, dd, td, th, blockquote, figcaption, caption, address, label, summary) strong:not([role='button'], [data-unilens-a11y-keep-font]),
+html[data-unilens-a11y-line-height='wide'] :is(body[data-unilens-page-content], #unilens-a11y-page-root) :is(p, li, dt, dd, td, th, blockquote, figcaption, caption, address, label, summary) em:not([role='button'], [data-unilens-a11y-keep-font]),
+html[data-unilens-a11y-line-height='wide'] :is(body[data-unilens-page-content], #unilens-a11y-page-root) :is(p, li, dt, dd, td, th, blockquote, figcaption, caption, address, label, summary) b:not([role='button'], [data-unilens-a11y-keep-font]),
+html[data-unilens-a11y-line-height='wide'] :is(body[data-unilens-page-content], #unilens-a11y-page-root) :is(p, li, dt, dd, td, th, blockquote, figcaption, caption, address, label, summary) i:not([role='button'], [data-unilens-a11y-keep-font]),
+html[data-unilens-a11y-line-height='wide'] :is(body[data-unilens-page-content], #unilens-a11y-page-root) :is(p, li, dt, dd, td, th, blockquote, figcaption, caption, address, label, summary) u:not([role='button'], [data-unilens-a11y-keep-font]),
+html[data-unilens-a11y-line-height='wide'] :is(body[data-unilens-page-content], #unilens-a11y-page-root) :is(p, li, dt, dd, td, th, blockquote, figcaption, caption, address, label, summary) s:not([role='button'], [data-unilens-a11y-keep-font]),
+html[data-unilens-a11y-line-height='wide'] :is(body[data-unilens-page-content], #unilens-a11y-page-root) :is(p, li, dt, dd, td, th, blockquote, figcaption, caption, address, label, summary) small:not([role='button'], [data-unilens-a11y-keep-font]),
+html[data-unilens-a11y-line-height='wide'] :is(body[data-unilens-page-content], #unilens-a11y-page-root) :is(p, li, dt, dd, td, th, blockquote, figcaption, caption, address, label, summary) mark:not([role='button'], [data-unilens-a11y-keep-font]),
+html[data-unilens-a11y-line-height='wide'] :is(body[data-unilens-page-content], #unilens-a11y-page-root) :is(p, li, dt, dd, td, th, blockquote, figcaption, caption, address, label, summary) time:not([role='button'], [data-unilens-a11y-keep-font]),
+html[data-unilens-a11y-line-height='wide'] :is(body[data-unilens-page-content], #unilens-a11y-page-root) :is(p, li, dt, dd, td, th, blockquote, figcaption, caption, address, label, summary) cite:not([role='button'], [data-unilens-a11y-keep-font]),
+html[data-unilens-a11y-line-height='wide'] :is(body[data-unilens-page-content], #unilens-a11y-page-root) :is(p, li, dt, dd, td, th, blockquote, figcaption, caption, address, label, summary) q:not([role='button'], [data-unilens-a11y-keep-font]),
+html[data-unilens-a11y-line-height='wide'] :is(body[data-unilens-page-content], #unilens-a11y-page-root) :is(p, li, dt, dd, td, th, blockquote, figcaption, caption, address, label, summary) abbr:not([role='button'], [data-unilens-a11y-keep-font]),
+html[data-unilens-a11y-line-height='wide'] :is(body[data-unilens-page-content], #unilens-a11y-page-root) :is(p, li, dt, dd, td, th, blockquote, figcaption, caption, address, label, summary) dfn:not([role='button'], [data-unilens-a11y-keep-font]),
+html[data-unilens-a11y-line-height='wide'] :is(body[data-unilens-page-content], #unilens-a11y-page-root) :is(p, li, dt, dd, td, th, blockquote, figcaption, caption, address, label, summary) code:not([role='button'], [data-unilens-a11y-keep-font]),
+html[data-unilens-a11y-line-height='wide'] :is(body[data-unilens-page-content], #unilens-a11y-page-root) :is(p, li, dt, dd, td, th, blockquote, figcaption, caption, address, label, summary) kbd:not([role='button'], [data-unilens-a11y-keep-font]),
+html[data-unilens-a11y-line-height='wide'] :is(body[data-unilens-page-content], #unilens-a11y-page-root) :is(p, li, dt, dd, td, th, blockquote, figcaption, caption, address, label, summary) samp:not([role='button'], [data-unilens-a11y-keep-font]),
+html[data-unilens-a11y-line-height='wide'] :is(body[data-unilens-page-content], #unilens-a11y-page-root) :is(p, li, dt, dd, td, th, blockquote, figcaption, caption, address, label, summary) var:not([role='button'], [data-unilens-a11y-keep-font]),
+html[data-unilens-a11y-line-height='wide'] :is(body[data-unilens-page-content], #unilens-a11y-page-root) :is(p, li, dt, dd, td, th, blockquote, figcaption, caption, address, label, summary) sup:not([role='button'], [data-unilens-a11y-keep-font]),
+html[data-unilens-a11y-line-height='wide'] :is(body[data-unilens-page-content], #unilens-a11y-page-root) :is(p, li, dt, dd, td, th, blockquote, figcaption, caption, address, label, summary) sub:not([role='button'], [data-unilens-a11y-keep-font]),
+html[data-unilens-a11y-line-height='wide'] :is(body[data-unilens-page-content], #unilens-a11y-page-root) :is(p, li, dt, dd, td, th, blockquote, figcaption, caption, address, label, summary) ins:not([role='button'], [data-unilens-a11y-keep-font]),
+html[data-unilens-a11y-line-height='wide'] :is(body[data-unilens-page-content], #unilens-a11y-page-root) :is(p, li, dt, dd, td, th, blockquote, figcaption, caption, address, label, summary) del:not([role='button'], [data-unilens-a11y-keep-font]),
+html[data-unilens-a11y-line-height='wide'] :is(body[data-unilens-page-content], #unilens-a11y-page-root) :is(p, li, dt, dd, td, th, blockquote, figcaption, caption, address, label, summary) bdi:not([role='button'], [data-unilens-a11y-keep-font]),
+html[data-unilens-a11y-line-height='wide'] :is(body[data-unilens-page-content], #unilens-a11y-page-root) :is(p, li, dt, dd, td, th, blockquote, figcaption, caption, address, label, summary) ruby:not([role='button'], [data-unilens-a11y-keep-font]),
+html[data-unilens-a11y-line-height='wide'] :is(body[data-unilens-page-content], #unilens-a11y-page-root) :is(p, li, dt, dd, td, th, blockquote, figcaption, caption, address, label, summary) rt:not([role='button'], [data-unilens-a11y-keep-font]),
+html[data-unilens-a11y-line-height='wide'] :is(body[data-unilens-page-content], #unilens-a11y-page-root) :is(p, li, dt, dd, td, th, blockquote, figcaption, caption, address, label, summary) label:not([role='button'], [data-unilens-a11y-keep-font]),
+html[data-unilens-a11y-line-height='wide'] :is(body[data-unilens-page-content], #unilens-a11y-page-root) :is(p, li, dt, dd, td, th, blockquote, figcaption, caption, address, label, summary) div:not([role='button'], [data-unilens-a11y-keep-font]),
+html[data-unilens-a11y-line-height='wide'] :is(body[data-unilens-page-content], #unilens-a11y-page-root) :is(p, li, dt, dd, td, th, blockquote, figcaption, caption, address, label, summary) p:not([role='button'], [data-unilens-a11y-keep-font]),
+html[data-unilens-a11y-line-height='wide'] :is(body[data-unilens-page-content], #unilens-a11y-page-root) :is(p, li, dt, dd, td, th, blockquote, figcaption, caption, address, label, summary) ul:not([role='button'], [data-unilens-a11y-keep-font]),
+html[data-unilens-a11y-line-height='wide'] :is(body[data-unilens-page-content], #unilens-a11y-page-root) :is(p, li, dt, dd, td, th, blockquote, figcaption, caption, address, label, summary) ol:not([role='button'], [data-unilens-a11y-keep-font]),
+html[data-unilens-a11y-line-height='wide'] :is(body[data-unilens-page-content], #unilens-a11y-page-root) :is(p, li, dt, dd, td, th, blockquote, figcaption, caption, address, label, summary) li:not([role='button'], [data-unilens-a11y-keep-font]),
+html[data-unilens-a11y-line-height='wide'] :is(body[data-unilens-page-content], #unilens-a11y-page-root) :is(p, li, dt, dd, td, th, blockquote, figcaption, caption, address, label, summary) dl:not([role='button'], [data-unilens-a11y-keep-font]),
+html[data-unilens-a11y-line-height='wide'] :is(body[data-unilens-page-content], #unilens-a11y-page-root) :is(p, li, dt, dd, td, th, blockquote, figcaption, caption, address, label, summary) dt:not([role='button'], [data-unilens-a11y-keep-font]),
+html[data-unilens-a11y-line-height='wide'] :is(body[data-unilens-page-content], #unilens-a11y-page-root) :is(p, li, dt, dd, td, th, blockquote, figcaption, caption, address, label, summary) dd:not([role='button'], [data-unilens-a11y-keep-font]),
+html[data-unilens-a11y-line-height='wide'] :is(body[data-unilens-page-content], #unilens-a11y-page-root) :is(p, li, dt, dd, td, th, blockquote, figcaption, caption, address, label, summary) font:not([role='button'], [data-unilens-a11y-keep-font]) {
+  line-height: var(--unilens-a11y-line-height, 2) !important;
+}
+
+/* Force the chosen typeface only when the visitor actually picked one
+ * (UD / custom). Must not rewrite the host site's own font-family.
+ * Pseudo-elements are left out, but they inherit the element's font, so icon
+ * fonts are kept apart by iconFontGuard.ts: it marks icon-font elements with
+ * data-unilens-a11y-keep-font, and switches this rule off with
+ * data-unilens-a11y-font-probe on <html> while it reads the host's own fonts. */
+html[data-unilens-a11y-font-family='ud']:not([data-unilens-a11y-font-probe]) :is(body[data-unilens-page-content], #unilens-a11y-page-root),
+html[data-unilens-a11y-font-family='ud']:not([data-unilens-a11y-font-probe]) :is(body[data-unilens-page-content], #unilens-a11y-page-root) *:not([data-unilens-a11y-keep-font]),
+html[data-unilens-a11y-font-family='custom']:not([data-unilens-a11y-font-probe]) :is(body[data-unilens-page-content], #unilens-a11y-page-root),
+html[data-unilens-a11y-font-family='custom']:not([data-unilens-a11y-font-probe]) :is(body[data-unilens-page-content], #unilens-a11y-page-root) *:not([data-unilens-a11y-keep-font]) {
+  font-family: var(--unilens-a11y-font-family, system-ui, sans-serif) !important;
+}
+
+/* Letter / word spacing: on every element for the same reason as line
+ * spacing. Icon-font glyphs are left out (a ligature icon spelled "home"
+ * falls apart into letters once letter-spacing is not 0). */
+html[data-unilens-a11y-letter-spacing='wide'] body,
+html[data-unilens-a11y-letter-spacing='wide'] :is(body[data-unilens-page-content], #unilens-a11y-page-root) *:not(
+  svg, text, tspan, [data-unilens-a11y-keep-font]
+) {
+  letter-spacing: var(--unilens-a11y-letter-spacing, 0.12em) !important;
+  word-spacing: var(--unilens-a11y-word-spacing, 0.16em) !important;
+}

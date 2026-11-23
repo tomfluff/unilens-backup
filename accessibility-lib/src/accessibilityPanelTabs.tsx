@@ -4,16 +4,18 @@
  * Every display string comes through t(). Since t() looks up the current
  * language's dictionary on every call, each render always reflects the
  * latest language, as long as the component re-renders on a language change
- * (see the useExternalSignal(onA11yLangChange) call in each tab below).
+ * (see useExternalSignal(onA11yLangChange) on each tab export).
  */
 import { type CSSProperties, useState } from "react";
 import {
     A11Y_LANG_NAMES,
     A11Y_LANGS,
     type A11yLang,
+    focusCursorBandName,
     getA11yLang,
     languageDescByLang,
     onA11yLangChange,
+    pointerHaloSizeName,
     setA11yLang,
     t,
 } from "./accessibilityI18n";
@@ -22,8 +24,15 @@ import {
     AUTO_MODES,
     bodyExpandLevelLabels,
     CONTRAST_FILTER,
+    DISPLAY_CONTRASTS,
+    DISPLAY_SATURATIONS,
     DISPLAY_THEMES,
+    focusEnhanceLevelLabels,
     fontScaleLabel,
+    fontScalePercent,
+    nextDisplayContrast,
+    nextDisplaySaturation,
+    nextDisplayTheme,
     PREVIEW_FONT_PX,
     SATURATION_FILTER,
     SELECTION_LEVELS,
@@ -34,6 +43,7 @@ import {
     THEME_SWATCH,
     UD_FONT_STACK,
 } from "./accessibilityPanelOptions";
+import { TextPlateCard } from "./accessibilityPanelTextPlate";
 import {
     announce,
     Button,
@@ -41,6 +51,7 @@ import {
     Card,
     ChoiceGroup,
     Icon,
+    type IconName,
     LevelControl,
     LinesPreview,
     Metrics,
@@ -50,6 +61,7 @@ import {
     SwatchPreview,
     SwitchRow,
     TextPreview,
+    ToggleGroup,
     useExternalSignal,
 } from "./accessibilityPanelUI";
 import {
@@ -63,13 +75,19 @@ import {
     type A11yFontSize,
     type A11yLetterSpacing,
     type A11yLineHeight,
-    a11ySettings,
+    type A11ySettings,
     type DisplayContrast,
     type DisplaySaturation,
     type DisplayTheme,
-    onA11yChange,
+    FOCUS_CURSOR_BAND_SIZES,
+    type FocusCursorBandPx,
+    focusCursorOn,
+    normalizeFocusCursorBandPx,
     patchA11ySettings,
+    TEXT_STROKE_PAIRS,
+    TEXT_STROKE_STYLES,
     type TextAdjustLevel,
+    type TextStrokeStyle,
 } from "./accessibilityStore";
 import {
     getAppliedTextScale,
@@ -77,7 +95,51 @@ import {
     runAutoTextAction,
     type TextAnalysis,
 } from "./autoTextSize";
-import { getLastBodyTextScan, scanBodyText } from "./bodyTextExpand";
+import {
+    afterBodyTextApplied,
+    getLastBodyTextScan,
+    onBodyTextScan,
+    scanBodyText,
+} from "./bodyTextExpand";
+import {
+    isPointerHaloViewportPct,
+    lastOnPointerHaloPx,
+    normalizePointerHaloPx,
+    POINTER_HALO_COLORS,
+    POINTER_HALO_FIXED_PX,
+    POINTER_HALO_OPACITIES,
+    POINTER_HALO_RGB,
+    POINTER_HALO_VIEWPORT_PCT,
+    type PointerHaloColor,
+    type PointerHaloOpacity,
+    type PointerHaloPx,
+    pointerHaloFillCss,
+    pointerHaloOn,
+    pointerHaloPreviewDiameter,
+    rememberPointerHaloOnPx,
+} from "./cursorHalo";
+import {
+    lastOnFocusCursorBandPx,
+    rememberFocusCursorBandPx,
+} from "./focusCursorMemory";
+import {
+    afterOppZoomApplied,
+    getAppliedOppZoom,
+    getLastOppZoomResult,
+    isOppZoomPending,
+    type OppZoomResult,
+    onOppZoomChange,
+    type PageHealth,
+    remeasureOpportunisticZoom,
+} from "./opportunisticZoom";
+import {
+    READING_GUIDE_PAIRS,
+    READING_GUIDE_POSITIONS,
+    READING_GUIDE_STYLES,
+    type ReadingGuidePosition,
+    type ReadingGuideStyle,
+    readingGuideBoxShadow,
+} from "./readingGuide";
 import {
     applySelectionFontLevel,
     clearSelectionFontSize,
@@ -101,11 +163,16 @@ import {
 // import { normalizeSpeechRateLevel } from './speechLevels'
 import {
     type AutoTextMode,
-    onSettingsChange,
+    patchSettings,
     saveSettings,
-    settings,
+    useSettings,
 } from "./settings";
-import { getLastSmallTextScan, scanSmallText } from "./smallTextBoost";
+import {
+    afterSmallTextApplied,
+    getLastSmallTextScan,
+    onSmallTextScan,
+    scanSmallText,
+} from "./smallTextBoost";
 
 export type { PanelTab } from "./accessibilityPanelOptions";
 
@@ -139,17 +206,17 @@ function presetMeta(id: A11yPresetId): { label: string; hint: string } {
 
 // ── Visual ─────────────────────────────────────────────────────────────────
 
-/** One-tap, per-use-case presets. Placed before the individual settings. 6 items, so 2 columns. */
+/** One-tap, per-use-case presets (Lab tab). 6 items, so 2 columns. */
 function PresetsCard() {
     return (
-        <Card title={t().presetsTitle} iconName="preset" desc={t().presetsDesc}>
+        <Card title={t().presetsTitle} iconName="preset">
             <fieldset className="unilens-a11y-group">
                 <legend className="unilens-a11y-group-label">
                     {t().presetsGroup}
                 </legend>
                 <div
                     className="unilens-a11y-choices"
-                    style={{ "--da-cols": 2 } as CSSProperties}
+                    style={{ "--unilens-a11y-panel-cols": 2 } as CSSProperties}
                 >
                     {A11Y_PRESET_IDS.map((id) => {
                         const { label, hint } = presetMeta(id);
@@ -185,9 +252,11 @@ function PresetsCard() {
                                 <span className="unilens-a11y-choice-label">
                                     {label}
                                 </span>
-                                <span className="unilens-a11y-choice-hint">
-                                    {active ? t().presetActive : hint}
-                                </span>
+                                {active && (
+                                    <span className="unilens-a11y-choice-hint">
+                                        {t().presetActive}
+                                    </span>
+                                )}
                             </button>
                         );
                     })}
@@ -198,16 +267,11 @@ function PresetsCard() {
 }
 
 /**
- * Panel-language switcher. Placed right after the presets.
+ * Panel-language switcher. Lives on the Lab tab with presets.
  *
- * For a visitor who can't read the panel's current language, being the
- * first thing they see matters far more than fitting neatly into a content
- * category — discoverability is prioritized over strict grouping. The
- * option labels are always written in their own language (日本語 / English)
- * so an unreadable label never leaves someone lost. For the same reason, the
- * description text always shows every supported language, not just the one
- * currently active (e.g. the English description is shown even while the
- * panel is in Japanese).
+ * Option labels are always written in their own language (日本語 / English)
+ * so an unreadable label never leaves someone lost. The description text
+ * always shows every supported language, not just the one currently active.
  */
 function LanguageCard() {
     const current = getA11yLang();
@@ -238,132 +302,497 @@ function LanguageCard() {
     );
 }
 
-/** Link underline and focus emphasis. Shared cues for color blindness and low vision. */
+type CueKey = Extract<
+    keyof A11ySettings,
+    | "linkUnderline"
+    | "linkBackground"
+    | "linkBorder"
+    | "imageBorder"
+    | "elementHighlight"
+    | "reduceMotion"
+>;
+
+interface CueItem {
+    key: CueKey;
+    label: string;
+    ariaLabel: string;
+    iconName: IconName;
+    checked: boolean;
+    focusKey: string;
+    on: string;
+    off: string;
+}
+
+/** Link underline, pointer halo, focus cursor, and reading guide. Independent toggles — press again to turn off. */
 function CuesCard() {
-    const s = a11ySettings;
+    const s = useSettings();
+    const toOptions = (cues: CueItem[]) =>
+        cues.map((cue) => ({
+            value: cue.key,
+            label: cue.label,
+            ariaLabel: cue.ariaLabel,
+            iconName: cue.iconName,
+            checked: cue.checked,
+            focusKey: cue.focusKey,
+        }));
+    const toggle = (cues: CueItem[]) => (value: string, next: boolean) => {
+        const cue = cues.find((item) => item.key === value);
+        if (!cue) return;
+        patchA11ySettings({ [cue.key]: next });
+        announce(next ? cue.on : cue.off);
+    };
+
+    const emphasis: CueItem[] = [
+        {
+            key: "linkUnderline",
+            label: t().linkUnderline,
+            ariaLabel: t().linkUnderlineSwitch,
+            iconName: "underline",
+            checked: s.linkUnderline,
+            focusKey: "link-underline",
+            on: t().linkUnderlineOn,
+            off: t().linkUnderlineOff,
+        },
+        {
+            key: "linkBackground",
+            label: t().linkBackground,
+            ariaLabel: t().linkBackgroundSwitch,
+            iconName: "fill",
+            checked: s.linkBackground,
+            focusKey: "link-background",
+            on: t().linkBackgroundOn,
+            off: t().linkBackgroundOff,
+        },
+        {
+            key: "linkBorder",
+            label: t().linkBorder,
+            ariaLabel: t().linkBorderSwitch,
+            iconName: "frame",
+            checked: s.linkBorder,
+            focusKey: "link-border",
+            on: t().linkBorderOn,
+            off: t().linkBorderOff,
+        },
+        {
+            key: "imageBorder",
+            label: t().imageBorder,
+            ariaLabel: t().imageBorderSwitch,
+            iconName: "image",
+            checked: s.imageBorder,
+            focusKey: "image-border",
+            on: t().imageBorderOn,
+            off: t().imageBorderOff,
+        },
+        {
+            key: "elementHighlight",
+            label: t().elementHighlight,
+            ariaLabel: t().elementHighlightSwitch,
+            iconName: "selection",
+            checked: s.elementHighlight,
+            focusKey: "element-highlight",
+            on: t().elementHighlightOn,
+            off: t().elementHighlightOff,
+        },
+    ];
+    const visibility: CueItem[] = [
+        {
+            key: "reduceMotion",
+            label: t().reduceMotion,
+            ariaLabel: t().reduceMotionSwitch,
+            iconName: "pause",
+            checked: s.reduceMotion,
+            focusKey: "reduce-motion",
+            on: t().reduceMotionOn,
+            off: t().reduceMotionOff,
+        },
+    ];
+    const haloPx = s.pointerHaloPx;
+    const haloOn = pointerHaloOn(haloPx);
+    const haloSize = pointerHaloSizeName(haloPx);
+    const togglePointer = () => {
+        if (haloOn) {
+            rememberPointerHaloOnPx(haloPx);
+            patchA11ySettings({ pointerHaloPx: 0 });
+            announce(t().pointerHaloOff);
+            return;
+        }
+        patchA11ySettings({ pointerHaloPx: lastOnPointerHaloPx() });
+        announce(t().pointerHaloOn);
+    };
+    const focusBandPx = normalizeFocusCursorBandPx(s.focusCursorBandPx);
+    const focusOn = focusCursorOn(focusBandPx);
+    const focusBandName = focusOn ? focusCursorBandName(focusBandPx) : "";
+    const toggleFocusCursor = () => {
+        if (focusOn) {
+            rememberFocusCursorBandPx(focusBandPx);
+            patchA11ySettings({ focusCursorBandPx: 0 });
+            announce(t().focusCursorOff);
+            return;
+        }
+        patchA11ySettings({ focusCursorBandPx: lastOnFocusCursorBandPx() });
+        announce(t().focusCursorOn);
+    };
+    const reduceMotionOpt = toOptions(visibility)[0];
+    if (!reduceMotionOpt) return null;
+
     return (
-        <Card title={t().cuesTitle} iconName="link" desc={t().cuesDesc}>
-            <SwitchRow
-                label={t().linkUnderlineSwitch}
-                hint={
-                    s.linkUnderline
-                        ? t().linkUnderlineHintOn
-                        : t().linkUnderlineHintOff
-                }
-                checked={s.linkUnderline}
-                focusKey="link-underline"
-                onChange={(checked) => {
-                    patchA11ySettings({ linkUnderline: checked });
-                    announce(
-                        checked ? t().linkUnderlineOn : t().linkUnderlineOff,
-                    );
-                }}
+        <Card title={t().cuesTitle} iconName="link">
+            <ToggleGroup
+                label={t().cuesEmphasisGroup}
+                columns={1}
+                options={toOptions(emphasis)}
+                onToggle={toggle(emphasis)}
             />
-            <SwitchRow
-                label={t().linkBackgroundSwitch}
-                hint={
-                    s.linkBackground
-                        ? t().linkBackgroundHintOn
-                        : t().linkBackgroundHintOff
-                }
-                checked={s.linkBackground}
-                focusKey="link-background"
-                onChange={(checked) => {
-                    patchA11ySettings({ linkBackground: checked });
-                    announce(
-                        checked ? t().linkBackgroundOn : t().linkBackgroundOff,
-                    );
-                }}
-            />
-            <SwitchRow
-                label={t().linkBorderSwitch}
-                hint={
-                    s.linkBorder ? t().linkBorderHintOn : t().linkBorderHintOff
-                }
-                checked={s.linkBorder}
-                focusKey="link-border"
-                onChange={(checked) => {
-                    patchA11ySettings({ linkBorder: checked });
-                    announce(checked ? t().linkBorderOn : t().linkBorderOff);
-                }}
-            />
-            <SwitchRow
-                label={t().imageBorderSwitch}
-                hint={
-                    s.imageBorder
-                        ? t().imageBorderHintOn
-                        : t().imageBorderHintOff
-                }
-                checked={s.imageBorder}
-                focusKey="image-border"
-                onChange={(checked) => {
-                    patchA11ySettings({ imageBorder: checked });
-                    announce(checked ? t().imageBorderOn : t().imageBorderOff);
-                }}
-            />
-            <SwitchRow
-                label={t().elementHighlightSwitch}
-                hint={
-                    s.elementHighlight
-                        ? t().elementHighlightHintOn
-                        : t().elementHighlightHintOff
-                }
-                checked={s.elementHighlight}
-                focusKey="element-highlight"
-                onChange={(checked) => {
-                    patchA11ySettings({ elementHighlight: checked });
-                    announce(
-                        checked
-                            ? t().elementHighlightOn
-                            : t().elementHighlightOff,
-                    );
-                }}
-            />
-            <SwitchRow
-                label={t().focusEnhanceSwitch}
-                hint={
-                    s.focusEnhance
-                        ? t().focusEnhanceHintOn
-                        : t().focusEnhanceHintOff
-                }
-                checked={s.focusEnhance}
-                focusKey="focus-enhance"
-                onChange={(checked) => {
-                    patchA11ySettings({ focusEnhance: checked });
-                    announce(
-                        checked ? t().focusEnhanceOn : t().focusEnhanceOff,
-                    );
-                }}
-            />
-            <SwitchRow
-                label={t().reduceMotionSwitch}
-                hint={
-                    s.reduceMotion
-                        ? t().reduceMotionHintOn
-                        : t().reduceMotionHintOff
-                }
-                checked={s.reduceMotion}
-                focusKey="reduce-motion"
-                onChange={(checked) => {
-                    patchA11ySettings({ reduceMotion: checked });
-                    announce(
-                        checked ? t().reduceMotionOn : t().reduceMotionOff,
-                    );
-                }}
+            <ToggleGroup
+                label={t().cuesVisibilityGroup}
+                columns={1}
+                options={[
+                    {
+                        value: "pointerHaloPx",
+                        label: t().pointerHalo,
+                        ariaLabel: haloOn
+                            ? t().adjPointerHalo(haloSize)
+                            : t().pointerHaloSwitch,
+                        iconName: "pointerHalo",
+                        hint: haloOn ? haloSize : undefined,
+                        checked: haloOn,
+                        focusKey: "pointer-halo",
+                        onActivate: togglePointer,
+                        after: haloOn ? (
+                            <PointerHaloOptions
+                                px={haloPx}
+                                color={s.pointerHaloColor}
+                                opacity={s.pointerHaloOpacity}
+                            />
+                        ) : undefined,
+                    },
+                    {
+                        value: "focusCursorBandPx",
+                        label: t().focusCursor,
+                        ariaLabel: focusOn
+                            ? t().adjFocusCursor(focusBandName)
+                            : t().focusCursorSwitch,
+                        iconName: "focusCursor",
+                        hint: focusOn ? focusBandName : undefined,
+                        checked: focusOn,
+                        focusKey: "focus-cursor",
+                        onActivate: toggleFocusCursor,
+                        after: focusOn ? (
+                            <FocusCursorOptions bandPx={focusBandPx} />
+                        ) : undefined,
+                    },
+                    {
+                        value: "readingGuide",
+                        label: t().readingGuide,
+                        ariaLabel: s.readingGuide
+                            ? t().readingGuidePositionAria(
+                                  t().readingGuidePosition[
+                                      s.readingGuidePosition
+                                  ],
+                              )
+                            : t().readingGuideSwitch,
+                        iconName: "readingGuide",
+                        hint: s.readingGuide
+                            ? t().readingGuidePosition[s.readingGuidePosition]
+                            : undefined,
+                        checked: s.readingGuide,
+                        focusKey: "reading-guide",
+                        onActivate: () => {
+                            const next = !s.readingGuide;
+                            patchA11ySettings({ readingGuide: next });
+                            announce(
+                                next ? t().readingGuideOn : t().readingGuideOff,
+                            );
+                        },
+                        after: s.readingGuide ? (
+                            <ReadingGuideOptions
+                                guideStyle={s.readingGuideStyle}
+                                guidePosition={s.readingGuidePosition}
+                            />
+                        ) : undefined,
+                    },
+                    reduceMotionOpt,
+                ]}
+                onToggle={toggle(visibility)}
             />
         </Card>
     );
 }
 
+function FocusCursorOptions({
+    bandPx,
+}: {
+    bandPx: Exclude<FocusCursorBandPx, 0>;
+}) {
+    const applySize = (value: string) => {
+        const next = normalizeFocusCursorBandPx(Number(value));
+        if (!focusCursorOn(next)) return;
+        rememberFocusCursorBandPx(next);
+        patchA11ySettings({ focusCursorBandPx: next });
+        const label = focusCursorBandName(next);
+        const hint = `${next}px`;
+        announce(t().focusCursorSizeAnnounce(`${label} ${hint}`));
+    };
+    return (
+        <div className="unilens-a11y-focus-cursor-opts">
+            <ChoiceGroup<string>
+                label={t().focusCursorGroup}
+                columns={3}
+                focusPrefix="focusCursorBand"
+                current={String(bandPx)}
+                options={FOCUS_CURSOR_BAND_SIZES.map((value) => {
+                    const label = focusCursorBandName(value);
+                    const hint = `${value}px`;
+                    return {
+                        value: String(value),
+                        label,
+                        hint,
+                        ariaLabel: t().focusCursorSizeAria(`${label} ${hint}`),
+                    };
+                })}
+                onSelect={applySize}
+            />
+        </div>
+    );
+}
+
+function HaloPreview({
+    diameter,
+    color,
+    opacity,
+}: {
+    diameter: number;
+    color: PointerHaloColor;
+    opacity: PointerHaloOpacity;
+}) {
+    if (diameter <= 0) return null;
+    const visual = Math.max(10, Math.round((diameter / 40) * 22));
+    const [r, g, b] = POINTER_HALO_RGB[color];
+    return (
+        <span
+            aria-hidden="true"
+            style={{
+                width: visual,
+                height: visual,
+                borderRadius: "50%",
+                background: pointerHaloFillCss(color, opacity),
+                boxShadow: `0 0 0 1px rgba(0, 0, 0, 0.4), 0 0 6px rgba(${r}, ${g}, ${b}, 0.7)`,
+                display: "block",
+                margin: "0 auto 4px",
+            }}
+        />
+    );
+}
+
+function PointerHaloOptions({
+    px,
+    color,
+    opacity,
+}: {
+    px: PointerHaloPx;
+    color: PointerHaloColor;
+    opacity: PointerHaloOpacity;
+}) {
+    const previewPx = pointerHaloPreviewDiameter(px);
+    const applySize = (value: string) => {
+        const next = normalizePointerHaloPx(value);
+        if (!pointerHaloOn(next)) return;
+        rememberPointerHaloOnPx(next);
+        patchA11ySettings({ pointerHaloPx: next });
+        const name = pointerHaloSizeName(next);
+        announce(
+            isPointerHaloViewportPct(next)
+                ? t().pointerHaloViewportAnnounce(name)
+                : t().pointerHaloSizeAnnounce(name),
+        );
+    };
+    return (
+        <div className="unilens-a11y-pointer-halo-opts">
+            <ChoiceGroup<string>
+                label={t().pointerHaloGroup}
+                columns={3}
+                focusPrefix="pointerHalo"
+                current={typeof px === "number" ? String(px) : ""}
+                options={POINTER_HALO_FIXED_PX.map((value) => {
+                    const label = pointerHaloSizeName(value);
+                    return {
+                        value: String(value),
+                        label,
+                        ariaLabel: t().pointerHaloSizeAria(label),
+                        preview: () => (
+                            <HaloPreview
+                                diameter={pointerHaloPreviewDiameter(value)}
+                                color={color}
+                                opacity={opacity}
+                            />
+                        ),
+                    };
+                })}
+                onSelect={applySize}
+            />
+            <ChoiceGroup<string>
+                label={t().pointerHaloViewportGroup}
+                columns={3}
+                focusPrefix="pointerHaloViewport"
+                current={typeof px === "string" ? px : ""}
+                options={POINTER_HALO_VIEWPORT_PCT.map((value) => {
+                    const label = pointerHaloSizeName(value);
+                    return {
+                        value,
+                        label,
+                        ariaLabel: t().pointerHaloViewportAria(label),
+                        preview: () => (
+                            <HaloPreview
+                                diameter={pointerHaloPreviewDiameter(value)}
+                                color={color}
+                                opacity={opacity}
+                            />
+                        ),
+                    };
+                })}
+                onSelect={applySize}
+            />
+            <ChoiceGroup<PointerHaloColor>
+                label={t().pointerHaloColorGroup}
+                columns={5}
+                focusPrefix="pointerHaloColor"
+                current={color}
+                options={POINTER_HALO_COLORS.map((value) => {
+                    const label = t().pointerHaloColor[value];
+                    const [r, g, b] = POINTER_HALO_RGB[value];
+                    return {
+                        value,
+                        label,
+                        hideLabel: true,
+                        ariaLabel: t().pointerHaloColorAria(label),
+                        preview: () => (
+                            <span
+                                aria-hidden="true"
+                                className="unilens-a11y-pointer-halo-swatch"
+                                style={{ background: `rgb(${r}, ${g}, ${b})` }}
+                            />
+                        ),
+                    };
+                })}
+                onSelect={(value) => {
+                    patchA11ySettings({ pointerHaloColor: value });
+                    announce(
+                        t().pointerHaloColorAnnounce(
+                            t().pointerHaloColor[value],
+                        ),
+                    );
+                }}
+            />
+            <ChoiceGroup<PointerHaloOpacity>
+                label={t().pointerHaloOpacityGroup}
+                columns={3}
+                focusPrefix="pointerHaloOpacity"
+                current={opacity}
+                options={POINTER_HALO_OPACITIES.map((value) => {
+                    const label = t().pointerHaloOpacity[value];
+                    return {
+                        value,
+                        label,
+                        ariaLabel: t().pointerHaloOpacityAria(label),
+                        preview: () => (
+                            <HaloPreview
+                                diameter={previewPx}
+                                color={color}
+                                opacity={value}
+                            />
+                        ),
+                    };
+                })}
+                onSelect={(value) => {
+                    patchA11ySettings({ pointerHaloOpacity: value });
+                    announce(
+                        t().pointerHaloOpacityAnnounce(
+                            t().pointerHaloOpacity[value],
+                        ),
+                    );
+                }}
+            />
+        </div>
+    );
+}
+
+function ReadingGuideOptions({
+    guideStyle,
+    guidePosition,
+}: {
+    guideStyle: ReadingGuideStyle;
+    guidePosition: ReadingGuidePosition;
+}) {
+    return (
+        <div className="unilens-a11y-reading-guide-opts">
+            <ChoiceGroup<ReadingGuidePosition>
+                label={t().readingGuidePositionGroup}
+                columns={3}
+                focusPrefix="readingGuidePosition"
+                current={guidePosition}
+                options={READING_GUIDE_POSITIONS.map((value) => {
+                    const label = t().readingGuidePosition[value];
+                    return {
+                        value,
+                        label,
+                        ariaLabel: t().readingGuidePositionAria(label),
+                    };
+                })}
+                onSelect={(value) => {
+                    patchA11ySettings({ readingGuidePosition: value });
+                    announce(
+                        t().readingGuidePositionAnnounce(
+                            t().readingGuidePosition[value],
+                        ),
+                    );
+                }}
+            />
+            <ChoiceGroup<ReadingGuideStyle>
+                label={t().readingGuideColorGroup}
+                columns={5}
+                focusPrefix="readingGuideStyle"
+                current={guideStyle}
+                options={READING_GUIDE_STYLES.map((value) => {
+                    const label = t().readingGuideColor[value];
+                    const pair = READING_GUIDE_PAIRS[value];
+                    return {
+                        value,
+                        label,
+                        hideLabel: true,
+                        ariaLabel: t().readingGuideColorAria(label),
+                        preview: () => (
+                            <span
+                                aria-hidden="true"
+                                className="unilens-a11y-reading-guide-swatch"
+                                style={{
+                                    background: pair.fill,
+                                    boxShadow: readingGuideBoxShadow(pair.edge),
+                                }}
+                            />
+                        ),
+                    };
+                })}
+                onSelect={(value) => {
+                    patchA11ySettings({ readingGuideStyle: value });
+                    announce(
+                        t().readingGuideColorAnnounce(
+                            t().readingGuideColor[value],
+                        ),
+                    );
+                }}
+            />
+        </div>
+    );
+}
+
 export function VisualTab() {
-    useExternalSignal(onA11yChange);
-    useExternalSignal(onSettingsChange);
     useExternalSignal(onA11yLangChange);
 
     return (
         <>
-            <PresetsCard />
-            <LanguageCard />
+            <PageTextCard />
+            <ColorModeCard />
+            <ToneCard />
             <CuesCard />
         </>
     );
@@ -372,13 +801,9 @@ export function VisualTab() {
 // ── Text & color ────────────────────────────────────────────────────────────
 
 function ColorModeCard() {
-    const s = a11ySettings;
+    const s = useSettings();
     return (
-        <Card
-            title={t().colorModeTitle}
-            iconName="palette"
-            desc={t().colorModeDesc}
-        >
+        <Card title={t().colorModeTitle} iconName="palette">
             <ChoiceGroup<DisplayTheme>
                 label={t().colorModeGroup}
                 columns={2}
@@ -406,17 +831,15 @@ function ColorModeCard() {
 }
 
 function ToneCard() {
-    const s = a11ySettings;
+    const s = useSettings();
     return (
-        <Card title={t().toneTitle} iconName="contrast" desc={t().toneDesc}>
+        <Card title={t().toneTitle} iconName="contrast">
             <ChoiceGroup<DisplaySaturation>
                 label={t().saturationGroup}
-                columns={5}
+                columns={3}
                 focusPrefix="saturation"
                 current={s.saturation}
-                options={(
-                    Object.keys(SATURATION_FILTER) as DisplaySaturation[]
-                ).map((value) => ({
+                options={DISPLAY_SATURATIONS.map((value) => ({
                     value,
                     label: t().saturation[value],
                     hint: `${Math.round(SATURATION_FILTER[value] * 100)}%`,
@@ -437,9 +860,7 @@ function ToneCard() {
                 columns={3}
                 focusPrefix="contrast"
                 current={s.contrast}
-                options={(
-                    Object.keys(CONTRAST_FILTER) as DisplayContrast[]
-                ).map((value) => ({
+                options={DISPLAY_CONTRASTS.map((value) => ({
                     value,
                     label: t().contrast[value],
                     hint: `${Math.round(CONTRAST_FILTER[value] * 100)}%`,
@@ -459,36 +880,118 @@ function ToneCard() {
     );
 }
 
-function PageTextCard() {
-    const s = a11ySettings;
-    const sizes: A11yFontSize[] = ["standard", "large", "xlarge"];
-    const sizeHints = ["100%", "150%", "200%"];
+/** Lab tab: one cycle button for color mode. */
+function LabColorModeCard() {
+    const s = useSettings();
+    const themeName = t().theme[s.theme];
+    const cycleTheme = () => {
+        const next = nextDisplayTheme(s.theme);
+        patchA11ySettings({ theme: next });
+        announce(t().themeAnnounce(t().theme[next]));
+    };
 
     return (
-        <Card title={t().pageTextTitle} iconName="type" desc={t().pageTextDesc}>
+        <Card title={t().colorModeTitle} iconName="palette">
+            <ToggleGroup
+                label={t().colorModeGroup}
+                columns={1}
+                options={[
+                    {
+                        value: "theme",
+                        label: themeName,
+                        ariaLabel: t().themeAria(themeName),
+                        checked: s.theme !== "standard",
+                        focusKey: "theme-cycle",
+                        onActivate: cycleTheme,
+                    },
+                ]}
+                onToggle={() => {}}
+            />
+        </Card>
+    );
+}
+
+/** Lab tab: one cycle button each for saturation and contrast. */
+function LabToneCard() {
+    const s = useSettings();
+    const saturationName = t().saturation[s.saturation];
+    const contrastName = t().contrast[s.contrast];
+    const cycleSaturation = () => {
+        const next = nextDisplaySaturation(s.saturation);
+        patchA11ySettings({ saturation: next });
+        announce(t().saturationAnnounce(t().saturation[next]));
+    };
+    const cycleContrast = () => {
+        const next = nextDisplayContrast(s.contrast);
+        patchA11ySettings({ contrast: next });
+        announce(t().contrastAnnounce(t().contrast[next]));
+    };
+
+    return (
+        <Card title={t().toneTitle} iconName="contrast">
+            <ToggleGroup
+                label={t().saturationGroup}
+                columns={1}
+                options={[
+                    {
+                        value: "saturation",
+                        label: saturationName,
+                        ariaLabel: t().saturationAria(saturationName),
+                        checked: s.saturation !== "standard",
+                        focusKey: "saturation-cycle",
+                        onActivate: cycleSaturation,
+                    },
+                ]}
+                onToggle={() => {}}
+            />
+            <ToggleGroup
+                label={t().contrastGroup}
+                columns={1}
+                options={[
+                    {
+                        value: "contrast",
+                        label: contrastName,
+                        ariaLabel: t().contrastAria(contrastName),
+                        checked: s.contrast !== "standard",
+                        focusKey: "contrast-cycle",
+                        onActivate: cycleContrast,
+                    },
+                ]}
+                onToggle={() => {}}
+            />
+        </Card>
+    );
+}
+
+function PageTextCard() {
+    const s = useSettings();
+    const sizes: A11yFontSize[] = ["standard", "large", "xlarge"];
+
+    return (
+        <Card title={t().pageTextTitle} iconName="type">
             <ChoiceGroup<A11yFontSize>
                 label={t().fontSizeGroup}
                 columns={3}
                 focusPrefix="fontSize"
                 current={s.fontSize}
-                options={sizes.map((value, i) => ({
-                    value,
-                    label: t().fontSize[value],
-                    hint: sizeHints[i],
-                    ariaLabel: t().fontSizeAria(
-                        t().fontSize[value],
-                        sizeHints[i],
-                    ),
-                    preview: () => (
-                        <TextPreview
-                            sample="Aa"
-                            style={{
-                                fontSize: `${PREVIEW_FONT_PX[i]}px`,
-                                fontWeight: 700,
-                            }}
-                        />
-                    ),
-                }))}
+                options={sizes.map((value, i) => {
+                    const hint = fontScalePercent((i + 1) as 1 | 2 | 3);
+                    return {
+                        value,
+                        label: t().fontSize[value],
+                        hint,
+                        ariaLabel: t().fontSizeAria(t().fontSize[value], hint),
+                        preview: () => (
+                            <TextPreview
+                                sample="Aa"
+                                style={{
+                                    fontSize: `${PREVIEW_FONT_PX[i]}px`,
+                                    fontWeight: 700,
+                                }}
+                            />
+                        ),
+                    };
+                })}
                 onSelect={(value) => {
                     patchA11ySettings({ fontSize: value });
                     announce(t().fontSizeAnnounce(t().fontSize[value]));
@@ -518,7 +1021,6 @@ function PageTextCard() {
                     {
                         value: "ud" as A11yFontFamily,
                         label: t().typefaceUd,
-                        hint: t().typefaceUdHint,
                         ariaLabel: t().typefaceUdAria,
                         preview: () => (
                             <TextPreview
@@ -552,14 +1054,12 @@ function PageTextCard() {
                     {
                         value: "standard" as A11yLineHeight,
                         label: t().lineHeightStandard,
-                        hint: "1.6",
                         ariaLabel: t().lineHeightAria(t().lineHeightStandard),
                         preview: () => <LinesPreview gap={3} />,
                     },
                     {
                         value: "wide" as A11yLineHeight,
                         label: t().lineHeightWide,
-                        hint: "2.0",
                         ariaLabel: t().lineHeightAria(t().lineHeightWide),
                         preview: () => <LinesPreview gap={9} />,
                     },
@@ -584,7 +1084,6 @@ function PageTextCard() {
                     {
                         value: "standard" as A11yLetterSpacing,
                         label: t().letterSpacingStandard,
-                        hint: "0",
                         ariaLabel: t().letterSpacingAria(
                             t().letterSpacingStandard,
                         ),
@@ -602,7 +1101,6 @@ function PageTextCard() {
                     {
                         value: "wide" as A11yLetterSpacing,
                         label: t().letterSpacingWide,
-                        hint: "0.12em",
                         ariaLabel: t().letterSpacingAria(t().letterSpacingWide),
                         preview: () => (
                             <TextPreview
@@ -631,9 +1129,169 @@ function PageTextCard() {
     );
 }
 
+function TextStrokePreview({
+    fill,
+    edge,
+    name,
+}: {
+    fill: string;
+    edge: string;
+    name: string;
+}) {
+    const saturation = useSettings((s) => s.saturation);
+    const contrast = useSettings((s) => s.contrast);
+    return (
+        <span aria-hidden="true" className="unilens-a11y-text-stroke-option">
+            <span
+                className="unilens-a11y-text-stroke-preview"
+                style={{
+                    filter: `saturate(${SATURATION_FILTER[saturation]}) contrast(${CONTRAST_FILTER[contrast]})`,
+                }}
+            >
+                <span className="unilens-a11y-text-stroke-chips">
+                    <span
+                        className="unilens-a11y-text-stroke-chip"
+                        style={{ background: fill }}
+                    />
+                    <span
+                        className="unilens-a11y-text-stroke-chip"
+                        style={{ background: edge }}
+                    />
+                </span>
+                <span
+                    className="unilens-a11y-text-stroke-glyph"
+                    style={{
+                        color: fill,
+                        WebkitTextFillColor: fill,
+                        WebkitTextStroke: `0.12em ${edge}`,
+                        paintOrder: "stroke fill",
+                    }}
+                >
+                    {t().previewSample}
+                </span>
+            </span>
+            <span className="unilens-a11y-text-stroke-name">{name}</span>
+        </span>
+    );
+}
+
+function TextStrokeOptions({ strokeStyle }: { strokeStyle: TextStrokeStyle }) {
+    return (
+        <div className="unilens-a11y-text-stroke-opts">
+            <ChoiceGroup<TextStrokeStyle>
+                label={t().textStrokeGroup}
+                columns={3}
+                focusPrefix="textStrokeStyle"
+                current={strokeStyle}
+                options={TEXT_STROKE_STYLES.map((value) => {
+                    const label = t().textStrokeStyle[value];
+                    const pair = TEXT_STROKE_PAIRS[value];
+                    return {
+                        value,
+                        label,
+                        hideLabel: true,
+                        ariaLabel: t().textStrokeStyleAria(label),
+                        preview: () => (
+                            <TextStrokePreview
+                                fill={pair.fill}
+                                edge={pair.edge}
+                                name={label}
+                            />
+                        ),
+                    };
+                })}
+                onSelect={(value) => {
+                    patchA11ySettings({ textStrokeStyle: value });
+                    announce(
+                        t().textStrokeStyleAnnounce(t().textStrokeStyle[value]),
+                    );
+                }}
+            />
+        </div>
+    );
+}
+
+function TextStrokeCard() {
+    const s = useSettings();
+    const styleName = t().textStrokeStyle[s.textStrokeStyle];
+    return (
+        <Card title={t().textStrokeTitle} iconName="textStroke">
+            <ToggleGroup
+                label={t().textStrokeSwitch}
+                columns={1}
+                options={[
+                    {
+                        value: "textStroke",
+                        label: t().textStrokeTitle,
+                        ariaLabel: s.textStroke
+                            ? t().textStrokeStyleAria(styleName)
+                            : t().textStrokeSwitch,
+                        iconName: "textStroke",
+                        hint: s.textStroke ? styleName : undefined,
+                        checked: s.textStroke,
+                        focusKey: "text-stroke",
+                        after: s.textStroke ? (
+                            <TextStrokeOptions
+                                strokeStyle={s.textStrokeStyle}
+                            />
+                        ) : undefined,
+                    },
+                ]}
+                onToggle={(_value, next) => {
+                    patchA11ySettings({ textStroke: next });
+                    announce(next ? t().textStrokeOn : t().textStrokeOff);
+                }}
+            />
+        </Card>
+    );
+}
+
+function FocusEnhanceCard() {
+    const level = useSettings((s) => s.focusEnhanceLevel);
+    const labels = focusEnhanceLevelLabels();
+    const [name] = labels[level];
+
+    return (
+        <Card
+            title={t().focusEnhance}
+            iconName="cursor"
+            desc={t().focusEnhanceSwitch}
+            badge={level > 0 ? name : undefined}
+        >
+            <LevelControl
+                label={t().focusEnhanceGroup}
+                focusPrefix="focusEnhanceLevel"
+                current={level}
+                options={TEXT_ADJUST_LEVELS.map((value) => ({
+                    value,
+                    label: labels[value][0],
+                    ariaLabel:
+                        value === 0
+                            ? t().focusEnhanceAriaOff
+                            : t().focusEnhanceAria(labels[value][0]),
+                }))}
+                onSelect={(value) => {
+                    patchA11ySettings({
+                        focusEnhanceLevel: value as TextAdjustLevel,
+                    });
+                    if (value === 0) announce(t().focusEnhanceOff);
+                    else
+                        announce(
+                            t().focusEnhanceOn(
+                                labels[value as TextAdjustLevel][0],
+                            ),
+                        );
+                }}
+            />
+        </Card>
+    );
+}
+
 function BodyExpandCard() {
     const [, setBump] = useState(0);
-    const level = a11ySettings.bodyTextExpandLevel;
+    // The page walk runs after the click repaints; re-render with its count.
+    useExternalSignal(onBodyTextScan);
+    const level = useSettings((s) => s.bodyTextExpandLevel);
     const labels = bodyExpandLevelLabels();
     const [name, hint] = labels[level];
     const scan = getLastBodyTextScan();
@@ -642,7 +1300,6 @@ function BodyExpandCard() {
         <Card
             title={t().bodyExpandTitle}
             iconName="expand"
-            desc={t().bodyExpandDesc}
             badge={level > 0 ? `${name} ${hint}` : undefined}
         >
             <LevelControl
@@ -662,15 +1319,18 @@ function BodyExpandCard() {
                     patchA11ySettings({
                         bodyTextExpandLevel: value as TextAdjustLevel,
                     });
-                    // The rescan triggered by the setting change is synchronous, so this count is already the final result.
-                    if (value === 0) announce(t().bodyExpandAnnounceOff);
-                    else
-                        announce(
-                            t().bodyExpandAnnounce(
-                                labels[value as TextAdjustLevel][0],
-                                getLastBodyTextScan().expanded,
-                            ),
-                        );
+                    // The rescan runs after the next paint; announce its
+                    // count once it is done.
+                    afterBodyTextApplied(() => {
+                        if (value === 0) announce(t().bodyExpandAnnounceOff);
+                        else
+                            announce(
+                                t().bodyExpandAnnounce(
+                                    labels[value as TextAdjustLevel][0],
+                                    getLastBodyTextScan().expanded,
+                                ),
+                            );
+                    });
                 }}
             />
             {level > 0 && (
@@ -707,7 +1367,9 @@ function BodyExpandCard() {
 
 function SmallBoostCard() {
     const [, setBump] = useState(0);
-    const level = a11ySettings.smallTextBoostLevel;
+    // The page walk runs after the click repaints; re-render with its count.
+    useExternalSignal(onSmallTextScan);
+    const level = useSettings((s) => s.smallTextBoostLevel);
     const labels = smallBoostLevelLabels();
     const [name, hint] = labels[level];
     const scan = getLastSmallTextScan();
@@ -716,7 +1378,6 @@ function SmallBoostCard() {
         <Card
             title={t().smallBoostTitle}
             iconName="boost"
-            desc={t().smallBoostDesc}
             // The hint already reads as a floor (e.g. "16px+"), so just place it as-is.
             badge={level > 0 ? `${name} ${hint}` : undefined}
         >
@@ -737,14 +1398,18 @@ function SmallBoostCard() {
                     patchA11ySettings({
                         smallTextBoostLevel: value as TextAdjustLevel,
                     });
-                    if (value === 0) announce(t().smallBoostAnnounceOff);
-                    else
-                        announce(
-                            t().smallBoostAnnounce(
-                                labels[value as TextAdjustLevel][0],
-                                getLastSmallTextScan().boosted,
-                            ),
-                        );
+                    // The rescan runs after the next paint; announce its
+                    // count once it is done.
+                    afterSmallTextApplied(() => {
+                        if (value === 0) announce(t().smallBoostAnnounceOff);
+                        else
+                            announce(
+                                t().smallBoostAnnounce(
+                                    labels[value as TextAdjustLevel][0],
+                                    getLastSmallTextScan().boosted,
+                                ),
+                            );
+                    });
                 }}
             />
             {level > 0 && (
@@ -779,20 +1444,6 @@ function SmallBoostCard() {
     );
 }
 
-export function TextTab() {
-    useExternalSignal(onA11yChange);
-    useExternalSignal(onA11yLangChange);
-    return (
-        <>
-            <PageTextCard />
-            <ColorModeCard />
-            <ToneCard />
-            <BodyExpandCard />
-            <SmallBoostCard />
-        </>
-    );
-}
-
 // ── Tools ──────────────────────────────────────────────────────────────────
 
 function SelectionCard({
@@ -803,7 +1454,9 @@ function SelectionCard({
     setLastMessage: (v: { text: string; ok: boolean } | null) => void;
 }) {
     const info = getSelectionInfo();
-    const level = settings.selectionFontLevel as SelectionFontLevel;
+    const level = useSettings(
+        (s) => s.selectionFontLevel,
+    ) as SelectionFontLevel;
 
     const detail = info.hasSelection
         ? [
@@ -818,11 +1471,7 @@ function SelectionCard({
         : null;
 
     return (
-        <Card
-            title={t().selectionTitle}
-            iconName="selection"
-            desc={t().selectionDesc}
-        >
+        <Card title={t().selectionTitle} iconName="selection">
             {info.hasSelection ? (
                 <Note
                     text={detail as string}
@@ -847,7 +1496,7 @@ function SelectionCard({
                 options={SELECTION_LEVELS.map((value) => ({
                     value: String(value),
                     label: t().fontScale[value].label,
-                    hint: t().fontScale[value].hint,
+                    hint: fontScalePercent(value),
                     ariaLabel: t().selectionAria(fontScaleLabel(value)),
                     preview: () => (
                         <TextPreview
@@ -919,7 +1568,8 @@ function AutoTextCard({
     lastAnalysis: TextAnalysis | null;
     setLastAnalysis: (v: TextAnalysis | null) => void;
 }) {
-    const enabled = settings.autoTextSize && settings.autoTextMode !== "off";
+    const { autoTextSize, autoTextMode, autoTextMinPx } = useSettings();
+    const enabled = autoTextSize && autoTextMode !== "off";
     const scale = getAppliedTextScale();
 
     // The stepper doesn't move focus, so without an announcement the change would go unnoticed.
@@ -932,7 +1582,6 @@ function AutoTextCard({
         <Card
             title={t().autoTitle}
             iconName="auto"
-            desc={t().autoDesc}
             badge={enabled ? `×${scale.toFixed(2)}` : undefined}
         >
             <SwitchRow
@@ -941,12 +1590,19 @@ function AutoTextCard({
                 checked={enabled}
                 focusKey="auto-enable"
                 onChange={(checked) => {
-                    settings.autoTextSize = checked;
                     if (checked) {
-                        if (settings.autoTextMode === "off")
-                            settings.autoTextMode = "combined";
+                        patchSettings({
+                            autoTextSize: true,
+                            autoTextMode:
+                                autoTextMode === "off"
+                                    ? "combined"
+                                    : autoTextMode,
+                        });
                     } else {
-                        settings.autoTextMode = "off";
+                        patchSettings({
+                            autoTextSize: false,
+                            autoTextMode: "off",
+                        });
                     }
                     saveSettings();
                     setLastAnalysis(checked ? refreshAutoTextSize() : null);
@@ -965,12 +1621,7 @@ function AutoTextCard({
                         columns={3}
                         focusPrefix="autoMode"
                         // By the time we get here enabled === true, so 'off' can't occur.
-                        current={
-                            settings.autoTextMode as Exclude<
-                                AutoTextMode,
-                                "off"
-                            >
-                        }
+                        current={autoTextMode as Exclude<AutoTextMode, "off">}
                         options={AUTO_MODES.map((value) => ({
                             value,
                             label: t().autoMode[value].label,
@@ -981,7 +1632,7 @@ function AutoTextCard({
                             ),
                         }))}
                         onSelect={(value) => {
-                            settings.autoTextMode = value;
+                            patchSettings({ autoTextMode: value });
                             saveSettings();
                             setLastAnalysis(refreshAutoTextSize());
                             announce(
@@ -997,14 +1648,14 @@ function AutoTextCard({
                         label={t().autoMinGroup}
                         columns={4}
                         focusPrefix="autoMin"
-                        current={String(settings.autoTextMinPx)}
+                        current={String(autoTextMinPx)}
                         options={AUTO_MIN_PX_OPTIONS.map((px) => ({
                             value: String(px),
                             label: `${px}px`,
                             ariaLabel: t().autoMinAria(px),
                         }))}
                         onSelect={(value) => {
-                            settings.autoTextMinPx = Number(value);
+                            patchSettings({ autoTextMinPx: Number(value) });
                             saveSettings();
                             setLastAnalysis(refreshAutoTextSize());
                             announce(
@@ -1079,6 +1730,134 @@ function AutoTextCard({
     );
 }
 
+/** "×1.6", the precision the zoom is searched at. */
+function zoomText(scale: number): string {
+    return scale.toFixed(1);
+}
+
+function percentOfPage(h: PageHealth, area: number): string {
+    return `${h.pageArea > 0 ? ((area / h.pageArea) * 100).toFixed(1) : "0.0"}%`;
+}
+
+function announceOppZoom() {
+    const result = getLastOppZoomResult();
+    if (!result) return;
+    announce(
+        t().oppZoomOnAnnounce(
+            zoomText(result.scale),
+            t().oppZoomStop[result.stopReason],
+        ),
+    );
+}
+
+function oppZoomRows(result: OppZoomResult): [string, string][] {
+    const rows: [string, string][] = [
+        [t().oppZoomMetricScale, `×${zoomText(result.scale)}`],
+    ];
+    const reason = t().oppZoomStopShort[result.stopReason];
+    rows.push([
+        t().oppZoomMetricStop,
+        result.failed
+            ? t().oppZoomStopAt(reason, zoomText(result.failed.scale))
+            : reason,
+    ]);
+    if (result.baseline && result.final)
+        rows.push([
+            t().oppZoomMetricHealth,
+            `${result.baseline.health.toFixed(3)} → ${result.final.health.toFixed(3)}`,
+        ]);
+    if (result.failed) {
+        const h = result.failed.health;
+        const at = zoomText(result.failed.scale);
+        rows.push([t().oppZoomMetricFailed(at), h.health.toFixed(3)]);
+        rows.push([
+            t().oppZoomMetricParts(at),
+            t().oppZoomPartsValue(
+                percentOfPage(h, h.overflow),
+                percentOfPage(h, h.overlap),
+                percentOfPage(h, h.narrow),
+            ),
+        ]);
+    }
+    if (!result.fromCache)
+        rows.push([
+            t().oppZoomMetricCost,
+            t().oppZoomCostValue(result.trials, result.ms),
+        ]);
+    return rows;
+}
+
+/**
+ * Lab: the page zoom of Bigham (UIST 2014) — as large as the page allows
+ * before it starts to break. The measuring itself is in opportunisticZoom.ts.
+ */
+function OppZoomCard() {
+    useExternalSignal(onOppZoomChange);
+    const on = useSettings((s) => s.oppZoom);
+    const result = getLastOppZoomResult();
+    const scale = getAppliedOppZoom();
+
+    return (
+        <Card
+            title={t().oppZoomTitle}
+            iconName="zoom"
+            desc={t().oppZoomDesc}
+            badge={on ? `×${zoomText(scale)}` : undefined}
+        >
+            <SwitchRow
+                label={t().oppZoomSwitch}
+                hint={on ? t().oppZoomHintOn : t().oppZoomHintOff}
+                checked={on}
+                focusKey="opp-zoom"
+                onChange={(checked) => {
+                    patchSettings({ oppZoom: checked });
+                    saveSettings();
+                    if (checked) afterOppZoomApplied(announceOppZoom);
+                    else announce(t().oppZoomOffAnnounce);
+                }}
+            />
+
+            {on && (
+                <>
+                    {result && !isOppZoomPending() ? (
+                        <>
+                            <Note
+                                text={
+                                    result.fromCache
+                                        ? t().oppZoomCachedNote
+                                        : t().oppZoomStop[result.stopReason]
+                                }
+                                tone={
+                                    result.stopReason === "empty"
+                                        ? "neutral"
+                                        : "info"
+                                }
+                                iconName="check"
+                            />
+                            <Metrics rows={oppZoomRows(result)} />
+                        </>
+                    ) : (
+                        <Note text={t().oppZoomMeasuring} tone="info" />
+                    )}
+                    <ButtonRow>
+                        <Button
+                            label={t().oppZoomRemeasure}
+                            iconName="refresh"
+                            variant="secondary"
+                            ariaLabel={t().oppZoomRemeasureAria}
+                            focusKey="opp-zoom-remeasure"
+                            onClick={() => {
+                                remeasureOpportunisticZoom();
+                                afterOppZoomApplied(announceOppZoom);
+                            }}
+                        />
+                    </ButtonRow>
+                </>
+            )}
+        </Card>
+    );
+}
+
 export interface ToolsTabProps {
     lastAnalysis: TextAnalysis | null;
     setLastAnalysis: (v: TextAnalysis | null) => void;
@@ -1092,12 +1871,19 @@ export function ToolsTab({
     lastSelectionMessage,
     setLastSelectionMessage,
 }: ToolsTabProps) {
-    useExternalSignal(onSettingsChange);
-    // useExternalSignal(onSpeechChange)
     useExternalSignal(onSelectionChange);
     useExternalSignal(onA11yLangChange);
     return (
         <>
+            <PresetsCard />
+            <LanguageCard />
+            <LabColorModeCard />
+            <LabToneCard />
+            <FocusEnhanceCard />
+            <TextPlateCard />
+            <TextStrokeCard />
+            <BodyExpandCard />
+            <SmallBoostCard />
             <SelectionCard
                 lastMessage={lastSelectionMessage}
                 setLastMessage={setLastSelectionMessage}
@@ -1107,6 +1893,7 @@ export function ToolsTab({
                 lastAnalysis={lastAnalysis}
                 setLastAnalysis={setLastAnalysis}
             />
+            <OppZoomCard />
         </>
     );
 }
