@@ -1446,10 +1446,9 @@ const settingsStorage: StateStorage = {
  * it does not know; a newer tab ignores that write rather than lose them (Yotam's
  * try-out, 2026-10-12: "What to mark" snapped back to None). Older records still
  * load as they always did (mergePersisted ignores the marker). 3: allMoves and the
- * four click-mark styles (2026-10-13). 4: assistantZoomStep and assistantZoomFitMax
- * (2026-11-23).
+ * four click-mark styles (2026-10-13).
  */
-export const SETTINGS_GEN = 4;
+export const SETTINGS_GEN = 3;
 const GEN_KEY = "_gen";
 
 /** what is written: everything, or under a preset only what differs from it; and
