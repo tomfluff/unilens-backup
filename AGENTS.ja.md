@@ -20,9 +20,9 @@
 - `make format`
 
 ## 便利な実行コマンド
-- `make serve <target>` (バックエンド + アンケートサーバー + 対象フロントエンド 1 つ)
+- `make serve <target>` (バックエンド + 対象フロントエンド 1 つ)
 - `make serve-backend`
-- `make serve-survey`
+- `make serve-survey` (アンケートが必要なときだけ。`make serve` では起動しません)
 - `make serve-frontend <target>`
 
 ## 変更完了前の確認事項

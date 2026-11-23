@@ -19,7 +19,7 @@
   <body>
     <div class="hero">
       <h1>SoftBank IR ミラー — 検証</h1>
-      <p><code>make bundle</code> でコピーされた <code>accessibility.js</code> / <code>unilens.js</code> / <code>quiz.js</code> を使います。</p>
+      <p><code>make bundle</code> でコピーされた <code>accessibility.js</code> / <code>unilens.js</code> を使います。</p>
     </div>
     <div class="container">
       <div class="card" id="verify">
@@ -31,7 +31,6 @@
           <li><strong>チャット</strong> — <kbd>Alt</kbd> + クリック（<code>make serve-backend</code>、ポート 5000）。</li>
           <li><strong>共同デザイン用プリセット</strong> — URL に <code>?unilens-preset=initial</code>、またはファシリテータ <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>B</kbd>。</li>
           <li><strong>研究ログ</strong> — <code>?pid=P01&amp;session=1</code>（バックエンド起動時）。</li>
-          <li><strong>アンケート</strong> — 左上の緑の「アンケート」ボタンを押すと、アンケートサーバーのページ（<code>http://127.0.0.1:5100/survey?quiz=unilens-poc</code>、<code>make serve-survey</code>）が新しいタブで開きます。このページの <code>pid</code> / <code>session</code> を引き継ぎます。</li>
         </ul>
         <p>他の検証用フロント（<code>make serve-all</code> または <code>make serve-frontend …</code>）：</p>
         <ul>
@@ -46,11 +45,9 @@
     </div>
     <script src="accessibility.js"></script>
     <script src="unilens.js"></script>
-    <script src="quiz.js"></script>
     <script>
       Accessibility.init()
       UniLens.init({ backend: 'http://127.0.0.1:5000', mouseWindow: 5 })
-      UniLensQuiz.init({ mode: 'link', survey: 'unilens-poc', backend: 'http://127.0.0.1:5100' })
     </script>
   </body>
 </html>
