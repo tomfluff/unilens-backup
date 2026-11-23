@@ -800,10 +800,16 @@ function endOfRun() {
  * on is gone). Part of a run like any move, so "back" returns.
  */
 export function revealPoint(x: number, y: number) {
-    const W = window.visualViewport?.width ?? window.innerWidth;
-    const H = window.visualViewport?.height ?? window.innerHeight;
+    // the middle of what the user sees: under browser pinch zoom, the visual
+    // viewport's, offset inside the layout viewport (as in revealElement)
+    const vv = window.visualViewport;
+    const W = vv?.width ?? window.innerWidth;
+    const H = vv?.height ?? window.innerHeight;
     rememberView(W, H);
-    setView(x * scale - W / 2, y * scale - H / 2);
+    setView(
+        x * scale - (vv?.offsetLeft ?? 0) - W / 2,
+        y * scale - (vv?.offsetTop ?? 0) - H / 2,
+    );
     endOfRun();
 }
 
