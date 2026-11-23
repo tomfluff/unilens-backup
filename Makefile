@@ -241,7 +241,7 @@ serve-all:
 
 
 # Format and check rules
-.PHONY: lint-all lint format-all format fix-all fix test-all check
+.PHONY: lint-all lint format-all format fix-all fix test-all test-trackers check
 
 # Typecheck all js targets
 lint-all:
@@ -273,12 +273,16 @@ fix-all:
 # Fix everything. Only fixes JS for now. TODO: Update this with a backend linter.
 fix: fix-all
 
-# Run unit tests for every target that has them
-test-all:
+# Run unit tests for every target that has them, and the tracker check
+test-all: test-trackers
 	echo "Targets: $(TEST_TARGETS)"
 	@for item in $(TEST_TARGETS); do \
 		$(MAKE) test-target $$item || exit 1; \
 	done
+
+# No page we serve may load Google Tag Manager (#49)
+test-trackers:
+	node scripts/check-no-trackers.mjs
 
 # Unified CI check: typecheck + build all bundles, format everything, check everything, run tests
 check: build format fix test-all
