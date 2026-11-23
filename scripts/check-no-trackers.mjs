@@ -18,24 +18,28 @@ import { parse } from "parse5";
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const SKIP = new Set(["softbank-mirror-1", "node_modules"]);
 const TAG = /googletagmanager|\bGTM-[A-Z0-9]{4,}\b/gi;
+const SCANNED = /\.(html?|m?js|css)$/i;
 
 /**
  * The places in one file where a GTM tag is live, as line numbers. An HTML page is
  * parsed as a browser parses it (parse5, the parser jsdom uses), so comments, script
- * bodies and attribute values (character references decoded) are what the browser
- * sees. <noscript> is parsed as markup, as a browser with JavaScript off does.
+ * bodies and attribute values (character references decoded, and the tabs and line
+ * breaks a browser drops from a URL dropped) are what the browser sees. A page is
+ * parsed twice, with JavaScript on (<noscript> is text) and off (it is markup), and
+ * a tag live in either counts.
  * - A <script> is inert only when its own type attribute is text/plain; any other
  *   is judged on its attributes and its code (a legacy <!-- wrapper included).
  * - The disabled fallback: in an <iframe data-local-disabled="gtm"> inside
  *   <noscript>, with no src, only data-src may hold the address.
  * - Every other element's attributes are judged, and <style> text; comments and
  *   page text load nothing.
+ * Any other file (.js, .mjs, .css) fails on any mention.
  */
 export function liveTags(text, isHtml) {
     if (!isHtml) return [...text.matchAll(TAG)].map((m) => lineOf(text, m.index));
-    const doc = parse(text, { scriptingEnabled: false, sourceCodeLocationInfo: true });
     const out = [];
-    const has = (v) => TAG.test(v) && ((TAG.lastIndex = 0), true);
+    const test = (v) => TAG.test(v) && ((TAG.lastIndex = 0), true);
+    const has = (v) => test(v) || test(v.replace(/[\t\n\r]/g, ""));
     const walk = (node, inNoscript) => {
         const name = node.tagName;
         if (name) {
@@ -65,22 +69,23 @@ export function liveTags(text, isHtml) {
         const kids = name === "template" ? node.content.childNodes : node.childNodes;
         for (const c of kids ?? []) walk(c, inNoscript || name === "noscript");
     };
-    walk(doc, false);
-    return out.sort((a, b) => a - b);
+    for (const scriptingEnabled of [true, false])
+        walk(parse(text, { scriptingEnabled, sourceCodeLocationInfo: true }), false);
+    return [...new Set(out)].sort((a, b) => a - b);
 }
 
 const lineOf = (text, i) => text.slice(0, i).split("\n").length;
 
 function* files(dir) {
     if (!statSync(dir).isDirectory()) {
-        if (/\.(html?|m?js)$/i.test(dir)) yield dir;
+        if (SCANNED.test(dir)) yield dir;
         return;
     }
     for (const name of readdirSync(dir)) {
         if (SKIP.has(name)) continue;
         const p = join(dir, name);
         if (statSync(p).isDirectory()) yield* files(p);
-        else if (/\.(html?|m?js)$/i.test(name)) yield p;
+        else if (SCANNED.test(name)) yield p;
     }
 }
 
@@ -106,6 +111,10 @@ function selfTest() {
         '<div title="<script type=text/plain>"></div><script>gtm("GTM-BMSW")</script>',
         '<script src="https://www.googletag&#109;anager.com/gtm.js"></script>',
         '<style>@import url("https://www.googletagmanager.com/x.css");</style>',
+        // and its fourth: a self-closed iframe in <noscript> swallows the next script
+        // only with JavaScript off; an encoded line break a URL drops
+        '<noscript><iframe data-local-disabled="gtm" data-src="//x.test/" /></noscript><script src="https://www.googletagmanager.com/gtm.js"></script>',
+        '<script src="https://www.googletag&#10;manager.com/gtm.js"></script>',
     ];
     const off = [
         '<script type="text/plain" data-local-disabled="gtm">j.src="//www.googletagmanager.com/gtm.js?id=GTM-BMSW"</script>',
@@ -123,6 +132,8 @@ function selfTest() {
         if (liveTags(page(s), true).length) throw new Error(`self-test flagged: ${s}`);
     if (!liveTags("x='googletagmanager.com'", false).length)
         throw new Error("self-test missed a .js mention");
+    if (!liveTags('@import url("https://www.googletagmanager.com/x.css");', false).length)
+        throw new Error("self-test missed a .css mention");
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
