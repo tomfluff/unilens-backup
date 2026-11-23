@@ -8,8 +8,8 @@
 // .js file) fails.
 //
 //   node scripts/check-no-trackers.mjs [DIR ...]
-// With no DIR: every folder in frontend/ except softbank-mirror-1 (Kinjo's IR mirror,
-// left to him in #49). The frozen study build runs it on its copy too (freeze.sh).
+// With no DIR: all of frontend/ (its root files too: the study pages' shared template)
+// except softbank-mirror-1 (Kinjo's IR mirror, left to him in #49). The frozen study build runs it on its copy too (freeze.sh).
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -38,30 +38,34 @@ export function liveTags(text, isHtml) {
     const flag = (from, x) => {
         for (const m of x.matchAll(TAG)) out.push(lineOf(text, from + m.index));
     };
-    // 1. scripts first (an HTML comment inside one is JavaScript, and runs): one is
+    // 1. comments and scripts in one pass, whichever starts first, as a browser
+    //    reads them: a comment is dropped (a <script> written inside it is text); a
+    //    script's contents are code, a legacy <!-- wrapper included. A script is
     //    inert only when its own type attribute is text/plain; any other is judged
     //    whole, its src and its code
     let t = text.replace(
-        /<script\b[^>]*>[\s\S]*?(?:<\/script\s*>|$)/gi,
+        /<!--[\s\S]*?(?:-->|$)|<script\b[^>]*>[\s\S]*?(?:<\/script\s*>|$)/gi,
         (el, at) => {
+            if (el.startsWith("<!--")) return blank(el);
             const open = el.match(/^<script\b[^>]*>/i)[0];
             const type = (attrs(open).type ?? "").trim().toLowerCase();
             if (type !== "text/plain") flag(at, el);
             return blank(el);
         },
     );
-    // 2. the disabled fallback only: an iframe marked data-local-disabled="gtm"
-    //    inside <noscript>, its address in data-src and no src
+    // 2. the disabled fallback: in an iframe marked data-local-disabled="gtm" inside
+    //    <noscript>, with no src, only its data-src value is exempt (its other
+    //    attributes, srcdoc say, are still judged)
     t = t.replace(/<noscript\b[^>]*>[\s\S]*?<\/noscript\s*>/gi, (ns) =>
         ns.replace(/<iframe\b[^>]*>/gi, (open) => {
             const a = attrs(open);
-            return a["data-local-disabled"] === "gtm" && !("src" in a)
-                ? blank(open)
-                : open;
+            if (a["data-local-disabled"] !== "gtm" || "src" in a) return open;
+            return open.replace(
+                /(\sdata-src\s*=\s*)("[^"]*"|'[^']*'|[^\s"'=<>`]+)/i,
+                (_, k, v) => k + blank(v),
+            );
         }),
     );
-    // 3. real HTML comments (outside scripts now)
-    t = t.replace(/<!--[\s\S]*?-->/g, blank);
     flag(0, t);
     return out.sort((a, b) => a - b);
 }
@@ -69,6 +73,10 @@ export function liveTags(text, isHtml) {
 const lineOf = (text, i) => text.slice(0, i).split("\n").length;
 
 function* files(dir) {
+    if (!statSync(dir).isDirectory()) {
+        if (/\.(html?|m?js)$/i.test(dir)) yield dir;
+        return;
+    }
     for (const name of readdirSync(dir)) {
         if (SKIP.has(name)) continue;
         const p = join(dir, name);
@@ -90,12 +98,17 @@ function selfTest() {
         '<noscript><iframe data-local-disabled="gtm" src="//www.googletagmanager.com/ns.html"></iframe></noscript>',
         '<iframe data-local-disabled="gtm" data-src="//www.googletagmanager.com/ns.html"></iframe>',
         "<script type=\"text/plain\"></script><script>gtm('GTM-BMSW')</script>",
+        // Codex's second pass: a comment mentioning a script doesn't hide the next
+        // real one; a marked iframe's other attributes are still judged
+        '<!-- <script type="text/plain"> --><script>gtm("GTM-BMSW")</script>',
+        '<noscript><iframe data-local-disabled="gtm" srcdoc="<script src=//www.googletagmanager.com/gtm.js></script>"></iframe></noscript>',
     ];
     const off = [
         '<script type="text/plain" data-local-disabled="gtm">j.src="//www.googletagmanager.com/gtm.js?id=GTM-BMSW"</script>',
         '<noscript><iframe data-local-disabled="gtm" data-src="//www.googletagmanager.com/ns.html?id=GTM-BMSW"></iframe></noscript>',
         "<!-- Google Tag Manager: GTM-BMSW -->",
         "<SCRIPT TYPE='TEXT/PLAIN'>gtm('GTM-BMSW')</SCRIPT>",
+        "<!-- <script>gtm('GTM-BMSW')</script> -->",
     ];
     for (const s of live)
         if (!liveTags(s, true).length) throw new Error(`self-test missed: ${s}`);
@@ -111,7 +124,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     const dirs = process.argv.slice(2).length
         ? process.argv.slice(2)
         : readdirSync(front)
-              .filter((d) => !SKIP.has(d) && statSync(join(front, d)).isDirectory())
+              .filter((d) => !SKIP.has(d))
               .map((d) => join(front, d));
     let bad = 0;
     let seen = 0;
@@ -132,5 +145,5 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
         );
         process.exit(1);
     }
-    console.log(`No live Google Tag Manager tag in ${seen} files (${dirs.length} folders).`);
+    console.log(`No live Google Tag Manager tag in ${seen} files.`);
 }
