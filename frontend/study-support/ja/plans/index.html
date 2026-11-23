@@ -87,7 +87,11 @@
 <ul><li><a href="/ja/procedures/switch-to-kumo.html">お乗り換え</a></li><li><a href="/ja/billing/read-your-bill.html">ご請求について</a></li><li><a href="/ja/procedures/lost-phone.html">紛失・盗難</a></li><li><a href="/ja/procedures/esim.html">eSIM</a></li><li><a href="/ja/faq.html">よくあるご質問</a></li></ul></div>
 <form class="chat-f"><input type="text" placeholder="メッセージを入力" aria-label="メッセージ"><button type="submit" class="btn" style="padding:6px 12px">送信</button></form></div>
 <script src="/assets/site.js"></script>
+<script src="/accessibility.js"></script>
 <script src="/unilens.js"></script>
-<script>UniLens.init({ backend: 'http://127.0.0.1:5000', mouseWindow: 5 })</script>
+<script>
+  Accessibility.init()
+  UniLens.init({ backend: 'http://127.0.0.1:5000', mouseWindow: 5 })
+</script>
 </body>
 </html>

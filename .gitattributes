@@ -1,0 +1,8 @@
+# Code is LF (biome rewrites CRLF on every `make check`). The mirrored sites
+# under frontend/ are left as they were captured.
+accessibility-lib/** text=auto eol=lf
+quiz-lib/** text=auto eol=lf
+survey-backend/** text=auto eol=lf
+unilens-lib/** text=auto eol=lf
+backend/** text=auto eol=lf
+scripts/** text=auto eol=lf

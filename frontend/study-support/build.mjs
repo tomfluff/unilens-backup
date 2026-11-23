@@ -4,6 +4,7 @@
 import { readdirSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { UNILENS_A11Y_BODY_SCRIPTS } from '../unilens-embed.mjs';
 
 const ROOT = dirname(fileURLToPath(import.meta.url));
 const LANGS = ['en', 'ja'];
@@ -73,8 +74,7 @@ ${body}
 <button type="button" class="chat-btn" aria-label="${ui.chat.label}"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5h16v11H9l-5 4z"/></svg><span>${ui.chat.btn}</span></button>
 <div class="chat-panel" hidden>${ui.chat.panel}</div>
 <script src="/assets/site.js"></script>
-<script src="/unilens.js"></script>
-<script>UniLens.init({ backend: 'http://127.0.0.1:5000', mouseWindow: 5 })</script>
+${UNILENS_A11Y_BODY_SCRIPTS}
 </body>
 </html>
 `;
@@ -96,7 +96,7 @@ for (const lang of LANGS) {
   for (const [rel, text] of Object.entries(files)) write(rel, text);
   console.log(`${lang}: ${Object.keys(pages).length} pages`);
 }
-write('index.html', `<!doctype html>\n<html lang="en"><head><meta charset="utf-8"><title>Kumo Mobile Support</title><meta http-equiv="refresh" content="0; url=/en/index.html"></head><body><p><a href="/en/index.html">Kumo Mobile Support</a> · <a href="/ja/index.html">クモモバイル サポート</a></p><script src="/unilens.js"></script>\n<script>UniLens.init({ backend: 'http://127.0.0.1:5000', mouseWindow: 5 })</script></body></html>\n`);
+write('index.html', `<!doctype html>\n<html lang="en"><head><meta charset="utf-8"><title>Kumo Mobile Support</title><meta http-equiv="refresh" content="0; url=/en/index.html"></head><body><p><a href="/en/index.html">Kumo Mobile Support</a> · <a href="/ja/index.html">クモモバイル サポート</a></p>${UNILENS_A11Y_BODY_SCRIPTS}</body></html>\n`);
 
 function rank(p) {
   if (p === 'index.html') return 0;

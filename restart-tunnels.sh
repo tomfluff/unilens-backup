@@ -5,7 +5,8 @@
 # Assumes Flask on :5000 and the mirror served on :8000 (make serve <dir>).
 set -e
 CF="/c/Program Files (x86)/cloudflared/cloudflared"
-MIRROR_HTML="softbank-mirror/index.html"
+# next to this script, wherever it is run from
+MIRROR_HTML="$(dirname "$0")/frontend/softbank-mirror/index.html"
 
 taskkill //F //IM cloudflared.exe 2>/dev/null || true
 sleep 1
@@ -24,8 +25,8 @@ for i in $(seq 1 30); do
 done
 [ -z "$BACKEND_URL" ] || [ -z "$MIRROR_URL" ] && { echo "ERROR: tunnels did not come up (see /tmp/cf-*.log)"; exit 1; }
 
-# Point the mirror's UniLens.init at the new backend tunnel
-sed -i -E "s|backend: '[^']*'|backend: '$BACKEND_URL'|" "$MIRROR_HTML"
+# Point the mirror's UniLens.init at the backend tunnel
+sed -i -E "/UniLens\.init\(/ s|backend: '[^']*'|backend: '$BACKEND_URL'|" "$MIRROR_HTML"
 
 echo "backend: $BACKEND_URL"
 echo "mirror:  $MIRROR_URL/index.html"

@@ -1,0 +1,29 @@
+<svg id="icon" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="33" height="33" viewBox="0 0 20 20">
+  <defs>
+    <style>
+      .cls-1 {
+        fill: #4579e8;
+        fill-opacity: 0;
+      }
+
+      .cls-2 {
+        filter: url(#filter);
+      }
+
+      .cls-3 {
+        fill: #fff;
+        fill-rule: evenodd;
+      }
+    </style>
+    <filter id="filter" filterUnits="userSpaceOnUse">
+      <feFlood result="flood" flood-color="#fff"/>
+      <feComposite result="composite" operator="in" in2="SourceGraphic"/>
+      <feBlend result="blend" in2="SourceGraphic"/>
+    </filter>
+  </defs>
+  <circle id="楕円形_1492" data-name="楕円形 1492" class="cls-1" cx="10" cy="10" r="10"/>
+  <g id="_" data-name="&gt;" class="cls-2">
+    <path id="長方形_4" data-name="長方形 4" class="cls-3" d="M2075.34,391.242l6.07,6.07-1.41,1.416-6.07-6.07Z" transform="translate(-2070 -384)"/>
+    <path id="長方形_4_のコピー" data-name="長方形 4 のコピー" class="cls-3" d="M2084.66,391.242l1.41,1.416-6.07,6.07-1.42-1.416Z" transform="translate(-2070 -384)"/>
+  </g>
+</svg>

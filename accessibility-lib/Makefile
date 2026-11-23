@@ -36,13 +36,14 @@ test:
 bundle:
 	echo "Building dist..."
 	$(NPX) $(ESBUILD)
+	$(NPX) node scripts/sync-dist.mjs
 
 # Full build: typecheck, then bundle. This is what `check` runs.
 build: lint bundle
 
-# Build bundled js, while watching for changes
+# Watch src/, rebuild, and copy into frontend targets on every save
 serve:
-	$(NPX) $(ESBUILD) $(WATCH)
+	$(NPX) npm run dev
 
 # Runs formatter
 format:

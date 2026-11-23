@@ -23,7 +23,7 @@ import { forgetForReset } from "./restore";
 import { initSettings } from "./SettingsPanel";
 import { initSettingsLog } from "./settingsLog";
 import { setSpeechBackend } from "./speech";
-import { initStudyLog, logEvent, pageAddress } from "./studyLog";
+import { initStudyLog, logEvent, pageAddress, studyIds } from "./studyLog";
 import { UnilensClient } from "./UnilensClient";
 import { UnilensRoot } from "./UnilensRoot";
 import { initZoom } from "./zoom";
@@ -115,7 +115,7 @@ export function init(options: InitOptions = {}) {
 // Expose for plain <script> embeds
 declare global {
     interface Window {
-        UniLens: { init: typeof init };
+        UniLens: { init: typeof init; studyIds: typeof studyIds };
     }
 }
-window.UniLens = { init };
+window.UniLens = { init, studyIds };

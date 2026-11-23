@@ -5,8 +5,9 @@ Everything runs through `make` from the repo root. Requires Node 20+ and Python 
 | Part | Dir | What it is |
 |---|---|---|
 | Backend | `backend/` | Flask API, port `5000` |
-| JS libs | `unilens-lib/`, `accessibility-lib/` | esbuild bundles, copied into frontends as `unilens.js` / `accessibility.js` |
-| Frontends | `frontend/softbank-mirror` (8000), `frontend/dev-demo` (8001), `frontend/softbank-mirror-recruit` (8002) | static sites served by `live-server` |
+| Survey server | `survey-backend/` | Express (TypeScript), port `5100`: the survey page, `/api/quiz/*` and the answers' log (see its README) |
+| JS libs | `unilens-lib/`, `accessibility-lib/`, `quiz-lib/` | esbuild bundles, copied into frontends as `unilens.js` / `accessibility.js` / `quiz.js` (the survey button); the survey server's page (`/survey`) loads `quiz-lib/dist/quiz.js` |
+| Frontends | `frontend/softbank-mirror` (8000), `frontend/dev-demo` (8001), `frontend/softbank-mirror-recruit` (8002), a copy of the IR mirror `frontend/softbank-mirror-1` (8003; `?p=1`…`?p=4` picks the survey `unilens-poc-p1`…`p4`; `npm run serve:mirrors`), six `frontend/study-*` mock sites (8031–8036; see `frontend/STUDY-SITES.md`) | static sites served by `live-server` |
 
 ## Setup
 
@@ -21,10 +22,27 @@ If `make init` fails with `ensurepip is not available`, see [Troubleshooting](#t
 
 ```bash
 make serve softbank-mirror     # backend + one frontend, rebuild on save. The usual one.
-make serve-all                 # backend + all three frontends
+make serve-all                 # backend + every frontend in make-targets.mk
 make run dev-demo              # one frontend, no build, no backend
 make serve-backend             # backend only
+make serve-survey              # the survey server only (port 5100, this machine only; not started by make serve)
 ```
+
+### Without make (study mock sites, ports 8031–8036)
+
+From the repo root, after `npm install` at the root and in `accessibility-lib` /
+`unilens-lib`:
+
+```bash
+npm run bundle          # accessibility.js + quiz.js + unilens.js → every frontend/
+npm run serve:study     # all six study sites via live-server
+npm run serve:study -- study-wiki   # one site only
+```
+
+Windows PowerShell: `.\scripts\bundle.ps1` then `.\scripts\serve-study-sites.ps1`
+(optional argument: site folder name). Flask for chat is still separate — see
+**Backend only** below (`flask --app app.py --debug run --port 5000` from
+`backend/` with the venv activated).
 
 `serve` bundles once at startup, then rebuilds and recopies on any change under
 the libs' `src/` or the frontend dir. It does **not** typecheck — see below.
@@ -55,8 +73,8 @@ not `unilens`).
 
 No env vars in the build; two files:
 
-- `make-include.mk` — `FLASK_PORT=5000`, binary names, dir names.
-- `make-targets.mk` — `JS_TARGETS`, `FRONTEND_TARGETS`, `TEST_TARGETS`, and
+- `make-include.mk` — `FLASK_PORT=5000`, `SURVEY_PORT=5100`, binary names, dir names.
+- `make-targets.mk` — `JS_TARGETS`, `SERVICE_TARGETS`, `FRONTEND_TARGETS`, `TEST_TARGETS`, and
   `frontend_port_<name>=<port>`. Add a frontend by dropping it in `frontend/`,
   appending its name and a port line.
 
@@ -105,5 +123,5 @@ esbuild's `--watch` stops when stdin closes; that is how it notices its parent
 `make serve-target unilens-lib WATCH=--watch=forever` and kill it by PID when done.
 
 **Sharing a local run.** `./restart-tunnels.sh` opens two cloudflared tunnels
-(backend `:5000`, mirror `:8000`) and rewrites `backend:` in
-`frontend/softbank-mirror/index.html`. Windows/Git Bash paths are hardcoded.
+(backend `:5000`, mirror `:8000`) and rewrites `UniLens.init`'s `backend:` in
+`frontend/softbank-mirror/index.html` to the backend's. Windows/Git Bash paths are hardcoded.

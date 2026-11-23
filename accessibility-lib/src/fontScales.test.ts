@@ -3,7 +3,10 @@ import {
     a11yFontSizeToScale,
     FONT_SCALE_LEVELS,
     type FontScaleLevel,
+    fontScalePercent,
     levelToScale,
+    PREVIEW_FONT_BASE_PX,
+    PREVIEW_FONT_PX,
     scaleToLevel,
 } from "./fontScales";
 
@@ -22,8 +25,8 @@ describe("levelToScale / scaleToLevel", () => {
 
     it("rounds an in-between scale to the nearest level", () => {
         expect(scaleToLevel(1.1)).toBe(1);
-        expect(scaleToLevel(1.4)).toBe(2);
-        expect(scaleToLevel(1.9)).toBe(3);
+        expect(scaleToLevel(1.7)).toBe(2);
+        expect(scaleToLevel(2.4)).toBe(3);
     });
 
     it("clamps out-of-range scales to the nearest edge level", () => {
@@ -44,7 +47,21 @@ describe("a11yFontSizeToScale", () => {
     });
 
     it("agrees with the shared level table for its scale", () => {
+        expect(a11yFontSizeToScale("standard")).toBe(levelToScale(1));
         expect(a11yFontSizeToScale("large")).toBe(levelToScale(2));
         expect(a11yFontSizeToScale("xlarge")).toBe(levelToScale(3));
+    });
+});
+
+describe("preview glyphs follow the same ratios as the live scale", () => {
+    it("is 100% / 150% / 200% of the base preview size", () => {
+        expect([...PREVIEW_FONT_PX]).toEqual([
+            PREVIEW_FONT_BASE_PX,
+            Math.round(PREVIEW_FONT_BASE_PX * 1.5),
+            Math.round(PREVIEW_FONT_BASE_PX * 2),
+        ]);
+        expect(fontScalePercent(1)).toBe("100%");
+        expect(fontScalePercent(2)).toBe("150%");
+        expect(fontScalePercent(3)).toBe("200%");
     });
 });

@@ -1,0 +1,33 @@
+{
+  "name": "survey-backend",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "engines": {
+    "node": ">=20.6"
+  },
+  "scripts": {
+    "bundle": "esbuild src/server.ts src/tools/createTable.ts src/tools/importJsonl.ts --outdir=dist --entry-names=[name] --bundle --splitting --platform=node --format=esm --packages=external --sourcemap",
+    "build": "tsc -b && npm run bundle",
+    "dev": "node scripts/dev.mjs",
+    "dev:dynamodb": "node --env-file=dynamodb-local.env scripts/dev.mjs",
+    "start": "node --enable-source-maps dist/server.js",
+    "db:up": "docker compose up -d",
+    "db:down": "docker compose down",
+    "db:table": "npm run bundle && node --env-file=dynamodb-local.env dist/createTable.js",
+    "db:import": "npm run bundle && node --env-file=dynamodb-local.env dist/importJsonl.js",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.700.0",
+    "express": "^5.1.0"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.5.11",
+    "@types/express": "^5.0.3",
+    "@types/node": "^24.13.2",
+    "esbuild": "^0.28.1",
+    "typescript": "^7.0.2",
+    "vitest": "^4.1.10"
+  }
+}

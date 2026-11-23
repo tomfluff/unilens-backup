@@ -33,6 +33,22 @@ export const SMALL_TEXT_BOOST_CONFIG: Record<
 
 export const TEXT_ADJUST_LEVELS: TextAdjustLevel[] = [0, 1, 2, 3];
 
+/** Off → 1 → 2 → 3 → off. Same control, each press advances one step. */
+export function nextTextAdjustLevel(current: TextAdjustLevel): TextAdjustLevel {
+    const next = (current + 1) % 4;
+    if (next === 0 || next === 1 || next === 2 || next === 3) return next;
+    return 0;
+}
+
+/** Looks up a 1–3 label. Empty when the level is off. */
+export function namedTextAdjustLevel(
+    names: Record<1 | 2 | 3, string>,
+    level: TextAdjustLevel,
+): string {
+    if (level === 1 || level === 2 || level === 3) return names[level];
+    return "";
+}
+
 export function normalizeTextAdjustLevel(n: unknown): TextAdjustLevel {
     if (n === 0 || n === 1 || n === 2 || n === 3) return n;
     return 0;

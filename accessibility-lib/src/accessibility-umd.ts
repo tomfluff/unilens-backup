@@ -2,7 +2,7 @@
  * UniLens Accessibility — UMD entry point.
  *
  * Browser:
- *   <script src="unilens-a11y.js"></script>
+ *   <script src="accessibility.js"></script>
  *   <script>UniLensA11y.init()</script>
  *
  * Node / bundler (CommonJS):
@@ -28,7 +28,9 @@ import {
 } from "./accessibilityI18n";
 import { destroyAccessibilityRuntime } from "./accessibilityLifecycle";
 import {
+    configureAccessibilityCssUrl,
     destroyAccessibilityPanel,
+    ensureAccessibilityStyles,
     initAccessibilityPanel,
 } from "./accessibilityPanel";
 import {
@@ -83,7 +85,9 @@ import {
     runAutoTextAction,
     type TextAnalysis,
 } from "./autoTextSize";
+import { stopBodySwapWatch, watchBodySwap } from "./bodySwap";
 import {
+    afterBodyTextApplied,
     type BodyTextScanResult,
     clearBodyTextExpand,
     computeExpandedFontPx,
@@ -91,8 +95,13 @@ import {
     getLastBodyTextScan,
     initBodyTextExpand,
     LARGE_TEXT_PX,
+    rebindBodyTextExpand,
     scanBodyText,
 } from "./bodyTextExpand";
+import { setCspNonce } from "./cspStyle";
+import { initCursorHalo } from "./cursorHalo";
+import { rebindDocumentEffects } from "./documentEffects";
+import { initFocusCursorMask } from "./focusCursorMask";
 import {
     a11yFontSizeToScale,
     FONT_SCALE_LEVELS,
@@ -100,6 +109,19 @@ import {
     levelToScale,
     scaleToLevel,
 } from "./fontScales";
+import {
+    clearOpportunisticZoom,
+    destroyOpportunisticZoom,
+    getAppliedOppZoom,
+    getLastOppZoomResult,
+    initOpportunisticZoom,
+    type OppZoomResult,
+    rebindOpportunisticZoom,
+    refreshOpportunisticZoom,
+    resetOpportunisticZoom,
+} from "./opportunisticZoom";
+import { rebindPageFontScale } from "./pageFontScale";
+import { initReadingGuide } from "./readingGuide";
 import {
     type ApplySelectionResult,
     applySelectionFontLevel,
@@ -111,15 +133,19 @@ import {
     levelToPx,
     onSelectionChange,
     pxToLevel,
+    rebindSelectionTextSize,
     type SelectionFontLevel,
     type SelectionInfo,
 } from "./selectionTextSize";
+import { startSettingsSync, stopSettingsSync } from "./settings";
 import {
+    afterSmallTextApplied,
     clearSmallTextBoost,
     computeTargetFontPx,
     destroySmallTextBoost,
     getLastSmallTextScan,
     initSmallTextBoost,
+    rebindSmallTextBoost,
     type SmallTextScanResult,
     scanSmallText,
 } from "./smallTextBoost";
@@ -164,8 +190,15 @@ import {
     smallTextBoostHint,
     TEXT_ADJUST_LEVELS,
 } from "./textAdjustLevels";
+import { rebindTextSizeWatch } from "./textSizeLayers";
 
 interface UniLensA11yInitOptions {
+    /**
+     * Optional extra stylesheet. Page theme / text rules are already bundled
+     * into this script and injected on init; pass `cssUrl` only to overlay a
+     * host-provided sheet on top.
+     */
+    cssUrl?: string;
     /** Show top-right ♿ panel. Default: true */
     panel?: boolean;
     /** Selection text resize. Default: true */
@@ -178,6 +211,12 @@ interface UniLensA11yInitOptions {
     speech?: boolean;
     /** Auto page text size analysis. Default: true */
     autoText?: boolean;
+    /**
+     * Lab: whole-page zoom that stops just before the layout breaks
+     * (Bigham, UIST 2014). Only makes the switch available; the visitor
+     * turns it on in the panel. Default: true
+     */
+    oppZoom?: boolean;
     /** Body-text-only expand (headings excluded). Default: true */
     bodyTextExpand?: boolean;
     /** Small text (<16px) floor boost. Default: true */
@@ -194,29 +233,59 @@ interface UniLensA11yInitOptions {
      * always wins over this value.
      */
     lang?: A11yLang;
+    /**
+     * Nonce for the <style> elements this script injects, for sites whose
+     * Content-Security-Policy restricts `style-src`. Default: the nonce of the
+     * <script> tag that loaded this file, if any. Without a usable nonce the
+     * rules are applied through constructed stylesheets instead, which CSP
+     * does not restrict.
+     */
+    cspNonce?: string;
 }
 
 let initialized = false;
+
+/** The host replaced <body> (Turbo / pjax): rebind every page feature to it. */
+function onBodySwap() {
+    rebindDocumentEffects();
+    rebindPageFontScale();
+    rebindBodyTextExpand();
+    rebindSmallTextBoost();
+    rebindTextSizeWatch();
+    rebindSelectionTextSize();
+    rebindOpportunisticZoom();
+}
 
 function init(options: UniLensA11yInitOptions = {}) {
     if (initialized) return;
     initialized = true;
 
+    if (options.cspNonce) setCspNonce(options.cspNonce);
+    if (options.cssUrl) configureAccessibilityCssUrl(options.cssUrl);
+    ensureAccessibilityStyles();
     if (options.lang) configureA11yLang(options.lang);
     if (options.followSystemPreferences) applySystemPreferences();
     applyA11yToDocument();
+    startSettingsSync();
 
     if (options.bodyTextExpand !== false) initBodyTextExpand();
     if (options.smallTextBoost !== false) initSmallTextBoost();
+    initCursorHalo();
+    initFocusCursorMask();
+    initReadingGuide();
     if (options.selection !== false) initSelectionTextSize();
     // Read-aloud disabled: speechSynthesis is shared with unilens-lib on the same page.
     // if (options.speech !== false) initSpeakSelection()
     if (options.autoText !== false) initAutoTextSize();
+    if (options.oppZoom !== false) initOpportunisticZoom();
     if (options.panel !== false) initAccessibilityPanel();
+    watchBodySwap(onBodySwap);
 }
 
 function destroy() {
     if (!initialized) return;
+    stopBodySwapWatch();
+    stopSettingsSync();
     destroyAccessibilityRuntime();
     initialized = false;
 }
@@ -246,8 +315,17 @@ const FEATURES = {
     },
     cues: {
         id: "cues",
-        title: "Extra visual cues (link underlines, focus enhance)",
-        keys: ["linkUnderline", "focusEnhance"] as const,
+        title: "Extra visual cues (link underlines, pointer highlight, focus guide, reading guide)",
+        keys: [
+            "linkUnderline",
+            "pointerHaloPx",
+            "pointerHaloColor",
+            "pointerHaloOpacity",
+            "focusCursorBandPx",
+            "readingGuide",
+            "readingGuideStyle",
+            "readingGuidePosition",
+        ] as const,
     },
     presets: {
         id: "presets",
@@ -268,6 +346,12 @@ const FEATURES = {
         levels: TEXT_ADJUST_LEVELS,
         hint: smallTextBoostHint,
     },
+    focusEnhance: {
+        id: "focusEnhance",
+        title: "Cursor enlarge and focus-ring thicken (3 levels)",
+        key: "focusEnhanceLevel" as const,
+        levels: TEXT_ADJUST_LEVELS,
+    },
     selectionText: {
         id: "selectionText",
         title: "Selection text size (100% / 150% / 200%)",
@@ -286,6 +370,21 @@ const FEATURES = {
         id: "autoTextSize",
         title: "Automatic text size (viewport / content / combined)",
         modes: ["off", "viewport", "content", "combined"] as const,
+    },
+    oppZoom: {
+        id: "oppZoom",
+        title: "Opportunistic zoom (whole page, up to just before layout breaks; Lab)",
+        key: "oppZoom" as const,
+    },
+    textStroke: {
+        id: "textStroke",
+        title: "Text outline (webkit-text-stroke, 5 fill/edge pairs)",
+        keys: ["textStroke", "textStrokeStyle"] as const,
+    },
+    textPlate: {
+        id: "textPlate",
+        title: "Text plate (solid background + type color, 5 pairs; reach: parts / all)",
+        keys: ["textPlateStyle", "hcTextScope"] as const,
     },
 } as const;
 
@@ -351,6 +450,7 @@ const UniLensA11y = {
 
     // Body text expand
     scanBodyText,
+    afterBodyTextApplied,
     clearBodyTextExpand,
     getLastBodyTextScan,
     initBodyTextExpand,
@@ -358,6 +458,7 @@ const UniLensA11y = {
 
     // Small text boost
     scanSmallText,
+    afterSmallTextApplied,
     clearSmallTextBoost,
     getLastSmallTextScan,
     initSmallTextBoost,
@@ -406,12 +507,22 @@ const UniLensA11y = {
     initAutoTextSize,
     destroyAutoTextSize,
 
+    // Opportunistic zoom (Lab)
+    refreshOpportunisticZoom,
+    clearOpportunisticZoom,
+    resetOpportunisticZoom,
+    getAppliedOppZoom,
+    getLastOppZoomResult,
+    initOpportunisticZoom,
+    destroyOpportunisticZoom,
+
     // UniLens auxiliary settings (auto-text / selection level)
     settings,
     saveSettings,
     onSettingsChange,
 
     // Panel
+    configureAccessibilityCssUrl,
     initAccessibilityPanel,
     destroyAccessibilityPanel,
 };
@@ -434,6 +545,7 @@ export type {
     DisplaySaturation,
     DisplayTheme,
     FontScaleLevel,
+    OppZoomResult,
     SelectionFontLevel,
     SelectionInfo,
     Settings,

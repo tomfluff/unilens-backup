@@ -69,7 +69,11 @@
 <div class="timers" aria-live="polite"></div>
 <script src="/assets/js/site.js" defer></script>
 
+<script src="/accessibility.js"></script>
 <script src="/unilens.js"></script>
-<script>UniLens.init({ backend: 'http://127.0.0.1:5000', mouseWindow: 5 })</script>
+<script>
+  Accessibility.init()
+  UniLens.init({ backend: 'http://127.0.0.1:5000', mouseWindow: 5 })
+</script>
 </body>
 </html>

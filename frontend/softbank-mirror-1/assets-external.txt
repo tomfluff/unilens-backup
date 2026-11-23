@@ -1,0 +1,8 @@
+https://assets.sitescdn.net/answers-search-bar/v1.5/answers.css
+https://assets.sitescdn.net/answers-search-bar/v1.5/answers.min.js
+https://assets.sitescdn.net/answers-search-bar/v1.5/answerstemplates.compiled.min.js
+https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js
+https://cdn.jsdelivr.net/npm/typed.js@2.0.11
+https://scdn.line-apps.com/n/line_add_friends/btn/ja.png
+https://search.ir.softbank.jp.pagescdn.com/static/assets/barcss/barcss.css
+https://www.softbank.jp/site/set/common/shared/img/icon_softbank.gif

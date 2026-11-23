@@ -28,7 +28,7 @@ make init
 make serve softbank-mirror
 ```
 
-ブラウザで http://localhost:8000/ を開きます。右上の **♿ 表示調整** がこのライブラリです。
+ブラウザで http://localhost:8000/ を開きます（検証チェックリストは http://localhost:8000/verify.html ）。右上の **♿ 表示調整** がこのライブラリです。
 
 採用サイトミラー（`softbank-mirror-recruit`）へビルド成果物を反映する場合:
 
@@ -37,15 +37,17 @@ make build
 # または特定ターゲットのみ: make copy softbank-mirror-recruit
 ```
 
-成果物は `frontend/softbank-mirror-recruit/site/` にコピーされます（配信ルートが `site/` のため）。  
-フロントのみ起動する例: `make serve-frontend softbank-mirror-recruit`（ポート 8002）。API レスポンスまで本番に近づける場合は `cd frontend/softbank-mirror-recruit && node server.mjs`（ポート 8787）。
+成果物は `frontend/softbank-mirror-recruit/` にコピーされます（このディレクトリが配信ルートです）。  
+フロントのみ起動する例: `make serve-frontend softbank-mirror-recruit`（ポート 8002）。 http://localhost:8002/recruit/disability/ を開きます（検証一覧は http://localhost:8002/verify.html ）。
 
 | コマンド | 内容 |
 |---|---|
 | `make serve-frontend softbank-mirror` | フロントのみ（ポート 8000） |
-| `make serve-frontend softbank-mirror-recruit` | 採用ミラー（ポート 8002、`site/` を配信） |
+| `make serve-frontend softbank-mirror-recruit` | 採用ミラー（ポート 8002） |
 | `make serve-frontend dev-demo` | 簡易デモ（ポート 8001） |
-| `make serve-target accessibility-lib` | このライブラリだけ watch ビルド |
+| `make serve-frontend study-support` など | 研究用モックサイト（8031–8036、`frontend/STUDY-SITES.md`） |
+| `make serve-target accessibility-lib` | このライブラリだけ watch ビルド（保存時に frontend へ自動コピー） |
+| `cd accessibility-lib && npm run dev` | 上と同じ（Make なし / Windows 向け） |
 | `cd accessibility-lib && make build` | 型チェック後に単一の `dist/accessibility.js` を出力 |
 | `cd accessibility-lib && make lint` | 型チェック |
 | `cd accessibility-lib && make test` | 単体テスト |
@@ -93,12 +95,12 @@ cp accessibility-lib/dist/accessibility.js frontend/softbank-mirror/accessibilit
 cp unilens-lib/dist/unilens.js frontend/softbank-mirror/unilens.js
 ```
 
-`softbank-mirror-recruit`（配信ルートは `site/`）:
+`softbank-mirror-recruit`（このディレクトリが配信ルート）:
 
 ```sh
 cd ..
-cp accessibility-lib/dist/accessibility.js frontend/softbank-mirror-recruit/site/accessibility.js
-cp unilens-lib/dist/unilens.js frontend/softbank-mirror-recruit/site/unilens.js
+cp accessibility-lib/dist/accessibility.js frontend/softbank-mirror-recruit/accessibility.js
+cp unilens-lib/dist/unilens.js frontend/softbank-mirror-recruit/unilens.js
 ```
 
 `unilens.js` が無い場合は、そのコピー行は省略してかまいません。`Accessibility.init()` だけでもパネルは動きます。
@@ -114,13 +116,17 @@ python3 -m http.server 8000
 
 ```sh
 cd frontend/softbank-mirror-recruit
-node server.mjs
-# → http://localhost:8787/recruit/disability/
+python3 -m http.server 8002
+# → http://localhost:8002/recruit/disability/
 ```
 
 Windows で `python3` が無いときは `python -m http.server 8000` を使います。
 
-ブラウザで http://127.0.0.1:8000/ を開きます。ソースを直したら **2 → 3 を再実行**し、ブラウザを再読み込みしてください。
+ブラウザで http://127.0.0.1:8000/ を開きます。
+
+**開発中は watch を使う（推奨）:** 別ターミナルで `cd accessibility-lib && npm run dev` を起動したままにすると、ソース保存のたびに `frontend/*/accessibility.js` へ自動コピーされます。`live-server` や `python -m http.server` と併用するとブラウザも自動更新されます。
+
+手動ビルドの場合は **2 → 3 を再実行**し、ブラウザを再読み込みしてください。
 
 型チェックとテスト:
 
@@ -135,19 +141,21 @@ npx vitest run
 リポジトリルートから:
 
 ```powershell
+# ターミナル 1: 保存時に自動ビルド＋フロントへコピー
 cd accessibility-lib
 npm install
-npx tsc -b
-npx esbuild src/main.tsx --outfile=dist/accessibility.js --bundle --minify --loader:.css=text
+npm run dev
 
-cd ..
-Copy-Item accessibility-lib/dist/accessibility.js frontend/softbank-mirror/accessibility.js -Force
-
-# 採用ミラーへも反映する場合:
-Copy-Item accessibility-lib/dist/accessibility.js frontend/softbank-mirror-recruit/site/accessibility.js -Force
-
+# ターミナル 2: ページ配信
 cd frontend/softbank-mirror
-python -m http.server 8000
+npx live-server --port=8000
+```
+
+一回だけビルドして反映する場合:
+
+```powershell
+cd accessibility-lib
+npm run build
 ```
 
 ## 任意の HTML への埋め込み
@@ -182,11 +190,17 @@ python -m http.server 8000
 | `selection` | `true` | 選択範囲の文字サイズ変更 |
 | `speech` | `true` | 選択テキストの読み上げ |
 | `autoText` | `true` | ページ文字サイズの自動分析 |
+| `oppZoom` | `true` | Lab の「崩れない範囲で拡大」（ページ全体を崩れる手前まで拡大。Bigham, UIST 2014）を使えるようにする。オンにするのは利用者 |
 | `bodyTextExpand` | `true` | 本文のみの拡大（見出し除外） |
 | `smallTextBoost` | `true` | 16px 未満の文字の底上げ |
 | `followSystemPreferences` | `false` | 初回のみ OS の表示設定を反映 |
 | `lang` | 自動検出 | パネル言語（`'ja'` / `'en'`）。パネルでの選択は常に優先 |
+| `cspNonce` | 読み込み元 `<script>` の nonce | Content-Security-Policy で `style-src` を制限しているサイト向けに、差し込む `<style>` に付ける nonce |
 
 パネル言語の初期値は `<html lang>` とブラウザ言語から推定されます。パネルで選んだ言語は保存され、次回以降も使われます。
+
+♿ ボタンとパネルは Shadow DOM の中に描画されるため、サイトの CSS（`!important` 付きの規則を含む）は届きません。逆に、サイトの CSS でパネルの見た目を変えることもできません。
+
+インライン style を禁止する CSP のサイトで nonce が使えない場合は、構築スタイルシート（`document.adoptedStyleSheets`。CSP の制限対象外）で同じルールを適用します。このときブラウザが報告する CSP 違反は、最初に拒否された `<style>` の 1 件だけです。
 
 全体のビルド／serve はリポジトリルートの `README.md` も参照してください。

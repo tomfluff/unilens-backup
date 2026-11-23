@@ -4,6 +4,9 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
+    "build": "esbuild src/main.tsx --outfile=dist/accessibility.js --bundle --minify --sourcemap --loader:.css=text --jsx=automatic && node scripts/sync-dist.mjs",
+    "dev": "node scripts/dev.mjs",
+    "sync": "node scripts/sync-dist.mjs",
     "test": "vitest run"
   },
   "dependencies": {

@@ -17,6 +17,8 @@
 | `POST /api/tts/stream` | Reads `text` aloud as the POST's own answer: 16-bit mono PCM at 24 kHz, sent as it is made (OpenAI or Gemini), for the widget to play with WebAudio. A quick tunnel passes a POST's body on at once but holds a GET's until it is complete |
 | `POST /api/study/log?pid=&session=` | The widget's events for a study participant, appended to `study-logs/<pid>/session-<n>.jsonl` (see Storage) |
 
+The survey (`/survey` and `/api/quiz/*`) is served by `survey-backend/`, not here.
+
 ## LLM provider selection
 
 Switched automatically via environment variables (`_provider()`):
@@ -37,5 +39,6 @@ Switched automatically via environment variables (`_provider()`):
 
 - `captures/<id>/`: `capture.png` (full annotated image), `viewport.png` (close-up, optional), `meta.json`, `chat.json` (one-off chat history outside of a session)
 - `sessions/<sid>.json`: per-session history
+- `quiz-logs/<quiz id>.jsonl`: the survey's answers from before it moved to `survey-backend/`. No longer written; copy them into `survey-backend/quiz-logs/` to keep them in its results. Git-ignored.
 - `study-logs/<pid>/session-<n>.jsonl`: a study participant's interaction log, one event per line, append-only. Written only when the page address named a participant (`?pid=P03&session=1`); the widget then adds `pid` and `session` to every request. The widget sends its events (clicks, questions, answers, source presses, the microphone, read-aloud, outlines, errors) to `POST /api/study/log`, and the routes add the capture saved, the model's answer and latency, a transcript and a read-aloud request. Git-ignored. `study_export.py` turns them into a CSV and a Markdown timeline per session and a `summary.csv` (`.venv/bin/python study_export.py [pid…]`, into `study-logs/export/`).
 
