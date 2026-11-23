@@ -606,7 +606,9 @@ function restoreScrollShare(shareY: number) {
  */
 export function refreshOpportunisticZoom({
     useCache = false,
-}: { useCache?: boolean } = {}): OppZoomResult {
+}: {
+    useCache?: boolean;
+} = {}): OppZoomResult {
     const width = window.innerWidth;
     if (useCache) {
         const scale = cachedScale(

@@ -63,7 +63,11 @@ export const DISPLAY_SATURATIONS: DisplaySaturation[] = [
 ];
 
 /** Contrast choice order (labels come from t().contrast). */
-export const DISPLAY_CONTRASTS: DisplayContrast[] = ["standard", "strong", "max"];
+export const DISPLAY_CONTRASTS: DisplayContrast[] = [
+    "standard",
+    "strong",
+    "max",
+];
 
 /** Standard → … → last → standard. Lab tab cycles with one button per axis. */
 export function nextDisplaySaturation(

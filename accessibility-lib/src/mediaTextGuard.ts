@@ -101,8 +101,7 @@ export function unionBox(a: Box, b: Box): Box {
 export function lineSitsOnMedia(line: Box, media: Box): boolean {
     const a = boxArea(line);
     return (
-        a > 0 &&
-        intersectionArea(line, media) >= MEDIA_TEXT_MIN_LINE_SHARE * a
+        a > 0 && intersectionArea(line, media) >= MEDIA_TEXT_MIN_LINE_SHARE * a
     );
 }
 
@@ -549,7 +548,11 @@ function clipToAncestors(
     cache: Map<Element, Box | null>,
 ): Box | null {
     let out = box;
-    for (let a = el.parentElement; a && a !== stop.parentElement; a = a.parentElement) {
+    for (
+        let a = el.parentElement;
+        a && a !== stop.parentElement;
+        a = a.parentElement
+    ) {
         let clip = cache.get(a);
         if (clip === undefined) {
             const cs = getComputedStyle(a);
@@ -670,7 +673,11 @@ function sitsOnSolidFill(owner: Element, stopAt: Element): boolean {
  * the article's photos while scrolling. That overlap is incidental.
  */
 function floatsOver(owner: Element, stopAt: Element): boolean {
-    for (let e: Element | null = owner; e && e !== stopAt; e = e.parentElement) {
+    for (
+        let e: Element | null = owner;
+        e && e !== stopAt;
+        e = e.parentElement
+    ) {
         const position = getComputedStyle(e).position;
         if (position === "fixed" || position === "sticky") return true;
     }

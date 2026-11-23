@@ -14,7 +14,10 @@ describe("clampPos", () => {
     });
 
     it("leaves an in-range position alone", () => {
-        expect(clampPos({ x: 300, y: 200 }, sz, vp)).toEqual({ x: 300, y: 200 });
+        expect(clampPos({ x: 300, y: 200 }, sz, vp)).toEqual({
+            x: 300,
+            y: 200,
+        });
     });
 });
 
@@ -52,6 +55,8 @@ describe("availablePanelHeight", () => {
     });
 
     it("never goes below a usable minimum", () => {
-        expect(availablePanelHeight({ x: 30, y: 20 }, sz, { w: 1000, h: 80 })).toBe(160);
+        expect(
+            availablePanelHeight({ x: 30, y: 20 }, sz, { w: 1000, h: 80 }),
+        ).toBe(160);
     });
 });

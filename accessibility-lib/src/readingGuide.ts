@@ -13,6 +13,7 @@ import {
     type ReadingGuideStyle,
     readingGuidePairCss,
 } from "./accessibilityStoreTypes";
+import { appendA11yStyle } from "./cspStyle";
 import {
     READING_GUIDE_EDGE_VAR,
     READING_GUIDE_FILL_VAR,
@@ -20,7 +21,6 @@ import {
     READING_GUIDE_TIP_ATTR,
     UI_ATTR,
 } from "./domIds";
-import { appendA11yStyle } from "./cspStyle";
 import { registerTopLayer, unregisterTopLayer } from "./topLayer";
 
 export {
@@ -250,7 +250,10 @@ function detachTracking() {
     if (!tracking || typeof window === "undefined") return;
     tracking = false;
     window.removeEventListener("pointermove", onPointerMove);
-    document.documentElement.removeEventListener("pointerleave", onPointerLeave);
+    document.documentElement.removeEventListener(
+        "pointerleave",
+        onPointerLeave,
+    );
     window.removeEventListener("blur", onPointerLeave);
 }
 

@@ -15,8 +15,9 @@ describe.skipIf(!endpoint)("DynamoStore on DynamoDB Local", () => {
     it("writes, reads back in order, lists and loads", async () => {
         // imported here: without an endpoint the AWS SDK is never loaded
         const { DeleteTableCommand } = await import("@aws-sdk/client-dynamodb");
-        const { dynamoApi, dynamoClient, ensureTable } =
-            await import("./dynamoSdk.ts");
+        const { dynamoApi, dynamoClient, ensureTable } = await import(
+            "./dynamoSdk.ts"
+        );
         const { DynamoStore } = await import("./dynamoStore.ts");
         const table = `survey-test-${Date.now()}`;
         const client = dynamoClient({ table, endpoint });

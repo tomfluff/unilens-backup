@@ -27,11 +27,6 @@ import {
     t,
 } from "./accessibilityI18n";
 import { destroyAccessibilityRuntime } from "./accessibilityLifecycle";
-import { stopBodySwapWatch, watchBodySwap } from "./bodySwap";
-import { rebindDocumentEffects } from "./documentEffects";
-import { rebindPageFontScale } from "./pageFontScale";
-import { rebindTextSizeWatch } from "./textSizeLayers";
-import { startSettingsSync, stopSettingsSync } from "./settings";
 import {
     configureAccessibilityCssUrl,
     destroyAccessibilityPanel,
@@ -90,20 +85,30 @@ import {
     runAutoTextAction,
     type TextAnalysis,
 } from "./autoTextSize";
+import { stopBodySwapWatch, watchBodySwap } from "./bodySwap";
 import {
     afterBodyTextApplied,
     type BodyTextScanResult,
     clearBodyTextExpand,
-    rebindBodyTextExpand,
     computeExpandedFontPx,
     destroyBodyTextExpand,
     getLastBodyTextScan,
     initBodyTextExpand,
     LARGE_TEXT_PX,
+    rebindBodyTextExpand,
     scanBodyText,
 } from "./bodyTextExpand";
+import { setCspNonce } from "./cspStyle";
 import { initCursorHalo } from "./cursorHalo";
+import { rebindDocumentEffects } from "./documentEffects";
 import { initFocusCursorMask } from "./focusCursorMask";
+import {
+    a11yFontSizeToScale,
+    FONT_SCALE_LEVELS,
+    type FontScaleLevel,
+    levelToScale,
+    scaleToLevel,
+} from "./fontScales";
 import {
     clearOpportunisticZoom,
     destroyOpportunisticZoom,
@@ -115,13 +120,7 @@ import {
     refreshOpportunisticZoom,
     resetOpportunisticZoom,
 } from "./opportunisticZoom";
-import {
-    a11yFontSizeToScale,
-    FONT_SCALE_LEVELS,
-    type FontScaleLevel,
-    levelToScale,
-    scaleToLevel,
-} from "./fontScales";
+import { rebindPageFontScale } from "./pageFontScale";
 import { initReadingGuide } from "./readingGuide";
 import {
     type ApplySelectionResult,
@@ -132,12 +131,13 @@ import {
     getSelectionInfo,
     initSelectionTextSize,
     levelToPx,
-    rebindSelectionTextSize,
     onSelectionChange,
     pxToLevel,
+    rebindSelectionTextSize,
     type SelectionFontLevel,
     type SelectionInfo,
 } from "./selectionTextSize";
+import { startSettingsSync, stopSettingsSync } from "./settings";
 import {
     afterSmallTextApplied,
     clearSmallTextBoost,
@@ -190,7 +190,7 @@ import {
     smallTextBoostHint,
     TEXT_ADJUST_LEVELS,
 } from "./textAdjustLevels";
-import { setCspNonce } from "./cspStyle";
+import { rebindTextSizeWatch } from "./textSizeLayers";
 
 interface UniLensA11yInitOptions {
     /**

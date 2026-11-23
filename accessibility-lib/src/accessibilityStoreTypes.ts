@@ -100,8 +100,10 @@ export const FOCUS_CURSOR_BAND_PX = [0, ...FOCUS_CURSOR_BAND_SIZES] as const;
 export type FocusCursorBandPx = (typeof FOCUS_CURSOR_BAND_PX)[number];
 
 /** Band height used when the visitor turns the focus cursor on. */
-export const FOCUS_CURSOR_DEFAULT_BAND_PX =
-    150 satisfies Exclude<FocusCursorBandPx, 0>;
+export const FOCUS_CURSOR_DEFAULT_BAND_PX = 150 satisfies Exclude<
+    FocusCursorBandPx,
+    0
+>;
 
 export function focusCursorOn(
     n: FocusCursorBandPx,

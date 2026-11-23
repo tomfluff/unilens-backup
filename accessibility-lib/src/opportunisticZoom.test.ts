@@ -80,27 +80,27 @@ describe("overlapArea", () => {
     ): LineBox => ({ group, left, top, right, bottom });
 
     it("sums where lines of different text nodes overlap", () => {
-        expect(overlapArea([box(1, 0, 0, 100, 20), box(2, 50, 0, 150, 20)])).toBe(
-            50 * 20,
-        );
+        expect(
+            overlapArea([box(1, 0, 0, 100, 20), box(2, 50, 0, 150, 20)]),
+        ).toBe(50 * 20);
     });
 
     it("ignores lines of the same text node", () => {
-        expect(overlapArea([box(1, 0, 0, 100, 20), box(1, 0, 10, 100, 30)])).toBe(
-            0,
-        );
+        expect(
+            overlapArea([box(1, 0, 0, 100, 20), box(1, 0, 10, 100, 30)]),
+        ).toBe(0);
     });
 
     it("ignores lines that only touch (tight line-height)", () => {
-        expect(overlapArea([box(1, 0, 0, 100, 20), box(2, 0, 18, 100, 38)])).toBe(
-            0,
-        );
+        expect(
+            overlapArea([box(1, 0, 0, 100, 20), box(2, 0, 18, 100, 38)]),
+        ).toBe(0);
     });
 
     it("ignores boxes side by side", () => {
-        expect(overlapArea([box(1, 0, 0, 100, 20), box(2, 100, 0, 200, 20)])).toBe(
-            0,
-        );
+        expect(
+            overlapArea([box(1, 0, 0, 100, 20), box(2, 100, 0, 200, 20)]),
+        ).toBe(0);
     });
 });
 

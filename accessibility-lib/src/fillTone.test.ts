@@ -103,12 +103,8 @@ describe("fillTier", () => {
     it("high contrast: large colored bands take the surface, small marks keep the hue", () => {
         for (const c of ["#3471cc", "#408038", "#e53935", "#fbc02d"]) {
             // Page band / section background: a side longer than 400px.
-            expect(fillTier(rgb(c), fillArea(1280, 600), true)).toBe(
-                "surface",
-            );
-            expect(fillTier(rgb(c), fillArea(300, 900), true)).toBe(
-                "surface",
-            );
+            expect(fillTier(rgb(c), fillArea(1280, 600), true)).toBe("surface");
+            expect(fillTier(rgb(c), fillArea(300, 900), true)).toBe("surface");
             // Switches, badges, chips, brand buttons: keep the hue.
             expect(fillTier(rgb(c), fillArea(48, 24), true)).toBe("tone");
             expect(fillTier(rgb(c), fillArea(400, 60), true)).toBe("tone");
@@ -122,9 +118,7 @@ describe("fillTier", () => {
         expect(fillTier(rgb("#cccccc"), fillArea(1280, 600), true)).toBe(
             "muted",
         );
-        expect(fillTier(rgb("#333333"), fillArea(80, 30), true)).toBe(
-            "muted",
-        );
+        expect(fillTier(rgb("#333333"), fillArea(80, 30), true)).toBe("muted");
     });
 
     it("only high contrast turns large colored fills into the surface", () => {
@@ -208,17 +202,35 @@ describe("themedBorderColor", () => {
     it("leaves plain borders to the theme", () => {
         const thin = side("rgb(51, 51, 51)", 1);
         expect(
-            themedBorderColor([thin, thin, thin, thin], "rgb(255, 255, 0)", HIGH_CONTRAST),
+            themedBorderColor(
+                [thin, thin, thin, thin],
+                "rgb(255, 255, 0)",
+                HIGH_CONTRAST,
+            ),
         ).toBeNull();
         // Thin colored lines too: they are lines, not shapes.
         const thinRed = side(red, 2);
         expect(
-            themedBorderColor([thinRed, thinRed, thinRed, thinRed], "rgb(255, 255, 0)", HIGH_CONTRAST),
+            themedBorderColor(
+                [thinRed, thinRed, thinRed, thinRed],
+                "rgb(255, 255, 0)",
+                HIGH_CONTRAST,
+            ),
         ).toBeNull();
         expect(
-            themedBorderColor([side(red, 0), side(red, 0), side(red, 0), side(red, 0)], "rgb(255, 255, 0)", HIGH_CONTRAST),
+            themedBorderColor(
+                [side(red, 0), side(red, 0), side(red, 0), side(red, 0)],
+                "rgb(255, 255, 0)",
+                HIGH_CONTRAST,
+            ),
         ).toBeNull();
-        expect(themedBorderColor([side(clear, 4), side(red, 4), side(red, 4), side(red, 4)], "x", null)).toBeNull();
+        expect(
+            themedBorderColor(
+                [side(clear, 4), side(red, 4), side(red, 4), side(red, 4)],
+                "x",
+                null,
+            ),
+        ).toBeNull();
     });
 
     it("keeps transparent sides transparent (CSS triangles, idle tab underlines)", () => {
@@ -257,23 +269,45 @@ describe("themedBorderColor", () => {
 
     it("keeps the theme border for dark arrow heads and currentColor shapes", () => {
         const dark = side("rgb(51, 51, 51)", 6);
-        expect(themedBorderColor([dark, side(clear, 6), side(clear, 6), side(clear, 6)], "rgb(255, 255, 0)", HIGH_CONTRAST)).toBe(
-            [T, "transparent", "transparent", "transparent"].join(" "),
-        );
+        expect(
+            themedBorderColor(
+                [dark, side(clear, 6), side(clear, 6), side(clear, 6)],
+                "rgb(255, 255, 0)",
+                HIGH_CONTRAST,
+            ),
+        ).toBe([T, "transparent", "transparent", "transparent"].join(" "));
         const cur = side("rgb(255, 255, 0)", 8);
-        expect(themedBorderColor([cur, cur, cur, cur], "rgb(255, 255, 0)", HIGH_CONTRAST)).toBeNull();
+        expect(
+            themedBorderColor(
+                [cur, cur, cur, cur],
+                "rgb(255, 255, 0)",
+                HIGH_CONTRAST,
+            ),
+        ).toBeNull();
     });
 
     it("light shapes take the surface, mid grays the muted gray", () => {
         const white = side("rgb(255, 255, 255)", 10);
-        expect(themedBorderColor([white, side(clear, 10), side(clear, 10), side(clear, 10)], "rgb(255, 255, 0)", HIGH_CONTRAST)?.startsWith(
-            "var(--unilens-a11y-display-surface)",
-        )).toBe(true);
+        expect(
+            themedBorderColor(
+                [white, side(clear, 10), side(clear, 10), side(clear, 10)],
+                "rgb(255, 255, 0)",
+                HIGH_CONTRAST,
+            )?.startsWith("var(--unilens-a11y-display-surface)"),
+        ).toBe(true);
         const gray = side("rgb(204, 204, 204)", 10);
-        const muted = themedFill("muted", rgb("#cccccc"), HIGH_CONTRAST) as string;
-        expect(themedBorderColor([gray, gray, gray, gray], "rgb(255, 255, 0)", HIGH_CONTRAST)).toBe(
-            [muted, muted, muted, muted].join(" "),
-        );
+        const muted = themedFill(
+            "muted",
+            rgb("#cccccc"),
+            HIGH_CONTRAST,
+        ) as string;
+        expect(
+            themedBorderColor(
+                [gray, gray, gray, gray],
+                "rgb(255, 255, 0)",
+                HIGH_CONTRAST,
+            ),
+        ).toBe([muted, muted, muted, muted].join(" "));
     });
 });
 
@@ -295,9 +329,7 @@ describe("high contrast reach", () => {
 
     it("drops only gradient-only backgrounds", () => {
         expect(
-            isGradientOnly(
-                "linear-gradient(rgb(255, 0, 0), rgb(0, 0, 255))",
-            ),
+            isGradientOnly("linear-gradient(rgb(255, 0, 0), rgb(0, 0, 255))"),
         ).toBe(true);
         expect(
             isGradientOnly(

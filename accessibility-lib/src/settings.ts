@@ -17,16 +17,16 @@ import {
     type A11ySettings,
     type AutoTextMode,
     CONTRAST_FILTER,
-    FOCUS_CURSOR_DEFAULT_BAND_PX,
     type DisplayTheme,
+    FOCUS_CURSOR_DEFAULT_BAND_PX,
     isA11yPresetId,
+    normalizeFocusCursorBandPx,
+    normalizeHcTextScope,
     normalizePointerHaloColor,
     normalizePointerHaloOpacity,
-    normalizeFocusCursorBandPx,
     normalizePointerHaloPx,
     normalizeReadingGuidePosition,
     normalizeReadingGuideStyle,
-    normalizeHcTextScope,
     normalizeTextPlateStyle,
     normalizeTextStrokeStyle,
     PANEL_TABS,
@@ -35,13 +35,13 @@ import {
 } from "./accessibilityStoreTypes";
 import { applyA11yToDocument } from "./documentEffects";
 import {
-    DEFAULT_SPEECH_RATE_LEVEL,
-    normalizeSpeechRateLevel,
-} from "./speechLevels";
-import {
     applyPointerFollowerExclusion,
     reconcilePointerFollowers,
 } from "./pointerFollowerExclusion";
+import {
+    DEFAULT_SPEECH_RATE_LEVEL,
+    normalizeSpeechRateLevel,
+} from "./speechLevels";
 import { normalizeTextAdjustLevel } from "./textAdjustLevels";
 
 export type { AutoTextMode } from "./accessibilityStoreTypes";
@@ -173,7 +173,10 @@ function normalizeSettings(s: Settings): void {
     s.speechHighlight = s.speechHighlight !== false;
     s.oppZoom = s.oppZoom === true;
     const panelTab = s.panelTab as string;
-    if (panelTab === "text" || !(PANEL_TABS as readonly string[]).includes(panelTab))
+    if (
+        panelTab === "text" ||
+        !(PANEL_TABS as readonly string[]).includes(panelTab)
+    )
         s.panelTab = "visual";
     if (s.activePreset !== undefined && s.activePreset !== null) {
         if (!isA11yPresetId(s.activePreset)) s.activePreset = null;

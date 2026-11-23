@@ -59,7 +59,6 @@ import {
     isPresetActive,
     toggleA11yPreset,
 } from "./accessibilityPresets";
-import { patchSettings } from "./settings";
 import {
     A11Y_DEFAULTS,
     applyA11yToDocument,
@@ -69,6 +68,7 @@ import {
     SATURATION_FILTER,
 } from "./accessibilityStore";
 import { runAutoTextAction } from "./autoTextSize";
+import { patchSettings } from "./settings";
 
 describe("accessibility presets", () => {
     beforeEach(() => {

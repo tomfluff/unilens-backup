@@ -160,7 +160,9 @@ describe("next survey", () => {
         // every placeholder, URL-encoded; an address without one stays as it is
         expect(
             nextSurveyHref(
-                { url: "https://x.test/?a={user_id}&b={user_id}&c={survey_id}" },
+                {
+                    url: "https://x.test/?a={user_id}&b={user_id}&c={survey_id}",
+                },
                 { userId: "a b", surveyId: "s&1" },
             ),
         ).toBe("https://x.test/?a=a%20b&b=a%20b&c=s%261");
@@ -173,8 +175,17 @@ describe("next survey", () => {
         expect(normalizeQuiz({ id: "q", questions }).quiz).not.toHaveProperty(
             "next",
         );
-        for (const next of [{ url: "javascript:alert(1)" }, { url: "nope" }, {}, "x"]) {
-            const { quiz, errors } = normalizeQuiz({ id: "q", questions, next });
+        for (const next of [
+            { url: "javascript:alert(1)" },
+            { url: "nope" },
+            {},
+            "x",
+        ]) {
+            const { quiz, errors } = normalizeQuiz({
+                id: "q",
+                questions,
+                next,
+            });
             expect(quiz).not.toBeNull();
             expect(quiz).not.toHaveProperty("next");
             expect(errors).toHaveLength(1);

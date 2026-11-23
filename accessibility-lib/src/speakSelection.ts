@@ -16,6 +16,7 @@
  *   unavailable (the panel decides what to show based on support).
  */
 import { getA11yLang } from "./accessibilityI18n";
+import { appendA11yStyle } from "./cspStyle";
 import { isUniLensOverlayNode } from "./domIds";
 import { getActiveSelectionRange } from "./selectionTextSize";
 import { getSettings } from "./settings";
@@ -26,7 +27,6 @@ import {
     speechRateValue,
     splitSpeechChunks,
 } from "./speechLevels";
-import { appendA11yStyle } from "./cspStyle";
 
 export type SpeechState = "idle" | "speaking" | "paused";
 

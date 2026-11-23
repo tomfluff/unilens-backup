@@ -163,8 +163,7 @@ function undoActivePreset() {
     const patch: Partial<A11ySettings> = {};
     for (const key of presetFieldKeys(id)) {
         if (current[key] !== preset[key]) continue;
-        const back =
-            saved && key in saved ? saved[key] : A11Y_DEFAULTS[key];
+        const back = saved && key in saved ? saved[key] : A11Y_DEFAULTS[key];
         (patch as Record<string, unknown>)[key] = back;
     }
     patchA11ySettings(patch);

@@ -24,11 +24,10 @@ import {
     useState,
 } from "react";
 import { createRoot } from "react-dom/client";
-import { installToggleDrag } from "./toggleDrag";
 import {
+    focusCursorBandName,
     getA11yLang,
     onA11yLangChange,
-    focusCursorBandName,
     pointerHaloSizeName,
     t,
 } from "./accessibilityI18n";
@@ -60,20 +59,16 @@ import {
     syncWidgetDisplayIsolation,
 } from "./accessibilityStore";
 import {
+    focusCursorOn,
+    normalizeFocusCursorBandPx,
+} from "./accessibilityStoreTypes";
+import {
     getAppliedTextScale,
     runAutoTextAction,
     type TextAnalysis,
 } from "./autoTextSize";
-import {
-    focusCursorOn,
-    normalizeFocusCursorBandPx,
-} from "./accessibilityStoreTypes";
+import { appendA11yStyle, getCspNonce } from "./cspStyle";
 import { pointerHaloOn, rememberPointerHaloOnPx } from "./cursorHalo";
-import {
-    getAppliedOppZoom,
-    onOppZoomChange,
-    resetOpportunisticZoom,
-} from "./opportunisticZoom";
 import {
     A11Y_CSS_LINK_ID,
     A11Y_OPEN_CLASS,
@@ -84,6 +79,11 @@ import {
     REDUCE_MOTION_ATTR,
     UI_ATTR,
 } from "./domIds";
+import {
+    getAppliedOppZoom,
+    onOppZoomChange,
+    resetOpportunisticZoom,
+} from "./opportunisticZoom";
 import { resolveA11yCssUrl } from "./resolveA11yCssUrl";
 import {
     clearAllSelectionFontSizes,
@@ -99,8 +99,8 @@ import {
     useSettings,
 } from "./settings";
 import { namedTextAdjustLevel } from "./textAdjustLevels";
+import { installToggleDrag } from "./toggleDrag";
 import pageCss from "./unilens-a11y/style.css";
-import { appendA11yStyle, getCspNonce } from "./cspStyle";
 
 const RESET_CONFIRM_MS = 4000;
 
@@ -253,13 +253,19 @@ function activeAdjustments(s: Settings): Adjustment[] {
         );
     }
     if (s.contrast !== "standard") {
-        add("visual", "contrast", t().adjContrast(t().contrast[s.contrast]), () =>
-            patchA11ySettings({ contrast: "standard" }),
+        add(
+            "visual",
+            "contrast",
+            t().adjContrast(t().contrast[s.contrast]),
+            () => patchA11ySettings({ contrast: "standard" }),
         );
     }
     if (s.fontSize !== "standard") {
-        add("visual", "fontSize", t().adjFontSize(t().fontSize[s.fontSize]), () =>
-            patchA11ySettings({ fontSize: "standard" }),
+        add(
+            "visual",
+            "fontSize",
+            t().adjFontSize(t().fontSize[s.fontSize]),
+            () => patchA11ySettings({ fontSize: "standard" }),
         );
     }
     if (s.fontFamily === "ud") {
@@ -438,6 +444,7 @@ function TabBar({
         // ("tab 1 of 2"); the <li> wrappers are presentation only.
         <ul
             className="unilens-a11y-tabs"
+            // biome-ignore lint/a11y/noNoninteractiveElementToInteractiveRole: the tab bar must stay a tablist; make check's --unsafe fix would strip the role
             role="tablist"
             aria-label={t().tabsLabel}
         >
@@ -599,11 +606,11 @@ function AccessibilityPanelApp() {
             ?.classList.toggle(A11Y_OPEN_CLASS, panelOpen);
     }, [panelOpen]);
 
+    // Only the open transition should move focus — switching tabs while
+    // already open is handled by the tab bar's own click/keydown handlers.
+    // biome-ignore lint/correctness/useExhaustiveDependencies: activeTab is read on open, not a trigger
     useEffect(() => {
         if (panelOpen) tabBtnRefs.current[activeTab]?.focus();
-        // Only the open transition should move focus — switching tabs while
-        // already open is handled by the tab bar's own click/keydown handlers.
-        // eslint-disable-next-line react-hooks/exhaustive-deps -- activeTab is read on open, not a trigger
     }, [panelOpen]);
 
     // A destructive action was reset out from under the confirmation state

@@ -88,7 +88,9 @@ describe("re-measuring host sizes (resize / root size change)", () => {
         vi.stubGlobal("getComputedStyle", () => {
             if (htmlAttrs.has(TEXT_SIZE_PROBE_ATTR)) probedReads++;
             // host's own size after a breakpoint: 12px; enlarged size: 30px
-            return { fontSize: htmlAttrs.has(TEXT_SIZE_PROBE_ATTR) ? "12px" : "30px" };
+            return {
+                fontSize: htmlAttrs.has(TEXT_SIZE_PROBE_ATTR) ? "12px" : "30px",
+            };
         });
         vi.stubGlobal("document", {
             documentElement: {

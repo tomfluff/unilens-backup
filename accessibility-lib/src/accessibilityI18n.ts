@@ -976,10 +976,10 @@ const en: A11yMessages = {
     oppZoomDesc:
         "Enlarges the whole page 0.1 at a time and stops just before horizontal scrolling, overlapping text or very short lines increase (the method of Bigham, UIST 2014)",
     oppZoomSwitch: "Zoom the whole page automatically",
-    oppZoomHintOn: "Measures again when the window width or text settings change",
+    oppZoomHintOn:
+        "Measures again when the window width or text settings change",
     oppZoomHintOff: "Everything on the page grows, images included",
-    oppZoomOnAnnounce: (scale, reason) =>
-        `Page zoomed to ×${scale}. ${reason}`,
+    oppZoomOnAnnounce: (scale, reason) => `Page zoomed to ×${scale}. ${reason}`,
     oppZoomOffAnnounce: "Automatic page zoom off",
     oppZoomMeasuring: "Measuring the page",
     oppZoomRemeasure: "Measure again",

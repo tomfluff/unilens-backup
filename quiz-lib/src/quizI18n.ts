@@ -131,7 +131,8 @@ const ja: QuizMessages = {
     chooseOne: "1つ選んでください",
     chooseAll: "当てはまるものをすべて選んでください",
     typeAnswer: "回答を入力してください",
-    typeAnswerOptional: "回答を入力してください（任意。空欄のままでも送信できます）",
+    typeAnswerOptional:
+        "回答を入力してください（任意。空欄のままでも送信できます）",
     submit: "回答する",
     needAnswer: "まだ回答されていません",
     correct: "正解",

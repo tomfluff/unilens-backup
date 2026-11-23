@@ -19,12 +19,14 @@
  * size for the host's own.
  */
 
+import { appendA11yStyle } from "./cspStyle";
 import {
     BODY_EXPAND_ATTR,
     BODY_EXPAND_CLASS,
     BODY_EXPAND_ORIGINAL_ATTR,
     BODY_EXPAND_TARGET_VAR,
     HTML_STYLE_FONT_SCALE,
+    isUniLensOverlayNode,
     PAGE_FONT_ATTR,
     PAGE_FONT_CAP_VAR,
     PAGE_FONT_CLASS,
@@ -34,10 +36,8 @@ import {
     SMALL_BOOST_CLASS,
     SMALL_BOOST_ORIGINAL_ATTR,
     SMALL_BOOST_TARGET_VAR,
-    isUniLensOverlayNode,
 } from "./domIds";
 import { isOwnStyleMutation, removedOwnMarks } from "./ownMutation";
-import { appendA11yStyle } from "./cspStyle";
 
 export const TEXT_SIZE_STYLE_ID = "unilens-a11y-text-size-style";
 

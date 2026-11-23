@@ -3,8 +3,8 @@
  */
 import {
     FOCUS_CURSOR_DEFAULT_BAND_PX,
-    focusCursorOn,
     type FocusCursorBandPx,
+    focusCursorOn,
 } from "./accessibilityStoreTypes";
 
 let rememberedBandPx: Exclude<FocusCursorBandPx, 0> =

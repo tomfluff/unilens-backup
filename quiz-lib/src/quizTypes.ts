@@ -343,10 +343,7 @@ function normalizeQuestion(
 }
 
 /** A quiz's `next`: an http(s) address and an optional label, or undefined. */
-function normalizeNext(
-    raw: unknown,
-    errors: string[],
-): NextSurvey | undefined {
+function normalizeNext(raw: unknown, errors: string[]): NextSurvey | undefined {
     if (raw === undefined) return undefined;
     const url = isRecord(raw) ? raw.url : undefined;
     let ok = false;
@@ -359,7 +356,9 @@ function normalizeNext(
         }
     }
     if (!ok || !isRecord(raw)) {
-        errors.push('quiz: "next.url" must be an http(s) address; no next survey');
+        errors.push(
+            'quiz: "next.url" must be an http(s) address; no next survey',
+        );
         return undefined;
     }
     const label = toLocalizedText(raw.label) ?? undefined;

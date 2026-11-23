@@ -3,8 +3,8 @@ import {
     compositeBackdrop,
     contentDrawsText,
     imageOfLayer,
-    isFigureBox,
     isClearGradient,
+    isFigureBox,
     isFlatGradient,
     isPictureSized,
     isSolidFill,
@@ -221,9 +221,9 @@ describe("paintedLayerBox", () => {
     });
 
     it("fills the box when the image repeats", () => {
-        expect(
-            paintedLayerBox(el, "auto", "0% 0%", "repeat", null),
-        ).toEqual(el);
+        expect(paintedLayerBox(el, "auto", "0% 0%", "repeat", null)).toEqual(
+            el,
+        );
     });
 });
 
@@ -375,7 +375,7 @@ describe("contentDrawsText", () => {
         expect(contentDrawsText('"NEW"')).toBe(true);
         expect(contentDrawsText('"\u203a"')).toBe(true);
         expect(contentDrawsText("counter(item)")).toBe(true);
-        expect(contentDrawsText('attr(data-label)')).toBe(true);
+        expect(contentDrawsText("attr(data-label)")).toBe(true);
     });
 
     it("ignores none, empty strings and images", () => {
@@ -384,7 +384,14 @@ describe("contentDrawsText", () => {
     });
 
     it("ignores strings of only spaces (icon boxes like yukoyuko's external-link mark)", () => {
-        for (const c of ['" "', "' '", '"\u00a0"', '"  "', '"\u3000"', '"\u200b"'])
+        for (const c of [
+            '" "',
+            "' '",
+            '"\u00a0"',
+            '"  "',
+            '"\u3000"',
+            '"\u200b"',
+        ])
             expect(contentDrawsText(c)).toBe(false);
     });
 });

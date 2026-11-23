@@ -23,6 +23,8 @@ describe("draggable toggle button stays wired up", () => {
     });
 
     it("the module still exports the installer", () => {
-        expect(read("./toggleDrag.ts")).toContain("export function installToggleDrag");
+        expect(read("./toggleDrag.ts")).toContain(
+            "export function installToggleDrag",
+        );
     });
 });

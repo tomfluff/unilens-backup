@@ -23,6 +23,7 @@ import {
 } from "./accessibilityStoreTypes";
 import { afterNextPaint } from "./afterPaint";
 import { clearBackgroundMediaMarkers } from "./backgroundMediaOverlay";
+import { appendA11yStyle } from "./cspStyle";
 import {
     A11Y_TEXT_OPTIONS_STYLE_ID,
     A11Y_UD_FONT_LINK_ID,
@@ -95,8 +96,8 @@ import {
 } from "./domIds";
 import {
     type BorderSide,
-    fillArea,
     type FillPalette,
+    fillArea,
     fillTier,
     isGradientOnly,
     largeToneIsSurfaceFor,
@@ -113,11 +114,13 @@ import {
     clearHighContrastTextPlates,
     syncHighContrastTextPlates,
 } from "./highContrastTextPlate";
+import { stopHostCursorGuard, syncHostCursorGuard } from "./hostCursorGuard";
 import {
     restoreAllHostInlineStyles,
     restoreHostInlineStyle,
     setHostInlineStyle,
 } from "./hostSurface";
+import { stopIconFontGuard, syncIconFontGuard } from "./iconFontGuard";
 import {
     clearMediaTextMarkers,
     onMediaTextResync,
@@ -127,9 +130,6 @@ import {
 import { isOwnStyleMutation, styleChangeKind } from "./ownMutation";
 import { destroyPageFontScale, setPageFontSizeScale } from "./pageFontScale";
 import type { Settings } from "./settings";
-import { stopIconFontGuard, syncIconFontGuard } from "./iconFontGuard";
-import { stopHostCursorGuard, syncHostCursorGuard } from "./hostCursorGuard";
-import { appendA11yStyle } from "./cspStyle";
 import textOptionsCss from "./unilens-a11y/text-options.css";
 
 let readSettings: () => Settings = () => ({}) as Settings;
@@ -462,10 +462,7 @@ function clearPositionedOverlayMarkers(root: ParentNode | null = document) {
     root.querySelectorAll(`[${PSEUDO_OVERLAY_AFTER_ATTR}]`).forEach((el) => {
         el.removeAttribute(PSEUDO_OVERLAY_AFTER_ATTR);
     });
-    for (const [attr, prop] of [
-        ...FILL_SLOTS,
-        ...BORDER_SLOTS,
-    ]) {
+    for (const [attr, prop] of [...FILL_SLOTS, ...BORDER_SLOTS]) {
         root.querySelectorAll(`[${attr}]`).forEach((el) => {
             setFill(el, attr, prop, null);
         });
@@ -517,9 +514,7 @@ function borderFor(
     if (!palette) return null;
     let drawn = false;
     const sides: BorderSide[] = BORDER_SIDES.map((side) => {
-        const style = cs.getPropertyValue(
-            `border-${side.toLowerCase()}-style`,
-        );
+        const style = cs.getPropertyValue(`border-${side.toLowerCase()}-style`);
         const width =
             style === "none" || style === "hidden"
                 ? 0
@@ -542,7 +537,9 @@ function borderFor(
 /** A ::before / ::after that is rendered at all. */
 function pseudoRendered(cs: CSSStyleDeclaration): boolean {
     const c = cs.content;
-    return Boolean(c) && c !== "none" && c !== "normal" && cs.display !== "none";
+    return (
+        Boolean(c) && c !== "none" && c !== "normal" && cs.display !== "none"
+    );
 }
 
 /**
@@ -810,10 +807,7 @@ export function syncPositionedOverlayMarkers(pageRoot: HTMLElement | null) {
     // Fills on elements that left the candidate list (now overlay UI, or a
     // skipped tag) — candidates were all handled above.
     const seen = new Set<Element>(candidates);
-    for (const [attr, prop] of [
-        ...FILL_SLOTS,
-        ...BORDER_SLOTS,
-    ]) {
+    for (const [attr, prop] of [...FILL_SLOTS, ...BORDER_SLOTS]) {
         pageRoot.querySelectorAll(`[${attr}]`).forEach((el) => {
             if (!seen.has(el)) setFill(el, attr, prop, null);
         });
@@ -1060,11 +1054,9 @@ function ensurePositionedOverlayObserver(
         lastSurfaceInputsKey = null;
         clearPositionedOverlayMarkers(pageRoot);
         clearMediaTextMarkers(pageRoot);
-        pageRoot
-            ?.querySelectorAll(`[${KEEP_MOTION_ATTR}]`)
-            .forEach((el) => {
-                el.removeAttribute(KEEP_MOTION_ATTR);
-            });
+        pageRoot?.querySelectorAll(`[${KEEP_MOTION_ATTR}]`).forEach((el) => {
+            el.removeAttribute(KEEP_MOTION_ATTR);
+        });
         return;
     }
 

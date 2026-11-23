@@ -9,6 +9,7 @@ import {
     focusCursorOn,
     normalizeFocusCursorBandPx,
 } from "./accessibilityStoreTypes";
+import { appendA11yStyle } from "./cspStyle";
 import {
     FOCUS_CURSOR_BOTTOM_ID,
     FOCUS_CURSOR_EDGE_BOTTOM_ID,
@@ -18,7 +19,6 @@ import {
     UI_ATTR,
 } from "./domIds";
 import { resetFocusCursorMemory } from "./focusCursorMemory";
-import { appendA11yStyle } from "./cspStyle";
 import { registerTopLayer, unregisterTopLayer } from "./topLayer";
 
 /** Default clear band height (medium). */
@@ -235,12 +235,19 @@ function detachTracking() {
     if (!tracking || typeof window === "undefined") return;
     tracking = false;
     window.removeEventListener("pointermove", onPointerMove);
-    document.documentElement.removeEventListener("pointerleave", onPointerLeave);
+    document.documentElement.removeEventListener(
+        "pointerleave",
+        onPointerLeave,
+    );
     window.removeEventListener("blur", onPointerLeave);
 }
 
 function syncFromSettings() {
-    if (focusCursorOn(normalizeFocusCursorBandPx(getA11ySettings().focusCursorBandPx))) {
+    if (
+        focusCursorOn(
+            normalizeFocusCursorBandPx(getA11ySettings().focusCursorBandPx),
+        )
+    ) {
         ensureStylesheet();
         attachTracking();
         paintMask();

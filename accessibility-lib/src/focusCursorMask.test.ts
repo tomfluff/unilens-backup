@@ -21,9 +21,9 @@ describe("focus cursor mask", () => {
     });
 
     it("supports small, medium, and large band heights", () => {
-        expect(focusCursorBandBottom(100, 80) - focusCursorBandTop(100, 80)).toBe(
-            80,
-        );
+        expect(
+            focusCursorBandBottom(100, 80) - focusCursorBandTop(100, 80),
+        ).toBe(80);
         expect(
             focusCursorBandBottom(100, 240) - focusCursorBandTop(100, 240),
         ).toBe(240);

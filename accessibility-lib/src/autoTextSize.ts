@@ -3,17 +3,17 @@
  * Prototype: viewport / content / combined modes with a tab panel for testing.
  */
 
+import type { AutoTextMode } from "./accessibilityStoreTypes";
+import { appendA11yStyle } from "./cspStyle";
 import { isUniLensOverlayNode, UI_ATTR } from "./domIds";
 import { restoreHostInlineStyle, setHostInlineStyle } from "./hostSurface";
-import { remeasureTextSizes } from "./textSizeLayers";
 import {
     getSettings,
     patchSettings,
     saveSettings,
     useSettings,
 } from "./settings";
-import { appendA11yStyle } from "./cspStyle";
-import type { AutoTextMode } from "./accessibilityStoreTypes";
+import { remeasureTextSizes } from "./textSizeLayers";
 
 export type { AutoTextMode } from "./accessibilityStoreTypes";
 

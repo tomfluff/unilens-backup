@@ -4,8 +4,8 @@
  */
 import {
     POINTER_HALO_DEFAULT_PX,
-    pointerHaloOn,
     type PointerHaloPx,
+    pointerHaloOn,
 } from "./accessibilityStoreTypes";
 
 let rememberedOnPx: Exclude<PointerHaloPx, 0> = POINTER_HALO_DEFAULT_PX;

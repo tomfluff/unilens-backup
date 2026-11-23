@@ -7,16 +7,11 @@ import {
     normalizePointerHaloColor,
     normalizePointerHaloOpacity,
     POINTER_HALO_RGB,
-    type PointerHaloPx,
     pointerHaloCssDiameter,
     pointerHaloFillCss,
     pointerHaloOn,
 } from "./accessibilityStoreTypes";
-import {
-    lastOnPointerHaloPx,
-    rememberPointerHaloOnPx,
-    resetPointerHaloMemory,
-} from "./pointerHaloMemory";
+import { appendA11yStyle } from "./cspStyle";
 import {
     CURSOR_HALO_FILL_VAR,
     CURSOR_HALO_ID,
@@ -24,7 +19,10 @@ import {
     CURSOR_HALO_SIZE_VAR,
     UI_ATTR,
 } from "./domIds";
-import { appendA11yStyle } from "./cspStyle";
+import {
+    rememberPointerHaloOnPx,
+    resetPointerHaloMemory,
+} from "./pointerHaloMemory";
 import { registerTopLayer, unregisterTopLayer } from "./topLayer";
 
 export {
@@ -97,7 +95,11 @@ let tracking = false;
 let a11yUnsub: (() => void) | null = null;
 let lastX = Number.NaN;
 let lastY = Number.NaN;
-export { lastOnPointerHaloPx, rememberPointerHaloOnPx } from "./pointerHaloMemory";
+
+export {
+    lastOnPointerHaloPx,
+    rememberPointerHaloOnPx,
+} from "./pointerHaloMemory";
 
 function ensureStylesheet() {
     if (typeof document === "undefined") return;
@@ -175,7 +177,10 @@ function detachTracking() {
     if (!tracking || typeof window === "undefined") return;
     tracking = false;
     window.removeEventListener("pointermove", onPointerMove);
-    document.documentElement.removeEventListener("pointerleave", onPointerLeave);
+    document.documentElement.removeEventListener(
+        "pointerleave",
+        onPointerLeave,
+    );
     window.removeEventListener("blur", onPointerLeave);
 }
 

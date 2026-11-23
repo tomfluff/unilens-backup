@@ -18,13 +18,14 @@
  */
 
 import { fontScaleLabel, t } from "./accessibilityI18n";
+import { appendA11yStyle } from "./cspStyle";
 import {
     isUniLensOverlayNode,
+    SELECTION_FLOW_ATTR,
     SELECTION_FONT_BASE_ATTR,
     SELECTION_FONT_LEVEL_ATTR,
     SELECTION_FONT_PX_ATTR,
     SELECTION_FONT_SCALE_ATTR,
-    SELECTION_FLOW_ATTR,
     SELECTION_FONT_SIZE_VAR,
     SELECTION_GROUP_ATTR,
     SELECTION_RESIZE_ATTR,
@@ -40,7 +41,6 @@ import {
 } from "./fontScales";
 import { readUnscaledFontSizePx } from "./pageFontScale";
 import { saveSettings, updateSetting } from "./settings";
-import { appendA11yStyle } from "./cspStyle";
 
 export { FONT_SCALE_LEVELS };
 export type SelectionFontLevel = FontScaleLevel;
@@ -448,11 +448,9 @@ function logicalText(run: Run): string {
 function forgetRun(run: Run) {
     for (const n of run.ours) runOfOurNode.delete(n);
     if (run.flow)
-        run.flow
-            .querySelectorAll(`[${SELECTION_RESIZE_ATTR}]`)
-            .forEach((w) => {
-                runOfOurNode.delete(w);
-            });
+        run.flow.querySelectorAll(`[${SELECTION_RESIZE_ATTR}]`).forEach((w) => {
+            runOfOurNode.delete(w);
+        });
     devirtualizeOrigin(run.origin);
     runOfOrigin.delete(run.origin);
     liveRuns.delete(run);
@@ -1105,13 +1103,11 @@ export function initSelectionTextSize() {
             const wrapper =
                 findResizeWrapper(sel.anchorNode) ??
                 findResizeWrapper(sel.focusNode);
-            if (wrapper) activeGroup = wrapper.getAttribute(SELECTION_GROUP_ATTR);
+            if (wrapper)
+                activeGroup = wrapper.getAttribute(SELECTION_GROUP_ATTR);
             else {
                 const groupRange = activeGroupRange();
-                if (
-                    !groupRange ||
-                    !groupRange.intersectsNode(range.commonAncestorContainer)
-                )
+                if (!groupRange?.intersectsNode(range.commonAncestorContainer))
                     activeGroup = null;
             }
         }
