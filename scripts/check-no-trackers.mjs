@@ -1,0 +1,189 @@
+#!/usr/bin/env node
+// Fails when a page we serve to participants could load Google Tag Manager: the
+// SoftBank mirrors carry SoftBank's own GTM tag, and a study page must never report
+// a participant's visit to a third party (#49). A tag is fine only when disabled the
+// way the recruit mirror's landing page does it: the loader as
+// <script type="text/plain" data-local-disabled="gtm">, the <noscript> iframe's
+// address moved to data-src. Every other mention (a live <script>, an iframe src, a
+// .js file) fails.
+//
+//   node scripts/check-no-trackers.mjs [DIR ...]
+// With no DIR: all of frontend/ (its root files too: the study pages' shared template)
+// except softbank-mirror-1 (Kinjo's IR mirror, left to him in #49) and the recruit
+// mirror's unmodified snapshot (below). The frozen study build runs it on its copy too (freeze.sh).
+import { readdirSync, readFileSync, realpathSync, statSync } from "node:fs";
+import { dirname, join, relative, sep } from "node:path";
+import { fileURLToPath } from "node:url";
+import { parse } from "parse5";
+
+const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
+const FRONT = join(ROOT, "frontend");
+const SKIP = new Set(["softbank-mirror-1", "node_modules"]);
+// the recruit mirror's unmodified snapshot, kept as fetched for diffs (its README);
+// its tags are live, and it is served at /original/ though nothing links to it
+// (left to its owners: noted in the PR)
+const SKIP_PATHS = new Set(["softbank-mirror-recruit/original"]);
+const TAG = /googletagmanager|\bGTM-[A-Z0-9]{4,}\b/gi;
+const SCANNED = /\.(html?|m?js|css)$/i;
+
+/**
+ * The places in one file where a GTM tag is live, as line numbers. An HTML page is
+ * parsed as a browser parses it (parse5, the parser jsdom uses), so comments, script
+ * bodies and attribute values (character references decoded, and the tabs and line
+ * breaks a browser drops from a URL dropped) are what the browser sees. A page is
+ * parsed twice, with JavaScript on (<noscript> is text) and off (it is markup), and
+ * a tag live in either counts.
+ * - A <script> is inert only when its own type attribute is text/plain and it has
+ *   our data-local-disabled marker; any other is judged on its attributes and its
+ *   code (a legacy <!-- wrapper included).
+ * - The disabled fallback: in an <iframe data-local-disabled="gtm"> inside
+ *   <noscript>, with no src, only data-src may hold the address.
+ * - Every other element's attributes are judged, and <style> text; comments and
+ *   page text load nothing.
+ * Any other file (.js, .mjs, .css) fails on any mention.
+ */
+export function liveTags(text, isHtml) {
+    if (!isHtml) return [...text.matchAll(TAG)].map((m) => lineOf(text, m.index));
+    const out = [];
+    const test = (v) => TAG.test(v) && ((TAG.lastIndex = 0), true);
+    const has = (v) => test(v) || test(v.replace(/[\t\n\r]/g, ""));
+    const walk = (node, inNoscript) => {
+        const name = node.tagName;
+        if (name) {
+            const at = Object.fromEntries(node.attrs.map((a) => [a.name, a.value]));
+            const where = node.sourceCodeLocation;
+            const line = (attr) =>
+                where?.attrs?.[attr]?.startLine ?? where?.startLine ?? 0;
+            // text/plain and our marker: a consent manager also parks scripts as
+            // text/plain, and runs them after opt-in
+            const inert =
+                name === "script" &&
+                (at.type ?? "").trim().toLowerCase() === "text/plain" &&
+                Boolean(at["data-local-disabled"]);
+            if (inert) return;
+            const fallback =
+                name === "iframe" &&
+                inNoscript &&
+                at["data-local-disabled"] === "gtm" &&
+                !("src" in at);
+            for (const a of node.attrs)
+                if (!(fallback && a.name === "data-src") && has(a.value)) out.push(line(a.name));
+            if (name === "script" || name === "style")
+                for (const c of node.childNodes)
+                    if (c.nodeName === "#text" && has(c.value))
+                        for (const m of c.value.matchAll(TAG))
+                            out.push(
+                                (c.sourceCodeLocation?.startLine ?? where?.startLine ?? 0) +
+                                    c.value.slice(0, m.index).split("\n").length -
+                                    1,
+                            );
+        }
+        const kids = name === "template" ? node.content.childNodes : node.childNodes;
+        for (const c of kids ?? []) walk(c, inNoscript || name === "noscript");
+    };
+    for (const scriptingEnabled of [true, false])
+        walk(parse(text, { scriptingEnabled, sourceCodeLocationInfo: true }), false);
+    return [...new Set(out)].sort((a, b) => a - b);
+}
+
+const lineOf = (text, i) => text.slice(0, i).split("\n").length;
+
+function* files(dir) {
+    if (!statSync(dir).isDirectory()) {
+        if (SCANNED.test(dir)) yield dir;
+        return;
+    }
+    for (const name of readdirSync(dir)) {
+        const p = join(dir, name);
+        if (SKIP.has(name) || SKIP_PATHS.has(relative(FRONT, p).split(sep).join("/")))
+            continue;
+        if (statSync(p).isDirectory()) yield* files(p);
+        else if (SCANNED.test(name)) yield p;
+    }
+}
+
+function selfTest() {
+    const live = [
+        "<script>(function(){j.src='https://www.googletagmanager.com/gtm.js?id='+i})(window,document,'script','dataLayer','GTM-BMSW');</script>",
+        '<noscript><iframe src="//www.googletagmanager.com/ns.html?id=GTM-BMSW"></iframe></noscript>',
+        '<script async src="https://www.googletagmanager.com/gtag/js?id=G-X"></script>',
+        // Codex's three (2026-11-23): data-type isn't type; a data-src outside the
+        // disabled fallback can feed a loader; a legacy <!-- wrapper still runs
+        '<script data-type="text/plain" src="https://www.googletagmanager.com/gtm.js?id=GTM-BMSW"></script>',
+        '<div data-src="https://www.googletagmanager.com/gtm.js?id=GTM-BMSW"></div>',
+        "<script><!--\nj.src='//www.googletagmanager.com/gtm.js?id=GTM-BMSW';\n//--></script>",
+        '<noscript><iframe data-local-disabled="gtm" src="//www.googletagmanager.com/ns.html"></iframe></noscript>',
+        '<iframe data-local-disabled="gtm" data-src="//www.googletagmanager.com/ns.html"></iframe>',
+        "<script type=\"text/plain\"></script><script>gtm('GTM-BMSW')</script>",
+        // Codex's second pass: a comment mentioning a script doesn't hide the next
+        // real one; a marked iframe's other attributes are still judged
+        '<!-- <script type="text/plain"> --><script>gtm("GTM-BMSW")</script>',
+        '<noscript><iframe data-local-disabled="gtm" srcdoc="<script src=//www.googletagmanager.com/gtm.js></script>"></iframe></noscript>',
+        // and its third: a script opener quoted in an attribute isn't a script; an
+        // address written with character references is what the browser fetches
+        '<div title="<script type=text/plain>"></div><script>gtm("GTM-BMSW")</script>',
+        '<script src="https://www.googletag&#109;anager.com/gtm.js"></script>',
+        '<style>@import url("https://www.googletagmanager.com/x.css");</style>',
+        // and its fourth: a self-closed iframe in <noscript> swallows the next script
+        // only with JavaScript off; an encoded line break a URL drops
+        '<noscript><iframe data-local-disabled="gtm" data-src="//x.test/" /></noscript><script src="https://www.googletagmanager.com/gtm.js"></script>',
+        '<script src="https://www.googletag&#10;manager.com/gtm.js"></script>',
+        // and its seventh: a consent manager's parked script runs after opt-in
+        '<script type="text/plain" data-cookieconsent="marketing">gtm("GTM-BMSW")</script>',
+    ];
+    const off = [
+        '<script type="text/plain" data-local-disabled="gtm">j.src="//www.googletagmanager.com/gtm.js?id=GTM-BMSW"</script>',
+        '<noscript><iframe data-local-disabled="gtm" data-src="//www.googletagmanager.com/ns.html?id=GTM-BMSW"></iframe></noscript>',
+        "<!-- Google Tag Manager: GTM-BMSW -->",
+        "<SCRIPT TYPE='TEXT/PLAIN' DATA-LOCAL-DISABLED='gtm'>gtm('GTM-BMSW')</SCRIPT>",
+        "<!-- <script>gtm('GTM-BMSW')</script> -->",
+    ];
+    // in a body, where the mirrors have them (a <noscript> in <head> can't hold an
+    // iframe, so a parser moves it out)
+    const page = (s) => `<!doctype html><html><head></head><body>${s}</body></html>`;
+    for (const s of live)
+        if (!liveTags(page(s), true).length) throw new Error(`self-test missed: ${s}`);
+    for (const s of off)
+        if (liveTags(page(s), true).length) throw new Error(`self-test flagged: ${s}`);
+    if (!liveTags("x='googletagmanager.com'", false).length)
+        throw new Error("self-test missed a .js mention");
+    if (!liveTags('@import url("https://www.googletagmanager.com/x.css");', false).length)
+        throw new Error("self-test missed a .css mention");
+}
+
+// run as a script (through a symlink too), not imported
+const self = (p) => {
+    try {
+        return realpathSync(p);
+    } catch {
+        return p;
+    }
+};
+if (process.argv[1] && self(process.argv[1]) === self(fileURLToPath(import.meta.url))) {
+    selfTest();
+    const dirs = process.argv.slice(2).length
+        ? process.argv.slice(2)
+        : readdirSync(FRONT)
+              .filter((d) => !SKIP.has(d))
+              .map((d) => join(FRONT, d));
+    let bad = 0;
+    let seen = 0;
+    for (const dir of dirs)
+        for (const f of files(dir)) {
+            seen++;
+            const lines = liveTags(readFileSync(f, "utf8"), /\.html?$/i.test(f));
+            for (const n of new Set(lines)) {
+                bad++;
+                console.error(`live Google Tag Manager tag: ${relative(process.cwd(), f)}:${n}`);
+            }
+        }
+    if (bad) {
+        console.error(
+            `A live tag on ${bad} line(s). Disable each as the recruit mirror does (#49): ` +
+                'the loader as <script type="text/plain" data-local-disabled="gtm">, ' +
+                "the iframe's src as data-src.",
+        );
+        process.exit(1);
+    }
+    console.log(`No live Google Tag Manager tag in ${seen} files.`);
+}
